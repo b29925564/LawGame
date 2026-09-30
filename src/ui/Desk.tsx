@@ -3,7 +3,7 @@ import * as desk from '../engine/episode/desk';
 import type { DeskScene } from '../engine/episode/schema';
 import { deskState, useEpisode } from '../engine/game';
 import { play } from '../engine/sound';
-import { CardPick, EvidenceDrawer, KindFilter, useKindFilter } from './Evidence';
+import { CardPick, EvidenceDrawer, KindFilter, timeGroups, useKindFilter } from './Evidence';
 import { Speech } from './Portrait';
 import { RelationPicker } from './RelationPicker';
 import { Shell, Tabs } from './Shell';
@@ -308,6 +308,19 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
               </li>
               {slot(1)}
             </ul>
+            <RelationPicker
+              cards={st.link.cards.map((id) => pool.find((c) => c.id === id)?.name)}
+              value={st.link.relation}
+              onPick={setLinkRelation}
+              compact
+            />
+            <button
+              className="primary wide-center"
+              disabled={!desk.canConnect(st)}
+              onClick={connect}
+            >
+              連起來
+            </button>
             {st.linkNote && (
               <p role="status" className={st.link.cards.length ? 'board-note bad' : 'board-note'}>
                 {st.linkNote}
@@ -316,9 +329,9 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
           </div>
           <KindFilter items={pool} value={kind} onPick={setKind} />
           <ul className="stack">
-            {pool
-              .filter((c) => showKind(c) || st.link.cards.includes(c.id))
-              .map((c) => (
+            {timeGroups(
+              pool.filter((c) => showKind(c) || st.link.cards.includes(c.id)),
+              (c) => (
                 <li key={c.id}>
                   <CardPick
                     item={c}
@@ -326,16 +339,9 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
                     onPick={() => toggleLinkCard(c.id)}
                   />
                 </li>
-              ))}
+              ),
+            )}
           </ul>
-          <RelationPicker
-            cards={st.link.cards.map((id) => pool.find((c) => c.id === id)?.name)}
-            value={st.link.relation}
-            onPick={setLinkRelation}
-          />
-          <button className="primary" disabled={!desk.canConnect(st)} onClick={connect}>
-            連起來
-          </button>
           {found.length > 0 && (
             <>
               <h3 className="findings-head">

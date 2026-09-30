@@ -3,6 +3,7 @@ import * as interview from '../engine/episode/interview';
 import type { InterviewScene } from '../engine/episode/schema';
 import { interviewState, useEpisode } from '../engine/game';
 import { Portrait, Speech } from './Portrait';
+import { Transcript } from './Shell';
 
 /** 訪談（企劃書 6.3）：提問、施壓、安撫。視訊通話畫面。 */
 export function Interview({ scene }: { scene: InterviewScene }) {
@@ -33,11 +34,11 @@ export function Interview({ scene }: { scene: InterviewScene }) {
         </p>
       </header>
 
-      <div className="lines" aria-live="polite">
+      <Transcript count={st.log.length}>
         {st.log.map((l, i) => (
           <Speech key={i} line={l} />
         ))}
-      </div>
+      </Transcript>
 
       {st.over ? null : (
         <section className="panel actions">
