@@ -2,7 +2,9 @@ import { useState } from 'react';
 import * as depo from '../engine/episode/deposition';
 import type { DepositionScene } from '../engine/episode/schema';
 import { depoState, useEpisode } from '../engine/game';
+import { EvidenceDrawer } from './Evidence';
 import { Speech } from './Portrait';
+import { Shell, Tabs } from './Shell';
 
 /** 證詞錄取（企劃書 6.7）：12 個提問額度，定錨與探路互相衝突。 */
 export function Deposition({ scene }: { scene: DepositionScene }) {
@@ -59,47 +61,56 @@ export function Deposition({ scene }: { scene: DepositionScene }) {
     );
 
   return (
-    <main className="court-screen">
-      <header className="panel-head bench">
-        <p className="eyebrow">
-          {scene.witness.name}・{scene.witness.role}
-        </p>
-        <p className="patience" aria-label={`剩餘提問 ${st.left} 個`}>
-          剩餘提問 <strong>{st.left}</strong>
-        </p>
-      </header>
-
-      <div className="lines transcript" aria-live="polite">
-        {st.log.map((l, i) => (
-          <Speech key={i} line={l} />
-        ))}
-        {st.log.length === 0 && <p className="muted">速記員在等妳的第一個問題。</p>}
-      </div>
-
-      <nav className="apps" aria-label="話題">
-        {scene.topics.map((t) => (
-          <button key={t.id} aria-current={topic === t.id} onClick={() => setTopic(t.id)}>
-            {t.label}
+    <Shell
+      resetKey={topic}
+      head={
+        <header className="panel-head bench">
+          <p className="eyebrow">
+            {scene.witness.name}・{scene.witness.role}
+          </p>
+          <p className="patience" aria-label={`剩餘提問 ${st.left} 個`}>
+            剩餘提問 <strong>{st.left}</strong>
+          </p>
+        </header>
+      }
+      tabs={
+        <>
+          <div className="lines transcript" aria-live="polite">
+            {st.log.map((l, i) => (
+              <Speech key={i} line={l} />
+            ))}
+            {st.log.length === 0 && <p className="muted">速記員在等妳的第一個問題。</p>}
+          </div>
+          <Tabs
+            label="話題"
+            value={topic}
+            onPick={setTopic}
+            items={scene.topics.map((t) => ({ id: t.id, label: t.label }))}
+          />
+        </>
+      }
+      foot={
+        <>
+          <EvidenceDrawer />
+          <button className="wide" onClick={finishDepo}>
+            結束錄取
           </button>
+        </>
+      }
+    >
+      <ul className="stack">
+        {depo.questionsOf(scene, topic).map((q) => (
+          <li key={q.id}>
+            <button
+              className="wide"
+              disabled={!depo.canAsk(st, q.id)}
+              onClick={() => askDepo(q.id)}
+            >
+              {q.q}
+            </button>
+          </li>
         ))}
-      </nav>
-
-      <section className="panel">
-        <ul className="stack">
-          {depo.questionsOf(scene, topic).map((q) => (
-            <li key={q.id}>
-              <button
-                className="wide"
-                disabled={!depo.canAsk(st, q.id)}
-                onClick={() => askDepo(q.id)}
-              >
-                {q.q}
-              </button>
-            </li>
-          ))}
-        </ul>
-        <button onClick={finishDepo}>結束錄取</button>
-      </section>
-    </main>
+      </ul>
+    </Shell>
   );
 }

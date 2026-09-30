@@ -1,9 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { episodes } from '../../content';
-import type { VoirDireScene } from './schema';
+import { courtScene, useEpisode } from '../game';
+import type { TrialScene, VoirDireScene } from './schema';
+import type * as trial from './trial';
 import * as vd from './voirdire';
 
 const scene = episodes.ep1.scenes.find((s) => s.id === 'voir-dire') as VoirDireScene;
+const kowalski = episodes.ep1.scenes.find((s) => s.id === 'court-kowalski') as TrialScene;
 
 describe('陪審團遴選', () => {
   it('提問次數用完就不能再問，同一個人也只問一次', () => {
@@ -73,5 +76,52 @@ describe('陪審團遴選', () => {
     st = vd.strike(scene, st, vd.pool(scene, st)[0].id);
     expect(vd.canSeat(scene, st)).toBe(false);
     expect(vd.seat(scene, st).seated).toBeNull();
+  });
+});
+
+describe('遴選之後的法庭', () => {
+  const at = (id: string) => episodes.ep1.scenes.findIndex((s) => s.id === id);
+
+  /** 遴選完成、12 位入席，遊戲停在科瓦斯基那一場庭審。 */
+  const seated = () => {
+    const st = vd.seat(scene, vd.startVoirDire(scene));
+    useEpisode.setState({
+      mode: 'play',
+      progress: {
+        episode: 'ep1',
+        scene: at('court-kowalski'),
+        step: 0,
+        choices: {},
+        cards: [],
+        scenes: { [scene.id]: st },
+      },
+    });
+    return vd.panel(scene, st).map((j) => j.id);
+  };
+
+  it('上場的陪審員就是遴選留下的那 12 位', () => {
+    const ids = seated();
+    expect(courtScene(useEpisode.getState().progress, kowalski).jurors.map((j) => j.id)).toEqual(
+      ids,
+    );
+  });
+
+  /**
+   * 以前庭審的動作拿到的是劇本裡的預設陪審團，心證因此記在沒有上場的人身上：
+   * 畫面上那 12 張臉整場不動，數值還會算成 NaN。
+   */
+  it('主詰問推動的是上場的那 12 位，不是劇本的預設陪審團', () => {
+    const ids = seated();
+    const { nextQuestion, letPass } = useEpisode.getState();
+    for (let i = 0; i < kowalski.witness.direct.length; i++) {
+      nextQuestion();
+      if ((useEpisode.getState().progress.scenes['court-kowalski'] as trial.TrialState).window)
+        letPass();
+    }
+    const st = useEpisode.getState().progress.scenes['court-kowalski'] as trial.TrialState;
+    expect(Object.keys(st.jury).sort()).toEqual([...ids].sort());
+    for (const id of ids) expect(Number.isFinite(st.jury[id])).toBe(true);
+    // 檢方舉證完，12 個人都偏有罪，交叉詰問才有東西可以拉。
+    expect(ids.every((id) => st.jury[id] >= kowalski.threshold)).toBe(true);
   });
 });

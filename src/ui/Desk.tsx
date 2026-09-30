@@ -4,19 +4,21 @@ import type { DeskScene } from '../engine/episode/schema';
 import { deskState, useEpisode } from '../engine/game';
 import type { Relation } from '../engine/schema';
 import { play } from '../engine/sound';
+import { CardPick, EvidenceCard, EvidenceDrawer } from './Evidence';
 import { Speech } from './Portrait';
 import { RelationPicker } from './RelationPicker';
+import { Shell, Tabs } from './Shell';
 import { Timeline } from './Timeline';
 
 type App = 'mail' | 'docs' | 'cards' | 'board' | 'jobs' | 'court';
-const apps: { id: App; label: string }[] = [
-  { id: 'mail', label: '郵件' },
-  { id: 'docs', label: '卷宗' },
-  { id: 'cards', label: '證據庫' },
-  { id: 'board', label: '證據板' },
-  { id: 'jobs', label: '委託' },
-  { id: 'court', label: '法院系統' },
-];
+const labels: Record<App, string> = {
+  mail: '郵件',
+  docs: '卷宗',
+  cards: '證據庫',
+  board: '證據板',
+  jobs: '委託',
+  court: '法院系統',
+};
 
 /** 第二幕的桌面：艾莉絲的工作電腦，每個 App 是一個系統入口（企劃書 6.1）。 */
 export function Desk({ scene }: { scene: DeskScene }) {
@@ -78,36 +80,42 @@ export function Desk({ scene }: { scene: DeskScene }) {
       </main>
     );
 
+  const apps = (Object.keys(labels) as App[]).map((id) => ({
+    id,
+    label: labels[id],
+    badge: id === 'mail' && unread.length > 0 ? unread.length : undefined,
+  }));
+
   return (
-    <main className="desk">
-      <header className="taskbar">
-        <span className="hours" aria-label={`剩餘工時 ${st.hours} 小時`}>
-          <strong>{st.hours}</strong> 工時
-        </span>
-        <span className="muted">{scene.deadline}</span>
-        {desk.canWrap(scene, st) && (
-          <button className="primary" onClick={wrapDesk}>
-            結束調查
-          </button>
-        )}
-      </header>
-      <nav className="apps" aria-label="應用程式">
-        {apps.map((a) => (
-          <button key={a.id} aria-current={app === a.id} onClick={() => setApp(a.id)}>
-            {a.label}
-            {a.id === 'mail' && unread.length > 0 && <span className="dot">{unread.length}</span>}
-          </button>
-        ))}
-      </nav>
-      <div className="window">
-        {app === 'mail' && <Mail scene={scene} />}
-        {app === 'docs' && <Docs scene={scene} />}
-        {app === 'cards' && <Cards scene={scene} held={held} />}
-        {app === 'board' && <Board scene={scene} held={held} />}
-        {app === 'jobs' && <Jobs scene={scene} held={held} />}
-        {app === 'court' && <Motions scene={scene} held={held} />}
-      </div>
-    </main>
+    <Shell
+      resetKey={app}
+      head={
+        <header className="taskbar">
+          <span className="hours" aria-label={`剩餘工時 ${st.hours} 小時`}>
+            <strong>{st.hours}</strong> 工時
+          </span>
+          <span className="muted small">{scene.deadline}</span>
+        </header>
+      }
+      tabs={<Tabs label="應用程式" value={app} onPick={setApp} items={apps} />}
+      foot={
+        <>
+          <EvidenceDrawer />
+          {desk.canWrap(scene, st) && (
+            <button className="primary wide" onClick={wrapDesk}>
+              結束調查
+            </button>
+          )}
+        </>
+      }
+    >
+      {app === 'mail' && <Mail scene={scene} />}
+      {app === 'docs' && <Docs scene={scene} />}
+      {app === 'cards' && <Cards scene={scene} held={held} />}
+      {app === 'board' && <Board scene={scene} held={held} />}
+      {app === 'jobs' && <Jobs scene={scene} held={held} />}
+      {app === 'court' && <Motions scene={scene} held={held} />}
+    </Shell>
   );
 }
 
@@ -219,30 +227,24 @@ function Cards({ scene, held }: { scene: DeskScene; held: string[] }) {
   return (
     <ul className="stack cards">
       {args.map((a) => (
-        <li key={a.id} className="card arg">
-          <strong>{a.name}</strong>
-          <p>{a.text}</p>
-          <span className="muted small">強度 {a.strength}</span>
-        </li>
+        <EvidenceCard
+          key={a.id}
+          item={{ ...a, kind: '論點', source: `強度 ${a.strength}・${a.tags.join('、')}` }}
+        />
       ))}
       {cards.map((c) => (
-        <li key={c.id} className="card">
-          <strong>
-            {c.time && <span className="time">{c.time}</span>}
-            {c.name}
-          </strong>
-          <p>{c.text}</p>
-          <span className="muted small">
-            {c.kind}・{c.source}
-          </span>
-        </li>
+        <EvidenceCard key={c.id} item={c} />
       ))}
       {cards.length === 0 && <li className="muted">還沒有任何卡片。先去讀卷宗。</li>}
     </ul>
   );
 }
 
-/** 證據板：時間線與推理鏈（企劃書 6.5）。 */
+/**
+ * 證據板：時間線與推理鏈（企劃書 6.5）。
+ * 一次只顯示一條推理鏈——五條疊在一頁上要捲很久，
+ * 而且選卡的清單會把下一條鏈推到看不見的地方。
+ */
 function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
   const { progress, toggleCard, setRelation, submit, toggleTimeline, moveTimeline } = useEpisode();
   const st = deskState(progress, scene);
@@ -256,182 +258,179 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
       text: q.argument.text,
     }));
   const pool = [...args, ...scene.cards.filter((c) => held.includes(c.id))];
-  const [view, setView] = useState<'chains' | 'timeline'>('chains');
-  if (view === 'timeline')
-    return (
-      <div className="stack">
-        <BoardTabs view={view} setView={setView} />
+  // 一打開就停在第一條還沒確認的鏈上，不必自己找進度。
+  const firstOpen = scene.questions.find((q) => !st.confirmed.includes(q.id));
+  const [view, setView] = useState<string>(firstOpen?.id ?? 'timeline');
+  const q = scene.questions.find((x) => x.id === view);
+  const items = [
+    ...scene.questions.map((x, i) => ({
+      id: x.id,
+      label: `疑問 ${i + 1}`,
+      done: st.confirmed.includes(x.id),
+    })),
+    { id: 'timeline', label: '時間線' },
+  ];
+  return (
+    <div className="stack">
+      <Tabs label="證據板" value={view} onPick={setView} items={items} />
+      {!q && (
         <Timeline
           cards={pool}
           placed={st.timeline}
           onToggle={toggleTimeline}
           onMove={moveTimeline}
         />
-      </div>
-    );
-  return (
-    <div className="stack">
-      <BoardTabs view={view} setView={setView} />
-      {scene.questions.map((q) => {
-        const a = st.attempts[q.id] ?? { cards: [], relation: null as Relation | null };
-        const done = st.confirmed.includes(q.id);
-        return (
-          <section key={q.id} className="panel chain">
-            <h2>{q.text}</h2>
-            {done ? (
-              <p className="good">已確認：{q.argument.name}</p>
-            ) : (
-              <>
-                <p className="muted small">
-                  放 {q.answer.length} 張卡片，再說明這兩張卡之間是什麼關係。提交花 1 工時。
-                </p>
-                <ul className="slots-row">
-                  {Array.from({ length: q.answer.length }, (_, i) => (
-                    <li key={i} className={a.cards[i] ? 'slot-card filled' : 'slot-card'}>
-                      {a.cards[i] ? pool.find((c) => c.id === a.cards[i])?.name : '（空）'}
-                    </li>
-                  ))}
-                </ul>
-                <details>
-                  <summary>選卡片</summary>
-                  <ul className="stack">
-                    {pool.map((c) => (
-                      <li key={c.id}>
-                        <button
-                          className={a.cards.includes(c.id) ? 'wide on' : 'wide'}
-                          aria-pressed={a.cards.includes(c.id)}
-                          onClick={() => toggleCard(q.id, c.id)}
-                        >
-                          {c.name}
-                        </button>
+      )}
+      {q &&
+        (() => {
+          const a = st.attempts[q.id] ?? { cards: [], relation: null as Relation | null };
+          const done = st.confirmed.includes(q.id);
+          return (
+            <section className={done ? 'panel chain done' : 'panel chain'}>
+              <h2>{q.text}</h2>
+              {done ? (
+                <p className="good">已確認：{q.argument.name}</p>
+              ) : (
+                <>
+                  <p className="muted small">
+                    放 {q.answer.length} 張卡片，再說明這兩張卡之間是什麼關係。提交花 1 工時。
+                  </p>
+                  <ul className="slots-row">
+                    {Array.from({ length: q.answer.length }, (_, i) => (
+                      <li key={i} className={a.cards[i] ? 'slot-card filled' : 'slot-card'}>
+                        {a.cards[i] ? pool.find((c) => c.id === a.cards[i])?.name : '（空）'}
                       </li>
                     ))}
                   </ul>
-                </details>
-                <RelationPicker
-                  cards={a.cards.map((id) => scene.cards.find((c) => c.id === id)?.name)}
-                  value={a.relation}
-                  onPick={(r) => setRelation(q.id, r)}
-                />
-                <button
-                  className="primary"
-                  disabled={!desk.canSubmit(scene, st, q.id)}
-                  onClick={() => submit(q.id)}
-                >
-                  提交到案情會議（1 工時）
-                </button>
-              </>
-            )}
-            {st.feedback[q.id] && <p role="status">{st.feedback[q.id]}</p>}
-          </section>
-        );
-      })}
+                  <ul className="stack">
+                    {pool.map((c) => (
+                      <li key={c.id}>
+                        <CardPick
+                          item={c}
+                          on={a.cards.includes(c.id)}
+                          onPick={() => toggleCard(q.id, c.id)}
+                        />
+                      </li>
+                    ))}
+                  </ul>
+                  <RelationPicker
+                    cards={a.cards.map((id) => pool.find((c) => c.id === id)?.name)}
+                    value={a.relation}
+                    onPick={(r) => setRelation(q.id, r)}
+                  />
+                  <button
+                    className="primary"
+                    disabled={!desk.canSubmit(scene, st, q.id)}
+                    onClick={() => submit(q.id)}
+                  >
+                    提交到案情會議（1 工時）
+                  </button>
+                </>
+              )}
+              {st.feedback[q.id] && <p role="status">{st.feedback[q.id]}</p>}
+            </section>
+          );
+        })()}
     </div>
   );
 }
 
-/** 法院系統：提出動議與聲請傳票。三樣都要選對（企劃書 6.6）。 */
+/**
+ * 法院系統：提出動議與聲請傳票。三樣都要選對（企劃書 6.6）。
+ * 一份聲請就有三組選項，所以一次只處理一份。
+ */
 function Motions({ scene, held }: { scene: DeskScene; held: string[] }) {
   const { progress, pickBasis, pickRequest, toggleSupport, fileMotion } = useEpisode();
   const st = deskState(progress, scene);
   const pool = scene.cards.filter((c) => held.includes(c.id));
   const args = scene.questions.filter((q) => held.includes(q.argument.id)).map((q) => q.argument);
+  // 一打開就停在還沒裁定的那一份上。
+  const open = scene.motions.find((m) => desk.motionAttempt(st, m.id).ruling === null);
+  const [pick, setPick] = useState<string>(open?.id ?? scene.motions[0]?.id ?? '');
   if (scene.motions.length === 0) return <p className="muted">目前沒有可以提出的聲請。</p>;
+  const m = scene.motions.find((x) => x.id === pick) ?? scene.motions[0];
+  const a = desk.motionAttempt(st, m.id);
+  const missing = m.needs.filter((n) => !held.includes(n));
   return (
-    <ul className="stack">
-      {scene.motions.map((m) => {
-        const a = desk.motionAttempt(st, m.id);
-        const missing = m.needs.filter((n) => !held.includes(n));
-        return (
-          <li key={m.id} className="panel job">
-            <strong>{m.label}</strong>
-            <p className="muted">{m.cost} 工時</p>
-            <p>{m.detail}</p>
-            {a.ruling === 'granted' && <p className="good">法官准了。</p>}
-            {a.ruling === 'denied' && <p className="bad-text">駁回。法官記得妳浪費了他的時間。</p>}
-            {a.ruling === null &&
-              (missing.length ? (
-                <p className="muted">還缺前提：先把相關的論點確認起來。</p>
-              ) : (
-                <>
-                  <fieldset className="relations">
-                    <legend>法律依據</legend>
-                    <div className="row">
-                      {m.bases.map((b) => (
-                        <button
-                          key={b}
-                          role="radio"
-                          aria-checked={a.basis === b}
-                          className={a.basis === b ? 'on' : ''}
-                          onClick={() => pickBasis(m.id, b)}
-                        >
-                          {b}
-                        </button>
-                      ))}
-                    </div>
-                  </fieldset>
-                  <fieldset className="relations">
-                    <legend>支撐（{m.support.length} 張）</legend>
-                    <div className="stack">
-                      {[...args, ...pool].map((c) => (
-                        <button
-                          key={c.id}
-                          aria-pressed={a.support.includes(c.id)}
-                          className={a.support.includes(c.id) ? 'wide on' : 'wide'}
-                          onClick={() => toggleSupport(m.id, c.id)}
-                        >
-                          {c.name}
-                        </button>
-                      ))}
-                    </div>
-                  </fieldset>
-                  <fieldset className="relations">
-                    <legend>請求</legend>
-                    <div className="stack">
-                      {m.requests.map((r) => (
-                        <button
-                          key={r}
-                          role="radio"
-                          aria-checked={a.request === r}
-                          className={a.request === r ? 'wide on' : 'wide'}
-                          onClick={() => pickRequest(m.id, r)}
-                        >
-                          {r}
-                        </button>
-                      ))}
-                    </div>
-                  </fieldset>
-                  <button
-                    className="primary"
-                    disabled={!desk.canFile(scene, st, m.id, progress.cards)}
-                    onClick={() => fileMotion(m.id)}
-                  >
-                    送出（{m.cost} 工時）
-                  </button>
-                </>
-              ))}
-          </li>
-        );
-      })}
-    </ul>
-  );
-}
-
-function BoardTabs({
-  view,
-  setView,
-}: {
-  view: 'chains' | 'timeline';
-  setView: (v: 'chains' | 'timeline') => void;
-}) {
-  return (
-    <div className="row" role="tablist">
-      <button role="tab" aria-selected={view === 'chains'} onClick={() => setView('chains')}>
-        推理鏈
-      </button>
-      <button role="tab" aria-selected={view === 'timeline'} onClick={() => setView('timeline')}>
-        時間線
-      </button>
+    <div className="stack">
+      {scene.motions.length > 1 && (
+        <Tabs
+          label="聲請"
+          value={pick}
+          onPick={setPick}
+          items={scene.motions.map((x, i) => ({
+            id: x.id,
+            label: `聲請 ${i + 1}`,
+            done: desk.motionAttempt(st, x.id).ruling !== null,
+          }))}
+        />
+      )}
+      <section className="panel job">
+        <strong>{m.label}</strong>
+        <p className="muted">{m.cost} 工時</p>
+        <p>{m.detail}</p>
+        {a.ruling === 'granted' && <p className="good">法官准了。</p>}
+        {a.ruling === 'denied' && <p className="bad-text">駁回。法官記得妳浪費了他的時間。</p>}
+        {a.ruling === null &&
+          (missing.length ? (
+            <p className="muted">還缺前提：先把相關的論點確認起來。</p>
+          ) : (
+            <>
+              <fieldset className="relations">
+                <legend>法律依據</legend>
+                <div className="stack">
+                  {m.bases.map((b) => (
+                    <button
+                      key={b}
+                      role="radio"
+                      aria-checked={a.basis === b}
+                      className={a.basis === b ? 'wide on' : 'wide'}
+                      onClick={() => pickBasis(m.id, b)}
+                    >
+                      {b}
+                    </button>
+                  ))}
+                </div>
+              </fieldset>
+              <fieldset className="relations">
+                <legend>支撐（{m.support.length} 張）</legend>
+                <div className="stack">
+                  {[...args, ...pool].map((c) => (
+                    <CardPick
+                      key={c.id}
+                      item={c}
+                      on={a.support.includes(c.id)}
+                      onPick={() => toggleSupport(m.id, c.id)}
+                    />
+                  ))}
+                </div>
+              </fieldset>
+              <fieldset className="relations">
+                <legend>請求</legend>
+                <div className="stack">
+                  {m.requests.map((r) => (
+                    <button
+                      key={r}
+                      role="radio"
+                      aria-checked={a.request === r}
+                      className={a.request === r ? 'wide on' : 'wide'}
+                      onClick={() => pickRequest(m.id, r)}
+                    >
+                      {r}
+                    </button>
+                  ))}
+                </div>
+              </fieldset>
+              <button
+                className="primary"
+                disabled={!desk.canFile(scene, st, m.id, progress.cards)}
+                onClick={() => fileMotion(m.id)}
+              >
+                送出（{m.cost} 工時）
+              </button>
+            </>
+          ))}
+      </section>
     </div>
   );
 }

@@ -2,13 +2,16 @@ import { useState } from 'react';
 import * as nego from '../engine/episode/negotiation';
 import type { NegotiationScene } from '../engine/episode/schema';
 import { deskSceneOf, negoState, useEpisode } from '../engine/game';
+import { CardPick, EvidenceDrawer } from './Evidence';
 import { Speech } from './Portrait';
+import { Shell, Tabs } from './Shell';
 
 /** 認罪協商（企劃書 6.8）：攤牌會洩底，虛張聲勢看證據清單，決定權在委託人手上。 */
 export function Negotiation({ scene }: { scene: NegotiationScene }) {
   const { progress, revealArg, bluff, advise, walkOut, advance } = useEpisode();
   const st = negoState(progress, scene);
   const [intro, setIntro] = useState(st.log.length <= scene.intro.length);
+  const [tab, setTab] = useState<'offer' | 'reveal' | 'bluff'>('offer');
   const deskScene = deskSceneOf(progress);
   const args = (deskScene?.questions ?? [])
     .filter((q) => progress.cards.includes(q.argument.id))
@@ -56,75 +59,105 @@ export function Negotiation({ scene }: { scene: NegotiationScene }) {
     );
 
   return (
-    <main className="court-screen">
-      <header className="panel-head bench">
-        <p className="eyebrow">
-          {scene.opponent.name}・{scene.opponent.role}
-        </p>
-        <p className="patience" aria-label={`剩餘回合 ${st.rounds}`}>
-          剩餘回合 <strong>{st.rounds}</strong>
-        </p>
-      </header>
-
-      <div className="lines transcript" aria-live="polite">
-        {st.log.map((l, i) => (
-          <Speech key={i} line={l} />
-        ))}
-      </div>
-
-      <section className="panel">
-        <h2>她現在開的條件</h2>
-        <p className="claim-text">{offer.label}</p>
-        {offer.lines.map((l, i) => (
-          <Speech key={i} line={l} />
-        ))}
-        <div className="row">
-          <button onClick={() => advise(true)}>建議伊森接受</button>
-          <button onClick={() => advise(false)}>建議他撐下去</button>
-        </div>
-        <p className="muted small">最後決定權在伊森手上。信任低的時候，他可能不聽妳的。</p>
-      </section>
-
-      <section className="panel">
-        <h2>攤牌</h2>
-        <div className="stack">
-          {args.map((a) => (
-            <button
-              key={a.id}
-              className="wide"
-              disabled={st.played.includes(a.id) || !nego.canAct(st)}
-              onClick={() => revealArg(a.id, a.strength, a.name)}
-            >
-              亮出 {a.name}
-            </button>
+    <Shell
+      resetKey={tab}
+      head={
+        <header className="panel-head bench">
+          <p className="eyebrow">
+            {scene.opponent.name}・{scene.opponent.role}
+          </p>
+          <p className="patience" aria-label={`剩餘回合 ${st.rounds}`}>
+            剩餘回合 <strong>{st.rounds}</strong>
+          </p>
+        </header>
+      }
+      tabs={
+        <>
+          <div className="lines transcript" aria-live="polite">
+            {st.log.map((l, i) => (
+              <Speech key={i} line={l} />
+            ))}
+          </div>
+          <Tabs
+            label="談判"
+            value={tab}
+            onPick={setTab}
+            items={[
+              { id: 'offer', label: '她開的條件' },
+              { id: 'reveal', label: '攤牌' },
+              { id: 'bluff', label: '虛張聲勢' },
+            ]}
+          />
+        </>
+      }
+      foot={
+        <>
+          <EvidenceDrawer />
+          <button className="wide" onClick={walkOut}>
+            離席
+          </button>
+        </>
+      }
+    >
+      {tab === 'offer' && (
+        <section className="panel">
+          <h2>她現在開的條件</h2>
+          <p className="claim-text">{offer.label}</p>
+          {offer.lines.map((l, i) => (
+            <Speech key={i} line={l} />
           ))}
-          {args.length === 0 && <span className="muted">手上沒有確認過的論點。</span>}
-        </div>
-        <p className="muted small">亮出去的論點，庭上衝擊減半，除非妳破解她的反擊。</p>
-      </section>
-
-      <section className="panel">
-        <h2>虛張聲勢</h2>
-        <div className="stack">
-          {scene.bluffs.map((b) => (
-            <button
-              key={b.id}
-              className="wide"
-              disabled={st.bluffed.includes(b.id) || !nego.canAct(st)}
-              onClick={() => bluff(b.id)}
-            >
-              {b.label}
+          <div className="stack">
+            <button className="wide" onClick={() => advise(true)}>
+              建議伊森接受
             </button>
-          ))}
-        </div>
-        <p className="muted small">
-          她會核對開示過的證據清單。撐不起來就被識破，之後的攤牌都打折。
-        </p>
-      </section>
+            <button className="wide" onClick={() => advise(false)}>
+              建議他撐下去
+            </button>
+          </div>
+          <p className="muted small">最後決定權在伊森手上。信任低的時候，他可能不聽妳的。</p>
+        </section>
+      )}
 
-      <button className="wide" onClick={walkOut}>
-        離席
-      </button>
-    </main>
+      {tab === 'reveal' && (
+        <section className="panel">
+          <h2>攤牌</h2>
+          <p className="muted small">亮出去的論點，庭上衝擊減半，除非妳破解她的反擊。</p>
+          <div className="stack">
+            {args.map((a) => (
+              <CardPick
+                key={a.id}
+                item={a}
+                verb="亮出"
+                disabled={st.played.includes(a.id) || !nego.canAct(st)}
+                tag={st.played.includes(a.id) ? '（已亮出）' : undefined}
+                onPick={() => revealArg(a.id, a.strength, a.name)}
+              />
+            ))}
+            {args.length === 0 && <span className="muted">手上沒有確認過的論點。</span>}
+          </div>
+        </section>
+      )}
+
+      {tab === 'bluff' && (
+        <section className="panel">
+          <h2>虛張聲勢</h2>
+          <p className="muted small">
+            她會核對開示過的證據清單。撐不起來就被識破，之後的攤牌都打折。
+          </p>
+          <div className="stack">
+            {scene.bluffs.map((b) => (
+              <button
+                key={b.id}
+                className="wide"
+                disabled={st.bluffed.includes(b.id) || !nego.canAct(st)}
+                onClick={() => bluff(b.id)}
+              >
+                {b.label}
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
+    </Shell>
   );
 }
