@@ -1,0 +1,203 @@
+# 原型用：只取第一集的一段（證據板 → 詰問法醫 → 詰問瑞秋 → 結辯與評議），用來回答企劃書 v2.0 第 15 節的問題。
+id: proto-ep1
+title: 《合理懷疑》原型：已收回的訊息
+intro:
+  - 卡爾德物流財務長葛蘭特・沃斯週五深夜陳屍在 31 樓辦公室。被告伊森・蕭說，是沃斯傳訊叫他 22:45 上樓的，但那則訊息已經被收回了。
+  - 你是辯護律師艾莉絲・韓。調查已經結束，桌上是你拿到的卡片。先在證據板上把推理鏈拼起來：每次提交花 1 工時，整條全對才會確認，遊戲不會告訴你錯在哪。
+  - 確認的推理會變成論點卡，開庭時用來彈劾檢方的目擊證人瑞秋・艾德勒。彈劾要三步：先讓她把說法講死（鎖定），再確立你的證據可信（鋪陳），最後出示論點（對質）。
+  - 陪審團有 12 個人。刑事案要 12 人都認為「超越合理懷疑」才會定罪；只要有人動搖，就不是有罪。看他們的表情決定下一步。
+hours: 7
+threshold: 70
+patience: 5
+
+cards:
+  - id: uber
+    name: 叫車收據
+    kind: 事實
+    time: '22:34'
+    text: 伊森 22:34 從家裡上車，22:44 抵達卡爾德大樓。
+  - id: watch-note
+    name: 伊森手錶的通知
+    kind: 事實
+    time: '22:33'
+    text: 22:33 通知：「葛蘭特・沃斯：十點四十五分上來，我們談談。」
+  - id: coroner
+    name: 法醫報告
+    kind: 事實
+    admitted: true
+    text: 死因為鈍器重擊頭部。死亡時間推估 22:00 至 23:30。
+  - id: heart
+    name: 沃斯手錶心率紀錄
+    kind: 事實
+    time: '22:24'
+    text: 沃斯的心率在 22:24 急遽升高後歸零，之後再無讀數。
+  - id: chat-audit
+    name: 聊天系統稽核紀錄
+    kind: 事實
+    time: '23:14'
+    text: 22:31 由沃斯桌機發送訊息給伊森；23:14 由同一台桌機收回。
+  - id: badge-full
+    name: 完整門禁紀錄
+    kind: 事實
+    admitted: true
+    time: '23:26'
+    text: 當晚進過 31 樓的人裡，23:14 時還沒離開大廳的只剩瑞秋・艾德勒，她 23:26 才刷卡離開。
+  - id: meeting-log
+    name: 新加坡會議紀錄
+    kind: 事實
+    time: '22:08'
+    text: 陳偉倫主持的季度會議，系統紀錄顯示瑞秋 22:08 離線，之後沒有再加入。
+  - id: rachel-statement
+    name: 瑞秋的警詢筆錄
+    kind: 陳述
+    text: 「我整晚都在跟新加坡開會，開到快十一點。22:50 左右聽到沃斯辦公室有爭吵和東西倒地的聲音。」
+  - id: badge-police
+    name: 警方標記的門禁紀錄
+    kind: 事實
+    admitted: true
+    time: '22:47'
+    text: 伊森 22:47 刷卡進入 31 樓，23:01 離開大廳。
+  - id: fingerprint
+    name: 指紋報告
+    kind: 事實
+    admitted: true
+    text: 凶器獎盃上驗出伊森的指紋。
+  - id: sophie
+    name: 蘇菲的陳述
+    kind: 陳述
+    text: 「伊森下午在走廊對沃斯說：『你會後悔的。』」
+
+questions:
+  - id: q1
+    text: 伊森為什麼那時候上樓？
+    answer: [watch-note, uber]
+    relation: 支持
+    argument:
+      id: arg-a
+      name: 論點 A：伊森是被叫上樓的
+      text: 22:33 伊森收到沃斯的訊息，22:34 就叫車出門，時間完全吻合。
+      strength: 6
+      tags: [情感, 邏輯]
+  - id: q2
+    text: 沃斯什麼時候死的？
+    answer: [coroner, heart]
+    relation: 支持
+    argument:
+      id: arg-b
+      name: 論點 B：沃斯 22:24 就死了
+      text: 心率在 22:24 歸零，落在法醫推估的窗口內，比伊森抵達早了二十分鐘。
+      strength: 9
+      tags: [邏輯, 權威]
+  - id: q4
+    text: 誰收回了那則訊息？
+    answer: [chat-audit, badge-full]
+    relation: 說明機會
+    argument:
+      id: arg-d
+      name: 論點 D：23:14 時 31 樓只剩瑞秋
+      text: 訊息 23:14 從沃斯的桌機被收回，那時整層樓只剩瑞秋・艾德勒還沒離開。
+      strength: 8
+      tags: [邏輯, 程序]
+  - id: q5
+    text: 瑞秋的不在場說法站得住嗎？
+    answer: [rachel-statement, meeting-log]
+    relation: 矛盾
+    argument:
+      id: arg-e
+      name: 論點 E：瑞秋 22:08 就離開了會議
+      text: 瑞秋說她開會開到快十一點，但會議系統顯示她 22:08 就離線了。
+      strength: 6
+      tags: [邏輯]
+
+jurors:
+  - { id: j1, label: 退休警察, leans: [權威, 程序], start: 100, foreperson: true }
+  - { id: j2, label: 軟體工程師, leans: [邏輯], start: 94 }
+  - { id: j3, label: 超市店長, leans: [情感], start: 100 }
+  - { id: j4, label: 會計師, leans: [邏輯, 權威], start: 97 }
+  - { id: j5, label: 大學生, leans: [程序], start: 93 }
+  - { id: j6, label: 護理師, leans: [情感, 權威], start: 99 }
+  - { id: j7, label: 公車司機, leans: [情感], start: 100 }
+  - { id: j8, label: 高中老師, leans: [邏輯, 程序], start: 94 }
+  - { id: j9, label: 保險理賠員, leans: [邏輯], start: 96 }
+  - { id: j10, label: 退休軍官, leans: [權威], start: 100 }
+  - { id: j11, label: 咖啡店老闆, leans: [情感, 程序], start: 98 }
+  - { id: j12, label: 建築工人, leans: [情感], start: 100 }
+
+expert:
+  name: 布魯克斯法醫
+  role: 檢方證人，法醫
+  questions:
+    - id: window
+      q: 妳推估的死亡時間是 22:00 到 23:30，這個窗口有一個半小時，對嗎？
+      a: 對。僅憑屍體跡象，沒辦法再縮小了。
+    - id: watch
+      q: 如果死者戴著會持續記錄心率的手錶，那份資料在醫學上能用來縮小死亡時間嗎？
+      a: 可以。這類裝置的心率資料通常相當可靠，我們在其他案件也採用過。
+      admits: heart
+    - id: career
+      q: 法醫，您在這一行做了多久？
+      a: 二十二年。
+      irrelevant: true
+
+witness:
+  name: 瑞秋・艾德勒
+  role: 檢方證人，卡爾德物流合規長
+  irrelevant:
+    - q: 艾德勒女士，您在卡爾德物流工作愉快嗎？
+      a: ……還算愉快。
+  claims:
+    - id: thud
+      text: 「22:50 左右，我聽到沃斯辦公室傳來爭吵，接著是很重的倒地聲。」
+      argument: arg-b
+      needs: heart
+      lock:
+        strong:
+          q: 妳確定是十點五十分，不是更早？
+          a: 我確定。我那時剛好看了手錶。
+        weak:
+          q: 大概是那個時間前後吧？
+          a: 大概吧，差不多那時候。
+      setup:
+        q: 沃斯先生每天都會看手錶上的健康資料，這件事妳知道吧？
+        a: 知道，他整天都在看那個。他說數字不會騙人。
+      confront:
+        strong: （瑞秋沉默了幾秒。）「……也許是我記錯了時間。」陪審團有人抬起了頭。
+        weak: 「我剛才說了，大概是那個時間。我又不是一直盯著錶。」
+    - id: meeting
+      text: 「那晚我一直在跟新加坡開視訊會議，開到快十一點。」
+      argument: arg-e
+      needs: meeting-log
+      lock:
+        strong:
+          q: 會議一直開到快十一點，中間妳沒有離開過？
+          a: 沒有，我一直在線上。
+        weak:
+          q: 會議開了一段時間，對吧？
+          a: 對，開了滿久的。
+      setup:
+        q: 那場會議是陳偉倫主持的季度會議，會議系統會自動記錄每個人的上下線時間，對嗎？
+        a: ……對，系統會記錄。
+      confront:
+        strong: 「那……那是網路斷線。我之後有打電話進去。」她的手在發抖。
+        weak: 「我是說我一直在處理會議的事，不一定整晚都掛在線上。」
+    - id: left
+      text: 「我大約十點四十分就離開 31 樓，之後沒有再上去。」
+      argument: arg-d
+      needs: chat-audit
+      lock:
+        strong:
+          q: 十點四十分之後，妳一次都沒有回到 31 樓？
+          a: 一次都沒有。
+        weak:
+          q: 妳後來就下樓了，是嗎？
+          a: 對，我後來就走了。
+      setup:
+        q: 公司聊天系統的稽核紀錄，是妳這位合規長負責管理的，對嗎？
+        a: ……是我負責的。
+      confront:
+        strong: （瑞秋看向檢察官，檢察官沒有看她。）
+        weak: 「我記不清楚了，可能有回去拿東西吧。」
+  breakdown: 瑞秋停頓了很久。「……我拒絕回答，因為答案可能使我自證己罪。」法庭一片寂靜。
+
+closing:
+  max: 3

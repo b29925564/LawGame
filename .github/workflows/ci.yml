@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  pull_request:
+    paths-ignore: ['**/*.md']
+  push:
+    branches: [main]
+    paths-ignore: ['**/*.md']
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: 型別檢查
+        run: npm run typecheck
+      - name: Lint 與格式
+        run: npm run lint
+      - name: 劇本驗證器
+        run: npm run validate:content
+      - name: 單元測試
+        run: npm test
+      - name: 建置
+        run: npm run build
+      - name: 自動通關測試
+        run: |
+          npx playwright install --with-deps chromium
+          npm run e2e
