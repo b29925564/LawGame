@@ -163,7 +163,7 @@ test('第 1 集可以一路從冷開場玩到判決', async ({ page }) => {
   // 第三幕之一：米蘭達動議
   await page.getByRole('button', { name: '卷宗', exact: true }).click();
   await page.getByRole('button', { name: /逮捕報告與巡邏車錄影/ }).click();
-  await page.getByRole('button', { name: /逮捕時間 03:40/ }).click();
+  await page.getByRole('button', { name: /逮捕時間 14:05，地點/ }).click();
   await page.getByRole('button', { name: /沒有唸出任何權利告知/ }).click();
   await page.getByRole('button', { name: '← 卷宗' }).click();
   await page.getByRole('button', { name: '證據板' }).click();
