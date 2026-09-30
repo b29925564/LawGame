@@ -3,17 +3,17 @@ import * as desk from '../engine/episode/desk';
 import type { DeskScene } from '../engine/episode/schema';
 import { deskState, useEpisode } from '../engine/game';
 import { play } from '../engine/sound';
-import { CardPick, EvidenceCard, EvidenceDrawer } from './Evidence';
+import { CardPick, EvidenceDrawer, KindFilter, useKindFilter } from './Evidence';
 import { Speech } from './Portrait';
 import { RelationPicker } from './RelationPicker';
 import { Shell, Tabs } from './Shell';
 import { Timeline } from './Timeline';
 
-type App = 'mail' | 'docs' | 'cards' | 'board' | 'jobs' | 'court';
+// 證據庫和左下的證據抽屜內容一模一樣，所以只留抽屜：它在每個畫面都叫得出來。
+type App = 'mail' | 'docs' | 'board' | 'jobs' | 'court';
 const labels: Record<App, string> = {
   mail: '郵件',
   docs: '卷宗',
-  cards: '證據庫',
   board: '證據板',
   jobs: '委託',
   court: '法院系統',
@@ -110,7 +110,6 @@ export function Desk({ scene }: { scene: DeskScene }) {
     >
       {app === 'mail' && <Mail scene={scene} />}
       {app === 'docs' && <Docs scene={scene} />}
-      {app === 'cards' && <Cards scene={scene} held={held} />}
       {app === 'board' && <Board scene={scene} held={held} />}
       {app === 'jobs' && <Jobs scene={scene} held={held} />}
       {app === 'court' && <Motions scene={scene} held={held} />}
@@ -220,25 +219,6 @@ function Docs({ scene }: { scene: DeskScene }) {
   );
 }
 
-function Cards({ scene, held }: { scene: DeskScene; held: string[] }) {
-  const cards = scene.cards.filter((c) => held.includes(c.id));
-  const args = scene.questions.filter((q) => held.includes(q.argument.id)).map((q) => q.argument);
-  return (
-    <ul className="stack cards">
-      {args.map((a) => (
-        <EvidenceCard
-          key={a.id}
-          item={{ ...a, kind: '論點', source: `強度 ${a.strength}・${a.tags.join('、')}` }}
-        />
-      ))}
-      {cards.map((c) => (
-        <EvidenceCard key={c.id} item={c} />
-      ))}
-      {cards.length === 0 && <li className="muted">還沒有任何卡片。先去讀卷宗。</li>}
-    </ul>
-  );
-}
-
 /**
  * 證據板：時間線與推理（企劃書 6.5）。推理分兩步：
  * 先在「連線」把兩張卡用一種關係連成發現，再拿發現去回答疑問。
@@ -288,6 +268,7 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
     })),
     { id: 'timeline', label: '時間線' },
   ];
+  const [kind, setKind, showKind] = useKindFilter();
   const slot = (i: number) => {
     const c = pool.find((x) => x.id === st.link.cards[i]);
     return (
@@ -333,16 +314,19 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
               </p>
             )}
           </div>
+          <KindFilter items={pool} value={kind} onPick={setKind} />
           <ul className="stack">
-            {pool.map((c) => (
-              <li key={c.id}>
-                <CardPick
-                  item={c}
-                  on={st.link.cards.includes(c.id)}
-                  onPick={() => toggleLinkCard(c.id)}
-                />
-              </li>
-            ))}
+            {pool
+              .filter((c) => showKind(c) || st.link.cards.includes(c.id))
+              .map((c) => (
+                <li key={c.id}>
+                  <CardPick
+                    item={c}
+                    on={st.link.cards.includes(c.id)}
+                    onPick={() => toggleLinkCard(c.id)}
+                  />
+                </li>
+              ))}
           </ul>
           <RelationPicker
             cards={st.link.cards.map((id) => pool.find((c) => c.id === id)?.name)}
