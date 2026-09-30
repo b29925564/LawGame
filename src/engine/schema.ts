@@ -4,7 +4,7 @@ const id = z.string().regex(/^[a-z0-9-]+$/, 'id 只能用小寫英數與連字�
 
 export const tags = ['邏輯', '情感', '權威', '程序'] as const;
 export type Tag = (typeof tags)[number];
-export const relations = ['矛盾', '支持', '說明動機', '說明機會'] as const;
+export const relations = ['矛盾', '支持', '縮小範圍', '說明動機', '說明機會'] as const;
 export type Relation = (typeof relations)[number];
 
 const line = z.object({ q: z.string(), a: z.string() });

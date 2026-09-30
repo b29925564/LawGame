@@ -99,6 +99,7 @@ function deskErrors(s: DeskScene, available: Set<string>, args: Set<string>, err
   const unlocked = {
     jobs: new Set<string>(),
     motions: new Set<string>(),
+    links: new Set<string>(),
     questions: new Set<string>(),
   };
   const has = (ids: string[]) => ids.every((i) => reachable.has(i));
@@ -114,6 +115,11 @@ function deskErrors(s: DeskScene, available: Set<string>, args: Set<string>, err
         unlocked.motions.add(m.id);
         m.gives.forEach((g) => reachable.add(g));
         m.twist?.options.forEach((o) => o.gives.forEach((g) => reachable.add(g)));
+      }
+    for (const l of s.links)
+      if (!unlocked.links.has(l.id) && has(l.cards)) {
+        unlocked.links.add(l.id);
+        reachable.add(l.id);
       }
     for (const q of s.questions)
       if (!unlocked.questions.has(q.id) && has(q.answer)) {
@@ -138,14 +144,31 @@ function deskErrors(s: DeskScene, available: Set<string>, args: Set<string>, err
     for (const g of out) if (!cards.has(g)) errors.push(`動議 ${m.id} 給了不存在的卡片 ${g}`);
   }
 
-  // 可解：每個疑問的正解卡片都拿得到。
+  // 連線：兩張卡都要存在（證據或論點），id 不能和卡片撞名。
+  const sceneArgs = new Set(s.questions.map((q) => q.argument.id));
+  const lids = new Set<string>();
+  for (const l of s.links) {
+    if (lids.has(l.id) || cards.has(l.id)) errors.push(`桌面 ${s.id} 的連線 id 重複：${l.id}`);
+    lids.add(l.id);
+    for (const c of [...l.cards, ...Object.values(l.accept).flat()])
+      if (!cards.has(c) && !args.has(c) && !sceneArgs.has(c) && !available.has(c))
+        errors.push(`連線 ${l.id} 用了不存在的卡片 ${c}`);
+    if (!unlocked.links.has(l.id))
+      for (const c of l.cards)
+        if (!reachable.has(c)) errors.push(`連線 ${l.id} 需要玩家拿不到的 ${c}`);
+  }
+
+  // 可解：每個疑問的正解都是拿得到的發現或論點（第二步不直接放證據）。
   const qids = new Set<string>();
   for (const q of s.questions) {
     if (qids.has(q.id)) errors.push(`桌面 ${s.id} 的疑問 id 重複：${q.id}`);
     qids.add(q.id);
+    for (const id of [...q.answer, ...Object.values(q.accept).flat()])
+      if (!lids.has(id) && !args.has(id) && !sceneArgs.has(id))
+        errors.push(`疑問 ${q.id} 的正解 ${id} 不是發現也不是論點`);
     if (!unlocked.questions.has(q.id))
       for (const id of q.answer)
-        if (!reachable.has(id)) errors.push(`疑問 ${q.id} 的正解需要玩家拿不到的卡片 ${id}`);
+        if (!reachable.has(id)) errors.push(`疑問 ${q.id} 的正解需要玩家拿不到的 ${id}`);
     args.add(q.argument.id);
     available.add(q.argument.id);
   }
@@ -156,7 +179,8 @@ function deskErrors(s: DeskScene, available: Set<string>, args: Set<string>, err
   let keyHours = 0;
   const goal = s.questions.find((q) => q.id === s.goal);
   if (goal) {
-    for (const j of s.jobs) if (j.gives.some((g) => goal.answer.includes(g))) keyHours += j.cost;
+    const need = goal.answer.flatMap((id) => s.links.find((l) => l.id === id)?.cards ?? [id]);
+    for (const j of s.jobs) if (j.gives.some((g) => need.includes(g))) keyHours += j.cost;
     keyHours += 1;
     if (keyHours > s.hours * 0.6)
       errors.push(`桌面 ${s.id} 的關鍵路徑要 ${keyHours} 工時，超過預算 ${s.hours} 的 60%`);

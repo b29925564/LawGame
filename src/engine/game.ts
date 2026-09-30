@@ -173,7 +173,9 @@ interface GameState {
   toggleCard: (qid: string, card: string) => void;
   toggleTimeline: (card: string) => void;
   moveTimeline: (card: string, dir: -1 | 1) => void;
-  setRelation: (qid: string, r: Relation) => void;
+  toggleLinkCard: (card: string) => void;
+  setLinkRelation: (r: Relation) => void;
+  connect: () => void;
   submit: (qid: string) => void;
   /** 法庭 */
   nextQuestion: () => void;
@@ -329,7 +331,9 @@ export const useEpisode = create<GameState>()((set, get) => {
     toggleCard: (qid, card) => onDesk((s, st) => desk.toggleCard(s, st, qid, card)),
     toggleTimeline: (card) => onDesk((_s, st) => desk.toggleTimeline(st, card)),
     moveTimeline: (card, dir) => onDesk((_s, st) => desk.moveTimeline(st, card, dir)),
-    setRelation: (qid, r) => onDesk((_s, st) => desk.setRelation(st, qid, r)),
+    toggleLinkCard: (card) => onDesk((_s, st) => desk.toggleLinkCard(st, card)),
+    setLinkRelation: (r) => onDesk((_s, st) => desk.setLinkRelation(st, r)),
+    connect: () => onDesk((s, st) => desk.connect(s, st)),
     submit: (qid) =>
       onDesk(
         (s, st) => desk.submit(s, st, qid),

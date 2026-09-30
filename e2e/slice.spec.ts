@@ -11,6 +11,29 @@ const next = (page: Page, name: string | RegExp = '繼續') =>
 const card = (root: Page | ReturnType<Page['locator']>, name: string | RegExp) =>
   root.locator('.pick-name', { hasText: name });
 
+/** 推理兩步：先在連線區把兩張卡連成發現，再拿第 n 條發現回答疑問。 */
+async function solve(
+  page: Page,
+  tab: string,
+  title: string,
+  names: (string | RegExp)[],
+  relation: RegExp,
+  n: number,
+) {
+  await page.getByRole('button', { name: '連線', exact: true }).click();
+  const links = page.locator('section.links');
+  for (const name of names) await card(links, name).click();
+  await links.getByRole('radio', { name: relation }).click();
+  await links.getByRole('button', { name: '連起來' }).click();
+  await expect(links.getByRole('status')).toContainText('連起來了');
+  await page.getByRole('button', { name: tab, exact: true }).click();
+  const q = page.locator('section.chain');
+  await expect(q).toContainText(title);
+  await card(q, `發現 ${n}`).click();
+  await q.getByRole('button', { name: /提交到案情會議/ }).click();
+  await expect(q).toContainText('已確認');
+}
+
 /** 一直按「繼續」直到某個東西出現；對話長度改了測試也不會壞。 */
 async function until(page: Page, target: ReturnType<Page['getByRole']>, limit = 30) {
   for (let i = 0; i < limit; i++) {
@@ -87,13 +110,9 @@ test('第 1 集可以一路從冷開場玩到判決', async ({ page }) => {
   await expect(page.getByLabel(/剩餘工時 20/)).toBeVisible();
 
   await page.getByRole('button', { name: '證據板' }).click();
-  // 證據板一次只顯示一條推理鏈，分頁列上有五條。
-  const chain = page.locator('section.chain');
-  await expect(chain).toContainText('伊森為什麼');
-  await card(chain, '手錶通知紀錄').click();
-  await card(chain, '叫車收據').click();
-  await chain.getByRole('radio', { name: /支持/ }).click();
-  await chain.getByRole('button', { name: /提交到案情會議/ }).click();
+  // 還沒有發現時，證據板先打開連線區。
+  await expect(page.locator('section.links')).toBeVisible();
+  await solve(page, '疑問 1', '伊森為什麼', ['手錶通知紀錄', '叫車收據'], /支持/, 1);
   // 過關的推理鏈確認了，但要玩家自己收工，剩下的工時還能查。
   await expect(page.getByRole('button', { name: '結束調查' })).toBeVisible();
 
@@ -104,13 +123,14 @@ test('第 1 集可以一路從冷開場玩到判決', async ({ page }) => {
   await page.getByRole('button', { name: /錶帶完好/ }).click();
   await page.getByRole('button', { name: '← 卷宗' }).click();
   await page.getByRole('button', { name: '證據板' }).click();
-  await page.getByRole('button', { name: '疑問 2' }).click();
-  const watchChain = page.locator('section.chain');
-  await expect(watchChain).toContainText('手錶，能把死亡時間縮小嗎');
-  await card(watchChain, '驗屍照片：死者的手錶').click();
-  await card(watchChain, /驗屍報告$/).click();
-  await watchChain.getByRole('radio', { name: /支持/ }).click();
-  await watchChain.getByRole('button', { name: /提交到案情會議/ }).click();
+  await solve(
+    page,
+    '疑問 2',
+    '手錶，能把死亡時間縮小嗎',
+    ['驗屍照片：死者的手錶', /驗屍報告$/],
+    /縮小範圍/,
+    2,
+  );
 
   // 法院系統：依據、支撐、請求三樣都要對。
   await page.getByRole('button', { name: '法院系統' }).click();
@@ -141,18 +161,13 @@ test('第 1 集可以一路從冷開場玩到判決', async ({ page }) => {
   // 拿到心率與稽核紀錄之後，把論點 B、C、D 也拼起來。
   await page.getByRole('button', { name: '證據板' }).click();
   const chains: [string, string, (string | RegExp)[], RegExp][] = [
-    ['疑問 3', '沃斯是什麼時候死的', [/驗屍報告$/, '沃斯手錶的心率紀錄'], /支持/],
+    ['疑問 3', '沃斯是什麼時候死的', [/驗屍報告$/, '沃斯手錶的心率紀錄'], /縮小範圍/],
     ['疑問 4', '真的是沃斯本人傳的嗎', ['聊天系統稽核紀錄', '論點 B：沃斯 22:24 死亡'], /矛盾/],
     ['疑問 5', '31 樓還剩誰', ['聊天系統稽核紀錄', '完整門禁紀錄'], /說明機會/],
   ];
-  for (const [tab, title, names, relation] of chains) {
-    await page.getByRole('button', { name: tab }).click();
-    const c = page.locator('section.chain');
-    await expect(c).toContainText(title);
-    for (const name of names) await card(c, name).click();
-    await c.getByRole('radio', { name: relation }).click();
-    await c.getByRole('button', { name: /提交到案情會議/ }).click();
-  }
+  let n = 3;
+  for (const [tab, title, names, relation] of chains)
+    await solve(page, tab, title, names, relation, n++);
 
   // 收工，海爾在開庭前說出彈劾三步驟的那句話。
   await page.getByRole('button', { name: '結束調查' }).click();
@@ -167,12 +182,7 @@ test('第 1 集可以一路從冷開場玩到判決', async ({ page }) => {
   await page.getByRole('button', { name: /沒有唸出任何權利告知/ }).click();
   await page.getByRole('button', { name: '← 卷宗' }).click();
   await page.getByRole('button', { name: '證據板' }).click();
-  const miranda = page.locator('section.chain');
-  await expect(miranda).toContainText('車上那句話');
-  await card(miranda, /逮捕報告$/).click();
-  await card(miranda, '巡邏車錄影：沒有警告').click();
-  await miranda.getByRole('radio', { name: /矛盾/ }).click();
-  await miranda.getByRole('button', { name: /提交到案情會議/ }).click();
+  await solve(page, '疑問 1', '車上那句話', [/逮捕報告$/, '巡邏車錄影：沒有警告'], /矛盾/, 1);
   await page.getByRole('button', { name: '法院系統' }).click();
   const mm = page.locator('section.job');
   await expect(mm).toContainText('巡邏車上的供述');

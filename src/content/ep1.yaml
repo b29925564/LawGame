@@ -584,14 +584,37 @@ scenes:
             text: 大廳閘門只有一道，員工證刷了才過得去。地下停車場另有一個出口，不刷卡。
           - who: 蘿莎
             text: 還有，31 樓的夜間清潔是外包的，週五晚上不排班。
-    questions:
-      - id: q1
-        text: 伊森為什麼那個時間上樓？
-        answer: [watch-notice, ride-receipt]
+    links:
+      - id: l-called
+        cards: [watch-notice, ride-receipt]
         accept:
           watch-notice: [ethan-message]
           ride-receipt: [ethan-ride]
         relation: 支持
+        text: 22:33 手錶跳出死者帳號的訊息，22:34 伊森就叫了車。
+      - id: l-watch
+        cards: [watch-photo, autopsy]
+        relation: 縮小範圍
+        text: 法醫只給得出一個半小時的時間窗，但死者手上那支錶有心率感測器，而且完好。
+      - id: l-time
+        cards: [autopsy, heart-rate]
+        relation: 縮小範圍
+        text: 心率 22:24 歸零，落在法醫的時間窗裡，把死亡時間釘死在 22:24。
+      - id: l-dead-sender
+        cards: [chat-audit, arg-b]
+        accept:
+          chat-audit: [watch-notice]
+          arg-b: [heart-rate]
+        relation: 矛盾
+        text: 沃斯 22:24 已經死了，22:31 他的帳號卻還在傳訊息。
+      - id: l-alone
+        cards: [chat-audit, access-full]
+        relation: 說明機會
+        text: 23:14 有人在 31 樓的桌機上收回訊息；門禁紀錄顯示那時 31 樓只剩一個人。
+    questions:
+      - id: q1
+        text: 伊森為什麼那個時間上樓？
+        answer: [l-called]
         argument:
           id: arg-a
           name: 論點 A：伊森是被叫上樓的
@@ -600,8 +623,7 @@ scenes:
           tags: [邏輯]
       - id: q2a
         text: 死者的手錶，能把死亡時間縮小嗎？
-        answer: [watch-photo, autopsy]
-        relation: 支持
+        answer: [l-watch]
         argument:
           id: arg-watch
           name: 論點：手錶資料與本案相關
@@ -610,8 +632,7 @@ scenes:
           tags: [邏輯]
       - id: q2
         text: 沃斯是什麼時候死的？
-        answer: [autopsy, heart-rate]
-        relation: 支持
+        answer: [l-time]
         argument:
           id: arg-b
           name: 論點 B：沃斯 22:24 死亡
@@ -620,11 +641,7 @@ scenes:
           tags: [邏輯, 權威]
       - id: q3
         text: 22:31 那則訊息，真的是沃斯本人傳的嗎？
-        answer: [chat-audit, arg-b]
-        accept:
-          chat-audit: [watch-notice]
-          arg-b: [heart-rate]
-        relation: 矛盾
+        answer: [l-dead-sender]
         argument:
           id: arg-c
           name: 論點 C：有人用死者的電腦傳訊
@@ -633,8 +650,7 @@ scenes:
           tags: [邏輯]
       - id: q4
         text: 訊息被收回的時候，31 樓還剩誰？
-        answer: [chat-audit, access-full]
-        relation: 說明機會
+        answer: [l-alone]
         argument:
           id: arg-d
           name: 論點 D：23:14 時 31 樓只剩一個人
@@ -781,13 +797,17 @@ scenes:
             text: 依據選錯了。開庭第一天，法官會記得。
             thought: true
         gives: [statement-excluded]
-    questions:
-      - id: q-miranda
-        text: 車上那句話拿得掉嗎？
-        answer: [arrest-report, no-warning]
+    links:
+      - id: l-no-warning
+        cards: [arrest-report, no-warning]
         accept:
           arrest-report: [car-statement]
         relation: 矛盾
+        text: 報告寫「自願陳述」，錄影裡卻是警員先開口問話，從頭到尾沒有權利告知。
+    questions:
+      - id: q-miranda
+        text: 車上那句話拿得掉嗎？
+        answer: [l-no-warning]
         argument:
           id: arg-miranda
           name: 論點：供述取得程序違法
