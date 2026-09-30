@@ -1,6 +1,7 @@
 import { useEpisode, sceneChoices } from '../engine/game';
 import type { DialogueScene, Line } from '../engine/episode/schema';
 import { Speech } from './Portrait';
+import { Transcript } from './Shell';
 
 /** 對話場景：一路往下讀，遇到選擇就停。之前的台詞留在畫面上，方便回頭看。 */
 export function Dialogue({ scene }: { scene: DialogueScene }) {
@@ -22,11 +23,11 @@ export function Dialogue({ scene }: { scene: DialogueScene }) {
   return (
     <main className="scene dialogue">
       <p className="eyebrow">{scene.place}</p>
-      <div className="lines" aria-live="polite">
+      <Transcript count={lines.length}>
         {lines.map((l, i) => (
           <Speech key={i} line={l} />
         ))}
-      </div>
+      </Transcript>
       {choosing && step.do === 'choose' ? (
         <div className="choices" role="group" aria-label={step.prompt ?? '選擇'}>
           {step.prompt && <p className="muted">{step.prompt}</p>}

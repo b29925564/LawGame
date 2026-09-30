@@ -3,7 +3,7 @@ import * as desk from '../engine/episode/desk';
 import type { DeskScene } from '../engine/episode/schema';
 import { deskState, useEpisode } from '../engine/game';
 import { play } from '../engine/sound';
-import { CardPick, EvidenceDrawer, KindFilter, useKindFilter } from './Evidence';
+import { CardPick, EvidenceDrawer, KindFilter, timeGroups, useKindFilter } from './Evidence';
 import { Speech } from './Portrait';
 import { RelationPicker } from './RelationPicker';
 import { Shell, Tabs } from './Shell';
@@ -308,6 +308,19 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
               </li>
               {slot(1)}
             </ul>
+            <RelationPicker
+              cards={st.link.cards.map((id) => pool.find((c) => c.id === id)?.name)}
+              value={st.link.relation}
+              onPick={setLinkRelation}
+              compact
+            />
+            <button
+              className="primary wide-center"
+              disabled={!desk.canConnect(st)}
+              onClick={connect}
+            >
+              連起來
+            </button>
             {st.linkNote && (
               <p role="status" className={st.link.cards.length ? 'board-note bad' : 'board-note'}>
                 {st.linkNote}
@@ -316,9 +329,9 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
           </div>
           <KindFilter items={pool} value={kind} onPick={setKind} />
           <ul className="stack">
-            {pool
-              .filter((c) => showKind(c) || st.link.cards.includes(c.id))
-              .map((c) => (
+            {timeGroups(
+              pool.filter((c) => showKind(c) || st.link.cards.includes(c.id)),
+              (c) => (
                 <li key={c.id}>
                   <CardPick
                     item={c}
@@ -326,16 +339,9 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
                     onPick={() => toggleLinkCard(c.id)}
                   />
                 </li>
-              ))}
+              ),
+            )}
           </ul>
-          <RelationPicker
-            cards={st.link.cards.map((id) => pool.find((c) => c.id === id)?.name)}
-            value={st.link.relation}
-            onPick={setLinkRelation}
-          />
-          <button className="primary" disabled={!desk.canConnect(st)} onClick={connect}>
-            連起來
-          </button>
           {found.length > 0 && (
             <>
               <h3 className="findings-head">
@@ -507,6 +513,10 @@ function Motions({ scene, held }: { scene: DeskScene; held: string[] }) {
 function Jobs({ scene, held }: { scene: DeskScene; held: string[] }) {
   const { progress, commission } = useEpisode();
   const st = deskState(progress, scene);
+  const nameOf = (id: string) =>
+    scene.cards.find((c) => c.id === id)?.name ??
+    scene.questions.find((q) => q.argument.id === id)?.argument.name ??
+    id;
   return (
     <ul className="stack">
       {scene.jobs.map((j) => {
@@ -519,6 +529,16 @@ function Jobs({ scene, held }: { scene: DeskScene; held: string[] }) {
               {j.who}・{j.cost} 工時
             </p>
             <p>{j.detail}</p>
+            {/* 前提寫在卡上：沒寫的話，玩家會以為不必任何證據就能委託。 */}
+            {j.needs.length > 0 && !done && (
+              <ul className="needs" aria-label="需要">
+                {j.needs.map((n) => (
+                  <li key={n} className={held.includes(n) ? 'have' : 'lack'}>
+                    {held.includes(n) ? '✓' : '需要'} {nameOf(n)}
+                  </li>
+                ))}
+              </ul>
+            )}
             {done ? (
               <p className="good">已回報。</p>
             ) : (
@@ -527,7 +547,9 @@ function Jobs({ scene, held }: { scene: DeskScene; held: string[] }) {
                 disabled={!desk.canCommission(scene, st, j.id, progress.cards)}
                 onClick={() => commission(j.id)}
               >
-                {missing.length ? '還缺前提' : `委託（${j.cost} 工時）`}
+                {missing.length
+                  ? `還缺：${missing.map(nameOf).join('、')}`
+                  : `委託（${j.cost} 工時）`}
               </button>
             )}
           </li>
