@@ -122,13 +122,27 @@ const card = z.object({
   admitted: z.boolean().default(false),
 });
 
+/**
+ * 推理第一步：連線（企劃書 6.5）。兩張卡加一種關係，成立就得到一條「發現」。
+ * 卡片可以是證據，也可以是已經確認的論點。
+ */
+const link = z.object({
+  id,
+  cards: z.array(id).length(2),
+  /** 說得通的替代卡：cards 裡某張卡 → 同樣能連出這條發現的其他卡。 */
+  accept: z.record(id, z.array(id)).default({}),
+  relation: z.enum(relations),
+  /** 連線成立後顯示的發現。 */
+  text: z.string(),
+});
+
+/** 推理第二步：拿發現（或已確認的論點）回答疑問，全對才產生論點卡。 */
 const question = z.object({
   id,
   text: z.string(),
-  answer: z.array(id).min(2).max(3),
-  /** 說得通的替代卡：answer 裡某張卡 → 同樣能撐起這條推理的其他卡。 */
+  answer: z.array(id).min(1).max(3),
+  /** 說得通的替代：answer 裡某條發現 → 同樣能回答這個疑問的其他發現或論點。 */
   accept: z.record(id, z.array(id)).default({}),
-  relation: z.enum(relations),
   argument: z.object({
     id,
     name: z.string(),
@@ -216,6 +230,7 @@ const deskScene = z.object({
       }),
     )
     .default([]),
+  links: z.array(link).default([]),
   questions: z.array(question).min(1),
   /** 確認這條推理鏈，才能結束這一幕。 */
   goal: id,

@@ -2,7 +2,6 @@ import { useState } from 'react';
 import * as desk from '../engine/episode/desk';
 import type { DeskScene } from '../engine/episode/schema';
 import { deskState, useEpisode } from '../engine/game';
-import type { Relation } from '../engine/schema';
 import { play } from '../engine/sound';
 import { CardPick, EvidenceCard, EvidenceDrawer } from './Evidence';
 import { Speech } from './Portrait';
@@ -241,14 +240,23 @@ function Cards({ scene, held }: { scene: DeskScene; held: string[] }) {
 }
 
 /**
- * 證據板：時間線與推理鏈（企劃書 6.5）。
- * 一次只顯示一條推理鏈——五條疊在一頁上要捲很久，
- * 而且選卡的清單會把下一條鏈推到看不見的地方。
+ * 證據板：時間線與推理（企劃書 6.5）。推理分兩步：
+ * 先在「連線」把兩張卡用一種關係連成發現，再拿發現去回答疑問。
+ * 一次只顯示一個分頁，免得選卡清單把下一題推到看不見的地方。
  */
 function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
-  const { progress, toggleCard, setRelation, submit, toggleTimeline, moveTimeline } = useEpisode();
+  const {
+    progress,
+    toggleCard,
+    toggleLinkCard,
+    setLinkRelation,
+    connect,
+    submit,
+    toggleTimeline,
+    moveTimeline,
+  } = useEpisode();
   const st = deskState(progress, scene);
-  // 確認過的論點也是卡片，後面的推理鏈可以拿它當前提（例如「那則訊息是誰傳的」要用論點 B）。
+  // 確認過的論點也是卡片，可以拿來連線或回答後面的疑問（例如「那則訊息是誰傳的」要用論點 B）。
   const args = scene.questions
     .filter((q) => st.confirmed.includes(q.id))
     .map((q) => ({
@@ -258,11 +266,21 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
       text: q.argument.text,
     }));
   const pool = [...args, ...scene.cards.filter((c) => held.includes(c.id))];
-  // 一打開就停在第一條還沒確認的鏈上，不必自己找進度。
+  const found = desk.findings(scene, st).map((l, i) => ({
+    id: l.id,
+    name: `發現 ${i + 1}`,
+    kind: '發現' as const,
+    text: l.text,
+  }));
+  const answers = [...found, ...args];
+  // 一打開就停在第一題還沒確認的疑問；還沒有任何發現時先到連線。
   const firstOpen = scene.questions.find((q) => !st.confirmed.includes(q.id));
-  const [view, setView] = useState<string>(firstOpen?.id ?? 'timeline');
+  const [view, setView] = useState<string>(
+    found.length === 0 && firstOpen ? 'links' : (firstOpen?.id ?? 'timeline'),
+  );
   const q = scene.questions.find((x) => x.id === view);
   const items = [
+    { id: 'links', label: '連線' },
     ...scene.questions.map((x, i) => ({
       id: x.id,
       label: `疑問 ${i + 1}`,
@@ -273,7 +291,7 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
   return (
     <div className="stack">
       <Tabs label="證據板" value={view} onPick={setView} items={items} />
-      {!q && (
+      {view === 'timeline' && (
         <Timeline
           cards={pool}
           placed={st.timeline}
@@ -281,29 +299,71 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
           onMove={moveTimeline}
         />
       )}
+      {view === 'links' && (
+        <section className="panel chain links">
+          <h2>連線</h2>
+          <p className="muted small">
+            挑兩張卡，說明它們之間是什麼關係。連對了得到一條發現；連錯扣 1 工時。
+          </p>
+          <ul className="slots-row">
+            {[0, 1].map((i) => (
+              <li key={i} className={st.link.cards[i] ? 'slot-card filled' : 'slot-card'}>
+                {st.link.cards[i] ? pool.find((c) => c.id === st.link.cards[i])?.name : '（空）'}
+              </li>
+            ))}
+          </ul>
+          <ul className="stack">
+            {pool.map((c) => (
+              <li key={c.id}>
+                <CardPick
+                  item={c}
+                  on={st.link.cards.includes(c.id)}
+                  onPick={() => toggleLinkCard(c.id)}
+                />
+              </li>
+            ))}
+          </ul>
+          <RelationPicker
+            cards={st.link.cards.map((id) => pool.find((c) => c.id === id)?.name)}
+            value={st.link.relation}
+            onPick={setLinkRelation}
+          />
+          <button className="primary" disabled={!desk.canConnect(st)} onClick={connect}>
+            連起來
+          </button>
+          {st.linkNote && <p role="status">{st.linkNote}</p>}
+          {found.length > 0 && (
+            <>
+              <h3>發現</h3>
+              <ul className="stack">
+                {found.map((f) => (
+                  <li key={f.id}>
+                    <strong>{f.name}</strong> {f.text}
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+        </section>
+      )}
       {q &&
         (() => {
-          const a = st.attempts[q.id] ?? { cards: [], relation: null as Relation | null };
+          const a = st.attempts[q.id] ?? { cards: [] };
           const done = st.confirmed.includes(q.id);
           return (
             <section className={done ? 'panel chain done' : 'panel chain'}>
               <h2>{q.text}</h2>
               {done ? (
                 <p className="good">已確認：{q.argument.name}</p>
+              ) : answers.length === 0 ? (
+                <p className="muted">還沒有發現。先到「連線」把證據拼起來。</p>
               ) : (
                 <>
                   <p className="muted small">
-                    放 {q.answer.length} 張卡片，再說明這兩張卡之間是什麼關係。提交花 1 工時。
+                    挑 {q.answer.length} 條發現或論點來回答。提交花 1 工時。
                   </p>
-                  <ul className="slots-row">
-                    {Array.from({ length: q.answer.length }, (_, i) => (
-                      <li key={i} className={a.cards[i] ? 'slot-card filled' : 'slot-card'}>
-                        {a.cards[i] ? pool.find((c) => c.id === a.cards[i])?.name : '（空）'}
-                      </li>
-                    ))}
-                  </ul>
                   <ul className="stack">
-                    {pool.map((c) => (
+                    {answers.map((c) => (
                       <li key={c.id}>
                         <CardPick
                           item={c}
@@ -313,11 +373,6 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
                       </li>
                     ))}
                   </ul>
-                  <RelationPicker
-                    cards={a.cards.map((id) => pool.find((c) => c.id === id)?.name)}
-                    value={a.relation}
-                    onPick={(r) => setRelation(q.id, r)}
-                  />
                   <button
                     className="primary"
                     disabled={!desk.canSubmit(scene, st, q.id)}

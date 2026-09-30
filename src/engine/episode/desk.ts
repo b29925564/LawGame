@@ -22,7 +22,15 @@ export interface DeskState {
   /** 已經寄達的郵件（含一開始就在收件匣裡的）。 */
   mail: string[];
   openMail: string[];
-  attempts: Record<string, { cards: string[]; relation: Relation | null }>;
+  /** 連線區正在拼的那一條（推理第一步）。 */
+  link: { cards: string[]; relation: Relation | null };
+  /** 已經連成的發現。 */
+  found: string[];
+  /** 連錯的次數；每次扣 1 工時。 */
+  badLinks: number;
+  linkNote: string | null;
+  /** 各疑問放了哪些發現或論點（推理第二步）。 */
+  attempts: Record<string, { cards: string[] }>;
   confirmed: string[];
   submissions: number;
   wrong: number;
@@ -45,6 +53,10 @@ export function startDesk(s: DeskScene): DeskState {
     jobs: [],
     mail: s.mail.filter((m) => m.afterHours === 0).map((m) => m.id),
     openMail: [],
+    link: { cards: [], relation: null },
+    found: [],
+    badLinks: 0,
+    linkNote: null,
     attempts: {},
     confirmed: [],
     submissions: 0,
@@ -144,39 +156,75 @@ export function clearReport(st: DeskState): DeskState {
   return { ...st, report: [] };
 }
 
+/** 連線區：挑兩張卡。 */
+export function toggleLinkCard(st: DeskState, card: string): DeskState {
+  const cur = st.link;
+  const has = cur.cards.includes(card);
+  if (!has && cur.cards.length >= 2) return st;
+  const cards = has ? cur.cards.filter((x) => x !== card) : [...cur.cards, card];
+  return { ...st, link: { ...cur, cards }, linkNote: null };
+}
+
+export function setLinkRelation(st: DeskState, relation: Relation): DeskState {
+  return { ...st, link: { ...st.link, relation }, linkNote: null };
+}
+
+export function canConnect(st: DeskState): boolean {
+  return st.hours >= 1 && st.link.cards.length === 2 && !!st.link.relation;
+}
+
+/**
+ * 推理第一步（企劃書 6.5）：兩張卡加一種關係，當場知道成不成立。
+ * 連對不花工時；連錯扣 1 工時，免得逐一亂試。
+ */
+export function connect(s: DeskScene, st: DeskState): DeskState {
+  if (!canConnect(st)) return st;
+  const { cards, relation } = st.link;
+  const hit = s.links.find((l) => l.relation === relation && fits(l.cards, l.accept, cards));
+  if (hit && st.found.includes(hit.id))
+    return { ...st, link: { cards: [], relation: null }, linkNote: '這條已經連過了。' };
+  if (hit)
+    return {
+      ...st,
+      found: [...st.found, hit.id],
+      link: { cards: [], relation: null },
+      linkNote: `連起來了：${hit.text}`,
+    };
+  const next = spend(s, st, 1);
+  return {
+    ...next,
+    badLinks: next.badLinks + 1,
+    linkNote: '這兩張卡連不起來，至少不是這種關係。白花了 1 工時。',
+  };
+}
+
+/** 已經連成的發現，照連出來的先後。 */
+export function findings(s: DeskScene, st: DeskState) {
+  return st.found.flatMap((id) => s.links.filter((l) => l.id === id));
+}
+
+/** 推理第二步：替疑問挑發現或論點。 */
 export function toggleCard(s: DeskScene, st: DeskState, qid: string, card: string): DeskState {
   const q = s.questions.find((x) => x.id === qid);
   if (!q || st.confirmed.includes(qid)) return st;
-  const cur = st.attempts[qid] ?? { cards: [], relation: null };
+  const cur = st.attempts[qid] ?? { cards: [] };
   const has = cur.cards.includes(card);
   if (!has && cur.cards.length >= q.answer.length) return st;
   const cards = has ? cur.cards.filter((x) => x !== card) : [...cur.cards, card];
-  return { ...st, attempts: { ...st.attempts, [qid]: { ...cur, cards } } };
-}
-
-export function setRelation(st: DeskState, qid: string, relation: Relation): DeskState {
-  const cur = st.attempts[qid] ?? { cards: [], relation: null };
-  return { ...st, attempts: { ...st.attempts, [qid]: { ...cur, relation } } };
+  return { ...st, attempts: { ...st.attempts, [qid]: { cards } } };
 }
 
 export function canSubmit(s: DeskScene, st: DeskState, qid: string): boolean {
   const q = s.questions.find((x) => x.id === qid);
   const a = st.attempts[qid];
-  return (
-    !!q &&
-    st.hours >= 1 &&
-    !st.confirmed.includes(qid) &&
-    !!a?.relation &&
-    a.cards.length === q.answer.length
-  );
+  return !!q && st.hours >= 1 && !st.confirmed.includes(qid) && a?.cards.length === q.answer.length;
 }
 
-/** 提交花 1 工時。整條全對才確認，遊戲不說哪一格錯（企劃書 6.5）。 */
+/** 提交花 1 工時。全對才確認，遊戲不說哪一條放錯（企劃書 6.5）。 */
 export function submit(s: DeskScene, st: DeskState, qid: string): DeskState {
   if (!canSubmit(s, st, qid)) return st;
   const q = s.questions.find((x) => x.id === qid)!;
-  const a = st.attempts[qid];
-  const ok = a.relation === q.relation && fits(q.answer, q.accept, a.cards);
+  const ok = fits(q.answer, q.accept, st.attempts[qid].cards);
   const next = spend(s, st, 1);
   return {
     ...next,
@@ -187,7 +235,7 @@ export function submit(s: DeskScene, st: DeskState, qid: string): DeskState {
       ...next.feedback,
       [qid]: ok
         ? '案情會議通過：這條推理成立，產生論點卡。'
-        : '案情會議結論：這條推理站不住。沒有人說得出是哪裡不對。',
+        : '案情會議結論：這樣回答站不住。沒有人說得出是哪裡不對。',
     },
   };
 }

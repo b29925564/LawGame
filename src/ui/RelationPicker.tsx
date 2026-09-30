@@ -1,7 +1,7 @@
 import { relations, type Relation } from '../engine/schema';
 
 /**
- * 四個選項問的是「這兩張卡之間的關係」，不是這條推理的結論。
+ * 這些選項問的是「這兩張卡之間的關係」，不是這條推理的結論。
  * 試玩回饋：只寫「支持／矛盾」會讓人以為是在問對疑問的立場，所以改成整句話。
  */
 export const relationSentence = (r: Relation, a: string, b: string) => {
@@ -10,6 +10,8 @@ export const relationSentence = (r: Relation, a: string, b: string) => {
   switch (r) {
     case '支持':
       return `${x}和${y}講的是同一件事，互相印證`;
+    case '縮小範圍':
+      return `${x}留下一個範圍或缺口，${y}把它收窄或補上`;
     case '矛盾':
       return `${x}和${y}不可能同時成立`;
     case '說明動機':

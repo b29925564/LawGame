@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { episodes } from '../../content';
+import type { Relation } from '../schema';
 import * as desk from './desk';
 import * as interview from './interview';
 import type { DeskScene, InterviewScene, TrialScene } from './schema';
@@ -10,6 +11,12 @@ const meet = scene<InterviewScene>('meet-ethan');
 const investigate = scene<DeskScene>('investigate');
 const court = scene<TrialScene>('court-kowalski');
 const rachel = scene<TrialScene>('court-rachel');
+
+/** 連線區：兩張卡加一種關係。 */
+const linkUp = (st: desk.DeskState, cards: string[], r: Relation) => {
+  for (const c of cards) st = desk.toggleLinkCard(st, c);
+  return desk.connect(investigate, desk.setLinkRelation(st, r));
+};
 
 describe('訪談', () => {
   it('話題問過就不再出現，卡片要湊齊才解鎖新話題', () => {
@@ -64,20 +71,36 @@ describe('桌面調查', () => {
     expect(desk.heldCards(investigate, st)).toContain('watch-notice');
   });
 
-  it('推理鏈整條對才確認，錯了照樣扣工時而且不說哪裡錯', () => {
+  it('連線對了不花工時，連錯扣 1 工時', () => {
     let st = desk.commission(investigate, play(), 'job-watch', ['ethan-message']);
     st = desk.commission(investigate, st, 'job-ride', ['ethan-ride']);
-    st = desk.toggleCard(investigate, st, 'q1', 'watch-notice');
-    st = desk.toggleCard(investigate, st, 'q1', 'autopsy');
-    st = desk.setRelation(st, 'q1', '矛盾');
+    const hours = st.hours;
+    st = desk.toggleLinkCard(st, 'watch-notice');
+    st = desk.toggleLinkCard(st, 'ride-receipt');
+    st = desk.setLinkRelation(st, '矛盾');
+    st = desk.connect(investigate, st);
+    expect(st.found).toEqual([]);
+    expect(st.hours).toBe(hours - 1);
+    st = desk.setLinkRelation(st, '支持');
+    st = desk.connect(investigate, st);
+    expect(st.found).toEqual(['l-called']);
+    expect(st.hours).toBe(hours - 1);
+    expect(st.link.cards).toEqual([]);
+  });
+
+  it('疑問要拿發現回答，全對才確認，錯了照樣扣工時而且不說哪裡錯', () => {
+    let st = desk.commission(investigate, play(), 'job-watch', ['ethan-message']);
+    st = desk.commission(investigate, st, 'job-ride', ['ethan-ride']);
+    st = linkUp(st, ['watch-notice', 'ride-receipt'], '支持');
+    st = linkUp(st, ['watch-photo', 'autopsy'], '縮小範圍');
+    st = desk.toggleCard(investigate, st, 'q1', 'l-watch');
     st = desk.submit(investigate, st, 'q1');
     expect(st.confirmed).toEqual([]);
     expect(st.wrong).toBe(1);
-    expect(st.feedback.q1).not.toContain('autopsy');
+    expect(st.feedback.q1).not.toContain('l-');
 
-    st = desk.toggleCard(investigate, st, 'q1', 'autopsy');
-    st = desk.toggleCard(investigate, st, 'q1', 'ride-receipt');
-    st = desk.setRelation(st, 'q1', '支持');
+    st = desk.toggleCard(investigate, st, 'q1', 'l-watch');
+    st = desk.toggleCard(investigate, st, 'q1', 'l-called');
     st = desk.submit(investigate, st, 'q1');
     expect(st.confirmed).toContain('q1');
     // 過關的推理鏈確認之後才收得了工，但要玩家自己按，剩下的工時還能繼續查。
@@ -110,13 +133,12 @@ describe('審前動議', () => {
     st = desk.mark(investigate, st, 'watch-photo');
     st = desk.commission(investigate, st, 'job-watch', ['ethan-message']);
     st = desk.commission(investigate, st, 'job-ride', ['ethan-ride']);
-    for (const c of ['watch-notice', 'ride-receipt'])
-      st = desk.toggleCard(investigate, st, 'q1', c);
-    st = desk.setRelation(st, 'q1', '支持');
+    st = linkUp(st, ['watch-notice', 'ride-receipt'], '支持');
+    st = desk.toggleCard(investigate, st, 'q1', 'l-called');
     st = desk.submit(investigate, st, 'q1');
     // 手錶相關性的推理鏈，解鎖傳票動議。
-    for (const c of ['watch-photo', 'autopsy']) st = desk.toggleCard(investigate, st, 'q2a', c);
-    st = desk.setRelation(st, 'q2a', '支持');
+    st = linkUp(st, ['watch-photo', 'autopsy'], '縮小範圍');
+    st = desk.toggleCard(investigate, st, 'q2a', 'l-watch');
     return desk.submit(investigate, st, 'q2a');
   };
   const fill = (

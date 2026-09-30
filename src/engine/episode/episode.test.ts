@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { episodes } from '../../content';
 import { migrate, readSave, writeSave, SAVE_VERSION } from '../save';
+import type * as desk from './desk';
 import { canAdvance, phoneView } from './phone';
 import type { Episode, PhoneScene } from './schema';
 import { validateEpisode } from './validate';
@@ -128,6 +129,33 @@ describe('存檔', () => {
     expect(f?.version).toBe(SAVE_VERSION);
     expect((f?.progress.scenes.investigate as { timeline: string[] }).timeline).toEqual([]);
     expect((f?.progress.scenes.investigate as { hours: number }).hours).toBe(20);
+  });
+
+  it('第 3 版的推理鏈草稿清空，已確認的疑問保留', () => {
+    const old = {
+      version: 3,
+      savedAt: 1,
+      label: '第 1 集・第二幕',
+      progress: {
+        episode: 'ep1',
+        scene: 7,
+        step: 0,
+        choices: {},
+        cards: [],
+        scenes: {
+          investigate: {
+            hours: 20,
+            confirmed: ['q1'],
+            attempts: { q2: { cards: ['autopsy'], relation: '支持' } },
+          },
+        },
+      },
+    };
+    const st = migrate(old)?.progress.scenes.investigate as desk.DeskState;
+    expect(st.confirmed).toEqual(['q1']);
+    expect(st.attempts).toEqual({});
+    expect(st.found).toEqual([]);
+    expect(st.link).toEqual({ cards: [], relation: null });
   });
 
   it('未來版本或壞掉的存檔不讀，也不讓遊戲當掉', () => {
