@@ -88,7 +88,7 @@ export function CardPick({
   verb,
   tag,
 }: {
-  item: { id: string; name: string; text: string; date?: string; time?: string };
+  item: { id: string; name: string; text: string; date?: string; time?: string; kind?: string };
   on?: boolean;
   disabled?: boolean;
   onPick: () => void;
@@ -101,6 +101,7 @@ export function CardPick({
     <button
       className={on ? 'pick on' : 'pick'}
       aria-pressed={on}
+      data-kind={item.kind}
       disabled={disabled}
       onClick={onPick}
     >
