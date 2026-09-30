@@ -73,7 +73,7 @@ function Jurors({
             {scene.jurors.map((j) => {
               const r = reaction(deltas[j.id] ?? 0);
               return (
-                <li key={j.id} className={`juror ${r ? 'react' : ''}`}>
+                <li key={j.id} className={`juror ${r ? 'react' : ''}`} data-reaction={r}>
                   <span className="face" aria-hidden>
                     {glyph[r]}
                   </span>

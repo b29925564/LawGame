@@ -4,7 +4,7 @@ import type { DepositionScene } from '../engine/episode/schema';
 import { depoState, useEpisode } from '../engine/game';
 import { EvidenceDrawer } from './Evidence';
 import { Speech } from './Portrait';
-import { Shell, Tabs } from './Shell';
+import { Shell, Tabs, Transcript } from './Shell';
 
 /** 證詞錄取（企劃書 6.7）：12 個提問額度，定錨與探路互相衝突。 */
 export function Deposition({ scene }: { scene: DepositionScene }) {
@@ -75,12 +75,12 @@ export function Deposition({ scene }: { scene: DepositionScene }) {
       }
       tabs={
         <>
-          <div className="lines transcript" aria-live="polite">
+          <Transcript count={st.log.length}>
             {st.log.map((l, i) => (
               <Speech key={i} line={l} />
             ))}
             {st.log.length === 0 && <p className="muted">速記員在等妳的第一個問題。</p>}
-          </div>
+          </Transcript>
           <Tabs
             label="話題"
             value={topic}
