@@ -81,3 +81,13 @@ describe('結辯', () => {
     expect(out.rounds[0].jury.j1).toBeGreaterThan(court.threshold + 5);
   });
 });
+
+describe('論點不夠', () => {
+  it('手上論點少於規定數量時，有幾個講幾個也能結辯', () => {
+    const s = { picks: 3 } as Parameters<typeof closing.canDeliver>[0];
+    const st = { ...closing.startClosing({}), tone: 'logic', picked: ['x'] };
+    expect(closing.canDeliver(s, st, 1)).toBe(true);
+    expect(closing.canDeliver(s, { ...st, picked: [] }, 0)).toBe(true);
+    expect(closing.canDeliver(s, st, 3)).toBe(false);
+  });
+});

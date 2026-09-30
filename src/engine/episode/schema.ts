@@ -112,6 +112,8 @@ const card = z.object({
   id,
   name: z.string(),
   kind: z.enum(['事實', '陳述', '宣誓陳述', '論點']),
+  /** 哪一天，例如「週五」。時間線上沒有日期就分不出先後。 */
+  date: z.string().optional(),
   time: time.optional(),
   text: z.string(),
   source: z.string(),
@@ -124,6 +126,8 @@ const question = z.object({
   id,
   text: z.string(),
   answer: z.array(id).min(2).max(3),
+  /** 說得通的替代卡：answer 裡某張卡 → 同樣能撐起這條推理的其他卡。 */
+  accept: z.record(id, z.array(id)).default({}),
   relation: z.enum(relations),
   argument: z.object({
     id,
@@ -186,6 +190,8 @@ const deskScene = z.object({
         basis: z.string(),
         /** 支撐：剛好要選這幾張卡（順序不拘）。 */
         support: z.array(id).min(1).max(2),
+        /** 說得通的替代卡：support 裡某張卡 → 同樣能撐起聲請的其他卡。 */
+        accept: z.record(id, z.array(id)).default({}),
         requests: z.array(z.string()).min(2),
         request: z.string(),
         granted: z.array(line).min(1),

@@ -19,6 +19,7 @@ export function Closing({ scene }: { scene: ClosingScene }) {
     .filter((q) => progress.cards.includes(q.argument.id))
     .map((q) => q.argument);
   const [tab, setTab] = useState<'args' | 'tone'>('args');
+  const need = closing.needed(scene, args.length);
 
   if (st.verdict)
     return (
@@ -60,7 +61,7 @@ export function Closing({ scene }: { scene: ClosingScene }) {
           <p className="patience">
             論點{' '}
             <strong>
-              {st.picked.length}/{scene.picks}
+              {st.picked.length}/{need}
             </strong>{' '}
             ・ 基調 {st.tone ? '已選' : '未選'}
           </p>
@@ -72,7 +73,7 @@ export function Closing({ scene }: { scene: ClosingScene }) {
           value={tab}
           onPick={setTab}
           items={[
-            { id: 'args', label: '論點', done: st.picked.length === scene.picks },
+            { id: 'args', label: '論點', done: st.picked.length === need },
             { id: 'tone', label: '訴求基調', done: !!st.tone },
           ]}
         />
@@ -82,7 +83,7 @@ export function Closing({ scene }: { scene: ClosingScene }) {
           <EvidenceDrawer />
           <button
             className="primary wide"
-            disabled={!closing.canDeliver(scene, st)}
+            disabled={!closing.canDeliver(scene, st, args.length)}
             onClick={deliver}
           >
             開始結辯
@@ -92,7 +93,13 @@ export function Closing({ scene }: { scene: ClosingScene }) {
     >
       {tab === 'args' && (
         <section className="panel">
-          <h2>挑 {scene.picks} 個論點，順序就是妳講的順序</h2>
+          <h2>挑 {need} 個論點，順序就是妳講的順序</h2>
+          {need < scene.picks && (
+            <p className="muted small">
+              手上只有 {args.length} 個確認過的論點，
+              {need === 0 ? '只能靠訴求基調結辯。' : '有幾個講幾個。'}
+            </p>
+          )}
           <p className="muted small">最後講的那一個，陪審團記得最清楚（衝擊 ×1.3）。</p>
           <div className="stack">
             {args.map((a) => {
@@ -115,7 +122,7 @@ export function Closing({ scene }: { scene: ClosingScene }) {
               {st.picked.map((id, i) => (
                 <li key={id}>
                   {i + 1}. {args.find((a) => a.id === id)?.name}
-                  {i === st.picked.length - 1 && st.picked.length === scene.picks && (
+                  {i === st.picked.length - 1 && st.picked.length === need && (
                     <span className="good"> ・最後講，×1.3</span>
                   )}
                 </li>

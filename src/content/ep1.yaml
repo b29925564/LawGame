@@ -6,18 +6,21 @@ _cards: &cards
   - id: ethan-accused
     name: 伊森的說法：被指控盜用
     kind: 陳述
+    date: 週五
     time: '16:30'
     text: 週五下午沃斯指控他盜用公款，說週一報警。他離開時喊了「等稽核報告出來，你會後悔的」。
     source: 看守所會見
   - id: ethan-ride
     name: 伊森的說法：他叫了車
     kind: 陳述
+    date: 週五
     time: '22:34'
     text: 他沒有車，當晚叫車前往卡爾德大樓，路上和司機說過話。
     source: 看守所會見
   - id: ethan-message
     name: 伊森的說法：訊息被收回
     kind: 陳述
+    date: 週五
     time: '23:14'
     text: 沃斯傳訊叫他上樓；他再看時訊息已被收回，但手錶當時跳過通知。
     source: 看守所會見
@@ -45,18 +48,21 @@ _cards: &cards
   - id: arrest-time
     name: 逮捕時間 14:05
     kind: 事實
+    date: 週日
     time: '14:05'
     text: 週日 14:05 於友人住處逮捕伊森・蕭。
     source: 逮捕報告
   - id: car-statement
     name: 警車上的供述 14:20
     kind: 事實
+    date: 週日
     time: '14:20'
     text: 14:20 押解途中，被告未經詢問自行陳述：「我只是想讓他住手。」
     source: 隨身攝影機紀錄
   - id: miranda-form
     name: 權利告知書 14:32
     kind: 事實
+    date: 週日
     time: '14:32'
     text: 14:32 於分局由柯瓦斯基警探告知並簽署米蘭達權利。
     source: 逮捕報告
@@ -68,6 +74,7 @@ _cards: &cards
   - id: access-partial
     name: 門禁紀錄（警方標註）
     kind: 事實
+    date: 週五
     time: '22:47'
     text: 被告 22:47 刷卡進入 31 樓，23:01 刷卡離開大廳閘門。
     source: 警方報告
@@ -75,6 +82,7 @@ _cards: &cards
   - id: access-full
     name: 完整門禁紀錄
     kind: 事實
+    date: 週五
     time: '23:26'
     text: 附件三未經標註的原始檔：當晚 31 樓另有一人 23:26 才刷卡離開大廳。
     source: 警方報告附件三
@@ -97,24 +105,28 @@ _cards: &cards
   - id: ride-receipt
     name: 叫車收據
     kind: 事實
+    date: 週五
     time: '22:34'
     text: 22:34 於東河街 118 號上車，22:44 抵達卡爾德大樓。司機奧瑪・哈桑。
     source: 叫車公司
   - id: heart-rate
     name: 沃斯手錶的心率紀錄
     kind: 事實
+    date: 週五
     time: '22:24'
     text: 心率在 22:24 急遽升高後歸零，之後再無讀數。
     source: 手錶廠商（傳票）
   - id: chat-audit
     name: 聊天系統稽核紀錄
     kind: 事實
+    date: 週五
     time: '23:14'
     text: 21:55 沃斯傳訊給瑞秋；22:31 由沃斯桌機發出一則訊息給伊森；23:14 由同一台桌機收回。
     source: 卡爾德物流（傳票）
   - id: watch-notice
     name: 手錶通知紀錄
     kind: 事實
+    date: 週五
     time: '22:33'
     text: 22:33 通知：「葛蘭特・沃斯：十點四十五分上來，把筆電帶來。我們私下解決。」
     source: 被告扣押手錶
@@ -123,11 +135,14 @@ _cards: &cards
   - id: arrest-report
     name: 逮捕報告
     kind: 事實
+    date: 週日
+    time: '03:40'
     text: 逮捕時間 03:40。備註欄：「嫌犯於巡邏車後座自願陳述。」
     source: 檢方開示
   - id: no-warning
     name: 巡邏車錄影：沒有警告
     kind: 事實
+    date: 週日
     time: '03:40'
     text: 錄影裡警員沒有唸出米蘭達警告，就開始問他為什麼在大樓裡。
     source: 檢方開示
@@ -573,6 +588,9 @@ scenes:
       - id: q1
         text: 伊森為什麼那個時間上樓？
         answer: [watch-notice, ride-receipt]
+        accept:
+          watch-notice: [ethan-message]
+          ride-receipt: [ethan-ride]
         relation: 支持
         argument:
           id: arg-a
@@ -603,6 +621,9 @@ scenes:
       - id: q3
         text: 那則訊息是誰傳的？
         answer: [chat-audit, arg-b]
+        accept:
+          chat-audit: [watch-notice]
+          arg-b: [heart-rate]
         relation: 矛盾
         argument:
           id: arg-c
@@ -629,6 +650,8 @@ scenes:
         bases: [相關性, 米蘭達警告, 傳聞例外, 營業秘密]
         basis: 相關性
         support: [arg-watch]
+        accept:
+          arg-watch: [watch-photo]
         requests: [核發傳票給手錶廠商, 排除該項證據, 限制證人作證範圍]
         request: 核發傳票給手錶廠商
         gives: [heart-rate]
@@ -652,6 +675,8 @@ scenes:
         bases: [相關性, 米蘭達警告, 傳聞例外, 營業秘密]
         basis: 相關性
         support: [arg-a]
+        accept:
+          arg-a: [watch-notice, ethan-message]
         requests: [核發傳票給卡爾德物流, 排除該項證據, 撤銷對方的傳票]
         request: 核發傳票給卡爾德物流
         granted:
@@ -739,6 +764,8 @@ scenes:
         bases: [米蘭達警告, 相關性, 傳聞例外, 證據基礎]
         basis: 米蘭達警告
         support: [arg-miranda]
+        accept:
+          arg-miranda: [no-warning]
         requests: [排除該項供述, 核發傳票給警局, 限制證人作證範圍]
         request: 排除該項供述
         granted:
@@ -758,6 +785,8 @@ scenes:
       - id: q-miranda
         text: 車上那句話拿得掉嗎？
         answer: [arrest-report, no-warning]
+        accept:
+          arrest-report: [car-statement]
         relation: 矛盾
         argument:
           id: arg-miranda

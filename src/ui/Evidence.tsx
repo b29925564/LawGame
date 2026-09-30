@@ -65,7 +65,7 @@ export function EvidenceCard({ item }: { item: Item }) {
   return (
     <li className={item.kind === '論點' ? 'card arg' : 'card'}>
       <strong>
-        {item.time && <span className="time">{item.time}</span>}
+        {stamp(item) && <span className="time">{stamp(item)}</span>}
         {item.name}
       </strong>
       <p>{item.text}</p>
@@ -88,7 +88,7 @@ export function CardPick({
   verb,
   tag,
 }: {
-  item: { id: string; name: string; text: string; time?: string };
+  item: { id: string; name: string; text: string; date?: string; time?: string };
   on?: boolean;
   disabled?: boolean;
   onPick: () => void;
@@ -106,11 +106,16 @@ export function CardPick({
     >
       <span className="pick-name">
         {verb && <span className="verb">{verb} </span>}
-        {item.time && <span className="time">{item.time}</span>}
+        {stamp(item) && <span className="time">{stamp(item)}</span>}
         {item.name}
         {tag && <span className="muted"> {tag}</span>}
       </span>
       <span className="pick-text">{item.text}</span>
     </button>
   );
+}
+
+/** 卡片上的日期與時間，例如「週五 22:34」。 */
+export function stamp(c: { date?: string; time?: string }): string {
+  return [c.date, c.time].filter(Boolean).join(' ');
 }

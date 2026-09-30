@@ -1,8 +1,10 @@
+import { stamp } from './Evidence';
 /** 時間線：順序由玩家自己排。遊戲不會自動排序，也不會標出衝突（企劃書 6.5）。 */
 export interface TimelineCard {
   id: string;
   name: string;
   text: string;
+  date?: string;
   time?: string;
 }
 
@@ -30,7 +32,7 @@ export function Timeline({
           <ol className="timeline">
             {rows.map((c, i) => (
               <li key={c.id}>
-                <time>{c.time}</time>
+                <time>{stamp(c)}</time>
                 <div>
                   <strong>{c.name}</strong>
                   <p>{c.text}</p>
@@ -64,7 +66,7 @@ export function Timeline({
         <div className="chips">
           {timed.map((c) => (
             <button key={c.id} aria-pressed={placed.includes(c.id)} onClick={() => onToggle(c.id)}>
-              {c.time} {c.name}
+              {stamp(c)} {c.name}
             </button>
           ))}
           {timed.length === 0 && <span className="muted">目前沒有帶時間的卡片。</span>}
