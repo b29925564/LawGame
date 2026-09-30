@@ -1,0 +1,93 @@
+# 第一集《已收回的訊息》。真相時間線見企劃書 v2.0 第 10.3 節，這裡所有時間都要對得上。
+id: ep1
+number: 1
+title: 已收回的訊息
+scenes:
+  # 冷開場（企劃書 10.7）：玩家拿著伊森的手機，親眼看過那則之後被收回的訊息。
+  - type: phone
+    id: cold-open
+    act: 冷開場
+    owner: 伊森
+    steps:
+      - do: caption
+        time: '22:31'
+        text: 週五深夜。卡爾德大樓 31 樓，財務長辦公室的燈還亮著。有人坐在一台還登入著的電腦前，打了一行字。
+      - do: caption
+        time: '22:33'
+        text: 城東一間小公寓。伊森・蕭坐在床邊，第三次重寫給稽核部門的信。下午，財務長沃斯指控他盜用公款，說星期一會讓保全帶他離開。
+      - do: notify
+        time: '22:33'
+        message:
+          id: summons
+          from: 葛蘭特・沃斯
+          text: 十點四十五分上來，把筆電帶來。我們私下解決。
+      - do: choose
+        mode: chat
+        options:
+          - text: 好。
+          - text: 我馬上到。
+          - text: 現在？您還在公司？
+      - do: ride
+        time: '22:34'
+        from: 家・東河街 118 號
+        to: 卡爾德大樓
+        driver: 奧瑪・H
+      - do: talk
+        time: '22:38'
+        who: 奧瑪
+        text: 這麼晚還要進城？加班喔？
+      - do: choose
+        mode: talk
+        options:
+          - text: 老闆說要私下解決。也許……我不會被開除了。
+            then:
+              - who: 奧瑪
+                text: 那是好事啊。祝你好運，老弟。
+          - text: 嗯，算是吧。
+            then:
+              - who: 奧瑪
+                text: 你抓著手機的樣子不像要去加班，比較像要去見法官。
+              - who: 伊森
+                text: 老闆說要私下解決。也許……我不會被開除了。
+              - who: 奧瑪
+                text: 那就好。祝你好運，老弟。
+      - do: talk
+        time: '22:44'
+        who: 奧瑪
+        text: 卡爾德大樓到了。
+      - do: badge
+        time: '22:47'
+        place: 卡爾德大樓・31F 電梯廳
+      - do: door
+        text: 走廊只剩緊急照明。財務長辦公室的門半掩著，裡面很安靜。
+        action: 推開門
+      - do: caption
+        time: '22:49'
+        text: 沃斯倒在辦公桌旁的地毯上。伊森後來只記得三件事：摸不到的脈搏、袖口上的血，還有那座水晶獎盃，不知道為什麼握在自己手裡。
+      - do: caption
+        time: '23:01'
+        text: 大廳閘門。他沒有報警。四年前那一次，他就知道警察會怎麼看他這種人。
+      - do: caption
+        time: '23:14'
+        text: 港邊的公車亭。伊森的手還在發抖。他打開聊天室，想再看一次那則訊息。
+      - do: retract
+        time: '23:14'
+        target: summons
+      - do: caption
+        time: '23:14'
+        text: 那則訊息不見了。他親眼看過的東西，現在只剩你記得。
+
+  - type: card
+    id: title
+    act: 片頭
+    title: 合理懷疑
+    lines:
+      - 第一集　已收回的訊息
+
+  # 垂直切片製作中：第一幕在下一個 PR 加入後移除這張卡。
+  - type: card
+    id: wip
+    act: 製作中
+    title: 待續
+    lines:
+      - 第一幕「接案」在下一個版本加入。

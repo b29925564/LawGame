@@ -420,3 +420,325 @@ button:focus-visible {
     }
   }
 }
+
+/* ── 垂直切片：標題、選單、冷開場的手機 ── */
+:root {
+  --cine-bg: #07090c;
+  --cine-text: #e8ecf1;
+  --cine-muted: #8a96a6;
+  --bezel: #1a1d22;
+  --bubble-in: #e4e8ee;
+  --bubble-out: #1f4e8c;
+  --bubble-out-text: #ffffff;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --bezel: #000000;
+    --bubble-in: #26313d;
+    --bubble-out: #3d6fb0;
+  }
+}
+:root[data-theme='dark'] {
+  --bezel: #000000;
+  --bubble-in: #26313d;
+  --bubble-out: #3d6fb0;
+}
+
+.title-screen {
+  min-height: 100dvh;
+  justify-content: center;
+  max-width: 420px;
+}
+.title-screen h1 {
+  font-family: var(--font-doc);
+  font-size: 44px;
+  letter-spacing: 6px;
+}
+.title-card {
+  min-height: 100dvh;
+  justify-content: center;
+  text-align: center;
+}
+.title-card h1 {
+  font-family: var(--font-doc);
+  font-size: 40px;
+  letter-spacing: 4px;
+}
+.title-card button {
+  align-self: center;
+}
+.slot {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+}
+.back {
+  margin: 8px 16px 0;
+}
+
+.game-menu {
+  position: fixed;
+  top: 8px;
+  right: 8px;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+.menu-toggle {
+  background: var(--surface);
+  opacity: 0.9;
+}
+.menu-panel {
+  width: min(340px, calc(100vw - 16px));
+  box-shadow: 0 8px 24px rgb(0 0 0 / 25%);
+}
+.menu-panel [aria-selected='true'] {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* 片頭字卡與冷開場的黑場：深淺色模式都用黑底，這是鏡頭語言不是主題。 */
+.cine {
+  min-height: 100dvh;
+  background: var(--cine-bg);
+  color: var(--cine-text);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 16px;
+  padding: 24px 24px 48px;
+  max-width: none;
+}
+.cine > * {
+  width: 100%;
+  max-width: 560px;
+  margin-inline: auto;
+}
+.cine-time {
+  margin: 0;
+  color: var(--cine-muted);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 2px;
+}
+.cine-text {
+  margin: 0;
+  font-family: var(--font-doc);
+  font-size: 19px;
+  line-height: 1.9;
+}
+.cine-next {
+  width: auto;
+  background: transparent;
+  color: var(--cine-text);
+  border-color: #3a4350;
+}
+.cine .cine-next {
+  margin-left: auto;
+  margin-right: max(0px, calc((100% - 560px) / 2));
+}
+
+.phone-stage {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: var(--bg);
+}
+.phone {
+  width: 100%;
+  max-width: 380px;
+  height: min(720px, calc(100dvh - 32px));
+  border: 10px solid var(--bezel);
+  border-radius: 36px;
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 12px 40px rgb(0 0 0 / 30%);
+}
+.phone-status {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 18px 4px;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+.phone-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px 16px 16px;
+  min-height: 0;
+}
+.lock {
+  align-items: stretch;
+  background: linear-gradient(180deg, var(--surface-2), var(--surface));
+}
+.lock-clock {
+  margin: 32px 0 24px;
+  text-align: center;
+  font-size: 64px;
+  font-weight: 300;
+  font-variant-numeric: tabular-nums;
+}
+.notif {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  text-align: left;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: var(--surface);
+  box-shadow: 0 2px 10px rgb(0 0 0 / 12%);
+}
+.notif-app {
+  font-size: 12px;
+  color: var(--muted);
+}
+.chat-head {
+  font-weight: 700;
+  text-align: center;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.bubbles {
+  flex: 1;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+}
+.bubble {
+  max-width: 80%;
+  padding: 8px 12px;
+  border-radius: 16px;
+  background: var(--bubble-in);
+  align-self: flex-start;
+}
+.bubble.mine {
+  align-self: flex-end;
+  background: var(--bubble-out);
+  color: var(--bubble-out-text);
+}
+.bubble.retracted {
+  background: transparent;
+  border: 1px dashed var(--border);
+  color: var(--muted);
+  font-style: italic;
+  animation: retract 1.2s ease-out;
+}
+@keyframes retract {
+  from {
+    opacity: 0.2;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bubble.retracted {
+    animation: none;
+  }
+}
+.replies {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.replies button {
+  text-align: left;
+  border-radius: 16px;
+}
+.phone-next {
+  align-self: flex-end;
+}
+.ride-route {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 6px 12px;
+  margin: 8px 0;
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--surface-2);
+}
+.ride-route dt {
+  color: var(--muted);
+}
+.ride-route dd {
+  margin: 0;
+}
+.ride {
+  justify-content: flex-start;
+}
+.ride .primary,
+.badge .primary,
+.door .primary {
+  margin-top: auto;
+}
+.badge {
+  align-items: center;
+  text-align: center;
+}
+.reader {
+  margin: auto;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 48px;
+  color: var(--accent);
+  border: 2px solid var(--border);
+}
+.badge .primary {
+  align-self: stretch;
+}
+.door {
+  justify-content: center;
+  background: var(--cine-bg);
+  color: var(--cine-text);
+  font-family: var(--font-doc);
+  font-size: 18px;
+  line-height: 1.9;
+}
+.talk {
+  background: var(--cine-bg);
+  color: var(--cine-text);
+  justify-content: flex-end;
+}
+.subtitles {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.subtitles li {
+  display: flex;
+  flex-direction: column;
+}
+.subtitles strong {
+  font-size: 13px;
+  color: var(--cine-muted);
+}
+.subtitles li.own strong {
+  color: #9cc3f5;
+}
+.talk .replies button,
+.talk .phone-next {
+  background: transparent;
+  color: var(--cine-text);
+  border-color: #3a4350;
+}
