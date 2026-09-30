@@ -63,6 +63,14 @@ describe('桌面調查', () => {
     expect(st.hours).toBe(investigate.hours);
   });
 
+  it('沒有前提的時候，每個委託都下不了', () => {
+    const st = play();
+    for (const j of investigate.jobs) {
+      expect(j.needs.length).toBeGreaterThan(0);
+      expect(desk.canCommission(investigate, st, j.id)).toBe(false);
+    }
+  });
+
   it('委託要先有前提卡片，花掉的工時會扣', () => {
     let st = play();
     expect(desk.canCommission(investigate, st, 'job-watch')).toBe(false);
