@@ -54,9 +54,12 @@ export function Title() {
       </span>
       <div className="title-head">
         <span className="title-rule" aria-hidden />
-        <h1>
+        {/* 一字一行排成直式；每個字是區塊，所以名字要另外給，不然讀成「合 理 懷 疑」。 */}
+        <h1 aria-label="合理懷疑">
           {[...'合理懷疑'].map((c, i) => (
-            <span key={i}>{c}</span>
+            <span key={i} aria-hidden>
+              {c}
+            </span>
           ))}
         </h1>
       </div>
