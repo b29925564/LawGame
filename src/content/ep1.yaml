@@ -95,7 +95,7 @@ _cards: &cards
   - id: watch-photo
     name: 驗屍照片：死者的手錶
     kind: 事實
-    text: 死者左腕配戴智慧手錶，錶帶完好，仍扣在腕上。
+    text: 死者左腕配戴智慧手錶，錶帶完好，仍扣在腕上；背面有心率感測器，貼著皮膚。
     source: 布魯克斯法醫
   - id: blood-report
     name: 補充血跡報告
@@ -516,7 +516,7 @@ scenes:
           - text: 死因：頭部鈍器重擊，一擊致命。
           - text: 死亡時間推估為週五 22:00 至 23:30 之間。
             fact: autopsy
-          - text: 死者左腕配戴智慧手錶一只，錶帶完好，仍扣於腕上。
+          - text: 死者左腕配戴智慧手錶一只，錶帶完好，仍扣於腕上；背面有心率感測器，貼著皮膚。
             fact: watch-photo
       - id: doc-property
         title: 看守所財物清單
@@ -599,7 +599,7 @@ scenes:
           strength: 8
           tags: [邏輯]
       - id: q2a
-        text: 死者的手錶能告訴我們什麼？
+        text: 死者的手錶，能把死亡時間縮小嗎？
         answer: [watch-photo, autopsy]
         relation: 支持
         argument:
