@@ -1,9 +1,15 @@
-import type { CaseData, Juror, Tag } from './schema';
+import type { Juror, Tag } from './schema';
+
+/** 陪審團規則只需要這兩樣，集數劇本的法庭場景也套用同一套。 */
+export interface JuryRules {
+  jurors: Juror[];
+  threshold: number;
+}
 
 export type Jury = Record<string, number>;
 export type Reaction = '點頭' | '抄筆記' | '皺眉' | '看向被告' | '';
 
-export function startJury(c: CaseData): Jury {
+export function startJury(c: JuryRules): Jury {
   return Object.fromEntries(c.jurors.map((j) => [j.id, j.start]));
 }
 
@@ -18,7 +24,7 @@ export function traitMultiplier(j: Juror, tags: readonly Tag[]): number {
  * 每位的變動 = 基礎衝擊 × 特質倍率 × 修正。
  */
 export function applyImpact(
-  c: CaseData,
+  c: JuryRules,
   jury: Jury,
   impact: number,
   tags: readonly Tag[],
@@ -36,7 +42,7 @@ export function applyImpact(
 
 /** 全體往同一方向移動（例如法官訓斥 +5）。 */
 export function shiftAll(
-  c: CaseData,
+  c: JuryRules,
   jury: Jury,
   amount: number,
   only?: Tag,
@@ -66,7 +72,7 @@ export interface Round {
 }
 
 /** 三輪評議：門檻附近 10 以內的人往多數方向移 5；陪審長再讓所有人往他那邊移 2。 */
-export function deliberate(c: CaseData, jury: Jury): Round[] {
+export function deliberate(c: JuryRules, jury: Jury): Round[] {
   const rounds: Round[] = [];
   let cur = { ...jury };
   const t = c.threshold;
@@ -94,7 +100,7 @@ export function deliberate(c: CaseData, jury: Jury): Round[] {
 
 export type Verdict = '無罪' | '有罪' | '陪審團僵局';
 
-export function verdict(c: CaseData, jury: Jury): Verdict {
+export function verdict(c: JuryRules, jury: Jury): Verdict {
   const guilty = c.jurors.filter((j) => jury[j.id] >= c.threshold).length;
   if (guilty === c.jurors.length) return '有罪';
   if (guilty === 0) return '無罪';

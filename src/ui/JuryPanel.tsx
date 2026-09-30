@@ -1,5 +1,7 @@
 import { reaction, type Jury } from '../engine/jury';
-import { episode, useGame } from '../engine/store';
+import { useSettings } from '../engine/settings';
+import { episode } from '../engine/store';
+import { JuryLegend } from './JuryLegend';
 
 const glyph: Record<string, string> = {
   點頭: '◡',
@@ -19,7 +21,7 @@ export function JuryPanel({
   deltas: Jury;
   compact?: boolean;
 }) {
-  const { showNumbers, toggleNumbers } = useGame();
+  const { showNumbers, set } = useSettings();
   return (
     <section className={compact ? 'jury compact' : 'panel jury'} aria-label="陪審團">
       <div className="panel-head">
@@ -34,10 +36,22 @@ export function JuryPanel({
           </span>
         )}
         <label className="toggle">
-          <input id="show-numbers" type="checkbox" checked={showNumbers} onChange={toggleNumbers} />
+          <input
+            id="show-numbers"
+            type="checkbox"
+            checked={showNumbers}
+            onChange={(e) => set({ showNumbers: e.target.checked })}
+          />
           顯示數值
         </label>
       </div>
+      {showNumbers && (
+        <JuryLegend
+          jury={jury}
+          threshold={episode.threshold}
+          note="原型是從檢方舉證完畢開始，所以一開始所有人都在線上，你要把他們拉下來。"
+        />
+      )}
       <ul className="jurors">
         {episode.jurors.map((j) => {
           const r = reaction(deltas[j.id] ?? 0);

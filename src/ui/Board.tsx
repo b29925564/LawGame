@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { canSubmit } from '../engine/board';
-import { relations } from '../engine/schema';
 import { episode, useGame } from '../engine/store';
+import { RelationPicker } from './RelationPicker';
+import { Timeline } from './Timeline';
 
 type Tab = 'chains' | 'timeline' | 'cards';
 
@@ -37,7 +38,7 @@ export function Board() {
         ))}
       </nav>
       {tab === 'chains' && <Chains />}
-      {tab === 'timeline' && <Timeline />}
+      {tab === 'timeline' && <TimelineTab />}
       {tab === 'cards' && <Cards />}
     </main>
   );
@@ -95,18 +96,11 @@ function Chains() {
                     </li>
                   </ul>
                 )}
-                <div className="relations" role="radiogroup" aria-label="關係">
-                  {relations.map((r) => (
-                    <button
-                      key={r}
-                      role="radio"
-                      aria-checked={a.relation === r}
-                      onClick={() => setRelation(q.id, r)}
-                    >
-                      {r}
-                    </button>
-                  ))}
-                </div>
+                <RelationPicker
+                  cards={a.cards.map((id) => episode.cards.find((c) => c.id === id)?.name)}
+                  value={a.relation}
+                  onPick={(r) => setRelation(q.id, r)}
+                />
                 <button
                   className="primary"
                   disabled={!canSubmit(episode, board, q.id)}
@@ -124,47 +118,15 @@ function Chains() {
   );
 }
 
-function Timeline() {
-  const { board, toggleTimeline } = useGame();
-  const timed = episode.cards.filter((c) => c.time);
-  const placed = timed
-    .filter((c) => board.timeline.includes(c.id))
-    .sort((a, b) => a.time!.localeCompare(b.time!));
+function TimelineTab() {
+  const { board, toggleTimeline, moveTimeline } = useGame();
   return (
-    <div className="stack">
-      <section className="panel">
-        <h2>時間軸</h2>
-        {placed.length === 0 ? (
-          <p className="muted">把有時間的卡片放上來。遊戲不會標出衝突，要自己看。</p>
-        ) : (
-          <ol className="timeline">
-            {placed.map((c) => (
-              <li key={c.id}>
-                <time>{c.time}</time>
-                <div>
-                  <strong>{c.name}</strong>
-                  <p>{c.text}</p>
-                </div>
-              </li>
-            ))}
-          </ol>
-        )}
-      </section>
-      <section className="panel">
-        <h2>有時間的卡片</h2>
-        <div className="chips">
-          {timed.map((c) => (
-            <button
-              key={c.id}
-              aria-pressed={board.timeline.includes(c.id)}
-              onClick={() => toggleTimeline(c.id)}
-            >
-              {c.time} {c.name}
-            </button>
-          ))}
-        </div>
-      </section>
-    </div>
+    <Timeline
+      cards={episode.cards}
+      placed={board.timeline}
+      onToggle={toggleTimeline}
+      onMove={moveTimeline}
+    />
   );
 }
 

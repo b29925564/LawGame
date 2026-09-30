@@ -1,0 +1,91 @@
+import { describe, expect, it } from 'vitest';
+import { episodes } from '../../content';
+import * as depo from './deposition';
+import * as nego from './negotiation';
+import type { DepositionScene, NegotiationScene } from './schema';
+
+const scene = <T>(id: string) => episodes.ep1.scenes.find((s) => s.id === id) as T;
+const rachel = scene<DepositionScene>('depo-rachel');
+const plea = scene<NegotiationScene>('plea-morrow');
+
+describe('證詞錄取', () => {
+  it('定錨的問題把說法變成宣誓陳述，額度用掉一個', () => {
+    let st = depo.startDeposition(rachel);
+    st = depo.ask(rachel, st, 'd-heard');
+    expect(st.left).toBe(rachel.budget - 1);
+    expect(st.anchored).toContain('rachel-2250');
+    expect(st.log.some((l) => l.text.includes('十點五十分'))).toBe(true);
+    // 同一個問題問不了第二次。
+    expect(depo.ask(rachel, st, 'd-heard')).toBe(st);
+  });
+
+  it('底牌話題問了就洩漏方向，無害的問題不會', () => {
+    let st = depo.ask(rachel, depo.startDeposition(rachel), 'd-online');
+    expect(st.exposed).toEqual([]);
+    st = depo.ask(rachel, st, 'd-watch');
+    expect(st.exposed).toContain('arg-b');
+  });
+
+  it('對造律師異議，證人照樣要回答', () => {
+    const st = depo.ask(rachel, depo.startDeposition(rachel), 'd-who');
+    expect(st.log.some((l) => l.who === '對造律師')).toBe(true);
+    expect(st.gained).toContain('meeting-name');
+  });
+
+  it('問題比額度多，額度用完就結束；也可以提早收手', () => {
+    const all = rachel.topics.flatMap((t) => t.questions);
+    expect(all.length).toBeGreaterThan(rachel.budget);
+    let st = depo.startDeposition(rachel);
+    for (const q of all) st = depo.ask(rachel, st, q.id);
+    expect(st.left).toBe(0);
+    expect(depo.done(st)).toBe(true);
+    expect(depo.done(depo.finish(depo.startDeposition(rachel)))).toBe(true);
+  });
+});
+
+describe('認罪協商', () => {
+  it('信心越低，莫羅開的條件越好', () => {
+    const st = nego.startNegotiation(plea);
+    expect(nego.offerOf(plea, st).label).toContain('十五年');
+    expect(nego.offerOf(plea, { ...st, confidence: 55 }).label).toContain('三年');
+    expect(nego.offerOf(plea, { ...st, confidence: 10 }).label).toContain('緩刑');
+  });
+
+  it('攤牌讓信心下降，但那個論點就此洩漏', () => {
+    const st = nego.reveal(plea, nego.startNegotiation(plea), 'arg-b', 25, '論點 B');
+    expect(st.confidence).toBe(plea.confidence - 25);
+    expect(st.exposed).toContain('arg-b');
+    expect(st.rounds).toBe(plea.rounds - 1);
+  });
+
+  it('虛張聲勢：證據都在清單上她就信，缺一張就被識破，之後攤牌打折', () => {
+    const ok = nego.bluff(plea, nego.startNegotiation(plea), 'b-time');
+    expect(ok.confidence).toBe(plea.confidence - 10);
+    expect(ok.credit).toBe(0);
+
+    const caught = nego.bluff(plea, nego.startNegotiation(plea), 'b-witness');
+    expect(caught.confidence).toBe(plea.confidence);
+    expect(caught.credit).toBe(1);
+    const after = nego.reveal(plea, caught, 'arg-b', 25, '論點 B');
+    expect(plea.confidence - after.confidence).toBeLessThan(25);
+  });
+
+  it('決定權在伊森手上：勸他撐下去會磨掉信任，信任見底他就自己點頭', () => {
+    let st = nego.startNegotiation(plea);
+    st = nego.advise(plea, st, false);
+    expect(st.outcome).toBeNull();
+    expect(st.trust).toBe(plea.client.trust - 1);
+    st = nego.advise(plea, st, false);
+    expect(st.outcome).toBeNull();
+    st = nego.advise(plea, st, false);
+    expect(st.outcome).toBe('deal');
+  });
+
+  it('接受就是一個正式結局，離席也結束這一幕', () => {
+    const deal = nego.advise(plea, nego.startNegotiation(plea), true);
+    expect(deal.outcome).toBe('deal');
+    expect(deal.deal).toContain('十五年');
+    expect(nego.done(deal)).toBe(true);
+    expect(nego.walk(plea, nego.startNegotiation(plea)).outcome).toBe('walk');
+  });
+});

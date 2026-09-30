@@ -1,0 +1,1128 @@
+# 第一集《已收回的訊息》。真相時間線見企劃書 v2.0 第 10.3 節，這裡所有時間都要對得上。
+id: ep1
+number: 1
+title: 已收回的訊息
+_cards: &cards
+  - id: ethan-accused
+    name: 伊森的說法：被指控盜用
+    kind: 陳述
+    time: '16:30'
+    text: 週五下午沃斯指控他盜用公款，說週一報警。他離開時喊了「等稽核報告出來，你會後悔的」。
+    source: 看守所會見
+  - id: ethan-ride
+    name: 伊森的說法：他叫了車
+    kind: 陳述
+    time: '22:34'
+    text: 他沒有車，當晚叫車前往卡爾德大樓，路上和司機說過話。
+    source: 看守所會見
+  - id: ethan-message
+    name: 伊森的說法：訊息被收回
+    kind: 陳述
+    time: '23:14'
+    text: 沃斯傳訊叫他上樓；他再看時訊息已被收回，但手錶當時跳過通知。
+    source: 看守所會見
+  - id: ethan-flee
+    name: 伊森的說法：他為什麼跑
+    kind: 陳述
+    text: 他有前科，怕警察先抓人再問，所以躲了兩天。
+    source: 看守所會見
+  - id: ethan-report
+    name: 伊森的說法：他先檢舉了沃斯
+    kind: 陳述
+    text: 週三以匿名系統檢舉一筆 3,800 萬美元的應收帳款，掛在空殼公司北門貨運名下。他記得舉報編號。
+    source: 看守所會見
+  - id: ethan-trophy
+    name: 伊森的說法：獎盃
+    kind: 陳述
+    text: 他蹲下探脈搏，站起來時獎盃就在手上，自己也說不出為什麼。
+    source: 看守所會見
+  - id: indictment
+    name: 起訴書
+    kind: 事實
+    text: 二級謀殺。卡爾德港州訴伊森・蕭。
+    source: 檢方證據開示
+    held: true
+  - id: arrest-time
+    name: 逮捕時間 14:05
+    kind: 事實
+    time: '14:05'
+    text: 週日 14:05 於友人住處逮捕伊森・蕭。
+    source: 逮捕報告
+  - id: car-statement
+    name: 警車上的供述 14:20
+    kind: 事實
+    time: '14:20'
+    text: 14:20 押解途中，被告未經詢問自行陳述：「我只是想讓他住手。」
+    source: 隨身攝影機紀錄
+  - id: miranda-form
+    name: 權利告知書 14:32
+    kind: 事實
+    time: '14:32'
+    text: 14:32 於分局由柯瓦斯基警探告知並簽署米蘭達權利。
+    source: 逮捕報告
+  - id: watch-listed
+    name: 財物清單：智慧手錶
+    kind: 事實
+    text: 被告入所時扣押物品：手機 1 支、皮夾 1 個、智慧手錶 1 支。
+    source: 看守所財物清單
+  - id: access-partial
+    name: 門禁紀錄（警方標註）
+    kind: 事實
+    time: '22:47'
+    text: 被告 22:47 刷卡進入 31 樓，23:01 刷卡離開大廳閘門。
+    source: 警方報告
+    admitted: true
+  - id: access-full
+    name: 完整門禁紀錄
+    kind: 事實
+    time: '23:26'
+    text: 附件三未經標註的原始檔：當晚 31 樓另有一人 23:26 才刷卡離開大廳。
+    source: 警方報告附件三
+  - id: autopsy
+    name: 驗屍報告
+    kind: 事實
+    text: 鈍器重擊頭部致死。死亡時間推估 22:00 至 23:30。
+    source: 布魯克斯法醫
+    admitted: true
+  - id: watch-photo
+    name: 驗屍照片：死者的手錶
+    kind: 事實
+    text: 死者左腕配戴智慧手錶，錶帶完好，仍扣在腕上。
+    source: 布魯克斯法醫
+  - id: blood-report
+    name: 補充血跡報告
+    kind: 事實
+    text: 被告外套袖口血跡與死者 DNA 相符。
+    source: 檢方補充開示
+  - id: ride-receipt
+    name: 叫車收據
+    kind: 事實
+    time: '22:34'
+    text: 22:34 於東河街 118 號上車，22:44 抵達卡爾德大樓。司機奧瑪・哈桑。
+    source: 叫車公司
+  - id: heart-rate
+    name: 沃斯手錶的心率紀錄
+    kind: 事實
+    time: '22:24'
+    text: 心率在 22:24 急遽升高後歸零，之後再無讀數。
+    source: 手錶廠商（傳票）
+  - id: chat-audit
+    name: 聊天系統稽核紀錄
+    kind: 事實
+    time: '23:14'
+    text: 21:55 沃斯傳訊給瑞秋；22:31 由沃斯桌機發出一則訊息給伊森；23:14 由同一台桌機收回。
+    source: 卡爾德物流（傳票）
+  - id: watch-notice
+    name: 手錶通知紀錄
+    kind: 事實
+    time: '22:33'
+    text: 22:33 通知：「葛蘭特・沃斯：十點四十五分上來，把筆電帶來。我們私下解決。」
+    source: 被告扣押手錶
+
+  # 第三幕新增的卡片，和第二幕共用同一份牌庫（見 _cards 錨點）。
+  - id: arrest-report
+    name: 逮捕報告
+    kind: 事實
+    text: 逮捕時間 03:40。備註欄：「嫌犯於巡邏車後座自願陳述。」
+    source: 檢方開示
+  - id: no-warning
+    name: 巡邏車錄影：沒有警告
+    kind: 事實
+    time: '03:40'
+    text: 錄影裡警員沒有唸出米蘭達警告，就開始問他為什麼在大樓裡。
+    source: 檢方開示
+  - id: statement-excluded
+    name: 裁定：車上供述已排除
+    kind: 事實
+    text: 法院裁定排除巡邏車上的供述，檢方不得在陪審團面前提起。
+    source: 法院裁定
+  - id: rachel-2250
+    name: 瑞秋的宣誓陳述：22:50 的聲音
+    kind: 宣誓陳述
+    text: 她在錄取時宣誓說，22:50 聽見隔壁房間有人倒地的聲音。
+    source: 證詞錄取
+  - id: rachel-meeting
+    name: 瑞秋的宣誓陳述：整晚都在開會
+    kind: 宣誓陳述
+    text: 她宣誓說自己 21:00 到 23:30 全程在線上會議裡，沒有離開座位。
+    source: 證詞錄取
+  - id: meeting-name
+    name: 會議名稱：北門結案會議
+    kind: 事實
+    text: 瑞秋說出的會議名稱，可以據此調閱出席紀錄。
+    source: 證詞錄取
+
+scenes:
+  # 冷開場（企劃書 10.7）：玩家拿著伊森的手機，親眼看過那則之後被收回的訊息。
+  - type: phone
+    id: cold-open
+    act: 冷開場
+    owner: 伊森
+    steps:
+      - do: caption
+        time: '22:31'
+        text: 週五深夜。卡爾德大樓 31 樓，財務長辦公室的燈還亮著。有人坐在一台還登入著的電腦前，打了一行字。
+      - do: caption
+        time: '22:33'
+        text: 城東一間小公寓。伊森・蕭坐在床邊，第三次重寫給稽核部門的信。下午，財務長沃斯指控他盜用公款，說星期一會讓保全帶他離開。
+      - do: notify
+        time: '22:33'
+        message:
+          id: summons
+          from: 葛蘭特・沃斯
+          text: 十點四十五分上來，把筆電帶來。我們私下解決。
+      - do: choose
+        mode: chat
+        options:
+          - text: 好。
+          - text: 我馬上到。
+          - text: 現在？您還在公司？
+      - do: ride
+        time: '22:34'
+        from: 家・東河街 118 號
+        to: 卡爾德大樓
+        driver: 奧瑪・H
+      - do: talk
+        time: '22:38'
+        who: 奧瑪
+        text: 這麼晚還要進城？加班喔？
+      - do: choose
+        mode: talk
+        options:
+          - text: 老闆說要私下解決。也許……我不會被開除了。
+            then:
+              - who: 奧瑪
+                text: 那是好事啊。祝你好運，老弟。
+          - text: 嗯，算是吧。
+            then:
+              - who: 奧瑪
+                text: 你抓著手機的樣子不像要去加班，比較像要去見法官。
+              - who: 伊森
+                text: 老闆說要私下解決。也許……我不會被開除了。
+              - who: 奧瑪
+                text: 那就好。祝你好運，老弟。
+      - do: talk
+        time: '22:44'
+        who: 奧瑪
+        text: 卡爾德大樓到了。
+      - do: badge
+        time: '22:47'
+        place: 卡爾德大樓・31F 電梯廳
+      - do: door
+        text: 走廊只剩緊急照明。財務長辦公室的門半掩著，裡面很安靜。
+        action: 推開門
+      - do: caption
+        time: '22:49'
+        text: 沃斯倒在辦公桌旁的地毯上。伊森後來只記得三件事：摸不到的脈搏、袖口上的血，還有那座水晶獎盃，不知道為什麼握在自己手裡。
+      - do: caption
+        time: '23:01'
+        text: 大廳閘門。他沒有報警。四年前那一次，他就知道警察會怎麼看他這種人。
+      - do: caption
+        time: '23:14'
+        text: 港邊的公車亭。伊森的手還在發抖。他打開聊天室，想再看一次那則訊息。
+      - do: retract
+        time: '23:14'
+        target: summons
+      - do: caption
+        time: '23:14'
+        text: 那則訊息不見了。他親眼看過的東西，現在只剩你記得。
+
+  - type: card
+    id: title
+    act: 片頭
+    title: 合理懷疑
+    lines:
+      - 第一集　已收回的訊息
+
+  # 第一幕：接案（企劃書 10.7）
+  - type: dialogue
+    id: firm-morning
+    act: 第一幕
+    place: 惠特洛克・海爾律師事務所　大廳　週一 08:00
+    steps:
+      - do: say
+        who: 旁白
+        text: 銅牌上「惠特洛克」的字比「海爾」舊，漆色也深一點。海爾是後來才被刻上去的。
+      - do: say
+        who: 艾莉絲
+        text: 六年公設辯護人，兩百多件案子，換來這塊銅牌上一個還沒刻上去的名字。
+        thought: true
+      - do: say
+        who: 馬可仕・海爾
+        text: 韓律師。歡迎。我把妳挖來，不是因為妳的履歷漂亮，是因為妳輸得起。
+        mood: 暖
+      - do: say
+        who: 艾莉絲
+        text: 我比較希望是因為我贏過幾次。
+      - do: say
+        who: 馬可仕・海爾
+        text: 贏過幾次的人這裡有的是。肯在明知會輸的案子上花力氣的人，我只認識妳一個。
+        mood: 暖
+      - do: say
+        who: 薇薇安・惠特洛克
+        text: 韓律師，第一天。我只說一件事：卡爾德物流是這間事務所最大的客戶，請謹慎。
+        mood: 硬
+      - do: say
+        who: 羅根・皮爾斯
+        text: 羅根・皮爾斯，五年級。妳的辦公室在走廊底，影印機旁邊那間。
+        mood: 硬
+      - do: say
+        who: 艾莉絲
+        text: 他講「影印機旁邊」的時候笑了一下。記下來。
+        thought: true
+      - do: say
+        who: 旁白
+        text: 09:40，桌上的電話亮起。來電顯示：卡爾德港看守所。
+
+  - type: dialogue
+    id: jail-call
+    act: 第一幕
+    place: 艾莉絲的辦公室　週一 09:40
+    steps:
+      - do: say
+        who: 語音
+        text: 本通話來自卡爾德港看守所，將被錄音。您是否接受？
+      - do: say
+        who: 伊森
+        text: 艾莉絲……是他叫我上去的。我發誓，是他叫我上去的。
+        mood: 緊
+      - do: say
+        who: 艾莉絲
+        text: 四年前那通電話，他也是這個聲音。那次他說的是實話。
+        thought: true
+      - do: choose
+        prompt: 你要先跟他說什麼？
+        options:
+          - text: 慢慢說。從你收到訊息開始。
+            then:
+              - who: 伊森
+                text: 好。好。……十點半多一點，他傳訊息給我。
+                mood: 緊
+          - text: 你有沒有跟警察說過任何話？
+            then:
+              - who: 伊森
+                text: 在車上……我說我只是想讓他住手。我是說我想讓他別再誣賴我。
+                mood: 緊
+              - who: 艾莉絲
+                text: 那句話現在是檢方手上最好的一張牌。
+                thought: true
+      - do: say
+        who: 艾莉絲
+        text: 下午我過去看你。在那之前，一個字都不要跟任何人說。
+
+  # 教學：訪談（企劃書 10.10）
+  - type: interview
+    id: meet-ethan
+    act: 第一幕
+    who: 伊森・蕭
+    role: 委託人・26 歲・財務分析師
+    via: 看守所視訊會見室
+    meter:
+      label: 不安
+      start: 2
+      max: 5
+    intro:
+      - who: 艾莉絲
+        text: 問話有三件事要記得：先讓他說完，再問細節，最後才問他不想講的。
+        thought: true
+      - who: 伊森
+        text: 他們說我逃亡兩天。我不是逃亡，我只是……不知道能去哪裡。
+        mood: 緊
+    topics:
+      - id: t-friday
+        label: 星期五下午，沃斯找你做什麼？
+        key: true
+        lines:
+          - who: 伊森
+            text: 他說帳上少了錢，說是我做的。他說星期一會請保全帶我出去，然後報警。
+            mood: 緊
+          - who: 伊森
+            text: 我走出去的時候喊了一句「等稽核報告出來，你會後悔的」。門外有人聽到。
+        gives: [ethan-accused]
+      - id: t-ride
+        label: 那天晚上你怎麼去公司的？
+        key: true
+        lines:
+          - who: 伊森
+            text: 叫車。我沒有車。司機是個中年男的，話很多。我還跟他講了話。
+          - who: 艾莉絲
+            text: 叫車就有紀錄。上車時間、下車時間，都在別人的伺服器上。
+            thought: true
+        gives: [ethan-ride]
+      - id: t-message
+        label: 他傳給你的訊息，還在嗎？
+        key: true
+        lines:
+          - who: 伊森
+            text: 不見了。我在公車亭想再看一次，變成「此訊息已被收回」。
+            mood: 緊
+          - who: 伊森
+            text: 我知道這聽起來像什麼。但我的手錶有跳通知，手錶上的東西不會不見吧？
+        gives: [ethan-message]
+      - id: t-flee
+        label: 你為什麼跑？
+        guard: 1
+        lines:
+          - who: 伊森
+            text: 因為我有前科。因為四年前他們也是先抓人再問。
+            mood: 緊
+          - who: 伊森
+            text: 那時候是妳幫我的。妳知道他們怎麼看我這種人。
+        gives: [ethan-flee]
+      - id: t-report
+        label: 你說的稽核報告，是什麼意思？
+        needs: [ethan-accused]
+        lines:
+          - who: 伊森
+            text: 我禮拜三用匿名系統檢舉過一筆應收帳款，三千八百萬，掛在一家叫北門貨運的公司名下。
+          - who: 伊森
+            text: 系統會給編號。我記得編號。
+        gives: [ethan-report]
+    press:
+      - id: p-trophy
+        label: 你為什麼會握著那座獎盃？
+        needs: ethan-flee
+        lines:
+          - who: 伊森
+            text: 我不知道。我真的不知道。我蹲下去摸他脖子，站起來的時候它就在我手上。
+            mood: 緊
+          - who: 伊森
+            text: 妳相信我嗎？……妳如果不信，就沒有人會信了。
+        gives: [ethan-trophy]
+        blank:
+          - who: 伊森
+            text: 我不想講那個。
+            mood: 緊
+    calm:
+      - who: 艾莉絲
+        text: 伊森，看著我。現在這個房間裡，只有我站在你那邊。
+        mood: 暖
+      - who: 伊森
+        text: ……好。
+    guarded:
+      - who: 伊森
+        text: 我不想再講了。對不起。
+        mood: 緊
+      - who: 旁白
+        text: 他把椅子往後推，看著地板。會見時間還沒到，但今天問不出更多了。
+    outro:
+      - who: 艾莉絲
+        text: 他講了兩次「妳相信我嗎」。真正說謊的人不會問這個。
+        thought: true
+
+  - type: dialogue
+    id: take-case
+    act: 第一幕
+    place: 海爾的辦公室　週一 15:20
+    steps:
+      - do: say
+        who: 艾莉絲
+        text: 我要接這個案子。
+      - do: say
+        who: 薇薇安・惠特洛克
+        text: 死者是卡爾德物流的財務長。妳要替殺他的人辯護，還要我們的最大客戶簽豁免書。
+        mood: 硬
+      - do: say
+        who: 馬可仕・海爾
+        text: 亞瑟・卡爾德早上簽了。他覺得這案子很單純，簽得很爽快。
+      - do: say
+        who: 薇薇安・惠特洛克
+        text: 公益案件，四十工時。調查二十四，審前十六。超過的部分，妳自己去跟我解釋。
+        mood: 硬
+      - do: say
+        who: 薇薇安・惠特洛克
+        text: 還有，羅根當第二律師。
+      - do: say
+        who: 艾莉絲
+        text: 第二律師，還是監視器？
+        thought: true
+      - do: choose
+        prompt: 惠特洛克在等你回話。
+        options:
+          - text: 謝謝。四十小時夠了。
+            then:
+              - who: 薇薇安・惠特洛克
+                text: 希望如此。
+                mood: 硬
+          - text: 卡爾德簽得太快了，你們不覺得嗎？
+            then:
+              - who: 馬可仕・海爾
+                text: 覺得。所以我批了這個案子。
+                mood: 暖
+              - who: 薇薇安・惠特洛克
+                text: 馬可仕。
+                mood: 硬
+      - do: say
+        who: 旁白
+        text: 16:05，莫羅檢察官的證據開示寄到了。卷宗解鎖。
+
+  - type: card
+    id: act2
+    act: 第二幕
+    title: 第二幕　調查
+    lines:
+      - 二十四工時。讀文件、擺卡片、和自己人講話都不花錢。
+      - 查不完是這一行的常態。
+
+  # 第二幕前半（企劃書 10.7 教學順序：標記事實 → 推理鏈 Q1 → 委託 → 傳票）
+  - type: desk
+    id: investigate
+    act: 第二幕
+    hours: 24
+    deadline: 預審　三週後
+    cards: *cards
+    docs:
+      - id: doc-arrest
+        title: 逮捕報告
+        from: 卡爾德港警局　重案組
+        lines:
+          - text: 案件編號 CH-2026-1147。被告：伊森・蕭，男，26 歲。
+          - text: 週日 14:05，於友人住處逮捕被告，未有抵抗。
+            fact: arrest-time
+          - text: 14:20 押解途中，被告未經詢問自行陳述：「我只是想讓他住手。」
+            fact: car-statement
+          - text: 14:32 於分局由本人告知並簽署米蘭達權利告知書。
+            fact: miranda-form
+          - text: 承辦：雷・柯瓦斯基警探。
+      - id: doc-police
+        title: 警方報告與附件
+        from: 卡爾德港警局　重案組
+        lines:
+          - text: 大樓警衛厄爾・吉布森於 23:58 巡邏時發現死者，報案。
+          - text: 門禁系統顯示被告 22:47 刷卡進入 31 樓，23:01 刷卡離開大廳閘門。
+            fact: access-partial
+          - text: 附件三為門禁系統原始檔，本報告僅標註與被告有關之紀錄。
+          - text: 附件三第 14 行：另有一組員工證於 23:26 刷卡離開大廳。
+            fact: access-full
+      - id: doc-autopsy
+        title: 驗屍報告
+        from: 艾倫・布魯克斯　法醫
+        lines:
+          - text: 死因：頭部鈍器重擊，一擊致命。
+          - text: 死亡時間推估為週五 22:00 至 23:30 之間。
+            fact: autopsy
+          - text: 死者左腕配戴智慧手錶一只，錶帶完好，仍扣於腕上。
+            fact: watch-photo
+      - id: doc-property
+        title: 看守所財物清單
+        from: 卡爾德港看守所
+        lines:
+          - text: 入所日期：週日。被告：伊森・蕭。
+          - text: 扣押物品：手機 1 支、皮夾 1 個、智慧手錶 1 支。
+            fact: watch-listed
+    mail:
+      - id: mail-morrow
+        from: 黛安・莫羅　檢察官
+        subject: 州訴蕭案　證據開示（第一批）
+        body:
+          - 韓律師，附上第一批開示資料：起訴書、逮捕報告、警方報告與附件、驗屍報告。
+          - 我手上有目擊證人。這案子不複雜，早點打給我。
+      - id: mail-blood
+        from: 黛安・莫羅　檢察官
+        subject: 補充開示：血跡報告
+        afterHours: 4
+        gives: [blood-report]
+        body:
+          - 補充鑑識報告：被告外套袖口血跡與死者 DNA 相符。
+          - 附帶一提，我的條件還在桌上。
+      - id: mail-devon
+        from: 戴文・帕克　助理
+        subject: 我把你可能還沒看的東西列一下
+        afterHours: 6
+        body:
+          - 韓律師，兩件事：警方報告的附件三是原始門禁檔，報告內文只標了被告那幾行。
+          - 還有看守所財物清單上有一支智慧手錶。手錶通常會同步手機通知。
+    jobs:
+      - id: job-ride
+        who: 戴文
+        label: 請戴文向叫車公司調閱那晚的乘車紀錄
+        detail: 公開紀錄調閱。要先知道他確實叫了車。
+        cost: 2
+        needs: [ethan-ride]
+        gives: [ride-receipt]
+        report:
+          - who: 戴文
+            text: 叫車公司回了。22:34 東河街 118 號上車，22:44 到卡爾德大樓。司機叫奧瑪・哈桑。
+          - who: 艾莉絲
+            text: 22:44 到，22:47 刷卡。中間三分鐘，剛好夠走到電梯。
+            thought: true
+      - id: job-watch
+        who: 法院系統
+        label: 聲請檢視被告扣押財物中的智慧手錶
+        detail: 要指出這支手錶和本案相關，法院才會核准。
+        cost: 2
+        needs: [watch-listed, ethan-message]
+        gives: [watch-notice]
+        report:
+          - who: 旁白
+            text: 雷耶斯法官核准。手錶的通知紀錄裡，22:33 那一則還在。
+          - who: 艾莉絲
+            text: 訊息可以從兩支手機上收回。通知紀錄不行。
+            thought: true
+      - id: job-rosa
+        who: 蘿莎
+        label: 請蘿莎到卡爾德大樓外看一看
+        detail: 現場、出入口、警衛的動線。不一定查得到什麼。
+        cost: 3
+        report:
+          - who: 蘿莎
+            text: 大廳閘門只有一道，員工證刷了才過得去。地下停車場另有一個出口，不刷卡。
+          - who: 蘿莎
+            text: 還有，31 樓的夜間清潔是外包的，週五晚上不排班。
+    questions:
+      - id: q1
+        text: 伊森為什麼那個時間上樓？
+        answer: [watch-notice, ride-receipt]
+        relation: 支持
+        argument:
+          id: arg-a
+          name: 論點 A：伊森是被叫上樓的
+          text: 22:33 死者的帳號傳訊要他上樓，22:34 他立刻叫車。他不是自己決定去的。
+          strength: 15
+          tags: [邏輯]
+      - id: q2a
+        text: 死者的手錶能告訴我們什麼？
+        answer: [watch-photo, autopsy]
+        relation: 支持
+        argument:
+          id: arg-watch
+          name: 論點：手錶資料與本案相關
+          text: 死者戴著手錶，錶帶完好；法醫的死亡時間窗有一個半小時。手錶的資料能把它縮小。
+          strength: 10
+          tags: [邏輯]
+      - id: q2
+        text: 沃斯是什麼時候死的？
+        answer: [autopsy, heart-rate]
+        relation: 支持
+        argument:
+          id: arg-b
+          name: 論點 B：沃斯 22:24 死亡
+          text: 心率在 22:24 歸零，落在法醫的死亡時間窗內。伊森 22:47 才進門。
+          strength: 25
+          tags: [邏輯, 權威]
+      - id: q3
+        text: 那則訊息是誰傳的？
+        answer: [chat-audit, arg-b]
+        relation: 矛盾
+        argument:
+          id: arg-c
+          name: 論點 C：有人用死者的電腦傳訊
+          text: 沃斯 22:24 已死，但 22:31 有人用他的桌機傳訊叫伊森上樓，23:14 又收回。
+          strength: 15
+          tags: [邏輯]
+      - id: q4
+        text: 訊息被收回的時候，31 樓還剩誰？
+        answer: [chat-audit, access-full]
+        relation: 說明機會
+        argument:
+          id: arg-d
+          name: 論點 D：23:14 時 31 樓只剩一個人
+          text: 伊森 23:01 離開大廳；23:14 有人在 31 樓操作那台桌機；那個人 23:26 才刷卡離開。
+          strength: 20
+          tags: [邏輯, 程序]
+    motions:
+      - id: m-watch
+        label: 聲請傳票：死者手錶的健康資料
+        detail: 要拿到廠商手上的心率紀錄，得先讓法官相信這支手錶和本案有關。
+        cost: 2
+        needs: [arg-watch]
+        bases: [相關性, 米蘭達警告, 傳聞例外, 營業秘密]
+        basis: 相關性
+        support: [arg-watch]
+        requests: [核發傳票給手錶廠商, 排除該項證據, 限制證人作證範圍]
+        request: 核發傳票給手錶廠商
+        gives: [heart-rate]
+        granted:
+          - who: 旁白
+            text: 雷耶斯法官當庭核發傳票。三天後，廠商的資料到了。
+          - who: 艾莉絲
+            text: 22:24，心率歸零。伊森 22:47 才刷卡進門。
+            thought: true
+        denied:
+          - who: 旁白
+            text: 「本庭看不出這支手錶和本案的關聯。聲請駁回。」
+          - who: 艾莉絲
+            text: 依據選錯了。法官記得這種事。
+            thought: true
+      - id: m-chat
+        label: 聲請傳票：卡爾德物流聊天系統稽核紀錄
+        detail: 訊息被收回了，但系統會留下「誰、用哪台機器、什麼時候收回」。
+        cost: 2
+        needs: [arg-a]
+        bases: [相關性, 米蘭達警告, 傳聞例外, 營業秘密]
+        basis: 相關性
+        support: [arg-a]
+        requests: [核發傳票給卡爾德物流, 排除該項證據, 撤銷對方的傳票]
+        request: 核發傳票給卡爾德物流
+        granted:
+          - who: 旁白
+            text: 傳票核發。當天下午，卡爾德物流委任另一家事務所聲請撤銷。
+        denied:
+          - who: 旁白
+            text: 「聲請駁回。」
+          - who: 艾莉絲
+            text: 依據選錯了。
+            thought: true
+        twist:
+          lines:
+            - who: 薇薇安・惠特洛克
+              text: 卡爾德會簽豁免書，是因為他們以為這件案子很單純。撤回那張傳票。
+              mood: 硬
+            - who: 艾莉絲
+              text: 那張紀錄是唯一能證明訊息存在過的東西。
+            - who: 薇薇安・惠特洛克
+              text: 我知道。我也知道誰付我們薪水。
+              mood: 硬
+          options:
+            - text: 撤回傳票。
+              flags: [whitlock-up, chat-audit-lost]
+              then:
+                - who: 薇薇安・惠特洛克
+                  text: 聰明。這件事我記著。
+                  mood: 硬
+                - who: 艾莉絲
+                  text: 我也記著。記著我沒去拿的那張紙。
+                  thought: true
+            - text: 我出庭答辯。
+              gives: [chat-audit]
+              flags: [whitlock-down, hale-up]
+              then:
+                - who: 旁白
+                  text: 答辯庭只開了二十分鐘。法官維持傳票，稽核紀錄當週送到。
+                - who: 馬可仕・海爾
+                  text: 做得好。別讓她知道是我說的。
+                  mood: 暖
+    goal: q1
+    goalLines:
+      - who: 羅根
+        text: 案情會議通過了。妳要拿這個去開庭？
+        mood: 硬
+      - who: 艾莉絲
+        text: 我要拿這個去問柯瓦斯基警探，他到底查了什麼、沒查什麼。
+      - who: 馬可仕・海爾
+        text: 記住一句話。先讓他把話說死，再拿出證據。
+        mood: 暖
+
+  - type: card
+    id: act3
+    act: 第三幕
+    title: 第三幕　審前
+    lines:
+      - 十六工時。開庭前能做的事，都在這三個星期裡。
+
+  # 第三幕之一：米蘭達動議（教學：排除證據）
+  - type: desk
+    id: pretrial
+    act: 第三幕
+    hours: 16
+    deadline: 開庭　三天後
+    cards: *cards
+    docs:
+      - id: doc-arrest
+        title: 逮捕報告與巡邏車錄影
+        from: 卡爾德港警局
+        lines:
+          - text: 逮捕時間 03:40，地點為嫌犯胞姊住處門口。
+            fact: arrest-report
+          - text: 備註：嫌犯於巡邏車後座自願陳述「我只是去拿東西，我沒有要傷害他」。
+            fact: car-statement
+          - text: 錄影 03:41:12 —— 警員直接開口問話，沒有唸出任何權利告知。
+            fact: no-warning
+    mail: []
+    jobs: []
+    motions:
+      - id: m-miranda
+        label: 聲請排除：巡邏車上的供述
+        detail: 沒有警告就問話，問出來的話不能用。不提出的話，檢方開庭時會用它。
+        cost: 3
+        needs: [arg-miranda]
+        bases: [米蘭達警告, 相關性, 傳聞例外, 證據基礎]
+        basis: 米蘭達警告
+        support: [arg-miranda]
+        requests: [排除該項供述, 核發傳票給警局, 限制證人作證範圍]
+        request: 排除該項供述
+        granted:
+          - who: 旁白
+            text: 雷耶斯法官看完錄影，只說了一句：「本庭排除該項供述。」
+          - who: 艾莉絲
+            text: 檢方開庭時不能再提那句話了。
+            thought: true
+        denied:
+          - who: 旁白
+            text: 「本庭認為該項陳述屬自願。聲請駁回。」
+          - who: 艾莉絲
+            text: 依據選錯了。開庭第一天，法官會記得。
+            thought: true
+        gives: [statement-excluded]
+    questions:
+      - id: q-miranda
+        text: 車上那句話拿得掉嗎？
+        answer: [arrest-report, no-warning]
+        relation: 矛盾
+        argument:
+          id: arg-miranda
+          name: 論點：供述取得程序違法
+          text: 報告寫「自願陳述」，錄影裡卻是警員先開口問話，而且從頭到尾沒有權利告知。
+          strength: 20
+          tags: [程序]
+    goal: q-miranda
+    goalLines:
+      - who: 馬可仕・海爾
+        text: 審前該做的都做了。接下來是錄取瑞秋的證詞。
+        mood: 暖
+      - who: 艾莉絲
+        text: 她是唯一聽見聲音的人。我想知道她聽見的是幾點。
+
+  # 第三幕之二：證詞錄取（教學：定錨 vs 探路）
+  - type: deposition
+    id: depo-rachel
+    act: 第三幕
+    place: 惠特洛克・海爾　會議室 B
+    budget: 12
+    witness:
+      name: 瑞秋・林恩
+      role: 卡爾德物流　財務長
+    intro:
+      - who: 馬可仕・海爾
+        text: 十二個問題。宣誓過的話，她在庭上改一個字，妳就能拿逐字稿打她。
+        mood: 暖
+      - who: 馬可仕・海爾
+        text: 但妳問什麼，對面就知道妳往哪裡查。問到痛處，他們開庭前就補好了。
+        mood: 暖
+      - who: 艾莉絲
+        text: 用不痛不癢的問題把她釘死，真正的武器留到法庭上。
+        thought: true
+    outro:
+      - who: 瑞秋・林恩
+        text: 還有事嗎？我十一點有會。
+        mood: 硬
+    topics:
+      - id: d-night
+        label: 那天晚上
+        questions:
+          - id: d-heard
+            q: 妳說妳聽見隔壁有人倒地。那是幾點？
+            a: 十點五十分。我看了螢幕右下角的時間。
+            anchors: rachel-2250
+          - id: d-after
+            q: 聽見之後妳做了什麼？
+            a: 我以為是東西倒了。我繼續開我的會。
+          - id: d-leave
+            q: 妳幾點離開公司？
+            a: 十一點半過後吧。保全紀錄上有。
+      - id: d-meeting
+        label: 那場會議
+        questions:
+          - id: d-online
+            q: 妳說妳整晚都在線上會議裡，中間有離開過嗎？
+            a: 沒有。二十一點到二十三點半，我一直在座位上。
+            anchors: rachel-meeting
+          - id: d-who
+            q: 那場會議叫什麼名字？
+            a: 北門結案會議。這跟本案有關係嗎？
+            gives: [meeting-name]
+            objection: 與本案無關
+          - id: d-camera
+            q: 會議全程開著鏡頭嗎？
+            a: 我不記得了。
+      - id: d-cards
+        label: 妳手上的牌
+        questions:
+          - id: d-watch
+            q: 沃斯那支手錶的健康資料，妳知道裡面有什麼嗎？
+            a: 我為什麼要知道他手錶裡有什麼？
+            tips: [arg-b]
+            objection: 推測
+          - id: d-chat
+            q: 公司的聊天系統，訊息收回之後還留得下紀錄嗎？
+            a: 那要問資訊部。我不碰那些。
+            tips: [arg-a]
+          - id: d-31f
+            q: 二十三點十四分的時候，三十一樓還有誰？
+            a: 我不知道。我在自己的房間裡。
+            tips: [arg-d]
+      - id: d-person
+        label: 她這個人
+        questions:
+          - id: d-role
+            q: 妳在卡爾德物流負責什麼？
+            a: 財務。所有數字最後都到我桌上。
+          - id: d-voss
+            q: 妳和沃斯共事多久了？
+            a: 九年。他找我進來的。
+          - id: d-audit
+            q: 公司內部有匿名檢舉系統嗎？
+            a: 有。收件的是稽核，不是我。
+            objection: 與本案無關
+          - id: d-northgate
+            q: 北門貨運這家公司，妳聽過嗎？
+            a: ……那是我們的承攬商之一。很多家。
+            tips: [arg-c]
+          - id: d-ethan
+            q: 妳認識伊森・里維拉嗎？
+            a: 見過。分析師，沃斯很欣賞他。
+          - id: d-blood
+            q: 那天晚上妳有看到任何人離開三十一樓嗎？
+            a: 沒有。我說過了，我在自己的房間裡。
+            anchors: rachel-2250
+
+  # 第三幕之三：認罪協商（教學：談判、虛張聲勢、委託人才有決定權）
+  - type: negotiation
+    id: plea-morrow
+    act: 第三幕
+    place: 地方檢察署　四樓
+    opponent:
+      name: 黛安娜・莫羅
+      role: 地方助理檢察官
+    client:
+      name: 伊森・里維拉
+      trust: 3
+    confidence: 85
+    rounds: 5
+    intro:
+      - who: 黛安娜・莫羅
+        text: 我有一位目擊證人、一件帶血的外套，還有他自己跑了兩天。妳有什麼？
+        mood: 硬
+    offers:
+      - id: o-murder2
+        min: 80
+        label: 二級謀殺，十五年
+        lines:
+          - who: 黛安娜・莫羅
+            text: 二級謀殺，十五年。這已經是看在他年輕的份上。
+            mood: 硬
+        asks:
+          - who: 伊森・里維拉
+            text: 十五年。我出來的時候……妳覺得我該接受嗎？
+            mood: 緊
+      - id: o-manslaughter
+        min: 60
+        label: 故意殺人，八年
+        lines:
+          - who: 黛安娜・莫羅
+            text: 故意殺人，八年。妳的那些東西還不足以讓陪審團轉向。
+            mood: 硬
+        asks:
+          - who: 伊森・里維拉
+            text: 八年還是八年。妳覺得我該接受嗎？
+            mood: 緊
+      - id: o-negligent
+        min: 40
+        label: 過失致死，三年
+        lines:
+          - who: 黛安娜・莫羅
+            text: 過失致死，三年。妳讓我有點不舒服了，韓律師。
+            mood: 硬
+        asks:
+          - who: 伊森・里維拉
+            text: 三年。我姊說她可以等。妳覺得呢？
+            mood: 緊
+      - id: o-probation
+        min: 0
+        label: 過失致死，緩刑五年
+        lines:
+          - who: 黛安娜・莫羅
+            text: 過失致死，緩刑五年。他明天就能回家。但我不會撤回起訴——我有目擊證人。
+            mood: 硬
+        asks:
+          - who: 伊森・里維拉
+            text: 明天就能回家。可是我這輩子都是殺人犯了。妳覺得我該接受嗎？
+            mood: 緊
+    disclosed: [autopsy, watch-photo, ride-receipt, watch-notice, indictment, blood-report]
+    bluffs:
+      - id: b-time
+        label: 我有辦法證明沃斯在伊森進門前就死了。
+        needs: [autopsy, watch-photo]
+        strength: 20
+        believed:
+          - who: 黛安娜・莫羅
+            text: 手錶。……妳拿到那支手錶的資料了。
+            mood: 硬
+        caught:
+          - who: 黛安娜・莫羅
+            text: 妳開示給我的清單裡沒有那種東西。別在我這裡唬人，韓律師。
+            mood: 硬
+      - id: b-witness
+        label: 我有人可以證明妳的證人整晚不在座位上。
+        needs: [meeting-name]
+        strength: 25
+        believed:
+          - who: 黛安娜・莫羅
+            text: 誰？
+            mood: 硬
+        caught:
+          - who: 黛安娜・莫羅
+            text: 清單上沒有這個人。妳在虛張聲勢，而且我記住了。
+            mood: 硬
+    reveals:
+      - who: 黛安娜・莫羅
+        text: ……讓我看一下。
+        mood: 硬
+    walkOut:
+      - who: 黛安娜・莫羅
+        text: 那就法庭見。我的條件在開庭前會回到原點。
+        mood: 硬
+      - who: 艾莉絲
+        text: 我知道。我也知道我為什麼不能替他決定。
+        thought: true
+    accepted:
+      - who: 伊森・里維拉
+        text: 好。就這樣吧。
+        mood: 緊
+      - who: 艾莉絲
+        text: 十二年前我也對另一個人說過「這是最好的選擇」。他死在裡面。
+        thought: true
+
+  - type: card
+    id: act4
+    act: 第四幕
+    title: 第四幕　庭審　第一天
+    lines:
+      - 卡爾德港高等法院　第三法庭
+      - 陪審團已經選定。檢方傳喚第一位證人。
+
+  # 庭審：柯瓦斯基（教學：異議、彈劾三步驟簡單版）
+  - type: trial
+    id: court-kowalski
+    act: 第四幕
+    day: 第一天
+    threshold: 70
+    patience: 5
+    jurors:
+      - id: j1
+        label: 退休警察
+        leans: [權威]
+        start: 58
+      - id: j2
+        label: 軟體工程師
+        leans: [邏輯]
+        start: 50
+      - id: j3
+        label: 超市店長、單親媽媽
+        leans: [情感]
+        start: 48
+      - id: j4
+        label: 會計師
+        leans: [邏輯, 權威]
+        start: 56
+        foreperson: true
+      - id: j5
+        label: 大學生
+        leans: [程序]
+        start: 46
+      - id: j6
+        label: 護理師
+        leans: [情感, 邏輯]
+        start: 50
+      - id: j7
+        label: 貨運司機
+        leans: [權威]
+        start: 54
+      - id: j8
+        label: 高中老師
+        leans: [程序, 情感]
+        start: 48
+      - id: j9
+        label: 保險理賠員
+        leans: [邏輯]
+        start: 52
+      - id: j10
+        label: 麵包店老闆
+        leans: [情感]
+        start: 50
+      - id: j11
+        label: 圖書館員
+        leans: [程序]
+        start: 47
+      - id: j12
+        label: 建築工地領班
+        leans: [權威, 情感]
+        start: 55
+    intro:
+      - who: 羅根
+        text: 檢方直接詰問的時候，每個問題妳都有一次異議的機會。理由錯了，法官的耐心就少一格。
+        mood: 硬
+      - who: 艾莉絲
+        text: 五格耐心。用完之前，我得讓陪審團知道這個警探沒查什麼。
+        thought: true
+    witness:
+      name: 柯瓦斯基
+      role: 重案組警探・服務 22 年
+      direct:
+        - id: d1
+          q: 警探，請說明您到達現場時看到的情況。
+          a: 死者倒在辦公桌旁，頭部有重擊傷。桌上的水晶獎盃掉在地毯上，上面有血。
+          impact: 8
+          tags: [權威]
+        - id: d2
+          q: 門禁紀錄顯示被告 22:47 上樓。這代表他在案發時間在場，對不對？
+          a: 對，這正是我們鎖定他的原因。
+          objection: 誘導
+          sustained: 異議成立。檢察官，請不要把答案放進問題裡。
+          impact: 10
+          tags: [邏輯, 權威]
+        - id: d3
+          q: 大樓警衛跟您說，他看到被告驚慌地跑出大廳，是嗎？
+          a: 警衛是這樣告訴我的。
+          objection: 傳聞
+          sustained: 異議成立。警衛本人可以自己來作證。
+          impact: 10
+          tags: [情感]
+        - id: d4
+          q: 以您二十二年的辦案經驗，被告當時的心裡在想什麼？
+          a: 一個剛犯下重罪的人會想的事：離開現場。
+          objection: 推測
+          sustained: 異議成立。證人不是被告肚子裡的蛔蟲。
+          impact: 8
+          tags: [權威, 情感]
+        - id: d5
+          q: 被告四年前也曾經被逮捕，您知道嗎？
+          a: 我調過他的紀錄，持有毒品。
+          objection: 無關
+          sustained: 異議成立。陪審團請忽略這個問題。檢察官，妳很清楚不能這樣問。
+          impact: 12
+          tags: [情感, 權威]
+        - id: d6
+          q: 警探，逮捕當天，被告在警車上說了什麼？
+          a: 他自己開口說：「我只是想讓他住手。」沒有人問他任何問題。
+          impact: 15
+          tags: [情感, 權威]
+      claims:
+        - id: c-checked
+          text: 我們檢查了所有跟被告有關的證據。
+          argument: arg-a
+          needs: watch-notice
+          lock:
+            strong:
+              q: 警探，「所有」是指所有。您是不是要告訴陪審團，這個案子裡沒有一樣東西您沒查？
+              a: 我是說，該查的我們都查了。凶器、門禁、指紋、血跡，全部。
+            weak:
+              q: 你們大概都查過了吧？
+              a: 我們查了該查的東西。案發現場能採的都採了。
+          setup:
+            q: 在那之前先請教一個常識問題：智慧手錶會同步手機的通知，這一點您同意嗎？
+            a: ……會。這是常識。
+          confront:
+            strong: （很長的停頓）那則通知……我沒有看過。被告的手機裡沒有那則訊息，所以我們沒有再往下查。
+            weak: 我說的是該查的都查了。手錶那種東西，我們通常不會特別去調。
+      irrelevant:
+        - q: 警探，您辦過多少件命案？
+          a: 加上這件，一百一十七件。
+        - q: 您是什麼時候決定被告就是兇手的？
+          a: 我沒有「決定」，我是依證據辦案。
+      breakdown: （陪審席上，那位軟體工程師放下了筆，看著證人席。）
+    outro:
+      - who: 旁白
+        text: 法官宣布休庭。走廊上，莫羅檢察官從後面追上來。
+      - who: 莫羅
+        text: 韓律師。過失致死，緩刑五年。這是我最後的條件。
+      - who: 艾莉絲
+        text: 她在庭上從來不追人講話。她開始怕了。
+        thought: true
+
+  - type: card
+    id: slice-end
+    act: 垂直切片
+    title: 待續
+    lines:
+      - 第 1 集的其餘內容（陪審團遴選、瑞秋的詰問、結辯與判決）在 Alpha 階段補齊。

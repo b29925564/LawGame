@@ -4,7 +4,7 @@ async function chain(page: Page, question: string, cards: string[], relation: st
   const panel = page.locator('section.chain').filter({ hasText: question });
   await panel.getByRole('button', { name: '＋ 放卡片' }).first().click();
   for (const c of cards) await panel.getByRole('button', { name: c, exact: true }).click();
-  await panel.getByRole('radio', { name: relation }).click();
+  await panel.getByRole('radio', { name: new RegExp(relation) }).click();
   await panel.getByRole('button', { name: /提交到案情會議/ }).click();
   await expect(panel.getByText('案情會議通過')).toBeVisible();
 }
@@ -19,6 +19,7 @@ async function impeach(page: Page, claim: string, lockQ: string, setupQ: string,
 
 test('自動通關：三次彈劾成功，判決無罪', async ({ page }) => {
   await page.goto('/');
+  await page.getByRole('button', { name: /系統原型/ }).click();
   await page.getByRole('button', { name: '打開證據板' }).click();
 
   await chain(page, '伊森為什麼', ['伊森手錶的通知', '叫車收據'], '支持');
