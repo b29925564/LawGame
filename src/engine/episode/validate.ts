@@ -181,6 +181,21 @@ function trialErrors(s: TrialScene, available: Set<string>, args: Set<string>, e
   for (const c of s.witness.claims) {
     if (!args.has(c.argument)) errors.push(`對質 ${c.id} 需要的論點 ${c.argument} 沒有人產得出來`);
     if (!available.has(c.needs)) errors.push(`對質 ${c.id} 的鋪陳需要玩家拿不到的卡片 ${c.needs}`);
+    if (c.anchor && !available.has(c.anchor))
+      errors.push(`對質 ${c.id} 說可以用 ${c.anchor} 跳過鎖定，但沒有任何一幕產得出來`);
+    // 底牌反擊要破解得了，否則洩漏一次就永遠減半。
+    if (c.counter) {
+      if (!available.has(c.counter.needs))
+        errors.push(`對質 ${c.id} 的反擊要用 ${c.counter.needs} 破解，但玩家拿不到`);
+      if (!args.has(c.counter.argument))
+        errors.push(`對質 ${c.id} 的反擊針對的論點 ${c.counter.argument} 沒有人產得出來`);
+    }
+  }
+  if (s.fifth) {
+    if (!args.has(s.fifth.argument))
+      errors.push(`法庭 ${s.id} 的緘默權結局要出示 ${s.fifth.argument}，但沒有人產得出來`);
+    if (s.fifth.needs > s.witness.claims.length)
+      errors.push(`法庭 ${s.id} 的緘默權結局要 ${s.fifth.needs} 次彈劾，多於可拆的說法數`);
   }
 }
 

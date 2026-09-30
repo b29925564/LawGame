@@ -271,6 +271,19 @@ const trialScene = z.object({
           }),
           setup: z.object({ q: z.string(), a: z.string() }),
           confront: z.object({ strong: z.string(), weak: z.string() }),
+          /** 證詞錄取時已經定錨的說法：這一步視同完成鎖定（企劃書 6.9.4）。 */
+          anchor: id.optional(),
+          /** 對方的底牌反擊：論點先洩漏出去，檢方就備好了這一手（企劃書 6.8）。 */
+          counter: z
+            .object({
+              argument: id,
+              text: z.string(),
+              /** 破解要出示的卡片。 */
+              needs: id,
+              broken: z.string(),
+              failed: z.string(),
+            })
+            .optional(),
         }),
       )
       .min(1),
@@ -279,6 +292,10 @@ const trialScene = z.object({
   }),
   intro: z.array(line).default([]),
   outro: z.array(line).default([]),
+  /** 彈劾到一定程度又出示那個論點，證人當庭援引緘默權（企劃書 10.9 的 E1）。 */
+  fifth: z
+    .object({ needs: z.number().int().min(1), argument: id, lines: z.array(line).min(1) })
+    .optional(),
 });
 
 /**

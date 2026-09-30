@@ -38,7 +38,8 @@ export const JUDGE = '法官';
 export const YOU = '艾莉絲';
 export const DA = '莫羅檢察官';
 
-export function startTrial(s: TrialScene): TrialState {
+/** anchored＝證詞錄取時已經在宣誓下講死的說法，開庭時等於鎖定已經完成。 */
+export function startTrial(s: TrialScene, anchored: string[] = []): TrialState {
   return {
     stage: 'direct',
     i: 0,
@@ -49,7 +50,11 @@ export function startTrial(s: TrialScene): TrialState {
     claims: Object.fromEntries(
       s.witness.claims.map((c) => [
         c.id,
-        { lock: 'none', setup: false, result: 'none' } as ClaimState,
+        {
+          lock: c.anchor && anchored.includes(c.anchor) ? 'strong' : 'none',
+          setup: false,
+          result: 'none',
+        } as ClaimState,
       ]),
     ),
     asked: [],
@@ -167,6 +172,8 @@ export function confront(
   claimId: string,
   strength: number,
   tags: Tag[],
+  /** 出示的是哪個論點、有沒有洩漏過、手上有哪些卡片可以破解她的反擊。 */
+  arg: { id?: string; exposed?: boolean; cards?: string[] } = {},
 ): TrialState {
   const c = s.witness.claims.find((x) => x.id === claimId);
   const cur = st.claims[claimId];
@@ -180,18 +187,34 @@ export function confront(
   if (cur.lock === 'none') return say(st, { who: JUDGE, text: '律師，證人還沒有就這一點作證。' });
 
   const strong = cur.lock === 'strong';
-  const r = applyImpact(s, st.jury, strength, tags, strong ? 1.5 : 0.5);
-  const next = say(
+  // 底牌反擊（企劃書 6.8）：論點洩漏過，檢方早就備好說法，破解不了就衝擊減半。
+  const counter = c.counter && arg.exposed && c.counter.argument === arg.id ? c.counter : null;
+  const broke = !arg.exposed ? true : counter ? (arg.cards ?? []).includes(counter.needs) : false;
+  const rebuttal: LogLine[] = counter
+    ? [
+        { who: DA, text: counter.text },
+        { who: YOU, text: broke ? counter.broken : counter.failed },
+      ]
+    : [];
+  const r = applyImpact(s, st.jury, strength, tags, (strong ? 1.5 : 0.5) * (broke ? 1 : 0.5));
+  const impeached = strong && broke;
+  let next = say(
     {
       ...st,
       jury: r.jury,
       deltas: r.deltas,
-      impeachments: st.impeachments + (strong ? 1 : 0),
-      claims: { ...st.claims, [claimId]: { ...cur, result: strong ? 'impeached' : 'softened' } },
+      impeachments: st.impeachments + (impeached ? 1 : 0),
+      claims: { ...st.claims, [claimId]: { ...cur, result: impeached ? 'impeached' : 'softened' } },
     },
-    { who: s.witness.name, text: strong ? c.confront.strong : c.confront.weak },
+    ...rebuttal,
+    { who: s.witness.name, text: impeached ? c.confront.strong : c.confront.weak },
   );
-  return strong ? say(next, { who: '旁白', text: s.witness.breakdown }) : next;
+  if (impeached) next = say(next, { who: '旁白', text: s.witness.breakdown });
+  // 彈劾夠多次又出示了那個論點，她就當庭援引緘默權，詰問到此為止。
+  const f = s.fifth;
+  if (f && arg.id === f.argument && next.impeachments >= f.needs)
+    next = say({ ...next, stage: 'done' }, ...f.lines.map((l) => ({ who: l.who, text: l.text })));
+  return next;
 }
 
 /** 糾纏：重複問同一件事，法官耐心 −1，重視情感的陪審員反感。 */

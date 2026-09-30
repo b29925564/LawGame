@@ -60,6 +60,9 @@ test('垂直切片可以一路走到彈劾成功', async ({ page }) => {
   await page.getByRole('button', { name: /看守所財物清單/ }).click();
   await page.getByRole('button', { name: /智慧手錶 1 支/ }).click();
   await page.getByRole('button', { name: '← 卷宗' }).click();
+  await page.getByRole('button', { name: /警方報告與附件/ }).click();
+  await page.getByRole('button', { name: /另有一組員工證於 23:26/ }).click();
+  await page.getByRole('button', { name: '← 卷宗' }).click();
 
   await page.getByRole('button', { name: '委託', exact: true }).click();
   await page
@@ -121,6 +124,21 @@ test('垂直切片可以一路走到彈劾成功', async ({ page }) => {
   await page.getByRole('button', { name: '我出庭答辯。' }).click();
   await expect(page.getByText('法官維持傳票')).toBeVisible();
   await page.getByRole('button', { name: '回到桌面' }).click();
+
+  // 拿到心率與稽核紀錄之後，把論點 B、C、D 也拼起來。
+  await page.getByRole('button', { name: '證據板' }).click();
+  const chains: [string, string[], RegExp][] = [
+    ['沃斯是什麼時候死的', ['驗屍報告', '沃斯手錶的心率紀錄'], /支持/],
+    ['那則訊息是誰傳的', ['聊天系統稽核紀錄', '論點 B：沃斯 22:24 死亡'], /矛盾/],
+    ['31 樓還剩誰', ['聊天系統稽核紀錄', '完整門禁紀錄'], /說明機會/],
+  ];
+  for (const [title, cards, relation] of chains) {
+    const c = page.locator('section.chain').filter({ hasText: title });
+    await c.locator('summary').click();
+    for (const card of cards) await c.getByRole('button', { name: card, exact: true }).click();
+    await c.getByRole('radio', { name: relation }).click();
+    await c.getByRole('button', { name: /提交到案情會議/ }).click();
+  }
 
   // 收工，海爾在開庭前說出彈劾三步驟的那句話。
   await page.getByRole('button', { name: '結束調查' }).click();
@@ -208,10 +226,36 @@ test('垂直切片可以一路走到彈劾成功', async ({ page }) => {
 
   await page.getByRole('button', { name: /「所有」是指所有/ }).click();
   await page.getByRole('button', { name: /智慧手錶會同步手機的通知/ }).click();
-  // 談判裡攤牌過的論點，庭上會標成已洩漏，衝擊減半。
+  // 談判裡攤牌過的論點，庭上會標成已洩漏：對方備好了反擊。
   await expect(page.getByRole('button', { name: /出示 論點 A.*已洩漏/ })).toBeVisible();
   await page.getByRole('button', { name: /出示 論點 A/ }).click();
   await expect(page.getByText('那則通知……我沒有看過')).toBeVisible();
   await page.getByRole('button', { name: '詰問完畢' }).click();
   await expect(page.getByText('成功彈劾')).toBeVisible();
+  await next(page);
+  await next(page); // 第二天字卡
+
+  // 庭審第二天：瑞秋。錄取時定錨過的說法，這裡不必再鎖一次。
+  await page.getByRole('button', { name: '開庭' }).click();
+  for (let i = 0; i < 7; i++) {
+    await page.getByRole('button', { name: '聽下一個問題' }).click();
+    await page.getByRole('button', { name: '不異議' }).click();
+  }
+  await page.getByRole('button', { name: '開始交互詰問' }).click();
+
+  const heard = page.locator('article.claim').filter({ hasText: '十點五十分聽見' });
+  await expect(heard.locator('li.done').first()).toBeVisible();
+  await heard.getByRole('button', { name: /智慧手錶會記錄心率/ }).click();
+  await heard.getByRole('button', { name: /出示 論點 B/ }).click();
+
+  const meeting = page.locator('article.claim').filter({ hasText: '全程在線上會議' });
+  await meeting.getByRole('button', { name: /出席紀錄由系統自動產生/ }).click();
+  await meeting.getByRole('button', { name: /出示 論點 C/ }).click();
+
+  // 兩次彈劾之後出示論點 D，她當庭援引緘默權。
+  const floor = page.locator('article.claim').filter({ hasText: '三十一樓還有誰' });
+  await floor.getByRole('button', { name: /那個時間，三十一樓除了您/ }).click();
+  await floor.getByRole('button', { name: /門禁紀錄顯示/ }).click();
+  await floor.getByRole('button', { name: /出示 論點 D/ }).click();
+  await expect(page.getByText('自證己罪')).toBeVisible();
 });

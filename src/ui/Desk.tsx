@@ -246,7 +246,16 @@ function Cards({ scene, held }: { scene: DeskScene; held: string[] }) {
 function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
   const { progress, toggleCard, setRelation, submit, toggleTimeline, moveTimeline } = useEpisode();
   const st = deskState(progress, scene);
-  const pool = scene.cards.filter((c) => held.includes(c.id));
+  // 確認過的論點也是卡片，後面的推理鏈可以拿它當前提（例如「那則訊息是誰傳的」要用論點 B）。
+  const args = scene.questions
+    .filter((q) => st.confirmed.includes(q.id))
+    .map((q) => ({
+      id: q.argument.id,
+      name: q.argument.name,
+      kind: '論點' as const,
+      text: q.argument.text,
+    }));
+  const pool = [...args, ...scene.cards.filter((c) => held.includes(c.id))];
   const [view, setView] = useState<'chains' | 'timeline'>('chains');
   if (view === 'timeline')
     return (
@@ -279,7 +288,7 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
                 <ul className="slots-row">
                   {Array.from({ length: q.answer.length }, (_, i) => (
                     <li key={i} className={a.cards[i] ? 'slot-card filled' : 'slot-card'}>
-                      {a.cards[i] ? scene.cards.find((c) => c.id === a.cards[i])?.name : '（空）'}
+                      {a.cards[i] ? pool.find((c) => c.id === a.cards[i])?.name : '（空）'}
                     </li>
                   ))}
                 </ul>

@@ -188,6 +188,12 @@ export function Courtroom({ scene: raw }: { scene: TrialScene }) {
           <dd>{deskDone && deskScene ? `${deskDone.spent} / ${deskScene.hours}` : '—'}</dd>
         </dl>
         <Jurors scene={scene} jury={st.jury} deltas={{}} />
+        {/* 詰問的最後幾句話——高潮就在這裡，休庭畫面不該把它吃掉。 */}
+        <div className="lines transcript">
+          {st.log.slice(-4).map((l, i) => (
+            <Speech key={i} line={{ ...l, mood: '平', thought: false }} />
+          ))}
+        </div>
         <div className="lines">
           {scene.outro.map((l, i) => (
             <Speech key={i} line={l} />
@@ -278,16 +284,10 @@ export function Courtroom({ scene: raw }: { scene: TrialScene }) {
                             <button
                               key={a.id}
                               className="wide"
-                              onClick={() =>
-                                confront(
-                                  c.id,
-                                  leaked ? Math.round(a.strength / 2) : a.strength,
-                                  a.tags as Tag[],
-                                )
-                              }
+                              onClick={() => confront(c.id, a.strength, a.tags as Tag[], a.id)}
                             >
                               出示 {a.name}
-                              {leaked && '（已洩漏，衝擊減半）'}
+                              {leaked && '（已洩漏，她備好了反擊）'}
                             </button>
                           );
                         })}

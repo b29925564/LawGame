@@ -93,7 +93,7 @@ export function courtScene(p: Progress, s: TrialScene): TrialScene {
 }
 
 export function trialState(p: Progress, s: TrialScene) {
-  return stateOf(p, s, () => trial.startTrial(courtScene(p, s)));
+  return stateOf(p, s, () => trial.startTrial(courtScene(p, s), anchoredClaims(p)));
 }
 
 export function depoState(p: Progress, s: DepositionScene) {
@@ -163,7 +163,7 @@ interface GameState {
   toCross: () => void;
   lock: (claim: string, how: 'strong' | 'weak') => void;
   setup: (claim: string) => void;
-  confront: (claim: string, strength: number, tags: Tag[]) => void;
+  confront: (claim: string, strength: number, tags: Tag[], argument: string) => void;
   badger: (i: number) => void;
   finishTrial: () => void;
   /** 陪審團遴選 */
@@ -210,7 +210,7 @@ export const useEpisode = create<GameState>()((set, get) => {
   );
   const onDesk = on<DeskScene, desk.DeskState>('desk', desk.startDesk);
   const onTrial = on<TrialScene, trial.TrialState>('trial', (s) =>
-    trial.startTrial(courtScene(get().progress, s)),
+    trial.startTrial(courtScene(get().progress, s), anchoredClaims(get().progress)),
   );
   const onVoirDire = on<VoirDireScene, voirdire.VoirDireState>('voirdire', voirdire.startVoirDire);
   const onDepo = on<DepositionScene, depo.DepoState>('deposition', depo.startDeposition);
@@ -308,8 +308,14 @@ export const useEpisode = create<GameState>()((set, get) => {
     toCross: () => onTrial((s, st) => trial.toCross(s, st)),
     lock: (claim, how) => onTrial((s, st) => trial.lock(s, st, claim, how)),
     setup: (claim) => onTrial((s, st) => trial.setup(s, st, claim)),
-    confront: (claim, strength, tags) =>
-      onTrial((s, st) => trial.confront(s, st, claim, strength, tags)),
+    confront: (claim, strength, tags, argument) =>
+      onTrial((s, st) =>
+        trial.confront(s, st, claim, strength, tags, {
+          id: argument,
+          exposed: exposedArgs(get().progress).includes(argument),
+          cards: get().progress.cards,
+        }),
+      ),
     badger: (i) => onTrial((s, st) => trial.badger(s, st, i)),
     askJuror: (id) => onVoirDire((s, st) => voirdire.ask(s, st, id)),
     challengeJuror: (id) => onVoirDire((s, st) => voirdire.challenge(s, st, id)),
