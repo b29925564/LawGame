@@ -281,6 +281,95 @@ const trialScene = z.object({
   outro: z.array(line).default([]),
 });
 
+/**
+ * 證詞錄取（企劃書 6.7）：庭外、宣誓、12 個提問額度。
+ * 每個問題可以定錨（把說法講死，開庭時直接跳過鎖定）或探路（問出新資訊），
+ * 而標了 tip 的問題會洩漏方向，對應論點被標成「已揭露」。
+ */
+const depositionScene = z.object({
+  type: z.literal('deposition'),
+  id,
+  act: z.string(),
+  place: z.string(),
+  budget: z.number().int().min(1),
+  witness: z.object({ name: z.string(), role: z.string() }),
+  intro: z.array(line).default([]),
+  outro: z.array(line).default([]),
+  topics: z
+    .array(
+      z.object({
+        id,
+        label: z.string(),
+        questions: z
+          .array(
+            z.object({
+              id,
+              q: z.string(),
+              a: z.string(),
+              /** 問完就把這個說法鎖成宣誓陳述，開庭時可以跳過鎖定那一步。 */
+              anchors: id.optional(),
+              /** 問出來的新卡片。 */
+              gives: z.array(id).default([]),
+              /** 底牌話題：問了就洩漏方向，對應論點被標成已揭露。 */
+              tips: z.array(id).default([]),
+              /** 對方律師的異議，但證人照樣要回答。 */
+              objection: z.string().optional(),
+            }),
+          )
+          .min(1),
+      }),
+    )
+    .min(1),
+});
+
+/**
+ * 談判：認罪協商（企劃書 6.8）。對方有信心與看不見的底線，
+ * 攤牌會洩漏論點，虛張聲勢要看證據清單撐不撐得住。
+ */
+const negotiationScene = z.object({
+  type: z.literal('negotiation'),
+  id,
+  act: z.string(),
+  place: z.string(),
+  opponent: z.object({ name: z.string(), role: z.string() }),
+  client: z.object({ name: z.string(), trust: z.number().int().min(0).max(5) }),
+  confidence: z.number().int().min(0).max(100),
+  rounds: z.number().int().min(1),
+  intro: z.array(line).default([]),
+  /** 信心落在 min 以上時，對方開的條件。由高到低寫。 */
+  offers: z
+    .array(
+      z.object({
+        id,
+        min: z.number().int().min(0).max(100),
+        label: z.string(),
+        lines: z.array(line).min(1),
+        /** 委託人問「妳覺得我該接受嗎」的那一句。 */
+        asks: z.array(line).default([]),
+      }),
+    )
+    .min(2),
+  /** 虛張聲勢時可以聲稱的論點：對方會核對證據清單。 */
+  bluffs: z
+    .array(
+      z.object({
+        id,
+        label: z.string(),
+        /** 撐得起這個說法的證據；有一張不在開示清單上就被識破。 */
+        needs: z.array(id).min(1),
+        strength: z.number().int().min(1),
+        believed: z.array(line).min(1),
+        caught: z.array(line).min(1),
+      }),
+    )
+    .default([]),
+  /** 已開示給對方的證據清單（審前交換過的）。 */
+  disclosed: z.array(id).default([]),
+  reveals: z.array(line).default([]),
+  walkOut: z.array(line).min(1),
+  accepted: z.array(line).min(1),
+});
+
 const scene = z.discriminatedUnion('type', [
   z.object({
     type: z.literal('phone'),
@@ -299,6 +388,8 @@ const scene = z.discriminatedUnion('type', [
   interviewScene,
   deskScene,
   trialScene,
+  depositionScene,
+  negotiationScene,
   /** 片頭或幕與幕之間的標題卡。 */
   z.object({
     type: z.literal('card'),
@@ -324,6 +415,10 @@ export type DialogueScene = Extract<Scene, { type: 'dialogue' }>;
 export type InterviewScene = Extract<Scene, { type: 'interview' }>;
 export type DeskScene = Extract<Scene, { type: 'desk' }>;
 export type TrialScene = Extract<Scene, { type: 'trial' }>;
+export type DepositionScene = Extract<Scene, { type: 'deposition' }>;
+export type NegotiationScene = Extract<Scene, { type: 'negotiation' }>;
+export type DepoQuestion = DepositionScene['topics'][number]['questions'][number];
+export type Offer = NegotiationScene['offers'][number];
 export type Line = z.infer<typeof line>;
 export type Card = z.infer<typeof card>;
 export type Question = z.infer<typeof question>;

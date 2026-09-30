@@ -5,10 +5,12 @@ import { useGame } from '../engine/store';
 import { Board } from './Board';
 import { Court } from './Court';
 import { Courtroom } from './Courtroom';
+import { Deposition } from './Deposition';
 import { Desk } from './Desk';
 import { Dialogue } from './Dialogue';
 import { GameMenu } from './GameMenu';
 import { Interview } from './Interview';
+import { Negotiation } from './Negotiation';
 import { Phone } from './Phone';
 import { Intro, VerdictScreen } from './Scenes';
 import { Title } from './Title';
@@ -40,6 +42,8 @@ export function App() {
       {scene?.type === 'interview' && <Interview key={scene.id} scene={scene} />}
       {scene?.type === 'desk' && <Desk key={scene.id} scene={scene} />}
       {scene?.type === 'trial' && <Courtroom key={scene.id} scene={scene} />}
+      {scene?.type === 'deposition' && <Deposition key={scene.id} scene={scene} />}
+      {scene?.type === 'negotiation' && <Negotiation key={scene.id} scene={scene} />}
       {(!scene || scene.type === 'card') && (
         <main className="scene title-card">
           <p className="eyebrow">{scene?.act ?? '本集完'}</p>

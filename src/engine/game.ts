@@ -1,10 +1,20 @@
 import { create } from 'zustand';
 import { episodes } from '../content';
 import type { Relation, Tag } from './schema';
+import * as depo from './episode/deposition';
 import * as desk from './episode/desk';
 import * as interview from './episode/interview';
+import * as nego from './episode/negotiation';
 import { canAdvance } from './episode/phone';
-import type { DeskScene, Episode, InterviewScene, Scene, TrialScene } from './episode/schema';
+import type {
+  DepositionScene,
+  DeskScene,
+  Episode,
+  InterviewScene,
+  NegotiationScene,
+  Scene,
+  TrialScene,
+} from './episode/schema';
 import * as trial from './episode/trial';
 import { readSave, writeSave, type Progress, type Slot } from './save';
 
@@ -65,6 +75,35 @@ export function trialState(p: Progress, s: TrialScene) {
   return stateOf(p, s, () => trial.startTrial(s));
 }
 
+export function depoState(p: Progress, s: DepositionScene) {
+  return stateOf(p, s, () => depo.startDeposition(s));
+}
+
+export function negoState(p: Progress, s: NegotiationScene) {
+  return stateOf(p, s, () => nego.startNegotiation(s));
+}
+
+/** 洩漏出去的論點：談判攤牌過或錄取時問到底牌話題的，庭上衝擊減半（企劃書 6.8）。 */
+export function exposedArgs(p: Progress): string[] {
+  const e = episodeOf(p);
+  const out: string[] = [];
+  for (const s of e.scenes) {
+    const st = p.scenes[s.id];
+    if (!st) continue;
+    if (s.type === 'deposition') out.push(...(st as depo.DepoState).exposed);
+    if (s.type === 'negotiation') out.push(...(st as nego.NegoState).exposed);
+  }
+  return [...new Set(out)];
+}
+
+/** 錄取時已經定錨的說法，開庭時可以跳過鎖定那一步（企劃書 6.9.4）。 */
+export function anchoredClaims(p: Progress): string[] {
+  const e = episodeOf(p);
+  return e.scenes.flatMap((s) =>
+    s.type === 'deposition' ? ((p.scenes[s.id] as depo.DepoState)?.anchored ?? []) : [],
+  );
+}
+
 interface GameState {
   mode: Mode;
   progress: Progress;
@@ -106,6 +145,14 @@ interface GameState {
   confront: (claim: string, strength: number, tags: Tag[]) => void;
   badger: (i: number) => void;
   finishTrial: () => void;
+  /** 證詞錄取 */
+  askDepo: (question: string) => void;
+  finishDepo: () => void;
+  /** 談判 */
+  revealArg: (id: string, strength: number, name: string) => void;
+  bluff: (id: string) => void;
+  advise: (take: boolean) => void;
+  walkOut: () => void;
 }
 
 export const useEpisode = create<GameState>()((set, get) => {
@@ -137,6 +184,8 @@ export const useEpisode = create<GameState>()((set, get) => {
   );
   const onDesk = on<DeskScene, desk.DeskState>('desk', desk.startDesk);
   const onTrial = on<TrialScene, trial.TrialState>('trial', trial.startTrial);
+  const onDepo = on<DepositionScene, depo.DepoState>('deposition', depo.startDeposition);
+  const onNego = on<NegotiationScene, nego.NegoState>('negotiation', nego.startNegotiation);
 
   return {
     mode: 'title',
@@ -233,6 +282,18 @@ export const useEpisode = create<GameState>()((set, get) => {
     confront: (claim, strength, tags) =>
       onTrial((s, st) => trial.confront(s, st, claim, strength, tags)),
     badger: (i) => onTrial((s, st) => trial.badger(s, st, i)),
+    askDepo: (q) =>
+      onDepo(
+        (s, st) => depo.ask(s, st, q),
+        (_s, st) => st.gained,
+      ),
+    finishDepo: () => onDepo((_s, st) => depo.finish(st)),
+
+    revealArg: (id, strength, name) => onNego((s, st) => nego.reveal(s, st, id, strength, name)),
+    bluff: (id) => onNego((s, st) => nego.bluff(s, st, id)),
+    advise: (take) => onNego((s, st) => nego.advise(s, st, take)),
+    walkOut: () => onNego((s, st) => nego.walk(s, st)),
+
     finishTrial: () => onTrial((_s, st) => trial.finish(st)),
   };
 });

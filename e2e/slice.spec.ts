@@ -126,6 +126,52 @@ test('垂直切片可以一路走到彈劾成功', async ({ page }) => {
   await page.getByRole('button', { name: '結束調查' }).click();
   await expect(page.getByText('先讓他把話說死，再拿出證據。')).toBeVisible();
   await page.getByRole('button', { name: '開庭' }).click();
+  await next(page); // 第三幕字卡
+
+  // 第三幕之一：米蘭達動議
+  await page.getByRole('button', { name: '卷宗', exact: true }).click();
+  await page.getByRole('button', { name: /逮捕報告與巡邏車錄影/ }).click();
+  await page.getByRole('button', { name: /逮捕時間 03:40/ }).click();
+  await page.getByRole('button', { name: /沒有唸出任何權利告知/ }).click();
+  await page.getByRole('button', { name: '← 卷宗' }).click();
+  await page.getByRole('button', { name: '證據板' }).click();
+  const miranda = page.locator('section.chain').filter({ hasText: '車上那句話' });
+  await miranda.locator('summary').click();
+  await miranda.getByRole('button', { name: '逮捕報告', exact: true }).click();
+  await miranda.getByRole('button', { name: '巡邏車錄影：沒有警告' }).click();
+  await miranda.getByRole('radio', { name: /矛盾/ }).click();
+  await miranda.getByRole('button', { name: /提交到案情會議/ }).click();
+  await page.getByRole('button', { name: '法院系統' }).click();
+  const mm = page.locator('li.job').filter({ hasText: '巡邏車上的供述' });
+  await mm.getByRole('radio', { name: '米蘭達警告' }).click();
+  await mm.getByRole('button', { name: /供述取得程序違法/ }).click();
+  await mm.getByRole('radio', { name: '排除該項供述' }).click();
+  await mm.getByRole('button', { name: /送出/ }).click();
+  await expect(page.getByText('本庭排除該項供述')).toBeVisible();
+  await page.getByRole('button', { name: '回到桌面' }).click();
+  await page.getByRole('button', { name: '結束調查' }).click();
+  await next(page, '開庭');
+
+  // 第三幕之二：證詞錄取。無害的問題定錨，底牌話題留著不問。
+  await page.getByRole('button', { name: '開始錄取' }).click();
+  await page.getByRole('button', { name: /妳說妳聽見隔壁有人倒地/ }).click();
+  await page.getByRole('button', { name: '那場會議' }).click();
+  await page.getByRole('button', { name: /整晚都在線上會議/ }).click();
+  await page.getByRole('button', { name: '結束錄取' }).click();
+  await expect(page.getByText('宣誓下定錨的說法')).toBeVisible();
+  await next(page);
+
+  // 第三幕之三：認罪協商。虛張聲勢被識破，攤牌，最後建議伊森撐下去。
+  await page.getByRole('button', { name: '坐下' }).click();
+  await expect(page.getByText('二級謀殺，十五年').first()).toBeVisible();
+  await page.getByRole('button', { name: /證明妳的證人整晚不在座位上/ }).click();
+  await expect(page.getByText('妳在虛張聲勢')).toBeVisible();
+  await page.getByRole('button', { name: /亮出 論點 A/ }).click();
+  await page.getByRole('button', { name: '建議他撐下去' }).click();
+  await page.getByRole('button', { name: '離席' }).click();
+  await expect(page.getByText('那就法庭見')).toBeVisible();
+  await next(page);
+
   await next(page); // 第四幕字卡
   await page.getByRole('button', { name: '開庭' }).click(); // 羅根交代異議規則之後開庭
 
@@ -143,6 +189,8 @@ test('垂直切片可以一路走到彈劾成功', async ({ page }) => {
 
   await page.getByRole('button', { name: /「所有」是指所有/ }).click();
   await page.getByRole('button', { name: /智慧手錶會同步手機的通知/ }).click();
+  // 談判裡攤牌過的論點，庭上會標成已洩漏，衝擊減半。
+  await expect(page.getByRole('button', { name: /出示 論點 A.*已洩漏/ })).toBeVisible();
   await page.getByRole('button', { name: /出示 論點 A/ }).click();
   await expect(page.getByText('那則通知……我沒有看過')).toBeVisible();
   await page.getByRole('button', { name: '詰問完畢' }).click();

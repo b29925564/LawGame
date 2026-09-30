@@ -1,4 +1,4 @@
-import type { DeskScene, Episode, TrialScene } from './schema';
+import type { DepositionScene, DeskScene, Episode, NegotiationScene, TrialScene } from './schema';
 
 /** 劇本邏輯檢查（企劃書 v2.0 第 14 節）。CI 每個 PR 都跑，劇本錯了不會進 main。 */
 export function validateEpisode(e: Episode): string[] {
@@ -53,6 +53,8 @@ export function validateEpisode(e: Episode): string[] {
 
     if (s.type === 'desk') deskErrors(s, available, args, errors);
     if (s.type === 'trial') trialErrors(s, available, args, errors);
+    if (s.type === 'deposition') depoErrors(s, available, args, errors);
+    if (s.type === 'negotiation') negoErrors(s, available, args, errors);
   }
   return errors;
 }
@@ -65,8 +67,10 @@ function deskErrors(s: DeskScene, available: Set<string>, args: Set<string>, err
     dupes.add(c.id);
   }
   // 前面幕帶進來的卡片，也要在這一幕有定義，否則證據庫會顯示不出來。
+  // 論點卡是推理鏈產生的，定義在疑問裡，不必再寫進牌庫。
   for (const id of available)
-    if (!cards.has(id)) errors.push(`桌面 ${s.id} 少了前面幕帶進來的卡片定義 ${id}`);
+    if (!cards.has(id) && !args.has(id))
+      errors.push(`桌面 ${s.id} 少了前面幕帶進來的卡片定義 ${id}`);
 
   const reachable = new Set<string>([
     ...available,
@@ -170,4 +174,47 @@ function trialErrors(s: TrialScene, available: Set<string>, args: Set<string>, e
     if (!args.has(c.argument)) errors.push(`對質 ${c.id} 需要的論點 ${c.argument} 沒有人產得出來`);
     if (!available.has(c.needs)) errors.push(`對質 ${c.id} 的鋪陳需要玩家拿不到的卡片 ${c.needs}`);
   }
+}
+
+function depoErrors(
+  s: DepositionScene,
+  available: Set<string>,
+  args: Set<string>,
+  errors: string[],
+) {
+  const qs = s.topics.flatMap((t) => t.questions);
+  // 額度要真的是取捨：問題必須比額度多，否則玩家可以全問。
+  if (qs.length <= s.budget)
+    errors.push(`錄取 ${s.id} 只有 ${qs.length} 個問題，沒有多於 ${s.budget} 個提問額度`);
+  const ids = new Set<string>();
+  for (const q of qs) {
+    if (ids.has(q.id)) errors.push(`錄取 ${s.id} 的問題 id 重複：${q.id}`);
+    ids.add(q.id);
+    for (const t of q.tips)
+      if (!args.has(t)) errors.push(`錄取 ${s.id} 的底牌問題 ${q.id} 指到不存在的論點 ${t}`);
+    q.gives.forEach((g) => available.add(g));
+    if (q.anchors) available.add(q.anchors);
+  }
+  // 教學要成立：至少要有一個定錨問題，和一個會洩底的底牌問題。
+  if (!qs.some((q) => q.anchors)) errors.push(`錄取 ${s.id} 沒有任何可以定錨的問題`);
+  if (!qs.some((q) => q.tips.length)) errors.push(`錄取 ${s.id} 沒有任何底牌問題`);
+}
+
+function negoErrors(
+  s: NegotiationScene,
+  available: Set<string>,
+  _args: Set<string>,
+  errors: string[],
+) {
+  const sorted = [...s.offers].sort((a, b) => b.min - a.min);
+  if (sorted[sorted.length - 1].min !== 0) errors.push(`談判 ${s.id} 沒有信心歸零時的底線條件`);
+  for (const b of s.bluffs) {
+    for (const n of b.needs)
+      if (!available.has(n)) errors.push(`談判 ${s.id} 的虛張聲勢 ${b.id} 指到不存在的證據 ${n}`);
+    // 撐得起來的說法要真的撐得起來：需要的證據全在開示清單上才算可信。
+    if (b.needs.every((n) => s.disclosed.includes(n)) === false && b.caught.length === 0)
+      errors.push(`談判 ${s.id} 的虛張聲勢 ${b.id} 沒有被識破時的台詞`);
+  }
+  for (const d of s.disclosed)
+    if (!available.has(d)) errors.push(`談判 ${s.id} 開示了不存在的證據 ${d}`);
 }

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { TrialScene } from '../engine/episode/schema';
 import * as trial from '../engine/episode/trial';
-import { deskSceneOf, deskState, trialState, useEpisode } from '../engine/game';
+import { deskSceneOf, deskState, exposedArgs, trialState, useEpisode } from '../engine/game';
 import { reaction, type Jury } from '../engine/jury';
 import type { Tag } from '../engine/schema';
 import { useSettings } from '../engine/settings';
@@ -134,6 +134,8 @@ export function Courtroom({ scene }: { scene: TrialScene }) {
     .filter((q) => progress.cards.includes(q.argument.id))
     .map((q) => q.argument);
   const deskDone = deskScene ? deskState(progress, deskScene) : null;
+  // 談判攤牌過、或錄取時問到底牌話題的論點，對方已經備好反擊，衝擊減半（企劃書 6.8）。
+  const exposed = exposedArgs(progress);
 
   if (intro)
     return (
@@ -261,15 +263,25 @@ export function Courtroom({ scene }: { scene: TrialScene }) {
                     3 對質
                     {cs.result === 'none' && (
                       <div className="stack">
-                        {args.map((a) => (
-                          <button
-                            key={a.id}
-                            className="wide"
-                            onClick={() => confront(c.id, a.strength, a.tags as Tag[])}
-                          >
-                            出示 {a.name}
-                          </button>
-                        ))}
+                        {args.map((a) => {
+                          const leaked = exposed.includes(a.id);
+                          return (
+                            <button
+                              key={a.id}
+                              className="wide"
+                              onClick={() =>
+                                confront(
+                                  c.id,
+                                  leaked ? Math.round(a.strength / 2) : a.strength,
+                                  a.tags as Tag[],
+                                )
+                              }
+                            >
+                              出示 {a.name}
+                              {leaked && '（已洩漏，衝擊減半）'}
+                            </button>
+                          );
+                        })}
                         {args.length === 0 && <span className="muted">手上沒有論點可以出示。</span>}
                       </div>
                     )}
