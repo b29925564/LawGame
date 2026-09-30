@@ -32,11 +32,13 @@ _cards: &cards
   - id: ethan-report
     name: 伊森的說法：他先檢舉了沃斯
     kind: 陳述
+    date: 週三
     text: 週三以匿名系統檢舉一筆 3,800 萬美元的應收帳款，掛在空殼公司北門貨運名下。他記得舉報編號。
     source: 看守所會見
   - id: ethan-trophy
     name: 伊森的說法：獎盃
     kind: 陳述
+    date: 週五
     text: 他蹲下探脈搏，站起來時獎盃就在手上，自己也說不出為什麼。
     source: 看守所會見
   - id: indictment
@@ -159,6 +161,8 @@ _cards: &cards
   - id: rachel-2250
     name: 瑞秋的宣誓陳述：22:50 的聲音
     kind: 宣誓陳述
+    date: 週五
+    time: '22:50'
     text: 她在錄取時宣誓說，22:50 聽見隔壁房間有人倒地的聲音。
     source: 證詞錄取
   - id: rachel-meeting
@@ -584,6 +588,7 @@ scenes:
         label: 打電話給蘇菲，問沃斯平常的習慣
         detail: 執行助理最清楚他的日常。她是檢方證人，問得出什麼不一定。
         cost: 1
+        needs: [watch-photo]
         report:
           - who: 蘇菲
             text: 他那支錶是去年買的。每天早上、每次開完會，他都低頭看健康 App，數字不好看就發脾氣。
@@ -596,6 +601,7 @@ scenes:
         label: 請蘿莎到卡爾德大樓外看一看
         detail: 現場、出入口、警衛的動線。不一定查得到什麼。
         cost: 3
+        needs: [access-full]
         report:
           - who: 蘿莎
             text: 大廳閘門只有一道，員工證刷了才過得去。地下停車場另有一個出口，不刷卡。

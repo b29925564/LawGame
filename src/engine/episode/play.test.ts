@@ -91,6 +91,7 @@ describe('桌面調查', () => {
   it('疑問要拿發現回答，全對才確認，錯了照樣扣工時而且不說哪裡錯', () => {
     let st = desk.commission(investigate, play(), 'job-watch', ['ethan-message']);
     st = desk.commission(investigate, st, 'job-ride', ['ethan-ride']);
+    st = desk.mark(investigate, st, 'watch-photo');
     st = desk.commission(investigate, st, 'job-sophie', []);
     st = linkUp(st, ['watch-notice', 'ride-receipt'], '支持');
     st = linkUp(st, ['watch-photo', 'sophie-health-app'], '支持');
@@ -368,5 +369,16 @@ describe('疑問 4：那則訊息是不是沃斯本人傳的', () => {
     expect(desk.fits(q.answer, q.accept, ['l-dead-sender'])).toBe(true);
     expect(desk.fits(q.answer, q.accept, ['arg-b'])).toBe(true);
     expect(desk.fits(q.answer, q.accept, ['arg-a'])).toBe(false);
+  });
+});
+
+describe('委託的前提', () => {
+  it('沒有相關卡片就不能委託，有了才行', () => {
+    const st = desk.startDesk(investigate);
+    expect(desk.canCommission(investigate, st, 'job-sophie')).toBe(false);
+    expect(desk.canCommission(investigate, st, 'job-rosa')).toBe(false);
+    const marked = desk.mark(investigate, desk.mark(investigate, st, 'watch-photo'), 'access-full');
+    expect(desk.canCommission(investigate, marked, 'job-sophie')).toBe(true);
+    expect(desk.canCommission(investigate, marked, 'job-rosa')).toBe(true);
   });
 });
