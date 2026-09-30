@@ -122,8 +122,10 @@ describe('陪審團平衡', () => {
     expect(s.verdict).toBe('無罪');
   });
 
-  it('兩次彈劾成功就足以無罪', () => {
-    expect(play(['strong', 'strong', null]).verdict).toBe('無罪');
+  // 特質倍率補上 0.5 之後（企劃書 6.10），說詞說不中的陪審員幾乎不動，
+  // 所以兩次彈劾會留下死不鬆口的人：僵局，不是無罪也不是有罪。
+  it('兩次彈劾成功：陪審團僵局', () => {
+    expect(play(['strong', 'strong', null]).verdict).toBe('陪審團僵局');
   });
 
   it('只彈劾一次：有罪', () => {

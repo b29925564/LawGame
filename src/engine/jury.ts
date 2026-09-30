@@ -15,8 +15,14 @@ export function startJury(c: JuryRules): Jury {
 
 const clamp = (v: number) => Math.max(0, Math.min(100, Math.round(v)));
 
+/**
+ * 特質倍率（企劃書 6.10）：說中他的取向 ×1.5；完全不對盤 ×0.5。
+ * 有兩個取向的人立場比較硬，說詞沒說中他關心的事，對他幾乎沒有用——
+ * 這也是陪審團會出現僵局、而不是整團一起倒的原因。
+ */
 export function traitMultiplier(j: Juror, tags: readonly Tag[]): number {
-  return tags.some((t) => j.leans.includes(t)) ? 1.5 : 1.0;
+  if (tags.some((t) => j.leans.includes(t))) return 1.5;
+  return j.leans.length >= 2 ? 0.5 : 1.0;
 }
 
 /**
