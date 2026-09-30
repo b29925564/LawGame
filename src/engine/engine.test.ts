@@ -1,57 +1,152 @@
 import { describe, expect, it } from 'vitest';
 import { cases } from '../content';
+import {
+  setRelation,
+  startBoard,
+  submit,
+  toggleCard,
+  confirmedArguments,
+  type BoardState,
+} from './board';
+import * as x from './cross';
+import { startJury } from './jury';
 import type { CaseData } from './schema';
-import { move, outcome, present, startTrial } from './trial';
 import { validateCase } from './validate';
 
-const ep1 = cases.ep1;
+const c = cases.proto;
 
-describe('validateCase', () => {
-  it('抓出無法取得的矛盾證據', () => {
-    const broken: CaseData = structuredClone(ep1);
-    broken.documents = broken.documents.filter((d) => !d.evidence.includes('call-log'));
-    const errors = validateCase(broken);
-    expect(errors).toContain('證據 call-log 沒有任何文件可以取得');
-    expect(errors.some((e) => e.includes('s-alone'))).toBe(true);
+function solveAll(): BoardState {
+  let b = startBoard(c);
+  for (const q of c.questions) {
+    for (const id of q.answer) b = toggleCard(c, b, q.id, id);
+    b = setRelation(b, q.id, q.relation);
+    b = submit(c, b, q.id).board;
+  }
+  return b;
+}
+
+const arg = (id: string) => c.questions.map((q) => q.argument).find((a) => a.id === id)!;
+
+describe('證據板', () => {
+  it('整條全對才確認，每次提交花 1 工時', () => {
+    let b = startBoard(c);
+    b = toggleCard(c, b, 'q1', 'watch-note');
+    b = toggleCard(c, b, 'q1', 'fingerprint');
+    b = setRelation(b, 'q1', '支持');
+    const r = submit(c, b, 'q1');
+    expect(r.ok).toBe(false);
+    expect(r.board.hours).toBe(c.hours - 1);
+    expect(r.board.confirmed).toEqual([]);
   });
 
-  it('抓出沒有矛盾的審判', () => {
-    const broken: CaseData = structuredClone(ep1);
-    broken.trial.statements = broken.trial.statements.map((s) => ({
-      ...s,
-      contradiction: undefined,
-    }));
-    expect(validateCase(broken)).toContain('審判沒有任何矛盾，無法勝訴');
+  it('關係選錯也不算對', () => {
+    let b = startBoard(c);
+    b = toggleCard(c, b, 'q1', 'watch-note');
+    b = toggleCard(c, b, 'q1', 'uber');
+    b = setRelation(b, 'q1', '矛盾');
+    expect(submit(c, b, 'q1').ok).toBe(false);
+  });
+
+  it('一次全對可以確認所有論點', () => {
+    const b = solveAll();
+    expect(confirmedArguments(c, b).map((a) => a.id)).toEqual(['arg-a', 'arg-b', 'arg-d', 'arg-e']);
+    expect(b.hours).toBe(c.hours - c.questions.length);
+  });
+
+  it('工時用完不能再提交', () => {
+    let b: BoardState = { ...startBoard(c), hours: 0 };
+    b = toggleCard(c, b, 'q1', 'watch-note');
+    b = toggleCard(c, b, 'q1', 'uber');
+    b = setRelation(b, 'q1', '支持');
+    expect(submit(c, b, 'q1').ok).toBe(false);
   });
 });
 
-describe('交互詰問', () => {
-  it('出示正確證據破解所有矛盾即勝訴', () => {
-    let t = startTrial(ep1);
-    ep1.trial.statements.forEach((s, i) => {
-      t = { ...t, index: i };
-      if (s.contradiction) t = present(ep1, t, s.contradiction.evidence);
+describe('彈劾三步驟', () => {
+  const start = () => x.toWitness(c, x.startCross(c, startJury(c)));
+
+  it('缺乏證據基礎時異議成立，扣法官耐心且無衝擊', () => {
+    const s = x.confront(c, x.lock(c, start(), 'meeting', 'strong'), 'meeting', arg('arg-e'));
+    expect(s.patience).toBe(c.patience - 1);
+    expect(s.claims.meeting.result).toBe('none');
+  });
+
+  it('鎖定＋鋪陳＋對質＝彈劾成功，衝擊比沒鎖死大', () => {
+    let good = x.lock(c, start(), 'meeting', 'strong');
+    good = x.setup(c, good, 'meeting');
+    good = x.confront(c, good, 'meeting', arg('arg-e'));
+    let weak = x.lock(c, start(), 'meeting', 'weak');
+    weak = x.setup(c, weak, 'meeting');
+    weak = x.confront(c, weak, 'meeting', arg('arg-e'));
+    const sum = (j: Record<string, number>) => Object.values(j).reduce((a, b) => a + b, 0);
+    expect(good.claims.meeting.result).toBe('impeached');
+    expect(weak.claims.meeting.result).toBe('softened');
+    expect(sum(good.jury)).toBeLessThan(sum(weak.jury));
+  });
+
+  it('專家證人承認心率資料可靠，就等於替瑞秋的對質鋪陳', () => {
+    let s = x.askExpert(c, x.startCross(c, startJury(c)), 'watch');
+    s = x.toWitness(c, s);
+    expect(x.hasFoundation(c, s, 'thud')).toBe(true);
+  });
+
+  it('重複發問算糾纏，耐心歸零時法官訓斥並結束詰問', () => {
+    let s = start();
+    for (let i = 0; i < c.patience + 1; i++) s = x.lock(c, s, 'thud', 'weak');
+    expect(s.rebuked).toBe(true);
+    expect(s.stage).toBe('closing');
+  });
+});
+
+/** 數值平衡：兩次以上彈劾成功才有機會無罪；沒鎖死或只彈劾一次都會輸。 */
+describe('陪審團平衡', () => {
+  type Plan = ('strong' | 'weak' | null)[];
+  function play(plan: Plan, closing = true) {
+    const b = solveAll();
+    let s = x.askExpert(c, x.startCross(c, startJury(c)), 'watch');
+    s = x.toWitness(c, s);
+    c.witness.claims.forEach((cl, i) => {
+      const how = plan[i];
+      if (!how) return;
+      s = x.lock(c, s, cl.id, how);
+      s = x.setup(c, s, cl.id);
+      s = x.confront(c, s, cl.id, arg(cl.argument));
     });
-    expect(outcome(ep1, t)).toBe('win');
-    expect(t.persuasion).toBe(ep1.trial.persuasion);
+    const args = closing ? confirmedArguments(c, b).slice(0, 3) : [];
+    return x.closing(c, x.toClosing(s), args, '邏輯');
+  }
+
+  it('三次彈劾都成功，瑞秋援引緘默權，判決無罪', () => {
+    const s = play(['strong', 'strong', 'strong']);
+    expect(s.fifth).toBe(true);
+    expect(s.verdict).toBe('無罪');
   });
 
-  it('出示錯誤證據扣說服度，歸零即敗訴', () => {
-    let t = startTrial(ep1);
-    for (let i = 0; i < ep1.trial.persuasion; i++) t = present(ep1, t, 'inventory');
-    expect(outcome(ep1, t)).toBe('lose');
+  it('兩次彈劾成功就足以無罪', () => {
+    expect(play(['strong', 'strong', null]).verdict).toBe('無罪');
   });
 
-  it('同一個矛盾不能重複計分', () => {
-    let t = move(ep1, startTrial(ep1), 1);
-    t = present(ep1, t, 'cctv-store');
-    t = present(ep1, t, 'cctv-store');
-    expect(t.resolved).toEqual(['s-saw']);
-    expect(t.persuasion).toBe(ep1.trial.persuasion);
+  it('只彈劾一次：有罪', () => {
+    expect(play(['strong', null, null]).verdict).toBe('有罪');
   });
 
-  it('證詞可以循環切換', () => {
-    const t = move(ep1, startTrial(ep1), -1);
-    expect(t.index).toBe(ep1.trial.statements.length - 1);
+  it('三個矛盾都對質但都沒鎖死：有罪', () => {
+    expect(play(['weak', 'weak', 'weak']).verdict).toBe('有罪');
+  });
+
+  it('不詰問也不結辯：有罪', () => {
+    expect(play([null, null, null], false).verdict).toBe('有罪');
+  });
+});
+
+describe('validateCase', () => {
+  it('原型劇本通過', () => {
+    expect(validateCase(c)).toEqual([]);
+  });
+
+  it('抓出引用不存在卡片的疑問', () => {
+    const broken: CaseData = structuredClone(c);
+    broken.questions[0].answer = ['watch-note', 'nope'];
+    expect(validateCase(broken)).toContain('疑問 q1 的正解引用了不存在的卡片 nope');
   });
 });

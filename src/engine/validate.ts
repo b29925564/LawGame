@@ -1,6 +1,6 @@
 import type { CaseData } from './schema';
 
-/** 劇本邏輯檢查：引用存在、每個矛盾都有可取得的證據能破解、至少有一條通關路徑。 */
+/** 劇本邏輯檢查（企劃書 v2.0 第 14 節中原型用得到的部分）。 */
 export function validateCase(c: CaseData): string[] {
   const errors: string[] = [];
   const dupes = (kind: string, ids: string[]) => {
@@ -10,44 +10,50 @@ export function validateCase(c: CaseData): string[] {
       seen.add(i);
     }
   };
+  const args = c.questions.map((q) => q.argument);
   dupes(
-    '角色',
-    c.characters.map((x) => x.id),
+    '卡片',
+    c.cards.map((x) => x.id),
   );
   dupes(
-    '證據',
-    c.evidence.map((x) => x.id),
+    '疑問',
+    c.questions.map((x) => x.id),
   );
   dupes(
-    '文件',
-    c.documents.map((x) => x.id),
+    '論點',
+    args.map((x) => x.id),
+  );
+  dupes(
+    '陪審員',
+    c.jurors.map((x) => x.id),
   );
   dupes(
     '證詞',
-    c.trial.statements.map((x) => x.id),
+    c.witness.claims.map((x) => x.id),
   );
 
-  const evidenceIds = new Set(c.evidence.map((e) => e.id));
-  const obtainable = new Set<string>();
-  for (const doc of c.documents) {
-    for (const e of doc.evidence) {
-      if (!evidenceIds.has(e)) errors.push(`文件 ${doc.id} 引用了不存在的證據 ${e}`);
-      else obtainable.add(e);
-    }
+  const cards = new Set(c.cards.map((x) => x.id));
+  // 可解：每個疑問的正解卡片都存在。
+  for (const q of c.questions) {
+    for (const id of q.answer)
+      if (!cards.has(id)) errors.push(`疑問 ${q.id} 的正解引用了不存在的卡片 ${id}`);
   }
-  for (const e of evidenceIds) {
-    if (!obtainable.has(e)) errors.push(`證據 ${e} 沒有任何文件可以取得`);
-  }
+  // 工時：全部疑問一次答對所需工時 ≤ 預算的 60%。
+  if (c.questions.length > c.hours * 0.6 + 1e-9)
+    errors.push(`全部疑問需要 ${c.questions.length} 工時，超過預算 ${c.hours} 的 60%`);
 
-  if (!c.characters.some((ch) => ch.id === c.trial.witness)) {
-    errors.push(`證人 ${c.trial.witness} 不在角色清單中`);
+  // 鋪陳可達：每個對質都有論點，且至少一個鋪陳時機。
+  const argIds = new Set(args.map((a) => a.id));
+  const expertAdmits = new Set(c.expert.questions.map((q) => q.admits).filter(Boolean));
+  for (const cl of c.witness.claims) {
+    if (!argIds.has(cl.argument)) errors.push(`證詞 ${cl.id} 需要不存在的論點 ${cl.argument}`);
+    if (!cards.has(cl.needs)) errors.push(`證詞 ${cl.id} 的鋪陳引用了不存在的卡片 ${cl.needs}`);
+    const chances = 1 + (expertAdmits.has(cl.needs) ? 1 : 0);
+    if (chances < 1) errors.push(`證詞 ${cl.id} 沒有鋪陳時機`);
   }
+  for (const id of expertAdmits)
+    if (!cards.has(id!)) errors.push(`專家證人承認了不存在的卡片 ${id}`);
 
-  const contradictions = c.trial.statements.filter((s) => s.contradiction);
-  if (contradictions.length === 0) errors.push('審判沒有任何矛盾，無法勝訴');
-  for (const s of contradictions) {
-    const e = s.contradiction!.evidence;
-    if (!obtainable.has(e)) errors.push(`證詞 ${s.id} 的矛盾需要證據 ${e}，但無法取得`);
-  }
+  if (c.jurors.filter((j) => j.foreperson).length !== 1) errors.push('陪審長必須剛好一位');
   return errors;
 }

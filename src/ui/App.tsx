@@ -1,20 +1,18 @@
 import { useGame } from '../engine/store';
-import { Desk } from './Desk';
-import { Incident, Title, Verdict } from './Scenes';
-import { Trial } from './Trial';
+import { Board } from './Board';
+import { Court } from './Court';
+import { Intro, VerdictScreen } from './Scenes';
 
 export function App() {
   const phase = useGame((s) => s.phase);
   switch (phase) {
-    case 'title':
-      return <Title />;
-    case 'incident':
-      return <Incident />;
-    case 'desk':
-      return <Desk />;
-    case 'trial':
-      return <Trial />;
+    case 'intro':
+      return <Intro />;
+    case 'board':
+      return <Board />;
+    case 'court':
+      return <Court />;
     case 'verdict':
-      return <Verdict />;
+      return <VerdictScreen />;
   }
 }

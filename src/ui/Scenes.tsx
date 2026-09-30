@@ -1,53 +1,73 @@
 import { episode, useGame } from '../engine/store';
+import { JuryPanel } from './JuryPanel';
 
-export function Title() {
-  const newGame = useGame((s) => s.newGame);
+export function Intro() {
+  const begin = useGame((s) => s.begin);
   return (
-    <main className="scene title">
-      <h1>LawGame</h1>
-      <p className="subtitle">{episode.title}</p>
-      <button className="primary" onClick={newGame}>
-        開始新遊戲
+    <main className="scene">
+      <p className="eyebrow">原型・灰盒版</p>
+      <h1>{episode.title}</h1>
+      {episode.intro.map((p) => (
+        <p key={p}>{p}</p>
+      ))}
+      <button className="primary" onClick={begin}>
+        打開證據板
       </button>
     </main>
   );
 }
 
-export function Incident() {
-  const { line, nextLine } = useGame();
-  const { speaker, text } = episode.incident[line];
+export function VerdictScreen() {
+  const { cross, board, witnessStart, witnessEnd, restart } = useGame();
+  if (!cross) return null;
+  const minutes =
+    witnessStart && witnessEnd
+      ? Math.max(1, Math.round((witnessEnd - witnessStart) / 60000))
+      : null;
   return (
-    <main className="scene incident" onClick={nextLine}>
-      <div className="dialogue">
-        <div className="speaker">{speaker}</div>
-        <p>{text}</p>
-        <button className="primary" onClick={(e) => (e.stopPropagation(), nextLine())}>
-          繼續 ▸
-        </button>
-      </div>
-    </main>
-  );
-}
-
-export function Verdict() {
-  const { won, trial, goToTrial, backToDesk, newGame } = useGame();
-  return (
-    <main className="scene verdict">
-      <h2>{won ? '勝訴' : '敗訴'}</h2>
-      {trial.message && <p className="quote">{trial.message}</p>}
-      <p>{won ? episode.trial.verdict.win : episode.trial.verdict.lose}</p>
-      {won ? (
-        <button className="primary" onClick={newGame}>
-          重新開始
-        </button>
-      ) : (
-        <div className="row">
-          <button onClick={backToDesk}>回去調查</button>
-          <button className="primary" onClick={goToTrial}>
-            重新開庭
-          </button>
-        </div>
-      )}
+    <main className="scene">
+      <p className="eyebrow">判決</p>
+      <h1>{cross.verdict}</h1>
+      <JuryPanel jury={cross.jury} deltas={{}} />
+      <section className="panel">
+        <h2>評議</h2>
+        {cross.rounds.map((r, i) => (
+          <div key={i}>
+            <strong>第 {i + 1} 輪</strong>
+            <ul>
+              {r.moves.map((m, k) => (
+                <li key={k}>{m}</li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </section>
+      <section className="panel">
+        <h2>這一局的紀錄</h2>
+        <dl className="stats">
+          <dt>推理鏈提交</dt>
+          <dd>
+            {board.submissions} 次（錯 {board.wrong} 次）
+          </dd>
+          <dt>確認的論點</dt>
+          <dd>
+            {board.confirmed.length} / {episode.questions.length}
+          </dd>
+          <dt>彈劾成功</dt>
+          <dd>
+            {cross.impeachments} / {episode.witness.claims.length}
+          </dd>
+          <dt>剩餘法官耐心</dt>
+          <dd>
+            {cross.patience} / {episode.patience}
+          </dd>
+          <dt>詰問瑞秋用時</dt>
+          <dd>{minutes ? `約 ${minutes} 分鐘` : '—'}</dd>
+        </dl>
+      </section>
+      <button className="primary" onClick={restart}>
+        重新開始
+      </button>
     </main>
   );
 }
