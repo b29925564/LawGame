@@ -10,6 +10,10 @@ export interface Progress {
   step: number;
   /** 玩家做過的選擇，鍵是「場景 id:步數」。 */
   choices: Record<string, number>;
+  /** 帶著走的卡片與論點（跨場景）。 */
+  cards: string[];
+  /** 各場景的進行狀態，鍵是場景 id。 */
+  scenes: Record<string, unknown>;
 }
 
 export interface SaveFile {
@@ -19,12 +23,19 @@ export interface SaveFile {
   progress: Progress;
 }
 
-export const SAVE_VERSION = 1;
+export const SAVE_VERSION = 2;
 export const SLOTS = [1, 2, 3] as const;
 export type Slot = 'auto' | (typeof SLOTS)[number];
 
 /** migrations[n] 把第 n 版的存檔轉成第 n + 1 版。 */
-const migrations: Record<number, (d: SaveFile) => SaveFile> = {};
+const migrations: Record<number, (d: SaveFile) => SaveFile> = {
+  // v1 的存檔只有場景與步數，補上卡片與各場景狀態的預設值。
+  1: (d) => ({
+    ...d,
+    version: 2,
+    progress: { ...d.progress, cards: d.progress.cards ?? [], scenes: d.progress.scenes ?? {} },
+  }),
+};
 
 export function migrate(raw: unknown): SaveFile | null {
   if (!raw || typeof raw !== 'object') return null;

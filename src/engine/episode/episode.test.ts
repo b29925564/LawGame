@@ -81,13 +81,33 @@ describe('存檔', () => {
       length: 0,
     };
   };
-  const progress = { episode: 'ep1', scene: 0, step: 3, choices: { 'cold-open:3': 1 } };
+  const progress = {
+    episode: 'ep1',
+    scene: 0,
+    step: 3,
+    choices: { 'cold-open:3': 1 },
+    cards: [],
+    scenes: {},
+  };
 
   it('寫入後讀得回來', () => {
     const s = memory();
     expect(writeSave(2, '第 1 集・冷開場', progress, s)).toBe(true);
     expect(readSave(2, s)).toMatchObject({ version: SAVE_VERSION, progress });
     expect(readSave(1, s)).toBeNull();
+  });
+
+  it('第 1 版的存檔補上新欄位後照樣讀得回來', () => {
+    const old = {
+      version: 1,
+      savedAt: 1,
+      label: '第 1 集・冷開場',
+      progress: { episode: 'ep1', scene: 0, step: 3, choices: {} },
+    };
+    const f = migrate(old);
+    expect(f).toMatchObject({ version: SAVE_VERSION });
+    expect(f?.progress.cards).toEqual([]);
+    expect(f?.progress.scenes).toEqual({});
   });
 
   it('未來版本或壞掉的存檔不讀，也不讓遊戲當掉', () => {

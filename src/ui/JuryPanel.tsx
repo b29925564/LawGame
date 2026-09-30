@@ -1,5 +1,6 @@
 import { reaction, type Jury } from '../engine/jury';
-import { episode, useGame } from '../engine/store';
+import { useSettings } from '../engine/settings';
+import { episode } from '../engine/store';
 
 const glyph: Record<string, string> = {
   點頭: '◡',
@@ -19,7 +20,7 @@ export function JuryPanel({
   deltas: Jury;
   compact?: boolean;
 }) {
-  const { showNumbers, toggleNumbers } = useGame();
+  const { showNumbers, set } = useSettings();
   return (
     <section className={compact ? 'jury compact' : 'panel jury'} aria-label="陪審團">
       <div className="panel-head">
@@ -34,7 +35,12 @@ export function JuryPanel({
           </span>
         )}
         <label className="toggle">
-          <input id="show-numbers" type="checkbox" checked={showNumbers} onChange={toggleNumbers} />
+          <input
+            id="show-numbers"
+            type="checkbox"
+            checked={showNumbers}
+            onChange={(e) => set({ showNumbers: e.target.checked })}
+          />
           顯示數值
         </label>
       </div>

@@ -15,7 +15,6 @@ interface GameState {
   board: board.BoardState;
   feedback: Record<string, string>;
   cross: cross.CrossState | null;
-  showNumbers: boolean;
   witnessStart: number | null;
   witnessEnd: number | null;
   restart: () => void;
@@ -25,7 +24,6 @@ interface GameState {
   submit: (qid: string) => void;
   toggleTimeline: (card: string) => void;
   goToCourt: () => void;
-  toggleNumbers: () => void;
   askExpert: (qid: string) => void;
   toWitness: () => void;
   lock: (claim: string, how: 'strong' | 'weak') => void;
@@ -57,7 +55,6 @@ export const useGame = create<GameState>()(
       };
       return {
         ...fresh(),
-        showNumbers: false,
         restart: () => set(fresh()),
         begin: () => set({ phase: 'board' }),
         toggleCard: (qid, card) =>
@@ -73,7 +70,6 @@ export const useGame = create<GameState>()(
         toggleTimeline: (card) => set({ board: board.toggleTimeline(get().board, card) }),
         goToCourt: () =>
           set({ phase: 'court', cross: cross.startCross(episode, startJury(episode)) }),
-        toggleNumbers: () => set({ showNumbers: !get().showNumbers }),
         askExpert: (qid) => act((s) => cross.askExpert(episode, s, qid)),
         toWitness: () => {
           act((s) => cross.toWitness(episode, s));
@@ -94,7 +90,7 @@ export const useGame = create<GameState>()(
     {
       name: 'lawgame-save',
       version: 2,
-      migrate: () => ({ ...fresh(), showNumbers: false }) as unknown as GameState,
+      migrate: () => fresh() as unknown as GameState,
     },
   ),
 );
