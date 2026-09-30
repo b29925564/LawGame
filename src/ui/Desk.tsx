@@ -513,6 +513,10 @@ function Motions({ scene, held }: { scene: DeskScene; held: string[] }) {
 function Jobs({ scene, held }: { scene: DeskScene; held: string[] }) {
   const { progress, commission } = useEpisode();
   const st = deskState(progress, scene);
+  const nameOf = (id: string) =>
+    scene.cards.find((c) => c.id === id)?.name ??
+    scene.questions.find((q) => q.argument.id === id)?.argument.name ??
+    id;
   return (
     <ul className="stack">
       {scene.jobs.map((j) => {
@@ -525,6 +529,16 @@ function Jobs({ scene, held }: { scene: DeskScene; held: string[] }) {
               {j.who}・{j.cost} 工時
             </p>
             <p>{j.detail}</p>
+            {/* 前提寫在卡上：沒寫的話，玩家會以為不必任何證據就能委託。 */}
+            {j.needs.length > 0 && !done && (
+              <ul className="needs" aria-label="需要">
+                {j.needs.map((n) => (
+                  <li key={n} className={held.includes(n) ? 'have' : 'lack'}>
+                    {held.includes(n) ? '✓' : '需要'} {nameOf(n)}
+                  </li>
+                ))}
+              </ul>
+            )}
             {done ? (
               <p className="good">已回報。</p>
             ) : (
@@ -533,7 +547,9 @@ function Jobs({ scene, held }: { scene: DeskScene; held: string[] }) {
                 disabled={!desk.canCommission(scene, st, j.id, progress.cards)}
                 onClick={() => commission(j.id)}
               >
-                {missing.length ? '還缺前提' : `委託（${j.cost} 工時）`}
+                {missing.length
+                  ? `還缺：${missing.map(nameOf).join('、')}`
+                  : `委託（${j.cost} 工時）`}
               </button>
             )}
           </li>
