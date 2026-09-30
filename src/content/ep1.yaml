@@ -619,7 +619,7 @@ scenes:
           strength: 12
           tags: [邏輯, 權威]
       - id: q3
-        text: 那則訊息是誰傳的？
+        text: 22:31 那則訊息，真的是沃斯本人傳的嗎？
         answer: [chat-audit, arg-b]
         accept:
           chat-audit: [watch-notice]
