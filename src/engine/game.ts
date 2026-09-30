@@ -85,6 +85,12 @@ interface GameState {
   mark: (fact: string) => void;
   commission: (id: string) => void;
   clearReport: () => void;
+  pickBasis: (motion: string, basis: string) => void;
+  pickRequest: (motion: string, request: string) => void;
+  toggleSupport: (motion: string, card: string) => void;
+  fileMotion: (motion: string) => void;
+  resolveTwist: (motion: string, option: number) => void;
+  wrapDesk: () => void;
   toggleCard: (qid: string, card: string) => void;
   toggleTimeline: (card: string) => void;
   moveTimeline: (card: string, dir: -1 | 1) => void;
@@ -194,6 +200,20 @@ export const useEpisode = create<GameState>()((set, get) => {
         (s, st) => desk.heldCards(s, st, get().progress.cards),
       ),
     clearReport: () => onDesk((_s, st) => desk.clearReport(st)),
+    pickBasis: (m, basis) => onDesk((_s, st) => desk.pickBasis(st, m, basis)),
+    pickRequest: (m, request) => onDesk((_s, st) => desk.pickRequest(st, m, request)),
+    toggleSupport: (m, card) => onDesk((s, st) => desk.toggleSupport(s, st, m, card)),
+    fileMotion: (m) =>
+      onDesk(
+        (s, st) => desk.file(s, st, m, get().progress.cards),
+        (s, st) => desk.heldCards(s, st, get().progress.cards),
+      ),
+    resolveTwist: (m, option) =>
+      onDesk(
+        (s, st) => desk.resolveTwist(s, st, m, option),
+        (s, st) => desk.heldCards(s, st, get().progress.cards),
+      ),
+    wrapDesk: () => onDesk((_s, st) => desk.wrap(st)),
     toggleCard: (qid, card) => onDesk((s, st) => desk.toggleCard(s, st, qid, card)),
     toggleTimeline: (card) => onDesk((_s, st) => desk.toggleTimeline(st, card)),
     moveTimeline: (card, dir) => onDesk((_s, st) => desk.moveTimeline(st, card, dir)),

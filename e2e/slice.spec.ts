@@ -82,7 +82,48 @@ test('垂直切片可以一路走到彈劾成功', async ({ page }) => {
   await chain.getByRole('button', { name: '叫車收據' }).click();
   await chain.getByRole('radio', { name: /支持/ }).click();
   await chain.getByRole('button', { name: /提交到案情會議/ }).click();
-  // 確認過關的推理鏈，這一幕就收尾，海爾在開庭前說出彈劾三步驟的那句話。
+  // 過關的推理鏈確認了，但要玩家自己收工，剩下的工時還能查。
+  await expect(page.getByRole('button', { name: '結束調查' })).toBeVisible();
+
+  // 第二幕後半：先把手錶相關性鏈確認起來，才提得出傳票聲請。
+  await page.getByRole('button', { name: '卷宗', exact: true }).click();
+  await page.getByRole('button', { name: /驗屍報告/ }).click();
+  await page.getByRole('button', { name: /死亡時間推估/ }).click();
+  await page.getByRole('button', { name: /錶帶完好/ }).click();
+  await page.getByRole('button', { name: '← 卷宗' }).click();
+  await page.getByRole('button', { name: '證據板' }).click();
+  const watchChain = page.locator('section.chain').filter({ hasText: '手錶能告訴我們什麼' });
+  await watchChain.locator('summary').click();
+  await watchChain.getByRole('button', { name: '驗屍照片：死者的手錶' }).click();
+  await watchChain.getByRole('button', { name: '驗屍報告', exact: true }).click();
+  await watchChain.getByRole('radio', { name: /支持/ }).click();
+  await watchChain.getByRole('button', { name: /提交到案情會議/ }).click();
+
+  // 法院系統：依據、支撐、請求三樣都要對。
+  await page.getByRole('button', { name: '法院系統' }).click();
+  const watchMotion = page.locator('li.job').filter({ hasText: '死者手錶的健康資料' });
+  await watchMotion.getByRole('radio', { name: '相關性' }).click();
+  await watchMotion.getByRole('button', { name: /手錶資料與本案相關/ }).click();
+  await watchMotion.getByRole('radio', { name: '核發傳票給手錶廠商' }).click();
+  await watchMotion.getByRole('button', { name: /送出/ }).click();
+  await expect(page.getByText('22:24，心率歸零。')).toBeVisible();
+  await page.getByRole('button', { name: '回到桌面' }).click();
+
+  // 聊天稽核紀錄的傳票：核准之後對方聲請撤銷，惠特洛克要她收手。
+  await page.getByRole('button', { name: '法院系統' }).click();
+  const chatMotion = page.locator('li.job').filter({ hasText: '稽核紀錄' });
+  await chatMotion.getByRole('radio', { name: '相關性' }).click();
+  await chatMotion.getByRole('button', { name: /論點 A/ }).click();
+  await chatMotion.getByRole('radio', { name: '核發傳票給卡爾德物流' }).click();
+  await chatMotion.getByRole('button', { name: /送出/ }).click();
+  await page.getByRole('button', { name: '回到桌面' }).click();
+  await expect(page.getByText('我也知道誰付我們薪水。')).toBeVisible();
+  await page.getByRole('button', { name: '我出庭答辯。' }).click();
+  await expect(page.getByText('法官維持傳票')).toBeVisible();
+  await page.getByRole('button', { name: '回到桌面' }).click();
+
+  // 收工，海爾在開庭前說出彈劾三步驟的那句話。
+  await page.getByRole('button', { name: '結束調查' }).click();
   await expect(page.getByText('先讓他把話說死，再拿出證據。')).toBeVisible();
   await page.getByRole('button', { name: '開庭' }).click();
   await next(page); // 第四幕字卡

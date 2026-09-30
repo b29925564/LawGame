@@ -83,23 +83,57 @@ function deskErrors(s: DeskScene, available: Set<string>, args: Set<string>, err
       if (!cards.has(g)) errors.push(`郵件 ${m.id} 附了不存在的卡片 ${g}`);
       reachable.add(g);
     }
+  // 委託、動議、疑問會互相解鎖（動議要論點，論點要動議拿到的卡片），所以推到不動為止。
+  const unlocked = {
+    jobs: new Set<string>(),
+    motions: new Set<string>(),
+    questions: new Set<string>(),
+  };
+  const has = (ids: string[]) => ids.every((i) => reachable.has(i));
+  for (;;) {
+    const before = reachable.size;
+    for (const j of s.jobs)
+      if (!unlocked.jobs.has(j.id) && has(j.needs)) {
+        unlocked.jobs.add(j.id);
+        j.gives.forEach((g) => reachable.add(g));
+      }
+    for (const m of s.motions)
+      if (!unlocked.motions.has(m.id) && has(m.needs) && has(m.support)) {
+        unlocked.motions.add(m.id);
+        m.gives.forEach((g) => reachable.add(g));
+        m.twist?.options.forEach((o) => o.gives.forEach((g) => reachable.add(g)));
+      }
+    for (const q of s.questions)
+      if (!unlocked.questions.has(q.id) && has(q.answer)) {
+        unlocked.questions.add(q.id);
+        reachable.add(q.argument.id);
+      }
+    if (reachable.size === before) break;
+  }
+
   for (const j of s.jobs) {
     for (const n of j.needs)
       if (!reachable.has(n)) errors.push(`委託 ${j.id} 需要玩家拿不到的卡片 ${n}`);
-    for (const g of j.gives) {
-      if (!cards.has(g)) errors.push(`委託 ${j.id} 給了不存在的卡片 ${g}`);
-      reachable.add(g);
-    }
+    for (const g of j.gives) if (!cards.has(g)) errors.push(`委託 ${j.id} 給了不存在的卡片 ${g}`);
+  }
+  for (const m of s.motions) {
+    for (const n of [...m.needs, ...m.support])
+      if (!reachable.has(n)) errors.push(`動議 ${m.id} 需要玩家拿不到的 ${n}`);
+    if (!m.bases.includes(m.basis)) errors.push(`動議 ${m.id} 的正解理由 ${m.basis} 不在選項裡`);
+    if (!m.requests.includes(m.request))
+      errors.push(`動議 ${m.id} 的正解請求 ${m.request} 不在選項裡`);
+    const out = [...m.gives, ...(m.twist?.options.flatMap((o) => o.gives) ?? [])];
+    for (const g of out) if (!cards.has(g)) errors.push(`動議 ${m.id} 給了不存在的卡片 ${g}`);
   }
 
   // 可解：每個疑問的正解卡片都拿得到。
-  let keyHours = 0;
   const qids = new Set<string>();
   for (const q of s.questions) {
     if (qids.has(q.id)) errors.push(`桌面 ${s.id} 的疑問 id 重複：${q.id}`);
     qids.add(q.id);
-    for (const id of q.answer)
-      if (!reachable.has(id)) errors.push(`疑問 ${q.id} 的正解需要玩家拿不到的卡片 ${id}`);
+    if (!unlocked.questions.has(q.id))
+      for (const id of q.answer)
+        if (!reachable.has(id)) errors.push(`疑問 ${q.id} 的正解需要玩家拿不到的卡片 ${id}`);
     args.add(q.argument.id);
     available.add(q.argument.id);
   }
@@ -107,6 +141,7 @@ function deskErrors(s: DeskScene, available: Set<string>, args: Set<string>, err
     errors.push(`桌面 ${s.id} 的過關疑問 ${s.goal} 不存在`);
 
   // 工時：關鍵路徑（過關疑問的正解需要的委託＋提交）不超過預算的 60%。
+  let keyHours = 0;
   const goal = s.questions.find((q) => q.id === s.goal);
   if (goal) {
     for (const j of s.jobs) if (j.gives.some((g) => goal.answer.includes(g))) keyHours += j.cost;

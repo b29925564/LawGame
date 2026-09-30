@@ -172,8 +172,46 @@ const deskScene = z.object({
       }),
     )
     .default([]),
+  /** 法院系統：動議與傳票（企劃書 6.6）。三樣都選對才成立。 */
+  motions: z
+    .array(
+      z.object({
+        id,
+        label: z.string(),
+        detail: z.string(),
+        cost: z.number().int().min(1),
+        /** 要先有這些卡片或論點才提得出來。 */
+        needs: z.array(id).default([]),
+        bases: z.array(z.string()).min(2),
+        basis: z.string(),
+        /** 支撐：剛好要選這幾張卡（順序不拘）。 */
+        support: z.array(id).min(1).max(2),
+        requests: z.array(z.string()).min(2),
+        request: z.string(),
+        granted: z.array(line).min(1),
+        denied: z.array(line).min(1),
+        gives: z.array(id).default([]),
+        /** 對方反擊：核准後卡爾德聲請撤銷，事務所要你收手（企劃書 10.7 中段反轉）。 */
+        twist: z
+          .object({
+            lines: z.array(line).min(1),
+            options: z
+              .array(
+                z.object({
+                  text: z.string(),
+                  then: z.array(line).min(1),
+                  gives: z.array(id).default([]),
+                  flags: z.array(z.string()).default([]),
+                }),
+              )
+              .length(2),
+          })
+          .optional(),
+      }),
+    )
+    .default([]),
   questions: z.array(question).min(1),
-  /** 確認這條推理鏈就能進入下一場。 */
+  /** 確認這條推理鏈，才能結束這一幕。 */
   goal: id,
   goalLines: z.array(line).default([]),
 });
@@ -289,5 +327,6 @@ export type TrialScene = Extract<Scene, { type: 'trial' }>;
 export type Line = z.infer<typeof line>;
 export type Card = z.infer<typeof card>;
 export type Question = z.infer<typeof question>;
+export type Motion = DeskScene['motions'][number];
 export type Topic = z.infer<typeof topic>;
 export type Message = z.infer<typeof message>;

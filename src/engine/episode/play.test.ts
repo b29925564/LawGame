@@ -79,7 +79,10 @@ describe('桌面調查', () => {
     st = desk.setRelation(st, 'q1', '支持');
     st = desk.submit(investigate, st, 'q1');
     expect(st.confirmed).toContain('q1');
-    expect(desk.done(investigate, st)).toBe(true);
+    // 過關的推理鏈確認之後才收得了工，但要玩家自己按，剩下的工時還能繼續查。
+    expect(desk.canWrap(investigate, st)).toBe(true);
+    expect(desk.done(investigate, st)).toBe(false);
+    expect(desk.done(investigate, desk.wrap(st))).toBe(true);
     expect(desk.heldCards(investigate, st)).toContain('arg-a');
   });
 
@@ -94,6 +97,84 @@ describe('桌面調查', () => {
   it('工時用完就進下一幕', () => {
     const st = { ...desk.startDesk(investigate), hours: 0 };
     expect(desk.done(investigate, st)).toBe(true);
+  });
+});
+
+describe('審前動議', () => {
+  /** 走到 q1 確認為止，手上就有 arg-a 與 arg-watch，才提得出兩件動議。 */
+  const solved = () => {
+    let st = desk.startDesk(investigate);
+    st = desk.mark(investigate, st, 'watch-listed');
+    st = desk.mark(investigate, st, 'autopsy');
+    st = desk.mark(investigate, st, 'watch-photo');
+    st = desk.commission(investigate, st, 'job-watch', ['ethan-message']);
+    st = desk.commission(investigate, st, 'job-ride', ['ethan-ride']);
+    for (const c of ['watch-notice', 'ride-receipt'])
+      st = desk.toggleCard(investigate, st, 'q1', c);
+    st = desk.setRelation(st, 'q1', '支持');
+    st = desk.submit(investigate, st, 'q1');
+    // 手錶相關性的推理鏈，解鎖傳票動議。
+    for (const c of ['watch-photo', 'autopsy']) st = desk.toggleCard(investigate, st, 'q2a', c);
+    st = desk.setRelation(st, 'q2a', '支持');
+    return desk.submit(investigate, st, 'q2a');
+  };
+  const fill = (
+    st: desk.DeskState,
+    id: string,
+    basis: string,
+    request: string,
+    cards: string[],
+  ) => {
+    let next = desk.pickBasis(st, id, basis);
+    next = desk.pickRequest(next, id, request);
+    for (const c of cards) next = desk.toggleSupport(investigate, next, id, c);
+    return next;
+  };
+
+  it('三樣都對才核准，依據錯了駁回並記下旗標', () => {
+    const base = solved();
+    const wrong = desk.file(
+      investigate,
+      fill(base, 'm-watch', '傳聞例外', '核發傳票給手錶廠商', ['arg-watch']),
+      'm-watch',
+    );
+    expect(desk.motionAttempt(wrong, 'm-watch').ruling).toBe('denied');
+    expect(wrong.flags).toContain('motion-denied');
+    expect(desk.heldCards(investigate, wrong)).not.toContain('heart-rate');
+
+    const right = desk.file(
+      investigate,
+      fill(base, 'm-watch', '相關性', '核發傳票給手錶廠商', ['arg-watch']),
+      'm-watch',
+    );
+    expect(desk.motionAttempt(right, 'm-watch').ruling).toBe('granted');
+    expect(desk.heldCards(investigate, right)).toContain('heart-rate');
+    expect(right.hours).toBe(base.hours - 2);
+  });
+
+  it('沒有論點撐著就提不出來，工時也不會扣', () => {
+    const st = desk.startDesk(investigate);
+    const tried = fill(st, 'm-watch', '相關性', '核發傳票給手錶廠商', ['arg-watch']);
+    expect(desk.canFile(investigate, tried, 'm-watch')).toBe(false);
+    expect(desk.file(investigate, tried, 'm-watch')).toBe(tried);
+  });
+
+  it('核准之後對方聲請撤銷：撤回拿不到紀錄，出庭答辯才拿得到', () => {
+    const base = fill(solved(), 'm-chat', '相關性', '核發傳票給卡爾德物流', ['arg-a']);
+    const granted = desk.file(investigate, base, 'm-chat');
+    expect(desk.pendingTwist(investigate, granted)?.id).toBe('m-chat');
+    expect(desk.heldCards(investigate, granted)).not.toContain('chat-audit');
+
+    const back = desk.resolveTwist(investigate, granted, 'm-chat', 0);
+    expect(back.flags).toContain('chat-audit-lost');
+    expect(desk.heldCards(investigate, back)).not.toContain('chat-audit');
+    expect(desk.pendingTwist(investigate, back)).toBeUndefined();
+
+    const fight = desk.resolveTwist(investigate, granted, 'm-chat', 1);
+    expect(fight.flags).toContain('whitlock-down');
+    expect(desk.heldCards(investigate, fight)).toContain('chat-audit');
+    // 決定過就不能反悔。
+    expect(desk.resolveTwist(investigate, fight, 'm-chat', 0)).toBe(fight);
   });
 });
 

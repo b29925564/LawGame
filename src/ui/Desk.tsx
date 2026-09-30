@@ -8,18 +8,19 @@ import { Speech } from './Portrait';
 import { RelationPicker } from './RelationPicker';
 import { Timeline } from './Timeline';
 
-type App = 'mail' | 'docs' | 'cards' | 'board' | 'jobs';
+type App = 'mail' | 'docs' | 'cards' | 'board' | 'jobs' | 'court';
 const apps: { id: App; label: string }[] = [
   { id: 'mail', label: '郵件' },
   { id: 'docs', label: '卷宗' },
   { id: 'cards', label: '證據庫' },
   { id: 'board', label: '證據板' },
   { id: 'jobs', label: '委託' },
+  { id: 'court', label: '法院系統' },
 ];
 
 /** 第二幕的桌面：艾莉絲的工作電腦，每個 App 是一個系統入口（企劃書 6.1）。 */
 export function Desk({ scene }: { scene: DeskScene }) {
-  const { progress, advance, clearReport } = useEpisode();
+  const { progress, advance, clearReport, resolveTwist, wrapDesk } = useEpisode();
   const st = deskState(progress, scene);
   const [app, setApp] = useState<App>('mail');
   const held = desk.heldCards(scene, st, progress.cards);
@@ -38,6 +39,27 @@ export function Desk({ scene }: { scene: DeskScene }) {
         <button className="primary next" onClick={clearReport}>
           回到桌面
         </button>
+      </main>
+    );
+
+  // 對方聲請撤銷傳票，事務所要你收手。這個抉擇擋在桌面前面，非決定不可。
+  const twist = desk.pendingTwist(scene, st);
+  if (twist?.twist)
+    return (
+      <main className="scene report">
+        <p className="eyebrow">事務所</p>
+        <div className="lines">
+          {twist.twist.lines.map((l, i) => (
+            <Speech key={i} line={l} />
+          ))}
+        </div>
+        <div className="choices">
+          {twist.twist.options.map((o, i) => (
+            <button key={i} onClick={() => resolveTwist(twist.id, i)}>
+              {o.text}
+            </button>
+          ))}
+        </div>
       </main>
     );
 
@@ -63,6 +85,11 @@ export function Desk({ scene }: { scene: DeskScene }) {
           <strong>{st.hours}</strong> 工時
         </span>
         <span className="muted">{scene.deadline}</span>
+        {desk.canWrap(scene, st) && (
+          <button className="primary" onClick={wrapDesk}>
+            結束調查
+          </button>
+        )}
       </header>
       <nav className="apps" aria-label="應用程式">
         {apps.map((a) => (
@@ -78,6 +105,7 @@ export function Desk({ scene }: { scene: DeskScene }) {
         {app === 'cards' && <Cards scene={scene} held={held} />}
         {app === 'board' && <Board scene={scene} held={held} />}
         {app === 'jobs' && <Jobs scene={scene} held={held} />}
+        {app === 'court' && <Motions scene={scene} held={held} />}
       </div>
     </main>
   );
@@ -290,6 +318,93 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
         );
       })}
     </div>
+  );
+}
+
+/** 法院系統：提出動議與聲請傳票。三樣都要選對（企劃書 6.6）。 */
+function Motions({ scene, held }: { scene: DeskScene; held: string[] }) {
+  const { progress, pickBasis, pickRequest, toggleSupport, fileMotion } = useEpisode();
+  const st = deskState(progress, scene);
+  const pool = scene.cards.filter((c) => held.includes(c.id));
+  const args = scene.questions.filter((q) => held.includes(q.argument.id)).map((q) => q.argument);
+  if (scene.motions.length === 0) return <p className="muted">目前沒有可以提出的聲請。</p>;
+  return (
+    <ul className="stack">
+      {scene.motions.map((m) => {
+        const a = desk.motionAttempt(st, m.id);
+        const missing = m.needs.filter((n) => !held.includes(n));
+        return (
+          <li key={m.id} className="panel job">
+            <strong>{m.label}</strong>
+            <p className="muted">{m.cost} 工時</p>
+            <p>{m.detail}</p>
+            {a.ruling === 'granted' && <p className="good">法官准了。</p>}
+            {a.ruling === 'denied' && <p className="bad-text">駁回。法官記得妳浪費了他的時間。</p>}
+            {a.ruling === null &&
+              (missing.length ? (
+                <p className="muted">還缺前提：先把相關的論點確認起來。</p>
+              ) : (
+                <>
+                  <fieldset className="relations">
+                    <legend>法律依據</legend>
+                    <div className="row">
+                      {m.bases.map((b) => (
+                        <button
+                          key={b}
+                          role="radio"
+                          aria-checked={a.basis === b}
+                          className={a.basis === b ? 'on' : ''}
+                          onClick={() => pickBasis(m.id, b)}
+                        >
+                          {b}
+                        </button>
+                      ))}
+                    </div>
+                  </fieldset>
+                  <fieldset className="relations">
+                    <legend>支撐（{m.support.length} 張）</legend>
+                    <div className="stack">
+                      {[...args, ...pool].map((c) => (
+                        <button
+                          key={c.id}
+                          aria-pressed={a.support.includes(c.id)}
+                          className={a.support.includes(c.id) ? 'wide on' : 'wide'}
+                          onClick={() => toggleSupport(m.id, c.id)}
+                        >
+                          {c.name}
+                        </button>
+                      ))}
+                    </div>
+                  </fieldset>
+                  <fieldset className="relations">
+                    <legend>請求</legend>
+                    <div className="stack">
+                      {m.requests.map((r) => (
+                        <button
+                          key={r}
+                          role="radio"
+                          aria-checked={a.request === r}
+                          className={a.request === r ? 'wide on' : 'wide'}
+                          onClick={() => pickRequest(m.id, r)}
+                        >
+                          {r}
+                        </button>
+                      ))}
+                    </div>
+                  </fieldset>
+                  <button
+                    className="primary"
+                    disabled={!desk.canFile(scene, st, m.id, progress.cards)}
+                    onClick={() => fileMotion(m.id)}
+                  >
+                    送出（{m.cost} 工時）
+                  </button>
+                </>
+              ))}
+          </li>
+        );
+      })}
+    </ul>
   );
 }
 

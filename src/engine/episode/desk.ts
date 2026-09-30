@@ -1,6 +1,16 @@
 import type { Relation } from '../schema';
 import type { DeskScene, Line } from './schema';
 
+export interface MotionAttempt {
+  basis: string | null;
+  support: string[];
+  request: string | null;
+  /** 裁定結果；null 代表還沒送出。 */
+  ruling: 'granted' | 'denied' | null;
+  /** 對方聲請撤銷後，玩家選了哪一個。 */
+  twist: number | null;
+}
+
 export interface DeskState {
   hours: number;
   /** 時間線上的卡片，順序就是玩家排的順序。 */
@@ -18,6 +28,11 @@ export interface DeskState {
   wrong: number;
   report: Line[];
   feedback: Record<string, string>;
+  motions: Record<string, MotionAttempt>;
+  /** 帶到後面幕的旗標，例如動議被駁回會讓開庭第一天的法官耐心 −1。 */
+  flags: string[];
+  /** 玩家按下結束調查才進下一幕。 */
+  wrapped: boolean;
 }
 
 export function startDesk(s: DeskScene): DeskState {
@@ -36,6 +51,9 @@ export function startDesk(s: DeskScene): DeskState {
     wrong: 0,
     report: [],
     feedback: {},
+    motions: {},
+    flags: [],
+    wrapped: false,
   };
 }
 
@@ -45,7 +63,18 @@ export function heldCards(s: DeskScene, st: DeskState, carried: string[] = []): 
   const fromJobs = s.jobs.filter((j) => st.jobs.includes(j.id)).flatMap((j) => j.gives);
   const fromMail = s.mail.filter((m) => st.mail.includes(m.id)).flatMap((m) => m.gives);
   const args = s.questions.filter((q) => st.confirmed.includes(q.id)).map((q) => q.argument.id);
-  return [...new Set([...carried, ...held, ...st.marked, ...fromJobs, ...fromMail, ...args])];
+  const fromMotions = motionCards(s, st);
+  return [
+    ...new Set([
+      ...carried,
+      ...held,
+      ...st.marked,
+      ...fromJobs,
+      ...fromMail,
+      ...fromMotions,
+      ...args,
+    ]),
+  ];
 }
 
 /** 花工時；同時把到時間的郵件放進收件匣（證據開示收件匣，企劃書 6.3）。 */
@@ -166,7 +195,111 @@ export function submit(s: DeskScene, st: DeskState, qid: string): DeskState {
   };
 }
 
+const attempt = (st: DeskState, id: string): MotionAttempt =>
+  st.motions[id] ?? { basis: null, support: [], request: null, ruling: null, twist: null };
+
+export function motionAttempt(st: DeskState, id: string) {
+  return attempt(st, id);
+}
+
+const setAttempt = (st: DeskState, id: string, a: MotionAttempt): DeskState => ({
+  ...st,
+  motions: { ...st.motions, [id]: a },
+});
+
+export function pickBasis(st: DeskState, id: string, basis: string): DeskState {
+  return setAttempt(st, id, { ...attempt(st, id), basis });
+}
+
+export function pickRequest(st: DeskState, id: string, request: string): DeskState {
+  return setAttempt(st, id, { ...attempt(st, id), request });
+}
+
+export function toggleSupport(s: DeskScene, st: DeskState, id: string, card: string): DeskState {
+  const m = s.motions.find((x) => x.id === id);
+  const a = attempt(st, id);
+  if (!m || a.ruling) return st;
+  const has = a.support.includes(card);
+  if (!has && a.support.length >= m.support.length) return st;
+  const support = has ? a.support.filter((x) => x !== card) : [...a.support, card];
+  return setAttempt(st, id, { ...a, support });
+}
+
+export function canFile(s: DeskScene, st: DeskState, id: string, carried: string[] = []): boolean {
+  const m = s.motions.find((x) => x.id === id);
+  const a = attempt(st, id);
+  if (!m || a.ruling || st.hours < m.cost) return false;
+  const held = heldCards(s, st, carried);
+  return (
+    m.needs.every((n) => held.includes(n)) &&
+    !!a.basis &&
+    !!a.request &&
+    a.support.length === m.support.length
+  );
+}
+
+/**
+ * 提出動議（企劃書 6.6）：法律依據、支撐、請求三樣都對才成立。
+ * 依據錯了是駁回，並記下旗標，開庭第一天法官耐心 −1（他記得你浪費時間）。
+ */
+export function file(s: DeskScene, st: DeskState, id: string, carried: string[] = []): DeskState {
+  if (!canFile(s, st, id, carried)) return st;
+  const m = s.motions.find((x) => x.id === id)!;
+  const a = attempt(st, id);
+  const ok =
+    a.basis === m.basis &&
+    a.request === m.request &&
+    m.support.every((c) => a.support.includes(c)) &&
+    a.support.every((c) => m.support.includes(c));
+  const next = spend(s, st, m.cost);
+  return {
+    ...setAttempt(next, id, { ...a, ruling: ok ? 'granted' : 'denied' }),
+    report: ok ? m.granted : m.denied,
+    flags: ok ? next.flags : [...new Set([...next.flags, 'motion-denied'])],
+  };
+}
+
+/** 對方聲請撤銷之後的抉擇：撤回，或出庭答辯。 */
+export function resolveTwist(s: DeskScene, st: DeskState, id: string, option: number): DeskState {
+  const m = s.motions.find((x) => x.id === id);
+  const a = attempt(st, id);
+  if (!m?.twist || a.ruling !== 'granted' || a.twist !== null) return st;
+  const o = m.twist.options[option];
+  if (!o) return st;
+  return {
+    ...setAttempt(st, id, { ...a, twist: option }),
+    report: o.then,
+    flags: [...new Set([...st.flags, ...o.flags])],
+  };
+}
+
+/** 動議核准、對方也聲請了撤銷，而玩家還沒決定要不要硬扛。 */
+export function pendingTwist(s: DeskScene, st: DeskState) {
+  return s.motions.find(
+    (m) => m.twist && attempt(st, m.id).ruling === 'granted' && attempt(st, m.id).twist === null,
+  );
+}
+
+/** 動議拿到的卡片：核准就到手，但被撤回的那條路會收走。 */
+export function motionCards(s: DeskScene, st: DeskState): string[] {
+  return s.motions.flatMap((m) => {
+    const a = attempt(st, m.id);
+    if (a.ruling !== 'granted') return [];
+    if (!m.twist) return m.gives;
+    return a.twist === null ? [] : m.twist.options[a.twist].gives;
+  });
+}
+
 /** 工時用完就直接進下一幕，帶著手上有的東西（企劃書 6.13）。 */
-export function done(s: DeskScene, st: DeskState): boolean {
-  return st.confirmed.includes(s.goal) || st.hours <= 0;
+export function done(_s: DeskScene, st: DeskState): boolean {
+  return st.wrapped || st.hours <= 0;
+}
+
+/** 過關的推理鏈確認之後，才能收工進下一幕。 */
+export function canWrap(s: DeskScene, st: DeskState): boolean {
+  return st.confirmed.includes(s.goal);
+}
+
+export function wrap(st: DeskState): DeskState {
+  return { ...st, wrapped: true };
 }

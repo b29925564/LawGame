@@ -418,6 +418,18 @@ scenes:
         time: '22:34'
         text: 22:34 於東河街 118 號上車，22:44 抵達卡爾德大樓。司機奧瑪・哈桑。
         source: 叫車公司
+      - id: heart-rate
+        name: 沃斯手錶的心率紀錄
+        kind: 事實
+        time: '22:24'
+        text: 心率在 22:24 急遽升高後歸零，之後再無讀數。
+        source: 手錶廠商（傳票）
+      - id: chat-audit
+        name: 聊天系統稽核紀錄
+        kind: 事實
+        time: '23:14'
+        text: 21:55 沃斯傳訊給瑞秋；22:31 由沃斯桌機發出一則訊息給伊森；23:14 由同一台桌機收回。
+        source: 卡爾德物流（傳票）
       - id: watch-notice
         name: 手錶通知紀錄
         kind: 事實
@@ -533,6 +545,118 @@ scenes:
           text: 22:33 死者的帳號傳訊要他上樓，22:34 他立刻叫車。他不是自己決定去的。
           strength: 15
           tags: [邏輯]
+      - id: q2a
+        text: 死者的手錶能告訴我們什麼？
+        answer: [watch-photo, autopsy]
+        relation: 支持
+        argument:
+          id: arg-watch
+          name: 論點：手錶資料與本案相關
+          text: 死者戴著手錶，錶帶完好；法醫的死亡時間窗有一個半小時。手錶的資料能把它縮小。
+          strength: 10
+          tags: [邏輯]
+      - id: q2
+        text: 沃斯是什麼時候死的？
+        answer: [autopsy, heart-rate]
+        relation: 支持
+        argument:
+          id: arg-b
+          name: 論點 B：沃斯 22:24 死亡
+          text: 心率在 22:24 歸零，落在法醫的死亡時間窗內。伊森 22:47 才進門。
+          strength: 25
+          tags: [邏輯, 權威]
+      - id: q3
+        text: 那則訊息是誰傳的？
+        answer: [chat-audit, arg-b]
+        relation: 矛盾
+        argument:
+          id: arg-c
+          name: 論點 C：有人用死者的電腦傳訊
+          text: 沃斯 22:24 已死，但 22:31 有人用他的桌機傳訊叫伊森上樓，23:14 又收回。
+          strength: 15
+          tags: [邏輯]
+      - id: q4
+        text: 訊息被收回的時候，31 樓還剩誰？
+        answer: [chat-audit, access-full]
+        relation: 說明機會
+        argument:
+          id: arg-d
+          name: 論點 D：23:14 時 31 樓只剩一個人
+          text: 伊森 23:01 離開大廳；23:14 有人在 31 樓操作那台桌機；那個人 23:26 才刷卡離開。
+          strength: 20
+          tags: [邏輯, 程序]
+    motions:
+      - id: m-watch
+        label: 聲請傳票：死者手錶的健康資料
+        detail: 要拿到廠商手上的心率紀錄，得先讓法官相信這支手錶和本案有關。
+        cost: 2
+        needs: [arg-watch]
+        bases: [相關性, 米蘭達警告, 傳聞例外, 營業秘密]
+        basis: 相關性
+        support: [arg-watch]
+        requests: [核發傳票給手錶廠商, 排除該項證據, 限制證人作證範圍]
+        request: 核發傳票給手錶廠商
+        gives: [heart-rate]
+        granted:
+          - who: 旁白
+            text: 雷耶斯法官當庭核發傳票。三天後，廠商的資料到了。
+          - who: 艾莉絲
+            text: 22:24，心率歸零。伊森 22:47 才刷卡進門。
+            thought: true
+        denied:
+          - who: 旁白
+            text: 「本庭看不出這支手錶和本案的關聯。聲請駁回。」
+          - who: 艾莉絲
+            text: 依據選錯了。法官記得這種事。
+            thought: true
+      - id: m-chat
+        label: 聲請傳票：卡爾德物流聊天系統稽核紀錄
+        detail: 訊息被收回了，但系統會留下「誰、用哪台機器、什麼時候收回」。
+        cost: 2
+        needs: [arg-a]
+        bases: [相關性, 米蘭達警告, 傳聞例外, 營業秘密]
+        basis: 相關性
+        support: [arg-a]
+        requests: [核發傳票給卡爾德物流, 排除該項證據, 撤銷對方的傳票]
+        request: 核發傳票給卡爾德物流
+        granted:
+          - who: 旁白
+            text: 傳票核發。當天下午，卡爾德物流委任另一家事務所聲請撤銷。
+        denied:
+          - who: 旁白
+            text: 「聲請駁回。」
+          - who: 艾莉絲
+            text: 依據選錯了。
+            thought: true
+        twist:
+          lines:
+            - who: 薇薇安・惠特洛克
+              text: 卡爾德會簽豁免書，是因為他們以為這件案子很單純。撤回那張傳票。
+              mood: 硬
+            - who: 艾莉絲
+              text: 那張紀錄是唯一能證明訊息存在過的東西。
+            - who: 薇薇安・惠特洛克
+              text: 我知道。我也知道誰付我們薪水。
+              mood: 硬
+          options:
+            - text: 撤回傳票。
+              flags: [whitlock-up, chat-audit-lost]
+              then:
+                - who: 薇薇安・惠特洛克
+                  text: 聰明。這件事我記著。
+                  mood: 硬
+                - who: 艾莉絲
+                  text: 我也記著。記著我沒去拿的那張紙。
+                  thought: true
+            - text: 我出庭答辯。
+              gives: [chat-audit]
+              flags: [whitlock-down, hale-up]
+              then:
+                - who: 旁白
+                  text: 答辯庭只開了二十分鐘。法官維持傳票，稽核紀錄當週送到。
+                - who: 馬可仕・海爾
+                  text: 做得好。別讓她知道是我說的。
+                  mood: 暖
     goal: q1
     goalLines:
       - who: 羅根
