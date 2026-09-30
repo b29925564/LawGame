@@ -9,6 +9,7 @@ const scene = <T>(id: string) => episodes.ep1.scenes.find((s) => s.id === id) as
 const meet = scene<InterviewScene>('meet-ethan');
 const investigate = scene<DeskScene>('investigate');
 const court = scene<TrialScene>('court-kowalski');
+const rachel = scene<TrialScene>('court-rachel');
 
 describe('訪談', () => {
   it('話題問過就不再出現，卡片要湊齊才解鎖新話題', () => {
@@ -262,5 +263,77 @@ describe('庭審', () => {
     expect(st.patience).toBe(court.patience);
     st = trial.badger(court, st, 0);
     expect(st.patience).toBe(court.patience - 1);
+  });
+});
+
+describe('瑞秋的詰問', () => {
+  const claim = (id: string) => rachel.witness.claims.find((c) => c.id === id)!;
+  const lean = (st: trial.TrialState) => Object.values(st.jury).reduce((a, b) => a + b, 0) / 12;
+
+  it('錄取時已經定錨的說法，開庭就不必再鎖一次', () => {
+    const cold = trial.startTrial(rachel);
+    expect(cold.claims['rc-2250'].lock).toBe('none');
+    const anchored = trial.startTrial(rachel, ['rachel-2250', 'rachel-meeting']);
+    expect(anchored.claims['rc-2250'].lock).toBe('strong');
+    expect(anchored.claims['rc-meeting'].lock).toBe('strong');
+    // 沒有定錨的那一條還是要自己鎖。
+    expect(anchored.claims['rc-31f'].lock).toBe('none');
+  });
+
+  const ready = (id: string, anchored: string[] = []) => {
+    let st = trial.toCross(rachel, trial.startTrial(rachel, anchored));
+    if (st.claims[id].lock === 'none') st = trial.lock(rachel, st, id, 'strong');
+    return trial.setup(rachel, st, id);
+  };
+
+  it('洩漏過的論點，檢方備好反擊；破解得了才算彈劾成功', () => {
+    const c = claim('rc-2250');
+    const st = ready('rc-2250');
+    const before = lean(st);
+
+    const failed = trial.confront(rachel, st, c.id, 25, ['邏輯'], {
+      id: 'arg-b',
+      exposed: true,
+      cards: [],
+    });
+    expect(failed.impeachments).toBe(0);
+    expect(failed.log.some((l) => l.text.includes('手錶在搏鬥中可能脫落'))).toBe(true);
+
+    const broken = trial.confront(rachel, st, c.id, 25, ['邏輯'], {
+      id: 'arg-b',
+      exposed: true,
+      cards: ['watch-photo'],
+    });
+    expect(broken.impeachments).toBe(1);
+    expect(before - lean(broken)).toBeGreaterThan(before - lean(failed));
+  });
+
+  it('沒洩漏過就沒有反擊這一關', () => {
+    const st = trial.confront(rachel, ready('rc-2250'), 'rc-2250', 25, ['邏輯'], { id: 'arg-b' });
+    expect(st.impeachments).toBe(1);
+    expect(st.log.some((l) => l.text.includes('異議'))).toBe(false);
+  });
+
+  it('彈劾兩次之後出示論點 D，她當庭援引緘默權，詰問結束', () => {
+    let st = ready('rc-2250', ['rachel-2250', 'rachel-meeting']);
+    st = trial.confront(rachel, st, 'rc-2250', 25, ['邏輯'], { id: 'arg-b' });
+    st = trial.setup(rachel, st, 'rc-meeting');
+    st = trial.confront(rachel, st, 'rc-meeting', 15, ['邏輯'], { id: 'arg-c' });
+    expect(st.impeachments).toBe(2);
+    expect(st.stage).toBe('cross');
+
+    st = trial.lock(rachel, st, 'rc-31f', 'strong');
+    st = trial.setup(rachel, st, 'rc-31f');
+    st = trial.confront(rachel, st, 'rc-31f', 20, ['邏輯', '程序'], { id: 'arg-d' });
+    expect(st.log.some((l) => l.text.includes('自證己罪'))).toBe(true);
+    expect(st.stage).toBe('done');
+  });
+
+  it('只彈劾一次就出示論點 D，她不會崩，詰問繼續', () => {
+    let st = ready('rc-31f');
+    st = trial.confront(rachel, st, 'rc-31f', 20, ['邏輯', '程序'], { id: 'arg-d' });
+    expect(st.impeachments).toBe(1);
+    expect(st.stage).toBe('cross');
+    expect(st.log.some((l) => l.text.includes('自證己罪'))).toBe(false);
   });
 });

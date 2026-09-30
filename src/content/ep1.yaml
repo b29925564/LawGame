@@ -1340,6 +1340,12 @@ scenes:
           confront:
             strong: （很長的停頓）那則通知……我沒有看過。被告的手機裡沒有那則訊息，所以我們沒有再往下查。
             weak: 我說的是該查的都查了。手錶那種東西，我們通常不會特別去調。
+          counter:
+            argument: arg-a
+            text: 異議。那則通知預覽也可能是被告自己用別的帳號傳給自己的。
+            needs: chat-audit
+            broken: 庭上，稽核紀錄顯示發送裝置是死者辦公室的桌機，不是被告的手機。
+            failed: 庭上……我手上沒有能證明是誰傳的東西。
       irrelevant:
         - q: 警探，您辦過多少件命案？
           a: 加上這件，一百一十七件。
@@ -1353,6 +1359,214 @@ scenes:
         text: 韓律師。過失致死，緩刑五年。這是我最後的條件。
       - who: 艾莉絲
         text: 她在庭上從來不追人講話。她開始怕了。
+        thought: true
+
+  - type: card
+    id: day2
+    act: 第四幕
+    title: 第四幕　庭審　第二天
+    lines:
+      - 檢方傳喚最後一位證人：瑞秋・林恩。
+      - 她是唯一聽見聲音的人，也是全案最無懈可擊的證人。
+
+  # 庭審第二天：瑞秋（全集高潮，企劃書 10.7 第四幕第二天）
+  - type: trial
+    id: court-rachel
+    act: 第四幕
+    day: 第二天
+    threshold: 70
+    patience: 5
+    jurors:
+      - id: j1
+        label: 退休警察
+        leans: [權威]
+        start: 58
+      - id: j2
+        label: 軟體工程師
+        leans: [邏輯]
+        start: 50
+      - id: j3
+        label: 超市店長、單親媽媽
+        leans: [情感]
+        start: 48
+      - id: j4
+        label: 會計師
+        leans: [邏輯, 權威]
+        start: 56
+        foreperson: true
+      - id: j5
+        label: 大學生
+        leans: [程序]
+        start: 46
+      - id: j6
+        label: 護理師
+        leans: [情感, 邏輯]
+        start: 50
+      - id: j7
+        label: 貨車司機
+        leans: [權威]
+        start: 54
+      - id: j8
+        label: 國中老師
+        leans: [程序, 情感]
+        start: 50
+      - id: j9
+        label: 咖啡店店員
+        leans: [情感]
+        start: 47
+      - id: j10
+        label: 保險經紀
+        leans: [邏輯, 權威]
+        start: 55
+      - id: j11
+        label: 餐廳主廚
+        leans: [情感]
+        start: 49
+      - id: j12
+        label: 郵局櫃檯
+        leans: [程序]
+        start: 51
+    intro:
+      - who: 馬可仕・海爾
+        text: 她會很穩。穩的證人只有一種拆法：讓她把話說死，再拿時間去對。
+        mood: 暖
+      - who: 艾莉絲
+        text: 如果錄取的時候已經讓她講死了，這裡就不必再問一次。
+        thought: true
+    witness:
+      name: 瑞秋・林恩
+      role: 卡爾德物流　財務長
+      direct:
+        - id: r1
+          q: 林恩女士，您在卡爾德物流擔任什麼職務？
+          a: 財務長。我在公司九年了。
+          impact: 4
+          tags: [權威]
+        - id: r2
+          q: 案發當晚，您在三十一樓，是嗎？
+          a: 是。我在自己的辦公室裡開線上會議。
+          impact: 6
+          tags: [權威]
+        - id: r3
+          q: 您聽見了什麼？
+          a: 十點五十分左右，隔壁房間有很重的一聲，像是有人倒下去。
+          impact: 15
+          tags: [情感, 權威]
+        - id: r4
+          q: 以一位在公司九年的主管來看，被告是個什麼樣的人？
+          a: 情緒化。他跟沃斯吵過不只一次。
+          objection: 推測
+          sustained: 異議成立。證人不是心理專家，也不是來替被告作人格鑑定的。
+          impact: 10
+          tags: [情感]
+        - id: r5
+          q: 您的同事跟您說過，被告那天下午在走廊上大吼，是嗎？
+          a: 有人跟我說過。
+          objection: 傳聞
+          sustained: 異議成立。聽別人說的不算證據。
+          impact: 10
+          tags: [情感]
+        - id: r6
+          q: 您整晚都在會議裡，沒有離開座位，對不對？
+          a: 對。從九點到十一點半。
+          objection: 誘導
+          sustained: 異議成立。檢察官，請不要替證人作證。
+          impact: 12
+          tags: [權威, 程序]
+        - id: r7
+          q: 您和死者的關係如何？
+          a: 我們共事九年。他找我進公司的。
+          impact: 5
+          tags: [情感]
+      claims:
+        - id: rc-2250
+          text: 我在十點五十分聽見隔壁有人倒地。
+          argument: arg-b
+          needs: heart-rate
+          anchor: rachel-2250
+          lock:
+            strong:
+              q: 林恩女士，十點五十分。您確定是這個時間，不是十點半，也不是十一點？
+              a: 我確定。我看了螢幕右下角的時間。
+            weak:
+              q: 那大概是十點五十分左右吧？
+              a: 差不多。我沒有特別去看時鐘。
+          setup:
+            q: 在那之前請教一件事：死者手上的智慧手錶會記錄心率，這一點您應該不陌生？
+            a: 公司有發健康手錶。我自己也有一支。
+          confront:
+            strong: （停頓）……那我可能記錯了。但我確實聽見了聲音。
+            weak: 我說的是大概。人不會每分每秒都在看時鐘。
+          counter:
+            argument: arg-b
+            text: 異議。手錶在搏鬥中可能脫落，心率歸零不等於死亡時間。
+            needs: watch-photo
+            broken: 庭上，驗屍照片顯示手錶仍扣在死者腕上，錶帶完好。它沒有脫落。
+            failed: 庭上……我手上沒有能證明手錶沒有脫落的東西。
+        - id: rc-meeting
+          text: 我從九點到十一點半，全程在線上會議裡。
+          argument: arg-c
+          needs: meeting-name
+          anchor: rachel-meeting
+          lock:
+            strong:
+              q: 全程。也就是說，從九點到十一點半，您一分鐘都沒有離開過那場會議？
+              a: 一分鐘都沒有。
+            weak:
+              q: 您那天晚上大致上都在開會吧？
+              a: 對，大致上都在。
+          setup:
+            q: 那場會議叫「北門結案會議」，出席紀錄由系統自動產生，您同意嗎？
+            a: ……應該是。
+          confront:
+            strong: （很長的停頓）二十二點零八分我離線了一下。我去倒水。
+            weak: 我可能中間離開過一兩分鐘。誰不會呢。
+        - id: rc-31f
+          text: 二十三點十四分，我不知道三十一樓還有誰。
+          argument: arg-d
+          needs: chat-audit
+          lock:
+            strong:
+              q: 二十三點十四分。那個時間，三十一樓除了您，還有誰在？
+              a: 我不知道。我在自己的房間裡。
+            weak:
+              q: 那麼晚了，樓上應該沒什麼人了吧？
+              a: 大概吧。我沒有出去看。
+          setup:
+            q: 門禁紀錄顯示，二十三點零一分之後，三十一樓沒有人再刷卡進出。這份紀錄您有理由懷疑嗎？
+            a: 沒有。門禁是公司自己的系統。
+          confront:
+            strong: （她看向檢方席。沒有人看她。）我……我要跟我的律師談一下。
+            weak: 那不代表什麼。有人可以跟著別人進來，不刷卡。
+          counter:
+            argument: arg-d
+            text: 異議。證人稍早補充過，她二十三點十分去敲過沃斯的門，沒有人應門就離開了。
+            needs: chat-audit
+            broken: 庭上，二十三點十四分有人在那個房間的桌機上操作。她若在門口，就一定進過房間。
+            failed: 庭上……如果她只是敲了門，那的確不能證明什麼。
+      irrelevant:
+        - q: 林恩女士，您那天晚上加班到幾點？
+          a: 我說過了，十一點半。
+        - q: 您和死者私下有往來嗎？
+          a: 我們是同事。
+      breakdown: （陪審席上，那位國中老師轉頭看了證人席很久。）
+    fifth:
+      needs: 2
+      argument: arg-d
+      lines:
+        - who: 瑞秋・林恩
+          text: （很長的停頓）我拒絕回答，因為答案可能使我自證己罪。
+          mood: 緊
+        - who: 旁白
+          text: 法庭裡沒有人說話。莫羅檢察官站起來，請求休庭。
+    outro:
+      - who: 旁白
+        text: 法官宣布休庭到明天上午。旁聽席的人還沒有散。
+      - who: 馬可仕・海爾
+        text: 我做了三十年，看過三次這種場面。
+        mood: 暖
+      - who: 艾莉絲
+        text: 我不想贏在她身上。我只是想知道那天晚上發生了什麼。
         thought: true
 
   - type: card
