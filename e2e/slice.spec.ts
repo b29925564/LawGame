@@ -13,7 +13,7 @@ async function until(page: Page, target: ReturnType<Page['getByRole']>, limit = 
 }
 
 /** 自動通關：冷開場 → 第一幕 → 調查 → 庭審，彈劾成功。 */
-test('垂直切片可以一路走到彈劾成功', async ({ page }) => {
+test('第 1 集可以一路從冷開場玩到判決', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: '新遊戲' }).click();
 
@@ -258,4 +258,25 @@ test('垂直切片可以一路走到彈劾成功', async ({ page }) => {
   await floor.getByRole('button', { name: /門禁紀錄顯示/ }).click();
   await floor.getByRole('button', { name: /出示 論點 D/ }).click();
   await expect(page.getByText('自證己罪')).toBeVisible();
+  await next(page);
+  await next(page); // 第三天字卡
+
+  // 結辯：挑三個論點排順序、選基調，然後是三輪評議與判決。
+  await page
+    .getByRole('button', { name: /亮出|論點 A/ })
+    .first()
+    .click();
+  await page
+    .getByRole('button', { name: /論點 D/ })
+    .first()
+    .click();
+  await page
+    .getByRole('button', { name: /論點 B/ })
+    .first()
+    .click();
+  await expect(page.getByRole('button', { name: /^3\. 論點 B/ })).toBeVisible();
+  await page.getByRole('button', { name: /程序正義/ }).click();
+  await page.getByRole('button', { name: '開始結辯' }).click();
+  await expect(page.getByText('第 1 輪評議')).toBeVisible();
+  await expect(page.getByRole('heading', { name: /無罪|有罪|陪審團僵局/ })).toBeVisible();
 });

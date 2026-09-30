@@ -425,6 +425,28 @@ const voirDireScene = z.object({
     .min(12),
 });
 
+/**
+ * 結辯與判決（企劃書 6.9.8、6.10）：挑三個論點排順序，選一種訴求基調，
+ * 然後是三輪評議與判決。玩家看得到誰被說服，但插不了手。
+ */
+const closingScene = z.object({
+  type: z.literal('closing'),
+  id,
+  act: z.string(),
+  place: z.string(),
+  /** 要挑幾個論點。 */
+  picks: z.number().int().min(1),
+  threshold: z.number().int().min(1).max(100),
+  intro: z.array(line).default([]),
+  tones: z.array(z.object({ id, label: z.string(), tag: z.enum(tags), text: z.string() })).min(2),
+  /** 判決之後的結局：依判決分開寫。 */
+  verdicts: z.object({
+    無罪: z.array(line).min(1),
+    有罪: z.array(line).min(1),
+    陪審團僵局: z.array(line).min(1),
+  }),
+});
+
 const scene = z.discriminatedUnion('type', [
   z.object({
     type: z.literal('phone'),
@@ -445,6 +467,7 @@ const scene = z.discriminatedUnion('type', [
   trialScene,
   depositionScene,
   voirDireScene,
+  closingScene,
   negotiationScene,
   /** 片頭或幕與幕之間的標題卡。 */
   z.object({
@@ -473,6 +496,7 @@ export type DeskScene = Extract<Scene, { type: 'desk' }>;
 export type TrialScene = Extract<Scene, { type: 'trial' }>;
 export type DepositionScene = Extract<Scene, { type: 'deposition' }>;
 export type VoirDireScene = Extract<Scene, { type: 'voirdire' }>;
+export type ClosingScene = Extract<Scene, { type: 'closing' }>;
 export type Candidate = VoirDireScene['candidates'][number];
 export type NegotiationScene = Extract<Scene, { type: 'negotiation' }>;
 export type DepoQuestion = DepositionScene['topics'][number]['questions'][number];

@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { episodes } from '../content';
 import type { Relation, Tag } from './schema';
+import * as closing from './episode/closing';
 import * as depo from './episode/deposition';
 import * as desk from './episode/desk';
 import * as interview from './episode/interview';
@@ -11,6 +12,7 @@ import type {
   DeskScene,
   Episode,
   InterviewScene,
+  ClosingScene,
   NegotiationScene,
   Scene,
   TrialScene,
@@ -71,6 +73,23 @@ export function deskState(p: Progress, s: DeskScene) {
 /** 這一集的調查那一幕：法庭要用它的論點定義與工時紀錄。 */
 export function deskSceneOf(p: Progress): DeskScene | null {
   return (episodeOf(p).scenes.find((s) => s.type === 'desk') as DeskScene) ?? null;
+}
+
+/** 結辯接的是上一場庭審留下的心證，不是重新開始（企劃書 6.10）。 */
+export function juryAfterTrial(
+  p: Progress,
+): { rules: TrialScene; jury: Record<string, number> } | null {
+  const trials = episodeOf(p).scenes.filter((x) => x.type === 'trial') as TrialScene[];
+  for (const t of [...trials].reverse()) {
+    const st = p.scenes[t.id] as trial.TrialState | undefined;
+    if (st) return { rules: courtScene(p, t), jury: st.jury };
+  }
+  return null;
+}
+
+export function closingState(p: Progress, s: ClosingScene) {
+  const after = juryAfterTrial(p);
+  return stateOf(p, s, () => closing.startClosing(after ? after.jury : {}));
 }
 
 export function voirDireState(p: Progress, s: VoirDireScene) {
@@ -166,6 +185,10 @@ interface GameState {
   confront: (claim: string, strength: number, tags: Tag[], argument: string) => void;
   badger: (i: number) => void;
   finishTrial: () => void;
+  /** 結辯 */
+  pickArg: (id: string) => void;
+  setTone: (id: string) => void;
+  deliver: () => void;
   /** 陪審團遴選 */
   askJuror: (id: string) => void;
   challengeJuror: (id: string) => void;
@@ -213,6 +236,9 @@ export const useEpisode = create<GameState>()((set, get) => {
     trial.startTrial(courtScene(get().progress, s), anchoredClaims(get().progress)),
   );
   const onVoirDire = on<VoirDireScene, voirdire.VoirDireState>('voirdire', voirdire.startVoirDire);
+  const onClosing = on<ClosingScene, closing.ClosingState>('closing', () =>
+    closing.startClosing(juryAfterTrial(get().progress)?.jury ?? {}),
+  );
   const onDepo = on<DepositionScene, depo.DepoState>('deposition', depo.startDeposition);
   const onNego = on<NegotiationScene, nego.NegoState>('negotiation', nego.startNegotiation);
 
@@ -317,6 +343,19 @@ export const useEpisode = create<GameState>()((set, get) => {
         }),
       ),
     badger: (i) => onTrial((s, st) => trial.badger(s, st, i)),
+    pickArg: (id) => onClosing((s, st) => closing.togglePick(s, st, id)),
+    setTone: (id) => onClosing((s, st) => closing.setTone(s, st, id)),
+    deliver: () =>
+      onClosing((s, st) => {
+        const p = get().progress;
+        const after = juryAfterTrial(p);
+        if (!after) return st;
+        const args = (deskSceneOf(p)?.questions ?? [])
+          .filter((q) => p.cards.includes(q.argument.id))
+          .map((q) => q.argument);
+        return closing.deliver(s, st, after.rules, args, exposedArgs(p));
+      }),
+
     askJuror: (id) => onVoirDire((s, st) => voirdire.ask(s, st, id)),
     challengeJuror: (id) => onVoirDire((s, st) => voirdire.challenge(s, st, id)),
     strikeJuror: (id) => onVoirDire((s, st) => voirdire.strike(s, st, id)),

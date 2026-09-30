@@ -4,6 +4,7 @@ import { useSettings } from '../engine/settings';
 import { useGame } from '../engine/store';
 import { Board } from './Board';
 import { Court } from './Court';
+import { Closing } from './Closing';
 import { Courtroom } from './Courtroom';
 import { Deposition } from './Deposition';
 import { Desk } from './Desk';
@@ -46,6 +47,7 @@ export function App() {
       {scene?.type === 'deposition' && <Deposition key={scene.id} scene={scene} />}
       {scene?.type === 'negotiation' && <Negotiation key={scene.id} scene={scene} />}
       {scene?.type === 'voirdire' && <VoirDire key={scene.id} scene={scene} />}
+      {scene?.type === 'closing' && <Closing key={scene.id} scene={scene} />}
       {(!scene || scene.type === 'card') && (
         <main className="scene title-card">
           <p className="eyebrow">{scene?.act ?? '本集完'}</p>
