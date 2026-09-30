@@ -109,6 +109,11 @@ _cards: &cards
     time: '22:34'
     text: 22:34 於東河街 118 號上車，22:44 抵達卡爾德大樓。司機奧瑪・哈桑。
     source: 叫車公司
+  - id: sophie-health-app
+    name: 蘇菲陳述：他每天盯著健康 App
+    kind: 陳述
+    text: 沃斯每天早上、散會之後都低頭看手錶上的健康 App，數字不好看就發脾氣。
+    source: 電話（蘇菲・馬丁內斯）
   - id: heart-rate
     name: 沃斯手錶的心率紀錄
     kind: 事實
@@ -574,6 +579,18 @@ scenes:
           - who: 艾莉絲
             text: 訊息可以從兩支手機上收回。通知紀錄不行。
             thought: true
+      - id: job-sophie
+        who: 艾莉絲
+        label: 打電話給蘇菲，問沃斯平常的習慣
+        detail: 執行助理最清楚他的日常。她是檢方證人，問得出什麼不一定。
+        cost: 1
+        report:
+          - who: 蘇菲
+            text: 他那支錶是去年買的。每天早上、每次開完會，他都低頭看健康 App，數字不好看就發脾氣。
+          - who: 艾莉絲
+            text: 一個每天看的人，那支錶裡就一定有東西可以查。
+            thought: true
+        gives: [sophie-health-app]
       - id: job-rosa
         who: 蘿莎
         label: 請蘿莎到卡爾德大樓外看一看
@@ -593,9 +610,9 @@ scenes:
         relation: 支持
         text: 22:33 手錶跳出死者帳號的訊息，22:34 伊森就叫了車。
       - id: l-watch
-        cards: [watch-photo, autopsy]
-        relation: 縮小範圍
-        text: 法醫只給得出一個半小時的時間窗，但死者手上那支錶有心率感測器，而且完好。
+        cards: [watch-photo, sophie-health-app]
+        relation: 支持
+        text: 死者戴著貼著皮膚的智慧手錶，而且每天都在看它的健康 App：那支錶一直在記他的身體數據。
       - id: l-time
         cards: [autopsy, heart-rate]
         relation: 縮小範圍
@@ -622,7 +639,7 @@ scenes:
           strength: 8
           tags: [邏輯]
       - id: q2a
-        text: 死者的手錶，能把死亡時間縮小嗎？
+        text: 死者的手錶裡，有能查的資料嗎？
         answer: [l-watch]
         argument:
           id: arg-watch

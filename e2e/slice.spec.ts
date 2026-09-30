@@ -117,6 +117,9 @@ test('第 1 集可以一路從冷開場玩到判決', async ({ page }) => {
   await expect(page.getByRole('button', { name: '結束調查' })).toBeVisible();
 
   // 第二幕後半：先把手錶相關性鏈確認起來，才提得出傳票聲請。
+  await page.getByRole('button', { name: '委託', exact: true }).click();
+  await page.getByRole('button', { name: /^委託（1 工時）$/ }).click();
+  await page.getByRole('button', { name: '回到桌面' }).click();
   await page.getByRole('button', { name: '卷宗', exact: true }).click();
   await page.getByRole('button', { name: /驗屍報告/ }).click();
   await page.getByRole('button', { name: /死亡時間推估/ }).click();
@@ -126,9 +129,9 @@ test('第 1 集可以一路從冷開場玩到判決', async ({ page }) => {
   await solve(
     page,
     '疑問 2',
-    '手錶，能把死亡時間縮小嗎',
-    ['驗屍照片：死者的手錶', /驗屍報告$/],
-    /縮小範圍/,
+    '手錶裡，有能查的資料嗎',
+    ['驗屍照片：死者的手錶', '蘇菲陳述：他每天盯著健康 App'],
+    /支持/,
     2,
   );
 
