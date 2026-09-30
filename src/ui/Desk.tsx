@@ -288,6 +288,14 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
     })),
     { id: 'timeline', label: '時間線' },
   ];
+  const slot = (i: number) => {
+    const c = pool.find((x) => x.id === st.link.cards[i]);
+    return (
+      <li className={c ? 'slot-card filled' : 'slot-card'}>
+        {c ? c.name : i === 0 ? '第一張卡' : '第二張卡'}
+      </li>
+    );
+  };
   return (
     <div className="stack">
       <Tabs label="證據板" value={view} onPick={setView} items={items} />
@@ -305,13 +313,26 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
           <p className="muted small">
             挑兩張卡，說明它們之間是什麼關係。連對了得到一條發現；連錯扣 1 工時。
           </p>
-          <ul className="slots-row">
-            {[0, 1].map((i) => (
-              <li key={i} className={st.link.cards[i] ? 'slot-card filled' : 'slot-card'}>
-                {st.link.cards[i] ? pool.find((c) => c.id === st.link.cards[i])?.name : '（空）'}
+          {/*
+           * 連線台黏在捲動區上緣：往下挑卡、選關係時都看得到自己拼了什麼，
+           * 按下「連起來」的結果也出現在這裡。連錯時卡片會留在槽裡，連對或重複時槽會清空。
+           */}
+          <div className={desk.canConnect(st) ? 'link-bench ready' : 'link-bench'}>
+            <ul className="slots-row">
+              {slot(0)}
+              <li className="link-knot" aria-hidden>
+                <span className={st.link.relation ? 'set' : undefined}>
+                  {st.link.relation ?? '？'}
+                </span>
               </li>
-            ))}
-          </ul>
+              {slot(1)}
+            </ul>
+            {st.linkNote && (
+              <p role="status" className={st.link.cards.length ? 'board-note bad' : 'board-note'}>
+                {st.linkNote}
+              </p>
+            )}
+          </div>
           <ul className="stack">
             {pool.map((c) => (
               <li key={c.id}>
@@ -331,17 +352,19 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
           <button className="primary" disabled={!desk.canConnect(st)} onClick={connect}>
             連起來
           </button>
-          {st.linkNote && <p role="status">{st.linkNote}</p>}
           {found.length > 0 && (
             <>
-              <h3>發現</h3>
-              <ul className="stack">
+              <h3 className="findings-head">
+                發現 <span>{found.length}</span>
+              </h3>
+              <ol className="findings">
                 {found.map((f) => (
                   <li key={f.id}>
-                    <strong>{f.name}</strong> {f.text}
+                    <strong>{f.name}</strong>
+                    <p>{f.text}</p>
                   </li>
                 ))}
-              </ul>
+              </ol>
             </>
           )}
         </section>
@@ -356,7 +379,10 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
               {done ? (
                 <p className="good">已確認：{q.argument.name}</p>
               ) : answers.length === 0 ? (
-                <p className="muted">還沒有發現。先到「連線」把證據拼起來。</p>
+                <div className="board-empty">
+                  <p className="muted">還沒有發現。先到「連線」把證據拼起來。</p>
+                  <button onClick={() => setView('links')}>去連線</button>
+                </div>
               ) : (
                 <>
                   <p className="muted small">
@@ -382,7 +408,11 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
                   </button>
                 </>
               )}
-              {st.feedback[q.id] && <p role="status">{st.feedback[q.id]}</p>}
+              {st.feedback[q.id] && (
+                <p role="status" className={done ? 'board-note' : 'board-note bad'}>
+                  {st.feedback[q.id]}
+                </p>
+              )}
             </section>
           );
         })()}

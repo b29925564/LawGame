@@ -149,6 +149,14 @@ button.primary {
     inset 0 -2px 0 rgb(0 0 0 / 14%),
     0 6px 18px -8px light-dark(rgb(160 120 0 / 55%), rgb(244 197 61 / 45%));
 }
+/* 還不能按的主要按鈕是一格虛線的空位，不是一塊褪色的黃。 */
+button.primary:disabled {
+  opacity: 1;
+  background: transparent;
+  border: 1px dashed var(--border-strong);
+  color: var(--faint);
+  box-shadow: none;
+}
 button.primary:hover:not(:disabled) {
   background: var(--hl);
   border-color: transparent;
@@ -1130,6 +1138,158 @@ button.relation {
 button.relation.on,
 .wide.on {
   color: var(--text);
+}
+
+/* 連線台：兩個槽之間拉一條線，線上的結寫著選好的關係；三樣都齊了整條線變成螢光筆。 */
+.link-bench {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  margin: 2px -16px;
+  padding: 10px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-block: 1px solid var(--border);
+  background: var(--surface-2);
+  box-shadow: 0 8px 16px -12px var(--shadow-color);
+}
+.link-bench .slots-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: 0;
+}
+.link-bench .slot-card {
+  min-height: 52px;
+  padding: 6px 10px;
+  font-size: 0.86em;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+  background-color: var(--surface);
+}
+.link-bench .slot-card.filled {
+  background: linear-gradient(var(--hl-wash), var(--hl-wash)), var(--surface);
+}
+.link-knot {
+  display: flex;
+  align-items: center;
+  padding-inline: 8px;
+  background: linear-gradient(var(--border-strong), var(--border-strong)) center / 100% 1px
+    no-repeat;
+}
+.link-knot span {
+  min-width: 28px;
+  padding: 3px 9px;
+  border: 1px dashed var(--border-strong);
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--faint);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-align: center;
+  white-space: nowrap;
+}
+.link-knot span.set {
+  border-style: solid;
+  border-color: var(--hl);
+  background: color-mix(in srgb, var(--hl) 16%, var(--surface-2));
+  color: var(--text);
+}
+.link-bench.ready .link-knot {
+  background-image: linear-gradient(var(--hl), var(--hl));
+  background-size: 100% 2px;
+}
+.link-bench.ready .link-knot span {
+  border: 1px solid transparent;
+  background: var(--hl);
+  color: var(--hl-ink);
+}
+
+/* 連線與案情會議的結果：成立用綠邊，站不住用紅邊。 */
+.board-note {
+  margin: 0;
+  padding: 8px 12px;
+  border: 1px solid color-mix(in srgb, var(--good) 35%, var(--border));
+  border-left: 3px solid var(--good);
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--good) 9%, var(--surface));
+  font-size: 0.9em;
+  line-height: 1.6;
+}
+.board-note.bad {
+  border-color: color-mix(in srgb, var(--bad) 35%, var(--border));
+  border-left-color: var(--bad);
+  background: color-mix(in srgb, var(--bad) 9%, var(--surface));
+}
+
+/* 發現：像釘在板上的一張便條，編號用打字機字，內容用文件字。 */
+.findings-head {
+  margin: 10px 0 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+}
+.findings-head span {
+  display: inline-grid;
+  place-items: center;
+  min-width: 22px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--hl);
+  color: var(--hl-ink);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0;
+}
+.findings {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.findings li {
+  padding: 10px 14px 12px;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--hl);
+  border-radius: var(--radius);
+  background: linear-gradient(90deg, var(--hl-wash), transparent 70%), var(--surface);
+}
+.findings strong,
+.pick[data-kind='發現'] .pick-name {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+}
+.findings p,
+.pick[data-kind='發現'] .pick-text {
+  margin: 2px 0 0;
+  font-family: var(--font-doc);
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--text);
+}
+/* 論點卡在任何清單裡都帶螢光筆邊，一眼分得出是自己推出來的。 */
+.pick[data-kind='論點'] {
+  border-left: 3px solid var(--hl);
+}
+.board-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+.board-empty p {
+  margin: 0;
 }
 .actions .wide,
 .wide {
@@ -2132,6 +2292,12 @@ button.relation.on,
   }
   .objection {
     animation: slam 0.38s var(--ease) both;
+  }
+  .board-note {
+    animation: drop 0.28s var(--ease) both;
+  }
+  .findings li:last-child {
+    animation: ink-in 0.5s var(--ease) both;
   }
   .sheet {
     animation: sheet-up 0.34s var(--ease) both;
