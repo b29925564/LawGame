@@ -136,14 +136,14 @@ _cards: &cards
     name: 逮捕報告
     kind: 事實
     date: 週日
-    time: '03:40'
-    text: 逮捕時間 03:40。備註欄：「嫌犯於巡邏車後座自願陳述。」
+    time: '14:05'
+    text: 逮捕時間 14:05。備註欄：「嫌犯於巡邏車後座自願陳述。」
     source: 檢方開示
   - id: no-warning
     name: 巡邏車錄影：沒有警告
     kind: 事實
     date: 週日
-    time: '03:40'
+    time: '14:20'
     text: 錄影裡警員沒有唸出米蘭達警告，就開始問他為什麼在大樓裡。
     source: 檢方開示
   - id: statement-excluded
@@ -747,11 +747,11 @@ scenes:
         title: 逮捕報告與巡邏車錄影
         from: 卡爾德港警局
         lines:
-          - text: 逮捕時間 03:40，地點為嫌犯胞姊住處門口。
+          - text: 逮捕時間 14:05，地點為嫌犯友人住處。
             fact: arrest-report
-          - text: 備註：嫌犯於巡邏車後座自願陳述「我只是去拿東西，我沒有要傷害他」。
+          - text: 備註：嫌犯於巡邏車後座自願陳述「我只是想讓他住手」。
             fact: car-statement
-          - text: 錄影 03:41:12 —— 警員直接開口問話，沒有唸出任何權利告知。
+          - text: 錄影 14:19:48 —— 警員直接開口問話，沒有唸出任何權利告知。
             fact: no-warning
     mail: []
     jobs: []
