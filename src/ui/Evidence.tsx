@@ -19,8 +19,9 @@ export function EvidenceDrawer({ note }: { note?: string }) {
     window.addEventListener('keydown', esc);
     return () => window.removeEventListener('keydown', esc);
   }, [open]);
+  const [kind, setKind, showKind] = useKindFilter();
   const hit = items.filter(
-    (i) => !q || i.name.includes(q) || i.text.includes(q) || i.kind.includes(q),
+    (i) => showKind(i) && (!q || i.name.includes(q) || i.text.includes(q) || i.kind.includes(q)),
   );
   return (
     <>
@@ -46,6 +47,7 @@ export function EvidenceDrawer({ note }: { note?: string }) {
               aria-label="找卡片"
               onChange={(e) => setQ(e.target.value)}
             />
+            <KindFilter items={items} value={kind} onPick={setKind} />
             <ul className="stack cards sheet-list">
               {hit.map((i) => (
                 <EvidenceCard key={i.id} item={i} />
@@ -119,4 +121,37 @@ export function CardPick({
 /** 卡片上的日期與時間，例如「週五 22:34」。 */
 export function stamp(c: { date?: string; time?: string }): string {
   return [c.date, c.time].filter(Boolean).join(' ');
+}
+
+/** 依卡片種類篩選；清單一長，玩家通常只想看某一類（例如只看論點）。 */
+export function useKindFilter() {
+  const [kind, setKind] = useState<string | null>(null);
+  const show = (c: { kind?: string }) => !kind || c.kind === kind;
+  return [kind, setKind, show] as const;
+}
+
+export function KindFilter({
+  items,
+  value,
+  onPick,
+}: {
+  items: { kind?: string }[];
+  value: string | null;
+  onPick: (k: string | null) => void;
+}) {
+  const kinds = [...new Set(items.map((i) => i.kind).filter((k) => !!k))] as string[];
+  if (kinds.length < 2) return null;
+  const count = (k: string) => items.filter((i) => i.kind === k).length;
+  return (
+    <div className="chips kinds" role="group" aria-label="卡片種類">
+      <button aria-pressed={value === null} onClick={() => onPick(null)}>
+        全部 {items.length}
+      </button>
+      {kinds.map((k) => (
+        <button key={k} aria-pressed={value === k} onClick={() => onPick(value === k ? null : k)}>
+          {k} {count(k)}
+        </button>
+      ))}
+    </div>
+  );
 }

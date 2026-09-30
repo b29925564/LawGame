@@ -1065,6 +1065,22 @@ details summary {
 .pick.on .pick-text {
   color: var(--text);
 }
+/* 清單很長時每張卡只露兩行，選中的那張才展開全文。 */
+.pick:not(.on) .pick-text {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+.chips.kinds {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.chips.kinds button {
+  flex: 0 0 auto;
+  min-height: 34px;
+}
 .verb {
   color: var(--accent);
 }
@@ -1319,8 +1335,21 @@ button.relation.on,
 .timeline li {
   position: relative;
   display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 2px 8px;
+  grid-template-columns: minmax(0, 1fr) 40px 40px;
+  gap: 2px 4px;
+  border-radius: var(--radius);
+  transition: background-color 0.15s var(--ease);
+}
+.timeline li > div {
+  grid-column: 1;
+}
+/* 被拖著的那一列浮起來，其他列讓出位置。 */
+.timeline li.dragging {
+  background: var(--hl-wash);
+  outline: 1px solid var(--hl);
+  outline-offset: 4px;
+  box-shadow: var(--shadow-2);
+  z-index: 1;
 }
 .timeline li::before {
   content: '';
@@ -1334,7 +1363,8 @@ button.relation.on,
   box-shadow: 0 0 0 3px var(--surface);
 }
 .timeline time {
-  grid-column: 1 / -1;
+  grid-column: 1;
+  grid-row: 1;
   font-family: var(--font-mono);
   font-size: 0.84em;
   font-weight: 700;
@@ -1343,18 +1373,40 @@ button.relation.on,
 }
 .timeline p {
   margin: 0;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
   font-size: 14px;
   color: var(--muted);
 }
-.timeline .order {
-  flex-wrap: nowrap;
-  align-self: start;
-  gap: 4px;
-}
-.timeline .order button {
+.timeline .grip,
+.timeline .drop-off {
+  grid-row: 1 / span 2;
+  align-self: center;
   min-width: 40px;
-  min-height: 40px;
-  padding: 4px 8px;
+  min-height: 44px;
+  padding: 0;
+  box-shadow: none;
+}
+.timeline .grip {
+  grid-column: 2;
+  touch-action: none;
+  cursor: grab;
+  color: var(--muted);
+  letter-spacing: -0.2em;
+  font-weight: 700;
+}
+.timeline .dragging .grip {
+  cursor: grabbing;
+  border-color: var(--hl);
+  color: var(--text);
+}
+.timeline .drop-off {
+  grid-column: 3;
+  border-color: transparent;
+  background: none;
+  color: var(--faint);
 }
 .chips,
 .slots,
