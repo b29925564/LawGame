@@ -40,6 +40,20 @@ export function Shell({
   );
 }
 
+/** 筆錄：新的一句話進來就捲到底，玩家永遠看得到最新的那句。 */
+export function Transcript({ count, children }: { count: number; children: ReactNode }) {
+  const box = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = box.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [count]);
+  return (
+    <div className="lines transcript" aria-live="polite" ref={box}>
+      {children}
+    </div>
+  );
+}
+
 /** 分頁列。每個分頁可以帶一個小記號（未讀數、已完成的勾）。 */
 export function Tabs<T extends string>({
   label,

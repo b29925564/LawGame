@@ -49,25 +49,40 @@ export function Title() {
   const auto = readSave('auto');
   return (
     <main className="scene title-screen">
-      <p className="eyebrow">垂直切片</p>
-      <h1>合理懷疑</h1>
-      <p className="subtitle">第一集・已收回的訊息</p>
-      <div className="stack">
-        {auto && (
-          <button className="primary" onClick={() => load('auto')}>
-            繼續（{auto.label}）
+      <span className="title-mark" aria-hidden>
+        疑
+      </span>
+      <div className="title-head">
+        <span className="title-rule" aria-hidden />
+        <h1>
+          {[...'合理懷疑'].map((c, i) => (
+            <span key={i}>{c}</span>
+          ))}
+        </h1>
+      </div>
+      <div className="title-foot">
+        <p className="title-episode">
+          <span>第一集</span>
+          <strong>已收回的訊息</strong>
+        </p>
+        <div className="stack">
+          {auto && (
+            <button className="primary" onClick={() => load('auto')}>
+              繼續（{auto.label}）
+            </button>
+          )}
+          <button className={auto ? '' : 'primary'} onClick={newGame}>
+            新遊戲
           </button>
-        )}
-        <button className={auto ? '' : 'primary'} onClick={newGame}>
-          新遊戲
-        </button>
-        <button onClick={() => setLoading(!loading)} aria-expanded={loading}>
-          讀取存檔
-        </button>
-        {loading && <SlotList slots={['auto', ...SLOTS]} verb="讀取" onPick={load} />}
-        <button className="link" onClick={openProto}>
-          系統原型（證據板、彈劾、陪審團）
-        </button>
+          <button onClick={() => setLoading(!loading)} aria-expanded={loading}>
+            讀取存檔
+          </button>
+          {loading && <SlotList slots={['auto', ...SLOTS]} verb="讀取" onPick={load} />}
+          <button className="link" onClick={openProto}>
+            系統原型（證據板、彈劾、陪審團）
+          </button>
+        </div>
+        <p className="title-build">垂直切片</p>
       </div>
     </main>
   );

@@ -193,7 +193,7 @@ function Docs({ scene }: { scene: DeskScene }) {
                       setNotes((n) => (n.includes(key) ? n.filter((x) => x !== key) : [...n, key]));
                   }}
                 >
-                  {l.text}
+                  <span>{l.text}</span>
                 </button>
               </li>
             );

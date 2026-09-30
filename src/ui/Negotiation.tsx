@@ -4,7 +4,7 @@ import type { NegotiationScene } from '../engine/episode/schema';
 import { deskSceneOf, negoState, useEpisode } from '../engine/game';
 import { CardPick, EvidenceDrawer } from './Evidence';
 import { Speech } from './Portrait';
-import { Shell, Tabs } from './Shell';
+import { Shell, Tabs, Transcript } from './Shell';
 
 /** 認罪協商（企劃書 6.8）：攤牌會洩底，虛張聲勢看證據清單，決定權在委託人手上。 */
 export function Negotiation({ scene }: { scene: NegotiationScene }) {
@@ -73,11 +73,11 @@ export function Negotiation({ scene }: { scene: NegotiationScene }) {
       }
       tabs={
         <>
-          <div className="lines transcript" aria-live="polite">
+          <Transcript count={st.log.length}>
             {st.log.map((l, i) => (
               <Speech key={i} line={l} />
             ))}
-          </div>
+          </Transcript>
           <Tabs
             label="談判"
             value={tab}
