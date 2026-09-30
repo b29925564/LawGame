@@ -91,8 +91,9 @@ describe('桌面調查', () => {
   it('疑問要拿發現回答，全對才確認，錯了照樣扣工時而且不說哪裡錯', () => {
     let st = desk.commission(investigate, play(), 'job-watch', ['ethan-message']);
     st = desk.commission(investigate, st, 'job-ride', ['ethan-ride']);
+    st = desk.commission(investigate, st, 'job-sophie', []);
     st = linkUp(st, ['watch-notice', 'ride-receipt'], '支持');
-    st = linkUp(st, ['watch-photo', 'autopsy'], '縮小範圍');
+    st = linkUp(st, ['watch-photo', 'sophie-health-app'], '支持');
     st = desk.toggleCard(investigate, st, 'q1', 'l-watch');
     st = desk.submit(investigate, st, 'q1');
     expect(st.confirmed).toEqual([]);
@@ -137,7 +138,8 @@ describe('審前動議', () => {
     st = desk.toggleCard(investigate, st, 'q1', 'l-called');
     st = desk.submit(investigate, st, 'q1');
     // 手錶相關性的推理鏈，解鎖傳票動議。
-    st = linkUp(st, ['watch-photo', 'autopsy'], '縮小範圍');
+    st = desk.commission(investigate, st, 'job-sophie', []);
+    st = linkUp(st, ['watch-photo', 'sophie-health-app'], '支持');
     st = desk.toggleCard(investigate, st, 'q2a', 'l-watch');
     return desk.submit(investigate, st, 'q2a');
   };
