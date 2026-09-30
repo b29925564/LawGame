@@ -578,7 +578,7 @@ scenes:
           id: arg-a
           name: 論點 A：伊森是被叫上樓的
           text: 22:33 死者的帳號傳訊要他上樓，22:34 他立刻叫車。他不是自己決定去的。
-          strength: 15
+          strength: 8
           tags: [邏輯]
       - id: q2a
         text: 死者的手錶能告訴我們什麼？
@@ -588,7 +588,7 @@ scenes:
           id: arg-watch
           name: 論點：手錶資料與本案相關
           text: 死者戴著手錶，錶帶完好；法醫的死亡時間窗有一個半小時。手錶的資料能把它縮小。
-          strength: 10
+          strength: 5
           tags: [邏輯]
       - id: q2
         text: 沃斯是什麼時候死的？
@@ -598,7 +598,7 @@ scenes:
           id: arg-b
           name: 論點 B：沃斯 22:24 死亡
           text: 心率在 22:24 歸零，落在法醫的死亡時間窗內。伊森 22:47 才進門。
-          strength: 25
+          strength: 12
           tags: [邏輯, 權威]
       - id: q3
         text: 那則訊息是誰傳的？
@@ -608,7 +608,7 @@ scenes:
           id: arg-c
           name: 論點 C：有人用死者的電腦傳訊
           text: 沃斯 22:24 已死，但 22:31 有人用他的桌機傳訊叫伊森上樓，23:14 又收回。
-          strength: 15
+          strength: 8
           tags: [邏輯]
       - id: q4
         text: 訊息被收回的時候，31 樓還剩誰？
@@ -618,7 +618,7 @@ scenes:
           id: arg-d
           name: 論點 D：23:14 時 31 樓只剩一個人
           text: 伊森 23:01 離開大廳；23:14 有人在 31 樓操作那台桌機；那個人 23:26 才刷卡離開。
-          strength: 20
+          strength: 10
           tags: [邏輯, 程序]
     motions:
       - id: m-watch
@@ -763,7 +763,7 @@ scenes:
           id: arg-miranda
           name: 論點：供述取得程序違法
           text: 報告寫「自願陳述」，錄影裡卻是警員先開口問話，而且從頭到尾沒有權利告知。
-          strength: 20
+          strength: 10
           tags: [程序]
     goal: q-miranda
     goalLines:
@@ -1287,40 +1287,40 @@ scenes:
         - id: d1
           q: 警探，請說明您到達現場時看到的情況。
           a: 死者倒在辦公桌旁，頭部有重擊傷。桌上的水晶獎盃掉在地毯上，上面有血。
-          impact: 8
+          impact: 4
           tags: [權威]
         - id: d2
           q: 門禁紀錄顯示被告 22:47 上樓。這代表他在案發時間在場，對不對？
           a: 對，這正是我們鎖定他的原因。
           objection: 誘導
           sustained: 異議成立。檢察官，請不要把答案放進問題裡。
-          impact: 10
+          impact: 5
           tags: [邏輯, 權威]
         - id: d3
           q: 大樓警衛跟您說，他看到被告驚慌地跑出大廳，是嗎？
           a: 警衛是這樣告訴我的。
           objection: 傳聞
           sustained: 異議成立。警衛本人可以自己來作證。
-          impact: 10
+          impact: 5
           tags: [情感]
         - id: d4
           q: 以您二十二年的辦案經驗，被告當時的心裡在想什麼？
           a: 一個剛犯下重罪的人會想的事：離開現場。
           objection: 推測
           sustained: 異議成立。證人不是被告肚子裡的蛔蟲。
-          impact: 8
+          impact: 4
           tags: [權威, 情感]
         - id: d5
           q: 被告四年前也曾經被逮捕，您知道嗎？
           a: 我調過他的紀錄，持有毒品。
           objection: 無關
           sustained: 異議成立。陪審團請忽略這個問題。檢察官，妳很清楚不能這樣問。
-          impact: 12
+          impact: 6
           tags: [情感, 權威]
         - id: d6
           q: 警探，逮捕當天，被告在警車上說了什麼？
           a: 他自己開口說：「我只是想讓他住手。」沒有人問他任何問題。
-          impact: 15
+          impact: 8
           tags: [情感, 權威]
       claims:
         - id: c-checked
@@ -1440,43 +1440,43 @@ scenes:
         - id: r1
           q: 林恩女士，您在卡爾德物流擔任什麼職務？
           a: 財務長。我在公司九年了。
-          impact: 4
+          impact: 2
           tags: [權威]
         - id: r2
           q: 案發當晚，您在三十一樓，是嗎？
           a: 是。我在自己的辦公室裡開線上會議。
-          impact: 6
+          impact: 3
           tags: [權威]
         - id: r3
           q: 您聽見了什麼？
           a: 十點五十分左右，隔壁房間有很重的一聲，像是有人倒下去。
-          impact: 15
+          impact: 8
           tags: [情感, 權威]
         - id: r4
           q: 以一位在公司九年的主管來看，被告是個什麼樣的人？
           a: 情緒化。他跟沃斯吵過不只一次。
           objection: 推測
           sustained: 異議成立。證人不是心理專家，也不是來替被告作人格鑑定的。
-          impact: 10
+          impact: 5
           tags: [情感]
         - id: r5
           q: 您的同事跟您說過，被告那天下午在走廊上大吼，是嗎？
           a: 有人跟我說過。
           objection: 傳聞
           sustained: 異議成立。聽別人說的不算證據。
-          impact: 10
+          impact: 5
           tags: [情感]
         - id: r6
           q: 您整晚都在會議裡，沒有離開座位，對不對？
           a: 對。從九點到十一點半。
           objection: 誘導
           sustained: 異議成立。檢察官，請不要替證人作證。
-          impact: 12
+          impact: 6
           tags: [權威, 程序]
         - id: r7
           q: 您和死者的關係如何？
           a: 我們共事九年。他找我進公司的。
-          impact: 5
+          impact: 2
           tags: [情感]
       claims:
         - id: rc-2250
