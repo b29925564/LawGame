@@ -14,6 +14,7 @@ import { Negotiation } from './Negotiation';
 import { Phone } from './Phone';
 import { Intro, VerdictScreen } from './Scenes';
 import { Title } from './Title';
+import { VoirDire } from './VoirDire';
 
 export function App() {
   const { mode, progress, advance, toTitle } = useEpisode();
@@ -44,6 +45,7 @@ export function App() {
       {scene?.type === 'trial' && <Courtroom key={scene.id} scene={scene} />}
       {scene?.type === 'deposition' && <Deposition key={scene.id} scene={scene} />}
       {scene?.type === 'negotiation' && <Negotiation key={scene.id} scene={scene} />}
+      {scene?.type === 'voirdire' && <VoirDire key={scene.id} scene={scene} />}
       {(!scene || scene.type === 'card') && (
         <main className="scene title-card">
           <p className="eyebrow">{scene?.act ?? '本集完'}</p>

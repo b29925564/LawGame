@@ -1,7 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import type { TrialScene } from '../engine/episode/schema';
 import * as trial from '../engine/episode/trial';
-import { deskSceneOf, deskState, exposedArgs, trialState, useEpisode } from '../engine/game';
+import {
+  courtScene,
+  deskSceneOf,
+  deskState,
+  exposedArgs,
+  trialState,
+  useEpisode,
+} from '../engine/game';
 import { reaction, type Jury } from '../engine/jury';
 import type { Tag } from '../engine/schema';
 import { useSettings } from '../engine/settings';
@@ -105,7 +112,7 @@ function ObjectionWindow({
   );
 }
 
-export function Courtroom({ scene }: { scene: TrialScene }) {
+export function Courtroom({ scene: raw }: { scene: TrialScene }) {
   const {
     progress,
     advance,
@@ -119,6 +126,8 @@ export function Courtroom({ scene }: { scene: TrialScene }) {
     badger,
     finishTrial,
   } = useEpisode();
+  // 上場的是遴選留下的陪審團，法官耐心也已經扣過遴選時的失誤。
+  const scene = courtScene(progress, raw);
   const st = trialState(progress, scene);
   const [intro, setIntro] = useState(st.log.length === 0);
   const transcript = useRef<HTMLDivElement>(null);

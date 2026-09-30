@@ -370,6 +370,44 @@ const negotiationScene = z.object({
   accepted: z.array(line).min(1),
 });
 
+/**
+ * 陪審團遴選（企劃書 6.9.1）：18 位候選人取 12 位。
+ * 問卷看得到的寫在 sheet，提問才看得到的寫在 hidden。
+ */
+const voirDireScene = z.object({
+  type: z.literal('voirdire'),
+  id,
+  act: z.string(),
+  place: z.string(),
+  /** 可以提問的次數。 */
+  questions: z.number().int().min(1),
+  /** 玩家的無因迴避次數；檢方同樣有這麼多次。 */
+  peremptories: z.number().int().min(1),
+  seats: z.number().int().min(1),
+  intro: z.array(line).default([]),
+  candidates: z
+    .array(
+      z.object({
+        id,
+        name: z.string(),
+        job: z.string(),
+        sheet: z.string(),
+        leans: z.array(z.enum(tags)).min(1).max(2),
+        start: z.number().int().min(0).max(100),
+        /** 陪審長由領導特質最高的人擔任。 */
+        lead: z.number().int().min(0).default(0),
+        /** 這個人對辯方多有利（0–10）：檢方的無因迴避照這個順序砍。 */
+        value: z.number().int().min(0).max(10).default(5),
+        question: z.object({ q: z.string(), a: z.string() }),
+        /** 提問後才看得到的偏見。 */
+        hidden: z.string().optional(),
+        /** 提問後明確表示偏見＝可以有因迴避。 */
+        cause: z.boolean().default(false),
+      }),
+    )
+    .min(12),
+});
+
 const scene = z.discriminatedUnion('type', [
   z.object({
     type: z.literal('phone'),
@@ -389,6 +427,7 @@ const scene = z.discriminatedUnion('type', [
   deskScene,
   trialScene,
   depositionScene,
+  voirDireScene,
   negotiationScene,
   /** 片頭或幕與幕之間的標題卡。 */
   z.object({
@@ -416,6 +455,8 @@ export type InterviewScene = Extract<Scene, { type: 'interview' }>;
 export type DeskScene = Extract<Scene, { type: 'desk' }>;
 export type TrialScene = Extract<Scene, { type: 'trial' }>;
 export type DepositionScene = Extract<Scene, { type: 'deposition' }>;
+export type VoirDireScene = Extract<Scene, { type: 'voirdire' }>;
+export type Candidate = VoirDireScene['candidates'][number];
 export type NegotiationScene = Extract<Scene, { type: 'negotiation' }>;
 export type DepoQuestion = DepositionScene['topics'][number]['questions'][number];
 export type Offer = NegotiationScene['offers'][number];

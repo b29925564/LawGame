@@ -981,6 +981,241 @@ scenes:
       - 卡爾德港高等法院　第三法庭
       - 陪審團已經選定。檢方傳喚第一位證人。
 
+  # 第四幕第一天之前：陪審團遴選（企劃書 6.9.1）
+  - type: voirdire
+    id: voir-dire
+    act: 第四幕
+    place: 卡爾德港高等法院　第三法庭
+    questions: 6
+    peremptories: 3
+    seats: 12
+    intro:
+      - who: 馬可仕・海爾
+        text: 十八個人，妳挑十二個。六次提問，三次無因迴避，檢方也有三次。
+        mood: 暖
+      - who: 馬可仕・海爾
+        text: 記住：妳不是在挑喜歡的人，妳是在挑聽得懂妳那套說法的人。
+        mood: 暖
+      - who: 艾莉絲
+        text: 有人明講偏見，我才能請法官剔除。沒憑沒據就聲請，法官會記住。
+        thought: true
+    candidates:
+      - id: c-cop
+        name: 華特・費雪
+        job: 退休警察
+        sheet: 在本市警局服務三十年，去年退休。
+        leans: [權威]
+        start: 58
+        lead: 3
+        value: 2
+        question:
+          q: 您在警局三十年。辦案草率的案子，您看過嗎？
+          a: 看過。我最看不起那種人。要辦就辦乾淨。
+        hidden: 偏見「信任警察」，但最討厭辦案草率。
+      - id: c-dev
+        name: 艾拉・鄭
+        job: 軟體工程師
+        sheet: 三十二歲，單身，寫後端系統。
+        leans: [邏輯]
+        start: 50
+        lead: 2
+        value: 9
+        question:
+          q: 如果一份電子紀錄和一個人的記憶對不上，您信哪一個？
+          a: 紀錄。人會記錯時間，機器不會。
+        hidden: 取向「邏輯」，對數位證據反應加倍。
+      - id: c-mom
+        name: 蘿倫・戴維斯
+        job: 超市店長
+        sheet: 單親，兩個孩子。
+        leans: [情感]
+        start: 48
+        lead: 4
+        value: 7
+        question:
+          q: 有沒有哪個時刻，您覺得一個年輕人只是走錯了路？
+          a: 我兒子十七歲的時候被抓過一次。他現在在念大學。
+        hidden: 取向「情感」，兒子曾經誤入歧途。
+      - id: c-cpa
+        name: 保羅・林德
+        job: 會計師
+        sheet: 在大型會計師事務所任職十二年。
+        leans: [邏輯, 權威]
+        start: 56
+        lead: 6
+        value: 4
+        question:
+          q: 白領犯罪的案子，您怎麼看？
+          a: 帳做假就是做假。這種人被起訴，通常不會是冤枉的。
+        hidden: 偏見「白領犯罪都是真的」，對動機證據敏感。
+      - id: c-student
+        name: 尼可・阿巴斯
+        job: 大學生
+        sheet: 二十一歲，法律系三年級。
+        leans: [程序]
+        start: 46
+        lead: 1
+        value: 8
+        question:
+          q: 警察沒有告知權利就問話，您會在意嗎？
+          a: 會。程序不是形式，程序就是保護。
+        hidden: 取向「程序」，討厭警方越權。
+      - id: c-fired
+        name: 唐娜・麥克雷
+        job: 待業中
+        sheet: 去年被前雇主資遣。
+        leans: [情感]
+        start: 40
+        lead: 1
+        value: 6
+        question:
+          q: 您和卡爾德物流有過什麼樣的關係？
+          a: 他們裁了我。那間公司爛透了，講出來的話一個字都不能信。
+        hidden: 明確表示對卡爾德物流有偏見。
+        cause: true
+      - id: c-nurse
+        name: 米莉安・奧提茲
+        job: 護理師
+        sheet: 在急診工作十五年。
+        leans: [情感, 權威]
+        start: 52
+        lead: 5
+        value: 5
+        question:
+          q: 死亡時間這種推估，您在急診看過嗎？
+          a: 看過。那是個範圍，不是一個點。醫生自己也會說「大概」。
+        hidden: 對法醫證詞有自己的判斷力。
+      - id: c-driver
+        name: 巴比・尹
+        job: 貨車司機
+        sheet: 長途貨運，跑夜班。
+        leans: [權威]
+        start: 54
+        lead: 2
+        value: 4
+        question:
+          q: 上夜班的人，時間感準不準？
+          a: 準。我們靠時間吃飯。
+        hidden: 對時間線證據特別敏感。
+      - id: c-teacher
+        name: 海倫・帕克
+        job: 國中老師
+        sheet: 教英文，二十八年。
+        leans: [程序, 情感]
+        start: 50
+        lead: 7
+        value: 6
+        question:
+          q: 如果有人說謊被您抓到，您還會信他其他的話嗎？
+          a: 要看他為什麼說謊。孩子說謊多半是怕。
+        hidden: 領導特質高，容易成為陪審長。
+      - id: c-barista
+        name: 昆恩・拉莫斯
+        job: 咖啡店店員
+        sheet: 二十四歲，兼職讀夜校。
+        leans: [情感]
+        start: 47
+        lead: 1
+        value: 6
+        question:
+          q: 您覺得被起訴的人，通常是不是真的做了？
+          a: 不知道欸。我沒想過這個。
+      - id: c-broker
+        name: 西奧・岡薩雷斯
+        job: 保險經紀
+        sheet: 自營，十年。
+        leans: [邏輯, 權威]
+        start: 55
+        lead: 4
+        value: 3
+        question:
+          q: 有人跑掉了，您會怎麼想？
+          a: 心虛才跑。我做保險，看太多了。
+        hidden: 明確表示逃跑等於心虛。
+        cause: true
+      - id: c-chef
+        name: 瑪雅・托雷斯
+        job: 餐廳主廚
+        sheet: 自己開店七年。
+        leans: [情感]
+        start: 49
+        lead: 3
+        value: 6
+        question:
+          q: 廚房出事的時候，您會先怪誰？
+          a: 先看流程哪裡壞掉，不是先找人。
+      - id: c-clerk
+        name: 亞當・費爾南德斯
+        job: 郵局櫃檯
+        sheet: 公務員，十八年。
+        leans: [程序]
+        start: 51
+        lead: 2
+        value: 5
+        question:
+          q: 規定和常識衝突的時候，您聽哪一個？
+          a: 規定。規定就是大家講好的常識。
+      - id: c-retail
+        name: 珍妮・吳
+        job: 服飾店副理
+        sheet: 三十五歲，已婚。
+        leans: [情感, 邏輯]
+        start: 50
+        lead: 3
+        value: 5
+        question:
+          q: 監視器畫面和店員的說法不一樣，您信哪邊？
+          a: 我會兩邊都看。畫面也會拍不到東西。
+      - id: c-farmer
+        name: 厄爾・強森
+        job: 農產批發
+        sheet: 六十歲，家族生意。
+        leans: [權威]
+        start: 57
+        lead: 5
+        value: 3
+        question:
+          q: 您對律師的印象怎麼樣？
+          a: 你們就是靠把黑的說成白的賺錢。
+        hidden: 明確表示對辯護律師有偏見。
+        cause: true
+      - id: c-dj
+        name: 凱・布萊克
+        job: 電台主持人
+        sheet: 深夜節目，八年。
+        leans: [情感, 程序]
+        start: 48
+        lead: 6
+        value: 7
+        question:
+          q: 深夜的大樓，聲音會不會傳得比較遠？
+          a: 會。而且人會把聽到的聲音想像成畫面。
+        hidden: 對「聽見倒地聲」這種證詞有懷疑。
+      - id: c-it
+        name: 山姆・奧克福
+        job: 資訊部門主管
+        sheet: 管一間中型公司的系統。
+        leans: [邏輯, 程序]
+        start: 49
+        lead: 4
+        value: 8
+        question:
+          q: 公司的聊天系統，訊息刪掉之後真的就沒了嗎？
+          a: 沒有。稽核紀錄會留著，只是一般人看不到。
+        hidden: 懂稽核紀錄，對數位證據反應加倍。
+      - id: c-guard
+        name: 露絲・卡拉漢
+        job: 大樓保全
+        sheet: 夜班保全，六年。
+        leans: [權威, 程序]
+        start: 53
+        lead: 2
+        value: 4
+        question:
+          q: 門禁刷卡紀錄可靠嗎？
+          a: 可靠。但沒刷卡不代表沒進去，跟著別人進去就不會留紀錄。
+        hidden: 知道門禁紀錄的漏洞。
+
   # 庭審：柯瓦斯基（教學：異議、彈劾三步驟簡單版）
   - type: trial
     id: court-kowalski
