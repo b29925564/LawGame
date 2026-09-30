@@ -13,8 +13,10 @@ import { reaction, type Jury } from '../engine/jury';
 import type { Tag } from '../engine/schema';
 import { useSettings } from '../engine/settings';
 import { play } from '../engine/sound';
+import { CardPick, EvidenceDrawer } from './Evidence';
 import { JuryLegend } from './JuryLegend';
 import { Speech } from './Portrait';
+import { Shell, Tabs } from './Shell';
 
 const glyph: Record<string, string> = {
   點頭: '◡',
@@ -24,13 +26,37 @@ const glyph: Record<string, string> = {
   '': '·',
 };
 
-/** 12 張臉。預設只看表情，輔助選項才顯示數值（企劃書 6.10）。 */
-function Jurors({ scene, jury, deltas }: { scene: TrialScene; jury: Jury; deltas: Jury }) {
+/**
+ * 12 張臉。預設只看表情，輔助選項才顯示數值（企劃書 6.10）。
+ * 在法庭裡它是釘在筆錄下面的一條，所以要能收起來——手機上
+ * 展開的陪審團會把詰問的按鈕推出畫面。
+ */
+function Jurors({
+  scene,
+  jury,
+  deltas,
+  strip,
+}: {
+  scene: TrialScene;
+  jury: Jury;
+  deltas: Jury;
+  strip?: boolean;
+}) {
   const { showNumbers, set } = useSettings();
+  // 法庭裡預設收起來：12 張臉展開會把詰問的按鈕擠出畫面。
+  const [open, setOpen] = useState(!strip);
+  const over = scene.jurors.filter((j) => (jury[j.id] ?? 0) >= scene.threshold).length;
   return (
-    <section className="jury compact" aria-label="陪審團">
+    <section className={strip ? 'jury compact strip' : 'jury compact'} aria-label="陪審團">
       <div className="panel-head">
-        <h2>陪審團</h2>
+        {strip ? (
+          <button className="link" aria-expanded={open} onClick={() => setOpen(!open)}>
+            陪審團 {open ? '▾' : '▸'}
+            <span className="muted"> {over} / 12 傾向有罪</span>
+          </button>
+        ) : (
+          <h2>陪審團</h2>
+        )}
         <label className="toggle">
           <input
             type="checkbox"
@@ -40,26 +66,30 @@ function Jurors({ scene, jury, deltas }: { scene: TrialScene; jury: Jury; deltas
           顯示數值
         </label>
       </div>
-      {showNumbers && <JuryLegend jury={jury} threshold={scene.threshold} />}
-      <ul className="jurors">
-        {scene.jurors.map((j) => {
-          const r = reaction(deltas[j.id] ?? 0);
-          return (
-            <li key={j.id} className={`juror ${r ? 'react' : ''}`}>
-              <span className="face" aria-hidden>
-                {glyph[r]}
-              </span>
-              <span className="label">{j.label}</span>
-              <span className="state">{r || '　'}</span>
-              {showNumbers && (
-                <span className={jury[j.id] >= scene.threshold ? 'num guilty' : 'num'}>
-                  {jury[j.id]}
-                </span>
-              )}
-            </li>
-          );
-        })}
-      </ul>
+      {(!strip || open) && (
+        <>
+          {showNumbers && !strip && <JuryLegend jury={jury} threshold={scene.threshold} />}
+          <ul className="jurors">
+            {scene.jurors.map((j) => {
+              const r = reaction(deltas[j.id] ?? 0);
+              return (
+                <li key={j.id} className={`juror ${r ? 'react' : ''}`}>
+                  <span className="face" aria-hidden>
+                    {glyph[r]}
+                  </span>
+                  <span className="label">{j.label}</span>
+                  <span className="state">{r || '　'}</span>
+                  {showNumbers && (
+                    <span className={jury[j.id] >= scene.threshold ? 'num guilty' : 'num'}>
+                      {jury[j.id]}
+                    </span>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </>
+      )}
     </section>
   );
 }
@@ -130,6 +160,9 @@ export function Courtroom({ scene: raw }: { scene: TrialScene }) {
   const scene = courtScene(progress, raw);
   const st = trialState(progress, scene);
   const [intro, setIntro] = useState(st.log.length === 0);
+  // 一次只處理一項證詞，預設停在還沒打完的那一項。
+  const pending = scene.witness.claims.find((c) => st.claims[c.id]?.result === 'none');
+  const [pick, setPick] = useState<string>(pending?.id ?? scene.witness.claims[0].id);
   const transcript = useRef<HTMLDivElement>(null);
   // 新的一句話進來就捲到底，玩家永遠看得到最新的證詞。
   useEffect(() => {
@@ -205,100 +238,130 @@ export function Courtroom({ scene: raw }: { scene: TrialScene }) {
       </main>
     );
 
+  const claim = scene.witness.claims.find((c) => c.id === pick) ?? scene.witness.claims[0];
+  const cs = st.claims[claim.id];
+
   return (
-    <main className="court-screen">
-      <header className="panel-head bench">
-        <p className="eyebrow">
-          {scene.witness.name}・{scene.witness.role}
-        </p>
-        <p className="patience" aria-label={`法官耐心 ${st.patience} / ${scene.patience}`}>
-          法官耐心
-          <span className="pips" aria-hidden>
-            {Array.from({ length: scene.patience }, (_, i) => (
-              <span key={i} className={i < st.patience ? 'pip on' : 'pip'} />
+    <Shell
+      resetKey={st.stage === 'cross' ? pick : st.stage}
+      head={
+        <header className="panel-head bench">
+          <p className="eyebrow">
+            {scene.witness.name}・{scene.witness.role}
+          </p>
+          <p className="patience" aria-label={`法官耐心 ${st.patience} / ${scene.patience}`}>
+            法官耐心
+            <span className="pips" aria-hidden>
+              {Array.from({ length: scene.patience }, (_, i) => (
+                <span key={i} className={i < st.patience ? 'pip on' : 'pip'} />
+              ))}
+            </span>
+          </p>
+        </header>
+      }
+      tabs={
+        <>
+          <div className="lines transcript" aria-live="polite" ref={transcript}>
+            {st.log.map((l, i) => (
+              <div key={i} className={l.struck ? 'struck' : ''}>
+                <Speech line={{ ...l, mood: '平', thought: false }} />
+                {l.struck && <p className="muted small">（這句話已從陪審團視角刪除）</p>}
+              </div>
             ))}
-          </span>
-        </p>
-      </header>
-
-      <div className="lines transcript" aria-live="polite" ref={transcript}>
-        {st.log.map((l, i) => (
-          <div key={i} className={l.struck ? 'struck' : ''}>
-            <Speech line={{ ...l, mood: '平', thought: false }} />
-            {l.struck && <p className="muted small">（這句話已從陪審團視角刪除）</p>}
           </div>
-        ))}
-      </div>
-
-      <Jurors scene={scene} jury={st.jury} deltas={st.deltas} />
-
-      {st.stage === 'direct' &&
-        (st.window ? (
-          <ObjectionWindow onPass={letPass} onObject={object} />
-        ) : (
-          <div className="row">
-            <button className="primary" onClick={nextQuestion}>
-              {st.i < scene.witness.direct.length ? '聽下一個問題' : '檢方詰問完畢'}
+          <Jurors scene={scene} jury={st.jury} deltas={st.deltas} strip />
+          {st.stage === 'cross' && (
+            <Tabs
+              label="證詞"
+              value={pick}
+              onPick={setPick}
+              items={scene.witness.claims.map((c, i) => ({
+                id: c.id,
+                label: `證詞 ${i + 1}`,
+                done: st.claims[c.id]?.result !== 'none',
+              }))}
+            />
+          )}
+        </>
+      }
+      foot={
+        <>
+          <EvidenceDrawer note="庭上隨時可以翻。出示哪一個論點，看的就是這裡的強度。" />
+          {st.stage === 'cross' && (
+            <button className="primary wide" onClick={finishTrial}>
+              詰問完畢
             </button>
-            {st.i >= scene.witness.direct.length && <button onClick={toCross}>開始交互詰問</button>}
-          </div>
-        ))}
+          )}
+          {st.stage === 'direct' && !st.window && (
+            <>
+              <button className="primary wide" onClick={nextQuestion}>
+                {st.i < scene.witness.direct.length ? '聽下一個問題' : '檢方詰問完畢'}
+              </button>
+              {st.i >= scene.witness.direct.length && (
+                <button onClick={toCross}>開始交互詰問</button>
+              )}
+            </>
+          )}
+        </>
+      }
+    >
+      {st.stage === 'direct' && st.window && <ObjectionWindow onPass={letPass} onObject={object} />}
+      {st.stage === 'direct' && !st.window && (
+        <p className="muted">聽檢方問下去。有問題的地方就在問完的那一刻提異議。</p>
+      )}
 
       {st.stage === 'cross' && (
         <section className="panel">
-          <h2>交互詰問</h2>
-          {scene.witness.claims.map((c) => {
-            const cs = st.claims[c.id];
-            return (
-              <article key={c.id} className="claim">
-                <p className="claim-text">「{c.text}」</p>
-                <ol className="steps">
-                  <li className={cs.lock !== 'none' ? 'done' : ''}>
-                    1 鎖定
-                    {cs.lock === 'none' && (
-                      <div className="stack">
-                        <button className="wide" onClick={() => lock(c.id, 'strong')}>
-                          {c.lock.strong.q}
-                        </button>
-                        <button className="wide" onClick={() => lock(c.id, 'weak')}>
-                          {c.lock.weak.q}
-                        </button>
-                      </div>
-                    )}
-                  </li>
-                  <li className={cs.setup ? 'done' : ''}>
-                    2 鋪陳
-                    {!cs.setup && (
-                      <button className="wide" onClick={() => setup(c.id)}>
-                        {c.setup.q}
-                      </button>
-                    )}
-                  </li>
-                  <li className={cs.result !== 'none' ? 'done' : ''}>
-                    3 對質
-                    {cs.result === 'none' && (
-                      <div className="stack">
-                        {args.map((a) => {
-                          const leaked = exposed.includes(a.id);
-                          return (
-                            <button
-                              key={a.id}
-                              className="wide"
-                              onClick={() => confront(c.id, a.strength, a.tags as Tag[], a.id)}
-                            >
-                              出示 {a.name}
-                              {leaked && '（已洩漏，她備好了反擊）'}
-                            </button>
+          <article className="claim">
+            <p className="claim-text">「{claim.text}」</p>
+            <ol className="steps">
+              <li className={cs.lock !== 'none' ? 'done' : ''}>
+                1 鎖定
+                {cs.lock === 'none' && (
+                  <div className="stack">
+                    <button className="wide" onClick={() => lock(claim.id, 'strong')}>
+                      {claim.lock.strong.q}
+                    </button>
+                    <button className="wide" onClick={() => lock(claim.id, 'weak')}>
+                      {claim.lock.weak.q}
+                    </button>
+                  </div>
+                )}
+              </li>
+              <li className={cs.setup ? 'done' : ''}>
+                2 鋪陳
+                {!cs.setup && (
+                  <button className="wide" onClick={() => setup(claim.id)}>
+                    {claim.setup.q}
+                  </button>
+                )}
+              </li>
+              <li className={cs.result !== 'none' ? 'done' : ''}>
+                3 對質
+                {cs.result === 'none' && (
+                  <div className="stack">
+                    {args.map((a) => (
+                      <CardPick
+                        key={a.id}
+                        item={a}
+                        verb="出示"
+                        tag={exposed.includes(a.id) ? '（已洩漏，她備好了反擊）' : undefined}
+                        onPick={() => {
+                          confront(claim.id, a.strength, a.tags as Tag[], a.id);
+                          // 這一項打完就跳到下一項。筆錄釘在上面，所以換頁不會把剛才的結果藏起來。
+                          const nx = scene.witness.claims.find(
+                            (c) => c.id !== claim.id && st.claims[c.id]?.result === 'none',
                           );
-                        })}
-                        {args.length === 0 && <span className="muted">手上沒有論點可以出示。</span>}
-                      </div>
-                    )}
-                  </li>
-                </ol>
-              </article>
-            );
-          })}
+                          if (nx) setPick(nx.id);
+                        }}
+                      />
+                    ))}
+                    {args.length === 0 && <span className="muted">手上沒有論點可以出示。</span>}
+                  </div>
+                )}
+              </li>
+            </ol>
+          </article>
           <details>
             <summary>其他問題</summary>
             <ul className="stack">
@@ -311,11 +374,8 @@ export function Courtroom({ scene: raw }: { scene: TrialScene }) {
               ))}
             </ul>
           </details>
-          <button className="primary" onClick={finishTrial}>
-            詰問完畢
-          </button>
         </section>
       )}
-    </main>
+    </Shell>
   );
 }

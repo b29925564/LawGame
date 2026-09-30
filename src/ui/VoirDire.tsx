@@ -3,12 +3,23 @@ import type { VoirDireScene } from '../engine/episode/schema';
 import * as vd from '../engine/episode/voirdire';
 import { useEpisode, voirDireState } from '../engine/game';
 import { Speech } from './Portrait';
+import { Shell, Tabs } from './Shell';
 
-/** 陪審團遴選（企劃書 6.9.1）：18 取 12，六次提問、三次無因迴避。 */
+type Filter = 'all' | 'seated' | 'unasked';
+
+/**
+ * 陪審團遴選（企劃書 6.9.1）：18 取 12，六次提問、三次無因迴避。
+ *
+ * 18 位候選人全部展開會是一頁捲不完的表格，而「就用這 12 位」
+ * 又躺在最底下。這裡收成一行一位，點開才看名單細節，
+ * 額度釘在上面、決定按鈕釘在下面。
+ */
 export function VoirDire({ scene }: { scene: VoirDireScene }) {
   const { progress, askJuror, challengeJuror, strikeJuror, seatJury, advance } = useEpisode();
   const st = voirDireState(progress, scene);
   const [intro, setIntro] = useState(st.asked.length === 0 && st.struck.length === 0);
+  const [filter, setFilter] = useState<Filter>('all');
+  const [open, setOpen] = useState<string | null>(null);
 
   if (intro)
     return (
@@ -51,52 +62,92 @@ export function VoirDire({ scene }: { scene: VoirDireScene }) {
     );
 
   const pool = vd.pool(scene, st);
+  const shown = pool.filter((c, i) =>
+    filter === 'seated' ? i < scene.seats : filter === 'unasked' ? !st.asked.includes(c.id) : true,
+  );
   return (
-    <main className="court-screen">
-      <header className="panel-head bench">
-        <p className="eyebrow">陪審團遴選</p>
-        <p className="patience">
-          提問 <strong>{st.left}</strong> ・ 無因迴避{' '}
-          <strong>{scene.peremptories - st.struck.length}</strong> ・ 候選 {pool.length}
-        </p>
-      </header>
-
-      <ul className="stack">
-        {pool.map((c) => {
+    <Shell
+      resetKey={filter}
+      head={
+        <header className="panel-head bench">
+          <p className="eyebrow">陪審團遴選</p>
+          <p className="patience">
+            提問 <strong>{st.left}</strong> ・ 無因迴避{' '}
+            <strong>{scene.peremptories - st.struck.length}</strong> ・ 候選 {pool.length}
+          </p>
+        </header>
+      }
+      tabs={
+        <Tabs
+          label="候選人"
+          value={filter}
+          onPick={setFilter}
+          items={[
+            { id: 'all', label: `全部 ${pool.length}` },
+            { id: 'seated', label: `會入座的 ${scene.seats}` },
+            { id: 'unasked', label: '還沒問過' },
+          ]}
+        />
+      }
+      foot={
+        <button className="primary wide" disabled={!vd.canSeat(scene, st)} onClick={seatJury}>
+          就用這 {scene.seats} 位（由上往下）
+        </button>
+      }
+    >
+      <p className="muted small">
+        名單由上往下入座，前 {scene.seats} 位就是會上場的人。有因迴避要候選人自己說出偏見才成立，
+        沒憑沒據法官會記住。你用掉一次無因迴避，檢方也會砍掉一位對你最有利的人。
+      </p>
+      <ul className="stack list">
+        {shown.map((c) => {
+          const seat = pool.indexOf(c);
           const asked = st.asked.includes(c.id);
+          const isOpen = open === c.id;
           return (
-            <li key={c.id} className="panel job">
-              <strong>
-                {c.name}・{c.job}
-              </strong>
-              <p className="muted">{c.sheet}</p>
-              {asked && (
-                <>
-                  <p className="claim-text">「{c.question.q}」</p>
-                  <p>{c.question.a}</p>
-                  {c.hidden && <p className="muted small">{c.hidden}</p>}
-                </>
+            <li key={c.id} className={seat < scene.seats ? 'candidate in' : 'candidate'}>
+              <button
+                className="row-item"
+                aria-expanded={isOpen}
+                onClick={() => setOpen(isOpen ? null : c.id)}
+              >
+                <strong>
+                  <span className="seat">{seat < scene.seats ? seat + 1 : '—'}</span>
+                  {c.name}・{c.job}
+                  {asked && <span className="good"> ・問過</span>}
+                </strong>
+                <span className="muted small">{c.sheet}</span>
+              </button>
+              {isOpen && (
+                <div className="candidate-body">
+                  {asked ? (
+                    <>
+                      <p className="claim-text">「{c.question.q}」</p>
+                      <p>{c.question.a}</p>
+                      {c.hidden && <p className="muted small">{c.hidden}</p>}
+                    </>
+                  ) : (
+                    <p className="muted small">還沒問過他。問過才知道他藏了什麼。</p>
+                  )}
+                  <div className="row">
+                    <button disabled={!vd.canAsk(st, c.id)} onClick={() => askJuror(c.id)}>
+                      提問
+                    </button>
+                    <button onClick={() => challengeJuror(c.id)}>聲請有因迴避</button>
+                    <button
+                      disabled={!vd.canStrike(scene, st, c.id)}
+                      onClick={() => strikeJuror(c.id)}
+                    >
+                      無因迴避
+                    </button>
+                  </div>
+                </div>
               )}
-              <div className="row">
-                <button disabled={!vd.canAsk(st, c.id)} onClick={() => askJuror(c.id)}>
-                  提問
-                </button>
-                <button onClick={() => challengeJuror(c.id)}>聲請有因迴避</button>
-                <button disabled={!vd.canStrike(scene, st, c.id)} onClick={() => strikeJuror(c.id)}>
-                  無因迴避
-                </button>
-              </div>
             </li>
           );
         })}
+        {shown.length === 0 && <li className="muted">這個篩選沒有人。</li>}
       </ul>
-
-      <button className="primary wide" disabled={!vd.canSeat(scene, st)} onClick={seatJury}>
-        就用這 {scene.seats} 位（由上往下）
-      </button>
-      <p className="muted small">
-        有因迴避要候選人自己說出偏見才成立，沒憑沒據法官會記住。你用掉一次無因迴避，檢方也會砍掉一位對你最有利的人。
-      </p>
-    </main>
+    </Shell>
   );
 }

@@ -212,13 +212,19 @@ export const useEpisode = create<GameState>()((set, get) => {
     return next;
   };
 
-  /** 套用一個場景動作，並把該場景的狀態寫回進度。 */
+  /**
+   * 套用一個場景動作，並把該場景的狀態寫回進度。
+   * `map` 用來把劇本裡的場景換成「真正上場的」那一版——法庭的陪審團
+   * 是遴選留下的 12 位，動作也必須拿到同一份名單，否則衝擊會算在
+   * 劇本預設的陪審員身上，畫面上的人反而不動。
+   */
   const on =
-    <S extends Scene, T>(type: S['type'], init: (s: S) => T) =>
+    <S extends Scene, T>(type: S['type'], init: (s: S) => T, map?: (s: S) => S) =>
     (f: (s: S, st: T) => T, carry?: (s: S, st: T) => string[]) => {
       const p = get().progress;
-      const s = sceneOf(p) as S | null;
-      if (!s || s.type !== type) return;
+      const raw = sceneOf(p) as S | null;
+      if (!raw || raw.type !== type) return;
+      const s = map ? map(raw) : raw;
       const st = f(
         s,
         stateOf(p, s, () => init(s)),
@@ -232,8 +238,10 @@ export const useEpisode = create<GameState>()((set, get) => {
     interview.startInterview,
   );
   const onDesk = on<DeskScene, desk.DeskState>('desk', desk.startDesk);
-  const onTrial = on<TrialScene, trial.TrialState>('trial', (s) =>
-    trial.startTrial(courtScene(get().progress, s), anchoredClaims(get().progress)),
+  const onTrial = on<TrialScene, trial.TrialState>(
+    'trial',
+    (s) => trial.startTrial(s, anchoredClaims(get().progress)),
+    (s) => courtScene(get().progress, s),
   );
   const onVoirDire = on<VoirDireScene, voirdire.VoirDireState>('voirdire', voirdire.startVoirDire);
   const onClosing = on<ClosingScene, closing.ClosingState>('closing', () =>
@@ -376,3 +384,44 @@ export const useEpisode = create<GameState>()((set, get) => {
     finishTrial: () => onTrial((_s, st) => trial.finish(st)),
   };
 });
+
+/** 手上的一張證據或論點，任何畫面都可以用它開證據抽屜。 */
+export interface Evidence {
+  id: string;
+  name: string;
+  kind: string;
+  text: string;
+  time?: string;
+  source: string;
+}
+
+/**
+ * 玩家目前手上的所有證據與確認過的論點。
+ * 抽屜要在每一個畫面都打得開，所以這份清單不綁在某一幕的桌面上。
+ */
+export function evidence(p: Progress): Evidence[] {
+  const out: Evidence[] = [];
+  const seen = new Set<string>();
+  for (const s of episodeOf(p).scenes) {
+    if (s.type !== 'desk') continue;
+    for (const q of s.questions) {
+      const a = q.argument;
+      if (!p.cards.includes(a.id) || seen.has(a.id)) continue;
+      seen.add(a.id);
+      out.push({ ...a, kind: '論點', source: `強度 ${a.strength}・${a.tags.join('、')}` });
+    }
+    for (const c of s.cards) {
+      if (!p.cards.includes(c.id) || seen.has(c.id)) continue;
+      seen.add(c.id);
+      out.push({
+        id: c.id,
+        name: c.name,
+        kind: c.kind,
+        text: c.text,
+        time: c.time,
+        source: c.source,
+      });
+    }
+  }
+  return out;
+}
