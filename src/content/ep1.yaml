@@ -659,6 +659,8 @@ scenes:
       - id: q3
         text: 22:31 那則訊息，真的是沃斯本人傳的嗎？
         answer: [l-dead-sender]
+        accept:
+          l-dead-sender: [arg-b]
         argument:
           id: arg-c
           name: 論點 C：有人用死者的電腦傳訊

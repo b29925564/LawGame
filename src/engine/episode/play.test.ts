@@ -361,3 +361,12 @@ describe('瑞秋的詰問', () => {
     expect(st.log.some((l) => l.text.includes('自證己罪'))).toBe(false);
   });
 });
+
+describe('疑問 4：那則訊息是不是沃斯本人傳的', () => {
+  it('發現或論點 B 都答得過，其他論點不行', () => {
+    const q = investigate.questions.find((x) => x.id === 'q3')!;
+    expect(desk.fits(q.answer, q.accept, ['l-dead-sender'])).toBe(true);
+    expect(desk.fits(q.answer, q.accept, ['arg-b'])).toBe(true);
+    expect(desk.fits(q.answer, q.accept, ['arg-a'])).toBe(false);
+  });
+});
