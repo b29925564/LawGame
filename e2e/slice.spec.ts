@@ -142,7 +142,7 @@ test('第 1 集可以一路從冷開場玩到判決', async ({ page }) => {
   await page.getByRole('button', { name: '證據板' }).click();
   const chains: [string, string, (string | RegExp)[], RegExp][] = [
     ['疑問 3', '沃斯是什麼時候死的', [/驗屍報告$/, '沃斯手錶的心率紀錄'], /支持/],
-    ['疑問 4', '那則訊息是誰傳的', ['聊天系統稽核紀錄', '論點 B：沃斯 22:24 死亡'], /矛盾/],
+    ['疑問 4', '真的是沃斯本人傳的嗎', ['聊天系統稽核紀錄', '論點 B：沃斯 22:24 死亡'], /矛盾/],
     ['疑問 5', '31 樓還剩誰', ['聊天系統稽核紀錄', '完整門禁紀錄'], /說明機會/],
   ];
   for (const [tab, title, names, relation] of chains) {
