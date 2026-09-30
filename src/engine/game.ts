@@ -14,8 +14,10 @@ import type {
   NegotiationScene,
   Scene,
   TrialScene,
+  VoirDireScene,
 } from './episode/schema';
 import * as trial from './episode/trial';
+import * as voirdire from './episode/voirdire';
 import { readSave, writeSave, type Progress, type Slot } from './save';
 
 export type Mode = 'title' | 'play' | 'proto';
@@ -71,8 +73,27 @@ export function deskSceneOf(p: Progress): DeskScene | null {
   return (episodeOf(p).scenes.find((s) => s.type === 'desk') as DeskScene) ?? null;
 }
 
+export function voirDireState(p: Progress, s: VoirDireScene) {
+  return stateOf(p, s, () => voirdire.startVoirDire(s));
+}
+
+/**
+ * 開庭時真正上場的法庭：陪審團是遴選留下的 12 位，
+ * 法官耐心先扣掉遴選時沒有根據的聲請（企劃書 6.9.1、6.11）。
+ */
+export function courtScene(p: Progress, s: TrialScene): TrialScene {
+  const vd = episodeOf(p).scenes.find((x) => x.type === 'voirdire') as VoirDireScene | undefined;
+  const st = vd ? (p.scenes[vd.id] as voirdire.VoirDireState | undefined) : undefined;
+  if (!vd || !st?.seated) return s;
+  return {
+    ...s,
+    jurors: voirdire.panel(vd, st),
+    patience: Math.max(1, s.patience - st.wrong),
+  };
+}
+
 export function trialState(p: Progress, s: TrialScene) {
-  return stateOf(p, s, () => trial.startTrial(s));
+  return stateOf(p, s, () => trial.startTrial(courtScene(p, s)));
 }
 
 export function depoState(p: Progress, s: DepositionScene) {
@@ -145,6 +166,11 @@ interface GameState {
   confront: (claim: string, strength: number, tags: Tag[]) => void;
   badger: (i: number) => void;
   finishTrial: () => void;
+  /** 陪審團遴選 */
+  askJuror: (id: string) => void;
+  challengeJuror: (id: string) => void;
+  strikeJuror: (id: string) => void;
+  seatJury: () => void;
   /** 證詞錄取 */
   askDepo: (question: string) => void;
   finishDepo: () => void;
@@ -183,7 +209,10 @@ export const useEpisode = create<GameState>()((set, get) => {
     interview.startInterview,
   );
   const onDesk = on<DeskScene, desk.DeskState>('desk', desk.startDesk);
-  const onTrial = on<TrialScene, trial.TrialState>('trial', trial.startTrial);
+  const onTrial = on<TrialScene, trial.TrialState>('trial', (s) =>
+    trial.startTrial(courtScene(get().progress, s)),
+  );
+  const onVoirDire = on<VoirDireScene, voirdire.VoirDireState>('voirdire', voirdire.startVoirDire);
   const onDepo = on<DepositionScene, depo.DepoState>('deposition', depo.startDeposition);
   const onNego = on<NegotiationScene, nego.NegoState>('negotiation', nego.startNegotiation);
 
@@ -282,6 +311,11 @@ export const useEpisode = create<GameState>()((set, get) => {
     confront: (claim, strength, tags) =>
       onTrial((s, st) => trial.confront(s, st, claim, strength, tags)),
     badger: (i) => onTrial((s, st) => trial.badger(s, st, i)),
+    askJuror: (id) => onVoirDire((s, st) => voirdire.ask(s, st, id)),
+    challengeJuror: (id) => onVoirDire((s, st) => voirdire.challenge(s, st, id)),
+    strikeJuror: (id) => onVoirDire((s, st) => voirdire.strike(s, st, id)),
+    seatJury: () => onVoirDire((s, st) => voirdire.seat(s, st)),
+
     askDepo: (q) =>
       onDepo(
         (s, st) => depo.ask(s, st, q),

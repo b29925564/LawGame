@@ -173,7 +173,26 @@ test('垂直切片可以一路走到彈劾成功', async ({ page }) => {
   await next(page);
 
   await next(page); // 第四幕字卡
+
+  // 陪審團遴選：問出偏見、有因迴避、無因迴避，再入席
+  await page.getByRole('button', { name: '開始遴選' }).click();
+  const fired = page.locator('li.job').filter({ hasText: '唐娜・麥克雷' });
+  await fired.getByRole('button', { name: '提問' }).click();
+  await expect(page.getByText('他們裁了我')).toBeVisible();
+  await fired.getByRole('button', { name: '聲請有因迴避' }).click();
+  await expect(page.locator('li.job').filter({ hasText: '唐娜・麥克雷' })).toHaveCount(0);
+  await page
+    .locator('li.job')
+    .filter({ hasText: '華特・費雪' })
+    .getByRole('button', { name: '無因迴避' })
+    .click();
+  await page.getByRole('button', { name: /就用這 12 位/ }).click();
+  await expect(page.getByText('陪審長')).toBeVisible();
+  await next(page);
+
   await page.getByRole('button', { name: '開庭' }).click(); // 羅根交代異議規則之後開庭
+  // 上場的是遴選留下的人，不是劇本裡的預設陪審團。
+  await expect(page.getByRole('list', { name: '陪審團' }).getByText('華特・費雪')).toHaveCount(0);
 
   // 庭審：異議、彈劾三步驟
   await page.getByRole('button', { name: '聽下一個問題' }).click();
