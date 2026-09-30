@@ -3,6 +3,8 @@ import type { DeskScene, Line } from './schema';
 
 export interface DeskState {
   hours: number;
+  /** 時間線上的卡片，順序就是玩家排的順序。 */
+  timeline: string[];
   spent: number;
   marked: string[];
   readDocs: string[];
@@ -21,6 +23,7 @@ export interface DeskState {
 export function startDesk(s: DeskScene): DeskState {
   return {
     hours: s.hours,
+    timeline: [],
     spent: 0,
     marked: [],
     readDocs: [],
@@ -65,6 +68,23 @@ export function openDoc(st: DeskState, docId: string): DeskState {
 
 export function openMail(st: DeskState, mailId: string): DeskState {
   return st.openMail.includes(mailId) ? st : { ...st, openMail: [...st.openMail, mailId] };
+}
+
+export function toggleTimeline(st: DeskState, card: string): DeskState {
+  const timeline = st.timeline.includes(card)
+    ? st.timeline.filter((x) => x !== card)
+    : [...st.timeline, card];
+  return { ...st, timeline };
+}
+
+/** 順序由玩家決定，所以是搬動，不是排序。 */
+export function moveTimeline(st: DeskState, card: string, dir: -1 | 1): DeskState {
+  const i = st.timeline.indexOf(card);
+  const j = i + dir;
+  if (i < 0 || j < 0 || j >= st.timeline.length) return st;
+  const timeline = [...st.timeline];
+  [timeline[i], timeline[j]] = [timeline[j], timeline[i]];
+  return { ...st, timeline };
 }
 
 export function canCommission(

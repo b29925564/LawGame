@@ -97,6 +97,20 @@ describe('桌面調查', () => {
   });
 });
 
+describe('時間線', () => {
+  it('順序是玩家放上去的順序，不會自動照時間排', () => {
+    let st = desk.startDesk(investigate);
+    st = desk.toggleTimeline(st, 'access-partial');
+    st = desk.toggleTimeline(st, 'ride-receipt');
+    expect(st.timeline).toEqual(['access-partial', 'ride-receipt']);
+    st = desk.moveTimeline(st, 'ride-receipt', -1);
+    expect(st.timeline).toEqual(['ride-receipt', 'access-partial']);
+    expect(desk.moveTimeline(st, 'ride-receipt', -1).timeline).toEqual(st.timeline);
+    st = desk.toggleTimeline(st, 'ride-receipt');
+    expect(st.timeline).toEqual(['access-partial']);
+  });
+});
+
 describe('庭審', () => {
   const guiltyLean = (st: trial.TrialState) =>
     Object.values(st.jury).reduce((a, b) => a + b, 0) / 12;

@@ -80,7 +80,7 @@ test('垂直切片可以一路走到彈劾成功', async ({ page }) => {
   await chain.locator('summary').click();
   await chain.getByRole('button', { name: '手錶通知紀錄' }).click();
   await chain.getByRole('button', { name: '叫車收據' }).click();
-  await chain.getByRole('radio', { name: '支持' }).click();
+  await chain.getByRole('radio', { name: /支持/ }).click();
   await chain.getByRole('button', { name: /提交到案情會議/ }).click();
   // 確認過關的推理鏈，這一幕就收尾，海爾在開庭前說出彈劾三步驟的那句話。
   await expect(page.getByText('先讓他把話說死，再拿出證據。')).toBeVisible();

@@ -23,6 +23,7 @@ interface GameState {
   setRelation: (qid: string, r: Relation) => void;
   submit: (qid: string) => void;
   toggleTimeline: (card: string) => void;
+  moveTimeline: (card: string, dir: -1 | 1) => void;
   goToCourt: () => void;
   askExpert: (qid: string) => void;
   toWitness: () => void;
@@ -68,6 +69,7 @@ export const useGame = create<GameState>()(
           set({ board: r.board, feedback: { ...get().feedback, [qid]: msg } });
         },
         toggleTimeline: (card) => set({ board: board.toggleTimeline(get().board, card) }),
+        moveTimeline: (card, dir) => set({ board: board.moveTimeline(get().board, card, dir) }),
         goToCourt: () =>
           set({ phase: 'court', cross: cross.startCross(episode, startJury(episode)) }),
         askExpert: (qid) => act((s) => cross.askExpert(episode, s, qid)),

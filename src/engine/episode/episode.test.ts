@@ -110,6 +110,26 @@ describe('存檔', () => {
     expect(f?.progress.scenes).toEqual({});
   });
 
+  it('第 2 版的桌面存檔補上時間線', () => {
+    const old = {
+      version: 2,
+      savedAt: 1,
+      label: '第 1 集・第二幕',
+      progress: {
+        episode: 'ep1',
+        scene: 7,
+        step: 0,
+        choices: {},
+        cards: [],
+        scenes: { investigate: { hours: 20, spent: 4, marked: [] } },
+      },
+    };
+    const f = migrate(old);
+    expect(f?.version).toBe(SAVE_VERSION);
+    expect((f?.progress.scenes.investigate as { timeline: string[] }).timeline).toEqual([]);
+    expect((f?.progress.scenes.investigate as { hours: number }).hours).toBe(20);
+  });
+
   it('未來版本或壞掉的存檔不讀，也不讓遊戲當掉', () => {
     expect(migrate({ version: SAVE_VERSION + 1, progress })).toBeNull();
     expect(migrate('亂碼')).toBeNull();

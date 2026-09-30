@@ -4,7 +4,7 @@ async function chain(page: Page, question: string, cards: string[], relation: st
   const panel = page.locator('section.chain').filter({ hasText: question });
   await panel.getByRole('button', { name: '＋ 放卡片' }).first().click();
   for (const c of cards) await panel.getByRole('button', { name: c, exact: true }).click();
-  await panel.getByRole('radio', { name: relation }).click();
+  await panel.getByRole('radio', { name: new RegExp(relation) }).click();
   await panel.getByRole('button', { name: /提交到案情會議/ }).click();
   await expect(panel.getByText('案情會議通過')).toBeVisible();
 }

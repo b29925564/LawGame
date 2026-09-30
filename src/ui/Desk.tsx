@@ -2,9 +2,11 @@ import { useState } from 'react';
 import * as desk from '../engine/episode/desk';
 import type { DeskScene } from '../engine/episode/schema';
 import { deskState, useEpisode } from '../engine/game';
-import { relations, type Relation } from '../engine/schema';
+import type { Relation } from '../engine/schema';
 import { play } from '../engine/sound';
 import { Speech } from './Portrait';
+import { RelationPicker } from './RelationPicker';
+import { Timeline } from './Timeline';
 
 type App = 'mail' | 'docs' | 'cards' | 'board' | 'jobs';
 const apps: { id: App; label: string }[] = [
@@ -212,13 +214,27 @@ function Cards({ scene, held }: { scene: DeskScene; held: string[] }) {
   );
 }
 
-/** 推理鏈：擺卡片免費，提交花 1 工時，整條全對才確認（企劃書 6.5）。 */
+/** 證據板：時間線與推理鏈（企劃書 6.5）。 */
 function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
-  const { progress, toggleCard, setRelation, submit } = useEpisode();
+  const { progress, toggleCard, setRelation, submit, toggleTimeline, moveTimeline } = useEpisode();
   const st = deskState(progress, scene);
   const pool = scene.cards.filter((c) => held.includes(c.id));
+  const [view, setView] = useState<'chains' | 'timeline'>('chains');
+  if (view === 'timeline')
+    return (
+      <div className="stack">
+        <BoardTabs view={view} setView={setView} />
+        <Timeline
+          cards={pool}
+          placed={st.timeline}
+          onToggle={toggleTimeline}
+          onMove={moveTimeline}
+        />
+      </div>
+    );
   return (
     <div className="stack">
+      <BoardTabs view={view} setView={setView} />
       {scene.questions.map((q) => {
         const a = st.attempts[q.id] ?? { cards: [], relation: null as Relation | null };
         const done = st.confirmed.includes(q.id);
@@ -230,7 +246,7 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
             ) : (
               <>
                 <p className="muted small">
-                  放 {q.answer.length} 張卡片，選一種關係。提交花 1 工時。
+                  放 {q.answer.length} 張卡片，再說明這兩張卡之間是什麼關係。提交花 1 工時。
                 </p>
                 <ul className="slots-row">
                   {Array.from({ length: q.answer.length }, (_, i) => (
@@ -255,18 +271,11 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
                     ))}
                   </ul>
                 </details>
-                <div className="row" role="radiogroup" aria-label="關係">
-                  {relations.map((r) => (
-                    <button
-                      key={r}
-                      role="radio"
-                      aria-checked={a.relation === r}
-                      onClick={() => setRelation(q.id, r)}
-                    >
-                      {r}
-                    </button>
-                  ))}
-                </div>
+                <RelationPicker
+                  cards={a.cards.map((id) => scene.cards.find((c) => c.id === id)?.name)}
+                  value={a.relation}
+                  onPick={(r) => setRelation(q.id, r)}
+                />
                 <button
                   className="primary"
                   disabled={!desk.canSubmit(scene, st, q.id)}
@@ -280,6 +289,25 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
           </section>
         );
       })}
+    </div>
+  );
+}
+
+function BoardTabs({
+  view,
+  setView,
+}: {
+  view: 'chains' | 'timeline';
+  setView: (v: 'chains' | 'timeline') => void;
+}) {
+  return (
+    <div className="row" role="tablist">
+      <button role="tab" aria-selected={view === 'chains'} onClick={() => setView('chains')}>
+        推理鏈
+      </button>
+      <button role="tab" aria-selected={view === 'timeline'} onClick={() => setView('timeline')}>
+        時間線
+      </button>
     </div>
   );
 }

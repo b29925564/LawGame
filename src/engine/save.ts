@@ -23,13 +23,27 @@ export interface SaveFile {
   progress: Progress;
 }
 
-export const SAVE_VERSION = 2;
+export const SAVE_VERSION = 3;
 export const SLOTS = [1, 2, 3] as const;
 export type Slot = 'auto' | (typeof SLOTS)[number];
 
 /** migrations[n] 把第 n 版的存檔轉成第 n + 1 版。 */
 const migrations: Record<number, (d: SaveFile) => SaveFile> = {
   // v1 的存檔只有場景與步數，補上卡片與各場景狀態的預設值。
+  // v2 的桌面狀態還沒有時間線，補上空陣列。
+  2: (d) => ({
+    ...d,
+    version: 3,
+    progress: {
+      ...d.progress,
+      scenes: Object.fromEntries(
+        Object.entries(d.progress.scenes ?? {}).map(([k, v]) => [
+          k,
+          v && typeof v === 'object' && 'hours' in v ? { timeline: [], ...v } : v,
+        ]),
+      ),
+    },
+  }),
   1: (d) => ({
     ...d,
     version: 2,

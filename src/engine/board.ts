@@ -76,6 +76,16 @@ export function toggleTimeline(b: BoardState, card: string): BoardState {
   return { ...b, timeline };
 }
 
+/** 時間線的順序完全由玩家決定，所以是搬動，不是排序。 */
+export function moveTimeline(b: BoardState, card: string, dir: -1 | 1): BoardState {
+  const i = b.timeline.indexOf(card);
+  const j = i + dir;
+  if (i < 0 || j < 0 || j >= b.timeline.length) return b;
+  const timeline = [...b.timeline];
+  [timeline[i], timeline[j]] = [timeline[j], timeline[i]];
+  return { ...b, timeline };
+}
+
 export function confirmedArguments(c: CaseData, b: BoardState) {
   return c.questions.filter((q) => b.confirmed.includes(q.id)).map((q) => q.argument);
 }

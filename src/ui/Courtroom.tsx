@@ -6,6 +6,7 @@ import { reaction, type Jury } from '../engine/jury';
 import type { Tag } from '../engine/schema';
 import { useSettings } from '../engine/settings';
 import { play } from '../engine/sound';
+import { JuryLegend } from './JuryLegend';
 import { Speech } from './Portrait';
 
 const glyph: Record<string, string> = {
@@ -32,6 +33,7 @@ function Jurors({ scene, jury, deltas }: { scene: TrialScene; jury: Jury; deltas
           顯示數值
         </label>
       </div>
+      {showNumbers && <JuryLegend jury={jury} threshold={scene.threshold} />}
       <ul className="jurors">
         {scene.jurors.map((j) => {
           const r = reaction(deltas[j.id] ?? 0);

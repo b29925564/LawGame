@@ -86,6 +86,8 @@ interface GameState {
   commission: (id: string) => void;
   clearReport: () => void;
   toggleCard: (qid: string, card: string) => void;
+  toggleTimeline: (card: string) => void;
+  moveTimeline: (card: string, dir: -1 | 1) => void;
   setRelation: (qid: string, r: Relation) => void;
   submit: (qid: string) => void;
   /** 法庭 */
@@ -193,6 +195,8 @@ export const useEpisode = create<GameState>()((set, get) => {
       ),
     clearReport: () => onDesk((_s, st) => desk.clearReport(st)),
     toggleCard: (qid, card) => onDesk((s, st) => desk.toggleCard(s, st, qid, card)),
+    toggleTimeline: (card) => onDesk((_s, st) => desk.toggleTimeline(st, card)),
+    moveTimeline: (card, dir) => onDesk((_s, st) => desk.moveTimeline(st, card, dir)),
     setRelation: (qid, r) => onDesk((_s, st) => desk.setRelation(st, qid, r)),
     submit: (qid) =>
       onDesk(
