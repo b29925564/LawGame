@@ -599,7 +599,7 @@ scenes:
           strength: 8
           tags: [邏輯]
       - id: q2a
-        text: 死者的手錶能告訴我們什麼？
+        text: 死者的手錶，能把死亡時間縮小嗎？
         answer: [watch-photo, autopsy]
         relation: 支持
         argument:

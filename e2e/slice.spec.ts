@@ -106,7 +106,7 @@ test('第 1 集可以一路從冷開場玩到判決', async ({ page }) => {
   await page.getByRole('button', { name: '證據板' }).click();
   await page.getByRole('button', { name: '疑問 2' }).click();
   const watchChain = page.locator('section.chain');
-  await expect(watchChain).toContainText('手錶能告訴我們什麼');
+  await expect(watchChain).toContainText('手錶，能把死亡時間縮小嗎');
   await card(watchChain, '驗屍照片：死者的手錶').click();
   await card(watchChain, /驗屍報告$/).click();
   await watchChain.getByRole('radio', { name: /支持/ }).click();
