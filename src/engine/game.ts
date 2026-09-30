@@ -391,6 +391,7 @@ export interface Evidence {
   name: string;
   kind: string;
   text: string;
+  date?: string;
   time?: string;
   source: string;
 }
@@ -418,6 +419,7 @@ export function evidence(p: Progress): Evidence[] {
         name: c.name,
         kind: c.kind,
         text: c.text,
+        date: c.date,
         time: c.time,
         source: c.source,
       });

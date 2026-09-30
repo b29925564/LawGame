@@ -33,8 +33,13 @@ export function setTone(s: ClosingScene, st: ClosingState, tone: string): Closin
   return { ...st, tone };
 }
 
-export function canDeliver(s: ClosingScene, st: ClosingState): boolean {
-  return !st.verdict && st.tone !== null && st.picked.length === s.picks;
+/** 要講幾個論點：規定的數量，但手上不夠的話，有幾個講幾個（一個都沒有也能只靠基調結辯）。 */
+export function needed(s: ClosingScene, available: number): number {
+  return Math.min(s.picks, available);
+}
+
+export function canDeliver(s: ClosingScene, st: ClosingState, available = s.picks): boolean {
+  return !st.verdict && st.tone !== null && st.picked.length === needed(s, available);
 }
 
 /**
@@ -48,7 +53,7 @@ export function deliver(
   args: Question['argument'][],
   exposed: string[] = [],
 ): ClosingState {
-  if (!canDeliver(s, st)) return st;
+  if (!canDeliver(s, st, args.length)) return st;
   const tone = s.tones.find((t) => t.id === st.tone)!;
   let jury = st.jury;
   st.picked.forEach((id, i) => {

@@ -176,10 +176,7 @@ export function submit(s: DeskScene, st: DeskState, qid: string): DeskState {
   if (!canSubmit(s, st, qid)) return st;
   const q = s.questions.find((x) => x.id === qid)!;
   const a = st.attempts[qid];
-  const ok =
-    a.relation === q.relation &&
-    q.answer.every((id) => a.cards.includes(id)) &&
-    a.cards.every((id) => q.answer.includes(id));
+  const ok = a.relation === q.relation && fits(q.answer, q.accept, a.cards);
   const next = spend(s, st, 1);
   return {
     ...next,
@@ -193,6 +190,30 @@ export function submit(s: DeskScene, st: DeskState, qid: string): DeskState {
         : '案情會議結論：這條推理站不住。沒有人說得出是哪裡不對。',
     },
   };
+}
+
+/**
+ * 選的卡能不能一對一填滿答案的每一格。每一格接受正解，或劇本列出的替代卡
+ * （同一件事的不同出處，例如伊森的說法與叫車收據）。
+ */
+export function fits(
+  answer: string[],
+  accept: Record<string, string[]>,
+  picked: string[],
+): boolean {
+  if (picked.length !== answer.length || new Set(picked).size !== picked.length) return false;
+  const ok = (slot: string, card: string) => slot === card || (accept[slot] ?? []).includes(card);
+  const go = (i: number, left: string[]): boolean =>
+    i === answer.length ||
+    left.some(
+      (c) =>
+        ok(answer[i], c) &&
+        go(
+          i + 1,
+          left.filter((x) => x !== c),
+        ),
+    );
+  return go(0, picked);
 }
 
 const attempt = (st: DeskState, id: string): MotionAttempt =>
@@ -246,11 +267,7 @@ export function file(s: DeskScene, st: DeskState, id: string, carried: string[] 
   if (!canFile(s, st, id, carried)) return st;
   const m = s.motions.find((x) => x.id === id)!;
   const a = attempt(st, id);
-  const ok =
-    a.basis === m.basis &&
-    a.request === m.request &&
-    m.support.every((c) => a.support.includes(c)) &&
-    a.support.every((c) => m.support.includes(c));
+  const ok = a.basis === m.basis && a.request === m.request && fits(m.support, m.accept, a.support);
   const next = spend(s, st, m.cost);
   return {
     ...setAttempt(next, id, { ...a, ruling: ok ? 'granted' : 'denied' }),
