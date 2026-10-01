@@ -99,6 +99,20 @@ _cards: &cards
     kind: 事實
     text: 死者左腕配戴智慧手錶，錶帶完好，仍扣在腕上；背面有心率感測器，貼著皮膚。
     source: 布魯克斯法醫
+  - id: sophie-home
+    name: 蘇菲對警方的說法：我直接回家了
+    kind: 事實
+    date: 週五
+    time: '19:02'
+    text: 蘇菲 19:02 刷卡離開 31 樓，向警方表示她下班後直接回家，沒有再回大樓。
+    source: 警方報告
+  - id: parking-log
+    name: 停車場紀錄：蘇菲的車停到 22:40
+    kind: 事實
+    date: 週五
+    time: '22:40'
+    text: 地下停車場的進出紀錄顯示，蘇菲的車週五 22:40 才駛離。
+    source: 蘿莎調查
   - id: blood-report
     name: 補充血跡報告
     kind: 事實
@@ -513,6 +527,8 @@ scenes:
         from: 卡爾德港警局　重案組
         lines:
           - text: 大樓警衛厄爾・吉布森於 23:58 巡邏時發現死者，報案。
+          - text: 死者執行助理蘇菲・馬丁內斯 19:02 刷卡離開 31 樓，稱下班後直接回家。
+            fact: sophie-home
           - text: 門禁系統顯示被告 22:47 刷卡進入 31 樓，23:01 刷卡離開大廳閘門。
             fact: access-partial
           - text: 附件三為門禁系統原始檔，本報告僅標註與被告有關之紀錄。
@@ -607,6 +623,9 @@ scenes:
             text: 大廳閘門只有一道，員工證刷了才過得去。地下停車場另有一個出口，不刷卡。
           - who: 蘿莎
             text: 還有，31 樓的夜間清潔是外包的，週五晚上不排班。
+          - who: 蘿莎
+            text: 我順便調了地下停車場的進出紀錄。那個助理蘇菲的車，週五一直停到 22:40 才開走。
+        gives: [parking-log]
       - id: job-morrow
         who: 艾莉絲
         label: 打電話給莫羅，聽聽她開的條件
@@ -650,6 +669,10 @@ scenes:
         cards: [chat-audit, access-full]
         relation: 說明機會
         text: 23:14 有人在 31 樓的桌機上收回訊息；門禁紀錄顯示那時 31 樓只剩一個人。
+      - id: l-sophie-lie
+        cards: [parking-log, sophie-home]
+        relation: 矛盾
+        text: 蘇菲說她 19:02 下班就直接回家，但她的車一直停到 22:40。
     questions:
       - id: q1
         text: 伊森為什麼那個時間上樓？
@@ -698,6 +721,15 @@ scenes:
           text: 伊森 23:01 離開大廳；23:14 有人在 31 樓操作那台桌機；那個人 23:26 才刷卡離開。
           strength: 10
           tags: [邏輯, 程序]
+      - id: q5
+        text: 蘇菲對警方說的是實話嗎？
+        answer: [l-sophie-lie]
+        argument:
+          id: arg-h
+          name: 論點 H：蘇菲當晚還在大樓，並且說了謊
+          text: 蘇菲說她 19:02 直接回家，但她的車停到 22:40 才離開。命案發生的時候，她就在大樓裡。
+          strength: 10
+          tags: [情感, 邏輯]
     motions:
       - id: m-watch
         label: 聲請傳票：死者手錶的健康資料
@@ -1088,6 +1120,15 @@ scenes:
           - id: doubt-time
             text: 你們會聽到，沃斯在伊森抵達之前就已經死了。
             argument: arg-b
+      - id: sophie
+        name: 另有其人：蘇菲
+        summary: 命案當晚還在大樓的人，對警方說了謊。她是檢方的證人。
+        needs: [arg-h]
+        cost: 情感取向的陪審員容易被說服，但蘇菲的人生會被毀掉。要在庭上讓她自己鬆口，沒有別的證據能替妳補。
+        promises:
+          - id: sophie-lied
+            text: 你們會看到，另一個人對警方說了謊。
+            argument: arg-h
       - id: rachel
         name: 另有其人：瑞秋
         summary: 那則訊息是別人傳的，收回訊息的人當時就在 31 樓。她是檢方的證人。
@@ -1510,8 +1551,139 @@ scenes:
     act: 第四幕
     title: 第四幕　庭審　第二天
     lines:
-      - 檢方傳喚最後一位證人：瑞秋・林恩。
-      - 她是唯一聽見聲音的人，也是全案最無懈可擊的證人。
+      - 檢方先傳喚死者的執行助理蘇菲・馬丁內斯，用她建立動機。
+      - 最後一位證人是瑞秋・林恩：她是唯一聽見聲音的人，也是全案最無懈可擊的證人。
+
+  - type: trial
+    id: court-sophie
+    act: 第四幕
+    day: 第二天
+    threshold: 70
+    patience: 5
+    jurors:
+      - id: j1
+        label: 退休警察
+        leans: [權威]
+        start: 58
+      - id: j2
+        label: 軟體工程師
+        leans: [邏輯]
+        start: 50
+      - id: j3
+        label: 超市店長、單親媽媽
+        leans: [情感]
+        start: 48
+      - id: j4
+        label: 會計師
+        leans: [邏輯, 權威]
+        start: 56
+        foreperson: true
+      - id: j5
+        label: 大學生
+        leans: [程序]
+        start: 46
+      - id: j6
+        label: 護理師
+        leans: [情感, 邏輯]
+        start: 50
+      - id: j7
+        label: 貨運司機
+        leans: [權威]
+        start: 54
+      - id: j8
+        label: 高中老師
+        leans: [程序, 情感]
+        start: 48
+      - id: j9
+        label: 保險理賠員
+        leans: [邏輯]
+        start: 52
+      - id: j10
+        label: 麵包店老闆
+        leans: [情感]
+        start: 50
+      - id: j11
+        label: 圖書館員
+        leans: [程序]
+        start: 47
+      - id: j12
+        label: 建築工地領班
+        leans: [權威, 情感]
+        start: 55
+    intro:
+      - who: 艾莉絲
+        text: 蘇菲是檢方的動機證人。她只聽到半句話，可是庭上沒有人會幫我說這一點。
+        thought: true
+    witness:
+      name: 蘇菲・馬丁內斯
+      role: 死者的執行助理・三十歲
+      direct:
+        - id: s1
+          q: 馬丁內斯小姐，您替沃斯先生工作多久了？
+          a: 四年。我負責他的行事曆、信件，還有他想不到要自己處理的事。
+          impact: 3
+          tags: [情感]
+        - id: s2
+          q: 被告那天下午威脅了沃斯先生，是不是？
+          a: 他是這麼大喊的。
+          objection: 誘導
+          sustained: 異議成立。檢察官，請不要把答案放進問題裡。
+          impact: 6
+          tags: [情感, 權威]
+        - id: s3
+          q: 您在門外聽見被告說了什麼？
+          a: 他大喊：「你會後悔的！」然後摔門出來。
+          impact: 8
+          tags: [情感]
+        - id: s4
+          q: 沃斯先生事後跟您說過，他很怕被告，是嗎？
+          a: 他說他不想再看到伊森。
+          objection: 傳聞
+          sustained: 異議成立。死者的話，本庭不能經由證人轉述。
+          impact: 5
+          tags: [情感]
+        - id: s4b
+          q: 以您對被告的了解，他那天下午是不是已經打算動手？
+          a: 他那種語氣，我想他是氣到失去理智了。
+          objection: 推測
+          sustained: 異議成立。證人不能替被告揣測他當時的意圖。
+          impact: 5
+          tags: [情感]
+        - id: s5
+          q: 案發當晚您在哪裡？
+          a: 我 19:02 刷卡離開大樓，直接回家了。
+          impact: 3
+          tags: [權威]
+      claims:
+        - id: sc-home
+          text: 我 19:02 離開大樓，之後直接回家。
+          argument: arg-h
+          needs: parking-log
+          lock:
+            strong:
+              q: 馬丁內斯小姐，19:02 離開之後，您沒有繞去任何地方，也沒有再回到大樓附近，對嗎？
+              a: 沒有。我直接回家，一路上沒有停。
+            weak:
+              q: 您那晚大概是下班就回家了吧？
+              a: 差不多。我不記得每個細節。
+          setup:
+            q: 請教一個小事：卡爾德大樓的員工下班，是從大廳走，還是開車從地下停車場走？
+            a: 我開車，停在地下停車場。
+          confront:
+            strong: （很長的沉默）……我在車上待了一陣子。那件事和命案沒有關係。
+            weak: 我說的是大概。我真的記不清那天晚上幾點開走的。
+      irrelevant:
+        - q: 您平常幾點下班？
+          a: 沃斯先生在的時候，沒有固定的時間。
+        - q: 您喜歡這份工作嗎？
+          a: 他是個很難伺候的老闆，但我學到很多。
+      breakdown: （陪審席上，那位超市店長皺起了眉，在筆記本上寫了一行字。）
+    outro:
+      - who: 旁白
+        text: 蘇菲離開證人席的時候，沒有看被告那一邊。
+      - who: 艾莉絲
+        text: 她那晚在車上做了什麼，和命案有沒有關係，我現在還不知道。
+        thought: true
 
   # 庭審第二天：瑞秋（全集高潮，企劃書 10.7 第四幕第二天）
   - type: trial

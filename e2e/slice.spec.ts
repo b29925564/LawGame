@@ -286,6 +286,16 @@ test('第 1 集可以一路從冷開場玩到判決', async ({ page }) => {
   await next(page);
   await next(page); // 第二天字卡
 
+  // 庭審第二天上午：蘇菲。這條線沒走的話，直詰聽完就結束。
+  await page.getByRole('button', { name: '開庭' }).click();
+  for (let i = 0; i < 6; i++) {
+    await page.getByRole('button', { name: '聽下一個問題' }).click();
+    await page.getByRole('button', { name: '不異議' }).click();
+  }
+  await page.getByRole('button', { name: '開始交互詰問' }).click();
+  await page.getByRole('button', { name: '詰問完畢' }).click();
+  await next(page);
+
   // 庭審第二天：瑞秋。錄取時定錨過的說法，這裡不必再鎖一次。
   await page.getByRole('button', { name: '開庭' }).click();
   for (let i = 0; i < 7; i++) {
