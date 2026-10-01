@@ -2688,3 +2688,141 @@ fieldset.relations.compact {
     }
   }
 }
+
+/* ── 電腦版：左邊應用程式、中間工作區、右邊常駐證據欄。 ── */
+@media (min-width: 1024px) {
+  .shell {
+    max-width: 1480px;
+    padding: 16px 404px 0 24px;
+    column-gap: 20px;
+  }
+  .shell:has(> .shell-tabs > .apps) {
+    grid-template-columns: 188px minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr) auto;
+  }
+  .shell:has(> .shell-tabs > .apps) > .shell-head {
+    grid-column: 1 / -1;
+  }
+  .shell:has(> .shell-tabs > .apps) > .shell-tabs {
+    grid-row: 2 / 4;
+    grid-column: 1;
+  }
+  .shell:has(> .shell-tabs > .apps) > .shell-body,
+  .shell:has(> .shell-tabs > .apps) > .shell-foot {
+    grid-column: 2;
+  }
+  .shell-tabs > .apps {
+    flex-direction: column;
+    overflow: visible;
+    gap: 2px;
+  }
+  .shell-tabs > .apps button {
+    justify-content: flex-start;
+    text-align: left;
+    padding: 10px 12px;
+  }
+  .shell-tabs > .apps button::after {
+    display: none;
+  }
+  .shell-tabs > .apps [aria-current='true'] {
+    background: var(--surface-2);
+    box-shadow: inset 3px 0 0 var(--hl);
+  }
+  .shell-foot {
+    margin-inline: 0;
+    padding-inline: 0;
+    background: none;
+    backdrop-filter: none;
+  }
+  .side-wrap {
+    position: fixed;
+    top: 16px;
+    bottom: 16px;
+    right: max(24px, calc((100vw - 1480px) / 2 + 24px));
+    width: 360px;
+    z-index: 5;
+  }
+  .sheet.side {
+    position: static;
+    height: 100%;
+    max-height: none;
+    width: 100%;
+    border-radius: var(--r, 12px);
+    border: 1px solid var(--border);
+    animation: none;
+    transform: none;
+  }
+  /* 法庭：左欄放筆錄與陪審團，要比應用程式選單寬。 */
+  .shell:has(> .shell-tabs > :not(.apps)) {
+    grid-template-columns: 320px minmax(0, 1fr);
+  }
+  /* 對話與會見：台詞在左，選項在右，一眼看完不用捲。 */
+  .scene.interview {
+    max-width: 1240px;
+    padding: 24px 32px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 420px;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    column-gap: 24px;
+    row-gap: 16px;
+  }
+  .scene.interview > * {
+    grid-column: 2;
+  }
+  .scene.interview > :first-child {
+    grid-column: 1 / -1;
+  }
+  .scene.interview > .lines {
+    grid-column: 1;
+    grid-row: 2 / 4;
+  }
+  .scene.interview > .panel.actions {
+    max-height: none;
+    align-self: start;
+  }
+  .scene.interview > .panel.actions .apps,
+  .scene.interview > .panel.actions > div:first-child {
+    flex-wrap: wrap;
+  }
+  .scene.dialogue,
+  .scene.report {
+    max-width: 880px;
+  }
+}
+@media (min-width: 1024px) {
+  .side-wrap {
+    top: 68px;
+  }
+  .sheet.side::before {
+    display: none;
+  }
+}
+@media (min-width: 1024px) {
+  /* 法庭左欄：筆錄吃滿剩下的高度。 */
+  .shell-tabs:has(> .transcript) {
+    min-height: 0;
+  }
+  .shell-tabs > .transcript {
+    flex: 1 1 auto;
+    max-height: none;
+    min-height: 0;
+  }
+  .scene.interview > .panel.actions .apps button,
+  .scene.interview > .panel.actions button {
+    white-space: nowrap;
+  }
+}
+/* 證據欄的卡片可以直接點上連線台。 */
+.card.pickable {
+  cursor: pointer;
+  transition:
+    border-color 0.15s,
+    background-color 0.15s;
+}
+.card.pickable:hover {
+  border-color: var(--hl);
+}
+.card.pickable.on {
+  border-color: var(--hl);
+  background: linear-gradient(var(--hl-wash), var(--hl-wash)), var(--surface);
+}

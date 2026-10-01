@@ -7,6 +7,7 @@ import {
   useEpisode,
   type Evidence as Item,
 } from '../engine/game';
+import { useCardPick } from './pick';
 import { TimelineView } from './Timeline';
 
 /**
@@ -16,10 +17,24 @@ import { TimelineView } from './Timeline';
  * 以前只能切到證據庫分頁再切回來，位置也跟著跑掉。
  * 抽屜是浮在畫面上的，打開關上都不會動到你正在做的事。
  */
+/** 寬螢幕（電腦）上抽屜常駐在右欄，不用再點開。 */
+export const WIDE = '(min-width: 1024px)';
+export function useWide() {
+  const [wide, setWide] = useState(() => window.matchMedia(WIDE).matches);
+  useEffect(() => {
+    const m = window.matchMedia(WIDE);
+    const on = () => setWide(m.matches);
+    m.addEventListener('change', on);
+    return () => m.removeEventListener('change', on);
+  }, []);
+  return wide;
+}
+
 export function EvidenceDrawer({ note }: { note?: string }) {
   const progress = useEpisode((s) => s.progress);
   const items = evidence(progress);
   const [open, setOpen] = useState(false);
+  const wide = useWide();
   const [q, setQ] = useState('');
   useEffect(() => {
     if (!open) return;
@@ -45,13 +60,21 @@ export function EvidenceDrawer({ note }: { note?: string }) {
   );
   return (
     <>
-      <button className="evidence-tab" aria-expanded={open} onClick={() => setOpen(true)}>
-        證據 <strong>{items.length}</strong>
-      </button>
-      {open && (
-        <div className="sheet-wrap">
-          <button className="sheet-back" aria-label="關閉證據抽屜" onClick={() => setOpen(false)} />
-          <section className="sheet" aria-label="證據抽屜">
+      {!wide && (
+        <button className="evidence-tab" aria-expanded={open} onClick={() => setOpen(true)}>
+          證據 <strong>{items.length}</strong>
+        </button>
+      )}
+      {(open || wide) && (
+        <div className={wide ? 'side-wrap' : 'sheet-wrap'}>
+          {!wide && (
+            <button
+              className="sheet-back"
+              aria-label="關閉證據抽屜"
+              onClick={() => setOpen(false)}
+            />
+          )}
+          <section className={wide ? 'sheet side' : 'sheet'} aria-label="證據抽屜">
             <div className="panel-head">
               <nav className="apps sheet-tabs" aria-label="抽屜">
                 <button aria-current={page === 'cards'} onClick={() => setPage('cards')}>
@@ -64,9 +87,11 @@ export function EvidenceDrawer({ note }: { note?: string }) {
                   法典
                 </button>
               </nav>
-              <button className="link" onClick={() => setOpen(false)}>
-                關閉
-              </button>
+              {!wide && (
+                <button className="link" onClick={() => setOpen(false)}>
+                  關閉
+                </button>
+              )}
             </div>
             {page === 'cards' && note && <p className="muted small">{note}</p>}
             {page !== 'timeline' && (
@@ -84,7 +109,7 @@ export function EvidenceDrawer({ note }: { note?: string }) {
                 <KindFilter items={items} value={kind} onPick={setKind} />
                 <ul className="stack cards sheet-list">
                   {timeGroups(hit, (i) => (
-                    <EvidenceCard key={i.id} item={i} />
+                    <EvidenceCard key={i.id} item={i} pickable={wide} />
                   ))}
                   {hit.length === 0 && (
                     <li className="muted">
@@ -121,9 +146,22 @@ export function EvidenceDrawer({ note }: { note?: string }) {
   );
 }
 
-export function EvidenceCard({ item }: { item: Item }) {
+export function EvidenceCard({ item, pickable }: { item: Item; pickable?: boolean }) {
+  const { pool, on, pick } = useCardPick();
+  const can = pickable && pick && pool.includes(item.id);
+  const cls = (item.kind === '論點' ? 'card arg' : 'card') + (can ? ' pickable' : '');
   return (
-    <li className={item.kind === '論點' ? 'card arg' : 'card'}>
+    <li
+      className={on.includes(item.id) && can ? cls + ' on' : cls}
+      {...(can && {
+        role: 'button',
+        tabIndex: 0,
+        'aria-pressed': on.includes(item.id),
+        onClick: () => pick(item.id),
+        onKeyDown: (e: React.KeyboardEvent) =>
+          (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), pick(item.id)),
+      })}
+    >
       <strong>
         {stamp(item) && <span className="time">{stamp(item)}</span>}
         {item.name}
