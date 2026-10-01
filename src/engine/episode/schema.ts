@@ -223,6 +223,8 @@ const question = z.object({
   answer: z.array(id).min(1).max(3),
   /** 說得通的替代：answer 裡某條發現 → 同樣能回答這個疑問的其他發現或論點。 */
   accept: z.record(id, z.array(id)).default({}),
+  /** 這些全部到手才出現在證據板：卡片、連出的發現或確認過的論點。不填＝一開始就看得到。 */
+  unlock: z.array(id).default([]),
   argument: z.object({
     id,
     name: z.string(),
