@@ -25,12 +25,37 @@ export function RelationPicker({
   cards,
   value,
   onPick,
+  compact,
 }: {
   cards: (string | undefined)[];
   value: Relation | null;
   onPick: (r: Relation) => void;
+  /** 精簡版：一排關係名稱，只把選中的那句話寫出來，放得進連線台。 */
+  compact?: boolean;
 }) {
   const [a, b] = cards;
+  if (compact)
+    return (
+      <fieldset className="relations compact">
+        <legend className="sr-only">這兩張卡之間是什麼關係？</legend>
+        <div className="chips kinds">
+          {relations.map((r) => (
+            <button
+              key={r}
+              role="radio"
+              aria-checked={value === r}
+              aria-label={`${r}：${relationSentence(r, a ?? '', b ?? '')}`}
+              onClick={() => onPick(r)}
+            >
+              {r}
+            </button>
+          ))}
+        </div>
+        <p className="muted small">
+          {value ? relationSentence(value, a ?? '', b ?? '') : '選一種關係，說明這兩張卡怎麼連。'}
+        </p>
+      </fieldset>
+    );
   return (
     <fieldset className="relations">
       <legend>這兩張卡之間是什麼關係？</legend>

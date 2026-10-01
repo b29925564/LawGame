@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { evidence, useEpisode, type Evidence as Item } from '../engine/game';
 
 /**
@@ -49,7 +49,7 @@ export function EvidenceDrawer({ note }: { note?: string }) {
             />
             <KindFilter items={items} value={kind} onPick={setKind} />
             <ul className="stack cards sheet-list">
-              {hit.map((i) => (
+              {timeGroups(hit, (i) => (
                 <EvidenceCard key={i.id} item={i} />
               ))}
               {hit.length === 0 && (
@@ -154,4 +154,27 @@ export function KindFilter({
       ))}
     </div>
   );
+}
+
+/**
+ * 有發生時間的事件和其他資料分開列：前者可以放上時間線，後者是文件、鑑定、論點。
+ * 兩群都有卡片時才加小標，只有一群就不多此一舉。
+ */
+export function timeGroups<T extends { id: string; time?: string }>(
+  items: T[],
+  render: (item: T) => ReactNode,
+) {
+  const timed = items.filter((i) => i.time);
+  const rest = items.filter((i) => !i.time);
+  if (!timed.length || !rest.length) return items.map(render);
+  return [
+    <li key="@timed" className="group-head">
+      有時間的事件 <span>{timed.length}</span>
+    </li>,
+    ...timed.map(render),
+    <li key="@rest" className="group-head">
+      其他資料 <span>{rest.length}</span>
+    </li>,
+    ...rest.map(render),
+  ];
 }

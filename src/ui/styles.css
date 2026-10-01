@@ -289,6 +289,24 @@ details summary {
   line-height: 1.2;
   letter-spacing: 0.12em;
 }
+/* 對話變長時只捲對話，操作區固定在畫面下方，不必捲回去看完再捲下來按。 */
+.scene:has(> .lines) {
+  height: 100dvh;
+  padding-bottom: 16px;
+}
+.scene > .lines {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.scene:has(> .lines) > :not(.lines) {
+  flex-shrink: 0;
+}
+.scene > .panel.actions {
+  max-height: 42dvh;
+  overflow-y: auto;
+}
 /* 捲動區裡的東西不准被壓扁：清單外框有 overflow: hidden，彈性版面會把它擠成一條。 */
 .stack > *,
 .shell-body > * {
@@ -1222,6 +1240,53 @@ button.relation.on,
   color: var(--hl-ink);
 }
 
+fieldset.relations.compact {
+  border: none;
+  padding: 0;
+  gap: 4px;
+}
+.relations.compact [aria-checked='true'] {
+  background: var(--hl) !important;
+  color: var(--hl-ink);
+  border-color: transparent;
+  box-shadow: none;
+}
+.relations.compact p {
+  margin: 0;
+  min-height: 1.5em;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* 清單裡的分組小標：有時間的事件、其他資料。 */
+.group-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+}
+.group-head:first-child {
+  margin-top: 0;
+}
+.group-head span {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--faint);
+}
+
 /* 連線與案情會議的結果：成立用綠邊，站不住用紅邊。 */
 .board-note {
   margin: 0;
@@ -1444,6 +1509,31 @@ button.relation.on,
   font-family: var(--font-mono);
   font-size: 0.82em;
   letter-spacing: 0.04em;
+}
+
+/* 委託的前提：有了打勾，還缺的標紅。 */
+.needs {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.needs li {
+  font-size: 13px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+}
+.needs .have {
+  color: var(--good);
+  border-color: color-mix(in srgb, var(--good) 40%, var(--border));
+}
+.needs .lack {
+  color: var(--bad);
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--bad) 50%, var(--border));
 }
 
 /* ── 證據抽屜 ── */
