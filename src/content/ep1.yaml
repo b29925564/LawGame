@@ -1723,10 +1723,97 @@ scenes:
           text: 有人沒有被說服。下一次開庭之前，我得先知道那個人是誰。
           thought: true
 
+  - type: dialogue
+    id: epilogue-review
+    act: 尾聲
+    place: 惠特洛克・海爾律師事務所　會議室　判決後
+    steps:
+      - do: say
+        who: 馬可仕・海爾
+        text: 不管結果怎麼寫，這一仗妳打得比我預期的乾淨。
+        mood: 暖
+      - do: say
+        who: 薇薇安・惠特洛克
+        text: 卡爾德物流的法務今天早上打來了。他們問，妳下一次會不會也這樣查到底。
+        mood: 硬
+      - do: say
+        who: 艾莉絲
+        text: 那不是稱讚。我聽得出來。
+        thought: true
+      - do: say
+        who: 薇薇安・惠特洛克
+        text: 事務所不是公設辯護室。記住這一點。
+        mood: 硬
+      - do: say
+        who: 旁白
+        text: 她走出會議室。桌上留下一個沒有寄件人的牛皮紙信封。
+
+  - type: dialogue
+    id: epilogue-envelope
+    act: 尾聲
+    place: 艾莉絲的辦公室　影印機旁邊
+    steps:
+      - do: say
+        who: 旁白
+        text: 信封裡是一份文件的影本，標題被裁掉了。內文是和解條款草稿，簽署欄只寫著一個字母：「V.」
+      - do: say
+        who: 蘇菲
+        text: （便條）那天晚上，沃斯先生要簽的不是辭退書。是這個。我不知道該交給誰。
+        mood: 緊
+      - do: say
+        who: 艾莉絲
+        text: 這份草稿證明有人想在案發前先把事情「私下解決」。它也會讓海爾、惠特洛克，甚至這間事務所，變成故事的一部分。
+        thought: true
+      - do: choose
+        mode: chat
+        options:
+          - text: 交給海爾。事務所的事，先問事務所。
+            then:
+              - who: 艾莉絲
+                text: 海爾看完草稿，沉默了很久。「這份文件，妳還給過誰？」他問的第一句不是它是真是假。
+                thought: true
+          - text: 自己保留。在知道它是什麼之前，誰都不給。
+            then:
+              - who: 艾莉絲
+                text: 我把信封放進抽屜最底層，鎖上。鑰匙只有一把。
+                thought: true
+          - text: 交給潔德。她會知道怎麼讓它見光。
+            then:
+              - who: 艾莉絲
+                text: 潔德翻了兩頁就抬頭看我。「這是客戶的機密文件，妳知道這是什麼意思嗎？」我知道。
+                thought: true
+
+  - type: dialogue
+    id: epilogue-call
+    act: 尾聲
+    place: 艾莉絲的公寓　深夜
+    steps:
+      - do: say
+        who: 旁白
+        text: 手機響起。來電顯示：州立監獄，受刑人付費電話。
+      - do: say
+        who: 艾莉絲
+        text: 十二年了。他從來沒有主動打給我。
+        thought: true
+      - do: say
+        who: 父親
+        text: 艾莉絲。我在新聞上看到了。妳……那個案子，不是只有妳看到的那樣。
+        mood: 緊
+      - do: say
+        who: 艾莉絲
+        text: 你怎麼知道我看到什麼。
+      - do: say
+        who: 父親
+        text: 那份和解草稿。我認得上面的簽名。十二年前，我替同一個人簽過字。
+        mood: 緊
+      - do: say
+        who: 旁白
+        text: 電話斷了。螢幕上的通話時間停在 00:47。
+
   - type: card
     id: slice-end
-    act: 垂直切片
+    act: 第 1 集
     title: 待續
     lines:
-      - 第 1 集的骨架到此完整：冷開場、調查、審前、遴選、兩天庭審、結辯與判決。
-      - 開場陳述與承諾、案件理論、專家證人與尾聲的信封還沒做。
+      - 第 1 集到此結束：冷開場、調查、審前、遴選、兩天庭審、結辯、判決與尾聲。
+      - 開場陳述與承諾、案件理論、專家證人與證人準備將於後續版本加入。
