@@ -158,7 +158,7 @@ async function playToRachelLast(page: Page) {
   await card(watchMotion, /手錶資料與本案相關/).click();
   await watchMotion.getByRole('radio', { name: '核發傳票給手錶廠商' }).click();
   await watchMotion.getByRole('button', { name: /送出/ }).click();
-  await expect(page.getByText('22:24，心率歸零。')).toBeVisible();
+  await expect(page.getByText('23 分鐘').first()).toBeVisible();
   await page.getByRole('button', { name: '回到桌面' }).click();
 
   // 聊天稽核紀錄的傳票：核准之後對方聲請撤銷，惠特洛克要她收手。
