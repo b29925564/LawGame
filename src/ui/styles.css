@@ -4418,6 +4418,9 @@ button.iou[aria-pressed='true'] {
   gap: 14px;
 }
 .wb-head h2 {
+  /* 手機上 balance 會把問句切成兩半，留一大塊空白；用滿寬度。 */
+  text-wrap: pretty;
+  max-width: none;
   margin: 2px 0 4px;
   font-family: var(--font-doc);
   font-size: 1.5em;
