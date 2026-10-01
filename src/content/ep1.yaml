@@ -468,9 +468,13 @@ scenes:
         mood: 緊
       - who: 旁白
         text: 他把椅子往後推，低頭看著地板。
+    # 收尾停在伊森的問題上，下一場第一句「我要接這個案子」就是回答。
     outro:
       - who: 旁白
-        text: 獄警在門外敲了兩下。會見時間到了。
+        text: 獄警在門外敲了兩下。
+      - who: 伊森
+        text: 艾莉絲……妳會接我的案子嗎？
+        mood: 緊
 
   - type: dialogue
     id: take-case
