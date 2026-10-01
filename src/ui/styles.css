@@ -2892,3 +2892,10 @@ fieldset.relations.compact {
     flex: 0 1 auto;
   }
 }
+
+/* 證據板的分頁（連線、疑問 1–6、時間線）在窄螢幕上折行，不要藏在畫面外。 */
+.board-tabs > .apps {
+  flex-wrap: wrap;
+  overflow: visible;
+  row-gap: 2px;
+}
