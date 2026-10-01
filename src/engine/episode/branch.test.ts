@@ -313,20 +313,15 @@ describe('重審交代與可選的辯方證人', () => {
   });
 
   it('辯方證人場景可以帶 when，不符就跳過', () => {
+    // 伊森作證要先在第三幕答應他（ethan-testifies）。
     const scenes = episodes.ep1.scenes;
-    const at = scenes.findIndex((s) => s.type === 'defense');
-    const d = scenes[at] as { when?: object };
+    const at = scenes.findIndex((s) => s.id === 'defense-ethan');
     const p = { ...base, scenes: {}, scene: at - 1, step: 0 };
-    try {
-      d.when = { flags: ['ethan-testifies'] };
-      useEpisode.setState({ progress: { ...p, flags: [] } });
-      useEpisode.getState().advance();
-      expect(useEpisode.getState().progress.scene).toBe(at + 1);
-      useEpisode.setState({ progress: { ...p, flags: ['ethan-testifies'] } });
-      useEpisode.getState().advance();
-      expect(useEpisode.getState().progress.scene).toBe(at);
-    } finally {
-      delete d.when;
-    }
+    useEpisode.setState({ progress: { ...p, flags: [] } });
+    useEpisode.getState().advance();
+    expect(useEpisode.getState().progress.scene).toBe(at + 1);
+    useEpisode.setState({ progress: { ...p, flags: ['ethan-testifies'] } });
+    useEpisode.getState().advance();
+    expect(useEpisode.getState().progress.scene).toBe(at);
   });
 });

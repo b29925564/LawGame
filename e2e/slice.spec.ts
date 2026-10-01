@@ -246,6 +246,12 @@ async function playToRachelLast(page: Page) {
     .click();
   await next(page);
 
+  // 伊森想作證。答應他，第三天辯方舉證時他會上證人席。
+  const testify = page.getByRole('button', { name: /每天練一遍最難聽的問題/ });
+  await until(page, testify);
+  await testify.click();
+  await next(page);
+
   await next(page); // 第四幕字卡
 
   // 陪審團遴選：問出偏見、有因迴避、無因迴避，再入席
@@ -350,6 +356,19 @@ test('第 1 集可以一路從冷開場玩到判決', async ({ page }) => {
   }
   await page.getByRole('button', { name: '問完了' }).click();
   await next(page);
+
+  // 其他辯方證人：普莉亞、奧瑪，以及答應過要作證的伊森。
+  for (const [who, qs] of [
+    ['普莉亞・奈爾', [/心率紀錄，可信嗎/, /有沒有地方留下紀錄/, /從哪裡發出、又是從哪裡收回/]],
+    ['奧瑪・哈桑', [/在哪裡載到被告/, /他要去做什麼/, /他一路上在做什麼/]],
+    ['伊森・蕭', [/你收到了什麼/, /看到了什麼/]],
+  ] as const) {
+    await page.getByRole('button', { name: new RegExp(`準備${who}出庭`) }).click();
+    await page.getByRole('button', { name: '就這樣準備' }).nth(1).click();
+    for (const q of qs) await page.getByRole('button', { name: q }).click();
+    await page.getByRole('button', { name: '問完了' }).click();
+    await next(page);
+  }
 
   // 結辯：挑三個論點排順序、選基調，然後是三輪評議與判決。
   await card(page, /論點 A/)

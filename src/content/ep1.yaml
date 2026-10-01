@@ -1190,6 +1190,36 @@ scenes:
             text: 你們會知道，那一晚 31 樓只剩下一個人。
             argument: arg-d
 
+  # 第三幕收尾：被告要不要作證（企劃書 10.7 第三幕 6）。決定權在伊森，艾莉絲只能建議。
+  - type: dialogue
+    id: ethan-testify
+    act: 第三幕
+    place: 看守所　會見室
+    steps:
+      - do: say
+        who: 伊森・蕭
+        text: 他們會說我跑了兩天。我想上去講。我想自己講。
+        mood: 緊
+      - do: say
+        who: 艾莉絲
+        text: 他一站上去，莫羅就能問四年前的事。
+        thought: true
+      - do: choose
+        prompt: 伊森在等妳的意見。
+        options:
+          - text: 好。從今天開始，每天練一遍最難聽的問題。
+            flags: [ethan-testifies]
+            then:
+              - who: 伊森・蕭
+                text: 好。好。我會練。
+                mood: 緊
+          - text: 我建議你不要。陪審團要聽的是證據。
+            flags: [ethan-silent]
+            then:
+              - who: 伊森・蕭
+                text: ……如果妳覺得這樣比較好。
+                mood: 緊
+
   - type: card
     id: act4
     act: 第四幕
@@ -2062,8 +2092,210 @@ scenes:
       - who: 艾莉絲
         text: 十一點半的窗口，現在有一個點釘在裡面了。
         thought: true
+
+  - type: defense
+    id: defense-priya
+    act: 第四幕
+    day: 第三天
+    when:
+      cards: [heart-rate]
+    witness:
+      name: 普莉亞・奈爾
+      role: 數位鑑識專家
+    intro:
       - who: 旁白
-        text: 法官宣布：辯方舉證完畢。
+        text: 艾莉絲站起來：「辯方傳喚普莉亞・奈爾博士。」
+      - who: 馬庫斯・海爾
+        text: 專家費的帳單寄到我這裡。不必謝我，記得就好。
+        mood: 暖
+    prep:
+      hours: 2
+      options:
+        - id: priya-none
+          label: 不準備
+          detail: 她出庭過幾十次，不需要人教。但她不知道妳想先講哪一段。
+          multiplier: 0.9
+        - id: priya-honest
+          label: 對一次順序
+          detail: 兩個小時，把心率、稽核紀錄、手錶通知照時間排好。措辭是她自己的。
+          multiplier: 1
+    asks: 3
+    questions:
+      - id: pq-cred
+        seq: 0
+        q: 奈爾博士，您做數位鑑識多久了？
+        a: 十四年。法院指定過我十一次，檢方也找過我。
+        impact: 5
+        tags: [權威]
+      - id: pq-hr
+        seq: 1
+        q: 沃斯先生手錶上的心率紀錄，可信嗎？
+        a: 原始檔有雜湊值，沒有被動過。22:24 心率衝高，然後歸零，之後是一條直線。
+        impact: 12
+        tags: [邏輯, 權威]
+        needs: [heart-rate]
+      - id: pq-notice
+        seq: 2
+        q: 被告說他收到過一則訊息，後來不見了。有沒有地方留下紀錄？
+        a: 他的手錶。22:33 跳過一則通知，寄件人是葛蘭特・沃斯。手機上收回，手錶上的通知紀錄不會跟著消失。
+        impact: 10
+        tags: [邏輯]
+        needs: [watch-notice]
+      - id: pq-audit
+        seq: 3
+        q: 聊天系統的稽核紀錄裡，那則訊息是從哪裡發出、又是從哪裡收回的？
+        a: 同一台桌機，沃斯先生辦公室裡那台。22:31 發出，23:14 收回。
+        impact: 14
+        tags: [邏輯]
+        needs: [chat-audit]
+        door:
+          q: 奈爾博士，您能告訴陪審團，23:14 坐在那台桌機前面的是誰嗎？
+          a: 不能。我能告訴你是哪台電腦，不能告訴你是哪雙手。
+          penalty: 5
+    leak:
+      q: 奈爾博士，辯方律師有沒有替您擬過證詞？
+      a: 她給過我問題的順序。答案是我自己的。
+      penalty: 4
+    outro:
+      - who: 旁白
+        text: 莫羅檢察官翻了兩頁筆記，只問了一題。
+
+  - type: defense
+    id: defense-omar
+    act: 第四幕
+    day: 第三天
+    when:
+      cards: [ride-receipt]
+    witness:
+      name: 奧瑪・哈桑
+      role: 叫車司機
+    intro:
+      - who: 旁白
+        text: 奧瑪・哈桑穿著一件燙過頭的襯衫，坐下前先對陪審團點了點頭。
+    prep:
+      hours: 1
+      options:
+        - id: omar-none
+          label: 不準備
+          detail: 他很愛講話。問一題，他會回三題。
+          multiplier: 0.8
+        - id: omar-honest
+          label: 正常準備
+          detail: 一個小時，請他只回答問到的，記得的就說記得，不記得就說不記得。
+          multiplier: 1
+        - id: omar-coach
+          label: 把那句話排好
+          detail: 讓他把伊森在車上說的話一字不差背下來。聽起來很有力，但檢方會問是誰教的。
+          multiplier: 1
+          rehearsed: 1.6
+          coached: true
+          ethics: [coached-witness]
+          flags: [coached-omar]
+    asks: 3
+    questions:
+      - id: oq-pick
+        seq: 0
+        q: 哈桑先生，那天晚上您在哪裡載到被告？
+        a: 東河街一一八號啦，十點三十四分。App 上都有記。
+        impact: 5
+        tags: [邏輯]
+        needs: [ride-receipt]
+      - id: oq-said
+        seq: 1
+        q: 他在車上有沒有說，他要去做什麼？
+        a: 他說「老闆說要私下解決，也許我不會被開除了」。我還跟他說祝他好運咧。
+        impact: 12
+        tags: [情感]
+        rehearsed: true
+      - id: oq-look
+        seq: 2
+        q: 他一路上在做什麼？
+        a: 盯著手機啊。那支手機快被他捏碎了喔。
+        impact: 5
+        tags: [情感]
+        door:
+          q: 哈桑先生，一個緊張到快把手機捏碎的人，您覺得他是去加班，還是去吵架？
+          a: ……我不知道啦。我只是開車的。
+          penalty: 7
+    leak:
+      q: 哈桑先生，那句話您記得這麼清楚，是不是有人幫您複習過？
+      a: 律師小姐有說，那句話一個字都不要改……這樣不行喔？
+      penalty: 8
+    outro:
+      - who: 旁白
+        text: 奧瑪走下證人席，經過被告席的時候，朝伊森比了一下大拇指。
+
+  - type: defense
+    id: defense-ethan
+    act: 第四幕
+    day: 第三天
+    when:
+      flags: [ethan-testifies]
+    witness:
+      name: 伊森・蕭
+      role: 被告
+    intro:
+      - who: 旁白
+        text: 艾莉絲站起來：「辯方傳喚被告，伊森・蕭。」旁聽席有人坐直了。
+    prep:
+      hours: 3
+      options:
+        - id: ethan-none
+          label: 不準備
+          detail: 他想說的話太多，會一直更正自己。
+          multiplier: 0.7
+        - id: ethan-honest
+          label: 模擬反詰問
+          detail: 三個小時，由羅根扮莫羅，把最難聽的問題先問一遍。不替他改答案。
+          multiplier: 1
+        - id: ethan-coach
+          label: 替他寫好答案
+          detail: 每一題都有一段背好的答案。聽起來很穩，但一被打斷就會亂。
+          multiplier: 1
+          rehearsed: 1.6
+          coached: true
+          ethics: [coached-witness]
+          flags: [coached-ethan]
+    asks: 3
+    questions:
+      - id: eq-message
+        seq: 0
+        q: 伊森，週五晚上十點半，你收到了什麼？
+        a: 沃斯先生的訊息。十點三十一……三十三分。叫我十點四十五分上去，帶筆電，說要私下解決。
+        impact: 9
+        tags: [情感]
+        rehearsed: true
+      - id: eq-door
+        seq: 1
+        q: 你推開他辦公室的門，看到了什麼？
+        a: 他倒在桌子旁邊。我去拉他，手上都是……我叫他，他沒有回答。
+        impact: 8
+        tags: [情感]
+      - id: eq-run
+        seq: 2
+        q: 你為什麼沒有報警？
+        a: 我按了九、按了一。然後我想到上一次。上一次也是警察先來，我解釋了一年。
+        impact: 9
+        tags: [情感]
+        rehearsed: true
+        door:
+          q: 蕭先生，您說「上一次」。上一次是什麼案子？
+          a: ……我有前科。四年前。那時候我十九……不對，二十二歲。
+          penalty: 9
+      - id: eq-report
+        seq: 3
+        q: 你在案發前兩天做了什麼？
+        a: 我用匿名系統檢舉了一筆三千八百萬美元的應收帳款，掛在北門貨運名下。我記得舉報編號。
+        impact: 10
+        tags: [邏輯]
+        needs: [ethan-report]
+    leak:
+      q: 蕭先生，這些答案是誰幫你寫的？
+      a: 我……我們練習過。艾莉絲說——韓律師說，照順序講就好。
+      penalty: 10
+    outro:
+      - who: 旁白
+        text: 伊森走下證人席，坐回被告席之前，先把手掌在褲子上擦了兩下。
 
   # 結辯與判決（企劃書 6.9.8、6.10）
   - type: closing
@@ -2073,6 +2305,8 @@ scenes:
     picks: 3
     threshold: 70
     intro:
+      - who: 旁白
+        text: 法官宣布：辯方舉證完畢。
       - who: 馬庫斯・海爾
         text: 挑三個。講最後的那一個，他們記得最清楚。
         mood: 暖
