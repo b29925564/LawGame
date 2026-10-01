@@ -163,9 +163,6 @@ export function Timeline({
           </p>
         )}
       </div>
-      <p className="muted small">
-        按住右邊的把手拖曳排序。順序由你排，遊戲不會幫你排，也不會告訴你哪兩件事兜不起來。
-      </p>
       {rows.length === 0 ? (
         <p className="muted">點上面的卡片，把它放上時間軸。</p>
       ) : (

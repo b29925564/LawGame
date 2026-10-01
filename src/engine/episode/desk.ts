@@ -36,6 +36,8 @@ export interface DeskState {
   wrong: number;
   report: Line[];
   feedback: Record<string, string>;
+  /** 各疑問提交過、沒通過的組合（排序過的卡片 id）。同樣的組合不能再交一次。舊存檔沒有這欄。 */
+  tried?: Record<string, string[][]>;
   motions: Record<string, MotionAttempt>;
   /** 帶到後面幕的旗標，例如動議被駁回會讓開庭第一天的法官耐心 −1。 */
   flags: string[];
@@ -218,7 +220,27 @@ export function toggleCard(s: DeskScene, st: DeskState, qid: string, card: strin
 export function canSubmit(s: DeskScene, st: DeskState, qid: string): boolean {
   const q = s.questions.find((x) => x.id === qid);
   const a = st.attempts[qid];
-  return !!q && st.hours >= 1 && !st.confirmed.includes(qid) && a?.cards.length === q.answer.length;
+  return (
+    !!q &&
+    st.hours >= 1 &&
+    !st.confirmed.includes(qid) &&
+    a?.cards.length === q.answer.length &&
+    !triedBefore(st, qid)
+  );
+}
+
+const key = (cards: string[]) => [...cards].sort().join('|');
+
+/** 目前放在答案格的組合，之前已經交過而且沒通過。 */
+export function triedBefore(st: DeskState, qid: string): boolean {
+  const a = st.attempts[qid];
+  if (!a) return false;
+  return (st.tried?.[qid] ?? []).some((t) => key(t) === key(a.cards));
+}
+
+/** 這個疑問交錯了幾次。 */
+export function misses(st: DeskState, qid: string): number {
+  return st.tried?.[qid]?.length ?? 0;
 }
 
 /** 提交花 1 工時。全對才確認，遊戲不說哪一條放錯（企劃書 6.5）。 */
@@ -232,6 +254,9 @@ export function submit(s: DeskScene, st: DeskState, qid: string): DeskState {
     submissions: next.submissions + 1,
     wrong: next.wrong + (ok ? 0 : 1),
     confirmed: ok ? [...next.confirmed, qid] : next.confirmed,
+    tried: ok
+      ? next.tried
+      : { ...next.tried, [qid]: [...(next.tried?.[qid] ?? []), [...st.attempts[qid].cards]] },
     feedback: {
       ...next.feedback,
       [qid]: ok

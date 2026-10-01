@@ -4559,3 +4559,103 @@ button.iou[aria-pressed='true'] {
   font-family: var(--font-mono, monospace);
   font-size: 0.8em;
 }
+/* 回饋教學（設計稿 board-redesign 修訂）：連錯、交錯抖一下；工時掉一格閃紅。 */
+@keyframes shake {
+  0%,
+  100% {
+    transform: none;
+  }
+  20%,
+  60% {
+    transform: translateX(-5px);
+  }
+  40%,
+  80% {
+    transform: translateX(5px);
+  }
+}
+.shake .slot-card,
+.shake.answer-slots {
+  animation: shake 0.4s ease;
+}
+@keyframes hours-drop {
+  0% {
+    color: var(--bad);
+    transform: translateY(-4px);
+  }
+  100% {
+    transform: none;
+  }
+}
+.hours.drop strong {
+  display: inline-block;
+  animation: hours-drop 0.6s ease;
+}
+.tries {
+  display: inline-flex;
+  gap: 6px;
+}
+.tries i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1px solid var(--border-strong);
+}
+.tries i.miss {
+  border-color: var(--bad);
+  background: var(--bad);
+}
+@media (prefers-reduced-motion: reduce) {
+  .shake .slot-card,
+  .shake.answer-slots,
+  .hours.drop strong {
+    animation: none;
+  }
+}
+/* 滑過小卡浮出全文：只有全文，不加標題。證據欄在右邊，所以往左浮。 */
+.card.mini .mini-full {
+  display: none;
+  position: absolute;
+  z-index: 20;
+  right: calc(100% + 10px);
+  top: 0;
+  width: 300px;
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  box-shadow: var(--shadow-1);
+  font-family: var(--font-doc);
+  line-height: 1.6;
+  color: var(--text);
+  pointer-events: none;
+}
+.card.mini:hover .mini-full,
+.card.mini:focus-visible .mini-full {
+  display: block;
+}
+.card.mini {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 10px;
+}
+.card.mini > :not(.thumb) {
+  grid-column: 2;
+}
+.card.mini .thumb {
+  grid-row: 1 / 3;
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 38%, var(--border-strong) 0 9px, transparent 10px),
+    radial-gradient(ellipse at 50% 100%, var(--border-strong) 0 16px, transparent 17px),
+    var(--surface-2);
+}
+.card.mini .thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}

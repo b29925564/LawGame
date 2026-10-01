@@ -114,14 +114,12 @@ export function Negotiation({ scene }: { scene: NegotiationScene }) {
               建議他撐下去
             </button>
           </div>
-          <p className="muted small">最後決定權在伊森手上。信任低的時候，他可能不聽妳的。</p>
         </section>
       )}
 
       {tab === 'reveal' && (
         <section className="panel">
           <h2>攤牌</h2>
-          <p className="muted small">亮出去的論點，庭上衝擊減半，除非妳破解她的反擊。</p>
           <div className="stack">
             {args.map((a) => (
               <CardPick
@@ -141,9 +139,6 @@ export function Negotiation({ scene }: { scene: NegotiationScene }) {
       {tab === 'bluff' && (
         <section className="panel">
           <h2>虛張聲勢</h2>
-          <p className="muted small">
-            她會核對開示過的證據清單。撐不起來就被識破，之後的攤牌都打折。
-          </p>
           <div className="stack">
             {scene.bluffs.map((b) => (
               <button

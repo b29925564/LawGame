@@ -36,6 +36,7 @@ export function Desk({ scene }: { scene: DeskScene }) {
   const held = desk.heldCards(scene, st, progress.cards);
   const unread = scene.mail.filter((m) => st.mail.includes(m.id) && !st.openMail.includes(m.id));
   const finished = desk.done(scene, st);
+  const hoursDrop = useBump(-st.hours);
 
   if (st.report.length) {
     // 聲請的結果印成裁定單（設計稿 inner-voice 2e）：旁白那句是法官的話，章蓋在紙上。
@@ -121,7 +122,11 @@ export function Desk({ scene }: { scene: DeskScene }) {
       resetKey={app}
       head={
         <header className="taskbar">
-          <span className="hours" aria-label={`剩餘工時 ${st.hours} 小時`}>
+          <span
+            className={hoursDrop ? 'hours drop' : 'hours'}
+
+            aria-label={`剩餘工時 ${st.hours} 小時`}
+          >
             <strong>{st.hours}</strong> 工時
           </span>
           <span className="muted small">{scene.deadline}</span>
@@ -202,7 +207,6 @@ function Docs({ scene }: { scene: DeskScene }) {
         </button>
         <h2>{doc.title}</h2>
         <p className="muted">{doc.from}</p>
-        <p className="muted small">點一句話標記。標到關鍵事實會生成卡片。</p>
         <ol className="doc-lines">
           {doc.lines.map((l, i) => {
             const key = `${doc.id}:${i}`;
@@ -315,6 +319,10 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
     return () => useCardPick.setState({ pool: [], on: [], pick: undefined });
   }, [linking, poolIds, picked, toggleLinkCard]);
   const [kind, setKind, showKind] = useKindFilter();
+  // 連錯、交錯的那一下才抖；之後重開畫面不再抖。
+  const badShake = useBump(st.badLinks);
+  const missTotal = Object.values(st.tried ?? {}).reduce((n, t) => n + t.length, 0);
+  const missShake = useBump(missTotal) ? shown : null;
   const status = (id: string) =>
     st.confirmed.includes(id)
       ? 'done'
@@ -395,7 +403,11 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
   const bench = (
     <section className="panel step links">
       <h3 className="step-head">連線</h3>
-      <div className={desk.canConnect(st) ? 'link-bench ready' : 'link-bench'}>
+      <div
+        className={
+          (desk.canConnect(st) ? 'link-bench ready' : 'link-bench') + (badShake ? ' shake' : '')
+        }
+      >
         <ul className="slots-row">
           {slot(0)}
           <li className="link-knot" aria-hidden>
@@ -418,7 +430,8 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
           </button>
         </div>
         {st.linkNote && (
-          <p role="status" className={st.link.cards.length ? 'board-note bad' : 'board-note'}>
+          // 連錯不寫字：兩張卡抖一下、頂端工時閃紅（設計稿 board-redesign 修訂）。
+          <p role="status" className={st.link.cards.length ? 'sr-only' : 'board-note'}>
             {st.linkNote}
           </p>
         )}
@@ -467,7 +480,11 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
                 <p className="good">已確認：{q.argument.name}</p>
               ) : (
                 <>
-                  <ul className="slots-row answer-slots">
+                  <ul
+                    className={
+                      missShake === q.id ? 'slots-row answer-slots shake' : 'slots-row answer-slots'
+                    }
+                  >
                     {Array.from({ length: q.answer.length }, (_, k) => {
                       const c = item(a.cards[k]);
                       return (
@@ -489,12 +506,19 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
                     })}
                   </ul>
                   <div className="row answer-foot">
-                    {st.feedback[q.id] ? (
-                      <p role="status" className="board-note bad">
+                    <span
+                      className="tries"
+                      role="img"
+                      aria-label={`交錯 ${desk.misses(st, q.id)} 次`}
+                    >
+                      {Array.from({ length: Math.max(3, desk.misses(st, q.id)) }, (_, k) => (
+                        <i key={k} className={k < desk.misses(st, q.id) ? 'miss' : undefined} />
+                      ))}
+                    </span>
+                    {st.feedback[q.id] && (
+                      <p role="status" className="sr-only">
                         {st.feedback[q.id]}
                       </p>
-                    ) : (
-                      <span />
                     )}
                     <button
                       className="primary"
@@ -750,6 +774,17 @@ function Jobs({ scene, held }: { scene: DeskScene; held: string[] }) {
 }
 
 /** 回報裡寫好的間距說明（例如「22:44 抵達 → 22:47 刷卡」），時間線上的間距標記沿用。 */
+/** 數字變大之後的 600ms 回傳 true，拿來觸發一次性的動畫。 */
+function useBump(n: number) {
+  const [base, setBase] = useState(n);
+  useEffect(() => {
+    if (n === base) return;
+    const t = setTimeout(() => setBase(n), 600);
+    return () => clearTimeout(t);
+  }, [n, base]);
+  return n > base;
+}
+
 function gapDetail(scene: DeskScene) {
   for (const j of scene.jobs)
     for (const l of j.report)
