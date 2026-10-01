@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { episodes } from '../../content';
 import { endingLines, matches, type BranchContext } from './branch';
-import type { ClosingScene, Episode } from './schema';
+import type { ClosingScene, Episode, TheoryScene } from './schema';
 import { validateEpisode } from './validate';
 import { closingArgs, deskSceneOf, useEpisode } from '../game';
 
@@ -10,6 +10,7 @@ const ctx = (o: Partial<BranchContext> = {}): BranchContext => ({
   theory: 'doubt',
   flags: [],
   ethics: [],
+  cards: [],
   ...o,
 });
 const closing = () =>
@@ -111,5 +112,50 @@ describe('結辯論點', () => {
     } finally {
       a.argument.motionOnly = was;
     }
+  });
+});
+
+describe('潔德線：持有論點的分支與明知故犯', () => {
+  it('cards 條件：全部都在手上才符合', () => {
+    expect(matches({ cards: ['arg-i'] }, ctx({ cards: ['arg-i', 'arg-a'] }))).toBe(true);
+    expect(matches({ cards: ['arg-i', 'arg-b'] }, ctx({ cards: ['arg-i'] }))).toBe(false);
+  });
+
+  it('手上已有推翻它的論點仍選這個理論，記進倫理帳本', () => {
+    const scenes = episodes.ep1.scenes;
+    const at = scenes.findIndex((s) => s.type === 'theory');
+    const ts = scenes[at] as TheoryScene;
+    const sophie = ts.theories.find((t) => t.id === 'sophie')!;
+    const base = {
+      episode: 'ep1',
+      scene: at,
+      step: 0,
+      choices: {},
+      scenes: {},
+      flags: [],
+      ethics: [],
+    };
+    try {
+      sophie.ethicsIf = { has: ['arg-a'], ethics: ['knowing', 'knowing'] };
+      useEpisode.setState({ progress: { ...base, cards: [...sophie.needs, 'arg-a'] } });
+      useEpisode.getState().chooseTheory('sophie');
+      expect(useEpisode.getState().progress.ethics).toEqual(['knowing', 'knowing']);
+      useEpisode.setState({ progress: { ...base, cards: [...sophie.needs] } });
+      useEpisode.getState().chooseTheory('sophie');
+      expect(useEpisode.getState().progress.ethics).toEqual([]);
+    } finally {
+      delete sophie.ethicsIf;
+    }
+  });
+
+  it('驗證：引用不存在的卡片會被擋', () => {
+    const ep = structuredClone(episodes.ep1) as Episode;
+    const ts = ep.scenes.find((s) => s.type === 'theory') as TheoryScene;
+    ts.theories[0].ethicsIf = { has: ['nope-card'], ethics: ['x'] };
+    const s = ep.scenes.find((x) => x.type === 'closing') as ClosingScene;
+    s.endings = [{ id: 'e', when: { cards: ['ghost'] }, lines: say('a') }];
+    const errs = validateEpisode(ep).join('\n');
+    expect(errs).toContain('不存在的卡片：nope-card');
+    expect(errs).toContain('不存在的卡片：ghost');
   });
 });

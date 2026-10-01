@@ -8,6 +8,7 @@ export interface BranchContext {
   theory: string | null;
   flags: string[];
   ethics: string[];
+  cards: string[];
 }
 
 export function matches(w: When | undefined, c: BranchContext): boolean {
@@ -16,6 +17,7 @@ export function matches(w: When | undefined, c: BranchContext): boolean {
   if (w.theory && !(c.theory && w.theory.includes(c.theory))) return false;
   if (w.flags && !w.flags.every((f) => c.flags.includes(f))) return false;
   if (w.notFlags && w.notFlags.some((f) => c.flags.includes(f))) return false;
+  if (w.cards && !w.cards.every((x) => c.cards.includes(x))) return false;
   if (w.ethics && !w.ethics.some((e) => c.ethics.includes(e))) return false;
   return true;
 }

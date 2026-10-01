@@ -505,6 +505,10 @@ const theoryScene = z.object({
         needs: z.array(id).min(1),
         /** 選了之後的一句話代價或風險，讓玩家選的時候看得到。 */
         cost: z.string(),
+        /** 選這個理論時手上已經有這些論點＝明知故犯，記進倫理帳本（一筆一點）。 */
+        ethicsIf: z
+          .object({ has: z.array(id).min(1), ethics: z.array(z.string()).min(1) })
+          .optional(),
         promises: z
           .array(
             z.object({
@@ -582,6 +586,8 @@ const when = z.object({
   flags: z.array(z.string()).optional(),
   /** 這些旗標一個都不能有。 */
   notFlags: z.array(z.string()).optional(),
+  /** 這些卡片或論點全部都要在手上。 */
+  cards: z.array(id).optional(),
   /** 倫理帳本裡至少有其中一筆。 */
   ethics: z.array(z.string()).optional(),
 });

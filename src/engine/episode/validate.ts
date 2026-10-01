@@ -372,10 +372,23 @@ function branchErrors(s: Episode['scenes'][number], e: Episode, errors: string[]
   const theories = new Set(
     e.scenes.flatMap((x) => (x.type === 'theory' ? x.theories.map((t) => t.id) : [])),
   );
+  const known = new Set(
+    e.scenes.flatMap((x) =>
+      x.type === 'desk'
+        ? [...x.cards.map((c) => c.id), ...x.questions.map((q) => q.argument.id)]
+        : [],
+    ),
+  );
   const check = (w: When | undefined, where: string) => {
     for (const t of w?.theory ?? [])
       if (!theories.has(t)) errors.push(`${where} 的條件引用了不存在的理論：${t}`);
+    for (const c of w?.cards ?? [])
+      if (!known.has(c)) errors.push(`${where} 的條件引用了不存在的卡片：${c}`);
   };
+  if (s.type === 'theory')
+    for (const t of s.theories)
+      for (const c of t.ethicsIf?.has ?? [])
+        if (!known.has(c)) errors.push(`理論 ${t.id} 的 ethicsIf 引用了不存在的卡片：${c}`);
   if ('when' in s && s.when) {
     check(s.when, `場景 ${s.id}`);
     const closeAt = e.scenes.findIndex((x) => x.type === 'closing');
