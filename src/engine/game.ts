@@ -246,8 +246,21 @@ export function courtScene(p: Progress, s: TrialScene): TrialScene {
   };
 }
 
+/** 前一場庭審的狀態（同一個陪審團，隔天繼續聽）。 */
+export function previousJury(p: Progress, s: TrialScene): trial.TrialState | undefined {
+  const scenes = episodeOf(p).scenes;
+  const before = scenes.slice(
+    0,
+    scenes.findIndex((x) => x.id === s.id),
+  );
+  const prev = [...before].reverse().find((x) => x.type === 'trial' && p.scenes[x.id]);
+  return prev ? (p.scenes[prev.id] as trial.TrialState) : undefined;
+}
+
 export function trialState(p: Progress, s: TrialScene) {
-  return stateOf(p, s, () => trial.startTrial(courtScene(p, s), anchoredClaims(p)));
+  return stateOf(p, s, () =>
+    trial.startTrial(courtScene(p, s), anchoredClaims(p), previousJury(p, s)),
+  );
 }
 
 export function depoState(p: Progress, s: DepositionScene) {
@@ -407,7 +420,7 @@ export const useEpisode = create<GameState>()((set, get) => {
   const onDesk = on<DeskScene, desk.DeskState>('desk', desk.startDesk);
   const onTrial = on<TrialScene, trial.TrialState>(
     'trial',
-    (s) => trial.startTrial(s, anchoredClaims(get().progress)),
+    (s) => trial.startTrial(s, anchoredClaims(get().progress), previousJury(get().progress, s)),
     (s) => courtScene(get().progress, s),
   );
   const onVoirDire = on<VoirDireScene, voirdire.VoirDireState>('voirdire', voirdire.startVoirDire);

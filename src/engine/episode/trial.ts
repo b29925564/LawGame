@@ -35,6 +35,10 @@ export interface TrialState {
   rebuked: boolean;
   /** 證人當庭援引緘默權（企劃書 10.9 的 E1）：檢方撤回起訴，這一集就此結束。 */
   pleaded?: boolean;
+  /** 前幾場延續下來、還沒回彈掉的辯方成果（負值＝往無罪）。 */
+  credit?: Jury;
+  /** 檢方主詰問結束時的心證；交互詰問拆掉多少，就從這裡比。 */
+  directEnd?: Jury;
   log: LogLine[];
 }
 
@@ -42,14 +46,48 @@ export const JUDGE = '法官';
 export const YOU = '艾莉絲';
 export const DA = '莫羅檢察官';
 
+/** 隔天開庭，前一場辯方拆掉的懷疑回彈這麼多（記憶淡化）；其餘延續下去。 */
+export const CARRY = 0.5;
+
+/**
+ * 延續前一場庭審：陪審團記得辯方在交互詰問拆掉了什麼。
+ * 只延續交互詰問的成果（主詰問每場都會重新把心證推高，那一段不重複算），
+ * 前幾場的成果累加，每過一天回彈一半。前面什麼都沒拆，就從起點開始。
+ */
+export function creditOf(previous: TrialState): Jury {
+  const from = previous.directEnd ?? previous.jury;
+  const before = previous.credit ?? {};
+  return Object.fromEntries(
+    Object.keys(previous.jury).map((id) => [
+      id,
+      ((before[id] ?? 0) + (previous.jury[id] - (from[id] ?? previous.jury[id]))) * (1 - CARRY),
+    ]),
+  );
+}
+
+export function carryJury(s: TrialScene, previous: TrialState): Jury {
+  const credit = creditOf(previous);
+  return Object.fromEntries(
+    Object.entries(startJury(s)).map(([id, v]) => [
+      id,
+      Math.max(0, Math.min(100, Math.round(v + (credit[id] ?? 0)))),
+    ]),
+  );
+}
+
 /** anchored＝證詞錄取時已經在宣誓下講死的說法，開庭時等於鎖定已經完成。 */
-export function startTrial(s: TrialScene, anchored: string[] = []): TrialState {
+export function startTrial(
+  s: TrialScene,
+  anchored: string[] = [],
+  previous?: TrialState,
+): TrialState {
   return {
     stage: 'direct',
     i: 0,
     window: false,
     patience: s.patience,
-    jury: startJury(s),
+    jury: previous ? carryJury(s, previous) : startJury(s),
+    credit: previous ? creditOf(previous) : {},
     deltas: {},
     claims: Object.fromEntries(
       s.witness.claims.map((c) => [
@@ -135,7 +173,7 @@ export function object(s: TrialScene, st: TrialState, reason: Objection): TrialS
 export function toCross(s: TrialScene, st: TrialState): TrialState {
   if (st.stage !== 'direct') return st;
   return say(
-    { ...st, stage: 'cross', window: false, deltas: {} },
+    { ...st, stage: 'cross', window: false, deltas: {}, directEnd: st.jury },
     { who: JUDGE, text: `辯方可以詰問${s.witness.name}警探。` },
   );
 }

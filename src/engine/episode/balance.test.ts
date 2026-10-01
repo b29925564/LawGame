@@ -64,22 +64,33 @@ const brooks = scene<DefenseScene>('defense-brooks-ep1');
  * 整集路線（測試員 2026-10-01 跑的路線）：瑞秋庭審 → 布魯克斯 → 承諾反噬 → 結辯。
  * 布魯克斯三題全問、能問的都問；結辯挑手上前三個論點。
  */
-function route(held: string[], impeach: boolean, broken: number, theory: boolean) {
+const trials = ['court-kowalski', 'court-sophie', 'court-rachel'].map((id) =>
+  scene<TrialScene>(id),
+);
+
+/** impeach：要在哪幾場庭審彈劾（true＝三場都彈劾）。心證跨場延續、隔天回彈一半。 */
+function route(held: string[], impeach: boolean | string[], broken: number, theory: boolean) {
   const have = args.filter((a) => held.includes(a.id));
-  let st = trial.startTrial(court, impeach ? ['rachel-2250', 'rachel-meeting'] : []);
-  for (let i = 0; i < court.witness.direct.length; i++) {
-    st = trial.nextQuestion(court, st);
-    st = trial.letPass(court, st);
-  }
-  st = trial.toCross(court, st);
-  if (impeach)
-    for (const c of court.witness.claims) {
-      const a = have.find((x) => x.id === c.argument);
-      if (!a) continue;
-      if (st.claims[c.id].lock === 'none') st = trial.lock(court, st, c.id, 'strong');
-      st = trial.setup(court, st, c.id);
-      st = trial.confront(court, st, c.id, a.strength, a.tags, { id: a.id });
+  const hits = (id: string) => impeach === true || (Array.isArray(impeach) && impeach.includes(id));
+  let st: trial.TrialState | undefined;
+  for (const t of trials) {
+    const go = hits(t.id);
+    st = trial.startTrial(t, go ? ['rachel-2250', 'rachel-meeting'] : [], st);
+    for (let i = 0; i < t.witness.direct.length; i++) {
+      st = trial.nextQuestion(t, st);
+      st = trial.letPass(t, st);
     }
+    st = trial.toCross(t, st);
+    if (go)
+      for (const c of t.witness.claims) {
+        const a = have.find((x) => x.id === c.argument);
+        if (!a || st.stage === 'done') continue;
+        if (st.claims[c.id].lock === 'none') st = trial.lock(t, st, c.id, 'strong');
+        st = trial.setup(t, st, c.id);
+        st = trial.confront(t, st, c.id, a.strength, a.tags, { id: a.id });
+      }
+  }
+  st = st!;
   let d = defense.prepare(brooks, defense.startDefense(st.jury), 'prep-honest');
   for (const q of brooks.questions) d = defense.ask(brooks, d, rules, q.id, held);
   d = defense.finish(brooks, d, rules);
@@ -117,6 +128,28 @@ describe('第 1 集整集路線：準備好壞決定判決', () => {
 
   it('論點齊全但庭上不彈劾、沒許承諾：贏不了（最多僵局）', () => {
     expect(route(full, false, 0, true)).not.toBe('無罪');
+  });
+
+  it('前兩場拆了柯瓦斯基和蘇菲、瑞秋那場沒拆：前面的成果延續下來，仍然無罪', () => {
+    expect(route(full.concat('arg-h'), ['court-kowalski', 'court-sophie'], 0, true)).toBe('無罪');
+  });
+
+  it('只拆柯瓦斯基，後兩場都沒拆：兩天回彈下來，贏不了', () => {
+    expect(route(full.concat('arg-h'), ['court-kowalski'], 0, true)).not.toBe('無罪');
+  });
+
+  it('前兩場的彈劾會延續：同樣不拆瑞秋，前面有拆比完全沒拆好', () => {
+    const order = ['無罪', '陪審團僵局', '有罪'];
+    const some = route(full.concat('arg-h'), ['court-kowalski', 'court-sophie'], 0, true);
+    const none = route(full.concat('arg-h'), [], 0, true);
+    expect(order.indexOf(some!)).toBeLessThanOrEqual(order.indexOf(none!));
+  });
+
+  it('隔天開庭：只延續交互詰問拆掉的部分，而且回彈一半', () => {
+    const at = (d: number) => Object.fromEntries(court.jurors.map((j) => [j.id, j.start + d]));
+    const prev = { ...trial.startTrial(court), directEnd: at(40), jury: at(20) };
+    const carried = trial.carryJury(court, prev);
+    for (const j of court.jurors) expect(carried[j.id]).toBe(j.start - 10);
   });
 
   it('布魯克斯沒有證據撐著就問不出手錶與心率', () => {
