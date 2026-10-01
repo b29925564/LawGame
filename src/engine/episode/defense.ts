@@ -1,0 +1,108 @@
+import { applyImpact, shiftAll, type Jury, type JuryRules } from '../jury';
+import type { Tag } from '../schema';
+import type { DefenseScene } from './schema';
+
+export interface DefenseLine {
+  who: string;
+  text: string;
+}
+
+export interface DefenseState {
+  stage: 'prep' | 'direct' | 'done';
+  /** 選的準備方式。 */
+  prep: string | null;
+  asked: string[];
+  jury: Jury;
+  deltas: Jury;
+  /** 被教過的證人在反詰問露了餡。 */
+  leaked: boolean;
+  log: DefenseLine[];
+}
+
+export const YOU = '艾莉絲';
+export const DA = '莫羅檢察官';
+
+export function startDefense(jury: Jury): DefenseState {
+  return { stage: 'prep', prep: null, asked: [], jury, deltas: {}, leaked: false, log: [] };
+}
+
+const say = (st: DefenseState, ...lines: DefenseLine[]): DefenseState => ({
+  ...st,
+  log: [...st.log, ...lines],
+});
+
+/** 證人準備：選一種，之後的直接詰問都照這一種算。 */
+export function prepare(s: DefenseScene, st: DefenseState, optionId: string): DefenseState {
+  const o = s.prep.options.find((x) => x.id === optionId);
+  if (!o || st.stage !== 'prep') return st;
+  return { ...st, stage: 'direct', prep: o.id };
+}
+
+export const prepOption = (s: DefenseScene, st: DefenseState) =>
+  s.prep.options.find((x) => x.id === st.prep) ?? null;
+
+export function canAsk(s: DefenseScene, st: DefenseState, qid: string): boolean {
+  return (
+    st.stage === 'direct' &&
+    st.asked.length < s.asks &&
+    !st.asked.includes(qid) &&
+    s.questions.some((q) => q.id === qid)
+  );
+}
+
+/**
+ * 直接詰問一題。衝擊 = 基礎 × 準備倍率 ×（被教過的措辭再乘一次）×（倒著問減半）。
+ * 問滿或玩家收尾時才換檢方反詰問。
+ */
+export function ask(
+  s: DefenseScene,
+  st: DefenseState,
+  rules: JuryRules,
+  qid: string,
+): DefenseState {
+  if (!canAsk(s, st, qid)) return st;
+  const q = s.questions.find((x) => x.id === qid)!;
+  const o = prepOption(s, st)!;
+  const last = st.asked.length
+    ? Math.max(...st.asked.map((id) => s.questions.find((x) => x.id === id)!.seq))
+    : -1;
+  const ordered = q.seq > last;
+  const mod = o.multiplier * (q.rehearsed ? o.rehearsed : 1) * (ordered ? 1 : 0.5);
+  const r = applyImpact(rules, st.jury, q.impact, q.tags as Tag[], mod);
+  return say(
+    { ...st, asked: [...st.asked, q.id], jury: r.jury, deltas: r.deltas },
+    { who: YOU, text: q.q },
+    { who: s.witness.name, text: q.a },
+  );
+}
+
+/** 直接詰問結束，換檢方反詰問：開門的題被翻出來；被教過又問過教過的措辭，就被問「有人教你嗎」。 */
+export function finish(s: DefenseScene, st: DefenseState, rules: JuryRules): DefenseState {
+  if (st.stage !== 'direct') return st;
+  let next: DefenseState = { ...st, stage: 'done', deltas: {} };
+  const o = prepOption(s, st);
+  for (const id of st.asked) {
+    const d = s.questions.find((x) => x.id === id)?.door;
+    if (!d) continue;
+    const r = shiftAll(rules, next.jury, d.penalty);
+    next = say(
+      { ...next, jury: r.jury },
+      { who: DA, text: d.q },
+      { who: s.witness.name, text: d.a },
+    );
+  }
+  const exposed =
+    !!o?.coached && st.asked.some((id) => s.questions.find((x) => x.id === id)?.rehearsed);
+  if (exposed) {
+    const r = shiftAll(rules, next.jury, s.leak.penalty);
+    next = say(
+      { ...next, jury: r.jury, leaked: true },
+      { who: DA, text: s.leak.q },
+      { who: s.witness.name, text: s.leak.a },
+    );
+  }
+  // 這一輪全部往有罪方向的變動，畫面上要看得到。
+  const deltas: Jury = {};
+  for (const id of Object.keys(next.jury)) deltas[id] = next.jury[id] - st.jury[id];
+  return { ...next, deltas };
+}

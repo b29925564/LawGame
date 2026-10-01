@@ -1,4 +1,5 @@
 import type {
+  DefenseScene,
   DepositionScene,
   DeskScene,
   Episode,
@@ -65,6 +66,7 @@ export function validateEpisode(e: Episode): string[] {
     if (s.type === 'negotiation') negoErrors(s, available, args, errors);
     if (s.type === 'voirdire') voirDireErrors(s, errors);
     if (s.type === 'theory') theoryErrors(s, args, e, errors);
+    if (s.type === 'defense') defenseErrors(s, e, errors);
   }
   openingErrors(e, errors);
   return errors;
@@ -328,4 +330,28 @@ function openingErrors(e: Episode, errors: string[]) {
   if (t < 0 || t > o) errors.push('開場陳述前面沒有案件理論');
   const firstTrial = e.scenes.findIndex((x) => x.type === 'trial');
   if (firstTrial >= 0 && o > firstTrial) errors.push('開場陳述必須在第一場庭審之前');
+}
+
+/** 辯方證人（企劃書 6.9.6）：要接在庭審之後，才有心證可以接；問題夠問，選項不重複。 */
+function defenseErrors(s: DefenseScene, e: Episode, errors: string[]) {
+  const at = e.scenes.indexOf(s);
+  if (!e.scenes.slice(0, at).some((x) => x.type === 'trial'))
+    errors.push(`辯方證人 ${s.id} 前面沒有庭審，沒有心證可以接`);
+  if (s.asks > s.questions.length)
+    errors.push(`辯方證人 ${s.id} 最多問 ${s.asks} 題，但只有 ${s.questions.length} 題可問`);
+  const oids = new Set<string>();
+  for (const o of s.prep.options) {
+    if (oids.has(o.id)) errors.push(`辯方證人 ${s.id} 的準備選項 id 重複：${o.id}`);
+    oids.add(o.id);
+  }
+  const qids = new Set<string>();
+  for (const q of s.questions) {
+    if (qids.has(q.id)) errors.push(`辯方證人 ${s.id} 的問題 id 重複：${q.id}`);
+    qids.add(q.id);
+  }
+  // 教過證人要有意義：至少有一題是被教過的措辭。
+  if (s.prep.options.some((o) => o.coached) && !s.questions.some((q) => q.rehearsed))
+    errors.push(`辯方證人 ${s.id} 有「教證人」選項，但沒有任何 rehearsed 問題`);
+  const closeAt = e.scenes.findIndex((x) => x.type === 'closing');
+  if (closeAt >= 0 && at > closeAt) errors.push(`辯方證人 ${s.id} 必須在結辯之前`);
 }
