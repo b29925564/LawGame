@@ -2087,10 +2087,119 @@ scenes:
           text: 有人沒有被說服。下一次開庭之前，我得先知道那個人是誰。
           thought: true
 
+  # 提前收場（企劃書 10.9）：E1 撤回起訴、E4 認罪協商。之後只演標了 epilogue 的尾聲。
+  - type: dialogue
+    id: epilogue-dismissed
+    act: 尾聲
+    epilogue: true
+    when:
+      outcome: [dismissed]
+    place: 郡法院　第三法庭外走廊　隔天上午
+    steps:
+      - do: say
+        who: 旁白
+        text: 隔天上午九點，莫羅檢察官向法庭撤回對伊森・蕭的起訴。兩名警員在旁聽席後排等著瑞秋・艾德勒。
+      - do: say
+        who: 旁白
+        text: 瑞秋站起來的時候，先把西裝外套的扣子扣好。她經過辯方席，沒有看任何人。
+      - do: say
+        who: 伊森・蕭
+        text: 就這樣？我……可以走了？
+        mood: 緊
+      - do: say
+        who: 艾莉絲
+        text: 可以走了。回家吧，伊森。
+      - do: say
+        who: 旁白
+        text: 走廊上，莫羅檢察官把卷宗夾在手臂下，在電梯前停住。
+      - do: say
+        who: 凱瑟琳・莫羅
+        text: 下次，早點打給我。
+        mood: 硬
+      - do: say
+        who: 艾莉絲
+        text: 她沒有說謝謝，我也沒有。我們都知道，這個案子差一點就判下去了。
+        thought: true
+
+  - type: dialogue
+    id: epilogue-deal-murder2
+    act: 尾聲
+    epilogue: true
+    when:
+      outcome: [deal]
+      deal: [o-murder2]
+    place: 郡法院　量刑庭
+    steps:
+      - do: say
+        who: 旁白
+        text: 法官接受認罪協商：二級謀殺，有期徒刑十五年。法官准他下週一自行到案服刑。
+
+  - type: dialogue
+    id: epilogue-deal-manslaughter
+    act: 尾聲
+    epilogue: true
+    when:
+      outcome: [deal]
+      deal: [o-manslaughter]
+    place: 郡法院　量刑庭
+    steps:
+      - do: say
+        who: 旁白
+        text: 法官接受認罪協商：故意殺人，有期徒刑八年。法官准他下週一自行到案服刑。
+
+  - type: dialogue
+    id: epilogue-deal-negligent
+    act: 尾聲
+    epilogue: true
+    when:
+      outcome: [deal]
+      deal: [o-negligent]
+    place: 郡法院　量刑庭
+    steps:
+      - do: say
+        who: 旁白
+        text: 法官接受認罪協商：過失致死，有期徒刑三年。法官准他下週一自行到案服刑。
+
+  - type: dialogue
+    id: epilogue-deal-probation
+    act: 尾聲
+    epilogue: true
+    when:
+      outcome: [deal]
+      deal: [o-probation]
+    place: 郡法院　量刑庭
+    steps:
+      - do: say
+        who: 旁白
+        text: 法官接受認罪協商：過失致死，緩刑五年。他今天就能回家。
+
+  - type: dialogue
+    id: epilogue-deal
+    act: 尾聲
+    epilogue: true
+    when:
+      outcome: [deal]
+    place: 郡法院　台階
+    steps:
+      - do: say
+        who: 旁白
+        text: 法院台階上，伊森的姊姊在等他。他走到一半停下來，回頭看艾莉絲。
+      - do: say
+        who: 伊森・蕭
+        text: 謝謝妳。
+      - do: say
+        who: 旁白
+        text: 他伸出手。艾莉絲握了，笑不出來。
+      - do: say
+        who: 艾莉絲
+        text: 認罪書上寫的是他做過的事。我到現在都不知道，那是不是真的。
+        thought: true
+
   - type: dialogue
     id: epilogue-review
     act: 尾聲
-    place: 惠特洛克・海爾律師事務所　會議室　判決後
+    epilogue: true
+    place: 惠特洛克・海爾律師事務所　會議室　結案後
     steps:
       - do: say
         who: 馬庫斯・海爾
@@ -2115,6 +2224,7 @@ scenes:
   - type: dialogue
     id: epilogue-envelope
     act: 尾聲
+    epilogue: true
     when:
       theory: [doubt, rachel]
     place: 艾莉絲的辦公室　影印機旁邊
@@ -2146,6 +2256,53 @@ scenes:
                 text: 我把信封放進抽屜最底層，鎖上。鑰匙只有一把。
                 thought: true
           - text: 交給潔德。她會知道怎麼讓它見光。
+            when:
+              cards: [parking-log]
+            flags: [draft-to-jade]
+            ethics: [leaked-client-doc]
+            then:
+              - who: 艾莉絲
+                text: 潔德翻了兩頁就抬頭看我。「這是客戶的機密文件，妳知道這是什麼意思嗎？」我知道。
+                thought: true
+
+  # 協商收場時沒有選案件理論，信封照蘇菲轉交的版本。
+  - type: dialogue
+    id: epilogue-envelope-deal
+    act: 尾聲
+    epilogue: true
+    when:
+      outcome: [deal]
+    place: 艾莉絲的辦公室　影印機旁邊
+    steps:
+      - do: say
+        who: 旁白
+        text: 信封裡是一份文件的影本，標題被裁掉了。是沃斯寫給「V.」、沒有寄出的郵件草稿。最後一行寫著：「星期一我會把碼頭九號的事全部說出來。」
+      - do: say
+        who: 蘇菲
+        text: （便條）那天晚上，沃斯先生在寫的不是辭退信。是這個。我不知道該交給誰。
+        mood: 緊
+      - do: say
+        who: 艾莉絲
+        text: 碼頭九號。十二年前那場大火，我父親的那一場。沃斯死前打算說出來的，是這件事。
+        thought: true
+      - do: choose
+        mode: chat
+        options:
+          - text: 交給海爾。事務所的事，先問事務所。
+            flags: [draft-to-hale]
+            then:
+              - who: 艾莉絲
+                text: 海爾看完草稿，沉默了很久。「這份文件，妳還給過誰？」他問的第一句不是它是真是假。
+                thought: true
+          - text: 自己保留。在知道它是什麼之前，誰都不給。
+            flags: [draft-kept]
+            then:
+              - who: 艾莉絲
+                text: 我把信封放進抽屜最底層，鎖上。鑰匙只有一把。
+                thought: true
+          - text: 交給潔德。她會知道怎麼讓它見光。
+            when:
+              cards: [parking-log]
             flags: [draft-to-jade]
             ethics: [leaked-client-doc]
             then:
@@ -2156,6 +2313,7 @@ scenes:
   - type: dialogue
     id: epilogue-envelope-jade
     act: 尾聲
+    epilogue: true
     when:
       theory: [sophie]
     place: 艾莉絲的辦公室　影印機旁邊
@@ -2239,6 +2397,7 @@ scenes:
   - type: dialogue
     id: epilogue-call
     act: 尾聲
+    epilogue: true
     place: 艾莉絲的公寓　深夜
     steps:
       - do: say
@@ -2266,6 +2425,7 @@ scenes:
   - type: card
     id: slice-end
     act: 第 1 集
+    epilogue: true
     title: 待續
     lines:
       - 第 1 集到此結束。
