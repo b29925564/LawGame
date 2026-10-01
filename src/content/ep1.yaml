@@ -610,14 +610,14 @@ scenes:
       - id: job-morrow
         who: 艾莉絲
         label: 打電話給莫羅，聽聽她開的條件
-        detail: 她在信裡說「早點打給我」。現在談，手上只有起訴書。
+        detail: 她在信裡說「早點打給我」，補充開示又說條件還在桌上。現在談，手上沒什麼牌。
         cost: 1
-        needs: [indictment]
+        needs: [blood-report]
         report:
           - who: 莫羅
             text: 韓律師，早。二級謀殺，十五年。這已經是看在他年輕的份上。
           - who: 艾莉絲
-            text: 妳的目擊證人是誰？
+            text: 血跡報告我收到了。妳的目擊證人是誰？
           - who: 莫羅
             text: 開庭前妳會看到名單。妳手上有什麼，就拿出來；沒有的話，我的條件會一直在桌上。
           - who: 艾莉絲
