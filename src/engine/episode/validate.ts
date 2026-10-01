@@ -160,7 +160,7 @@ function deskErrors(s: DeskScene, available: Set<string>, args: Set<string>, err
         reachable.add(l.id);
       }
     for (const q of s.questions)
-      if (!unlocked.questions.has(q.id) && has(q.answer)) {
+      if (!unlocked.questions.has(q.id) && has(q.answer) && has(q.unlock)) {
         unlocked.questions.add(q.id);
         reachable.add(q.argument.id);
       }
@@ -207,6 +207,12 @@ function deskErrors(s: DeskScene, available: Set<string>, args: Set<string>, err
     if (!unlocked.questions.has(q.id))
       for (const id of q.answer)
         if (!reachable.has(id)) errors.push(`疑問 ${q.id} 的正解需要玩家拿不到的 ${id}`);
+    // 顯示條件：每一項都要存在，而且玩家拿得到（不能卡在自己或彼此的論點上）。
+    for (const id of q.unlock) {
+      if (!cards.has(id) && !lids.has(id) && !sceneArgs.has(id) && !available.has(id))
+        errors.push(`疑問 ${q.id} 的顯示條件用了不存在的 ${id}`);
+      else if (!reachable.has(id)) errors.push(`疑問 ${q.id} 的顯示條件需要玩家拿不到的 ${id}`);
+    }
     args.add(q.argument.id);
     available.add(q.argument.id);
   }
