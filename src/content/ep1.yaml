@@ -1242,7 +1242,7 @@ scenes:
     seats: 12
     intro:
       - who: 馬庫斯・海爾
-        text: 十八個人，妳挑十二個。六次提問，三次無因迴避，檢方也有三次。
+        text: 二十一個人，妳挑十二個。六次提問，三次無因迴避，檢方也有三次。
         mood: 暖
       - who: 馬庫斯・海爾
         text: 記住：妳不是在挑喜歡的人，妳是在挑聽得懂妳那套說法的人。
@@ -1466,6 +1466,43 @@ scenes:
           q: 門禁刷卡紀錄可靠嗎？
           a: 可靠。但沒刷卡不代表沒進去，跟著別人進去就不會留紀錄。
         hidden: 知道門禁紀錄的漏洞。
+      # 後補候選人：兩造都砍滿、又有人因偏見被剔除時，才會輪到他們入席。
+      - id: c-baker
+        name: 葛蕾絲・莫蘭
+        job: 麵包店老闆
+        sheet: 在港口區開店二十年，每天四點起床。
+        leans: [情感]
+        start: 51
+        lead: 3
+        value: 3
+        question:
+          q: 如果有人說謊，您通常看得出來嗎？
+          a: 看得出來一半吧。另一半是我自己想相信的。
+        hidden: 知道自己會被印象左右，願意聽完再判斷。
+      - id: c-busdriver
+        name: 路易斯・帕茲
+        job: 公車司機
+        sheet: 開夜班路線，經常經過碼頭區。
+        leans: [程序]
+        start: 52
+        lead: 2
+        value: 3
+        question:
+          q: 您開夜班，晚上十一點的市區是什麼樣子？
+          a: 安靜。但不是沒有人，只是大家都不太看別人。
+        hidden: 對深夜目擊證詞持保留態度。
+      - id: c-postal
+        name: 瑪莎・林德
+        job: 郵局櫃員
+        sheet: 五十五歲，做了二十五年櫃員。
+        leans: [權威]
+        start: 54
+        lead: 2
+        value: 2
+        question:
+          q: 規定和現場狀況衝突的時候，您怎麼做？
+          a: 照規定。規定是有理由的。
+        hidden: 傾向相信制度與官方說法。
 
   # 第一天：開場陳述（企劃書 6.9.3）。許下的承諾，陪審員會記得。
   - type: opening
@@ -1948,6 +1985,7 @@ scenes:
     fifth:
       needs: 2
       argument: arg-d
+      theory: rachel
       lines:
         - who: 瑞秋・艾德勒
           text: （很長的停頓）我拒絕回答，因為答案可能使我自證己罪。
@@ -2253,97 +2291,9 @@ scenes:
         mood: 硬
       - do: say
         who: 旁白
-        text: 她走出會議室。桌上留下一個沒有寄件人的牛皮紙信封。
+        text: 她走出會議室，沒有等我回答。
 
-  - type: dialogue
-    id: epilogue-envelope
-    act: 尾聲
-    epilogue: true
-    when:
-      theory: [doubt, rachel]
-    place: 艾莉絲的辦公室　影印機旁邊
-    steps:
-      - do: say
-        who: 旁白
-        text: 信封裡是一份文件的影本，標題被裁掉了。是沃斯寫給「V.」、沒有寄出的郵件草稿。最後一行寫著：「星期一我會把碼頭九號的事全部說出來。」
-      - do: say
-        who: 蘇菲
-        text: （便條）那天晚上，沃斯先生在寫的不是辭退信。是這個。我不知道該交給誰。
-        mood: 緊
-      - do: say
-        who: 艾莉絲
-        text: 碼頭九號。十二年前那場大火，我父親的那一場。沃斯死前打算說出來的，是這件事。
-        thought: true
-      - do: choose
-        mode: chat
-        options:
-          - text: 交給海爾。事務所的事，先問事務所。
-            flags: [draft-to-hale]
-            then:
-              - who: 艾莉絲
-                text: 海爾看完草稿，沉默了很久。「這份文件，妳還給過誰？」他問的第一句不是它是真是假。
-                thought: true
-          - text: 自己保留。在知道它是什麼之前，誰都不給。
-            flags: [draft-kept]
-            then:
-              - who: 艾莉絲
-                text: 我把信封放進抽屜最底層，鎖上。鑰匙只有一把。
-                thought: true
-          - text: 交給潔德。她會知道怎麼讓它見光。
-            when:
-              cards: [parking-log]
-            flags: [draft-to-jade]
-            ethics: [leaked-client-doc]
-            then:
-              - who: 艾莉絲
-                text: 潔德翻了兩頁就抬頭看我。「這是客戶的機密文件，妳知道這是什麼意思嗎？」我知道。
-                thought: true
-
-  # 協商收場時沒有選案件理論，信封照蘇菲轉交的版本。
-  - type: dialogue
-    id: epilogue-envelope-deal
-    act: 尾聲
-    epilogue: true
-    when:
-      outcome: [deal]
-    place: 艾莉絲的辦公室　影印機旁邊
-    steps:
-      - do: say
-        who: 旁白
-        text: 信封裡是一份文件的影本，標題被裁掉了。是沃斯寫給「V.」、沒有寄出的郵件草稿。最後一行寫著：「星期一我會把碼頭九號的事全部說出來。」
-      - do: say
-        who: 蘇菲
-        text: （便條）那天晚上，沃斯先生在寫的不是辭退信。是這個。我不知道該交給誰。
-        mood: 緊
-      - do: say
-        who: 艾莉絲
-        text: 碼頭九號。十二年前那場大火，我父親的那一場。沃斯死前打算說出來的，是這件事。
-        thought: true
-      - do: choose
-        mode: chat
-        options:
-          - text: 交給海爾。事務所的事，先問事務所。
-            flags: [draft-to-hale]
-            then:
-              - who: 艾莉絲
-                text: 海爾看完草稿，沉默了很久。「這份文件，妳還給過誰？」他問的第一句不是它是真是假。
-                thought: true
-          - text: 自己保留。在知道它是什麼之前，誰都不給。
-            flags: [draft-kept]
-            then:
-              - who: 艾莉絲
-                text: 我把信封放進抽屜最底層，鎖上。鑰匙只有一把。
-                thought: true
-          - text: 交給潔德。她會知道怎麼讓它見光。
-            when:
-              cards: [parking-log]
-            flags: [draft-to-jade]
-            ethics: [leaked-client-doc]
-            then:
-              - who: 艾莉絲
-                text: 潔德翻了兩頁就抬頭看我。「這是客戶的機密文件，妳知道這是什麼意思嗎？」我知道。
-                thought: true
-
+  # 蘇菲理論：信封由潔德轉交。信封本身每條路線都會出現（父親的電話要接得上碼頭九號）。
   - type: dialogue
     id: epilogue-envelope-jade
     act: 尾聲
@@ -2353,15 +2303,23 @@ scenes:
     place: 艾莉絲的辦公室　影印機旁邊
     steps:
       - do: say
-        who: 旁白
-        text: 信封裡是一份文件的影本，標題被裁掉了。是沃斯寫給「V.」、沒有寄出的郵件草稿。最後一行寫著：「星期一我會把碼頭九號的事全部說出來。」
-      - do: say
         who: 潔德
-        text: （便條）她要我轉交。她說妳不配，但真相配。
+        text: （訊息）蘇菲託我在妳桌上放了一個信封。她說妳不配，但真相配。
         mood: 緊
+
+  - type: dialogue
+    id: epilogue-envelope
+    act: 尾聲
+    epilogue: true
+    place: 艾莉絲的辦公室　影印機旁邊
+    steps:
       - do: say
         who: 旁白
-        text: 便條背面是蘇菲的筆跡：沃斯那天晚上在寫的不是辭退信，是這個。
+        text: 回到辦公室，桌上有一個沒有寄件人的牛皮紙信封。裡面是一份文件的影本，標題被裁掉了。是沃斯寫給「V.」、沒有寄出的郵件草稿。最後一行寫著：「星期一我會把碼頭九號的事全部說出來。」
+      - do: say
+        who: 蘇菲
+        text: （便條）那天晚上，沃斯先生在寫的不是辭退信。是這個。
+        mood: 緊
       - do: say
         who: 艾莉絲
         text: 碼頭九號。十二年前那場大火，我父親的那一場。沃斯死前打算說出來的，是這件事。
@@ -2382,6 +2340,8 @@ scenes:
                 text: 我把信封放進抽屜最底層，鎖上。鑰匙只有一把。
                 thought: true
           - text: 交給潔德。她會知道怎麼讓它見光。
+            when:
+              cards: [parking-log]
             flags: [draft-to-jade]
             ethics: [leaked-client-doc]
             then:

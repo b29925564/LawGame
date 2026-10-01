@@ -55,14 +55,20 @@ export function challenge(s: VoirDireScene, st: VoirDireState, id: string): Voir
 }
 
 export function canStrike(s: VoirDireScene, st: VoirDireState, id: string): boolean {
-  return st.seated === null && st.struck.length < s.peremptories && !gone(st).includes(id);
+  return (
+    st.seated === null &&
+    st.struck.length < s.peremptories &&
+    !gone(st).includes(id) &&
+    pool(s, st).length > s.seats
+  );
 }
 
 /** 無因迴避：不用理由，但只有 3 次，而且檢方會跟著砍掉對你最有利的人。 */
 export function strike(s: VoirDireScene, st: VoirDireState, id: string): VoirDireState {
   if (!canStrike(s, st, id)) return st;
   const next = { ...st, struck: [...st.struck, id] };
-  if (next.theirs.length >= s.peremptories) return next;
+  // 檢方也不會把候選席砍到坐不滿。
+  if (next.theirs.length >= s.peremptories || pool(s, next).length <= s.seats) return next;
   const target = [...pool(s, next)].sort(
     (a, b) => b.value - a.value || a.id.localeCompare(b.id),
   )[0];
