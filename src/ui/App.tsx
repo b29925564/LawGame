@@ -11,6 +11,7 @@ import { Desk } from './Desk';
 import { Dialogue } from './Dialogue';
 import { GameMenu } from './GameMenu';
 import { Interview } from './Interview';
+import { Announcer } from './Marks';
 import { Negotiation } from './Negotiation';
 import { Phone } from './Phone';
 import { Intro, VerdictScreen } from './Scenes';
@@ -40,6 +41,7 @@ export function App() {
   const scene = sceneOf(progress);
   return (
     <>
+      <Announcer />
       <GameMenu />
       {scene?.type === 'phone' && <Phone key={scene.id} scene={scene} />}
       {scene?.type === 'dialogue' && <Dialogue key={scene.id} scene={scene} />}

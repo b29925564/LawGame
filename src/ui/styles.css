@@ -2899,3 +2899,96 @@ fieldset.relations.compact {
   overflow: visible;
   row-gap: 2px;
 }
+
+/* ══ 心聲改成介面與畫外字幕（設計稿 ui/design-review/inner-voice）══ */
+:root {
+  /* 紀錄層（核心 5.3、5.6） */
+  --note: light-dark(#efe8cf, #d8d1b8);
+  --index-card: light-dark(
+    #f6f5f0,
+    #e1e0db
+  ); /* 新增：3×5 索引卡（推理結論卡），比便條白，不和便條混 */
+  --pencil: #34404f;
+  --pencil-ui: light-dark(
+    #34404f,
+    #b8c2cf
+  ); /* 新增：鉛筆記號落在介面表面時（深色面板上鉛筆要亮） */
+  --hl-edge: #7f5a00;
+  --stamp: light-dark(#3d4688, #4b55a0); /* 紙上的印泥 */
+  --stamp-ui: light-dark(
+    #3d4688,
+    #a3abe8
+  ); /* 新增：章落在深色介面表面時的印泥（對 #131920 7.6:1） */
+  --redact: #000;
+  --redact-label: #6d7887;
+  --sub-scrim: rgb(6 8 11 / 60%);
+  --k-window: #ffe2c0;
+  --k-fluoro: #e4efe2;
+
+  /* 字族（核心 6.1） */
+  --font-hand: 'LXGW WenKai TC', 'Noto Serif TC', serif;
+  --font-court: 'Courier Prime', 'Noto Serif TC', monospace;
+  --fs-hand: 18px;
+  --fs-record: 13px;
+
+  /* 動態（核心 9.5） */
+  --ease-light: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-camera: cubic-bezier(0.45, 0, 0.2, 1);
+  --dur-stamp: 90ms;
+  --dur-sticker: 140ms;
+  --dur-ui: 180ms;
+  --dur-theme: 200ms;
+  --dur-hl: 330ms;
+  --dur-redact-in: 167ms;
+  --dur-redact-out: 500ms;
+  --dur-tube-off: 240ms;
+  --dur-rm: 120ms;
+  --dur-write: 60ms; /* 新增：手寫每一個字 */
+  --dur-narrow: 1200ms; /* 新增：時間窗收窄 */
+  --dur-vo-char: 50ms; /* 新增：畫外字幕每一個字 */
+  /* 設計稿沒定義的冷光權杖：陰天窗光（淺色主題字幕縫用） */
+  --k-overcast: #dfe6ee;
+  /* 意見 1：三主題同一結構，只差這三個權杖 */
+  --vo-veil: light-dark(rgb(227 230 234 / 93%), rgb(6 8 11 / 91%));
+  --vo-seam: light-dark(
+    color-mix(in srgb, var(--k-overcast) 55%, #5d6877),
+    color-mix(in srgb, var(--k-window) 9%, transparent)
+  ); /* 淺：冷灰縫；深：暖縫 */
+  --vo-mark: light-dark(
+    #5d6877,
+    color-mix(in srgb, var(--k-window) 70%, transparent)
+  ); /* .vo 獨有記號：字前短縫線 */
+  /* 意見 7：畫外字幕例外（core 9.7 補條），字重 500 */
+  --fs-vo: clamp(22px, 1.6vw, 26px);
+  --sub-scale: 1; /* 設定：字級 100／125／150% → 1／1.25／1.5 */
+  /* 意見 4：耐心燈管色（core 9.6：燈管＝--k-fluoro） */
+  --tube-on: var(--k-fluoro);
+  --tube-ember: color-mix(in srgb, var(--k-fluoro) 35%, transparent);
+  /* 意見 6：索引卡頂線改冷灰，不用紅 */
+  --index-rule: color-mix(in srgb, var(--paper-rule) 100%, #6d7887 40%);
+}
+
+/* 一格一黃（設計稿 inner-voice 1.1）：手的記號作用中時，其他黃退成鉛筆；主按鈕只在 sync 期間降級 */
+[data-hand='sync'] .gap-mark b {
+  color: var(--pencil-ui);
+}
+[data-hand='sync'] .gap-mark::before {
+  border-color: var(--pencil-ui);
+}
+[data-hand] mark.hl:not(.live) {
+  background: none;
+  text-decoration: underline 1.5px var(--pencil-ui);
+  text-underline-offset: 3px;
+}
+[data-hand] mark.hl:not(.live)::before {
+  background: none;
+}
+[data-hand='sync'] button.primary {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border-strong);
+}
+[data-hand] .apps [aria-current='true']::after,
+[data-hand] .sheet-tabs [aria-current='true']::after {
+  background: var(--text);
+}

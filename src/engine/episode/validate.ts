@@ -71,11 +71,42 @@ export function validateEpisode(e: Episode): string[] {
     branchErrors(s, e, errors);
   }
   openingErrors(e, errors);
+  lineErrors(e, errors);
   return errors;
+}
+
+/**
+ * 心聲的新寫法（設計稿 inner-voice）。對白框裡不再出現「艾莉絲（心裡）」：
+ * 沒說出口的話改成介面記號（mark）或畫外字幕（voice:'off'）。
+ */
+function lineErrors(e: Episode, errors: string[]) {
+  const walk = (v: unknown, where: string) => {
+    if (Array.isArray(v)) return v.forEach((x, i) => walk(x, `${where}[${i}]`));
+    if (!v || typeof v !== 'object') return;
+    const o = v as Record<string, unknown>;
+    if (typeof o.who === 'string' && typeof o.text === 'string') {
+      if (o.who.includes('（心裡）') || o.text.includes('（心裡）'))
+        errors.push(`${where} 寫了「（心裡）」：改成介面記號 mark 或畫外字幕 voice: off`);
+      if (o.beats && o.voice !== 'off')
+        errors.push(`${where} 有 beats，但不是畫外字幕（voice: off）`);
+      if (o.mark && o.voice === 'off') errors.push(`${where} 同時是介面記號和畫外字幕，只能選一種`);
+      if (o.mark && o.thought)
+        errors.push(`${where} 同時是介面記號和舊的心聲 thought，拿掉 thought`);
+    }
+    for (const [k, x] of Object.entries(o)) walk(x, `${where}.${k}`);
+  };
+  for (const s of e.scenes) walk(s, `場景 ${s.id}`);
 }
 
 function deskErrors(s: DeskScene, available: Set<string>, args: Set<string>, errors: string[]) {
   const cards = new Set(s.cards.map((c) => c.id));
+  for (const m of s.timelineMarks)
+    for (const c of m.cards) {
+      const card = s.cards.find((x) => x.id === c);
+      if (!card) errors.push(`桌面 ${s.id} 的時間線記號用了不存在的卡片 ${c}`);
+      else if (!card.time && !card.arrivesAt)
+        errors.push(`桌面 ${s.id} 的時間線記號用了沒有時間的卡片 ${c}`);
+    }
   const dupes = new Set<string>();
   for (const c of s.cards) {
     if (dupes.has(c.id)) errors.push(`桌面 ${s.id} 的卡片 id 重複：${c.id}`);
