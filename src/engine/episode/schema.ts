@@ -7,12 +7,46 @@ const time = z.string().regex(/^\d\d:\d\d$/, '時間格式是 HH:MM');
 /** 手機畫面上的一則訊息。from 是 me 代表玩家（手機主人）送出的。 */
 const message = z.object({ id: id.optional(), from: z.string(), text: z.string() });
 
-/** 說話的一行。thought＝艾莉絲的內心獨白（提示的主要載體，企劃書 11）。 */
+/**
+ * 介面記號（設計稿 inner-voice 2）：艾莉絲沒說出口的話不進對白框，改由她的手留在畫面上。
+ * text 是記號上顯示的字；word 是螢光筆或結論卡來源要標的那個詞；on 是記號貼在哪張卡或哪個元件上。
+ */
+export const markKinds = [
+  'sticky',
+  'highlight',
+  'gap',
+  'sync',
+  'conclusion',
+  'stamp',
+  'confirm',
+  'iou',
+  'anchored',
+  'window',
+  'tally',
+] as const;
+const mark = z.object({
+  kind: z.enum(markKinds),
+  text: z.string().optional(),
+  word: z.string().optional(),
+  on: z.string().optional(),
+});
+
+/**
+ * 說話的一行。
+ * thought＝舊的內心獨白，轉換期保留；新內容改用 voice 或 mark（設計稿 inner-voice）。
+ * voice:'off'＝畫外字幕：不掛名字框，置中於畫面 46%，text 裡的「｜」是唯一可斷行處。
+ * beats＝多拍字幕，每拍一段；hush 的那一拍前面先全靜 1200ms。
+ */
 const line = z.object({
   who: z.string(),
   text: z.string(),
   mood: z.enum(['平', '緊', '暖', '硬']).default('平'),
   thought: z.boolean().default(false),
+  voice: z.literal('off').optional(),
+  beats: z.array(z.object({ text: z.string(), hush: z.boolean().default(false) })).optional(),
+  /** 音效建議的 key，播放端沒有對應音效就略過。 */
+  sfx: z.string().optional(),
+  mark: mark.optional(),
 });
 
 /**
@@ -151,6 +185,8 @@ const card = z.object({
   /** 哪一天，例如「週五」。時間線上沒有日期就分不出先後。 */
   date: z.string().optional(),
   time: time.optional(),
+  /** 抵達時間（例如叫車收據的下車時間），時間線的間距標記讀它，不讀 time。 */
+  arrivesAt: time.optional(),
   text: z.string(),
   source: z.string(),
   /** 一開始就在手上（起訴資料附的）。 */
@@ -170,6 +206,11 @@ const link = z.object({
   relation: z.enum(relations),
   /** 連線成立後顯示的發現。 */
   text: z.string(),
+  /**
+   * 推理結論卡（設計稿 inner-voice 2b）：回報先在證據原文螢光 word，
+   * 這條連線成立時才在索引卡上寫出 text；沒成立就只留螢光。
+   */
+  conclusion: z.object({ word: z.string(), text: z.string() }).optional(),
 });
 
 /** 推理第二步：拿發現（或已確認的論點）回答疑問，全對才產生論點卡。 */
@@ -269,6 +310,19 @@ const deskScene = z.object({
     )
     .default([]),
   links: z.array(link).default([]),
+  /**
+   * 時間線上的手的記號（設計稿 inner-voice 2d）。
+   * gap：兩張卡的時間先後正確時，在較晚那張上方標出間距。sync：兩列同時亮起，when 的旗標有了才播。
+   */
+  timelineMarks: z
+    .array(
+      z.object({
+        kind: z.enum(['gap', 'sync']),
+        cards: z.array(id).length(2),
+        when: z.string().optional(),
+      }),
+    )
+    .default([]),
   questions: z.array(question).min(1),
   /** 確認這條推理鏈，才能結束這一幕。 */
   goal: id,
