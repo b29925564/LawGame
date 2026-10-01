@@ -225,6 +225,15 @@ test('第 1 集可以一路從冷開場玩到判決', async ({ page }) => {
   await expect(page.getByText('那就法庭見')).toBeVisible();
   await next(page);
 
+  // 第三幕收尾：選案件理論。四條論點都確認了，選難的那條。
+  await page.getByRole('button', { name: '選擇案件理論' }).click();
+  await page
+    .locator('li.panel')
+    .filter({ hasText: '另有其人：瑞秋' })
+    .getByRole('button', { name: '就用這個理論' })
+    .click();
+  await next(page);
+
   await next(page); // 第四幕字卡
 
   // 陪審團遴選：問出偏見、有因迴避、無因迴避，再入席
@@ -242,6 +251,13 @@ test('第 1 集可以一路從冷開場玩到判決', async ({ page }) => {
   await page.getByRole('button', { name: /就用這 12 位/ }).click();
   await expect(page.getByText('陪審長')).toBeVisible();
   await next(page);
+
+  // 開場陳述：許三個承諾，庭上要一個一個兌現。
+  await page.getByRole('button', { name: '開始陳述' }).click();
+  for (const t of [/死了/, /誰傳的/, /只剩下一個人/])
+    await page.getByRole('button', { name: t }).click();
+  await page.getByRole('button', { name: /許下 3 個承諾/ }).click();
+  await next(page, '開庭');
 
   await page.getByRole('button', { name: '開庭' }).click(); // 羅根交代異議規則之後開庭
   // 上場的是遴選留下的人，不是劇本裡的預設陪審團。

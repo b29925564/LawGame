@@ -3,6 +3,7 @@ import type {
   DeskScene,
   Episode,
   NegotiationScene,
+  TheoryScene,
   TrialScene,
   VoirDireScene,
 } from './schema';
@@ -63,7 +64,9 @@ export function validateEpisode(e: Episode): string[] {
     if (s.type === 'deposition') depoErrors(s, available, args, errors);
     if (s.type === 'negotiation') negoErrors(s, available, args, errors);
     if (s.type === 'voirdire') voirDireErrors(s, errors);
+    if (s.type === 'theory') theoryErrors(s, args, e, errors);
   }
+  openingErrors(e, errors);
   return errors;
 }
 
@@ -282,4 +285,47 @@ function voirDireErrors(s: VoirDireScene, errors: string[]) {
   if (!s.candidates.some((c) => c.cause)) errors.push(`遴選 ${s.id} 沒有可以有因迴避的候選人`);
   if (s.questions >= s.candidates.length)
     errors.push(`遴選 ${s.id} 的提問次數 ${s.questions} 不少於候選人數，問了等於沒有取捨`);
+}
+
+/** 案件理論（企劃書 6.9.2、14 節第 7 條）：需要的論點產得出來，每個承諾都兌現得了。 */
+function theoryErrors(s: TheoryScene, args: Set<string>, e: Episode, errors: string[]) {
+  const impeachable = new Set(
+    e.scenes.flatMap((x) =>
+      x.type === 'trial'
+        ? [...x.witness.claims.map((c) => c.argument), ...(x.fifth ? [x.fifth.argument] : [])]
+        : [],
+    ),
+  );
+  const tids = new Set<string>();
+  const pids = new Set<string>();
+  for (const t of s.theories) {
+    if (tids.has(t.id)) errors.push(`案件理論 id 重複：${t.id}`);
+    tids.add(t.id);
+    for (const n of t.needs)
+      if (!args.has(n)) errors.push(`案件理論 ${t.id} 需要的論點 ${n} 沒有人產得出來`);
+    for (const p of t.promises) {
+      if (pids.has(p.id)) errors.push(`承諾 id 重複：${p.id}`);
+      pids.add(p.id);
+      if (!t.needs.includes(p.argument))
+        errors.push(`承諾 ${p.id} 靠 ${p.argument} 兌現，但理論 ${t.id} 不要求這個論點`);
+      if (!impeachable.has(p.argument))
+        errors.push(`承諾 ${p.id} 的論點 ${p.argument} 在庭上沒有任何地方可以兌現`);
+    }
+  }
+  const after = e.scenes.slice(e.scenes.indexOf(s) + 1);
+  const firstTrial = e.scenes.findIndex((x) => x.type === 'trial');
+  if (firstTrial >= 0 && e.scenes.indexOf(s) > firstTrial)
+    errors.push(`案件理論 ${s.id} 必須在第一場庭審之前`);
+  if (!after.some((x) => x.type === 'opening'))
+    errors.push(`案件理論 ${s.id} 之後沒有開場陳述，承諾無處可許`);
+}
+
+/** 開場陳述一定要有案件理論在前面，而且在庭審之前。 */
+function openingErrors(e: Episode, errors: string[]) {
+  const o = e.scenes.findIndex((x) => x.type === 'opening');
+  if (o < 0) return;
+  const t = e.scenes.findIndex((x) => x.type === 'theory');
+  if (t < 0 || t > o) errors.push('開場陳述前面沒有案件理論');
+  const firstTrial = e.scenes.findIndex((x) => x.type === 'trial');
+  if (firstTrial >= 0 && o > firstTrial) errors.push('開場陳述必須在第一場庭審之前');
 }

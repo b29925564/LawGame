@@ -12,13 +12,24 @@ export interface ClosingState {
   deltas: Jury;
   rounds: Round[];
   verdict: '無罪' | '有罪' | '陪審團僵局' | null;
+  /** 開場許下卻沒兌現的承諾；結辯開始前已經反噬進心證。 */
+  broken: string[];
 }
 
 /** 結辯重述已經呈現過的論點，力道打對折（企劃書 6.9.8 的近因效應仍然疊在上面）。 */
 const RECAP = 0.25;
 
-export function startClosing(jury: Jury): ClosingState {
-  return { picked: [], tone: null, jury, spoken: null, deltas: {}, rounds: [], verdict: null };
+export function startClosing(jury: Jury, broken: string[] = []): ClosingState {
+  return {
+    picked: [],
+    tone: null,
+    jury,
+    spoken: null,
+    deltas: {},
+    rounds: [],
+    verdict: null,
+    broken,
+  };
 }
 
 export function togglePick(s: ClosingScene, st: ClosingState, id: string): ClosingState {
