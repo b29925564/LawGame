@@ -1914,6 +1914,7 @@ scenes:
     fifth:
       needs: 2
       argument: arg-d
+      theory: rachel
       lines:
         - who: 瑞秋・艾德勒
           text: （很長的停頓）我拒絕回答，因為答案可能使我自證己罪。

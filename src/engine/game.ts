@@ -547,6 +547,7 @@ export const useEpisode = create<GameState>()((set, get) => {
           exposed: exposedArgs(get().progress).includes(argument),
           cards: get().progress.cards,
           promise: promiseFor(argument),
+          theory: promisesOf(get().progress).theory?.id ?? null,
         }),
       ),
     badger: (i) => onTrial((s, st) => trial.badger(s, st, i)),

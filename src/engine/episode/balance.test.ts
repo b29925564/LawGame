@@ -69,7 +69,17 @@ const trials = ['court-kowalski', 'court-sophie', 'court-rachel'].map((id) =>
 );
 
 /** impeach：要在哪幾場庭審彈劾（true＝三場都彈劾）。心證跨場延續、隔天回彈一半。 */
-function route(held: string[], impeach: boolean | string[], broken: number, theory: boolean) {
+const avg = (j: Record<string, number>) =>
+  Math.round(Object.values(j).reduce((a, b) => a + b, 0) / Object.values(j).length);
+
+function route(
+  held: string[],
+  impeach: boolean | string[],
+  broken: number,
+  theory: boolean,
+  chosen: string | null = 'doubt',
+  out: { last?: trial.TrialState; brooks?: number } = {},
+) {
   const have = args.filter((a) => held.includes(a.id));
   const hits = (id: string) => impeach === true || (Array.isArray(impeach) && impeach.includes(id));
   let st: trial.TrialState | undefined;
@@ -87,13 +97,16 @@ function route(held: string[], impeach: boolean | string[], broken: number, theo
         if (!a || st.stage === 'done') continue;
         if (st.claims[c.id].lock === 'none') st = trial.lock(t, st, c.id, 'strong');
         st = trial.setup(t, st, c.id);
-        st = trial.confront(t, st, c.id, a.strength, a.tags, { id: a.id });
+        st = trial.confront(t, st, c.id, a.strength, a.tags, { id: a.id, theory: chosen });
       }
   }
   st = st!;
+  out.last = st;
+  if (st.pleaded) return '撤回起訴';
   let d = defense.prepare(brooks, defense.startDefense(st.jury), 'prep-honest');
   for (const q of brooks.questions) d = defense.ask(brooks, d, rules, q.id, held);
   d = defense.finish(brooks, d, rules);
+  out.brooks = avg(d.jury);
   let cs = closing.startClosing(shiftAll(rules, d.jury, 8 * broken).jury);
   for (const a of have.slice(0, 3)) cs = closing.togglePick(close, cs, a.id);
   cs = closing.setTone(close, cs, 't-logic');
@@ -184,5 +197,26 @@ describe('結辯的空格與理論', () => {
     expect(speak(['arg-a', 'arg-b', 'arg-d'], false)).toBeGreaterThan(
       speak(['arg-a', 'arg-b', 'arg-d'], true),
     );
+  });
+});
+
+describe('瑞秋援引緘默權：理論決定撤訴還是刪除證詞（企劃書 10.9）', () => {
+  it('選瑞秋理論：檢方撤回起訴（E1）', () => {
+    expect(route(full, true, 0, true, 'rachel')).toBe('撤回起訴');
+  });
+
+  it('選其他理論：證詞刪除，心證退回她上證人席之前再往無罪移，審判照走', () => {
+    const o: { last?: trial.TrialState } = {};
+    expect(route(full, true, 0, true, 'doubt', o)).toBe('無罪');
+    const st = o.last!;
+    expect(st.stricken).toBe(true);
+    expect(st.pleaded).toBeUndefined();
+    for (const [id, v] of Object.entries(st.jury))
+      expect(v).toBeLessThanOrEqual(st.opening![id] - trial.FIFTH_LEAN);
+    expect(st.log.some((l) => l.who === trial.JUDGE)).toBe(true);
+  });
+
+  it('只在瑞秋那場逼出緘默權、三個承諾全跳票：仍然無罪（緘默權的分量夠重）', () => {
+    expect(route(full, ['court-rachel'], 3, true)).toBe('無罪');
   });
 });
