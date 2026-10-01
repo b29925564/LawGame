@@ -100,11 +100,16 @@ describe('桌面調查', () => {
     st = desk.connect(investigate, st);
     expect(st.found).toEqual([]);
     expect(st.hours).toBe(hours - 1);
+    // 卡對了、關係錯：回饋要跟「兩張卡沒關係」分得開（試玩回報）。
+    expect(st.linkMiss).toBe('relation');
     st = desk.setLinkRelation(st, '支持');
     st = desk.connect(investigate, st);
     expect(st.found).toEqual(['l-called']);
     expect(st.hours).toBe(hours - 1);
     expect(st.link.cards).toEqual([]);
+    expect(st.linkMiss).toBeNull();
+    st = linkUp(st, ['ride-receipt', 'sophie-health-app'], '支持');
+    expect(st.linkMiss).toBe('cards');
   });
 
   it('疑問要拿發現回答，全對才確認，錯了照樣扣工時而且不說哪裡錯', () => {

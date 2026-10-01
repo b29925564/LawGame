@@ -407,7 +407,8 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
       <h3 className="step-head">連線</h3>
       <div
         className={
-          (desk.canConnect(st) ? 'link-bench ready' : 'link-bench') + (badShake ? ' shake' : '')
+          (desk.canConnect(st) ? 'link-bench ready' : 'link-bench') +
+          (badShake ? (st.linkMiss === 'relation' ? ' shake-rel' : ' shake') : '')
         }
       >
         <ul className="slots-row">

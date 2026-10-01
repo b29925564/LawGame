@@ -29,6 +29,8 @@ export interface DeskState {
   /** 連錯的次數；每次扣 1 工時。 */
   badLinks: number;
   linkNote: string | null;
+  /** 上一次連錯錯在哪：兩張卡根本沒關係（cards），或卡對了但關係選錯（relation）。 */
+  linkMiss?: 'cards' | 'relation' | null;
   /** 各疑問放了哪些發現或論點（推理第二步）。 */
   attempts: Record<string, { cards: string[] }>;
   confirmed: string[];
@@ -184,18 +186,26 @@ export function connect(s: DeskScene, st: DeskState): DeskState {
   const { cards, relation } = st.link;
   const hit = s.links.find((l) => l.relation === relation && fits(l.cards, l.accept, cards));
   if (hit && st.found.includes(hit.id))
-    return { ...st, link: { cards: [], relation: null }, linkNote: '這條已經連過了。' };
+    return {
+      ...st,
+      link: { cards: [], relation: null },
+      linkMiss: null,
+      linkNote: '這條已經連過了。',
+    };
   if (hit)
     return {
       ...st,
       found: [...st.found, hit.id],
       link: { cards: [], relation: null },
+      linkMiss: null,
       linkNote: `連起來了：${hit.text}`,
     };
   const next = spend(s, st, 1);
+  const pair = s.links.some((l) => fits(l.cards, l.accept, cards));
   return {
     ...next,
     badLinks: next.badLinks + 1,
+    linkMiss: pair ? 'relation' : 'cards',
     linkNote: '這兩張卡連不起來，至少不是這種關係。白花了 1 工時。',
   };
 }

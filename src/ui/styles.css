@@ -4417,6 +4417,19 @@ button.iou[aria-pressed='true'] {
   flex-direction: column;
   gap: 14px;
 }
+.board-one .wb-head {
+  /* 手機上往下捲去連線時，題目釘在上緣（試玩回報）。 */
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  margin-inline: -16px;
+  padding: 8px 16px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+.board-one .wb-head h2 {
+  font-size: 1.15em;
+}
 .wb-head h2 {
   /* 手機上 balance 會把問句切成兩半，留一大塊空白；用滿寬度。 */
   text-wrap: pretty;
@@ -4578,8 +4591,17 @@ button.iou[aria-pressed='true'] {
   }
 }
 .shake .slot-card,
-.shake.answer-slots {
+.shake.answer-slots,
+.shake-rel .link-knot span,
+.shake-rel .relations [aria-checked='true'] {
   animation: shake 0.4s ease;
+}
+/* 卡對了、關係錯：只有關係在抖，而且變紅；卡片不動。 */
+.shake-rel .link-knot span,
+.shake-rel .relations [aria-checked='true'] {
+  background: var(--bad) !important;
+  border-color: var(--bad);
+  color: #fff;
 }
 @keyframes hours-drop {
   0% {
