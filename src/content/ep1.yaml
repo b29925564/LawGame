@@ -744,7 +744,7 @@ scenes:
         conclusion: { word: 消息來源, text: 蘇菲說謊，是為了保護消息來源，不是為了掩蓋命案。 }
     questions:
       - id: q1
-        text: 伊森為什麼那個時間上樓？
+        text: 伊森說是沃斯叫他上去的。有紀錄能證明嗎？
         answer: [l-called]
         argument:
           id: arg-a
@@ -753,7 +753,7 @@ scenes:
           strength: 8
           tags: [邏輯]
       - id: q2a
-        text: 死者的手錶裡，有能查的資料嗎？
+        text: 沃斯的手錶死後還戴在身上。它平常記錄什麼？
         answer: [l-watch]
         argument:
           id: arg-watch
@@ -763,7 +763,7 @@ scenes:
           motionOnly: true
           tags: [邏輯]
       - id: q2
-        text: 沃斯是什麼時候死的？
+        text: 驗屍只給了一個範圍。有什麼能把死亡時間釘得更準？
         answer: [l-time]
         argument:
           id: arg-b
@@ -772,7 +772,7 @@ scenes:
           strength: 12
           tags: [邏輯, 權威]
       - id: q3
-        text: 22:31 那則訊息，真的是沃斯本人傳的嗎？
+        text: 22:31 的訊息從哪台電腦發出？那個時間，沃斯還能打字嗎？
         answer: [l-dead-sender]
         accept:
           l-dead-sender: [arg-b]
@@ -783,7 +783,7 @@ scenes:
           strength: 8
           tags: [邏輯]
       - id: q4
-        text: 訊息被收回的時候，31 樓還剩誰？
+        text: 23:14 訊息被收回時，誰還刷卡留在 31 樓？
         answer: [l-alone]
         argument:
           id: arg-d
@@ -792,7 +792,7 @@ scenes:
           strength: 10
           tags: [邏輯, 程序]
       - id: q5
-        text: 蘇菲對警方說的是實話嗎？
+        text: 蘇菲說她直接回家了。她的車幾點離開？
         answer: [l-sophie-lie]
         argument:
           id: arg-h
@@ -801,7 +801,7 @@ scenes:
           strength: 10
           tags: [情感, 邏輯]
       - id: q6
-        text: 蘇菲為什麼要對警方說謊？
+        text: 蘇菲那段時間其實在車上做什麼？跟誰在一起？
         answer: [l-sophie-jade]
         argument:
           id: arg-i
@@ -959,7 +959,7 @@ scenes:
         text: 報告寫「自願陳述」，錄影裡卻是警員先開口問話，從頭到尾沒有權利告知。
     questions:
       - id: q-miranda
-        text: 車上那句話拿得掉嗎？
+        text: 車上那句話是怎麼問出來的？警方有先告知權利嗎？
         answer: [l-no-warning]
         argument:
           id: arg-miranda

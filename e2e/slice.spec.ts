@@ -126,7 +126,7 @@ async function playToRachelLast(page: Page) {
   await expect(page.getByLabel(/剩餘工時 20/)).toBeVisible();
 
   await page.getByRole('button', { name: '證據板' }).click();
-  await solve(page, '疑問 1', '伊森為什麼', ['手錶通知紀錄', '叫車收據'], /支持/, 1);
+  await solve(page, '疑問 1', '沃斯叫他上去的', ['手錶通知紀錄', '叫車收據'], /支持/, 1);
   // 過關的推理鏈確認了，但要玩家自己收工，剩下的工時還能查。
   await expect(page.getByRole('button', { name: '結束調查' })).toBeVisible();
 
@@ -146,7 +146,7 @@ async function playToRachelLast(page: Page) {
   await solve(
     page,
     '疑問 2',
-    '手錶裡，有能查的資料嗎',
+    '它平常記錄什麼',
     ['驗屍照片：死者的手錶', '蘇菲陳述：他每天盯著健康 App'],
     /支持/,
     2,
@@ -181,9 +181,9 @@ async function playToRachelLast(page: Page) {
   // 拿到心率與稽核紀錄之後，把論點 B、C、D 也拼起來。
   await page.getByRole('button', { name: '證據板' }).click();
   const chains: [string, string, (string | RegExp)[], RegExp][] = [
-    ['疑問 3', '沃斯是什麼時候死的', [/驗屍報告$/, '沃斯手錶的心率紀錄'], /縮小範圍/],
-    ['疑問 4', '真的是沃斯本人傳的嗎', ['聊天系統稽核紀錄', '論點 B：沃斯 22:24 死亡'], /矛盾/],
-    ['疑問 5', '31 樓還剩誰', ['聊天系統稽核紀錄', '完整門禁紀錄'], /說明機會/],
+    ['疑問 3', '把死亡時間釘得更準', [/驗屍報告$/, '沃斯手錶的心率紀錄'], /縮小範圍/],
+    ['疑問 4', '沃斯還能打字嗎', ['聊天系統稽核紀錄', '論點 B：沃斯 22:24 死亡'], /矛盾/],
+    ['疑問 5', '誰還刷卡留在 31 樓', ['聊天系統稽核紀錄', '完整門禁紀錄'], /說明機會/],
   ];
   let n = 3;
   for (const [tab, title, names, relation] of chains)
