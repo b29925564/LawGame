@@ -8,6 +8,7 @@ import {
   closingArgs,
   deskSceneOf,
   optionOpen,
+  presentedArgs,
   sceneChoices,
   useEpisode,
 } from '../game';
@@ -20,6 +21,7 @@ const ctx = (o: Partial<BranchContext> = {}): BranchContext => ({
   flags: [],
   ethics: [],
   cards: [],
+  presented: [],
   ...o,
 });
 const closing = () =>
@@ -270,5 +272,61 @@ describe('對話選項的條件', () => {
     const step = s.steps.find((x) => x.do === 'choose')!;
     if (step.do === 'choose') for (const o of step.options) o.when = { flags: ['x'] };
     expect(validateEpisode(ep).join('\n')).toContain('選項全部有條件');
+  });
+});
+
+describe('重審交代與可選的辯方證人', () => {
+  const base = { episode: 'ep1', scene: 0, step: 0, choices: {}, cards: [], ethics: [] };
+
+  it('presented 條件：庭上出示過或結辯用過的論點全部都要有', () => {
+    expect(matches({ presented: ['arg-a', 'arg-b'] }, ctx({ presented: ['arg-a', 'arg-b'] }))).toBe(
+      true,
+    );
+    expect(matches({ presented: ['arg-a', 'arg-b'] }, ctx({ presented: ['arg-a'] }))).toBe(false);
+  });
+
+  it('對質過的說法、逼出緘默權的論點、結辯講過的論點都算出示過', () => {
+    const scenes = episodes.ep1.scenes;
+    const court = scenes.find((s) => s.id === 'court-rachel')!;
+    if (court.type !== 'trial') throw new Error('court-rachel');
+    const close = scenes.find((s) => s.type === 'closing')!;
+    const claim = court.witness.claims[0];
+    const p = {
+      ...base,
+      scenes: {
+        [court.id]: {
+          claims: { [claim.id]: { lock: 'strong', setup: true, result: 'softened' } },
+          stricken: true,
+        },
+        [close.id]: { picked: ['arg-h'], spoken: {} },
+      },
+    } as never;
+    expect(presentedArgs(p).sort()).toEqual(
+      [claim.argument, court.fifth!.argument, 'arg-h'].sort(),
+    );
+    // 結辯還沒講出口，挑了不算。
+    const unsaid = {
+      ...base,
+      scenes: { [close.id]: { picked: ['arg-h'], spoken: null } },
+    } as never;
+    expect(presentedArgs(unsaid)).toEqual([]);
+  });
+
+  it('辯方證人場景可以帶 when，不符就跳過', () => {
+    const scenes = episodes.ep1.scenes;
+    const at = scenes.findIndex((s) => s.type === 'defense');
+    const d = scenes[at] as { when?: object };
+    const p = { ...base, scenes: {}, scene: at - 1, step: 0 };
+    try {
+      d.when = { flags: ['ethan-testifies'] };
+      useEpisode.setState({ progress: { ...p, flags: [] } });
+      useEpisode.getState().advance();
+      expect(useEpisode.getState().progress.scene).toBe(at + 1);
+      useEpisode.setState({ progress: { ...p, flags: ['ethan-testifies'] } });
+      useEpisode.getState().advance();
+      expect(useEpisode.getState().progress.scene).toBe(at);
+    } finally {
+      delete d.when;
+    }
   });
 });
