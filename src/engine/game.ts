@@ -188,6 +188,7 @@ export function branchContext(p: Progress): branch.BranchContext {
     theory: promisesOf(p).theory?.id ?? null,
     flags: p.flags ?? [],
     ethics: p.ethics ?? [],
+    cards: p.cards,
   };
 }
 
@@ -545,7 +546,15 @@ export const useEpisode = create<GameState>()((set, get) => {
         const after = juryAfterTrial(get().progress);
         return after ? defense.finish(sc, st, after.rules) : st;
       }),
-    chooseTheory: (id) => onTheory((s, st) => theory.choose(s, st, id, get().progress.cards)),
+    chooseTheory: (id) => {
+      const was = promisesOf(get().progress).theory?.id;
+      onTheory((s, st) => theory.choose(s, st, id, get().progress.cards));
+      const p = get().progress;
+      const t = promisesOf(p).theory;
+      // 明知故犯：手上已經有推翻這個理論的論點，還是選了它。
+      if (t?.id === id && was !== id && t.ethicsIf?.has.every((x) => p.cards.includes(x)))
+        set({ progress: { ...p, ethics: [...(p.ethics ?? []), ...t.ethicsIf.ethics] } });
+    },
     skipTheory: () => onTheory((s, st) => theory.skip(s, st, get().progress.cards)),
     togglePromise: (id) =>
       onOpening((s, st) => theory.togglePromise(s, promisesOf(get().progress).theory, st, id)),
