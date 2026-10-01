@@ -14,12 +14,16 @@ import type {
   InterviewScene,
   ClosingScene,
   NegotiationScene,
+  OpeningScene,
   Scene,
+  TheoryScene,
   TrialScene,
   VoirDireScene,
 } from './episode/schema';
+import * as theory from './episode/theory';
 import * as trial from './episode/trial';
 import * as voirdire from './episode/voirdire';
+import { shiftAll } from './jury';
 import { readSave, writeSave, type Progress, type Slot } from './save';
 
 export type Mode = 'title' | 'play' | 'proto';
@@ -87,9 +91,61 @@ export function juryAfterTrial(
   return null;
 }
 
-export function closingState(p: Progress, s: ClosingScene) {
+export function theorySceneOf(p: Progress): TheoryScene | undefined {
+  return episodeOf(p).scenes.find((x) => x.type === 'theory') as TheoryScene | undefined;
+}
+export function openingSceneOf(p: Progress): OpeningScene | undefined {
+  return episodeOf(p).scenes.find((x) => x.type === 'opening') as OpeningScene | undefined;
+}
+export function theoryState(p: Progress, s: TheoryScene) {
+  return stateOf(p, s, () => theory.startTheory());
+}
+export function openingState(p: Progress, s: OpeningScene) {
+  return stateOf(p, s, () => theory.startOpening());
+}
+
+/** 選定的案件理論，以及開場許下的承諾（連同它要用哪個論點兌現）。 */
+export function promisesOf(p: Progress) {
+  const ts = theorySceneOf(p);
+  const os = openingSceneOf(p);
+  const t = ts ? theory.chosenTheory(ts, p.scenes[ts.id] as theory.TheoryState | undefined) : null;
+  const picked = os ? ((p.scenes[os.id] as theory.OpeningState | undefined)?.promises ?? []) : [];
+  return {
+    theory: t,
+    opening: os,
+    promises: (t?.promises ?? []).filter((x) => picked.includes(x.id)),
+  };
+}
+
+/** 庭上已經兌現的承諾。 */
+export function keptPromises(p: Progress): string[] {
+  const out: string[] = [];
+  for (const s of episodeOf(p).scenes)
+    if (s.type === 'trial')
+      out.push(...((p.scenes[s.id] as trial.TrialState | undefined)?.kept ?? []));
+  return [...new Set(out)];
+}
+
+/** 開場許下、到現在還沒兌現的承諾。 */
+export function brokenPromises(p: Progress): string[] {
+  const kept = keptPromises(p);
+  return promisesOf(p)
+    .promises.map((x) => x.id)
+    .filter((id) => !kept.includes(id));
+}
+
+/** 結辯的起點：庭審留下的心證，再扣掉沒兌現的承諾（企劃書 6.9.3，陪審員記得你說過的話）。 */
+function closingStart(p: Progress): closing.ClosingState {
   const after = juryAfterTrial(p);
-  return stateOf(p, s, () => closing.startClosing(after ? after.jury : {}));
+  if (!after) return closing.startClosing({});
+  const broken = brokenPromises(p);
+  const amount = (promisesOf(p).opening?.broken ?? 8) * broken.length;
+  const jury = amount > 0 ? shiftAll(after.rules, after.jury, amount).jury : after.jury;
+  return closing.startClosing(jury, broken);
+}
+
+export function closingState(p: Progress, s: ClosingScene) {
+  return stateOf(p, s, () => closingStart(p));
 }
 
 export function voirDireState(p: Progress, s: VoirDireScene) {
@@ -191,6 +247,11 @@ interface GameState {
   pickArg: (id: string) => void;
   setTone: (id: string) => void;
   deliver: () => void;
+  /** 案件理論與開場陳述 */
+  chooseTheory: (id: string) => void;
+  skipTheory: () => void;
+  togglePromise: (id: string) => void;
+  deliverOpening: () => void;
   /** 陪審團遴選 */
   askJuror: (id: string) => void;
   challengeJuror: (id: string) => void;
@@ -204,6 +265,15 @@ interface GameState {
   bluff: (id: string) => void;
   advise: (take: boolean) => void;
   walkOut: () => void;
+}
+
+/** 出示這個論點會兌現的承諾（還沒兌現過的那一個）。 */
+function promiseFor(argument: string) {
+  const p = useEpisode.getState().progress;
+  const kept = keptPromises(p);
+  const { promises, opening } = promisesOf(p);
+  const hit = promises.find((x) => x.argument === argument && !kept.includes(x.id));
+  return hit ? { id: hit.id, kept: opening?.kept ?? 5 } : undefined;
 }
 
 export const useEpisode = create<GameState>()((set, get) => {
@@ -247,8 +317,10 @@ export const useEpisode = create<GameState>()((set, get) => {
   );
   const onVoirDire = on<VoirDireScene, voirdire.VoirDireState>('voirdire', voirdire.startVoirDire);
   const onClosing = on<ClosingScene, closing.ClosingState>('closing', () =>
-    closing.startClosing(juryAfterTrial(get().progress)?.jury ?? {}),
+    closingStart(get().progress),
   );
+  const onTheory = on<TheoryScene, theory.TheoryState>('theory', theory.startTheory);
+  const onOpening = on<OpeningScene, theory.OpeningState>('opening', theory.startOpening);
   const onDepo = on<DepositionScene, depo.DepoState>('deposition', depo.startDeposition);
   const onNego = on<NegotiationScene, nego.NegoState>('negotiation', nego.startNegotiation);
 
@@ -352,6 +424,7 @@ export const useEpisode = create<GameState>()((set, get) => {
           id: argument,
           exposed: exposedArgs(get().progress).includes(argument),
           cards: get().progress.cards,
+          promise: promiseFor(argument),
         }),
       ),
     badger: (i) => onTrial((s, st) => trial.badger(s, st, i)),
@@ -367,6 +440,12 @@ export const useEpisode = create<GameState>()((set, get) => {
           .map((q) => q.argument);
         return closing.deliver(s, st, after.rules, args, exposedArgs(p));
       }),
+
+    chooseTheory: (id) => onTheory((s, st) => theory.choose(s, st, id, get().progress.cards)),
+    skipTheory: () => onTheory((s, st) => theory.skip(s, st, get().progress.cards)),
+    togglePromise: (id) =>
+      onOpening((s, st) => theory.togglePromise(s, promisesOf(get().progress).theory, st, id)),
+    deliverOpening: () => onOpening((_s, st) => theory.deliver(st)),
 
     askJuror: (id) => onVoirDire((s, st) => voirdire.ask(s, st, id)),
     challengeJuror: (id) => onVoirDire((s, st) => voirdire.challenge(s, st, id)),

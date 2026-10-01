@@ -29,6 +29,8 @@ export interface TrialState {
   claims: Record<string, ClaimState>;
   asked: number[];
   impeachments: number;
+  /** 這場兌現的開場承諾。 */
+  kept: string[];
   struck: number;
   rebuked: boolean;
   log: LogLine[];
@@ -59,6 +61,7 @@ export function startTrial(s: TrialScene, anchored: string[] = []): TrialState {
     ),
     asked: [],
     impeachments: 0,
+    kept: [],
     struck: 0,
     rebuked: false,
     log: [],
@@ -173,7 +176,13 @@ export function confront(
   strength: number,
   tags: Tag[],
   /** 出示的是哪個論點、有沒有洩漏過、手上有哪些卡片可以破解她的反擊。 */
-  arg: { id?: string; exposed?: boolean; cards?: string[] } = {},
+  arg: {
+    id?: string;
+    exposed?: boolean;
+    cards?: string[];
+    /** 出示這個論點會兌現的開場承諾 id，以及兌現時全體往辯方移多少。 */
+    promise?: { id: string; kept: number };
+  } = {},
 ): TrialState {
   const c = s.witness.claims.find((x) => x.id === claimId);
   const cur = st.claims[claimId];
@@ -210,6 +219,17 @@ export function confront(
     { who: s.witness.name, text: impeached ? c.confront.strong : c.confront.weak },
   );
   if (impeached) next = say(next, { who: '旁白', text: s.witness.breakdown });
+  // 開場承諾兌現（企劃書 6.9.3）：陪審員記得你說過的話，全體往辯方移。
+  const p = arg.promise;
+  if (impeached && p && !(next.kept ?? []).includes(p.id)) {
+    const k = shiftAll(s, next.jury, -p.kept);
+    const deltas: Jury = {};
+    for (const id of Object.keys(k.jury)) deltas[id] = k.jury[id] - st.jury[id];
+    next = say(
+      { ...next, jury: k.jury, deltas, kept: [...(next.kept ?? []), p.id] },
+      { who: '旁白', text: '開場時你許下的承諾，兌現了。陪審團記得。' },
+    );
+  }
   // 彈劾夠多次又出示了那個論點，她就當庭援引緘默權，詰問到此為止。
   const f = s.fifth;
   if (f && arg.id === f.argument && next.impeachments >= f.needs)

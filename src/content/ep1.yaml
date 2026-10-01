@@ -1063,6 +1063,47 @@ scenes:
         text: 十二年前我也對另一個人說過「這是最好的選擇」。他死在裡面。
         thought: true
 
+  # 第三幕收尾：選案件理論（企劃書 6.9.2）。選了就不能換。
+  - type: theory
+    id: theory
+    act: 第三幕
+    place: 惠特洛克・海爾　會議室 A
+    intro:
+      - who: 馬可仕・海爾
+        text: 明天開庭。你要告訴陪審團一個故事，一個就好。故事要靠你手上的論點撐起來。
+        mood: 暖
+      - who: 艾莉絲
+        text: 選了就不能換。中途改口，陪審團會覺得我在瞎掰。
+        thought: true
+    theories:
+      - id: doubt
+        name: 合理懷疑
+        summary: 檢方的證據有漏洞。我們不指認任何人，只證明他們沒有證明。
+        needs: [arg-a, arg-b]
+        cost: 最安全。但真兇逍遙法外，伊森只是「查無實據」。
+        promises:
+          - id: doubt-called
+            text: 你們會聽到，伊森是被人叫上樓的，不是自己決定去的。
+            argument: arg-a
+          - id: doubt-time
+            text: 你們會聽到，沃斯在伊森抵達之前就已經死了。
+            argument: arg-b
+      - id: rachel
+        name: 另有其人：瑞秋
+        summary: 那則訊息是別人傳的，收回訊息的人當時就在 31 樓。她是檢方的證人。
+        needs: [arg-a, arg-b, arg-c, arg-d]
+        cost: 最難。要在庭上彈劾一位看似無懈可擊的證人；做不到，許下的承諾會全部反噬。
+        promises:
+          - id: rachel-time
+            text: 你們會聽到，沃斯在伊森抵達之前就已經死了。
+            argument: arg-b
+          - id: rachel-sender
+            text: 你們會知道，那則訊息是誰傳的。
+            argument: arg-c
+          - id: rachel-alone
+            text: 你們會知道，那一晚 31 樓只剩下一個人。
+            argument: arg-d
+
   - type: card
     id: act4
     act: 第四幕
@@ -1305,6 +1346,19 @@ scenes:
           q: 門禁刷卡紀錄可靠嗎？
           a: 可靠。但沒刷卡不代表沒進去，跟著別人進去就不會留紀錄。
         hidden: 知道門禁紀錄的漏洞。
+
+  # 第一天：開場陳述（企劃書 6.9.3）。許下的承諾，陪審員會記得。
+  - type: opening
+    id: opening
+    act: 第四幕
+    place: 卡爾德港高等法院　第三法庭
+    picks: 3
+    intro:
+      - who: 法官
+        text: 辯方，開場陳述。
+      - who: 艾莉絲
+        text: 每一個承諾都是一張借據。庭上兌現了，他們會多信我一點；兌現不了，他們會記得是我說的。
+        thought: true
 
   # 庭審：柯瓦斯基（教學：異議、彈劾三步驟簡單版）
   - type: trial

@@ -411,6 +411,54 @@ const negotiationScene = z.object({
 });
 
 /**
+ * 案件理論（企劃書 6.9.2）：開庭前選一個，選了就不能換。
+ * 每個理論要有哪些論點才站得住，並列出開場陳述可以許下的承諾。
+ */
+const theoryScene = z.object({
+  type: z.literal('theory'),
+  id,
+  act: z.string(),
+  place: z.string(),
+  intro: z.array(line).default([]),
+  theories: z
+    .array(
+      z.object({
+        id,
+        name: z.string(),
+        summary: z.string(),
+        /** 要先確認這些論點，理論才站得住。 */
+        needs: z.array(id).min(1),
+        /** 選了之後的一句話代價或風險，讓玩家選的時候看得到。 */
+        cost: z.string(),
+        promises: z
+          .array(
+            z.object({
+              id,
+              text: z.string(),
+              /** 庭上彈劾成功並出示這個論點，承諾就兌現。 */
+              argument: id,
+            }),
+          )
+          .min(1),
+      }),
+    )
+    .min(1),
+});
+
+/** 開場陳述（企劃書 6.9.3）：從選定理論的承諾裡挑最多 picks 個。 */
+const openingScene = z.object({
+  type: z.literal('opening'),
+  id,
+  act: z.string(),
+  place: z.string(),
+  picks: z.number().int().min(1).default(3),
+  intro: z.array(line).default([]),
+  /** 承諾兌現：全體陪審員往辯方；結辯時還沒兌現：全體往有罪方向。 */
+  kept: z.number().int().min(0).default(5),
+  broken: z.number().int().min(0).default(8),
+});
+
+/**
  * 陪審團遴選（企劃書 6.9.1）：18 位候選人取 12 位。
  * 問卷看得到的寫在 sheet，提問才看得到的寫在 hidden。
  */
@@ -490,6 +538,8 @@ const scene = z.discriminatedUnion('type', [
   trialScene,
   depositionScene,
   voirDireScene,
+  theoryScene,
+  openingScene,
   closingScene,
   negotiationScene,
   /** 片頭或幕與幕之間的標題卡。 */
@@ -520,6 +570,9 @@ export type TrialScene = Extract<Scene, { type: 'trial' }>;
 export type DepositionScene = Extract<Scene, { type: 'deposition' }>;
 export type VoirDireScene = Extract<Scene, { type: 'voirdire' }>;
 export type ClosingScene = Extract<Scene, { type: 'closing' }>;
+export type TheoryScene = Extract<Scene, { type: 'theory' }>;
+export type OpeningScene = Extract<Scene, { type: 'opening' }>;
+export type Theory = TheoryScene['theories'][number];
 export type Candidate = VoirDireScene['candidates'][number];
 export type NegotiationScene = Extract<Scene, { type: 'negotiation' }>;
 export type DepoQuestion = DepositionScene['topics'][number]['questions'][number];

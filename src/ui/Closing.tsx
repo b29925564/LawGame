@@ -60,6 +60,11 @@ export function Closing({ scene }: { scene: ClosingScene }) {
             </strong>{' '}
             ・ 基調 {st.tone ? '已選' : '未選'}
           </p>
+          {(st.broken ?? []).length > 0 && (
+            <p className="bad-text small">
+              開場許下的 {st.broken.length} 個承諾沒有兌現，陪審員記得你說過的話。
+            </p>
+          )}
         </header>
       }
       tabs={
