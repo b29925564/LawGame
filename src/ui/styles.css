@@ -289,21 +289,25 @@ details summary {
   line-height: 1.2;
   letter-spacing: 0.12em;
 }
-/* 對話變長時只捲對話，操作區固定在畫面下方，不必捲回去看完再捲下來按。 */
-.scene:has(> .lines) {
+/* 對話與會見變長時只捲台詞，操作區固定在下方；其他場景（休庭、判決）照常整頁捲。 */
+.scene.dialogue,
+.scene.interview {
   height: 100dvh;
   padding-bottom: 16px;
 }
-.scene > .lines {
+.scene.dialogue > .lines,
+.scene.interview > .lines {
   flex: 1 1 auto;
   min-height: 0;
+  max-height: none;
   overflow-y: auto;
   overscroll-behavior: contain;
 }
-.scene:has(> .lines) > :not(.lines) {
+.scene.dialogue > :not(.lines),
+.scene.interview > :not(.lines) {
   flex-shrink: 0;
 }
-.scene > .panel.actions {
+.scene.interview > .panel.actions {
   max-height: 42dvh;
   overflow-y: auto;
 }
