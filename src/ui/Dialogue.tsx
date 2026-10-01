@@ -1,4 +1,4 @@
-import { useEpisode, sceneChoices } from '../engine/game';
+import { optionOpen, useEpisode, sceneChoices } from '../engine/game';
 import type { DialogueScene, Line } from '../engine/episode/schema';
 import { Speech } from './Portrait';
 import { Transcript } from './Shell';
@@ -31,11 +31,13 @@ export function Dialogue({ scene }: { scene: DialogueScene }) {
       {choosing && step.do === 'choose' ? (
         <div className="choices" role="group" aria-label={step.prompt ?? '選擇'}>
           {step.prompt && <p className="muted">{step.prompt}</p>}
-          {step.options.map((o, i) => (
-            <button key={i} onClick={() => choose(i)}>
-              {o.text}
-            </button>
-          ))}
+          {step.options.map((o, i) =>
+            optionOpen(progress, o) ? (
+              <button key={i} onClick={() => choose(i)}>
+                {o.text}
+              </button>
+            ) : null,
+          )}
         </div>
       ) : (
         <button className="primary next" onClick={advance}>

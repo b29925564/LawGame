@@ -14,6 +14,8 @@ export interface NegoState {
   /** null＝還在談；'walk'＝離席；'deal'＝委託人接受了條件。 */
   outcome: 'walk' | 'deal' | null;
   deal: string | null;
+  /** 成交的條件 id，結局依此分支（企劃書 10.9 的 E4）。 */
+  dealId?: string;
 }
 
 export function startNegotiation(s: NegotiationScene): NegoState {
@@ -98,10 +100,11 @@ export function bluff(s: NegotiationScene, st: NegoState, id: string): NegoState
 export function advise(s: NegotiationScene, st: NegoState, take: boolean): NegoState {
   if (st.outcome !== null) return st;
   const o = offerOf(s, st);
-  if (take) return { ...st, outcome: 'deal', deal: o.label, log: [...st.log, ...s.accepted] };
+  if (take)
+    return { ...st, outcome: 'deal', deal: o.label, dealId: o.id, log: [...st.log, ...s.accepted] };
   // 勸他撐下去：信任低的委託人會自己點頭。
   if (st.trust <= 1)
-    return { ...st, outcome: 'deal', deal: o.label, log: [...st.log, ...s.accepted] };
+    return { ...st, outcome: 'deal', deal: o.label, dealId: o.id, log: [...st.log, ...s.accepted] };
   return { ...st, trust: st.trust - 1, log: [...st.log, ...o.asks] };
 }
 

@@ -1,12 +1,21 @@
 import { describe, expect, it } from 'vitest';
 import { episodes } from '../../content';
 import { endingLines, matches, type BranchContext } from './branch';
-import type { ClosingScene, Episode, TheoryScene } from './schema';
+import type { ClosingScene, DialogueScene, Episode, TheoryScene } from './schema';
 import { validateEpisode } from './validate';
-import { closingArgs, deskSceneOf, useEpisode } from '../game';
+import {
+  branchContext,
+  closingArgs,
+  deskSceneOf,
+  optionOpen,
+  sceneChoices,
+  useEpisode,
+} from '../game';
 
 const ctx = (o: Partial<BranchContext> = {}): BranchContext => ({
   verdict: '無罪',
+  outcome: null,
+  deal: null,
   theory: 'doubt',
   flags: [],
   ethics: [],
@@ -157,5 +166,111 @@ describe('潔德線：持有論點的分支與明知故犯', () => {
     const errs = validateEpisode(ep).join('\n');
     expect(errs).toContain('不存在的卡片：nope-card');
     expect(errs).toContain('不存在的卡片：ghost');
+  });
+});
+
+describe('提前收場：協商成交（E4）與撤回起訴（E1）', () => {
+  const scenes = episodes.ep1.scenes;
+  const nego = scenes.findIndex((s) => s.type === 'negotiation');
+  const court = scenes.findIndex((s) => s.id === 'court-rachel');
+  const last = scenes.length - 1;
+  const base = { episode: 'ep1', step: 0, choices: {}, cards: [], flags: [], ethics: [] };
+  const withEpilogue = (run: () => void) => {
+    const end = scenes[last] as { epilogue?: boolean; when?: object };
+    const was = { epilogue: end.epilogue, when: end.when };
+    try {
+      end.epilogue = true;
+      end.when = { outcome: ['deal', 'dismissed'] };
+      run();
+    } finally {
+      end.epilogue = was.epilogue;
+      if (was.when) end.when = was.when;
+      else delete end.when;
+    }
+  };
+
+  it('協商成交後跳過庭審，直接到尾聲，條件看得到成交的是哪一個', () =>
+    withEpilogue(() => {
+      const offer = (scenes[nego] as { offers: { id: string }[] }).offers[0].id;
+      const st = { outcome: 'deal', deal: 'x', dealId: offer };
+      const p = { ...base, scene: nego, scenes: { [scenes[nego].id]: st } };
+      useEpisode.setState({ progress: p });
+      useEpisode.getState().advance();
+      expect(useEpisode.getState().progress.scene).toBe(last);
+      expect(matches({ outcome: ['deal'], deal: [offer] }, branchContext(p))).toBe(true);
+      expect(matches({ outcome: ['dismissed'] }, branchContext(p))).toBe(false);
+    }));
+
+  it('證人援引緘默權後撤回起訴：跳過辯方證人與結辯', () =>
+    withEpilogue(() => {
+      const p = { ...base, scene: court, scenes: { 'court-rachel': { pleaded: true } } };
+      useEpisode.setState({ progress: p });
+      useEpisode.getState().advance();
+      expect(useEpisode.getState().progress.scene).toBe(last);
+      expect(branchContext(p).outcome).toBe('dismissed');
+    }));
+
+  it('劇本還沒寫對應的尾聲：照常走到判決', () => {
+    const p = { ...base, scene: court, scenes: { 'court-rachel': { pleaded: true } } };
+    useEpisode.setState({ progress: p });
+    useEpisode.getState().advance();
+    expect(useEpisode.getState().progress.scene).toBe(court + 1);
+  });
+
+  it('沒有提前收場就照常往下走', () => {
+    useEpisode.setState({ progress: { ...base, scene: court, scenes: {} } });
+    useEpisode.getState().advance();
+    expect(useEpisode.getState().progress.scene).toBe(court + 1);
+  });
+
+  it('驗證：引用不存在的協商條件會被擋', () => {
+    const ep = structuredClone(episodes.ep1) as Episode;
+    const s = ep.scenes.find((x) => x.type === 'closing') as ClosingScene;
+    s.endings = [{ id: 'e', when: { deal: ['no-offer'] }, lines: say('a') }];
+    expect(validateEpisode(ep).join('\n')).toContain('不存在的協商條件：no-offer');
+  });
+});
+
+describe('對話選項的條件', () => {
+  it('條件不符的選項不出現，也選不了', () => {
+    const scenes = episodes.ep1.scenes;
+    const at = scenes.findIndex(
+      (s) => s.type === 'dialogue' && s.steps.some((x) => x.do === 'choose'),
+    );
+    const s = scenes[at] as DialogueScene;
+    const step = s.steps.findIndex((x) => x.do === 'choose');
+    const opt = (s.steps[step] as Extract<DialogueScene['steps'][number], { do: 'choose' }>)
+      .options[0];
+    const base = {
+      episode: 'ep1',
+      scene: at,
+      step,
+      choices: {},
+      scenes: {},
+      flags: [],
+      ethics: [],
+    };
+    try {
+      opt.when = { cards: ['parking-log'] };
+      expect(optionOpen({ ...base, cards: [] }, opt)).toBe(false);
+      useEpisode.setState({ progress: { ...base, cards: [] } });
+      useEpisode.getState().choose(0);
+      expect(sceneChoices(useEpisode.getState().progress)[step]).toBeUndefined();
+      useEpisode.setState({ progress: { ...base, cards: ['parking-log'] } });
+      useEpisode.getState().choose(0);
+      expect(sceneChoices(useEpisode.getState().progress)[step]).toBe(0);
+    } finally {
+      delete opt.when;
+    }
+  });
+
+  it('驗證：選項全部有條件會被擋', () => {
+    const ep = structuredClone(episodes.ep1) as Episode;
+    const s = ep.scenes.find(
+      (x) => x.type === 'dialogue' && x.steps.some((y) => y.do === 'choose'),
+    ) as DialogueScene;
+    const step = s.steps.find((x) => x.do === 'choose')!;
+    if (step.do === 'choose') for (const o of step.options) o.when = { flags: ['x'] };
+    expect(validateEpisode(ep).join('\n')).toContain('選項全部有條件');
   });
 });

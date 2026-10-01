@@ -22,6 +22,7 @@ import type {
   TheoryScene,
   TrialScene,
   VoirDireScene,
+  When,
 } from './episode/schema';
 import * as theory from './episode/theory';
 import * as trial from './episode/trial';
@@ -180,16 +181,45 @@ export function closingArgs(p: Progress) {
 }
 
 /** 分支條件看得到的事：判決、選定的理論、旗標、倫理帳本。 */
+/**
+ * 這一集是不是提前收場（企劃書 10.9）：接受認罪協商（E4），
+ * 或證人當庭援引緘默權、檢方撤回起訴（E1）。之後只演尾聲。
+ * 劇本要寫了對應的尾聲（epilogue 且 when.outcome 含這種收場）才會提前結束，
+ * 否則照常走到判決，免得玩家看到一集沒頭沒尾地結束。
+ */
+export function caseClosed(p: Progress): { outcome: branch.Outcome; deal: string | null } | null {
+  const scenes = episodeOf(p).scenes;
+  const written = (o: branch.Outcome) =>
+    scenes.some((s) => 'epilogue' in s && s.epilogue && s.when?.outcome?.includes(o));
+  for (const s of scenes) {
+    const st = p.scenes[s.id];
+    if (!st) continue;
+    if (s.type === 'negotiation' && (st as nego.NegoState).outcome === 'deal' && written('deal'))
+      return { outcome: 'deal', deal: (st as nego.NegoState).dealId ?? null };
+    if (s.type === 'trial' && (st as trial.TrialState).pleaded && written('dismissed'))
+      return { outcome: 'dismissed', deal: null };
+  }
+  return null;
+}
+
 export function branchContext(p: Progress): branch.BranchContext {
   const cs = episodeOf(p).scenes.find((x) => x.type === 'closing');
   const st = cs ? (p.scenes[cs.id] as closing.ClosingState | undefined) : undefined;
+  const closed = caseClosed(p);
   return {
     verdict: st?.verdict ?? null,
+    outcome: closed?.outcome ?? null,
+    deal: closed?.deal ?? null,
     theory: promisesOf(p).theory?.id ?? null,
     flags: p.flags ?? [],
     ethics: p.ethics ?? [],
     cards: p.cards,
   };
+}
+
+/** 對話選項此刻看不看得到：條件不符的選項不出現。 */
+export function optionOpen(p: Progress, o: { when?: When }) {
+  return branch.matches(o.when, branchContext(p));
 }
 
 /** 這一場的結局台詞，依判決與分支條件挑。 */
@@ -337,7 +367,12 @@ export const useEpisode = create<GameState>()((set, get) => {
     const scenes = episodeOf(p).scenes;
     while (next.scene < scenes.length) {
       const s = scenes[next.scene];
-      if (!('when' in s) || branch.matches(s.when, branchContext(next))) break;
+      // 提前收場：只剩標了 epilogue 的尾聲場景。
+      const epilogue = 'epilogue' in s && s.epilogue;
+      const skip =
+        (caseClosed(next) && !epilogue) ||
+        ('when' in s && !branch.matches(s.when, branchContext(next)));
+      if (!skip) break;
       next = { ...next, scene: next.scene + 1 };
     }
     writeSave('auto', saveLabel(next), next);
@@ -420,6 +455,7 @@ export const useEpisode = create<GameState>()((set, get) => {
       if (step?.do !== 'choose' || sceneChoices(p)[p.step] !== undefined) return;
       if (option < 0 || option >= step.options.length) return;
       const o = step.options[option];
+      if ('when' in o && !branch.matches(o.when, branchContext(p))) return;
       // 電話場景的選項沒有旗標與倫理紀錄。
       const gained = 'flags' in o ? o : { flags: [], ethics: [] };
       set({

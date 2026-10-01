@@ -16,6 +16,27 @@ const line = z.object({
 });
 
 /**
+ * 分支條件：結局與尾聲依判決、案件理論、對話旗標、倫理帳本分開寫。
+ * 每一項都要成立才算符合；沒寫的項目不限制。
+ */
+const when = z.object({
+  verdict: z.array(z.enum(['無罪', '有罪', '陪審團僵局'])).optional(),
+  theory: z.array(id).optional(),
+  /** 這些旗標全部都要有。 */
+  flags: z.array(z.string()).optional(),
+  /** 這些旗標一個都不能有。 */
+  notFlags: z.array(z.string()).optional(),
+  /** 這一集怎麼收場：deal＝接受認罪協商（E4），dismissed＝證人援引緘默權後撤回起訴（E1）。 */
+  outcome: z.array(z.enum(['deal', 'dismissed'])).optional(),
+  /** 協商成交的是哪個條件（offer id）。 */
+  deal: z.array(id).optional(),
+  /** 這些卡片或論點全部都要在手上。 */
+  cards: z.array(id).optional(),
+  /** 倫理帳本裡至少有其中一筆。 */
+  ethics: z.array(z.string()).optional(),
+});
+
+/**
  * 冷開場的手機劇本：一步一步往下走，每一步切換手機上的畫面。
  * 除了 choose、ride、badge、door 要玩家做特定操作，其餘步驟點「繼續」往下。
  */
@@ -66,6 +87,8 @@ const dialogueStep = z.discriminatedUnion('do', [
           flags: z.array(z.string()).default([]),
           /** 選了就記進倫理紀錄的項目；玩家看不到，第一季季終的懲戒聽證會翻出來（企劃書 6.12）。 */
           ethics: z.array(z.string()).default([]),
+          /** 條件不符就不出現這個選項（例如沒見過潔德就不能交給她）。 */
+          when: when.optional(),
         }),
       )
       .min(2)
@@ -576,23 +599,6 @@ const voirDireScene = z.object({
 });
 
 /**
- * 分支條件：結局與尾聲依判決、案件理論、對話旗標、倫理帳本分開寫。
- * 每一項都要成立才算符合；沒寫的項目不限制。
- */
-const when = z.object({
-  verdict: z.array(z.enum(['無罪', '有罪', '陪審團僵局'])).optional(),
-  theory: z.array(id).optional(),
-  /** 這些旗標全部都要有。 */
-  flags: z.array(z.string()).optional(),
-  /** 這些旗標一個都不能有。 */
-  notFlags: z.array(z.string()).optional(),
-  /** 這些卡片或論點全部都要在手上。 */
-  cards: z.array(id).optional(),
-  /** 倫理帳本裡至少有其中一筆。 */
-  ethics: z.array(z.string()).optional(),
-});
-
-/**
  * 結辯與判決（企劃書 6.9.8、6.10）：挑三個論點排順序，選一種訴求基調，
  * 然後是三輪評議與判決。玩家看得到誰被說服，但插不了手。
  */
@@ -623,6 +629,8 @@ const scene = z.discriminatedUnion('type', [
     act: z.string(),
     /** 條件不符就整場跳過（尾聲分支用）。 */
     when: when.optional(),
+    /** 尾聲：協商成交或撤回起訴提前收場時，只演標了 epilogue 的場景。 */
+    epilogue: z.boolean().default(false),
     owner: z.string(),
     steps: z.array(phoneStep).min(1),
   }),
@@ -632,6 +640,8 @@ const scene = z.discriminatedUnion('type', [
     act: z.string(),
     /** 條件不符就整場跳過（尾聲分支用）。 */
     when: when.optional(),
+    /** 尾聲：協商成交或撤回起訴提前收場時，只演標了 epilogue 的場景。 */
+    epilogue: z.boolean().default(false),
     place: z.string(),
     steps: z.array(dialogueStep).min(1),
   }),
@@ -651,6 +661,7 @@ const scene = z.discriminatedUnion('type', [
     id,
     act: z.string(),
     when: when.optional(),
+    epilogue: z.boolean().default(false),
     title: z.string(),
     lines: z.array(z.string()).default([]),
   }),
