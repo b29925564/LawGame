@@ -86,7 +86,7 @@ _cards: &cards
     kind: 文件
     date: 週五
     time: '23:26'
-    text: 附件三未經標註的原始檔：當晚 31 樓另有一人 23:26 才刷卡離開大廳。
+    text: 附件三未經標註的原始檔：伊森 23:01 離開後，31 樓只剩一個人沒有刷出，那個人 23:26 才刷卡離開大廳。
     source: 警方報告附件三
   - id: autopsy
     name: 驗屍報告
@@ -150,7 +150,7 @@ _cards: &cards
     kind: 文件
     date: 週五
     time: '23:14'
-    text: 21:55 沃斯傳訊給瑞秋；22:31 由沃斯桌機發出一則訊息給伊森；23:14 由同一台桌機收回。
+    text: 21:55 沃斯傳訊給瑞秋；22:31 由沃斯桌機發出一則訊息給伊森（伊森的手錶 22:33 才收到推播）；23:14 由同一台桌機收回。
     source: 卡爾德物流（傳票）
   - id: watch-notice
     name: 手錶通知紀錄
@@ -162,7 +162,7 @@ _cards: &cards
 
   # 第三幕新增的卡片，和第二幕共用同一份牌庫（見 _cards 錨點）。
   - id: arrest-report
-    name: 逮捕報告
+    name: 逮捕報告：「自願陳述」
     kind: 文件
     date: 週日
     time: '14:05'
@@ -710,9 +710,13 @@ scenes:
         cards: [watch-notice, ride-receipt]
         accept:
           watch-notice: [ethan-message]
-          ride-receipt: [ethan-ride]
         relation: 支持
         text: 22:33 手錶跳出死者帳號的訊息，22:34 伊森就叫了車。
+        conclusion: { word: 通知紀錄, text: 訊息可以從兩支手機上收回。通知紀錄不行。 }
+      - id: l-called-msg
+        cards: [watch-notice, ethan-message]
+        relation: 支持
+        text: 伊森說訊息被收回了，但他的手錶 22:33 留下了通知：寄件人是死者的帳號，叫他十點四十五分上樓。
         conclusion: { word: 通知紀錄, text: 訊息可以從兩支手機上收回。通知紀錄不行。 }
       - id: l-watch
         cards: [watch-photo, sophie-health-app]
@@ -746,6 +750,8 @@ scenes:
       - id: q1
         text: 伊森說是沃斯叫他上去的。有紀錄能證明嗎？
         answer: [l-called]
+        accept:
+          l-called: [l-called-msg]
         argument:
           id: arg-a
           name: 論點 A：伊森是被叫上樓的
@@ -754,6 +760,7 @@ scenes:
           tags: [邏輯]
       - id: q2a
         text: 沃斯的手錶死後還戴在身上。它平常記錄什麼？
+        unlock: [watch-photo]
         answer: [l-watch]
         argument:
           id: arg-watch
@@ -764,6 +771,7 @@ scenes:
           tags: [邏輯]
       - id: q2
         text: 驗屍只給了一個範圍。有什麼能把死亡時間釘得更準？
+        unlock: [heart-rate]
         answer: [l-time]
         argument:
           id: arg-b
@@ -773,6 +781,7 @@ scenes:
           tags: [邏輯, 權威]
       - id: q3
         text: 22:31 的訊息從哪台電腦發出？那個時間，沃斯還能打字嗎？
+        unlock: [chat-audit]
         answer: [l-dead-sender]
         accept:
           l-dead-sender: [arg-b]
@@ -784,6 +793,7 @@ scenes:
           tags: [邏輯]
       - id: q4
         text: 23:14 訊息被收回時，誰還刷卡留在 31 樓？
+        unlock: [chat-audit, access-full]
         answer: [l-alone]
         argument:
           id: arg-d
@@ -792,7 +802,8 @@ scenes:
           strength: 10
           tags: [邏輯, 程序]
       - id: q5
-        text: 蘇菲說她直接回家了。她的車幾點離開？
+        text: 蘇菲說她直接回家了。有什麼紀錄跟這句話對不上？
+        unlock: [parking-log]
         answer: [l-sophie-lie]
         argument:
           id: arg-h
@@ -802,6 +813,7 @@ scenes:
           tags: [情感, 邏輯]
       - id: q6
         text: 蘇菲那段時間其實在車上做什麼？跟誰在一起？
+        unlock: [arg-h]
         answer: [l-sophie-jade]
         argument:
           id: arg-i
@@ -957,10 +969,16 @@ scenes:
           arrest-report: [car-statement]
         relation: 矛盾
         text: 報告寫「自願陳述」，錄影裡卻是警員先開口問話，從頭到尾沒有權利告知。
+      - id: l-late-warning
+        cards: [car-statement, miranda-form]
+        relation: 矛盾
+        text: 車上那句話在 14:20，權利告知卻到 14:32 才在分局簽署。先有供述，後有警告。
     questions:
       - id: q-miranda
         text: 車上那句話是怎麼問出來的？警方有先告知權利嗎？
         answer: [l-no-warning]
+        accept:
+          l-no-warning: [l-late-warning]
         argument:
           id: arg-miranda
           name: 論點：供述取得程序違法

@@ -202,7 +202,14 @@ async function playToRachelLast(page: Page) {
   await page.getByRole('button', { name: /沒有唸出任何權利告知/ }).click();
   await page.getByRole('button', { name: '← 卷宗' }).click();
   await page.getByRole('button', { name: '證據板' }).click();
-  await solve(page, '疑問 1', '車上那句話', [/逮捕報告$/, '巡邏車錄影：沒有警告'], /矛盾/, 1);
+  await solve(
+    page,
+    '疑問 1',
+    '車上那句話',
+    [/逮捕報告：「自願陳述」/, '巡邏車錄影：沒有警告'],
+    /矛盾/,
+    1,
+  );
   await page.getByRole('button', { name: '法院系統' }).click();
   const mm = page.locator('section.job');
   await expect(mm).toContainText('巡邏車上的供述');
