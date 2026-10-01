@@ -123,7 +123,10 @@ test('第 1 集可以一路從冷開場玩到判決', async ({ page }) => {
   await page.getByRole('button', { name: /錶帶完好/ }).click();
   await page.getByRole('button', { name: '← 卷宗' }).click();
   await page.getByRole('button', { name: '委託', exact: true }).click();
-  await page.getByRole('button', { name: /^委託（1 工時）$/ }).click();
+  await page
+    .getByRole('button', { name: /^委託（1 工時）$/ })
+    .first()
+    .click();
   await page.getByRole('button', { name: '回到桌面' }).click();
   await page.getByRole('button', { name: '證據板' }).click();
   await solve(
