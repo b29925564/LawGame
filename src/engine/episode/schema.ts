@@ -568,6 +568,21 @@ const voirDireScene = z.object({
 });
 
 /**
+ * 分支條件：結局與尾聲依判決、案件理論、對話旗標、倫理帳本分開寫。
+ * 每一項都要成立才算符合；沒寫的項目不限制。
+ */
+const when = z.object({
+  verdict: z.array(z.enum(['無罪', '有罪', '陪審團僵局'])).optional(),
+  theory: z.array(id).optional(),
+  /** 這些旗標全部都要有。 */
+  flags: z.array(z.string()).optional(),
+  /** 這些旗標一個都不能有。 */
+  notFlags: z.array(z.string()).optional(),
+  /** 倫理帳本裡至少有其中一筆。 */
+  ethics: z.array(z.string()).optional(),
+});
+
+/**
  * 結辯與判決（企劃書 6.9.8、6.10）：挑三個論點排順序，選一種訴求基調，
  * 然後是三輪評議與判決。玩家看得到誰被說服，但插不了手。
  */
@@ -587,6 +602,8 @@ const closingScene = z.object({
     有罪: z.array(line).min(1),
     陪審團僵局: z.array(line).min(1),
   }),
+  /** 依條件改寫的結局，第一個符合的取代 verdicts 裡的那一段。 */
+  endings: z.array(z.object({ id, when, lines: z.array(line).min(1) })).default([]),
 });
 
 const scene = z.discriminatedUnion('type', [
@@ -594,6 +611,8 @@ const scene = z.discriminatedUnion('type', [
     type: z.literal('phone'),
     id,
     act: z.string(),
+    /** 條件不符就整場跳過（尾聲分支用）。 */
+    when: when.optional(),
     owner: z.string(),
     steps: z.array(phoneStep).min(1),
   }),
@@ -601,6 +620,8 @@ const scene = z.discriminatedUnion('type', [
     type: z.literal('dialogue'),
     id,
     act: z.string(),
+    /** 條件不符就整場跳過（尾聲分支用）。 */
+    when: when.optional(),
     place: z.string(),
     steps: z.array(dialogueStep).min(1),
   }),
@@ -619,6 +640,7 @@ const scene = z.discriminatedUnion('type', [
     type: z.literal('card'),
     id,
     act: z.string(),
+    when: when.optional(),
     title: z.string(),
     lines: z.array(z.string()).default([]),
   }),
@@ -651,6 +673,7 @@ export type NegotiationScene = Extract<Scene, { type: 'negotiation' }>;
 export type DepoQuestion = DepositionScene['topics'][number]['questions'][number];
 export type Offer = NegotiationScene['offers'][number];
 export type Line = z.infer<typeof line>;
+export type When = z.infer<typeof when>;
 export type Card = z.infer<typeof card>;
 export type Question = z.infer<typeof question>;
 export type Motion = DeskScene['motions'][number];

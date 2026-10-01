@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { episodes } from '../content';
 import type { Relation, Tag } from './schema';
+import * as branch from './episode/branch';
 import * as closing from './episode/closing';
 import * as defense from './episode/defense';
 import * as depo from './episode/deposition';
@@ -171,6 +172,23 @@ export function closingState(p: Progress, s: ClosingScene) {
   return stateOf(p, s, () => closingStart(p));
 }
 
+/** 分支條件看得到的事：判決、選定的理論、旗標、倫理帳本。 */
+export function branchContext(p: Progress): branch.BranchContext {
+  const cs = episodeOf(p).scenes.find((x) => x.type === 'closing');
+  const st = cs ? (p.scenes[cs.id] as closing.ClosingState | undefined) : undefined;
+  return {
+    verdict: st?.verdict ?? null,
+    theory: promisesOf(p).theory?.id ?? null,
+    flags: p.flags ?? [],
+    ethics: p.ethics ?? [],
+  };
+}
+
+/** 這一場的結局台詞，依判決與分支條件挑。 */
+export function endingOf(p: Progress, s: ClosingScene) {
+  return branch.endingLines(s, branchContext(p));
+}
+
 export function voirDireState(p: Progress, s: VoirDireScene) {
   return stateOf(p, s, () => voirdire.startVoirDire(s));
 }
@@ -306,7 +324,14 @@ function promiseFor(argument: string) {
 export const useEpisode = create<GameState>()((set, get) => {
   /** 換場時自動存檔。 */
   const nextScene = (p: Progress): Progress => {
-    const next = { ...p, scene: p.scene + 1, step: 0 };
+    let next = { ...p, scene: p.scene + 1, step: 0 };
+    // 條件不符的尾聲整場跳過。
+    const scenes = episodeOf(p).scenes;
+    while (next.scene < scenes.length) {
+      const s = scenes[next.scene];
+      if (!('when' in s) || branch.matches(s.when, branchContext(next))) break;
+      next = { ...next, scene: next.scene + 1 };
+    }
     writeSave('auto', saveLabel(next), next);
     return next;
   };

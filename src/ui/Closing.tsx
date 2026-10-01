@@ -1,6 +1,6 @@
 import * as closing from '../engine/episode/closing';
 import type { ClosingScene } from '../engine/episode/schema';
-import { closingState, deskSceneOf, exposedArgs, useEpisode } from '../engine/game';
+import { closingState, deskSceneOf, endingOf, exposedArgs, useEpisode } from '../engine/game';
 import { CardPick, EvidenceDrawer } from './Evidence';
 import { Speech } from './Portrait';
 import { Shell, Tabs } from './Shell';
@@ -35,7 +35,7 @@ export function Closing({ scene }: { scene: ClosingScene }) {
           ))}
         </ol>
         <div className="lines">
-          {scene.verdicts[st.verdict].map((l, i) => (
+          {endingOf(progress, scene).map((l, i) => (
             <Speech key={i} line={l} />
           ))}
         </div>
