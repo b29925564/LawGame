@@ -307,8 +307,12 @@ details summary {
 .scene.interview > :not(.lines) {
   flex-shrink: 0;
 }
+.scene.interview > .lines {
+  /* 手機上標頭和選項會把筆錄擠到剩兩行，一次三句的回答就看不全。 */
+  min-height: 34dvh;
+}
 .scene.interview > .panel.actions {
-  max-height: 42dvh;
+  max-height: 32dvh;
   overflow-y: auto;
 }
 /* 捲動區裡的東西不准被壓扁：清單外框有 overflow: hidden，彈性版面會把它擠成一條。 */

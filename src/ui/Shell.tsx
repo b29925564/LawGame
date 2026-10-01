@@ -40,12 +40,20 @@ export function Shell({
   );
 }
 
-/** 筆錄：新的一句話進來就捲到底，玩家永遠看得到最新的那句。 */
+/** 筆錄：新的話進來就捲過去，從這次的第一句開始看。 */
 export function Transcript({ count, children }: { count: number; children: ReactNode }) {
   const box = useRef<HTMLDivElement>(null);
+  const seen = useRef(0);
   useEffect(() => {
     const el = box.current;
-    if (el) el.scrollTop = el.scrollHeight;
+    if (!el) return;
+    // 一次進來好幾句時，捲到第一句新的；捲到底會把前面幾句藏在框外，看起來像沒出現。
+    const first = el.children[seen.current] as HTMLElement | undefined;
+    seen.current = el.children.length;
+    const top = first
+      ? el.scrollTop + first.getBoundingClientRect().top - el.getBoundingClientRect().top - 12
+      : el.scrollHeight;
+    el.scrollTop = Math.min(top, el.scrollHeight);
   }, [count]);
   return (
     <div className="lines transcript" aria-live="polite" ref={box}>
