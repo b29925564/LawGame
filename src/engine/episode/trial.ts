@@ -35,6 +35,10 @@ export interface TrialState {
   rebuked: boolean;
   /** 證人當庭援引緘默權（企劃書 10.9 的 E1）：檢方撤回起訴，這一集就此結束。 */
   pleaded?: boolean;
+  /** 證人援引緘默權，但辯方的理論不是指向她：檢方不撤訴，她的證詞整段刪除，審判繼續。 */
+  stricken?: boolean;
+  /** 開庭時的心證；刪除證詞時退回主詰問造成的影響要用。 */
+  opening?: Jury;
   /** 前幾場延續下來、還沒回彈掉的辯方成果（負值＝往無罪）。 */
   credit?: Jury;
   /** 檢方主詰問結束時的心證；交互詰問拆掉多少，就從這裡比。 */
@@ -81,12 +85,14 @@ export function startTrial(
   anchored: string[] = [],
   previous?: TrialState,
 ): TrialState {
+  const jury = previous ? carryJury(s, previous) : startJury(s);
   return {
     stage: 'direct',
     i: 0,
     window: false,
     patience: s.patience,
-    jury: previous ? carryJury(s, previous) : startJury(s),
+    jury,
+    opening: jury,
     credit: previous ? creditOf(previous) : {},
     deltas: {},
     claims: Object.fromEntries(
@@ -222,6 +228,8 @@ export function confront(
     cards?: string[];
     /** 出示這個論點會兌現的開場承諾 id，以及兌現時全體往辯方移多少。 */
     promise?: { id: string; kept: number };
+    /** 玩家選的案件理論；決定緘默權是撤訴還是刪除證詞。 */
+    theory?: string | null;
   } = {},
 ): TrialState {
   const c = s.witness.claims.find((x) => x.id === claimId);
@@ -271,13 +279,41 @@ export function confront(
     );
   }
   // 彈劾夠多次又出示了那個論點，她就當庭援引緘默權，詰問到此為止。
+  // 辯方理論指向她，檢方撐不下去、撤回起訴（E1）；否則法官刪除她的證詞，審判繼續。
   const f = s.fifth;
-  if (f && arg.id === f.argument && next.impeachments >= f.needs)
-    next = say(
-      { ...next, stage: 'done', pleaded: true },
-      ...f.lines.map((l) => ({ who: l.who, text: l.text })),
-    );
+  if (f && arg.id === f.argument && next.impeachments >= f.needs) {
+    const lines = f.lines.map((l) => ({ who: l.who, text: l.text }));
+    if (!f.theory || arg.theory === f.theory)
+      next = say({ ...next, stage: 'done', pleaded: true }, ...lines);
+    else next = strike(s, next, lines);
+  }
   return next;
+}
+
+export const STRUCK_DEFAULT =
+  '陪審團請注意：本席裁定，證人的證詞全部刪除。各位評議時不得列入考慮。';
+
+/**
+ * 證人當著陪審團援引緘默權，就算證詞刪除，陪審員也忘不掉：
+ * 心證退回她上證人席之前，再往無罪多移這麼多。
+ */
+export const FIFTH_LEAN = 10;
+
+/** 刪除證詞：她這一場造成的心證全部撤銷（退回開庭時），加上緘默權留下的懷疑。 */
+function strike(s: TrialScene, st: TrialState, lines: LogLine[]): TrialState {
+  const from = st.opening ?? startJury(s);
+  const jury = Object.fromEntries(
+    Object.entries(st.jury).map(([id, v]) => [
+      id,
+      Math.max(0, Math.min(v, Math.round((from[id] ?? v) - FIFTH_LEAN))),
+    ]),
+  );
+  const deltas: Jury = {};
+  for (const id of Object.keys(jury)) deltas[id] = jury[id] - st.jury[id];
+  const judge = s.fifth?.struck?.length
+    ? s.fifth.struck.map((l) => ({ who: l.who, text: l.text }))
+    : [{ who: JUDGE, text: STRUCK_DEFAULT }];
+  return say({ ...st, stage: 'done', stricken: true, jury, deltas }, ...lines, ...judge);
 }
 
 /** 糾纏：重複問同一件事，法官耐心 −1，重視情感的陪審員反感。 */

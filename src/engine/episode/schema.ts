@@ -351,7 +351,15 @@ const trialScene = z.object({
   outro: z.array(line).default([]),
   /** 彈劾到一定程度又出示那個論點，證人當庭援引緘默權（企劃書 10.9 的 E1）。 */
   fifth: z
-    .object({ needs: z.number().int().min(1), argument: id, lines: z.array(line).min(1) })
+    .object({
+      needs: z.number().int().min(1),
+      argument: id,
+      lines: z.array(line).min(1),
+      /** 只有選了這個理論才撤回起訴（E1）；其他理論改成刪除證詞、審判繼續。不填＝一律撤訴。 */
+      theory: id.optional(),
+      /** 刪除證詞時法官對陪審團的指示；不填用預設台詞。 */
+      struck: z.array(line).optional(),
+    })
     .optional(),
 });
 
