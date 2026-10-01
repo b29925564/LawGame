@@ -10,6 +10,9 @@ export function Interview({ scene }: { scene: InterviewScene }) {
   const { progress, advance, ask, press, calm } = useEpisode();
   const st = interviewState(progress, scene);
   const [tab, setTab] = useState<'ask' | 'press'>('ask');
+  // 結束會見時先播收尾（獄警敲門之類），再按一次才離開。
+  const [leaving, setLeaving] = useState(false);
+  const ending = leaving || st.over;
   const topics = interview.openTopics(scene, st, progress.cards);
   const canFinish = interview.canFinish(scene, st);
   const lastMood = [...st.log].reverse().find((l) => l.who === scene.who)?.mood ?? '平';
@@ -34,13 +37,14 @@ export function Interview({ scene }: { scene: InterviewScene }) {
         </p>
       </header>
 
-      <Transcript count={st.log.length}>
+      <Transcript count={st.log.length + (ending ? scene.outro.length : 0)}>
         {st.log.map((l, i) => (
           <Speech key={i} line={l} />
         ))}
+        {ending && scene.outro.map((l, i) => <Speech key={`outro-${i}`} line={l} />)}
       </Transcript>
 
-      {st.over ? null : (
+      {ending ? null : (
         <section className="panel actions">
           <div className="row" role="tablist">
             <button role="tab" aria-selected={tab === 'ask'} onClick={() => setTab('ask')}>
@@ -81,9 +85,19 @@ export function Interview({ scene }: { scene: InterviewScene }) {
         </section>
       )}
 
-      <button className="primary next" disabled={!canFinish} onClick={advance}>
-        {st.over ? '離開會見室' : canFinish ? '結束會見' : '還有關鍵的事沒問'}
-      </button>
+      {leaving ? (
+        <button className="primary next" onClick={advance}>
+          繼續
+        </button>
+      ) : (
+        <button
+          className="primary next"
+          disabled={!canFinish}
+          onClick={() => (!st.over && scene.outro.length ? setLeaving(true) : advance())}
+        >
+          {st.over ? '離開會見室' : canFinish ? '結束會見' : '還有關鍵的事沒問'}
+        </button>
+      )}
     </main>
   );
 }
