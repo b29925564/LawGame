@@ -2826,3 +2826,69 @@ fieldset.relations.compact {
   border-color: var(--hl);
   background: linear-gradient(var(--hl-wash), var(--hl-wash)), var(--surface);
 }
+@media (min-width: 1024px) {
+  /*
+   * 有筆錄的場景（法庭、談判、取證）：筆錄與陪審團佔左欄，
+   * 分頁列移到中間欄最上面，跟它切換的內容在一起。
+   */
+  .shell:has(> .shell-tabs > .transcript) {
+    grid-template-columns: 320px minmax(0, 1fr);
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
+  }
+  .shell:has(> .shell-tabs > .transcript) > .shell-head {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+  .shell:has(> .shell-tabs > .transcript) > .shell-tabs {
+    display: contents;
+  }
+  .shell-tabs > .transcript {
+    grid-column: 1;
+    grid-row: 2 / 4;
+  }
+  .shell-tabs > .jury {
+    grid-column: 1;
+    grid-row: 4;
+    align-self: end;
+    margin-bottom: 12px;
+  }
+  .shell:has(> .shell-tabs > .transcript):not(:has(> .shell-tabs > .jury))
+    > .shell-tabs
+    > .transcript {
+    grid-row: 2 / 5;
+    margin-bottom: 12px;
+  }
+  .shell:has(> .shell-tabs > .transcript) > .shell-tabs > .apps {
+    grid-column: 2;
+    grid-row: 2;
+    flex-direction: row;
+    overflow-x: auto;
+    gap: 0;
+  }
+  .shell:has(> .shell-tabs > .transcript) > .shell-tabs > .apps button {
+    padding: 10px 14px;
+  }
+  .shell:has(> .shell-tabs > .transcript) > .shell-tabs > .apps button::after {
+    display: block;
+  }
+  .shell:has(> .shell-tabs > .transcript) > .shell-tabs > .apps [aria-current='true'] {
+    background: none;
+    box-shadow: none;
+  }
+  .shell:has(> .shell-tabs > .transcript) > .shell-body {
+    grid-column: 2;
+    grid-row: 3;
+  }
+  .shell:has(> .shell-tabs > .transcript) > .shell-foot {
+    grid-column: 2;
+    grid-row: 4;
+  }
+  /* 沒有分頁列時，內容從第二列就開始。 */
+  .shell:has(> .shell-tabs > .transcript):not(:has(> .shell-tabs > .apps)) > .shell-body {
+    grid-row: 2 / 4;
+  }
+  /* 對話：台詞框跟著內容長，按鈕緊跟在最後一句下面。 */
+  .scene.dialogue > .lines {
+    flex: 0 1 auto;
+  }
+}
