@@ -181,8 +181,8 @@ const docLine = z.object({ text: z.string(), fact: id.optional() });
 const card = z.object({
   id,
   name: z.string(),
-  /** 物品／文件／陳述（設計稿 board-redesign）。「事實」是舊分類，劇本逐張重分完就拿掉。 */
-  kind: z.enum(['物品', '文件', '陳述', '宣誓陳述', '論點', '事實']),
+  /** 物品／文件／陳述（設計稿 board-redesign）。 */
+  kind: z.enum(['物品', '文件', '陳述', '宣誓陳述', '論點']),
   /** 物品卡的實物縮圖（public/ 底下的路徑）；沒有就畫剪影。 */
   image: z.string().optional(),
   /** 哪一天，例如「週五」。時間線上沒有日期就分不出先後。 */
