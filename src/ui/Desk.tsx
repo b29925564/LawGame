@@ -136,11 +136,7 @@ export function Desk({ scene }: { scene: DeskScene }) {
       foot={
         <>
           <EvidenceDrawer />
-          {desk.canWrap(scene, st) && (
-            <button className="primary wide" onClick={wrapDesk}>
-              結束調查
-            </button>
-          )}
+          {desk.canWrap(scene, st) && <WrapButton hours={st.hours} onWrap={wrapDesk} />}
         </>
       }
     >
@@ -335,9 +331,7 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
 
   const list = (
     <nav className="q-list" aria-label="疑問">
-      <p className="eyebrow">
-        疑問 {st.confirmed.length} / {questions.length} 已確認
-      </p>
+      <p className="eyebrow">已確認 {st.confirmed.length}</p>
       <ul>
         {questions.map((x, i) => {
           const s = status(x.id);
@@ -364,6 +358,15 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
             </li>
           );
         })}
+        {/* 還沒出現的疑問畫成鎖住的空格：玩家看得出案子還沒查完（試玩回報）。 */}
+        {Array.from({ length: scene.questions.length - questions.length }, (_, i) => (
+          <li key={`locked-${i}`}>
+            <span className="q-item locked" aria-label="尚未出現的疑問">
+              <span className="q-num">{num(questions.length + i)}</span>
+              <span className="q-text">？</span>
+            </span>
+          </li>
+        ))}
         <li>
           <button
             className="q-item idle"
@@ -777,6 +780,28 @@ function Jobs({ scene, held }: { scene: DeskScene; held: string[] }) {
 }
 
 /** 回報裡寫好的間距說明（例如「22:44 抵達 → 22:47 刷卡」），時間線上的間距標記沿用。 */
+/**
+ * 結束調查要按兩次：第一次只把按鈕換成確認，標出還剩幾小時（試玩回報：解完一題就以為查完了）。
+ * 四秒沒按就恢復原狀。
+ */
+function WrapButton({ hours, onWrap }: { hours: number; onWrap: () => void }) {
+  const [armed, setArmed] = useState(false);
+  useEffect(() => {
+    if (!armed) return;
+    const t = setTimeout(() => setArmed(false), 4000);
+    return () => clearTimeout(t);
+  }, [armed]);
+  return armed ? (
+    <button className="primary wide armed" onClick={onWrap}>
+      確定結束 <span className="cost">剩 {hours} 時</span>
+    </button>
+  ) : (
+    <button className="wide" onClick={() => setArmed(true)}>
+      結束調查
+    </button>
+  );
+}
+
 /** 數字變大之後的 600ms 回傳 true，拿來觸發一次性的動畫。 */
 function useBump(n: number) {
   const [base, setBase] = useState(n);
