@@ -607,6 +607,22 @@ scenes:
             text: 大廳閘門只有一道，員工證刷了才過得去。地下停車場另有一個出口，不刷卡。
           - who: 蘿莎
             text: 還有，31 樓的夜間清潔是外包的，週五晚上不排班。
+      - id: job-morrow
+        who: 艾莉絲
+        label: 打電話給莫羅，聽聽她開的條件
+        detail: 她在信裡說「早點打給我」。現在談，手上只有起訴書。
+        cost: 1
+        needs: [indictment]
+        report:
+          - who: 莫羅
+            text: 韓律師，早。二級謀殺，十五年。這已經是看在他年輕的份上。
+          - who: 艾莉絲
+            text: 妳的目擊證人是誰？
+          - who: 莫羅
+            text: 開庭前妳會看到名單。妳手上有什麼，就拿出來；沒有的話，我的條件會一直在桌上。
+          - who: 艾莉絲
+            text: 現在談，手上沒有牌。等我有東西再來，而且要伊森點頭才能談。
+            thought: true
     links:
       - id: l-called
         cards: [watch-notice, ride-receipt]
