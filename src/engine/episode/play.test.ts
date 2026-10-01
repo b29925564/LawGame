@@ -197,6 +197,22 @@ describe('審前動議', () => {
     expect(right.hours).toBe(base.hours - 2);
   });
 
+  it('駁回之後可以修正重送：工時再扣一次，駁回旗標留著', () => {
+    const wrong = desk.file(
+      investigate,
+      fill(solved(), 'm-watch', '傳聞例外', '核發傳票給手錶廠商', ['arg-watch']),
+      'm-watch',
+    );
+    const fixed = desk.pickBasis(wrong, 'm-watch', '相關性');
+    expect(desk.canFile(investigate, fixed, 'm-watch')).toBe(true);
+    const again = desk.file(investigate, fixed, 'm-watch');
+    expect(desk.motionAttempt(again, 'm-watch').ruling).toBe('granted');
+    expect(desk.heldCards(investigate, again)).toContain('heart-rate');
+    expect(again.hours).toBe(wrong.hours - 2);
+    expect(again.flags).toContain('motion-denied');
+    expect(desk.canFile(investigate, again, 'm-watch')).toBe(false);
+  });
+
   it('沒有論點撐著就提不出來，工時也不會扣', () => {
     const st = desk.startDesk(investigate);
     const tried = fill(st, 'm-watch', '相關性', '核發傳票給手錶廠商', ['arg-watch']);

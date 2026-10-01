@@ -160,6 +160,8 @@ const question = z.object({
     text: z.string(),
     strength: z.number().int().min(5).max(25),
     tags: z.array(z.enum(tags)).min(1),
+    /** 只用於聲請的程序論點（例如相關性、取證違法），不拿去對陪審團講，結辯選單排除。 */
+    motionOnly: z.boolean().default(false),
   }),
 });
 

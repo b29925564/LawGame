@@ -172,6 +172,13 @@ export function closingState(p: Progress, s: ClosingScene) {
   return stateOf(p, s, () => closingStart(p));
 }
 
+/** 結辯能挑的論點：手上已確認、而且不是只用於聲請的程序論點。 */
+export function closingArgs(p: Progress) {
+  return (deskSceneOf(p)?.questions ?? [])
+    .filter((q) => p.cards.includes(q.argument.id) && !q.argument.motionOnly)
+    .map((q) => q.argument);
+}
+
 /** 分支條件看得到的事：判決、選定的理論、旗標、倫理帳本。 */
 export function branchContext(p: Progress): branch.BranchContext {
   const cs = episodeOf(p).scenes.find((x) => x.type === 'closing');
@@ -500,10 +507,7 @@ export const useEpisode = create<GameState>()((set, get) => {
         const p = get().progress;
         const after = juryAfterTrial(p);
         if (!after) return st;
-        const args = (deskSceneOf(p)?.questions ?? [])
-          .filter((q) => p.cards.includes(q.argument.id))
-          .map((q) => q.argument);
-        return closing.deliver(s, st, after.rules, args, exposedArgs(p));
+        return closing.deliver(s, st, after.rules, closingArgs(p), exposedArgs(p));
       }),
 
     prepareWitness: (id) => {
