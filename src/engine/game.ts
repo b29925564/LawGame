@@ -543,7 +543,8 @@ export const useEpisode = create<GameState>()((set, get) => {
         (s, st) => desk.heldCards(s, st, get().progress.cards),
       ),
     wrapDesk: () => onDesk((_s, st) => desk.wrap(st)),
-    toggleCard: (qid, card) => onDesk((s, st) => desk.toggleCard(s, st, qid, card)),
+    toggleCard: (qid, card) =>
+      onDesk((s, st) => desk.toggleCard(s, st, qid, card, get().progress.cards)),
     toggleTimeline: (card) => onDesk((_s, st) => desk.toggleTimeline(st, card)),
     moveTimeline: (card, dir) => onDesk((_s, st) => desk.moveTimeline(st, card, dir)),
     toggleLinkCard: (card) => onDesk((_s, st) => desk.toggleLinkCard(st, card)),
@@ -551,7 +552,7 @@ export const useEpisode = create<GameState>()((set, get) => {
     connect: () => onDesk((s, st) => desk.connect(s, st)),
     submit: (qid) =>
       onDesk(
-        (s, st) => desk.submit(s, st, qid),
+        (s, st) => desk.submit(s, st, qid, get().progress.cards),
         (s, st) => desk.heldCards(s, st, get().progress.cards),
       ),
 

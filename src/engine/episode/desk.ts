@@ -205,10 +205,36 @@ export function findings(s: DeskScene, st: DeskState) {
   return st.found.flatMap((id) => s.links.filter((l) => l.id === id));
 }
 
+/**
+ * 疑問看不看得到：unlock 列的卡片、發現、論點全部到手才出現，
+ * 免得還沒查到的線索先從疑問的標題漏出來。
+ */
+export function questionOpen(
+  s: DeskScene,
+  st: DeskState,
+  q: DeskScene['questions'][number],
+  carried: string[] = [],
+): boolean {
+  if (!q.unlock.length) return true;
+  const have = new Set([...heldCards(s, st, carried), ...st.found]);
+  return q.unlock.every((id) => have.has(id));
+}
+
+/** 現在看得到的疑問，照劇本順序。 */
+export function openQuestions(s: DeskScene, st: DeskState, carried: string[] = []) {
+  return s.questions.filter((q) => questionOpen(s, st, q, carried));
+}
+
 /** 推理第二步：替疑問挑發現或論點。 */
-export function toggleCard(s: DeskScene, st: DeskState, qid: string, card: string): DeskState {
+export function toggleCard(
+  s: DeskScene,
+  st: DeskState,
+  qid: string,
+  card: string,
+  carried: string[] = [],
+): DeskState {
   const q = s.questions.find((x) => x.id === qid);
-  if (!q || st.confirmed.includes(qid)) return st;
+  if (!q || st.confirmed.includes(qid) || !questionOpen(s, st, q, carried)) return st;
   const cur = st.attempts[qid] ?? { cards: [] };
   const has = cur.cards.includes(card);
   // 格子滿了又挑新的一張：換掉最早挑的那張，不必先取消（還沒提交前隨時可以換）。
@@ -217,13 +243,19 @@ export function toggleCard(s: DeskScene, st: DeskState, qid: string, card: strin
   return { ...st, attempts: { ...st.attempts, [qid]: { cards } } };
 }
 
-export function canSubmit(s: DeskScene, st: DeskState, qid: string): boolean {
+export function canSubmit(
+  s: DeskScene,
+  st: DeskState,
+  qid: string,
+  carried: string[] = [],
+): boolean {
   const q = s.questions.find((x) => x.id === qid);
   const a = st.attempts[qid];
   return (
     !!q &&
     st.hours >= 1 &&
     !st.confirmed.includes(qid) &&
+    questionOpen(s, st, q, carried) &&
     a?.cards.length === q.answer.length &&
     !triedBefore(st, qid)
   );
@@ -244,8 +276,13 @@ export function misses(st: DeskState, qid: string): number {
 }
 
 /** 提交花 1 工時。全對才確認，遊戲不說哪一條放錯（企劃書 6.5）。 */
-export function submit(s: DeskScene, st: DeskState, qid: string): DeskState {
-  if (!canSubmit(s, st, qid)) return st;
+export function submit(
+  s: DeskScene,
+  st: DeskState,
+  qid: string,
+  carried: string[] = [],
+): DeskState {
+  if (!canSubmit(s, st, qid, carried)) return st;
   const q = s.questions.find((x) => x.id === qid)!;
   const ok = fits(q.answer, q.accept, st.attempts[qid].cards);
   const next = spend(s, st, 1);

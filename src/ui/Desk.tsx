@@ -297,14 +297,16 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
     conclusion: l.conclusion,
   }));
   const answers = [...found, ...args];
-  const firstOpen = scene.questions.find((q) => !st.confirmed.includes(q.id));
+  // 還沒解鎖的疑問不列出來，免得題目先把還沒查到的線索講出來。
+  const questions = desk.openQuestions(scene, st, progress.cards);
+  const firstOpen = questions.find((q) => !st.confirmed.includes(q.id));
   const wide = useWide();
   // 電腦版一打開就停在第一題還沒確認的疑問；手機版先看清單。
   const [view, setView] = useState<string | null>(() =>
     wide ? (firstOpen?.id ?? 'timeline') : null,
   );
   const shown = view ?? (wide ? (firstOpen?.id ?? 'timeline') : null);
-  const q = scene.questions.find((x) => x.id === shown);
+  const q = questions.find((x) => x.id === shown);
   // 電腦版：右邊證據欄的卡片直接點就放上連線台（先 A 再 B）。
   const linking = wide && !!q;
   const poolIds = pool.map((c) => c.id).join();
@@ -334,10 +336,10 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
   const list = (
     <nav className="q-list" aria-label="疑問">
       <p className="eyebrow">
-        疑問 {st.confirmed.length} / {scene.questions.length} 已確認
+        疑問 {st.confirmed.length} / {questions.length} 已確認
       </p>
       <ul>
-        {scene.questions.map((x, i) => {
+        {questions.map((x, i) => {
           const s = status(x.id);
           return (
             <li key={x.id}>
@@ -466,7 +468,7 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
     ? (() => {
         const a = st.attempts[q.id] ?? { cards: [] };
         const done = st.confirmed.includes(q.id);
-        const i = scene.questions.indexOf(q);
+        const i = questions.indexOf(q);
         const item = (id: string) => answers.find((c) => c.id === id);
         return (
           <section className="workbench chain" aria-label={q.text}>
@@ -522,7 +524,7 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
                     )}
                     <button
                       className="primary"
-                      disabled={!desk.canSubmit(scene, st, q.id)}
+                      disabled={!desk.canSubmit(scene, st, q.id, progress.cards)}
                       onClick={() => submit(q.id)}
                     >
                       提交 <span className="cost">−1 時</span>
