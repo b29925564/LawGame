@@ -41,11 +41,6 @@ import * as vd from './voirdire';
 const SEEDS = Number(process.env.FUZZ_SEEDS ?? 40);
 /** 同一個畫面連續這麼多步都沒推進，就算卡關。 */
 const STALL = 4000;
-/**
- * 已知問題：遴選時有因迴避＋三次無因迴避（檢方跟著砍三個）會讓候選人少於 12 位，
- * 「入席」再也按不下去。修好之後把這個改成 false，隨機玩家就會重新去踩它。
- */
-const KNOWN_VOIRDIRE_SOFTLOCK = true;
 const RELATIONS: Relation[] = ['矛盾', '支持', '縮小範圍', '說明動機', '說明機會'];
 
 function rng(seed: number) {
@@ -210,10 +205,8 @@ function actions(p: Progress): { go: Act | null; rest: Act[] } {
       if (vd.done(st)) return { go: go(), rest };
       for (const c of s.candidates) {
         add(`juror ask ${c.id}`, () => g.askJuror(c.id));
-        if (!KNOWN_VOIRDIRE_SOFTLOCK || vd.pool(s, st).length - 1 >= s.seats)
-          add(`juror cause ${c.id}`, () => g.challengeJuror(c.id));
-        if (!KNOWN_VOIRDIRE_SOFTLOCK || vd.pool(s, st).length - 2 >= s.seats)
-          add(`juror strike ${c.id}`, () => g.strikeJuror(c.id));
+        add(`juror cause ${c.id}`, () => g.challengeJuror(c.id));
+        add(`juror strike ${c.id}`, () => g.strikeJuror(c.id));
       }
       add('seat', g.seatJury);
       return { go: null, rest };
