@@ -1,5 +1,8 @@
 import { expect, test, type Page } from '@playwright/test';
 
+// 整集通關一次就接近 30 秒，CI 機器較慢。
+test.describe.configure({ timeout: 90_000 });
+
 const next = (page: Page, name: string | RegExp = '繼續') =>
   page.getByRole('button', { name }).first().click();
 
@@ -52,8 +55,8 @@ async function until(page: Page, target: ReturnType<Page['getByRole']>, limit = 
   await expect(target).toBeVisible();
 }
 
-/** 自動通關：冷開場 → 第一幕 → 調查 → 庭審，彈劾成功。 */
-test('第 1 集可以一路從冷開場玩到判決', async ({ page }) => {
+/** 自動通關：冷開場 → 第一幕 → 調查 → 庭審，玩到瑞秋的第三項證詞（論點 D）為止。 */
+async function playToRachelLast(page: Page) {
   await page.goto('/');
   await page.getByRole('button', { name: '新遊戲' }).click();
 
@@ -325,12 +328,16 @@ test('第 1 集可以一路從冷開場玩到判決', async ({ page }) => {
   await claim.getByRole('button', { name: /出席紀錄由系統自動產生/ }).click();
   await card(claim, /出示 論點 C/).click();
 
-  // 兩次彈劾之後出示論點 D，她當庭援引緘默權。
   await expect(claim).toContainText('三十一樓還有誰');
   await claim.getByRole('button', { name: /那個時間，三十一樓除了您/ }).click();
   await claim.getByRole('button', { name: /門禁紀錄顯示/ }).click();
-  await card(claim, /出示 論點 D/).click();
-  await expect(page.getByText('自證己罪')).toBeVisible();
+  return claim;
+}
+
+test('第 1 集可以一路從冷開場玩到判決', async ({ page }) => {
+  await playToRachelLast(page);
+  // 不出示論點 D：瑞秋不會援引緘默權，照常走到辯方證人和結辯。
+  await page.getByRole('button', { name: '詰問完畢' }).click();
   await next(page);
 
   await next(page); // 第三天字卡
@@ -361,4 +368,18 @@ test('第 1 集可以一路從冷開場玩到判決', async ({ page }) => {
   await page.getByRole('button', { name: '開始結辯' }).click();
   await expect(page.getByText('第 1 輪評議')).toBeVisible();
   await expect(page.getByRole('heading', { name: /無罪|有罪|陪審團僵局/ })).toBeVisible();
+});
+
+test('瑞秋援引緘默權後，檢方撤回起訴，直接進尾聲（E1）', async ({ page }) => {
+  const claim = await playToRachelLast(page);
+  await card(claim, /出示 論點 D/).click();
+  await expect(page.getByText('自證己罪')).toBeVisible();
+  await next(page);
+  await until(page, page.getByText('下次，早點打給我。'));
+  // 沒走蘿莎的停車場線，不知道潔德是誰：信封不能交給她。
+  const keep = page.getByRole('button', { name: /自己保留/ });
+  await until(page, keep);
+  await expect(page.getByRole('button', { name: /交給潔德/ })).toHaveCount(0);
+  await keep.click();
+  await until(page, page.getByText('第 1 集到此結束。'));
 });
