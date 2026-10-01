@@ -68,7 +68,7 @@ function Jurors({
       </div>
       {(!strip || open) && (
         <>
-          {showNumbers && !strip && <JuryLegend jury={jury} threshold={scene.threshold} />}
+          {showNumbers && <JuryLegend jury={jury} threshold={scene.threshold} />}
           <ul className="jurors">
             {scene.jurors.map((j) => {
               const r = reaction(deltas[j.id] ?? 0);

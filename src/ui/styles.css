@@ -1095,13 +1095,19 @@ details summary {
   overflow: hidden;
 }
 .chips.kinds {
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  scrollbar-width: none;
+  flex-shrink: 0;
 }
 .chips.kinds button {
-  flex: 0 0 auto;
   min-height: 34px;
+}
+/* 抽屜是直排：篩選列不准被清單擠扁，清單自己捲。 */
+.sheet > * {
+  flex-shrink: 0;
+}
+.sheet > .sheet-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
 }
 .verb {
   color: var(--accent);
@@ -1179,9 +1185,17 @@ button.relation.on,
 }
 
 /* 連線台：兩個槽之間拉一條線，線上的結寫著選好的關係；三樣都齊了整條線變成螢光筆。 */
-.link-bench {
+.board-tabs {
   position: sticky;
   top: 0;
+  z-index: 3;
+  margin-inline: -2px;
+  padding-inline: 2px;
+  background: var(--bg);
+}
+.link-bench {
+  position: sticky;
+  top: var(--tabs-h, 44px);
   z-index: 2;
   margin: 2px -16px;
   padding: 10px 16px;
@@ -1207,6 +1221,11 @@ button.relation.on,
 }
 .link-bench .slot-card.filled {
   background: linear-gradient(var(--hl-wash), var(--hl-wash)), var(--surface);
+}
+.link-bench .chips button {
+  min-height: 32px;
+  padding: 4px 10px;
+  font-size: 13px;
 }
 .link-knot {
   display: flex;
@@ -1266,6 +1285,18 @@ fieldset.relations.compact {
   overflow: hidden;
   clip-path: inset(50%);
   white-space: nowrap;
+}
+
+/* 長清單底下的主要動作釘在視窗底部，不必捲到底才找得到。 */
+.pin-bottom {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+}
+.pin-bottom:not(:disabled) {
+  box-shadow:
+    0 0 0 6px var(--surface),
+    0 6px 18px -8px light-dark(rgb(160 120 0 / 55%), rgb(244 197 61 / 45%));
 }
 
 /* 清單裡的分組小標：有時間的事件、其他資料。 */
@@ -1402,6 +1433,8 @@ fieldset.relations.compact {
   background: var(--border);
 }
 .timeline li {
+  user-select: none;
+  -webkit-user-select: none;
   position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1fr) 40px 40px;
@@ -1964,11 +1997,27 @@ fieldset.relations.compact {
   border: none;
   background: none;
 }
+.candidate:has(.candidate-body) {
+  box-shadow: inset 3px 0 0 var(--hl);
+}
+/* 點開的細節是一塊凹下去的面板，動作按鈕另成一排，和上面的名單分得開。 */
 .candidate-body {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 0 16px 14px;
+  margin: 0 12px 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+}
+.candidate-body .row {
+  margin-top: 4px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--border-strong);
+}
+.candidate-body .row button {
+  background: var(--surface);
 }
 .seat {
   display: inline-block;
