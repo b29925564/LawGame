@@ -3,7 +3,7 @@ import { episodes } from '../../content';
 import { endingLines, matches, type BranchContext } from './branch';
 import type { ClosingScene, Episode } from './schema';
 import { validateEpisode } from './validate';
-import { useEpisode } from '../game';
+import { closingArgs, deskSceneOf, useEpisode } from '../game';
 
 const ctx = (o: Partial<BranchContext> = {}): BranchContext => ({
   verdict: '無罪',
@@ -81,6 +81,35 @@ describe('尾聲跳場', () => {
       expect(useEpisode.getState().progress.scene).toBe(at + 1);
     } finally {
       delete next.when;
+    }
+  });
+});
+
+describe('結辯論點', () => {
+  it('只用於聲請的程序論點不會出現在結辯選單', () => {
+    const qs = deskSceneOf({
+      episode: 'ep1',
+      scene: 0,
+      step: 0,
+      choices: {},
+      cards: [],
+      scenes: {},
+    })!.questions;
+    const [a, b] = qs;
+    const p = {
+      episode: 'ep1',
+      scene: 0,
+      step: 0,
+      choices: {},
+      cards: [a.argument.id, b.argument.id],
+      scenes: {},
+    };
+    const was = a.argument.motionOnly;
+    try {
+      a.argument.motionOnly = true;
+      expect(closingArgs(p).map((x) => x.id)).toEqual([b.argument.id]);
+    } finally {
+      a.argument.motionOnly = was;
     }
   });
 });

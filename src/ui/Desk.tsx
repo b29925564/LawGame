@@ -454,7 +454,7 @@ function Motions({ scene, held }: { scene: DeskScene; held: string[] }) {
   const pool = scene.cards.filter((c) => held.includes(c.id));
   const args = scene.questions.filter((q) => held.includes(q.argument.id)).map((q) => q.argument);
   // 一打開就停在還沒裁定的那一份上。
-  const open = scene.motions.find((m) => desk.motionAttempt(st, m.id).ruling === null);
+  const open = scene.motions.find((m) => desk.motionAttempt(st, m.id).ruling !== 'granted');
   const [pick, setPick] = useState<string>(open?.id ?? scene.motions[0]?.id ?? '');
   if (scene.motions.length === 0) return <p className="muted">目前沒有可以提出的聲請。</p>;
   const m = scene.motions.find((x) => x.id === pick) ?? scene.motions[0];
@@ -470,7 +470,7 @@ function Motions({ scene, held }: { scene: DeskScene; held: string[] }) {
           items={scene.motions.map((x, i) => ({
             id: x.id,
             label: `聲請 ${i + 1}`,
-            done: desk.motionAttempt(st, x.id).ruling !== null,
+            done: desk.motionAttempt(st, x.id).ruling === 'granted',
           }))}
         />
       )}
@@ -479,8 +479,10 @@ function Motions({ scene, held }: { scene: DeskScene; held: string[] }) {
         <p className="muted">{m.cost} 工時</p>
         <p>{m.detail}</p>
         {a.ruling === 'granted' && <p className="good">法官准了。</p>}
-        {a.ruling === 'denied' && <p className="bad-text">駁回。法官記得妳浪費了他的時間。</p>}
-        {a.ruling === null &&
+        {a.ruling === 'denied' && (
+          <p className="bad-text">駁回。法官記得妳浪費了他的時間。修正後可以重送，工時照扣。</p>
+        )}
+        {a.ruling !== 'granted' &&
           (missing.length ? (
             <p className="muted">還缺前提：先把相關的論點確認起來。</p>
           ) : (

@@ -287,7 +287,7 @@ export function pickRequest(st: DeskState, id: string, request: string): DeskSta
 export function toggleSupport(s: DeskScene, st: DeskState, id: string, card: string): DeskState {
   const m = s.motions.find((x) => x.id === id);
   const a = attempt(st, id);
-  if (!m || a.ruling) return st;
+  if (!m || a.ruling === 'granted') return st;
   const has = a.support.includes(card);
   if (!has && a.support.length >= m.support.length) return st;
   const support = has ? a.support.filter((x) => x !== card) : [...a.support, card];
@@ -297,7 +297,7 @@ export function toggleSupport(s: DeskScene, st: DeskState, id: string, card: str
 export function canFile(s: DeskScene, st: DeskState, id: string, carried: string[] = []): boolean {
   const m = s.motions.find((x) => x.id === id);
   const a = attempt(st, id);
-  if (!m || a.ruling || st.hours < m.cost) return false;
+  if (!m || a.ruling === 'granted' || st.hours < m.cost) return false;
   const held = heldCards(s, st, carried);
   return (
     m.needs.every((n) => held.includes(n)) &&
@@ -310,6 +310,7 @@ export function canFile(s: DeskScene, st: DeskState, id: string, carried: string
 /**
  * 提出動議（企劃書 6.6）：法律依據、支撐、請求三樣都對才成立。
  * 依據錯了是駁回，並記下旗標，開庭第一天法官耐心 −1（他記得你浪費時間）。
+ * 駁回後可以修正再送，工時照扣；旗標已經記下，重送成功也不會抹掉。
  */
 export function file(s: DeskScene, st: DeskState, id: string, carried: string[] = []): DeskState {
   if (!canFile(s, st, id, carried)) return st;

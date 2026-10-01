@@ -1,6 +1,6 @@
 import * as closing from '../engine/episode/closing';
 import type { ClosingScene } from '../engine/episode/schema';
-import { closingState, deskSceneOf, endingOf, exposedArgs, useEpisode } from '../engine/game';
+import { closingArgs, closingState, endingOf, exposedArgs, useEpisode } from '../engine/game';
 import { CardPick, EvidenceDrawer } from './Evidence';
 import { Speech } from './Portrait';
 import { Shell, Tabs } from './Shell';
@@ -11,9 +11,7 @@ export function Closing({ scene }: { scene: ClosingScene }) {
   const { progress, pickArg, setTone, deliver, advance } = useEpisode();
   const st = closingState(progress, scene);
   const exposed = exposedArgs(progress);
-  const args = (deskSceneOf(progress)?.questions ?? [])
-    .filter((q) => progress.cards.includes(q.argument.id))
-    .map((q) => q.argument);
+  const args = closingArgs(progress);
   const [tab, setTab] = useState<'args' | 'tone'>('args');
   const need = closing.needed(scene, args.length);
 
