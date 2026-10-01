@@ -101,6 +101,8 @@ const interviewScene = z.object({
     )
     .default([]),
   calm: z.array(line).min(1),
+  /** 整場訪談能安撫幾次；不設上限的話，每問一題都可以安撫掉。 */
+  calms: z.number().int().min(1).default(2),
   guarded: z.array(line).min(1),
   outro: z.array(line).default([]),
 });

@@ -513,15 +513,20 @@ function Motions({ scene, held }: { scene: DeskScene; held: string[] }) {
 function Jobs({ scene, held }: { scene: DeskScene; held: string[] }) {
   const { progress, commission } = useEpisode();
   const st = deskState(progress, scene);
+  // 前提還沒出現的委託不顯示：先有線索，才知道可以查什麼。
+  const shown = scene.jobs.filter(
+    (j) => st.jobs.includes(j.id) || j.needs.every((n) => held.includes(n)),
+  );
   const nameOf = (id: string) =>
     scene.cards.find((c) => c.id === id)?.name ??
     scene.questions.find((q) => q.argument.id === id)?.argument.name ??
     id;
+  if (shown.length === 0)
+    return <p className="muted">目前沒有可以委託的事。多讀卷宗、多問委託人。</p>;
   return (
     <ul className="stack">
-      {scene.jobs.map((j) => {
+      {shown.map((j) => {
         const done = st.jobs.includes(j.id);
-        const missing = j.needs.filter((n) => !held.includes(n));
         return (
           <li key={j.id} className="panel job">
             <strong>{j.label}</strong>
@@ -547,9 +552,7 @@ function Jobs({ scene, held }: { scene: DeskScene; held: string[] }) {
                 disabled={!desk.canCommission(scene, st, j.id, progress.cards)}
                 onClick={() => commission(j.id)}
               >
-                {missing.length
-                  ? `還缺：${missing.map(nameOf).join('、')}`
-                  : `委託（${j.cost} 工時）`}
+                {`委託（${j.cost} 工時）`}
               </button>
             )}
           </li>
