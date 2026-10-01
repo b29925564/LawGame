@@ -2243,6 +2243,33 @@ scenes:
         text: 認罪書上寫的是他做過的事。我到現在都不知道，那是不是真的。
         thought: true
 
+  # E5 有罪（企劃書 10.9）：兩週後，監獄寄來的手寫信。
+  - type: dialogue
+    id: epilogue-letter
+    act: 尾聲
+    when:
+      verdict: [有罪]
+    place: 艾莉絲的辦公室　兩週後
+    steps:
+      - do: say
+        who: 旁白
+        text: 兩週後。郵件堆裡有一封從州立監獄寄來的信，信封上的字寫得很用力。
+      - do: say
+        who: 伊森・蕭
+        text: （信）艾莉絲，這裡晚上十點就熄燈。我每天晚上都在想那則訊息。它真的存在過，對吧？
+        mood: 緊
+      - do: say
+        who: 伊森・蕭
+        text: （信）我姊說妳還在找上訴的理由。如果找不到，也不是妳的錯。
+        mood: 緊
+      - do: say
+        who: 艾莉絲
+        text: 當公設辯護人那四年，我也收過這種信。我一封都沒有丟。
+        thought: true
+      - do: say
+        who: 旁白
+        text: 艾莉絲把信夾進伊森的卷宗，在卷宗的標籤上用鉛筆加了兩個字：上訴。
+
   - type: dialogue
     id: epilogue-review
     act: 尾聲
