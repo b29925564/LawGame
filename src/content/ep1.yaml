@@ -131,6 +131,7 @@ _cards: &cards
     date: 週五
     time: '22:34'
     text: 22:34 於東河街 118 號上車，22:44 抵達卡爾德大樓。司機奧瑪・哈桑。
+    arrivesAt: '22:44'
     source: 叫車公司
   - id: sophie-health-app
     name: 蘇菲陳述：他每天盯著健康 App
@@ -383,8 +384,8 @@ scenes:
         text: 他們說我逃了兩天。我不是逃，我只是……不知道還能去哪。
         mood: 緊
       - who: 艾莉絲
-        text: 還沒人問，他就先替自己辯護了。先讓他講，難聽的晚點再問。
-        thought: true
+        text: 先讓他講。
+        mark: { kind: sticky, on: meter }
     topics:
       - id: t-friday
         label: 星期五下午，沃斯找你做什麼？
@@ -550,6 +551,9 @@ scenes:
     hours: 24
     deadline: 預審　三週後
     cards: *cards
+    timelineMarks:
+      - { kind: gap, cards: [ride-receipt, access-partial] }
+      - { kind: sync, cards: [heart-rate, access-partial] }
     docs:
       - id: doc-arrest
         title: 逮捕報告
@@ -625,8 +629,8 @@ scenes:
           - who: 戴文
             text: 叫車公司回了。22:34 東河街 118 號上車，22:44 到卡爾德大樓。司機叫奧瑪・哈桑。
           - who: 艾莉絲
-            text: 22:44 到，22:47 刷卡。中間三分鐘，剛好夠走到電梯。
-            thought: true
+            text: 22:44 抵達 → 22:47 刷卡
+            mark: { kind: gap, text: 3 分鐘 }
       - id: job-watch
         who: 法院系統
         label: 聲請檢視被告扣押財物中的智慧手錶
@@ -639,7 +643,7 @@ scenes:
             text: 雷耶斯法官核准。手錶的通知紀錄裡，22:33 那一則還在。
           - who: 艾莉絲
             text: 訊息可以從兩支手機上收回。通知紀錄不行。
-            thought: true
+            mark: { kind: highlight, word: 通知紀錄 }
       - id: job-sophie
         who: 艾莉絲
         label: 打電話給蘇菲，問沃斯平常的習慣
@@ -651,7 +655,7 @@ scenes:
             text: 他那支錶是去年買的。每天早上、每次開完會，他都低頭看健康 App，數字不好看就發脾氣。
           - who: 艾莉絲
             text: 一個每天看的人，那支錶裡就一定有東西可以查。
-            thought: true
+            mark: { kind: highlight, word: 每天, on: sophie-health-app }
         gives: [sophie-health-app]
       - id: job-rosa
         who: 蘿莎
@@ -684,7 +688,7 @@ scenes:
             text: 八點半到十點四十，她都在我車上。她給了我一份沃斯的行事曆副本，然後哭了很久。她沒有上樓。
           - who: 艾莉絲
             text: 蘇菲說謊，是為了保護消息來源，不是為了掩蓋命案。
-            thought: true
+            mark: { kind: highlight, word: 消息來源 }
         gives: [jade-alibi]
       - id: job-morrow
         who: 艾莉絲
@@ -709,6 +713,7 @@ scenes:
           ride-receipt: [ethan-ride]
         relation: 支持
         text: 22:33 手錶跳出死者帳號的訊息，22:34 伊森就叫了車。
+        conclusion: { word: 通知紀錄, text: 訊息可以從兩支手機上收回。通知紀錄不行。 }
       - id: l-watch
         cards: [watch-photo, sophie-health-app]
         relation: 支持
@@ -736,6 +741,7 @@ scenes:
         cards: [parking-log, jade-alibi]
         relation: 支持
         text: 蘇菲的車停到 22:40，潔德說她 20:30 到 22:40 都在車上：兩份紀錄對得上。
+        conclusion: { word: 消息來源, text: 蘇菲說謊，是為了保護消息來源，不是為了掩蓋命案。 }
     questions:
       - id: q1
         text: 伊森為什麼那個時間上樓？
@@ -822,14 +828,14 @@ scenes:
           - who: 旁白
             text: 雷耶斯法官當庭核發傳票。三天後，廠商的資料到了。
           - who: 艾莉絲
-            text: 22:24，心率歸零。伊森 22:47 才刷卡進門。
-            thought: true
+            text: 22:24 心率歸零｜22:47 伊森刷卡進門｜23 分鐘
+            mark: { kind: stamp, text: 准予 }
         denied:
           - who: 旁白
             text: 「本庭看不出這支手錶和本案的關聯。聲請駁回。」
           - who: 艾莉絲
-            text: 依據選錯了。法官記得這種事。
-            thought: true
+            text: 駁回
+            mark: { kind: stamp, text: 駁回 }
       - id: m-chat
         label: 聲請傳票：卡爾德物流聊天系統稽核紀錄
         detail: 訊息被收回了，但系統會留下「誰、用哪台機器、什麼時候收回」。
@@ -849,8 +855,8 @@ scenes:
           - who: 旁白
             text: 「聲請駁回。」
           - who: 艾莉絲
-            text: 依據選錯了。
-            thought: true
+            text: 駁回
+            mark: { kind: stamp, text: 駁回 }
         twist:
           lines:
             - who: 維多莉亞・惠特洛克
@@ -869,8 +875,8 @@ scenes:
                   text: 聰明。這件事我記著。
                   mood: 硬
                 - who: 艾莉絲
-                  text: 我也記著。記著我沒去拿的那張紙。
-                  thought: true
+                  text: 我也記著。｜記著我沒去拿的那張紙。
+                  voice: 'off'
             - text: 我出庭答辯。
               gives: [chat-audit]
               flags: [whitlock-down, hale-up]
@@ -935,14 +941,14 @@ scenes:
           - who: 旁白
             text: 雷耶斯法官看完錄影，只說了一句：「本庭排除該項供述。」
           - who: 艾莉絲
-            text: 檢方開庭時不能再提那句話了。
-            thought: true
+            text: 已排除
+            mark: { kind: stamp, text: 已排除, on: car-statement }
         denied:
           - who: 旁白
             text: 「本庭認為該項陳述屬自願。聲請駁回。」
           - who: 艾莉絲
-            text: 依據選錯了。開庭第一天，法官會記得。
-            thought: true
+            text: 駁回
+            mark: { kind: stamp, text: 駁回 }
         gives: [statement-excluded]
     links:
       - id: l-no-warning
@@ -1165,7 +1171,11 @@ scenes:
         mood: 緊
       - who: 艾莉絲
         text: 當公設辯護人的時候，我也對另一個委託人說過「這是最好的選擇」。他死在裡面。
-        thought: true
+        voice: 'off'
+        beats:
+          - text: 當公設辯護人的時候，｜我也對另一個委託人說過｜「這是最好的選擇」。
+          - text: 他死在裡面。
+            hush: true
 
   # 第三幕收尾：選案件理論（企劃書 6.9.2）。選了就不能換。
   - type: theory
@@ -1177,8 +1187,8 @@ scenes:
         text: 明天開庭。妳要告訴陪審團一個故事，一個就好。故事要靠妳手上的論點撐起來。
         mood: 暖
       - who: 艾莉絲
-        text: 選了就不能換。中途改口，陪審團會覺得我在瞎掰。
-        thought: true
+        text: 選了就不能換。中途改口，陪審團會覺得妳在瞎掰。
+        mark: { kind: confirm }
     theories:
       - id: doubt
         name: 合理懷疑
@@ -1539,8 +1549,8 @@ scenes:
       - who: 法官
         text: 辯方，開場陳述。
       - who: 艾莉絲
-        text: 每一個承諾都是一張借據。庭上兌現了，他們會多信我一點；兌現不了，他們會記得是我說的。
-        thought: true
+        text: 每張承諾一張借據
+        mark: { kind: iou }
 
   # 庭審：柯瓦斯基（教學：異議、彈劾三步驟簡單版）
   - type: trial
@@ -1882,8 +1892,8 @@ scenes:
         text: 她會很穩。穩的證人只有一種拆法：讓她把話說死，再拿時間去對。
         mood: 暖
       - who: 艾莉絲
-        text: 如果錄取的時候已經讓她講死了，這裡就不必再問一次。
-        thought: true
+        text: 已定錨
+        mark: { kind: anchored }
     witness:
       name: 瑞秋・艾德勒
       role: 卡爾德物流　合規長
@@ -2027,9 +2037,6 @@ scenes:
       - who: 馬庫斯・海爾
         text: 我做了三十年，看過三次這種場面。
         mood: 暖
-      - who: 艾莉絲
-        text: 我不想贏在她身上。我只是想知道那天晚上發生了什麼。
-        thought: true
 
   - type: card
     id: day3
@@ -2113,8 +2120,8 @@ scenes:
       - who: 旁白
         text: 莫羅檢察官的反詰問結束得比平常早，她沒有再追問手錶。
       - who: 艾莉絲
-        text: 十一點半的窗口，現在有一個點釘在裡面了。
-        thought: true
+        text: 22:00–23:30 → 22:24
+        mark: { kind: window }
 
   - type: defense
     id: defense-priya
@@ -2390,8 +2397,8 @@ scenes:
         - who: 旁白
           text: 伊森的姊姊在旁聽席上哭出聲。伊森沒有回頭看她，他看著艾莉絲。
         - who: 艾莉絲
-          text: 我沒有贏。我只是把那天晚上真正發生的事放進了紀錄裡。
-          thought: true
+          text: 我沒有贏。｜我只是把那天晚上真正發生的事｜放進了紀錄裡。
+          voice: 'off'
         - who: 旁白
           text: 卡爾德大樓三十一樓。瑞秋・艾德勒把電腦裡的資料夾一個一個拖進垃圾桶，然後清空。
       有罪:
@@ -2401,8 +2408,8 @@ scenes:
           text: （他沒有看她）沒關係。妳已經比上一個律師努力了。
           mood: 緊
         - who: 艾莉絲
-          text: 上一個對我說「沒關係」的委託人，死在裡面。
-          thought: true
+          text: 上一個對我說「沒關係」的委託人，｜死在裡面。
+          voice: 'off'
       陪審團僵局:
         - who: 旁白
           text: 陪審長站起來。「庭上，我們無法達成一致的評決。」
@@ -2412,8 +2419,8 @@ scenes:
           text: 下個月見，韓律師。我會帶更好的證人來。
           mood: 硬
         - who: 艾莉絲
-          text: 有人沒有被說服。下一次開庭之前，我得先知道那個人是誰。
-          thought: true
+          text: 評議票數
+          mark: { kind: tally }
 
   # 提前收場（企劃書 10.9）：E1 撤回起訴、E4 認罪協商。之後只演標了 epilogue 的尾聲。
   - type: dialogue
@@ -2520,8 +2527,8 @@ scenes:
         text: 他伸出手。艾莉絲握了，笑不出來。
       - do: say
         who: 艾莉絲
-        text: 認罪書上寫的是他做過的事。我到現在都不知道，那是不是真的。
-        thought: true
+        text: 認罪書上寫的是他做過的事。｜我到現在都不知道，那是不是真的。
+        voice: 'off'
 
   # E5 有罪（企劃書 10.9）：兩週後，監獄寄來的手寫信。
   - type: dialogue
@@ -2606,7 +2613,11 @@ scenes:
       - do: say
         who: 艾莉絲
         text: 碼頭九號。十二年前那場大火，我父親的那一場。沃斯死前打算說出來的，是這件事。
-        thought: true
+        voice: 'off'
+        beats:
+          - text: 碼頭九號。
+          - text: 十二年前那場大火，我父親的那一場。
+          - text: 沃斯死前打算說出來的，是這件事。
       - do: choose
         mode: chat
         options:
@@ -2647,8 +2658,8 @@ scenes:
         text: 有人翻出她的社群帳號，有人貼出她租屋處的地址。卡爾德物流發了一則兩行的聲明，她被解僱了。
       - do: say
         who: 艾莉絲
-        text: 我沒有說她殺人。我只說她說了謊。
-        thought: true
+        text: 我沒有說她殺人。｜我只說她說了謊。
+        voice: 'off'
       - do: say
         who: 潔德
         text: （訊息）她那晚在車上，是在把沃斯的行事曆交給我。妳贏了。
@@ -2668,8 +2679,8 @@ scenes:
         mood: 緊
       - do: say
         who: 艾莉絲
-        text: 我知道她說謊的理由，還是選了這條路。陪審團不會記得這件事，我會。
-        thought: true
+        text: 我知道她說謊的理由，還是選了這條路。｜陪審團不會記得這件事，我會。
+        voice: 'off'
 
   - type: dialogue
     id: epilogue-call
