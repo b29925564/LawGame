@@ -2946,8 +2946,8 @@ fieldset.relations.compact {
   --dur-write: 60ms; /* 新增：手寫每一個字 */
   --dur-narrow: 1200ms; /* 新增：時間窗收窄 */
   --dur-vo-char: 50ms; /* 新增：畫外字幕每一個字 */
-  /* 設計稿沒定義的冷光權杖：陰天窗光（淺色主題字幕縫用） */
-  --k-overcast: #dfe6ee;
+  /* 陰天窗光 6500–7000K（美術方向核心 5.4） */
+  --k-overcast: #c9d3e2;
   /* 意見 1：三主題同一結構，只差這三個權杖 */
   --vo-veil: light-dark(rgb(227 230 234 / 93%), rgb(6 8 11 / 91%));
   --vo-seam: light-dark(
