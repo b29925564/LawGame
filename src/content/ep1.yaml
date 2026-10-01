@@ -691,6 +691,7 @@ scenes:
           name: 論點：手錶資料與本案相關
           text: 死者戴著手錶，錶帶完好；法醫的死亡時間窗有一個半小時。手錶的資料能把它縮小。
           strength: 5
+          motionOnly: true
           tags: [邏輯]
       - id: q2
         text: 沃斯是什麼時候死的？
@@ -886,6 +887,7 @@ scenes:
           name: 論點：供述取得程序違法
           text: 報告寫「自願陳述」，錄影裡卻是警員先開口問話，而且從頭到尾沒有權利告知。
           strength: 10
+          motionOnly: true
           tags: [程序]
     goal: q-miranda
     goalLines:
