@@ -1167,6 +1167,9 @@ scenes:
         summary: 命案當晚還在大樓的人，對警方說了謊。她是檢方的證人。
         needs: [arg-h]
         cost: 情感取向的陪審員容易被說服，但蘇菲的人生會被毀掉。要在庭上讓她自己鬆口，沒有別的證據能替妳補。
+        ethicsIf:
+          has: [arg-i]
+          ethics: [smeared-knowing, smeared-knowing]
         promises:
           - id: sophie-lied
             text: 你們會看到，另一個人對警方說了謊。
@@ -2209,12 +2212,29 @@ scenes:
         text: 有人翻出她的社群帳號，有人貼出她租屋處的地址。卡爾德物流發了一則兩行的聲明，她被解僱了。
       - do: say
         who: 艾莉絲
-        text: 我沒有說她殺人。我只說她說了謊。她那晚在車上做的事，我到現在都沒有問過。
+        text: 我沒有說她殺人。我只說她說了謊。
         thought: true
       - do: say
         who: 潔德
-        text: （訊息）她那晚在車上，是在把沃斯的行事曆交給我。妳贏了。妳本來可以先問。
+        text: （訊息）她那晚在車上，是在把沃斯的行事曆交給我。妳贏了。
         mood: 緊
+
+  - type: dialogue
+    id: epilogue-smear-knowing
+    act: 尾聲
+    when:
+      theory: [sophie]
+      cards: [arg-i]
+    place: 艾莉絲的辦公室　一週後
+    steps:
+      - do: say
+        who: 潔德
+        text: （訊息）而且妳知道。我在電話裡親口告訴過妳，妳也答應過我。
+        mood: 緊
+      - do: say
+        who: 艾莉絲
+        text: 我知道她說謊的理由，還是選了這條路。陪審團不會記得這件事，我會。
+        thought: true
 
   - type: dialogue
     id: epilogue-call
