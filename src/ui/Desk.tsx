@@ -399,7 +399,9 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
         <ul className="slots-row">
           {slot(0)}
           <li className="link-knot" aria-hidden>
-            <span className={st.link.relation ? 'set' : undefined}>{st.link.relation ? relationMark[st.link.relation] : '？'}</span>
+            <span className={st.link.relation ? 'set' : undefined}>
+              {st.link.relation ? relationMark[st.link.relation] : '？'}
+            </span>
           </li>
           {slot(1)}
         </ul>
