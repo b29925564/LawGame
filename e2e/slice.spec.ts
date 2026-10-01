@@ -313,6 +313,15 @@ test('第 1 集可以一路從冷開場玩到判決', async ({ page }) => {
   await card(claim, /出示 論點 D/).click();
   await expect(page.getByText('自證己罪')).toBeVisible();
   await next(page);
+
+  // 辯方證人：正常準備，照時間順序問三題，檢方反詰問後收尾。
+  await page.getByRole('button', { name: /準備艾倫・布魯克斯出庭/ }).click();
+  await page.getByRole('button', { name: '就這樣準備' }).nth(1).click();
+  for (const q of [/死亡時間是週五晚上/, /智慧手錶，您在驗屍/, /心率歸零，代表什麼/]) {
+    await page.getByRole('button', { name: q }).click();
+  }
+  await page.getByRole('button', { name: '問完了' }).click();
+  await next(page);
   await next(page); // 第三天字卡
 
   // 結辯：挑三個論點排順序、選基調，然後是三輪評議與判決。
