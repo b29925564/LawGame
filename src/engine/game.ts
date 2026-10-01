@@ -2,12 +2,14 @@ import { create } from 'zustand';
 import { episodes } from '../content';
 import type { Relation, Tag } from './schema';
 import * as closing from './episode/closing';
+import * as defense from './episode/defense';
 import * as depo from './episode/deposition';
 import * as desk from './episode/desk';
 import * as interview from './episode/interview';
 import * as nego from './episode/negotiation';
 import { canAdvance } from './episode/phone';
 import type {
+  DefenseScene,
   DepositionScene,
   DeskScene,
   Episode,
@@ -34,6 +36,8 @@ const start = (episode: string): Progress => ({
   step: 0,
   choices: {},
   cards: [],
+  flags: [],
+  ethics: [],
   scenes: {},
 });
 
@@ -57,6 +61,9 @@ export function sceneChoices(p: Progress): Record<number, number> {
   return out;
 }
 
+/** 對話選項記下的旗標。 */
+export const hasFlag = (p: Progress, flag: string) => (p.flags ?? []).includes(flag);
+
 export function saveLabel(p: Progress): string {
   const e = episodeOf(p);
   const s = sceneOf(p);
@@ -79,16 +86,32 @@ export function deskSceneOf(p: Progress): DeskScene | null {
   return (episodeOf(p).scenes.find((s) => s.type === 'desk') as DeskScene) ?? null;
 }
 
-/** 結辯接的是上一場庭審留下的心證，不是重新開始（企劃書 6.10）。 */
+/**
+ * 結辯接的是上一場庭審（或辯方證人）留下的心證，不是重新開始（企劃書 6.10）。
+ * 規則（陪審員名單）一律用遴選留下的那一份。
+ */
 export function juryAfterTrial(
   p: Progress,
 ): { rules: TrialScene; jury: Record<string, number> } | null {
-  const trials = episodeOf(p).scenes.filter((x) => x.type === 'trial') as TrialScene[];
-  for (const t of [...trials].reverse()) {
-    const st = p.scenes[t.id] as trial.TrialState | undefined;
-    if (st) return { rules: courtScene(p, t), jury: st.jury };
-  }
-  return null;
+  const scenes = episodeOf(p).scenes;
+  const trials = scenes.filter((x) => x.type === 'trial') as TrialScene[];
+  const lastTrial = [...trials].reverse().find((t) => p.scenes[t.id]);
+  if (!lastTrial) return null;
+  // 庭審之後的辯方證人場景也會改動心證，取順序最後、已經有狀態的那一個。
+  let jury = (p.scenes[lastTrial.id] as trial.TrialState).jury;
+  let at = scenes.indexOf(lastTrial);
+  scenes.forEach((x, i) => {
+    const st = p.scenes[x.id] as { jury?: Record<string, number> } | undefined;
+    if (x.type === 'defense' && st?.jury && i > at) {
+      jury = st.jury;
+      at = i;
+    }
+  });
+  return { rules: courtScene(p, lastTrial), jury };
+}
+
+export function defenseState(p: Progress, s: DefenseScene) {
+  return stateOf(p, s, () => defense.startDefense(juryAfterTrial(p)?.jury ?? {}));
 }
 
 export function theorySceneOf(p: Progress): TheoryScene | undefined {
@@ -247,6 +270,10 @@ interface GameState {
   pickArg: (id: string) => void;
   setTone: (id: string) => void;
   deliver: () => void;
+  /** 辯方證人 */
+  prepareWitness: (id: string) => void;
+  askWitness: (qid: string) => void;
+  finishWitness: () => void;
   /** 案件理論與開場陳述 */
   chooseTheory: (id: string) => void;
   skipTheory: () => void;
@@ -319,6 +346,9 @@ export const useEpisode = create<GameState>()((set, get) => {
   const onClosing = on<ClosingScene, closing.ClosingState>('closing', () =>
     closingStart(get().progress),
   );
+  const onDefense = on<DefenseScene, defense.DefenseState>('defense', () =>
+    defense.startDefense(juryAfterTrial(get().progress)?.jury ?? {}),
+  );
   const onTheory = on<TheoryScene, theory.TheoryState>('theory', theory.startTheory);
   const onOpening = on<OpeningScene, theory.OpeningState>('opening', theory.startOpening);
   const onDepo = on<DepositionScene, depo.DepoState>('deposition', depo.startDeposition);
@@ -356,7 +386,17 @@ export const useEpisode = create<GameState>()((set, get) => {
       const step = s.steps[p.step];
       if (step?.do !== 'choose' || sceneChoices(p)[p.step] !== undefined) return;
       if (option < 0 || option >= step.options.length) return;
-      set({ progress: { ...p, choices: { ...p.choices, [`${s.id}:${p.step}`]: option } } });
+      const o = step.options[option];
+      // 電話場景的選項沒有旗標與倫理紀錄。
+      const gained = 'flags' in o ? o : { flags: [], ethics: [] };
+      set({
+        progress: {
+          ...p,
+          choices: { ...p.choices, [`${s.id}:${p.step}`]: option },
+          flags: [...new Set([...(p.flags ?? []), ...gained.flags])],
+          ethics: [...(p.ethics ?? []), ...gained.ethics],
+        },
+      });
     },
     toTitle: () => set({ mode: 'title' }),
     openProto: () => set({ mode: 'proto' }),
@@ -441,6 +481,34 @@ export const useEpisode = create<GameState>()((set, get) => {
         return closing.deliver(s, st, after.rules, args, exposedArgs(p));
       }),
 
+    prepareWitness: (id) => {
+      const p = get().progress;
+      const s = sceneOf(p);
+      const o = s?.type === 'defense' ? s.prep.options.find((x) => x.id === id) : null;
+      const before =
+        s?.type === 'defense' ? (p.scenes[s.id] as defense.DefenseState | undefined) : undefined;
+      if (!o || before?.stage === 'direct' || before?.stage === 'done') return;
+      onDefense((sc, st) => defense.prepare(sc, st, id));
+      // 倫理紀錄與旗標記在選擇的當下；玩家看不到，季終才會翻出來。
+      const q = get().progress;
+      set({
+        progress: {
+          ...q,
+          flags: [...new Set([...(q.flags ?? []), ...o.flags])],
+          ethics: [...(q.ethics ?? []), ...o.ethics],
+        },
+      });
+    },
+    askWitness: (qid) =>
+      onDefense((sc, st) => {
+        const after = juryAfterTrial(get().progress);
+        return after ? defense.ask(sc, st, after.rules, qid) : st;
+      }),
+    finishWitness: () =>
+      onDefense((sc, st) => {
+        const after = juryAfterTrial(get().progress);
+        return after ? defense.finish(sc, st, after.rules) : st;
+      }),
     chooseTheory: (id) => onTheory((s, st) => theory.choose(s, st, id, get().progress.cards)),
     skipTheory: () => onTheory((s, st) => theory.skip(s, st, get().progress.cards)),
     togglePromise: (id) =>

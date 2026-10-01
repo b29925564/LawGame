@@ -15,6 +15,7 @@ import { Negotiation } from './Negotiation';
 import { Phone } from './Phone';
 import { Intro, VerdictScreen } from './Scenes';
 import { Title } from './Title';
+import { Defense } from './Defense';
 import { Opening, Theory } from './Theory';
 import { VoirDire } from './VoirDire';
 
@@ -48,6 +49,7 @@ export function App() {
       {scene?.type === 'deposition' && <Deposition key={scene.id} scene={scene} />}
       {scene?.type === 'negotiation' && <Negotiation key={scene.id} scene={scene} />}
       {scene?.type === 'voirdire' && <VoirDire key={scene.id} scene={scene} />}
+      {scene?.type === 'defense' && <Defense key={scene.id} scene={scene} />}
       {scene?.type === 'theory' && <Theory key={scene.id} scene={scene} />}
       {scene?.type === 'opening' && <Opening key={scene.id} scene={scene} />}
       {scene?.type === 'closing' && <Closing key={scene.id} scene={scene} />}

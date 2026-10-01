@@ -36,7 +36,7 @@ export function ask(s: DepositionScene, st: DepoState, id: string): DepoState {
       ? [
           {
             who: '對造律師',
-            text: `異議，${q.objection}。（證人仍須回答）`,
+            text: `異議，${q.objection}。（庭外取證沒有法官裁決，異議只記錄在案，證人仍須回答）`,
             mood: '硬' as const,
             thought: false,
           },
