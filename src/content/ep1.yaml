@@ -293,18 +293,18 @@ scenes:
         text: 四年公設辯護人，兩百多件案子，換來這塊銅牌上一個還沒刻上去的名字。
         thought: true
       - do: say
-        who: 馬可仕・海爾
+        who: 馬庫斯・海爾
         text: 韓律師。歡迎。我把妳挖來，不是因為妳的履歷漂亮，是因為妳輸得起。
         mood: 暖
       - do: say
         who: 艾莉絲
         text: 我比較希望是因為我贏過幾次。
       - do: say
-        who: 馬可仕・海爾
+        who: 馬庫斯・海爾
         text: 贏過幾次的人這裡有的是。肯在明知會輸的案子上花力氣的人，我只認識妳一個。
         mood: 暖
       - do: say
-        who: 薇薇安・惠特洛克
+        who: 維多莉亞・惠特洛克
         text: 韓律師，第一天。我只說一件事：卡爾德物流是這間事務所最大的客戶，請謹慎。
         mood: 硬
       - do: say
@@ -464,18 +464,18 @@ scenes:
         who: 艾莉絲
         text: 我要接這個案子。
       - do: say
-        who: 薇薇安・惠特洛克
+        who: 維多莉亞・惠特洛克
         text: 死者是卡爾德物流的財務長。妳要替殺他的人辯護，還要我們的最大客戶簽豁免書。
         mood: 硬
       - do: say
-        who: 馬可仕・海爾
+        who: 馬庫斯・海爾
         text: 亞瑟・卡爾德早上簽了。他覺得這案子很單純，簽得很爽快。
       - do: say
-        who: 薇薇安・惠特洛克
+        who: 維多莉亞・惠特洛克
         text: 公益案件，四十工時。調查二十四，審前十六。超過的部分，妳自己去跟我解釋。
         mood: 硬
       - do: say
-        who: 薇薇安・惠特洛克
+        who: 維多莉亞・惠特洛克
         text: 還有，羅根當第二律師。
       - do: say
         who: 艾莉絲
@@ -486,16 +486,16 @@ scenes:
         options:
           - text: 謝謝。四十小時夠了。
             then:
-              - who: 薇薇安・惠特洛克
+              - who: 維多莉亞・惠特洛克
                 text: 希望如此。
                 mood: 硬
           - text: 卡爾德簽得太快了，你們不覺得嗎？
             then:
-              - who: 馬可仕・海爾
+              - who: 馬庫斯・海爾
                 text: 覺得。所以我批了這個案子。
                 mood: 暖
-              - who: 薇薇安・惠特洛克
-                text: 馬可仕。
+              - who: 維多莉亞・惠特洛克
+                text: 馬庫斯。
                 mood: 硬
       - do: say
         who: 旁白
@@ -820,19 +820,19 @@ scenes:
             thought: true
         twist:
           lines:
-            - who: 薇薇安・惠特洛克
+            - who: 維多莉亞・惠特洛克
               text: 卡爾德會簽豁免書，是因為他們以為這件案子很單純。撤回那張傳票。
               mood: 硬
             - who: 艾莉絲
               text: 那張紀錄是唯一能證明訊息存在過的東西。
-            - who: 薇薇安・惠特洛克
+            - who: 維多莉亞・惠特洛克
               text: 我知道。我也知道誰付我們薪水。
               mood: 硬
           options:
             - text: 撤回傳票。
               flags: [whitlock-up, chat-audit-lost]
               then:
-                - who: 薇薇安・惠特洛克
+                - who: 維多莉亞・惠特洛克
                   text: 聰明。這件事我記著。
                   mood: 硬
                 - who: 艾莉絲
@@ -844,7 +844,7 @@ scenes:
               then:
                 - who: 旁白
                   text: 答辯庭只開了二十分鐘。法官維持傳票，稽核紀錄當週送到。
-                - who: 馬可仕・海爾
+                - who: 馬庫斯・海爾
                   text: 做得好。別讓她知道是我說的。
                   mood: 暖
     goal: q1
@@ -854,7 +854,7 @@ scenes:
         mood: 硬
       - who: 艾莉絲
         text: 我要拿這個去問柯瓦斯基警探，他到底查了什麼、沒查什麼。
-      - who: 馬可仕・海爾
+      - who: 馬庫斯・海爾
         text: 記住一句話。先讓他把話說死，再拿出證據。
         mood: 暖
 
@@ -931,7 +931,7 @@ scenes:
           tags: [程序]
     goal: q-miranda
     goalLines:
-      - who: 馬可仕・海爾
+      - who: 馬庫斯・海爾
         text: 審前該做的都做了。接下來是錄取瑞秋的證詞。
         mood: 暖
       - who: 艾莉絲
@@ -947,10 +947,10 @@ scenes:
       name: 瑞秋・艾德勒
       role: 卡爾德物流　合規長
     intro:
-      - who: 馬可仕・海爾
+      - who: 馬庫斯・海爾
         text: 十二個問題。宣誓過的話，她在庭上改一個字，妳就能拿逐字稿打她。
         mood: 暖
-      - who: 馬可仕・海爾
+      - who: 馬庫斯・海爾
         text: 但妳問什麼，對面就知道妳往哪裡查。問到痛處，他們開庭前就補好了。
         mood: 暖
       - who: 艾莉絲
@@ -1143,7 +1143,7 @@ scenes:
     act: 第三幕
     place: 惠特洛克・海爾　會議室 A
     intro:
-      - who: 馬可仕・海爾
+      - who: 馬庫斯・海爾
         text: 明天開庭。妳要告訴陪審團一個故事，一個就好。故事要靠妳手上的論點撐起來。
         mood: 暖
       - who: 艾莉絲
@@ -1207,10 +1207,10 @@ scenes:
     peremptories: 3
     seats: 12
     intro:
-      - who: 馬可仕・海爾
+      - who: 馬庫斯・海爾
         text: 十八個人，妳挑十二個。六次提問，三次無因迴避，檢方也有三次。
         mood: 暖
-      - who: 馬可仕・海爾
+      - who: 馬庫斯・海爾
         text: 記住：妳不是在挑喜歡的人，妳是在挑聽得懂妳那套說法的人。
         mood: 暖
       - who: 艾莉絲
@@ -1788,7 +1788,7 @@ scenes:
         leans: [程序]
         start: 51
     intro:
-      - who: 馬可仕・海爾
+      - who: 馬庫斯・海爾
         text: 她會很穩。穩的證人只有一種拆法：讓她把話說死，再拿時間去對。
         mood: 暖
       - who: 艾莉絲
@@ -1923,7 +1923,7 @@ scenes:
     outro:
       - who: 旁白
         text: 法官宣布休庭到明天上午。旁聽席的人還沒有散。
-      - who: 馬可仕・海爾
+      - who: 馬庫斯・海爾
         text: 我做了三十年，看過三次這種場面。
         mood: 暖
       - who: 艾莉絲
@@ -2025,10 +2025,10 @@ scenes:
     picks: 3
     threshold: 70
     intro:
-      - who: 馬可仕・海爾
+      - who: 馬庫斯・海爾
         text: 挑三個。講最後的那一個，他們記得最清楚。
         mood: 暖
-      - who: 馬可仕・海爾
+      - who: 馬庫斯・海爾
         text: 還有，決定妳要對誰說話。十二個人不是同一種人。
         mood: 暖
       - who: 艾莉絲
@@ -2093,11 +2093,11 @@ scenes:
     place: 惠特洛克・海爾律師事務所　會議室　判決後
     steps:
       - do: say
-        who: 馬可仕・海爾
+        who: 馬庫斯・海爾
         text: 不管結果怎麼寫，這一仗妳打得比我預期的乾淨。
         mood: 暖
       - do: say
-        who: 薇薇安・惠特洛克
+        who: 維多莉亞・惠特洛克
         text: 卡爾德物流的法務今天早上打來了。他們問，妳下一次會不會也這樣查到底。
         mood: 硬
       - do: say
@@ -2105,7 +2105,7 @@ scenes:
         text: 那不是稱讚。我聽得出來。
         thought: true
       - do: say
-        who: 薇薇安・惠特洛克
+        who: 維多莉亞・惠特洛克
         text: 事務所不是公設辯護室。記住這一點。
         mood: 硬
       - do: say
