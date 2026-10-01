@@ -209,8 +209,9 @@ export function toggleCard(s: DeskScene, st: DeskState, qid: string, card: strin
   if (!q || st.confirmed.includes(qid)) return st;
   const cur = st.attempts[qid] ?? { cards: [] };
   const has = cur.cards.includes(card);
-  if (!has && cur.cards.length >= q.answer.length) return st;
-  const cards = has ? cur.cards.filter((x) => x !== card) : [...cur.cards, card];
+  // 格子滿了又挑新的一張：換掉最早挑的那張，不必先取消（還沒提交前隨時可以換）。
+  const kept = !has && cur.cards.length >= q.answer.length ? cur.cards.slice(1) : cur.cards;
+  const cards = has ? cur.cards.filter((x) => x !== card) : [...kept, card];
   return { ...st, attempts: { ...st.attempts, [qid]: { cards } } };
 }
 

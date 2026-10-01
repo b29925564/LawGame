@@ -120,8 +120,9 @@ describe('桌面調查', () => {
     expect(st.wrong).toBe(1);
     expect(st.feedback.q1).not.toContain('l-');
 
-    st = desk.toggleCard(investigate, st, 'q1', 'l-watch');
+    // 格子滿了直接挑另一張就換掉，不必先取消（玩家回報：選了就換不掉）。
     st = desk.toggleCard(investigate, st, 'q1', 'l-called');
+    expect(st.attempts.q1.cards).toEqual(['l-called']);
     st = desk.submit(investigate, st, 'q1');
     expect(st.confirmed).toContain('q1');
     // 過關的推理鏈確認之後才收得了工，但要玩家自己按，剩下的工時還能繼續查。
