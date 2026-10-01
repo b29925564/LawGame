@@ -43,39 +43,39 @@ _cards: &cards
     source: 看守所會見
   - id: indictment
     name: 起訴書
-    kind: 事實
+    kind: 文件
     text: 二級謀殺。卡爾德港州訴伊森・蕭。
     source: 檢方證據開示
     held: true
   - id: arrest-time
     name: 逮捕時間 14:05
-    kind: 事實
+    kind: 文件
     date: 週日
     time: '14:05'
     text: 週日 14:05 於友人住處逮捕伊森・蕭。
     source: 逮捕報告
   - id: car-statement
     name: 警車上的供述 14:20
-    kind: 事實
+    kind: 陳述
     date: 週日
     time: '14:20'
     text: 14:20 押解途中，被告未經詢問自行陳述：「我只是想讓他住手。」
     source: 逮捕報告
   - id: miranda-form
     name: 權利告知書 14:32
-    kind: 事實
+    kind: 文件
     date: 週日
     time: '14:32'
     text: 14:32 於分局由柯瓦斯基警探告知並簽署米蘭達權利。
     source: 逮捕報告
   - id: watch-listed
     name: 財物清單：智慧手錶
-    kind: 事實
+    kind: 物品
     text: 被告入所時扣押物品：手機 1 支、皮夾 1 個、智慧手錶 1 支。
     source: 看守所財物清單
   - id: access-partial
     name: 門禁紀錄（警方標註）
-    kind: 事實
+    kind: 文件
     date: 週五
     time: '22:47'
     text: 被告 22:47 刷卡進入 31 樓，23:01 刷卡離開大廳閘門。
@@ -83,32 +83,32 @@ _cards: &cards
     admitted: true
   - id: access-full
     name: 完整門禁紀錄
-    kind: 事實
+    kind: 文件
     date: 週五
     time: '23:26'
     text: 附件三未經標註的原始檔：當晚 31 樓另有一人 23:26 才刷卡離開大廳。
     source: 警方報告附件三
   - id: autopsy
     name: 驗屍報告
-    kind: 事實
+    kind: 文件
     text: 鈍器重擊頭部致死。死亡時間推估 22:00 至 23:30。
     source: 布魯克斯法醫
     admitted: true
   - id: watch-photo
     name: 驗屍照片：死者的手錶
-    kind: 事實
+    kind: 物品
     text: 死者左腕配戴智慧手錶，錶帶完好，仍扣在腕上；背面有心率感測器，貼著皮膚。
     source: 布魯克斯法醫
   - id: sophie-home
     name: 蘇菲對警方的說法：我直接回家了
-    kind: 事實
+    kind: 陳述
     date: 週五
     time: '19:02'
     text: 蘇菲 19:02 刷卡離開 31 樓，向警方表示她下班後直接回家，沒有再回大樓。
     source: 警方報告
   - id: parking-log
     name: 停車場紀錄：蘇菲的車停到 22:40
-    kind: 事實
+    kind: 文件
     date: 週五
     time: '22:40'
     text: 地下停車場的進出紀錄顯示，蘇菲的車週五 22:40 才駛離。
@@ -122,12 +122,12 @@ _cards: &cards
     source: 電話（潔德・莫里斯）
   - id: blood-report
     name: 補充血跡報告
-    kind: 事實
+    kind: 文件
     text: 被告外套袖口血跡與死者 DNA 相符。
     source: 檢方補充開示
   - id: ride-receipt
     name: 叫車收據
-    kind: 事實
+    kind: 文件
     date: 週五
     time: '22:34'
     text: 22:34 於東河街 118 號上車，22:44 抵達卡爾德大樓。司機奧瑪・哈桑。
@@ -140,21 +140,21 @@ _cards: &cards
     source: 電話（蘇菲・馬丁內斯）
   - id: heart-rate
     name: 沃斯手錶的心率紀錄
-    kind: 事實
+    kind: 文件
     date: 週五
     time: '22:24'
     text: 心率在 22:24 急遽升高後歸零，之後再無讀數。
     source: 手錶廠商（傳票）
   - id: chat-audit
     name: 聊天系統稽核紀錄
-    kind: 事實
+    kind: 文件
     date: 週五
     time: '23:14'
     text: 21:55 沃斯傳訊給瑞秋；22:31 由沃斯桌機發出一則訊息給伊森；23:14 由同一台桌機收回。
     source: 卡爾德物流（傳票）
   - id: watch-notice
     name: 手錶通知紀錄
-    kind: 事實
+    kind: 文件
     date: 週五
     time: '22:33'
     text: 22:33 通知：「葛蘭特・沃斯：十點四十五分上來，把筆電帶來。我們私下解決。」
@@ -163,21 +163,21 @@ _cards: &cards
   # 第三幕新增的卡片，和第二幕共用同一份牌庫（見 _cards 錨點）。
   - id: arrest-report
     name: 逮捕報告
-    kind: 事實
+    kind: 文件
     date: 週日
     time: '14:05'
     text: 逮捕時間 14:05。備註欄：「嫌犯於巡邏車後座自願陳述。」
     source: 檢方開示
   - id: no-warning
     name: 巡邏車錄影：沒有警告
-    kind: 事實
+    kind: 文件
     date: 週日
     time: '14:20'
     text: 錄影裡警員沒有唸出米蘭達警告，就開始問他為什麼在大樓裡。
     source: 檢方開示
   - id: statement-excluded
     name: 裁定：車上供述已排除
-    kind: 事實
+    kind: 文件
     text: 法院裁定排除巡邏車上的供述，檢方不得在陪審團面前提起。
     source: 法院裁定
   - id: rachel-2250
@@ -194,7 +194,7 @@ _cards: &cards
     source: 證詞錄取
   - id: meeting-name
     name: 會議名稱：北門結案會議
-    kind: 事實
+    kind: 陳述
     text: 瑞秋說出的會議名稱，可以據此調閱出席紀錄。
     source: 證詞錄取
 
