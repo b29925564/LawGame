@@ -534,10 +534,6 @@ scenes:
       - do: say
         who: 旁白
         text: 16:05，地檢署送來三箱開示資料。箱子側面貼著承辦檢察官的名字：凱瑟琳・莫羅。
-      - do: say
-        who: 艾莉絲
-        text: 又是她。
-        thought: true
 
   - type: card
     id: act2
@@ -704,8 +700,7 @@ scenes:
           - who: 莫羅
             text: 開庭前妳會看到名單。妳手上有什麼，就拿出來；沒有的話，我的條件會一直在桌上。
           - who: 艾莉絲
-            text: 現在談，手上沒有牌。等我有東西再來，而且要伊森點頭才能談。
-            thought: true
+            text: 我會再打給妳。等我手上有東西，也等我的委託人點頭。
     links:
       - id: l-called
         cards: [watch-notice, ride-receipt]
@@ -991,9 +986,9 @@ scenes:
       - who: 馬庫斯・海爾
         text: 但妳問什麼，對面就知道妳往哪裡查。問到痛處，他們開庭前就補好了。
         mood: 暖
-      - who: 艾莉絲
-        text: 用不痛不癢的問題把她釘死，真正的武器留到法庭上。
-        thought: true
+      - who: 馬庫斯・海爾
+        text: 所以問些不痛不癢的，讓她把話講死。真正的武器，留到法庭上。
+        mood: 暖
     outro:
       - who: 瑞秋・艾德勒
         text: 還有事嗎？我十一點有會。
@@ -1164,9 +1159,6 @@ scenes:
       - who: 凱瑟琳・莫羅
         text: 那就法庭見。我的條件在開庭前會回到原點。
         mood: 硬
-      - who: 艾莉絲
-        text: 我知道。我也知道我為什麼不能替他決定。
-        thought: true
     accepted:
       - who: 伊森・蕭
         text: 好。就這樣吧。
@@ -1281,9 +1273,8 @@ scenes:
       - who: 馬庫斯・海爾
         text: 記住：妳不是在挑喜歡的人，妳是在挑聽得懂妳那套說法的人。
         mood: 暖
-      - who: 艾莉絲
-        text: 有人明講偏見，我才能請法官剔除。沒憑沒據就聲請，法官會記住。
-        thought: true
+      - who: 法官
+        text: 辯方若要以有因迴避剔除候選人，請指出他親口承認的偏見。沒有根據的聲請，本席不會聽第二次。
     candidates:
       - id: c-cop
         name: 華特・費雪
@@ -1612,9 +1603,9 @@ scenes:
       - who: 羅根
         text: 檢方直接詰問的時候，每個問題妳都有一次異議的機會。理由錯了，法官的耐心就少一格。
         mood: 硬
-      - who: 艾莉絲
-        text: 五格耐心。用完之前，我得讓陪審團知道這個警探沒查什麼。
-        thought: true
+      - who: 羅根
+        text: 五次。用完之前，讓陪審團看到這個警探什麼都沒查。
+        mood: 硬
     witness:
       name: 柯瓦斯基
       role: 重案組警探・服務 22 年
@@ -1692,9 +1683,6 @@ scenes:
         text: 法官宣布休庭。走廊上，莫羅檢察官從後面追上來。
       - who: 莫羅
         text: 韓律師。過失致死，緩刑五年。這是我最後的條件。
-      - who: 艾莉絲
-        text: 她在庭上從來不追人講話。她開始怕了。
-        thought: true
 
   - type: card
     id: day2
@@ -1761,9 +1749,9 @@ scenes:
         leans: [權威, 情感]
         start: 55
     intro:
-      - who: 艾莉絲
-        text: 蘇菲是檢方的動機證人。她只聽到半句話，可是庭上沒有人會幫我說這一點。
-        thought: true
+      - who: 羅根
+        text: 她只聽到半句。整個法庭，只有妳會替被告講這一點。
+        mood: 硬
     witness:
       name: 蘇菲・馬丁內斯
       role: 死者的執行助理・三十歲
@@ -1831,9 +1819,6 @@ scenes:
     outro:
       - who: 旁白
         text: 蘇菲離開證人席的時候，沒有看被告那一邊。
-      - who: 艾莉絲
-        text: 她那晚在車上做了什麼，和命案有沒有關係，我現在還不知道。
-        thought: true
 
   # 庭審第二天：瑞秋（全集高潮，企劃書 10.7 第四幕第二天）
   - type: trial
@@ -2064,9 +2049,9 @@ scenes:
     intro:
       - who: 旁白
         text: 檢方結束舉證。艾莉絲站起來：「辯方傳喚艾倫・布魯克斯法醫。」
-      - who: 艾莉絲
-        text: 她是檢方自己的驗屍官。讓她在證人席上把時間窗收窄，比我說一百句都有用。
-        thought: true
+      - who: 羅根
+        text: 她是檢方自己的法醫。由她把時間窗縮小，陪審團會比較信。
+        mood: 硬
     prep:
       hours: 2
       options:
@@ -2352,8 +2337,7 @@ scenes:
         text: 還有，決定妳要對誰說話。十二個人不是同一種人。
         mood: 暖
       - who: 艾莉絲
-        text: 我不打算說伊森是好人。我要說的是，這件事還有另一種可能。
-        thought: true
+        text: 我不打算說伊森是好人。我要讓他們看到另一種可能。
     tones:
       - id: t-logic
         label: 邏輯
@@ -2377,9 +2361,6 @@ scenes:
             text: 陪審長站起來。「就第一項罪名，我們認定被告無罪。」
           - who: 旁白
             text: 伊森的姊姊在旁聽席上哭出聲。伊森看著證人席旁的那張空椅子，沒有看艾莉絲。
-          - who: 艾莉絲
-            text: 我說的是「另一個人對警方說了謊」。他們聽到的，是「另一個人」。
-            thought: true
       # E3：陪審團僵局，但論點 A、B 都在庭上講過，檢方放棄重審（企劃書 10.9）。
       - id: retrial-dropped
         when:
