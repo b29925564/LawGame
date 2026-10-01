@@ -49,7 +49,9 @@ export function Interview({ scene }: { scene: InterviewScene }) {
             <button role="tab" aria-selected={tab === 'press'} onClick={() => setTab('press')}>
               施壓
             </button>
-            <button onClick={calm}>安撫</button>
+            <button disabled={(st.calms ?? scene.calms) <= 0} onClick={calm}>
+              安撫（剩 {st.calms ?? scene.calms} 次）
+            </button>
           </div>
           {tab === 'ask' ? (
             <ul className="stack">

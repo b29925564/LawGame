@@ -50,6 +50,17 @@ describe('訪談', () => {
   });
 });
 
+describe('訪談安撫', () => {
+  it('安撫整場只有固定次數，用完就沒有效果', () => {
+    let st = interview.startInterview(meet);
+    st = { ...st, guard: 4 };
+    for (let i = 0; i < meet.calms; i++) st = interview.calm(meet, st);
+    expect(st.guard).toBe(4 - meet.calms);
+    const after = interview.calm(meet, st);
+    expect(after).toBe(st);
+  });
+});
+
 describe('桌面調查', () => {
   const play = () => {
     let st = desk.startDesk(investigate);
