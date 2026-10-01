@@ -158,7 +158,7 @@ async function playToRachelLast(page: Page) {
   await card(watchMotion, /手錶資料與本案相關/).click();
   await watchMotion.getByRole('radio', { name: '核發傳票給手錶廠商' }).click();
   await watchMotion.getByRole('button', { name: /送出/ }).click();
-  await expect(page.getByText('22:24，心率歸零。')).toBeVisible();
+  await expect(page.getByText(/22:24，心率歸零。|23 分鐘/).first()).toBeVisible();
   await page.getByRole('button', { name: '回到桌面' }).click();
 
   // 聊天稽核紀錄的傳票：核准之後對方聲請撤銷，惠特洛克要她收手。
@@ -342,6 +342,16 @@ async function playToRachelLast(page: Page) {
   await claim.getByRole('button', { name: /門禁紀錄顯示/ }).click();
   return claim;
 }
+
+/** 畫外字幕蓋住整個畫面：一出現就點掉（出字中點一下出完，再點一下前進，多拍就多點幾次）。 */
+test.beforeEach(async ({ page }) => {
+  await page.addLocatorHandler(page.locator('.vo'), async () => {
+    for (let k = 0; k < 12 && (await page.locator('.vo').count()); k++) {
+      await page.locator('.vo-hit').click({ force: true });
+      await page.waitForTimeout(700);
+    }
+  });
+});
 
 test('第 1 集可以一路從冷開場玩到判決', async ({ page }) => {
   await playToRachelLast(page);

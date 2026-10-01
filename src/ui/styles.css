@@ -4329,3 +4329,22 @@ button.iou[aria-pressed='true'] {
   float: right;
   margin: 2px 0 0 8px;
 }
+
+/* 畫外字幕：點擊後整段立刻出現；字幕字級設定 */
+.vo-text.now .ch {
+  animation: none !important;
+}
+.vo .vo-text {
+  font-size: calc(var(--fs-vo) * var(--text-scale) * var(--sub-scale, 1));
+  font-weight: 500;
+}
+.vo > .vo-hit {
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+}
+.vo > .vo-frame,
+.vo > .vo-cue {
+  z-index: 2;
+  pointer-events: none;
+}
