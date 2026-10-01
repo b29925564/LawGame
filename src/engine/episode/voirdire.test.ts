@@ -65,17 +65,16 @@ describe('陪審團遴選', () => {
     expect(vd.done(st)).toBe(true);
   });
 
-  it('砍太多人就補不滿席位，補不滿就不能入席', () => {
+  it('候選席剩 12 位就不能再無因迴避，檢方也不會再砍', () => {
     let st = vd.startVoirDire(scene);
     for (const c of scene.candidates.filter((c) => c.cause)) {
       st = vd.ask(scene, st, c.id);
       st = vd.challenge(scene, st, c.id);
     }
-    st = vd.strike(scene, st, vd.pool(scene, st)[0].id);
+    while (vd.pool(scene, st).some((c) => vd.canStrike(scene, st, c.id)))
+      st = vd.strike(scene, st, vd.pool(scene, st)[0].id);
+    expect(vd.pool(scene, st).length).toBeGreaterThanOrEqual(scene.seats);
     expect(vd.canSeat(scene, st)).toBe(true);
-    st = vd.strike(scene, st, vd.pool(scene, st)[0].id);
-    expect(vd.canSeat(scene, st)).toBe(false);
-    expect(vd.seat(scene, st).seated).toBeNull();
   });
 });
 
@@ -123,5 +122,21 @@ describe('遴選之後的法庭', () => {
     for (const id of ids) expect(Number.isFinite(st.jury[id])).toBe(true);
     // 檢方舉證完，12 個人都偏有罪，交叉詰問才有東西可以拉。
     expect(ids.every((id) => st.jury[id] >= kowalski.threshold)).toBe(true);
+  });
+});
+
+describe('遴選不會卡死（QA fuzz：有因迴避＋兩造砍滿後坐不滿）', () => {
+  it('先剔除一位有因、兩造各砍三位、再剔除其餘有因：仍然坐得滿 12 位', () => {
+    const causes = scene.candidates.filter((c) => c.cause).map((c) => c.id);
+    let st = vd.startVoirDire(scene);
+    for (const id of causes) st = vd.ask(scene, st, id);
+    st = vd.challenge(scene, st, causes[0]);
+    for (let i = 0; i < scene.peremptories; i++) {
+      const target = vd.pool(scene, st).find((c) => !c.cause && vd.canStrike(scene, st, c.id))!;
+      st = vd.strike(scene, st, target.id);
+    }
+    for (const id of causes.slice(1)) st = vd.challenge(scene, st, id);
+    expect(st.excused).toHaveLength(causes.length);
+    expect(vd.canSeat(scene, st)).toBe(true);
   });
 });

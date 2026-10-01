@@ -279,11 +279,12 @@ function voirDireErrors(s: VoirDireScene, errors: string[]) {
     if (ids.has(c.id)) errors.push(`遴選 ${s.id} 的候選人 id 重複：${c.id}`);
     ids.add(c.id);
   }
-  // 玩家和檢方各砍 peremptories 位，有因迴避還會再少人，位子必須補得滿。
-  const worst = s.candidates.length - s.peremptories * 2;
+  // 玩家和檢方各砍 peremptories 位，有因迴避的人也全被剔除，位子仍要補得滿。
+  const worst =
+    s.candidates.length - s.peremptories * 2 - s.candidates.filter((c) => c.cause).length;
   if (worst < s.seats)
     errors.push(
-      `遴選 ${s.id} 只有 ${s.candidates.length} 位候選人，兩造砍完就補不滿 ${s.seats} 個位子`,
+      `遴選 ${s.id} 只有 ${s.candidates.length} 位候選人，兩造砍完、有因迴避也剔除後就補不滿 ${s.seats} 個位子`,
     );
   // 有因迴避要教得起來：至少要有一位問了就會自己講出偏見的人。
   if (!s.candidates.some((c) => c.cause)) errors.push(`遴選 ${s.id} 沒有可以有因迴避的候選人`);
