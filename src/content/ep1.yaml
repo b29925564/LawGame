@@ -2000,6 +2000,19 @@ scenes:
         label: 程序正義
         tag: 程序
         text: 警方沒有調閱手錶，沒有調閱稽核紀錄。他們選了一個人，然後停止了調查。
+    endings:
+      - id: scapegoat
+        when:
+          verdict: [無罪]
+          theory: [sophie]
+        lines:
+          - who: 旁白
+            text: 陪審長站起來。「就第一項罪名，我們認定被告無罪。」
+          - who: 旁白
+            text: 伊森的姊姊在旁聽席上哭出聲。伊森看著證人席旁的那張空椅子，沒有看艾莉絲。
+          - who: 艾莉絲
+            text: 我說的是「另一個人對警方說了謊」。他們聽到的，是「另一個人」。
+            thought: true
     verdicts:
       無罪:
         - who: 旁白
@@ -2055,6 +2068,8 @@ scenes:
   - type: dialogue
     id: epilogue-envelope
     act: 尾聲
+    when:
+      theory: [doubt, rachel]
     place: 艾莉絲的辦公室　影印機旁邊
     steps:
       - do: say
@@ -2090,6 +2105,72 @@ scenes:
               - who: 艾莉絲
                 text: 潔德翻了兩頁就抬頭看我。「這是客戶的機密文件，妳知道這是什麼意思嗎？」我知道。
                 thought: true
+
+  - type: dialogue
+    id: epilogue-envelope-jade
+    act: 尾聲
+    when:
+      theory: [sophie]
+    place: 艾莉絲的辦公室　影印機旁邊
+    steps:
+      - do: say
+        who: 旁白
+        text: 信封裡是一份文件的影本，標題被裁掉了。內文是和解條款草稿，簽署欄只寫著一個字母：「V.」
+      - do: say
+        who: 潔德
+        text: （便條）她要我轉交。她說妳不配，但真相配。
+        mood: 緊
+      - do: say
+        who: 旁白
+        text: 便條背面是蘇菲的筆跡：沃斯那天晚上要簽的不是辭退書，是這個。
+      - do: say
+        who: 艾莉絲
+        text: 這份草稿證明有人想在案發前先把事情「私下解決」。它也會讓海爾、惠特洛克，甚至這間事務所，變成故事的一部分。
+        thought: true
+      - do: choose
+        mode: chat
+        options:
+          - text: 交給海爾。事務所的事，先問事務所。
+            flags: [draft-to-hale]
+            then:
+              - who: 艾莉絲
+                text: 海爾看完草稿，沉默了很久。「這份文件，妳還給過誰？」他問的第一句不是它是真是假。
+                thought: true
+          - text: 自己保留。在知道它是什麼之前，誰都不給。
+            flags: [draft-kept]
+            then:
+              - who: 艾莉絲
+                text: 我把信封放進抽屜最底層，鎖上。鑰匙只有一把。
+                thought: true
+          - text: 交給潔德。她會知道怎麼讓它見光。
+            flags: [draft-to-jade]
+            ethics: [leaked-client-doc]
+            then:
+              - who: 艾莉絲
+                text: 潔德翻了兩頁就抬頭看我。「這是客戶的機密文件，妳知道這是什麼意思嗎？」我知道。
+                thought: true
+
+  - type: dialogue
+    id: epilogue-smear
+    act: 尾聲
+    when:
+      theory: [sophie]
+    place: 艾莉絲的辦公室　一週後
+    steps:
+      - do: say
+        who: 旁白
+        text: 新聞 App 的頭條不是伊森。是蘇菲：〈卡爾德物流助理涉偽證？停車場紀錄曝光她命案當晚的行蹤〉。
+      - do: say
+        who: 旁白
+        text: 有人翻出她的社群帳號，有人貼出她租屋處的地址。卡爾德物流發了一則兩行的聲明，她被解僱了。
+      - do: say
+        who: 艾莉絲
+        text: 我沒有說她殺人。我只說她說了謊。她那晚在車上做的事，我到現在都沒有問過。
+        thought: true
+      - do: say
+        who: 潔德
+        text: （訊息）她那晚在車上，是在把沃斯的行事曆交給我。妳贏了。妳本來可以先問。
+        mood: 緊
 
   - type: dialogue
     id: epilogue-call
