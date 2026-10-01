@@ -34,6 +34,8 @@ const when = z.object({
   cards: z.array(id).optional(),
   /** 倫理帳本裡至少有其中一筆。 */
   ethics: z.array(z.string()).optional(),
+  /** 這些論點全部都在庭上出示過（對質或逼出緘默權）或結辯用過。 */
+  presented: z.array(id).optional(),
 });
 
 /**
@@ -461,6 +463,8 @@ const defenseScene = z.object({
   type: z.literal('defense'),
   id,
   act: z.string(),
+  /** 條件不符就跳過這位證人（例如玩家決定不讓他作證）。 */
+  when: when.optional(),
   day: z.string().default(''),
   witness: z.object({ name: z.string(), role: z.string() }),
   intro: z.array(line).default([]),
