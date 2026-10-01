@@ -1,4 +1,4 @@
-import { relations, type Relation } from '../engine/schema';
+import { relations, type Relation } from '../engine/constants';
 
 /**
  * 這些選項問的是「這兩張卡之間的關係」，不是這條推理的結論。

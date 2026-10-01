@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { confirmedArguments } from '../engine/board';
 import { hasFoundation } from '../engine/cross';
-import { tags, type Argument, type Tag } from '../engine/schema';
+import { tags, type Tag } from '../engine/constants';
+import type { Argument } from '../engine/schema';
 import { episode, useGame } from '../engine/store';
 import { JuryPanel } from './JuryPanel';
 
