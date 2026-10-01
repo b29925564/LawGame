@@ -191,6 +191,7 @@ async function playToRachelLast(page: Page) {
 
   // 收工，海爾在開庭前說出彈劾三步驟的那句話。
   await page.getByRole('button', { name: '結束調查' }).click();
+  await page.getByRole('button', { name: /^確定結束/ }).click();
   await expect(page.getByText('先讓他把話說死，再拿出證據。')).toBeVisible();
   await page.getByRole('button', { name: '開庭' }).click();
   await next(page); // 第三幕字卡
@@ -220,6 +221,7 @@ async function playToRachelLast(page: Page) {
   await expect(page.getByText('本庭排除該項供述')).toBeVisible();
   await page.getByRole('button', { name: '回到桌面' }).click();
   await page.getByRole('button', { name: '結束調查' }).click();
+  await page.getByRole('button', { name: /^確定結束/ }).click();
   await next(page, '開庭');
 
   // 第三幕之二：證詞錄取。無害的問題定錨，底牌話題留著不問。

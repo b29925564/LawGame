@@ -4684,3 +4684,12 @@ button.iou[aria-pressed='true'] {
   height: 100%;
   object-fit: cover;
 }
+
+.q-item.locked {
+  border-style: dashed;
+  background: none;
+  color: var(--faint);
+}
+.q-item.locked .q-text {
+  color: var(--faint);
+}
