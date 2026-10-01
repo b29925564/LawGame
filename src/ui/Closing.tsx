@@ -1,19 +1,15 @@
 import * as closing from '../engine/episode/closing';
 import type { ClosingScene } from '../engine/episode/schema';
-import { closingState, deskSceneOf, exposedArgs, juryAfterTrial, useEpisode } from '../engine/game';
+import { closingState, deskSceneOf, exposedArgs, useEpisode } from '../engine/game';
 import { CardPick, EvidenceDrawer } from './Evidence';
-import { JuryLegend } from './JuryLegend';
 import { Speech } from './Portrait';
 import { Shell, Tabs } from './Shell';
-import { useSettings } from '../engine/settings';
 import { useState } from 'react';
 
 /** 結辯與判決（企劃書 6.9.8、6.10）：挑三個論點排順序、選基調，然後看三輪評議。 */
 export function Closing({ scene }: { scene: ClosingScene }) {
   const { progress, pickArg, setTone, deliver, advance } = useEpisode();
   const st = closingState(progress, scene);
-  const showNumbers = useSettings((s) => s.showNumbers);
-  const after = juryAfterTrial(progress);
   const exposed = exposedArgs(progress);
   const args = (deskSceneOf(progress)?.questions ?? [])
     .filter((q) => progress.cards.includes(q.argument.id))
@@ -38,7 +34,6 @@ export function Closing({ scene }: { scene: ClosingScene }) {
             </li>
           ))}
         </ol>
-        {showNumbers && after && <JuryLegend jury={st.jury} threshold={scene.threshold} />}
         <div className="lines">
           {scene.verdicts[st.verdict].map((l, i) => (
             <Speech key={i} line={l} />

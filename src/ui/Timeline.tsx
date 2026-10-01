@@ -56,6 +56,17 @@ export function Timeline({
   return (
     <div className="stack">
       <section className="panel">
+        <h2>有時間的卡片</h2>
+        <div className="chips">
+          {timed.map((c) => (
+            <button key={c.id} aria-pressed={placed.includes(c.id)} onClick={() => onToggle(c.id)}>
+              {stamp(c)} {c.name}
+            </button>
+          ))}
+          {timed.length === 0 && <span className="muted">目前沒有帶時間的卡片。</span>}
+        </div>
+      </section>
+      <section className="panel">
         <h2>時間軸</h2>
         <p className="muted small">
           按住左邊的把手拖曳排序。順序由你排，遊戲不會幫你排，也不會告訴你哪兩件事兜不起來。
@@ -98,17 +109,6 @@ export function Timeline({
             ))}
           </ol>
         )}
-      </section>
-      <section className="panel">
-        <h2>有時間的卡片</h2>
-        <div className="chips">
-          {timed.map((c) => (
-            <button key={c.id} aria-pressed={placed.includes(c.id)} onClick={() => onToggle(c.id)}>
-              {stamp(c)} {c.name}
-            </button>
-          ))}
-          {timed.length === 0 && <span className="muted">目前沒有帶時間的卡片。</span>}
-        </div>
       </section>
     </div>
   );

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import * as desk from '../engine/episode/desk';
 import type { DeskScene } from '../engine/episode/schema';
 import { deskState, useEpisode } from '../engine/game';
@@ -269,6 +269,12 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
     { id: 'timeline', label: '時間線' },
   ];
   const [kind, setKind, showKind] = useKindFilter();
+  const board = useRef<HTMLDivElement>(null);
+  const tabs = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const t = tabs.current;
+    if (t) board.current?.style.setProperty('--tabs-h', `${t.offsetHeight}px`);
+  }, [view]);
   const slot = (i: number) => {
     const c = pool.find((x) => x.id === st.link.cards[i]);
     return (
@@ -278,8 +284,11 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
     );
   };
   return (
-    <div className="stack">
-      <Tabs label="證據板" value={view} onPick={setView} items={items} />
+    <div className="stack" ref={board}>
+      {/* 分頁列釘在上緣，連線台再釘在它下面：往下挑卡時兩者都不會捲走。 */}
+      <div className="board-tabs" ref={tabs}>
+        <Tabs label="證據板" value={view} onPick={setView} items={items} />
+      </div>
       {view === 'timeline' && (
         <Timeline
           cards={pool}
@@ -390,7 +399,7 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
                     ))}
                   </ul>
                   <button
-                    className="primary"
+                    className="primary pin-bottom"
                     disabled={!desk.canSubmit(scene, st, q.id)}
                     onClick={() => submit(q.id)}
                   >
@@ -468,19 +477,6 @@ function Motions({ scene, held }: { scene: DeskScene; held: string[] }) {
                 </div>
               </fieldset>
               <fieldset className="relations">
-                <legend>支撐（{m.support.length} 張）</legend>
-                <div className="stack">
-                  {[...args, ...pool].map((c) => (
-                    <CardPick
-                      key={c.id}
-                      item={c}
-                      on={a.support.includes(c.id)}
-                      onPick={() => toggleSupport(m.id, c.id)}
-                    />
-                  ))}
-                </div>
-              </fieldset>
-              <fieldset className="relations">
                 <legend>請求</legend>
                 <div className="stack">
                   {m.requests.map((r) => (
@@ -496,8 +492,21 @@ function Motions({ scene, held }: { scene: DeskScene; held: string[] }) {
                   ))}
                 </div>
               </fieldset>
+              <fieldset className="relations">
+                <legend>支撐（{m.support.length} 張）</legend>
+                <div className="stack">
+                  {[...args, ...pool].map((c) => (
+                    <CardPick
+                      key={c.id}
+                      item={c}
+                      on={a.support.includes(c.id)}
+                      onPick={() => toggleSupport(m.id, c.id)}
+                    />
+                  ))}
+                </div>
+              </fieldset>
               <button
-                className="primary"
+                className="primary pin-bottom"
                 disabled={!desk.canFile(scene, st, m.id, progress.cards)}
                 onClick={() => fileMotion(m.id)}
               >
