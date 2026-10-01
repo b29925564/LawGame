@@ -1,5 +1,6 @@
-import { useRef, useState, type PointerEvent } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent } from 'react';
 import { stamp } from './Evidence';
+import { announce, useHand } from './Marks';
 /** 時間線：順序由玩家自己排。遊戲不會自動排序，也不會標出衝突（企劃書 6.5）。 */
 export interface TimelineCard {
   id: string;
@@ -7,21 +8,67 @@ export interface TimelineCard {
   text: string;
   date?: string;
   time?: string;
+  arrivesAt?: string;
 }
+
+/** 時間線上的手的記號（設計稿 inner-voice 2d）。 */
+export interface TimelineMark {
+  kind: 'gap' | 'sync';
+  cards: string[];
+  /** 間距標記的說明，例如「22:44 抵達 → 22:47 刷卡」；沒有就用兩張卡的時間。 */
+  detail?: string;
+}
+
+const minutes = (t: string) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5));
+/** 已經播完的 sync：同時亮起只在第一次看到時播一次。 */
+const synced = new Set<string>();
 
 export function Timeline({
   cards,
   placed,
   onToggle,
   onMove,
+  marks = [],
 }: {
   cards: TimelineCard[];
   placed: string[];
   onToggle: (id: string) => void;
   onMove: (id: string, dir: -1 | 1) => void;
+  marks?: TimelineMark[];
 }) {
   const timed = cards.filter((c) => c.time);
   const rows = placed.map((id) => timed.find((c) => c.id === id)).filter((c) => !!c);
+  // 間距標記：兩張卡的先後排對了（不必相鄰），就標在較晚那張上方。
+  const gaps = new Map<string, { min: number; detail: string }>();
+  for (const m of marks.filter((x) => x.kind === 'gap')) {
+    const [a, b] = m.cards.map((id) => rows.find((c) => c.id === id));
+    if (!a?.time || !b?.time) continue;
+    const ta = a.arrivesAt ?? a.time;
+    const min = minutes(b.time) - minutes(ta);
+    if (min < 0 || rows.indexOf(a) > rows.indexOf(b)) continue;
+    gaps.set(b.id, { min, detail: m.detail ?? `${ta}\u3000→\u3000${b.time}` });
+  }
+  // 同時亮起：兩張卡都放上去了，第一次打開時亮 2400ms。
+  const sync = marks.find((m) => m.kind === 'sync' && m.cards.every((id) => placed.includes(id)));
+  const syncKey = sync?.cards.join();
+  // 還沒播過就亮著；播完（2400ms 後）記下來，之後打開不再亮。
+  const [, setDone] = useState(0);
+  const lit = !!syncKey && !synced.has(syncKey);
+  useEffect(() => {
+    if (!syncKey || synced.has(syncKey)) return;
+    const [a, b] = sync!.cards.map((id) => timed.find((c) => c.id === id));
+    announce.mark({
+      from: 'sync',
+      text: `兩點同時亮起：${a?.time} ${a?.name}，${b?.time} ${b?.name}`,
+    });
+    const t = setTimeout(() => {
+      synced.add(syncKey);
+      setDone((n) => n + 1);
+    }, 2400);
+    return () => clearTimeout(t);
+  }, [syncKey]); // eslint-disable-line react-hooks/exhaustive-deps
+  useHand('sync', lit);
+  useHand('gap', gaps.size > 0);
   const loose = timed.filter((c) => !placed.includes(c.id));
   // 拖曳：被拖的那列跟著手指走，其他列用位移讓位，放開才真的搬。整段只改 transform，不重排版面。
   const [drag, setDrag] = useState<{
@@ -34,6 +81,24 @@ export function Timeline({
     mids: number[];
   } | null>(null);
   const list = useRef<HTMLOListElement>(null);
+  const link = useRef<HTMLSpanElement>(null);
+  // 連線：量兩列的位置；排序、拖曳、視窗縮放後都重量一次，拖曳中先藏起來。
+  useLayoutEffect(() => {
+    const ol = list.current;
+    const el = link.current;
+    if (!ol || !el || !sync) return;
+    const measure = () => {
+      const rs = sync.cards.map((id) => ol.querySelector<HTMLElement>(`[data-id="${id}"]`));
+      if (!rs[0] || !rs[1]) return;
+      const [y0, y1] = rs.map((r) => r!.offsetTop + 12).sort((x, y) => x - y);
+      el.style.setProperty('--y', `${y0}px`);
+      el.style.setProperty('--h', `${y1 - y0}px`);
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(ol);
+    return () => ro.disconnect();
+  });
   const grab = (e: PointerEvent<HTMLButtonElement>, id: string, i: number) => {
     e.currentTarget.setPointerCapture(e.pointerId);
     const els = [...(list.current?.children ?? [])];
@@ -108,9 +173,28 @@ export function Timeline({
           {rows.map((c, i) => (
             <li
               key={c.id}
-              className={drag?.id === c.id ? 'dragging' : undefined}
+              data-id={c.id}
+              className={
+                [
+                  drag?.id === c.id && 'dragging',
+                  gaps.has(c.id) && 'has-gap',
+                  lit && sync?.cards.includes(c.id) && 'sync',
+                ]
+                  .filter(Boolean)
+                  .join(' ') || undefined
+              }
               style={drag ? { transform: `translateY(${shift(i)}px)` } : undefined}
             >
+              {gaps.has(c.id) && (
+                <span
+                  className="gap-mark enter"
+                  role="note"
+                  aria-label={`間距 ${gaps.get(c.id)!.min} 分鐘：${gaps.get(c.id)!.detail}`}
+                >
+                  <b>{gaps.get(c.id)!.min} 分鐘</b>
+                  <span>{gaps.get(c.id)!.detail}</span>
+                </span>
+              )}
               <button
                 className="grip"
                 aria-label={`移動「${c.name}」：拖曳，或用上下鍵`}
@@ -141,6 +225,7 @@ export function Timeline({
               </button>
             </li>
           ))}
+          {lit && sync && !drag && <span className="sync-link" ref={link} aria-hidden />}
         </ol>
       )}
     </section>
