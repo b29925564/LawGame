@@ -760,6 +760,7 @@ scenes:
           tags: [邏輯]
       - id: q2a
         text: 沃斯的手錶死後還戴在身上。它平常記錄什麼？
+        unlock: [watch-photo]
         answer: [l-watch]
         argument:
           id: arg-watch
@@ -770,6 +771,7 @@ scenes:
           tags: [邏輯]
       - id: q2
         text: 驗屍只給了一個範圍。有什麼能把死亡時間釘得更準？
+        unlock: [heart-rate]
         answer: [l-time]
         argument:
           id: arg-b
@@ -779,6 +781,7 @@ scenes:
           tags: [邏輯, 權威]
       - id: q3
         text: 22:31 的訊息從哪台電腦發出？那個時間，沃斯還能打字嗎？
+        unlock: [chat-audit]
         answer: [l-dead-sender]
         accept:
           l-dead-sender: [arg-b]
@@ -790,6 +793,7 @@ scenes:
           tags: [邏輯]
       - id: q4
         text: 23:14 訊息被收回時，誰還刷卡留在 31 樓？
+        unlock: [chat-audit, access-full]
         answer: [l-alone]
         argument:
           id: arg-d
@@ -799,6 +803,7 @@ scenes:
           tags: [邏輯, 程序]
       - id: q5
         text: 蘇菲說她直接回家了。有什麼紀錄跟這句話對不上？
+        unlock: [parking-log]
         answer: [l-sophie-lie]
         argument:
           id: arg-h
@@ -808,6 +813,7 @@ scenes:
           tags: [情感, 邏輯]
       - id: q6
         text: 蘇菲那段時間其實在車上做什麼？跟誰在一起？
+        unlock: [arg-h]
         answer: [l-sophie-jade]
         argument:
           id: arg-i
