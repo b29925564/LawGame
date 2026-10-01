@@ -1,9 +1,17 @@
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import * as desk from '../engine/episode/desk';
 import type { DeskScene } from '../engine/episode/schema';
 import { deskState, useEpisode } from '../engine/game';
 import { play } from '../engine/sound';
-import { CardPick, EvidenceDrawer, KindFilter, timeGroups, useKindFilter } from './Evidence';
+import {
+  CardPick,
+  EvidenceDrawer,
+  KindFilter,
+  timeGroups,
+  useKindFilter,
+  useWide,
+} from './Evidence';
+import { useCardPick } from './pick';
 import { Speech } from './Portrait';
 import { RelationPicker } from './RelationPicker';
 import { Shell, Tabs } from './Shell';
@@ -269,6 +277,20 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
     { id: 'timeline', label: '時間線' },
   ];
   const [kind, setKind, showKind] = useKindFilter();
+  // 電腦版：連線區開著時，右邊證據欄的卡片直接點就放上連線台，中間不再重複列一次。
+  const wide = useWide();
+  const linking = wide && view === 'links';
+  const poolIds = pool.map((c) => c.id).join();
+  const picked = st.link.cards.join();
+  useEffect(() => {
+    if (!linking) return;
+    useCardPick.setState({
+      pool: poolIds.split(','),
+      on: picked ? picked.split(',') : [],
+      pick: toggleLinkCard,
+    });
+    return () => useCardPick.setState({ pool: [], on: [], pick: undefined });
+  }, [linking, poolIds, picked, toggleLinkCard]);
   const board = useRef<HTMLDivElement>(null);
   const tabs = useRef<HTMLDivElement>(null);
   useLayoutEffect(() => {
@@ -336,21 +358,24 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
               </p>
             )}
           </div>
-          <KindFilter items={pool} value={kind} onPick={setKind} />
-          <ul className="stack">
-            {timeGroups(
-              pool.filter((c) => showKind(c) || st.link.cards.includes(c.id)),
-              (c) => (
-                <li key={c.id}>
-                  <CardPick
-                    item={c}
-                    on={st.link.cards.includes(c.id)}
-                    onPick={() => toggleLinkCard(c.id)}
-                  />
-                </li>
-              ),
-            )}
-          </ul>
+          {linking && <p className="muted small">從右邊的證據欄點兩張卡，放上連線台。</p>}
+          {!linking && <KindFilter items={pool} value={kind} onPick={setKind} />}
+          {!linking && (
+            <ul className="stack">
+              {timeGroups(
+                pool.filter((c) => showKind(c) || st.link.cards.includes(c.id)),
+                (c) => (
+                  <li key={c.id}>
+                    <CardPick
+                      item={c}
+                      on={st.link.cards.includes(c.id)}
+                      onPick={() => toggleLinkCard(c.id)}
+                    />
+                  </li>
+                ),
+              )}
+            </ul>
+          )}
           {found.length > 0 && (
             <>
               <h3 className="findings-head">
