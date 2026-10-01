@@ -346,10 +346,19 @@ function defenseErrors(s: DefenseScene, e: Episode, errors: string[]) {
     if (oids.has(o.id)) errors.push(`辯方證人 ${s.id} 的準備選項 id 重複：${o.id}`);
     oids.add(o.id);
   }
+  const known = new Set(
+    e.scenes.flatMap((x) =>
+      x.type === 'desk'
+        ? [...x.cards.map((c) => c.id), ...x.questions.map((q) => q.argument.id)]
+        : [],
+    ),
+  );
   const qids = new Set<string>();
   for (const q of s.questions) {
     if (qids.has(q.id)) errors.push(`辯方證人 ${s.id} 的問題 id 重複：${q.id}`);
     qids.add(q.id);
+    for (const n of q.needs ?? [])
+      if (!known.has(n)) errors.push(`辯方證人 ${s.id} 的問題 ${q.id} 需要不存在的卡片：${n}`);
   }
   // 教過證人要有意義：至少有一題是被教過的措辭。
   if (s.prep.options.some((o) => o.coached) && !s.questions.some((q) => q.rehearsed))

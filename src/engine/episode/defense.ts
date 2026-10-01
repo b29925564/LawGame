@@ -20,6 +20,8 @@ export interface DefenseState {
 }
 
 export const YOU = '艾莉絲';
+/** 辯方自己傳的證人，陪審團本來就打折聽：直接詰問的衝擊只算這麼多，彈劾檢方證人才是主力。 */
+export const OWN_WITNESS = 0.4;
 export const DA = '莫羅檢察官';
 
 export function startDefense(jury: Jury): DefenseState {
@@ -41,12 +43,23 @@ export function prepare(s: DefenseScene, st: DefenseState, optionId: string): De
 export const prepOption = (s: DefenseScene, st: DefenseState) =>
   s.prep.options.find((x) => x.id === st.prep) ?? null;
 
-export function canAsk(s: DefenseScene, st: DefenseState, qid: string): boolean {
+/** 這一題還缺哪些卡片或論點。 */
+export function missing(s: DefenseScene, qid: string, held: string[]): string[] {
+  return (s.questions.find((q) => q.id === qid)?.needs ?? []).filter((n) => !held.includes(n));
+}
+
+export function canAsk(
+  s: DefenseScene,
+  st: DefenseState,
+  qid: string,
+  held: string[] = [],
+): boolean {
   return (
     st.stage === 'direct' &&
     st.asked.length < s.asks &&
     !st.asked.includes(qid) &&
-    s.questions.some((q) => q.id === qid)
+    s.questions.some((q) => q.id === qid) &&
+    missing(s, qid, held).length === 0
   );
 }
 
@@ -59,15 +72,16 @@ export function ask(
   st: DefenseState,
   rules: JuryRules,
   qid: string,
+  held: string[] = [],
 ): DefenseState {
-  if (!canAsk(s, st, qid)) return st;
+  if (!canAsk(s, st, qid, held)) return st;
   const q = s.questions.find((x) => x.id === qid)!;
   const o = prepOption(s, st)!;
   const last = st.asked.length
     ? Math.max(...st.asked.map((id) => s.questions.find((x) => x.id === id)!.seq))
     : -1;
   const ordered = q.seq > last;
-  const mod = o.multiplier * (q.rehearsed ? o.rehearsed : 1) * (ordered ? 1 : 0.5);
+  const mod = OWN_WITNESS * o.multiplier * (q.rehearsed ? o.rehearsed : 1) * (ordered ? 1 : 0.5);
   const r = applyImpact(rules, st.jury, q.impact, q.tags as Tag[], mod);
   return say(
     { ...st, asked: [...st.asked, q.id], jury: r.jury, deltas: r.deltas },
