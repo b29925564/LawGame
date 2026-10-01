@@ -1,4 +1,5 @@
 import type {
+  When,
   DefenseScene,
   DepositionScene,
   DeskScene,
@@ -67,6 +68,7 @@ export function validateEpisode(e: Episode): string[] {
     if (s.type === 'voirdire') voirDireErrors(s, errors);
     if (s.type === 'theory') theoryErrors(s, args, e, errors);
     if (s.type === 'defense') defenseErrors(s, e, errors);
+    branchErrors(s, e, errors);
   }
   openingErrors(e, errors);
   return errors;
@@ -354,4 +356,29 @@ function defenseErrors(s: DefenseScene, e: Episode, errors: string[]) {
     errors.push(`辯方證人 ${s.id} 有「教證人」選項，但沒有任何 rehearsed 問題`);
   const closeAt = e.scenes.findIndex((x) => x.type === 'closing');
   if (closeAt >= 0 && at > closeAt) errors.push(`辯方證人 ${s.id} 必須在結辯之前`);
+}
+
+/** 分支條件：引用的理論要存在；結局 id 不重複；判決類的條件只能用在結辯之後。 */
+function branchErrors(s: Episode['scenes'][number], e: Episode, errors: string[]) {
+  const theories = new Set(
+    e.scenes.flatMap((x) => (x.type === 'theory' ? x.theories.map((t) => t.id) : [])),
+  );
+  const check = (w: When | undefined, where: string) => {
+    for (const t of w?.theory ?? [])
+      if (!theories.has(t)) errors.push(`${where} 的條件引用了不存在的理論：${t}`);
+  };
+  if ('when' in s && s.when) {
+    check(s.when, `場景 ${s.id}`);
+    const closeAt = e.scenes.findIndex((x) => x.type === 'closing');
+    if (s.when.verdict && (closeAt < 0 || e.scenes.indexOf(s) < closeAt))
+      errors.push(`場景 ${s.id} 依判決分支，但它在結辯之前`);
+  }
+  if (s.type === 'closing') {
+    const ids = new Set<string>();
+    for (const x of s.endings) {
+      if (ids.has(x.id)) errors.push(`結辯 ${s.id} 的結局 id 重複：${x.id}`);
+      ids.add(x.id);
+      check(x.when, `結辯 ${s.id} 的結局 ${x.id}`);
+    }
+  }
 }
