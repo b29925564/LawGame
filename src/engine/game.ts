@@ -214,7 +214,28 @@ export function branchContext(p: Progress): branch.BranchContext {
     flags: p.flags ?? [],
     ethics: p.ethics ?? [],
     cards: p.cards,
+    presented: presentedArgs(p),
   };
+}
+
+/** 庭上出示過（對質過、逼出緘默權）或結辯講過的論點。 */
+export function presentedArgs(p: Progress): string[] {
+  const out = new Set<string>();
+  for (const s of episodeOf(p).scenes) {
+    const st = p.scenes[s.id];
+    if (!st) continue;
+    if (s.type === 'trial') {
+      const t = st as trial.TrialState;
+      for (const c of courtScene(p, s).witness.claims)
+        if ((t.claims?.[c.id]?.result ?? 'none') !== 'none') out.add(c.argument);
+      if (s.fifth && (t.pleaded || t.stricken)) out.add(s.fifth.argument);
+    }
+    if (s.type === 'closing') {
+      const c = st as closing.ClosingState;
+      if (c.spoken) for (const id of c.picked) out.add(id);
+    }
+  }
+  return [...out];
 }
 
 /** 對話選項此刻看不看得到：條件不符的選項不出現。 */

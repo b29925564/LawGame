@@ -13,6 +13,8 @@ export interface BranchContext {
   flags: string[];
   ethics: string[];
   cards: string[];
+  /** 庭上出示過（對質或逼出緘默權）或結辯用過的論點。 */
+  presented: string[];
 }
 
 export function matches(w: When | undefined, c: BranchContext): boolean {
@@ -24,6 +26,7 @@ export function matches(w: When | undefined, c: BranchContext): boolean {
   if (w.flags && !w.flags.every((f) => c.flags.includes(f))) return false;
   if (w.notFlags && w.notFlags.some((f) => c.flags.includes(f))) return false;
   if (w.cards && !w.cards.every((x) => c.cards.includes(x))) return false;
+  if (w.presented && !w.presented.every((x) => c.presented.includes(x))) return false;
   if (w.ethics && !w.ethics.some((e) => c.ethics.includes(e))) return false;
   return true;
 }

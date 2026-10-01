@@ -390,6 +390,8 @@ function branchErrors(s: Episode['scenes'][number], e: Episode, errors: string[]
       if (!offers.has(d)) errors.push(`${where} 的條件引用了不存在的協商條件：${d}`);
     for (const c of w?.cards ?? [])
       if (!known.has(c)) errors.push(`${where} 的條件引用了不存在的卡片：${c}`);
+    for (const c of w?.presented ?? [])
+      if (!known.has(c)) errors.push(`${where} 的條件引用了不存在的論點：${c}`);
   };
   if (s.type === 'trial' && s.fifth?.theory && !theories.has(s.fifth.theory))
     errors.push(`法庭 ${s.id} 的緘默權撤訴條件引用了不存在的理論：${s.fifth.theory}`);
