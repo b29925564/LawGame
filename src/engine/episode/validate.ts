@@ -379,9 +379,14 @@ function branchErrors(s: Episode['scenes'][number], e: Episode, errors: string[]
         : [],
     ),
   );
+  const offers = new Set(
+    e.scenes.flatMap((x) => (x.type === 'negotiation' ? x.offers.map((o) => o.id) : [])),
+  );
   const check = (w: When | undefined, where: string) => {
     for (const t of w?.theory ?? [])
       if (!theories.has(t)) errors.push(`${where} 的條件引用了不存在的理論：${t}`);
+    for (const d of w?.deal ?? [])
+      if (!offers.has(d)) errors.push(`${where} 的條件引用了不存在的協商條件：${d}`);
     for (const c of w?.cards ?? [])
       if (!known.has(c)) errors.push(`${where} 的條件引用了不存在的卡片：${c}`);
   };
@@ -395,6 +400,14 @@ function branchErrors(s: Episode['scenes'][number], e: Episode, errors: string[]
     if (s.when.verdict && (closeAt < 0 || e.scenes.indexOf(s) < closeAt))
       errors.push(`場景 ${s.id} 依判決分支，但它在結辯之前`);
   }
+  if (s.type === 'dialogue')
+    s.steps.forEach((step, i) => {
+      if (step.do !== 'choose') return;
+      step.options.forEach((o, j) => check(o.when, `場景 ${s.id} 第 ${i + 1} 步選項 ${j + 1}`));
+      // 至少留一個無條件的選項，否則條件全不符時玩家會卡住。
+      if (step.options.every((o) => o.when))
+        errors.push(`場景 ${s.id} 第 ${i + 1} 步的選項全部有條件，可能一個都不出現`);
+    });
   if (s.type === 'closing') {
     const ids = new Set<string>();
     for (const x of s.endings) {

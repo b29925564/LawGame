@@ -33,6 +33,8 @@ export interface TrialState {
   kept: string[];
   struck: number;
   rebuked: boolean;
+  /** 證人當庭援引緘默權（企劃書 10.9 的 E1）：檢方撤回起訴，這一集就此結束。 */
+  pleaded?: boolean;
   log: LogLine[];
 }
 
@@ -233,7 +235,10 @@ export function confront(
   // 彈劾夠多次又出示了那個論點，她就當庭援引緘默權，詰問到此為止。
   const f = s.fifth;
   if (f && arg.id === f.argument && next.impeachments >= f.needs)
-    next = say({ ...next, stage: 'done' }, ...f.lines.map((l) => ({ who: l.who, text: l.text })));
+    next = say(
+      { ...next, stage: 'done', pleaded: true },
+      ...f.lines.map((l) => ({ who: l.who, text: l.text })),
+    );
   return next;
 }
 

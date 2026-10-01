@@ -53,13 +53,14 @@ describe('劇本驗證器（集數）', () => {
         id: 'a',
         act: '測試',
         owner: '某人',
+        epilogue: false,
         steps: [
           { do: 'caption', time: '23:00', text: '晚' },
           { do: 'caption', time: '22:00', text: '時間倒流' },
           { do: 'retract', target: 'ghost' },
         ],
       },
-      { type: 'card', id: 'a', act: '測試', title: '重複', lines: [] },
+      { type: 'card', id: 'a', act: '測試', title: '重複', lines: [], epilogue: false },
     ],
   };
   it('抓出時間倒流、收回不存在的訊息、場景 id 重複', () => {
