@@ -113,6 +113,13 @@ _cards: &cards
     time: '22:40'
     text: 地下停車場的進出紀錄顯示，蘇菲的車週五 22:40 才駛離。
     source: 蘿莎調查
+  - id: jade-alibi
+    name: 潔德證實：蘇菲當晚和她在車上
+    kind: 陳述
+    date: 週五
+    time: '20:30'
+    text: 潔德・莫里斯說，蘇菲 20:30 到 22:40 都和她坐在停車場的車上，交給她一份沃斯的行事曆副本。
+    source: 電話（潔德・莫里斯）
   - id: blood-report
     name: 補充血跡報告
     kind: 事實
@@ -625,7 +632,26 @@ scenes:
             text: 還有，31 樓的夜間清潔是外包的，週五晚上不排班。
           - who: 蘿莎
             text: 我順便調了地下停車場的進出紀錄。那個助理蘇菲的車，週五一直停到 22:40 才開走。
+          - who: 蘿莎
+            text: 監視器拍到她副駕駛還坐著一個人。我認得那張臉：《卡爾德論壇報》的潔德・莫里斯，跑卡爾德物流跑了好幾年。
         gives: [parking-log]
+      - id: job-jade
+        who: 艾莉絲
+        label: 打電話給記者潔德・莫里斯
+        detail: 她不會白白開口。要她說出那晚的事，得先答應不公開她的消息來源。
+        cost: 1
+        needs: [parking-log]
+        report:
+          - who: 潔德
+            text: 韓律師。妳想知道蘇菲那晚在哪裡，我可以告訴妳，但她的名字不能出現在任何一份文件上。
+          - who: 艾莉絲
+            text: 我答應妳。
+          - who: 潔德
+            text: 八點半到十點四十，她都在我車上。她給了我一份沃斯的行事曆副本，然後哭了很久。她沒有上樓。
+          - who: 艾莉絲
+            text: 蘇菲說謊，是為了保護消息來源，不是為了掩蓋命案。
+            thought: true
+        gives: [jade-alibi]
       - id: job-morrow
         who: 艾莉絲
         label: 打電話給莫羅，聽聽她開的條件
@@ -673,6 +699,10 @@ scenes:
         cards: [parking-log, sophie-home]
         relation: 矛盾
         text: 蘇菲說她 19:02 下班就直接回家，但她的車一直停到 22:40。
+      - id: l-sophie-jade
+        cards: [parking-log, jade-alibi]
+        relation: 支持
+        text: 蘇菲的車停到 22:40，潔德說她 20:30 到 22:40 都在車上：兩份紀錄對得上。
     questions:
       - id: q1
         text: 伊森為什麼那個時間上樓？
@@ -731,6 +761,16 @@ scenes:
           text: 蘇菲說她 19:02 直接回家，但她的車停到 22:40 才離開。命案發生的時候，她就在大樓裡。
           strength: 10
           tags: [情感, 邏輯]
+      - id: q6
+        text: 蘇菲為什麼要對警方說謊？
+        answer: [l-sophie-jade]
+        argument:
+          id: arg-i
+          name: 論點 I：蘇菲在停車場見記者，與命案無關
+          text: 蘇菲 20:30 到 22:40 都在車上和記者潔德見面。她說謊是為了保護消息來源，不是因為她做了什麼。
+          strength: 6
+          motionOnly: true
+          tags: [邏輯]
     motions:
       - id: m-watch
         label: 聲請傳票：死者手錶的健康資料
