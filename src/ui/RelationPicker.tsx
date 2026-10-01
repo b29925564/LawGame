@@ -21,6 +21,15 @@ export const relationSentence = (r: Relation, a: string, b: string) => {
   }
 };
 
+/** 連線台上兩卡之間畫的符號（設計稿 board-redesign 修訂）。 */
+export const relationMark: Record<Relation, string> = {
+  支持: '＝',
+  矛盾: '⟂',
+  縮小範圍: '⊃',
+  說明動機: '⇒',
+  說明機會: '⇢',
+};
+
 export function RelationPicker({
   cards,
   value,
@@ -45,15 +54,13 @@ export function RelationPicker({
               role="radio"
               aria-checked={value === r}
               aria-label={`${r}：${relationSentence(r, a ?? '', b ?? '')}`}
+              title={relationSentence(r, a ?? '', b ?? '')}
               onClick={() => onPick(r)}
             >
               {r}
             </button>
           ))}
         </div>
-        <p className="muted small">
-          {value ? relationSentence(value, a ?? '', b ?? '') : '選一種關係，說明這兩張卡怎麼連。'}
-        </p>
       </fieldset>
     );
   return (

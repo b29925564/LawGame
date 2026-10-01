@@ -4352,3 +4352,210 @@ button.iou[aria-pressed='true'] {
   z-index: 2;
   pointer-events: none;
 }
+
+/* ══ 證據板三欄（設計稿 ui/design-review/board-redesign）══ */
+.board3 {
+  display: grid;
+  grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+.board3 > .q-list {
+  position: sticky;
+  top: 0;
+  max-height: calc(100dvh - 120px);
+  overflow-y: auto;
+}
+.q-list ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.q-item {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  padding: 12px 14px;
+  text-align: left;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.q-item[aria-current='true'] {
+  border-color: var(--hl);
+  border-left-width: 3px;
+  background: var(--hl-wash);
+}
+.q-num {
+  font-family: var(--font-mono, monospace);
+  font-size: 12px;
+  color: var(--faint);
+}
+.q-text {
+  font-family: var(--font-doc);
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.45;
+}
+.q-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+.q-item.idle .q-meta {
+  color: var(--faint);
+}
+.workbench {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.wb-head h2 {
+  margin: 2px 0 4px;
+  font-family: var(--font-doc);
+  font-size: 1.5em;
+}
+.wb-head p {
+  margin: 0;
+}
+.step {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.step-head {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted);
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  flex-wrap: wrap;
+}
+.step.answer.done {
+  border-color: color-mix(in srgb, var(--good) 60%, var(--border));
+}
+.answer-slots .slot-card {
+  flex: 1 1 160px;
+  min-height: 72px;
+}
+.answer-foot,
+.bench-foot {
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+.answer-foot .board-note {
+  margin: 0;
+  flex: 1;
+}
+.slot-card {
+  position: relative;
+}
+.slot-clear {
+  all: unset;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+}
+.slot-clear:focus-visible {
+  outline: 2px solid var(--hl);
+  outline-offset: 2px;
+}
+.slot-tag {
+  position: absolute;
+  top: -9px;
+  left: 10px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--hl);
+  color: var(--hl-ink);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 18px;
+}
+.step .link-bench {
+  position: static;
+  margin: 0;
+  padding: 14px 0 0;
+  border: none;
+  background: none;
+  box-shadow: none;
+}
+.found-chips {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.found {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-height: 52px;
+  padding: 8px 12px;
+  text-align: left;
+}
+.found.arg {
+  border-left: 3px solid var(--hl);
+  font-weight: 700;
+}
+.found[aria-pressed='true'] {
+  opacity: 0.6;
+}
+.bench-cards summary {
+  cursor: pointer;
+  padding: 8px 0;
+  font-weight: 700;
+}
+.board-one .back {
+  align-self: flex-start;
+}
+/* 證據欄小卡：兩行，全文放在 title 與之後的浮出卡。 */
+.card.mini {
+  position: relative;
+  padding: 10px 12px;
+  gap: 2px;
+}
+.card.mini .mini-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+.card.mini .mini-head .time {
+  order: 2;
+  font-family: var(--font-mono, monospace);
+  font-weight: 500;
+  font-size: 12px;
+  color: var(--muted);
+}
+.card.mini .slot-tag {
+  top: -8px;
+  left: auto;
+  right: 10px;
+}
+.card.mini.on {
+  border-color: var(--hl);
+  background: var(--hl-wash);
+}
+.cost {
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--hl-ink) 14%, transparent);
+  font-family: var(--font-mono, monospace);
+  font-size: 0.8em;
+}

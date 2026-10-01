@@ -14,21 +14,28 @@ const next = (page: Page, name: string | RegExp = '繼續') =>
 const card = (root: Page | ReturnType<Page['locator']>, name: string | RegExp) =>
   root.locator('.pick-name', { hasText: name });
 
-/** 推理兩步：先在連線區把兩張卡連成發現，再拿第 n 條發現回答疑問。 */
+/** 推理兩步：在疑問的工作台上，先用連線台把兩張卡連成發現，再拿第 n 條發現回答。 */
 async function solve(
   page: Page,
-  tab: string,
+  _tab: string,
   title: string,
   names: (string | RegExp)[],
   relation: RegExp,
   n: number,
 ) {
-  await page.getByRole('button', { name: '連線', exact: true }).click();
-  const links = page.locator('section.links');
-  // 電腦版的卡片在右邊證據欄，點了直接放上連線台；手機版在連線區底下。
+  // 手機版一次一欄：工作台開著就先回到疑問清單。
+  const back = page.getByRole('button', { name: '← 全部疑問' });
+  if (await back.isVisible()) await back.click();
+  await page.locator('.q-item', { hasText: title }).click();
+  const q = page.locator('section.workbench');
+  await expect(q).toContainText(title);
+  const links = q.locator('section.links');
+  // 電腦版的卡片在右邊證據欄，點了直接放上連線台；手機版在連線台底下的「挑卡片」。
   const side = page.locator('.sheet.side');
+  const wide = await side.isVisible();
+  if (!wide) await links.locator('summary').click();
   for (const name of names) {
-    if (await side.isVisible())
+    if (wide)
       await side
         .locator('.card.pickable', { has: page.locator('strong', { hasText: name }) })
         .first()
@@ -38,11 +45,8 @@ async function solve(
   await links.getByRole('radio', { name: relation }).click();
   await links.getByRole('button', { name: '連起來' }).click();
   await expect(links.getByRole('status')).toContainText('連起來了');
-  await page.getByRole('button', { name: tab, exact: true }).click();
-  const q = page.locator('section.chain');
-  await expect(q).toContainText(title);
-  await card(q, `發現 ${n}`).click();
-  await q.getByRole('button', { name: /提交到案情會議/ }).click();
+  await q.locator('.found', { hasText: `發現 ${n}：` }).click();
+  await q.getByRole('button', { name: /^提交/ }).click();
   await expect(q).toContainText('已確認');
 }
 
@@ -122,8 +126,6 @@ async function playToRachelLast(page: Page) {
   await expect(page.getByLabel(/剩餘工時 20/)).toBeVisible();
 
   await page.getByRole('button', { name: '證據板' }).click();
-  // 還沒有發現時，證據板先打開連線區。
-  await expect(page.locator('section.links')).toBeVisible();
   await solve(page, '疑問 1', '伊森為什麼', ['手錶通知紀錄', '叫車收據'], /支持/, 1);
   // 過關的推理鏈確認了，但要玩家自己收工，剩下的工時還能查。
   await expect(page.getByRole('button', { name: '結束調查' })).toBeVisible();

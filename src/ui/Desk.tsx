@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import * as desk from '../engine/episode/desk';
 import type { DeskScene } from '../engine/episode/schema';
 import { deskState, useEpisode } from '../engine/game';
@@ -14,7 +14,7 @@ import {
 import { IndexCard, MarkLines, Ruling } from './Marks';
 import { useCardPick } from './pick';
 import { Speech } from './Portrait';
-import { RelationPicker } from './RelationPicker';
+import { relationMark, RelationPicker } from './RelationPicker';
 import { Shell, Tabs } from './Shell';
 import { Timeline } from './Timeline';
 
@@ -255,6 +255,11 @@ function Docs({ scene }: { scene: DeskScene }) {
  * 先在「連線」把兩張卡用一種關係連成發現，再拿發現去回答疑問。
  * 一次只顯示一個分頁，免得選卡清單把下一題推到看不見的地方。
  */
+/**
+ * 證據板（設計稿 ui/design-review/board-redesign）：左邊疑問清單、中間工作台、右邊證據欄。
+ * 同一個疑問的三步由上到下排在一頁：① 你的答案 ② 連線台 ③ 我的發現與論點。
+ * 手機上一次只看一欄：先挑疑問，再進工作台。
+ */
 function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
   const {
     progress,
@@ -277,33 +282,27 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
       text: q.argument.text,
     }));
   const pool = [...args, ...scene.cards.filter((c) => held.includes(c.id))];
+  const nameOf = (id: string) => pool.find((c) => c.id === id)?.name ?? id;
   const found = desk.findings(scene, st).map((l, i) => ({
     id: l.id,
     name: `發現 ${i + 1}`,
     kind: '發現' as const,
     text: l.text,
+    pair: `${nameOf(l.cards[0])} ⟷ ${nameOf(l.cards[1])}`,
+    relation: l.relation,
     conclusion: l.conclusion,
   }));
   const answers = [...found, ...args];
-  // 一打開就停在第一題還沒確認的疑問；還沒有任何發現時先到連線。
   const firstOpen = scene.questions.find((q) => !st.confirmed.includes(q.id));
-  const [view, setView] = useState<string>(
-    found.length === 0 && firstOpen ? 'links' : (firstOpen?.id ?? 'timeline'),
-  );
-  const q = scene.questions.find((x) => x.id === view);
-  const items = [
-    { id: 'links', label: '連線' },
-    ...scene.questions.map((x, i) => ({
-      id: x.id,
-      label: `疑問 ${i + 1}`,
-      done: st.confirmed.includes(x.id),
-    })),
-    { id: 'timeline', label: '時間線' },
-  ];
-  const [kind, setKind, showKind] = useKindFilter();
-  // 電腦版：連線區開著時，右邊證據欄的卡片直接點就放上連線台，中間不再重複列一次。
   const wide = useWide();
-  const linking = wide && view === 'links';
+  // 電腦版一打開就停在第一題還沒確認的疑問；手機版先看清單。
+  const [view, setView] = useState<string | null>(() =>
+    wide ? (firstOpen?.id ?? 'timeline') : null,
+  );
+  const shown = view ?? (wide ? (firstOpen?.id ?? 'timeline') : null);
+  const q = scene.questions.find((x) => x.id === shown);
+  // 電腦版：右邊證據欄的卡片直接點就放上連線台（先 A 再 B）。
+  const linking = wide && !!q;
   const poolIds = pool.map((c) => c.id).join();
   const picked = st.link.cards.join();
   useEffect(() => {
@@ -315,27 +314,254 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
     });
     return () => useCardPick.setState({ pool: [], on: [], pick: undefined });
   }, [linking, poolIds, picked, toggleLinkCard]);
-  const board = useRef<HTMLDivElement>(null);
-  const tabs = useRef<HTMLDivElement>(null);
-  useLayoutEffect(() => {
-    const t = tabs.current;
-    if (t) board.current?.style.setProperty('--tabs-h', `${t.offsetHeight}px`);
-  }, [view]);
+  const [kind, setKind, showKind] = useKindFilter();
+  const status = (id: string) =>
+    st.confirmed.includes(id)
+      ? 'done'
+      : st.attempts[id]?.cards.length || st.feedback[id]
+        ? 'open'
+        : 'idle';
+  const num = (i: number) => String(i + 1).padStart(2, '0');
+
+  const list = (
+    <nav className="q-list" aria-label="疑問">
+      <p className="eyebrow">
+        疑問 {st.confirmed.length} / {scene.questions.length} 已確認
+      </p>
+      <ul>
+        {scene.questions.map((x, i) => {
+          const s = status(x.id);
+          return (
+            <li key={x.id}>
+              <button
+                className={`q-item ${s}`}
+                aria-current={shown === x.id}
+                onClick={() => setView(x.id)}
+              >
+                <span className="q-num">{num(i)}</span>
+                <span className="q-text">{x.text}</span>
+                <span className="q-meta">
+                  {s === 'done' ? (
+                    <>
+                      <span className="good">✓ 已確認</span>
+                      <span>{x.argument.name.split('：')[0]}</span>
+                    </>
+                  ) : (
+                    <span>{s === 'open' ? '進行中' : '尚未開始'}</span>
+                  )}
+                </span>
+              </button>
+            </li>
+          );
+        })}
+        <li>
+          <button
+            className="q-item idle"
+            aria-current={shown === 'timeline'}
+            onClick={() => setView('timeline')}
+          >
+            <span className="q-num">時間線</span>
+            <span className="q-text">把事件排在時間軸上</span>
+            <span className="q-meta">
+              <span>{pool.filter((c) => 'time' in c && c.time).length} 張卡可排</span>
+            </span>
+          </button>
+        </li>
+      </ul>
+    </nav>
+  );
+
   const slot = (i: number) => {
     const c = pool.find((x) => x.id === st.link.cards[i]);
+    const tag = i === 0 ? 'A' : 'B';
     return (
       <li className={c ? 'slot-card filled' : 'slot-card'}>
-        {c ? c.name : i === 0 ? '第一張卡' : '第二張卡'}
+        <span className="slot-tag" aria-hidden>
+          {tag}
+        </span>
+        {c ? (
+          <button
+            className="slot-clear"
+            onClick={() => toggleLinkCard(c.id)}
+            aria-label={`拿下 ${c.name}`}
+          >
+            {c.name}
+          </button>
+        ) : null}
       </li>
     );
   };
-  return (
-    <div className="stack" ref={board}>
-      {/* 分頁列釘在上緣，連線台再釘在它下面：往下挑卡時兩者都不會捲走。 */}
-      <div className="board-tabs" ref={tabs}>
-        <Tabs label="證據板" value={view} onPick={setView} items={items} />
+
+  const bench = (
+    <section className="panel step links">
+      <h3 className="step-head">連線</h3>
+      <div className={desk.canConnect(st) ? 'link-bench ready' : 'link-bench'}>
+        <ul className="slots-row">
+          {slot(0)}
+          <li className="link-knot" aria-hidden>
+            <span className={st.link.relation ? 'set' : undefined}>{st.link.relation ? relationMark[st.link.relation] : '？'}</span>
+          </li>
+          {slot(1)}
+        </ul>
+        <RelationPicker
+          cards={st.link.cards.map((id) => pool.find((c) => c.id === id)?.name)}
+          value={st.link.relation}
+          onPick={setLinkRelation}
+          compact
+        />
+        <div className="row bench-foot">
+          <span />
+          <button className="primary" disabled={!desk.canConnect(st)} onClick={connect}>
+            連起來
+          </button>
+        </div>
+        {st.linkNote && (
+          <p role="status" className={st.link.cards.length ? 'board-note bad' : 'board-note'}>
+            {st.linkNote}
+          </p>
+        )}
       </div>
-      {view === 'timeline' && (
+      {!wide && (
+        <details className="bench-cards">
+          <summary>挑卡片（{pool.length}）</summary>
+          <KindFilter items={pool} value={kind} onPick={setKind} />
+          <ul className="stack">
+            {timeGroups(
+              pool.filter((c) => showKind(c) || st.link.cards.includes(c.id)),
+              (c) => (
+                <li key={c.id}>
+                  <CardPick
+                    item={c}
+                    on={st.link.cards.includes(c.id)}
+                    verb={
+                      st.link.cards[0] === c.id ? 'A' : st.link.cards[1] === c.id ? 'B' : undefined
+                    }
+                    onPick={() => toggleLinkCard(c.id)}
+                  />
+                </li>
+              ),
+            )}
+          </ul>
+        </details>
+      )}
+    </section>
+  );
+
+  const work = q
+    ? (() => {
+        const a = st.attempts[q.id] ?? { cards: [] };
+        const done = st.confirmed.includes(q.id);
+        const i = scene.questions.indexOf(q);
+        const item = (id: string) => answers.find((c) => c.id === id);
+        return (
+          <section className="workbench chain" aria-label={q.text}>
+            <header className="wb-head">
+              <p className="eyebrow">疑問 {num(i)}</p>
+              <h2>{q.text}</h2>
+            </header>
+            <section className={done ? 'panel step answer done' : 'panel step answer'}>
+              <h3 className="step-head">答案</h3>
+              {done ? (
+                <p className="good">已確認：{q.argument.name}</p>
+              ) : (
+                <>
+                  <ul className="slots-row answer-slots">
+                    {Array.from({ length: q.answer.length }, (_, k) => {
+                      const c = item(a.cards[k]);
+                      return (
+                        <li key={k} className={c ? 'slot-card filled' : 'slot-card'}>
+                          {c ? (
+                            <button
+                              className="slot-clear"
+                              onClick={() => toggleCard(q.id, c.id)}
+                              aria-label={`從答案拿下 ${c.name}`}
+                            >
+                              <strong>{'pair' in c ? c.pair : c.name}</strong>
+                              <span className="muted small">
+                                {'relation' in c ? c.relation : '論點'}
+                              </span>
+                            </button>
+                          ) : null}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                  <div className="row answer-foot">
+                    {st.feedback[q.id] ? (
+                      <p role="status" className="board-note bad">
+                        {st.feedback[q.id]}
+                      </p>
+                    ) : (
+                      <span />
+                    )}
+                    <button
+                      className="primary"
+                      disabled={!desk.canSubmit(scene, st, q.id)}
+                      onClick={() => submit(q.id)}
+                    >
+                      提交 <span className="cost">−1 時</span>
+                    </button>
+                  </div>
+                </>
+              )}
+              {done && st.feedback[q.id] && (
+                <p role="status" className="board-note">
+                  {st.feedback[q.id]}
+                </p>
+              )}
+            </section>
+            {bench}
+            <section className="panel step mine">
+              <h3 className="step-head">發現</h3>
+              {answers.length === 0 ? (
+                <div className="slot-card" aria-label="還沒有發現" />
+              ) : (
+                <ul className="found-chips">
+                  {answers.map((c) => {
+                    const used = a.cards.includes(c.id);
+                    return (
+                      <li key={c.id}>
+                        <button
+                          className={c.kind === '論點' ? 'found arg' : 'found'}
+                          aria-pressed={used}
+                          disabled={done}
+                          onClick={() => toggleCard(q.id, c.id)}
+                          title={c.text}
+                        >
+                          <span className="pick-name">
+                            {'pair' in c ? `${c.name}：${c.pair}` : c.name}
+                          </span>
+                          <span className="muted small">
+                            {'relation' in c ? c.relation : '論點'}
+                            {used && '・已放進答案'}
+                          </span>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+              {found.some((f) => f.conclusion) && (
+                <ol className="findings">
+                  {found
+                    .filter((f) => f.conclusion)
+                    .map((f) => (
+                      <li key={f.id}>
+                        <IndexCard
+                          head={f.name}
+                          printed={f.text}
+                          text={f.conclusion!.text}
+                          word={f.conclusion!.word}
+                        />
+                      </li>
+                    ))}
+                </ol>
+              )}
+            </section>
+          </section>
+        );
+      })()
+    : shown === 'timeline' && (
         <Timeline
           cards={pool}
           placed={st.timeline}
@@ -346,139 +572,23 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
             detail: m.kind === 'gap' ? gapDetail(scene) : undefined,
           }))}
         />
-      )}
-      {view === 'links' && (
-        <section className="panel chain links">
-          <h2>連線</h2>
-          <p className="muted small">
-            挑兩張卡，說明它們之間是什麼關係。連對了得到一條發現；連錯扣 1 工時。
-          </p>
-          {/*
-           * 連線台黏在捲動區上緣：往下挑卡、選關係時都看得到自己拼了什麼，
-           * 按下「連起來」的結果也出現在這裡。連錯時卡片會留在槽裡，連對或重複時槽會清空。
-           */}
-          <div className={desk.canConnect(st) ? 'link-bench ready' : 'link-bench'}>
-            <ul className="slots-row">
-              {slot(0)}
-              <li className="link-knot" aria-hidden>
-                <span className={st.link.relation ? 'set' : undefined}>
-                  {st.link.relation ?? '？'}
-                </span>
-              </li>
-              {slot(1)}
-            </ul>
-            <RelationPicker
-              cards={st.link.cards.map((id) => pool.find((c) => c.id === id)?.name)}
-              value={st.link.relation}
-              onPick={setLinkRelation}
-              compact
-            />
-            <button
-              className="primary wide-center"
-              disabled={!desk.canConnect(st)}
-              onClick={connect}
-            >
-              連起來
-            </button>
-            {st.linkNote && (
-              <p role="status" className={st.link.cards.length ? 'board-note bad' : 'board-note'}>
-                {st.linkNote}
-              </p>
-            )}
-          </div>
-          {linking && <p className="muted small">從右邊的證據欄點兩張卡，放上連線台。</p>}
-          {!linking && <KindFilter items={pool} value={kind} onPick={setKind} />}
-          {!linking && (
-            <ul className="stack">
-              {timeGroups(
-                pool.filter((c) => showKind(c) || st.link.cards.includes(c.id)),
-                (c) => (
-                  <li key={c.id}>
-                    <CardPick
-                      item={c}
-                      on={st.link.cards.includes(c.id)}
-                      onPick={() => toggleLinkCard(c.id)}
-                    />
-                  </li>
-                ),
-              )}
-            </ul>
-          )}
-          {found.length > 0 && (
-            <>
-              <h3 className="findings-head">
-                發現 <span>{found.length}</span>
-              </h3>
-              <ol className="findings">
-                {found.map((f) => (
-                  <li key={f.id}>
-                    {f.conclusion ? (
-                      <IndexCard
-                        head={f.name}
-                        printed={f.text}
-                        text={f.conclusion.text}
-                        word={f.conclusion.word}
-                      />
-                    ) : (
-                      <>
-                        <strong>{f.name}</strong>
-                        <p>{f.text}</p>
-                      </>
-                    )}
-                  </li>
-                ))}
-              </ol>
-            </>
-          )}
-        </section>
-      )}
-      {q &&
-        (() => {
-          const a = st.attempts[q.id] ?? { cards: [] };
-          const done = st.confirmed.includes(q.id);
-          return (
-            <section className={done ? 'panel chain done' : 'panel chain'}>
-              <h2>{q.text}</h2>
-              {done ? (
-                <p className="good">已確認：{q.argument.name}</p>
-              ) : answers.length === 0 ? (
-                <div className="board-empty">
-                  <p className="muted">還沒有發現。先到「連線」把證據拼起來。</p>
-                  <button onClick={() => setView('links')}>去連線</button>
-                </div>
-              ) : (
-                <>
-                  <p className="muted small">
-                    挑 {q.answer.length} 條發現或論點來回答。提交花 1 工時。
-                  </p>
-                  <ul className="stack">
-                    {answers.map((c) => (
-                      <li key={c.id}>
-                        <CardPick
-                          item={c}
-                          on={a.cards.includes(c.id)}
-                          onPick={() => toggleCard(q.id, c.id)}
-                        />
-                      </li>
-                    ))}
-                  </ul>
-                  <button
-                    className="primary pin-bottom"
-                    disabled={!desk.canSubmit(scene, st, q.id)}
-                    onClick={() => submit(q.id)}
-                  >
-                    提交到案情會議（1 工時）
-                  </button>
-                </>
-              )}
-              {st.feedback[q.id] && (
-                <p role="status" className={done ? 'board-note' : 'board-note bad'}>
-                  {st.feedback[q.id]}
-                </p>
-              )}
-            </section>
-          );
-        })()}
+      );
+
+  if (!wide)
+    return shown ? (
+      <div className="stack board-one">
+        <button className="link back" onClick={() => setView(null)}>
+          ← 全部疑問
+        </button>
+        {work}
+      </div>
+    ) : (
+      list
+    );
+  return (
+    <div className="board3">
+      {list}
+      <div className="board-work">{work}</div>
     </div>
   );
 }
