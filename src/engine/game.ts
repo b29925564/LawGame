@@ -507,7 +507,14 @@ export const useEpisode = create<GameState>()((set, get) => {
         const p = get().progress;
         const after = juryAfterTrial(p);
         if (!after) return st;
-        return closing.deliver(s, st, after.rules, closingArgs(p), exposedArgs(p));
+        return closing.deliver(
+          s,
+          st,
+          after.rules,
+          closingArgs(p),
+          exposedArgs(p),
+          !!promisesOf(p).theory,
+        );
       }),
 
     prepareWitness: (id) => {
@@ -531,7 +538,7 @@ export const useEpisode = create<GameState>()((set, get) => {
     askWitness: (qid) =>
       onDefense((sc, st) => {
         const after = juryAfterTrial(get().progress);
-        return after ? defense.ask(sc, st, after.rules, qid) : st;
+        return after ? defense.ask(sc, st, after.rules, qid, get().progress.cards) : st;
       }),
     finishWitness: () =>
       onDefense((sc, st) => {

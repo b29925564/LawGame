@@ -63,6 +63,7 @@ const brooks: DefenseScene = {
       impact: 10,
       tags: ['權威'],
       rehearsed: false,
+      needs: [],
     },
     {
       id: 'q-hr',
@@ -72,6 +73,7 @@ const brooks: DefenseScene = {
       impact: 10,
       tags: ['權威'],
       rehearsed: true,
+      needs: [],
     },
     {
       id: 'q-char',
@@ -81,6 +83,7 @@ const brooks: DefenseScene = {
       impact: 4,
       tags: ['情感'],
       rehearsed: false,
+      needs: [],
       door: { q: '妳十年前的紀錄呢？', a: 'a', penalty: 5 },
     },
   ],

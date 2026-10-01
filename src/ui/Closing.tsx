@@ -1,6 +1,13 @@
 import * as closing from '../engine/episode/closing';
 import type { ClosingScene } from '../engine/episode/schema';
-import { closingArgs, closingState, endingOf, exposedArgs, useEpisode } from '../engine/game';
+import {
+  closingArgs,
+  closingState,
+  endingOf,
+  promisesOf,
+  exposedArgs,
+  useEpisode,
+} from '../engine/game';
 import { CardPick, EvidenceDrawer } from './Evidence';
 import { Speech } from './Portrait';
 import { Shell, Tabs } from './Shell';
@@ -58,6 +65,14 @@ export function Closing({ scene }: { scene: ClosingScene }) {
             </strong>{' '}
             ・ 基調 {st.tone ? '已選' : '未選'}
           </p>
+          {need < scene.picks && (
+            <p className="bad-text small">
+              手上的論點不夠，結辯會空 {scene.picks - need} 格，檢方的說法沒人反駁。
+            </p>
+          )}
+          {!promisesOf(progress).theory && (
+            <p className="bad-text small">沒有案件理論，論點說服力打七折。</p>
+          )}
           {(st.broken ?? []).length > 0 && (
             <p className="bad-text small">
               開場許下的 {st.broken.length} 個承諾沒有兌現，陪審員記得你說過的話。

@@ -77,11 +77,14 @@ export function Defense({ scene }: { scene: DefenseScene }) {
                 <li key={q.id}>
                   <button
                     className="wide"
-                    disabled={!defense.canAsk(scene, st, q.id)}
+                    disabled={!defense.canAsk(scene, st, q.id, progress.cards)}
                     onClick={() => askWitness(q.id)}
                   >
                     {q.q}
                   </button>
+                  {defense.missing(scene, q.id, progress.cards).length > 0 && (
+                    <p className="muted small">手上沒有能讓證人說這件事的證據。</p>
+                  )}
                 </li>
               ))}
           </ul>

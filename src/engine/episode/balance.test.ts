@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { episodes } from '../../content';
 import * as closing from './closing';
-import type { ClosingScene, DeskScene, TrialScene } from './schema';
+import * as defense from './defense';
+import { shiftAll } from '../jury';
+import type { ClosingScene, DefenseScene, DeskScene, TrialScene } from './schema';
 import * as trial from './trial';
 
 const scene = <T>(id: string) => episodes.ep1.scenes.find((s) => s.id === id) as T;
@@ -53,5 +55,101 @@ describe('第 1 集的庭審平衡', () => {
 
   it('三次彈劾成功：無罪', () => {
     expect(finish(play(3))).toBe('無罪');
+  });
+});
+
+const brooks = scene<DefenseScene>('defense-brooks-ep1');
+
+/**
+ * 整集路線（測試員 2026-10-01 跑的路線）：瑞秋庭審 → 布魯克斯 → 承諾反噬 → 結辯。
+ * 布魯克斯三題全問、能問的都問；結辯挑手上前三個論點。
+ */
+function route(held: string[], impeach: boolean, broken: number, theory: boolean) {
+  const have = args.filter((a) => held.includes(a.id));
+  let st = trial.startTrial(court, impeach ? ['rachel-2250', 'rachel-meeting'] : []);
+  for (let i = 0; i < court.witness.direct.length; i++) {
+    st = trial.nextQuestion(court, st);
+    st = trial.letPass(court, st);
+  }
+  st = trial.toCross(court, st);
+  if (impeach)
+    for (const c of court.witness.claims) {
+      const a = have.find((x) => x.id === c.argument);
+      if (!a) continue;
+      if (st.claims[c.id].lock === 'none') st = trial.lock(court, st, c.id, 'strong');
+      st = trial.setup(court, st, c.id);
+      st = trial.confront(court, st, c.id, a.strength, a.tags, { id: a.id });
+    }
+  let d = defense.prepare(brooks, defense.startDefense(st.jury), 'prep-honest');
+  for (const q of brooks.questions) d = defense.ask(brooks, d, rules, q.id, held);
+  d = defense.finish(brooks, d, rules);
+  let cs = closing.startClosing(shiftAll(rules, d.jury, 8 * broken).jury);
+  for (const a of have.slice(0, 3)) cs = closing.togglePick(close, cs, a.id);
+  cs = closing.setTone(close, cs, 't-logic');
+  return closing.deliver(close, cs, rules, have, [], theory).verdict;
+}
+
+const full = ['arg-a', 'arg-b', 'arg-c', 'arg-d', 'watch-photo', 'heart-rate'];
+
+describe('第 1 集整集路線：準備好壞決定判決', () => {
+  it('四個論點、彈劾成功、有理論：無罪', () => {
+    expect(route(full, true, 0, true)).toBe('無罪');
+  });
+
+  it('少了瑞秋會面的論點，彈劾剩兩次：仍然無罪', () => {
+    expect(
+      route(
+        full.filter((x) => x !== 'arg-c'),
+        true,
+        0,
+        true,
+      ),
+    ).toBe('無罪');
+  });
+
+  it('傳票被駁回沒拿到心率、沒有理論、庭上只能彈劾一點：有罪', () => {
+    expect(route(['arg-a', 'arg-watch', 'watch-photo'], true, 0, false)).toBe('有罪');
+  });
+
+  it('論點齊全但庭上不彈劾、三個承諾全跳票：有罪', () => {
+    expect(route(full, false, 3, true)).toBe('有罪');
+  });
+
+  it('論點齊全但庭上不彈劾、沒許承諾：贏不了（最多僵局）', () => {
+    expect(route(full, false, 0, true)).not.toBe('無罪');
+  });
+
+  it('布魯克斯沒有證據撐著就問不出手錶與心率', () => {
+    const d = defense.prepare(brooks, defense.startDefense({}), 'prep-honest');
+    expect(defense.canAsk(brooks, d, 'bq-hr', ['watch-photo'])).toBe(false);
+    expect(defense.canAsk(brooks, d, 'bq-hr', ['heart-rate'])).toBe(true);
+    expect(defense.canAsk(brooks, d, 'bq-window', [])).toBe(true);
+  });
+});
+
+describe('結辯的空格與理論', () => {
+  const jury = Object.fromEntries(court.jurors.map((j) => [j.id, 60]));
+  const sum = (j: Record<string, number>) => Object.values(j).reduce((a, b) => a + b, 0);
+  const speak = (picks: string[], theory: boolean) => {
+    let cs = closing.startClosing(jury);
+    for (const p of picks) cs = closing.togglePick(close, cs, p);
+    cs = closing.setTone(close, cs, 't-logic');
+    const have = args.filter((a) => picks.includes(a.id));
+    return sum(closing.deliver(close, cs, rules, have, [], theory).spoken!);
+  };
+
+  it('論點不夠，空格往有罪反噬', () => {
+    const one = speak(['arg-a'], true);
+    const base = sum(jury);
+    expect(one).toBeGreaterThan(base - 40);
+    expect(speak([], true)).toBe(
+      sum(Object.fromEntries(court.jurors.map((j) => [j.id, 60 + 3 * closing.EMPTY_SLOT]))),
+    );
+  });
+
+  it('沒有理論，同樣的論點說服力較弱', () => {
+    expect(speak(['arg-a', 'arg-b', 'arg-d'], false)).toBeGreaterThan(
+      speak(['arg-a', 'arg-b', 'arg-d'], true),
+    );
   });
 });

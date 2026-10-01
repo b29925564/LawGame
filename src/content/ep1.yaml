@@ -1942,6 +1942,7 @@ scenes:
         impact: 10
         tags: [權威, 邏輯]
         rehearsed: true
+        needs: [watch-photo]
       - id: bq-hr
         seq: 2
         q: 如果手錶一直貼在死者身上，它記錄的心率歸零，代表什麼？
@@ -1949,6 +1950,7 @@ scenes:
         impact: 14
         tags: [權威, 邏輯]
         rehearsed: true
+        needs: [heart-rate]
       - id: bq-police
         seq: 3
         q: 警方有沒有請您參考手錶的資料？

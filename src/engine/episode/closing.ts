@@ -1,4 +1,12 @@
-import { applyImpact, deliberate, verdict, type Jury, type JuryRules, type Round } from '../jury';
+import {
+  applyImpact,
+  deliberate,
+  shiftAll,
+  verdict,
+  type Jury,
+  type JuryRules,
+  type Round,
+} from '../jury';
 import type { Tag } from '../schema';
 import type { ClosingScene, Question } from './schema';
 
@@ -18,6 +26,10 @@ export interface ClosingState {
 
 /** 結辯重述已經呈現過的論點，力道打對折（企劃書 6.9.8 的近因效應仍然疊在上面）。 */
 const RECAP = 0.25;
+/** 結辯固定要講滿 picks 個論點；每空一格，檢方的說法就沒人反駁，全體往有罪移這麼多。 */
+export const EMPTY_SLOT = 6;
+/** 沒有案件理論，論點散成一盤，結辯力道打七折。 */
+export const NO_THEORY = 0.7;
 
 export function startClosing(jury: Jury, broken: string[] = []): ClosingState {
   return {
@@ -44,7 +56,10 @@ export function setTone(s: ClosingScene, st: ClosingState, tone: string): Closin
   return { ...st, tone };
 }
 
-/** 要講幾個論點：規定的數量，但手上不夠的話，有幾個講幾個（一個都沒有也能只靠基調結辯）。 */
+/**
+ * 要挑幾個論點：規定的數量，但手上不夠的話，有幾個挑幾個（一個都沒有也能只靠基調結辯）。
+ * 挑不滿的空格不是免費的，deliver 時每格都會反噬。
+ */
 export function needed(s: ClosingScene, available: number): number {
   return Math.min(s.picks, available);
 }
@@ -63,17 +78,20 @@ export function deliver(
   rules: JuryRules,
   args: Question['argument'][],
   exposed: string[] = [],
+  theory = true,
 ): ClosingState {
   if (!canDeliver(s, st, args.length)) return st;
   const tone = s.tones.find((t) => t.id === st.tone)!;
-  let jury = st.jury;
+  const empty = s.picks - st.picked.length;
+  let jury = empty > 0 ? shiftAll(rules, st.jury, EMPTY_SLOT * empty).jury : st.jury;
   st.picked.forEach((id, i) => {
     const a = args.find((x) => x.id === id);
     if (!a) return;
     const last = i === st.picked.length - 1;
     // 洩漏過的論點，對方在庭上已經打過預防針，結辯再講一次也只剩一半。
     // 結辯是提醒，不是新證據：陪審團已經在庭上聽過一次，所以只有一半的力道。
-    const modifier = RECAP * (last ? 1.3 : 1) * (exposed.includes(id) ? 0.5 : 1);
+    const modifier =
+      RECAP * (last ? 1.3 : 1) * (exposed.includes(id) ? 0.5 : 1) * (theory ? 1 : NO_THEORY);
     jury = applyImpact(rules, jury, a.strength, [...a.tags, tone.tag] as Tag[], modifier).jury;
   });
   const rounds = deliberate(rules, jury);

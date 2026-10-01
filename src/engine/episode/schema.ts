@@ -467,6 +467,8 @@ const defenseScene = z.object({
         impact: z.number().min(0),
         tags: z.array(z.enum(tags)).min(1),
         rehearsed: z.boolean().default(false),
+        /** 手上要先有這些卡片或論點才問得出口；沒拿到證據，證人也無從說起。 */
+        needs: z.array(id).default([]),
         /** 開門陷阱：問了這題，檢方反詰問時可以提本來不能提的事。 */
         door: z
           .object({ q: z.string(), a: z.string(), penalty: z.number().int().min(1) })
