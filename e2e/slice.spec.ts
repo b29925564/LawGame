@@ -22,7 +22,16 @@ async function solve(
 ) {
   await page.getByRole('button', { name: '連線', exact: true }).click();
   const links = page.locator('section.links');
-  for (const name of names) await card(links, name).click();
+  // 電腦版的卡片在右邊證據欄，點了直接放上連線台；手機版在連線區底下。
+  const side = page.locator('.sheet.side');
+  for (const name of names) {
+    if (await side.isVisible())
+      await side
+        .locator('.card.pickable', { has: page.locator('strong', { hasText: name }) })
+        .first()
+        .click();
+    else await card(links, name).click();
+  }
   await links.getByRole('radio', { name: relation }).click();
   await links.getByRole('button', { name: '連起來' }).click();
   await expect(links.getByRole('status')).toContainText('連起來了');
