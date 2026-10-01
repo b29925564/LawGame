@@ -8,7 +8,7 @@ import {
   useEpisode,
   type Evidence as Item,
 } from '../engine/game';
-import { cardHighlights, Hl } from './Marks';
+import { cardHighlights, cardStamps, Hl, Stamp } from './Marks';
 import { useCardPick } from './pick';
 import { TimelineView } from './Timeline';
 
@@ -152,6 +152,7 @@ export function EvidenceCard({ item, pickable }: { item: Item; pickable?: boolea
   const { pool, on, pick } = useCardPick();
   const { progress } = useEpisode();
   const hl = cardHighlights(episodeOf(progress))[item.id];
+  const sealed = cardStamps(progress)[item.id];
   const can = pickable && pick && pool.includes(item.id);
   const cls = (item.kind === '論點' ? 'card arg' : 'card') + (can ? ' pickable' : '');
   return (
@@ -170,6 +171,7 @@ export function EvidenceCard({ item, pickable }: { item: Item; pickable?: boolea
         {stamp(item) && <span className="time">{stamp(item)}</span>}
         {item.name}
       </strong>
+      {sealed && <Stamp text={sealed} sm />}
       <p>{hl ? <Hl text={item.text} words={hl} live={false} /> : item.text}</p>
       <span className="muted small">
         {item.kind}・{item.source}

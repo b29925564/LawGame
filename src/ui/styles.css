@@ -2946,8 +2946,8 @@ fieldset.relations.compact {
   --dur-write: 60ms; /* 新增：手寫每一個字 */
   --dur-narrow: 1200ms; /* 新增：時間窗收窄 */
   --dur-vo-char: 50ms; /* 新增：畫外字幕每一個字 */
-  /* 設計稿沒定義的冷光權杖：陰天窗光（淺色主題字幕縫用） */
-  --k-overcast: #dfe6ee;
+  /* 陰天窗光 6500–7000K（美術方向核心 5.4） */
+  --k-overcast: #c9d3e2;
   /* 意見 1：三主題同一結構，只差這三個權杖 */
   --vo-veil: light-dark(rgb(227 230 234 / 93%), rgb(6 8 11 / 91%));
   --vo-seam: light-dark(
@@ -3649,7 +3649,7 @@ button.iou[aria-pressed='true'] {
   padding: 0;
   list-style: none;
 }
-.seat {
+.tally .seat {
   position: relative;
   display: grid;
   justify-items: center;
@@ -3665,21 +3665,21 @@ button.iou[aria-pressed='true'] {
     background-color var(--dur-tube-off) var(--ease-light),
     color var(--dur-tube-off) var(--ease-light);
 }
-.seat .no {
+.tally .seat .no {
   position: absolute;
   top: 6px;
   left: 8px;
   font: 700 12px/1 var(--font-court);
 }
-.seat svg {
+.tally .seat svg {
   width: 44px;
   height: 52px;
 }
-.seat .vote {
+.tally .seat .vote {
   font-weight: 700;
 }
 /* 亮著的那一席：頭上一根燈管，臉被平光照滿（檢方的光） */
-.seat.lit {
+.tally .seat.lit {
   color: var(--text);
   border-color: color-mix(in srgb, var(--k-fluoro) 45%, var(--border));
   background:
@@ -3690,7 +3690,7 @@ button.iou[aria-pressed='true'] {
     ),
     var(--surface-2);
 }
-.seat.lit::before {
+.tally .seat.lit::before {
   content: '';
   position: absolute;
   top: -1px;
@@ -3904,7 +3904,7 @@ button.iou[aria-pressed='true'] {
     animation: ch-in 260ms var(--ease) calc(var(--i) * var(--dur-vo-char) + var(--p, 0ms) + 380ms)
       both;
   }
-  .seat.going-out {
+  .tally .seat.going-out {
     transition-delay: calc(var(--k) * 120ms);
   }
 
@@ -4030,15 +4030,15 @@ button.iou[aria-pressed='true'] {
     grid-template-columns: repeat(6, minmax(0, 1fr));
     gap: 4px;
   }
-  .seat {
+  .tally .seat {
     padding: 16px 0 6px;
     font-size: 11px;
   }
-  .seat svg {
+  .tally .seat svg {
     width: 32px;
     height: 38px;
   }
-  .seat .who {
+  .tally .seat .who {
     display: none;
   }
   .vo-frame {
@@ -4294,4 +4294,38 @@ button.iou[aria-pressed='true'] {
     right: auto;
     top: auto;
   }
+}
+
+/* 開場陳述：每個承諾是一張借據，點了就簽下 */
+.ious {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+}
+.iou-pick {
+  all: unset;
+  display: block;
+  width: 100%;
+  cursor: pointer;
+  border-radius: 3px;
+}
+.iou-pick:disabled {
+  cursor: default;
+}
+.iou-pick:focus-visible {
+  outline: 2px solid var(--hl);
+  outline-offset: 3px;
+}
+.iou-pick[aria-pressed='true'] .iou {
+  outline: 2px solid var(--hl);
+  outline-offset: 3px;
+}
+.iou .stamp.sm {
+  position: absolute;
+  right: 14px;
+  bottom: 12px;
+}
+.card .stamp.sm {
+  float: right;
+  margin: 2px 0 0 8px;
 }

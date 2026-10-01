@@ -1,5 +1,8 @@
 import { useEffect, useState, type CSSProperties } from 'react';
+import { motionAttempt } from '../engine/episode/desk';
 import type { Episode, Line } from '../engine/episode/schema';
+import { deskState, episodeOf } from '../engine/game';
+import type { Progress } from '../engine/save';
 import { Speech } from './Portrait';
 import { AnnounceQueue, type Announcement } from './announce';
 import { claimHand, topHand, useHandStore, type Hand } from './hand';
@@ -251,6 +254,7 @@ export function MarkLine({ line }: { line: Line }) {
       <GapNote minutes={parts.at(-1) ?? ''} detail={parts.slice(0, -1).join('\u3000→\u3000')} />
     );
   }
+  if (m.kind === 'window') return <WindowRuler text={line.text} />;
   if (m.kind === 'stamp' && !m.on)
     return (
       <p className="stamp-line">
@@ -273,5 +277,165 @@ export function cardHighlights(e: Episode): Record<string, string[]> {
         for (const l of j.report)
           if (l.mark?.kind === 'highlight' && l.mark.on && l.mark.word)
             (out[l.mark.on] ??= []).push(l.mark.word);
+  return out;
+}
+
+/**
+ * 時間窗收窄：法醫原本推估的窗口，收到釘點前後三分鐘。
+ * text 寫成「22:00–23:30 → 22:24」。
+ */
+export function WindowRuler({ text }: { text: string }) {
+  const m = text.match(/(\d\d:\d\d)\s*[–-]\s*(\d\d:\d\d)\s*→\s*(\d\d:\d\d)/);
+  const [narrow, setNarrow] = useState(false);
+  useEffect(() => {
+    const t = requestAnimationFrame(() => setNarrow(true));
+    return () => cancelAnimationFrame(t);
+  }, []);
+  useEffect(() => {
+    if (m)
+      announce.mark({ from: 'window', text: `死亡時間窗從 ${m[1]} 到 ${m[2]}，收窄到 ${m[3]}` });
+  }, [text]); // eslint-disable-line react-hooks/exhaustive-deps
+  if (!m) return null;
+  const min = (t: string) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3));
+  const [a, b, p] = [min(m[1]), min(m[2]), min(m[3])];
+  const x = (t: number) => (t - a) / (b - a);
+  const ticks = [];
+  for (let t = Math.ceil(a / 30) * 30; t <= b; t += 30) ticks.push(t);
+  const hhmm = (t: number) =>
+    `${String(Math.floor(t / 60)).padStart(2, '0')}:${String(t % 60).padStart(2, '0')}`;
+  const style = (v: Record<string, number>) => v as CSSProperties;
+  return (
+    <section className="panel ruler-panel" aria-label="死亡時間窗">
+      <figure className="ruler" aria-label={`推估窗口 ${m[1]} 到 ${m[2]}，收窄到 ${m[3]}`}>
+        <div className="ruler-track">
+          <span className="ruler-window ghost" style={style({ '--a': 0, '--b': 1 })}>
+            <span className="lbl">{`原本推估 ${m[1]}–${m[2]}`}</span>
+          </span>
+          <span
+            className="ruler-window narrow"
+            style={style(narrow ? { '--a': x(p - 3), '--b': x(p + 3) } : { '--a': 0, '--b': 1 })}
+          />
+          {narrow && <span className="ruler-pin" style={style({ '--x': x(p) })} />}
+          <span className="ruler-point on" style={style({ '--x': x(p) })} data-align="end">
+            <span className="lbl">
+              <time>{m[3]}</time>
+            </span>
+          </span>
+        </div>
+        <ol className="ruler-ticks" aria-hidden>
+          {ticks.map((t) => (
+            <li key={t} style={style({ '--x': x(t) })}>
+              {hhmm(t)}
+            </li>
+          ))}
+        </ol>
+      </figure>
+    </section>
+  );
+}
+
+/** 承諾借據卡（開場陳述）。draft＝還沒許、signed＝許了、kept／broken＝庭後結算。 */
+export function Iou({
+  no,
+  text,
+  backing,
+  kept,
+  broken,
+  state,
+}: {
+  no: number;
+  text: string;
+  backing?: string;
+  kept: number;
+  broken: number;
+  state: 'draft' | 'signed' | 'kept' | 'broken';
+}) {
+  const n = String(no).padStart(2, '0');
+  return (
+    <div className="iou" data-state={state}>
+      <div className="iou-stub">借據 {n}</div>
+      <div className="iou-body">
+        <header>
+          <b>借據</b>
+        </header>
+        <p className="iou-text">{text}</p>
+        <dl className="iou-terms">
+          {backing && (
+            <div>
+              <dt>擔保</dt>
+              <dd>{backing}</dd>
+            </div>
+          )}
+          <div>
+            <dt>兌現</dt>
+            <dd>陪審員往辯方 {kept}</dd>
+          </div>
+          <div>
+            <dt>逾期</dt>
+            <dd className="due">全體往有罪 {broken}</dd>
+          </div>
+        </dl>
+        <footer>
+          <span className="sig">韓</span>
+          <span className="to">{'債權人\u3000陪審團'}</span>
+        </footer>
+        {state === 'kept' && <Stamp text="已兌現" sm />}
+        {state === 'broken' && <Stamp text="逾期未兌現" sm />}
+      </div>
+    </div>
+  );
+}
+
+/** 陪審團僵局的票數：12 席先全亮，再一席一席熄，只剩投有罪的亮著。 */
+export function Tally({ guilty, round }: { guilty: boolean[]; round: number }) {
+  const [out, setOut] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setOut(true), 400);
+    return () => clearTimeout(t);
+  }, []);
+  const g = guilty.filter(Boolean).length;
+  const ng = guilty.length - g;
+  useEffect(
+    () =>
+      announce.mark({
+        from: 'tally',
+        text: `陪審團僵局，第${round}輪，無罪 ${ng}，有罪 ${g}，未達一致`,
+      }),
+    [round, ng, g],
+  );
+  let k = 0;
+  return (
+    <section className="panel stack" aria-label="評議票數">
+      <div className="tally-head">
+        <b>陪審團僵局</b>
+        <span className="count">{`第 ${round} 輪\u3000無罪 ${ng}\u3000有罪 ${g}`}</span>
+        <span className="muted small">未達一致</span>
+      </div>
+      <ol className="tally">
+        {guilty.map((v, i) => (
+          <li
+            key={i}
+            className={v || !out ? 'seat lit' : 'seat going-out'}
+            style={v ? undefined : ({ '--k': k++ } as CSSProperties)}
+          >
+            <span className="no">{i + 1}</span>
+            <span className="vote">{v ? '有罪' : '無罪'}</span>
+          </li>
+        ))}
+      </ol>
+    </section>
+  );
+}
+
+/** 證據卡上的小章：准予的聲請帶著 stamp 記號、on 指向某張卡（例如「已排除」）。 */
+export function cardStamps(p: Progress): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const s of episodeOf(p).scenes)
+    if (s.type === 'desk')
+      for (const m of s.motions) {
+        const l = m.granted.find((x) => x.mark?.kind === 'stamp' && x.mark.on);
+        if (l?.mark?.on && motionAttempt(deskState(p, s), m.id).ruling === 'granted')
+          out[l.mark.on] = l.mark.text ?? l.text;
+      }
   return out;
 }
