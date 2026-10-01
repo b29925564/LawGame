@@ -2125,27 +2125,27 @@ scenes:
         seq: 0
         q: 奈爾博士，您做數位鑑識多久了？
         a: 十四年。法院指定過我十一次，檢方也找過我。
-        impact: 5
+        impact: 2
         tags: [權威]
       - id: pq-hr
         seq: 1
         q: 沃斯先生手錶上的心率紀錄，可信嗎？
         a: 原始檔有雜湊值，沒有被動過。22:24 心率衝高，然後歸零，之後是一條直線。
-        impact: 12
+        impact: 5
         tags: [邏輯, 權威]
         needs: [heart-rate]
       - id: pq-notice
         seq: 2
         q: 被告說他收到過一則訊息，後來不見了。有沒有地方留下紀錄？
         a: 他的手錶。22:33 跳過一則通知，寄件人是葛蘭特・沃斯。手機上收回，手錶上的通知紀錄不會跟著消失。
-        impact: 10
+        impact: 4
         tags: [邏輯]
         needs: [watch-notice]
       - id: pq-audit
         seq: 3
         q: 聊天系統的稽核紀錄裡，那則訊息是從哪裡發出、又是從哪裡收回的？
         a: 同一台桌機，沃斯先生辦公室裡那台。22:31 發出，23:14 收回。
-        impact: 14
+        impact: 6
         tags: [邏輯]
         needs: [chat-audit]
         door:
@@ -2197,21 +2197,21 @@ scenes:
         seq: 0
         q: 哈桑先生，那天晚上您在哪裡載到被告？
         a: 東河街一一八號啦，十點三十四分。App 上都有記。
-        impact: 5
+        impact: 2
         tags: [邏輯]
         needs: [ride-receipt]
       - id: oq-said
         seq: 1
         q: 他在車上有沒有說，他要去做什麼？
         a: 他說「老闆說要私下解決，也許我不會被開除了」。我還跟他說祝他好運咧。
-        impact: 12
+        impact: 5
         tags: [情感]
         rehearsed: true
       - id: oq-look
         seq: 2
         q: 他一路上在做什麼？
         a: 盯著手機啊。那支手機快被他捏碎了喔。
-        impact: 5
+        impact: 2
         tags: [情感]
         door:
           q: 哈桑先生，一個緊張到快把手機捏碎的人，您覺得他是去加班，還是去吵架？
@@ -2262,20 +2262,20 @@ scenes:
         seq: 0
         q: 伊森，週五晚上十點半，你收到了什麼？
         a: 沃斯先生的訊息。十點三十一……三十三分。叫我十點四十五分上去，帶筆電，說要私下解決。
-        impact: 9
+        impact: 4
         tags: [情感]
         rehearsed: true
       - id: eq-door
         seq: 1
         q: 你推開他辦公室的門，看到了什麼？
         a: 他倒在桌子旁邊。我去拉他，手上都是……我叫他，他沒有回答。
-        impact: 8
+        impact: 4
         tags: [情感]
       - id: eq-run
         seq: 2
         q: 你為什麼沒有報警？
         a: 我按了九、按了一。然後我想到上一次。上一次也是警察先來，我解釋了一年。
-        impact: 9
+        impact: 4
         tags: [情感]
         rehearsed: true
         door:
@@ -2286,7 +2286,7 @@ scenes:
         seq: 3
         q: 你在案發前兩天做了什麼？
         a: 我用匿名系統檢舉了一筆三千八百萬美元的應收帳款，掛在北門貨運名下。我記得舉報編號。
-        impact: 10
+        impact: 4
         tags: [邏輯]
         needs: [ethan-report]
     leak:

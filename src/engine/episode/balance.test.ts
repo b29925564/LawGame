@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { episodes } from '../../content';
 import * as closing from './closing';
 import * as defense from './defense';
+import { matches, type BranchContext } from './branch';
 import { shiftAll } from '../jury';
 import type { ClosingScene, DefenseScene, DeskScene, TrialScene } from './schema';
 import * as trial from './trial';
@@ -59,6 +60,17 @@ describe('第 1 集的庭審平衡', () => {
 });
 
 const brooks = scene<DefenseScene>('defense-brooks-ep1');
+const witnesses = episodes.ep1.scenes.filter((s): s is DefenseScene => s.type === 'defense');
+const noBranch: BranchContext = {
+  verdict: null,
+  outcome: null,
+  deal: null,
+  theory: null,
+  flags: [],
+  ethics: [],
+  cards: [],
+  presented: [],
+};
 
 /**
  * 整集路線（測試員 2026-10-01 跑的路線）：瑞秋庭審 → 布魯克斯 → 承諾反噬 → 結辯。
@@ -78,7 +90,9 @@ function route(
   broken: number,
   theory: boolean,
   chosen: string | null = 'doubt',
-  out: { last?: trial.TrialState; brooks?: number } = {},
+  out: { last?: trial.TrialState; brooks?: number; witnesses?: number[] } = {},
+  flags: string[] = [],
+  prep = 'honest',
 ) {
   const have = args.filter((a) => held.includes(a.id));
   const hits = (id: string) => impeach === true || (Array.isArray(impeach) && impeach.includes(id));
@@ -103,11 +117,22 @@ function route(
   st = st!;
   out.last = st;
   if (st.pleaded) return '撤回起訴';
-  let d = defense.prepare(brooks, defense.startDefense(st.jury), 'prep-honest');
-  for (const q of brooks.questions) d = defense.ask(brooks, d, rules, q.id, held);
-  d = defense.finish(brooks, d, rules);
-  out.brooks = avg(d.jury);
-  let cs = closing.startClosing(shiftAll(rules, d.jury, 8 * broken).jury);
+  // 辯方證人：條件符合的都上場（布魯克斯＋普莉亞、奧瑪、伊森），心證一位接一位延續。
+  let jury = st.jury;
+  out.witnesses = [];
+  for (const w of witnesses) {
+    if (!matches(w.when, { ...noBranch, cards: held, flags })) continue;
+    const opt =
+      w.prep.options.find((o) => o.id.endsWith(`-${prep}`)) ??
+      w.prep.options.find((o) => o.id.endsWith('-honest'))!;
+    let d = defense.prepare(w, defense.startDefense(jury), opt.id);
+    for (const q of w.questions) d = defense.ask(w, d, rules, q.id, held);
+    d = defense.finish(w, d, rules);
+    jury = d.jury;
+    out.witnesses.push(avg(jury));
+  }
+  out.brooks = avg(jury);
+  let cs = closing.startClosing(shiftAll(rules, jury, 8 * broken).jury);
   for (const a of have.slice(0, 3)) cs = closing.togglePick(close, cs, a.id);
   cs = closing.setTone(close, cs, 't-logic');
   return closing.deliver(close, cs, rules, have, [], theory).verdict;
@@ -147,8 +172,13 @@ describe('第 1 集整集路線：準備好壞決定判決', () => {
     expect(route(full.concat('arg-h'), ['court-kowalski', 'court-sophie'], 0, true)).toBe('無罪');
   });
 
-  it('只拆柯瓦斯基，後兩場都沒拆：兩天回彈下來，贏不了', () => {
-    expect(route(full.concat('arg-h'), ['court-kowalski'], 0, true)).not.toBe('無罪');
+  it('只拆柯瓦斯基，後兩場都沒拆、也沒有專家證人：兩天回彈下來，贏不了', () => {
+    const noExpert = full.filter((x) => x !== 'heart-rate').concat('arg-h');
+    expect(route(noExpert, ['court-kowalski'], 0, true)).not.toBe('無罪');
+  });
+
+  it('只拆柯瓦斯基是邊緣路線：傳了心率紀錄、請專家作證，剛好補到無罪', () => {
+    expect(route(full.concat('arg-h'), ['court-kowalski'], 0, true)).toBe('無罪');
   });
 
   it('前兩場的彈劾會延續：同樣不拆瑞秋，前面有拆比完全沒拆好', () => {
@@ -218,5 +248,33 @@ describe('瑞秋援引緘默權：理論決定撤訴還是刪除證詞（企劃�
 
   it('只在瑞秋那場逼出緘默權、三個承諾全跳票：仍然無罪（緘默權的分量夠重）', () => {
     expect(route(full, ['court-rachel'], 3, true)).toBe('無罪');
+  });
+});
+
+describe('第三天的辯方證人（普莉亞、奧瑪、伊森）', () => {
+  const all = full.concat('ride-receipt');
+  const ethan = ['ethan-testifies'];
+
+  it('條件符合才上場：有心率紀錄才傳普莉亞，有乘車收據才傳奧瑪，決定讓伊森作證才有伊森', () => {
+    const o: { witnesses?: number[] } = {};
+    route(full, true, 0, true, 'doubt', o);
+    expect(o.witnesses).toHaveLength(2);
+    route(all, true, 0, true, 'doubt', o, ethan);
+    expect(o.witnesses).toHaveLength(4);
+  });
+
+  it('證人全上也替代不了庭上彈劾：不彈劾、沒許承諾，最多僵局', () => {
+    expect(route(all, false, 0, true, 'doubt', {}, ethan)).not.toBe('無罪');
+    expect(route(all, false, 0, true, 'doubt', {}, ethan, 'coach')).not.toBe('無罪');
+  });
+
+  it('準備錯了的路線，證人全上（連教證人）也救不回來：有罪', () => {
+    const wrong = ['arg-a', 'arg-watch', 'watch-photo', 'ride-receipt'];
+    expect(route(wrong, true, 0, false, 'doubt', {}, ethan)).toBe('有罪');
+    expect(route(wrong, true, 0, false, 'doubt', {}, ethan, 'coach')).toBe('有罪');
+  });
+
+  it('不彈劾、承諾全跳票，證人全上：仍然有罪', () => {
+    expect(route(all, false, 3, true, 'doubt', {}, ethan)).toBe('有罪');
   });
 });
