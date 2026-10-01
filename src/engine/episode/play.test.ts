@@ -119,6 +119,10 @@ describe('桌面調查', () => {
     expect(st.confirmed).toEqual([]);
     expect(st.wrong).toBe(1);
     expect(st.feedback.q1).not.toContain('l-');
+    // 同樣的組合不能再交一次（設計稿 board-redesign：試過的組合提交鈕變灰）。
+    expect(desk.misses(st, 'q1')).toBe(1);
+    expect(desk.triedBefore(st, 'q1')).toBe(true);
+    expect(desk.canSubmit(investigate, st, 'q1')).toBe(false);
 
     // 格子滿了直接挑另一張就換掉，不必先取消（玩家回報：選了就換不掉）。
     st = desk.toggleCard(investigate, st, 'q1', 'l-called');

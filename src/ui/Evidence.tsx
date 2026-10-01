@@ -159,6 +159,11 @@ export function EvidenceCard({ item, pickable }: { item: Item; pickable?: boolea
   const slot = can ? ['A', 'B'][on.indexOf(item.id)] : undefined;
   const body = can ? (
     <>
+      {item.kind === '物品' && (
+        <span className="thumb" aria-hidden>
+          {typeof item.image === 'string' && <img src={item.image} alt="" />}
+        </span>
+      )}
       <span className="mini-head">
         <strong>{item.name}</strong>
         {stamp(item) && <span className="time">{stamp(item)}</span>}
@@ -171,6 +176,9 @@ export function EvidenceCard({ item, pickable }: { item: Item; pickable?: boolea
       <span className="muted small">
         {item.kind}・{item.source}
       </span>
+      <p className="mini-full" role="tooltip">
+        {item.text}
+      </p>
     </>
   ) : (
     <>
@@ -196,7 +204,6 @@ export function EvidenceCard({ item, pickable }: { item: Item; pickable?: boolea
         onKeyDown: (e: React.KeyboardEvent) =>
           (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), pick(item.id)),
       })}
-      {...(can && { title: item.text })}
     >
       {body}
     </li>

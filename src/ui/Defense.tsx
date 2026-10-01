@@ -70,7 +70,6 @@ export function Defense({ scene }: { scene: DefenseScene }) {
       </Transcript>
       {st.stage === 'direct' ? (
         <>
-          <p className="muted small">只能用開放式問題，照時間順序問才連貫。</p>
           <ul className="stack">
             {[...scene.questions]
               .sort((a, b) => a.seq - b.seq)

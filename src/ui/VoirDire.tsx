@@ -95,10 +95,6 @@ export function VoirDire({ scene }: { scene: VoirDireScene }) {
         </button>
       }
     >
-      <p className="muted small">
-        名單由上往下入座，前 {scene.seats} 位就是會上場的人。有因迴避要候選人自己說出偏見才成立，
-        沒憑沒據法官會記住。你用掉一次無因迴避，檢方也會砍掉一位對你最有利的人。
-      </p>
       <ul className="stack list">
         {shown.map((c) => {
           const seat = pool.indexOf(c);
@@ -120,14 +116,12 @@ export function VoirDire({ scene }: { scene: VoirDireScene }) {
               </button>
               {isOpen && (
                 <div className="candidate-body">
-                  {asked ? (
+                  {asked && (
                     <>
                       <p className="claim-text">「{c.question.q}」</p>
                       <p>{c.question.a}</p>
                       {c.hidden && <p className="muted small">{c.hidden}</p>}
                     </>
-                  ) : (
-                    <p className="muted small">還沒問過他。問過才知道他藏了什麼。</p>
                   )}
                   <div className="row">
                     <button disabled={!vd.canAsk(st, c.id)} onClick={() => askJuror(c.id)}>

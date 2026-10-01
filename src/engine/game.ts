@@ -661,6 +661,7 @@ export interface Evidence {
   date?: string;
   time?: string;
   source: string;
+  image?: string;
 }
 
 /**
@@ -689,6 +690,7 @@ export function evidence(p: Progress): Evidence[] {
         date: c.date,
         time: c.time,
         source: c.source,
+        image: c.image,
       });
     }
   }

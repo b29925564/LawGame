@@ -47,7 +47,6 @@ export function Theory({ scene }: { scene: TheoryScene }) {
               <strong>{t.name}</strong>
               <p>{t.summary}</p>
               <p className="muted small">{t.cost}</p>
-              {!ok && <p className="muted small">論點還沒湊齊，這條路暫時走不通。</p>}
               {!theory.done(st) &&
                 (pending === t.id && warn ? (
                   <Confirm
@@ -118,8 +117,7 @@ export function Opening({ scene }: { scene: OpeningScene }) {
       ) : (
         <>
           <p className="muted small">
-            最多許 {scene.picks} 個承諾。庭上兌現了，陪審員往辯方 {scene.kept}；到結辯還沒兌現，
-            全體往有罪方向 {scene.broken}。
+            承諾 {st.promises.length} / {scene.picks}
           </p>
           <ul className="stack ious">
             {t.promises.map((p, i) => (

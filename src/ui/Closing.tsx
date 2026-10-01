@@ -126,7 +126,6 @@ export function Closing({ scene }: { scene: ClosingScene }) {
               {need === 0 ? '只能靠訴求基調結辯。' : '有幾個講幾個。'}
             </p>
           )}
-          <p className="muted small">最後講的那一個，陪審團記得最清楚（衝擊 ×1.3）。</p>
           <div className="stack">
             {args.map((a) => {
               const i = st.picked.indexOf(a.id);
