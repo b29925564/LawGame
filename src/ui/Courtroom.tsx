@@ -2,6 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import type { TrialScene } from '../engine/episode/schema';
 import * as trial from '../engine/episode/trial';
 import {
+  anchoredClaims,
+  keptPromises,
+  promisesOf,
   courtScene,
   deskSceneOf,
   deskState,
@@ -15,6 +18,7 @@ import { useSettings } from '../engine/settings';
 import { play } from '../engine/sound';
 import { CardPick, EvidenceDrawer } from './Evidence';
 import { JuryLegend } from './JuryLegend';
+import { Stamp } from './Marks';
 import { Speech } from './Portrait';
 import { Shell, Tabs } from './Shell';
 
@@ -239,6 +243,9 @@ export function Courtroom({ scene: raw }: { scene: TrialScene }) {
     );
 
   const claim = scene.witness.claims.find((c) => c.id === pick) ?? scene.witness.claims[0];
+  const anchored = anchoredClaims(progress);
+  const promised = promisesOf(progress).promises;
+  const kept = keptPromises(progress);
   const cs = st.claims[claim.id];
 
   return (
@@ -257,6 +264,16 @@ export function Courtroom({ scene: raw }: { scene: TrialScene }) {
               ))}
             </span>
           </p>
+          {promised.length > 0 && (
+            <ul className="iou-chips" aria-label="開場許下的承諾">
+              {promised.map((p, i) => (
+                <li key={p.id} data-state={kept.includes(p.id) ? 'kept' : 'signed'} title={p.text}>
+                  借據 {String(i + 1).padStart(2, '0')}
+                  {kept.includes(p.id) ? '・已兌現' : ''}
+                </li>
+              ))}
+            </ul>
+          )}
         </header>
       }
       tabs={
@@ -315,19 +332,26 @@ export function Courtroom({ scene: raw }: { scene: TrialScene }) {
           <article className="claim">
             <p className="claim-text">「{claim.text}」</p>
             <ol className="steps">
-              <li className={cs.lock !== 'none' ? 'done' : ''}>
-                1 鎖定
-                {cs.lock === 'none' && (
-                  <div className="stack">
-                    <button className="wide" onClick={() => lock(claim.id, 'strong')}>
-                      {claim.lock.strong.q}
-                    </button>
-                    <button className="wide" onClick={() => lock(claim.id, 'weak')}>
-                      {claim.lock.weak.q}
-                    </button>
-                  </div>
-                )}
-              </li>
+              {claim.anchor && anchored.includes(claim.anchor) ? (
+                <li className="done anchored">
+                  <Stamp text="已定錨" sm />
+                  <span>她在錄取筆錄裡已經講死這個說法</span>
+                </li>
+              ) : (
+                <li className={cs.lock !== 'none' ? 'done' : ''}>
+                  1 鎖定
+                  {cs.lock === 'none' && (
+                    <div className="stack">
+                      <button className="wide" onClick={() => lock(claim.id, 'strong')}>
+                        {claim.lock.strong.q}
+                      </button>
+                      <button className="wide" onClick={() => lock(claim.id, 'weak')}>
+                        {claim.lock.weak.q}
+                      </button>
+                    </div>
+                  )}
+                </li>
+              )}
               <li className={cs.setup ? 'done' : ''}>
                 2 鋪陳
                 {!cs.setup && (

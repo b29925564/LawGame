@@ -244,6 +244,9 @@ async function playToRachelLast(page: Page) {
     .filter({ hasText: '另有其人：瑞秋' })
     .getByRole('button', { name: '就用這個理論' })
     .click();
+  // 劇本標了確認提示時，要再按一次確定。
+  const sure = page.getByRole('button', { name: /^確定，就用/ });
+  if (await sure.isVisible()) await sure.click();
   await next(page);
 
   // 伊森想作證。答應他，第三天辯方舉證時他會上證人席。
