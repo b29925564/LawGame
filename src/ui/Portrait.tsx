@@ -1,4 +1,7 @@
+import type { ReactNode } from 'react';
 import type { Line } from '../engine/episode/schema';
+import { MarkLine } from './Marks';
+import { VoLine } from './VoiceOver';
 
 /**
  * 角色半身照的暫代版：用固定的五官元件畫出來，情緒換表情。
@@ -48,22 +51,26 @@ export function Portrait({ who, mood = '平' }: { who: string; mood?: Line['mood
   );
 }
 
-/** 一行台詞。艾莉絲的內心獨白用不同的排版，是提示的主要載體。 */
-export function Speech({ line }: { line: Line }) {
+/** 一行台詞。艾莉絲沒說出口的話不進對白框：記號交給 Marks，畫外字幕交給 VoiceOver。 */
+export function Speech({ line, body }: { line: Line; body?: ReactNode }) {
+  // 記號不是說出口的話，不進對白框（設計稿 inner-voice）。
+  if (line.mark) return <MarkLine line={line} />;
+  if (line.voice === 'off') return <VoLine line={line} />;
+  // 還沒改寫的舊心聲：不再掛「（心裡）」，先當成畫外字幕的筆錄行。
   if (line.thought)
     return (
-      <p className="thought">
-        <span className="who">{line.who}（心裡）</span>
-        {line.text}
+      <p className="vo-log">
+        <span className="vo-mark" aria-hidden />
+        <span>{line.text}</span>
       </p>
     );
-  if (line.who === '旁白') return <p className="narration">{line.text}</p>;
+  if (line.who === '旁白') return <p className="narration">{body ?? line.text}</p>;
   return (
     <p className="speech">
       <Portrait who={line.who} mood={line.mood} />
       <span>
         <span className="who">{line.who}</span>
-        {line.text}
+        {body ?? line.text}
       </span>
     </p>
   );

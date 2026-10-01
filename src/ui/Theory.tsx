@@ -1,7 +1,8 @@
 import { useState } from 'react';
+import { Iou, useHand } from './Marks';
 import type { OpeningScene, TheoryScene } from '../engine/episode/schema';
 import * as theory from '../engine/episode/theory';
-import { openingState, promisesOf, theoryState, useEpisode } from '../engine/game';
+import { episodeOf, openingState, promisesOf, theoryState, useEpisode } from '../engine/game';
 import { Speech } from './Portrait';
 
 /**
@@ -13,6 +14,7 @@ export function Theory({ scene }: { scene: TheoryScene }) {
   const st = theoryState(progress, scene);
   const held = progress.cards;
   const [intro, setIntro] = useState(!theory.done(st));
+  const [pending, setPending] = useState<string | null>(null);
 
   if (intro)
     return (
@@ -32,6 +34,7 @@ export function Theory({ scene }: { scene: TheoryScene }) {
     );
 
   const noneOpen = !scene.theories.some((t) => theory.unlocked(t, held));
+  const warn = scene.intro.find((l) => l.mark?.kind === 'confirm')?.text;
   return (
     <main className="scene">
       <p className="eyebrow">案件理論</p>
@@ -45,11 +48,23 @@ export function Theory({ scene }: { scene: TheoryScene }) {
               <p>{t.summary}</p>
               <p className="muted small">{t.cost}</p>
               {!ok && <p className="muted small">論點還沒湊齊，這條路暫時走不通。</p>}
-              {!theory.done(st) && (
-                <button className="primary" disabled={!ok} onClick={() => chooseTheory(t.id)}>
-                  就用這個理論
-                </button>
-              )}
+              {!theory.done(st) &&
+                (pending === t.id && warn ? (
+                  <Confirm
+                    text={warn}
+                    yes={`確定，就用「${t.name}」`}
+                    onYes={() => chooseTheory(t.id)}
+                    onNo={() => setPending(null)}
+                  />
+                ) : (
+                  <button
+                    className="primary"
+                    disabled={!ok}
+                    onClick={() => (warn ? setPending(t.id) : chooseTheory(t.id))}
+                  >
+                    就用這個理論
+                  </button>
+                ))}
               {on && <p className="good">已選定。</p>}
             </li>
           );
@@ -72,6 +87,10 @@ export function Opening({ scene }: { scene: OpeningScene }) {
   const { progress, togglePromise, deliverOpening, advance } = useEpisode();
   const st = openingState(progress, scene);
   const { theory: t } = promisesOf(progress);
+  const argName = (id: string) =>
+    episodeOf(progress)
+      .scenes.flatMap((x) => (x.type === 'desk' ? x.questions : []))
+      .find((q) => q.argument.id === id)?.argument.name;
   const [intro, setIntro] = useState(!st.delivered);
 
   if (intro)
@@ -102,16 +121,23 @@ export function Opening({ scene }: { scene: OpeningScene }) {
             最多許 {scene.picks} 個承諾。庭上兌現了，陪審員往辯方 {scene.kept}；到結辯還沒兌現，
             全體往有罪方向 {scene.broken}。
           </p>
-          <ul className="stack">
-            {t.promises.map((p) => (
+          <ul className="stack ious">
+            {t.promises.map((p, i) => (
               <li key={p.id}>
                 <button
-                  className={st.promises.includes(p.id) ? 'pick on' : 'pick'}
+                  className="iou-pick"
                   aria-pressed={st.promises.includes(p.id)}
                   disabled={st.delivered}
                   onClick={() => togglePromise(p.id)}
                 >
-                  <span className="pick-name">{p.text}</span>
+                  <Iou
+                    no={i + 1}
+                    text={p.text}
+                    backing={argName(p.argument)}
+                    kept={scene.kept}
+                    broken={scene.broken}
+                    state={st.promises.includes(p.id) ? 'signed' : 'draft'}
+                  />
                 </button>
               </li>
             ))}
@@ -128,5 +154,31 @@ export function Opening({ scene }: { scene: OpeningScene }) {
         </button>
       )}
     </main>
+  );
+}
+
+/** 選擇確認提示：此畫面唯一一處手的黃（設計稿 inner-voice 2g）。 */
+function Confirm({
+  text,
+  yes,
+  onYes,
+  onNo,
+}: {
+  text: string;
+  yes: string;
+  onYes: () => void;
+  onNo: () => void;
+}) {
+  useHand('confirm');
+  return (
+    <div className="confirm" role="alert">
+      <p>{text}</p>
+      <div className="row">
+        <button className="primary" onClick={onYes}>
+          {yes}
+        </button>
+        <button onClick={onNo}>再想想</button>
+      </div>
+    </div>
   );
 }

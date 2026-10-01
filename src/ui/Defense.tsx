@@ -3,6 +3,7 @@ import * as defense from '../engine/episode/defense';
 import type { DefenseScene } from '../engine/episode/schema';
 import { defenseState, juryAfterTrial, useEpisode } from '../engine/game';
 import { JuryLegend } from './JuryLegend';
+import { MarkLines } from './Marks';
 import { Speech } from './Portrait';
 import { Transcript } from './Shell';
 
@@ -93,9 +94,14 @@ export function Defense({ scene }: { scene: DefenseScene }) {
           </button>
         </>
       ) : (
-        <button className="primary next" onClick={advance}>
-          繼續
-        </button>
+        <>
+          <div className="lines">
+            <MarkLines lines={scene.outro} />
+          </div>
+          <button className="primary next" onClick={advance}>
+            繼續
+          </button>
+        </>
       )}
     </main>
   );

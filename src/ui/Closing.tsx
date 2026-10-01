@@ -6,9 +6,11 @@ import {
   endingOf,
   promisesOf,
   exposedArgs,
+  juryAfterTrial,
   useEpisode,
 } from '../engine/game';
 import { CardPick, EvidenceDrawer } from './Evidence';
+import { Tally } from './Marks';
 import { Speech } from './Portrait';
 import { Shell, Tabs } from './Shell';
 import { useState } from 'react';
@@ -21,6 +23,7 @@ export function Closing({ scene }: { scene: ClosingScene }) {
   const args = closingArgs(progress);
   const [tab, setTab] = useState<'args' | 'tone'>('args');
   const need = closing.needed(scene, args.length);
+  const rules = juryAfterTrial(progress)?.rules;
 
   if (st.verdict)
     return (
@@ -40,9 +43,19 @@ export function Closing({ scene }: { scene: ClosingScene }) {
           ))}
         </ol>
         <div className="lines">
-          {endingOf(progress, scene).map((l, i) => (
-            <Speech key={i} line={l} />
-          ))}
+          {endingOf(progress, scene).map((l, i) =>
+            l.mark?.kind === 'tally' ? (
+              rules && (
+                <Tally
+                  key={i}
+                  round={st.rounds.length}
+                  guilty={rules.jurors.map((j) => st.jury[j.id] >= rules.threshold)}
+                />
+              )
+            ) : (
+              <Speech key={i} line={l} />
+            ),
+          )}
         </div>
         <button className="primary next" onClick={advance}>
           繼續
