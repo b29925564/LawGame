@@ -1104,7 +1104,49 @@ details summary {
 .sheet > * {
   flex-shrink: 0;
 }
-.sheet > .sheet-list {
+.sheet > .sheet-tabs {
+  border-bottom: none;
+  margin-left: -12px;
+}
+.terms {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.term {
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+}
+.term dt {
+  font-family: var(--font-doc);
+  font-weight: 700;
+  font-size: 1.05em;
+}
+.term dt .muted {
+  font-family: var(--font);
+  font-weight: 500;
+  font-style: italic;
+}
+.term dd {
+  margin: 4px 0 0;
+  line-height: 1.7;
+}
+.term .in-game {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--border-strong);
+  color: var(--muted);
+  font-size: 0.9em;
+}
+.term .in-game::before {
+  content: '遊戲裡　';
+  color: var(--accent);
+  font-weight: 700;
+}
+.sheet-list {
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
@@ -1413,10 +1455,50 @@ fieldset.relations.compact {
   text-align: left;
 }
 
+/* 時間軸：未放的卡片匣釘在上緣，跟連線台一樣。 */
+.timeline-tray {
+  position: sticky;
+  top: var(--tabs-h, 44px);
+  z-index: 2;
+  margin: -14px -16px 0;
+  padding: 12px 16px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-bottom: 1px solid var(--border);
+  border-radius: var(--radius) var(--radius) 0 0;
+  background: var(--surface-2);
+  box-shadow: 0 8px 16px -12px var(--shadow-color);
+}
+.timeline-tray h2 {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.timeline-tray .chips {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.timeline-tray .chips button {
+  flex: 0 0 auto;
+  min-height: 34px;
+  font-size: 13px;
+}
+.timeline li {
+  transition: transform 0.18s var(--ease);
+}
+.timeline li.dragging {
+  transition: none;
+}
+.timeline.readonly li {
+  grid-template-columns: 1fr;
+}
+
 /* 時間軸 */
 .timeline {
   list-style: none;
-  margin: 4px 0 0;
+  margin: 12px 0 0;
   padding: 0 0 0 18px;
   position: relative;
   display: flex;
@@ -1440,14 +1522,16 @@ fieldset.relations.compact {
   grid-template-columns: minmax(0, 1fr) 40px 40px;
   gap: 2px 4px;
   border-radius: var(--radius);
-  transition: background-color 0.15s var(--ease);
+  transition:
+    background-color 0.15s var(--ease),
+    transform 0.18s var(--ease);
 }
 .timeline li > div {
   grid-column: 1;
 }
 /* 被拖著的那一列浮起來，其他列讓出位置。 */
 .timeline li.dragging {
-  background: var(--hl-wash);
+  background: linear-gradient(var(--hl-wash), var(--hl-wash)), var(--surface);
   outline: 1px solid var(--hl);
   outline-offset: 4px;
   box-shadow: var(--shadow-2);

@@ -1,5 +1,13 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { evidence, useEpisode, type Evidence as Item } from '../engine/game';
+import { glossary } from '../content/glossary';
+import {
+  deskSceneOf,
+  deskState,
+  evidence,
+  useEpisode,
+  type Evidence as Item,
+} from '../engine/game';
+import { TimelineView } from './Timeline';
 
 /**
  * 證據抽屜。
@@ -20,8 +28,20 @@ export function EvidenceDrawer({ note }: { note?: string }) {
     return () => window.removeEventListener('keydown', esc);
   }, [open]);
   const [kind, setKind, showKind] = useKindFilter();
+  // 抽屜分三頁：手上的證據、排好的時間軸、法典百科。庭上、談判時都翻得到。
+  const [page, setPage] = useState<'cards' | 'timeline' | 'terms'>('cards');
+  const scene = deskSceneOf(progress);
+  const placed = scene ? deskState(progress, scene).timeline : [];
+  const rows = placed.map((id) => items.find((i) => i.id === id)).filter((i) => !!i);
   const hit = items.filter(
     (i) => showKind(i) && (!q || i.name.includes(q) || i.text.includes(q) || i.kind.includes(q)),
+  );
+  const terms = glossary.filter(
+    (t) =>
+      !q ||
+      t.term.includes(q) ||
+      t.text.includes(q) ||
+      t.en?.toLowerCase().includes(q.toLowerCase()),
   );
   return (
     <>
@@ -33,29 +53,67 @@ export function EvidenceDrawer({ note }: { note?: string }) {
           <button className="sheet-back" aria-label="關閉證據抽屜" onClick={() => setOpen(false)} />
           <section className="sheet" aria-label="證據抽屜">
             <div className="panel-head">
-              <h2>手上的證據</h2>
+              <nav className="apps sheet-tabs" aria-label="抽屜">
+                <button aria-current={page === 'cards'} onClick={() => setPage('cards')}>
+                  證據 {items.length}
+                </button>
+                <button aria-current={page === 'timeline'} onClick={() => setPage('timeline')}>
+                  時間軸
+                </button>
+                <button aria-current={page === 'terms'} onClick={() => setPage('terms')}>
+                  法典
+                </button>
+              </nav>
               <button className="link" onClick={() => setOpen(false)}>
                 關閉
               </button>
             </div>
-            {note && <p className="muted small">{note}</p>}
-            <input
-              className="find"
-              type="search"
-              value={q}
-              placeholder="找卡片"
-              aria-label="找卡片"
-              onChange={(e) => setQ(e.target.value)}
-            />
-            <KindFilter items={items} value={kind} onPick={setKind} />
-            <ul className="stack cards sheet-list">
-              {timeGroups(hit, (i) => (
-                <EvidenceCard key={i.id} item={i} />
-              ))}
-              {hit.length === 0 && (
-                <li className="muted">{items.length ? '沒有符合的卡片。' : '還沒有任何卡片。'}</li>
-              )}
-            </ul>
+            {page === 'cards' && note && <p className="muted small">{note}</p>}
+            {page !== 'timeline' && (
+              <input
+                className="find"
+                type="search"
+                value={q}
+                placeholder={page === 'terms' ? '找名詞，例如「相關性」' : '找卡片'}
+                aria-label={page === 'terms' ? '找名詞' : '找卡片'}
+                onChange={(e) => setQ(e.target.value)}
+              />
+            )}
+            {page === 'cards' && (
+              <>
+                <KindFilter items={items} value={kind} onPick={setKind} />
+                <ul className="stack cards sheet-list">
+                  {timeGroups(hit, (i) => (
+                    <EvidenceCard key={i.id} item={i} />
+                  ))}
+                  {hit.length === 0 && (
+                    <li className="muted">
+                      {items.length ? '沒有符合的卡片。' : '還沒有任何卡片。'}
+                    </li>
+                  )}
+                </ul>
+              </>
+            )}
+            {page === 'timeline' && (
+              <div className="sheet-list">
+                <TimelineView rows={rows} />
+              </div>
+            )}
+            {page === 'terms' && (
+              <dl className="terms sheet-list">
+                {terms.map((t) => (
+                  <div key={t.term} className="term">
+                    <dt>
+                      {t.term}
+                      {t.en && <span className="muted small"> {t.en}</span>}
+                    </dt>
+                    <dd>{t.text}</dd>
+                    {t.inGame && <dd className="in-game">{t.inGame}</dd>}
+                  </div>
+                ))}
+                {terms.length === 0 && <p className="muted">沒有符合的名詞。</p>}
+              </dl>
+            )}
           </section>
         </div>
       )}
