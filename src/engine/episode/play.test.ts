@@ -50,6 +50,17 @@ describe('訪談', () => {
   });
 });
 
+describe('訪談安撫', () => {
+  it('安撫整場只有固定次數，用完就沒有效果', () => {
+    let st = interview.startInterview(meet);
+    st = { ...st, guard: 4 };
+    for (let i = 0; i < meet.calms; i++) st = interview.calm(meet, st);
+    expect(st.guard).toBe(4 - meet.calms);
+    const after = interview.calm(meet, st);
+    expect(after).toBe(st);
+  });
+});
+
 describe('桌面調查', () => {
   const play = () => {
     let st = desk.startDesk(investigate);
@@ -61,6 +72,14 @@ describe('桌面調查', () => {
     const st = desk.mark(investigate, play(), 'not-a-card');
     expect(desk.heldCards(investigate, st)).toContain('watch-listed');
     expect(st.hours).toBe(investigate.hours);
+  });
+
+  it('沒有前提的時候，每個委託都下不了', () => {
+    const st = play();
+    for (const j of investigate.jobs) {
+      expect(j.needs.length).toBeGreaterThan(0);
+      expect(desk.canCommission(investigate, st, j.id)).toBe(false);
+    }
   });
 
   it('委託要先有前提卡片，花掉的工時會扣', () => {

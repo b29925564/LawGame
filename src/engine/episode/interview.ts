@@ -2,6 +2,8 @@ import type { InterviewScene, Line, Topic } from './schema';
 
 export interface InterviewState {
   guard: number;
+  /** 還剩幾次安撫。 */
+  calms: number;
   asked: string[];
   pressed: string[];
   shown: string[];
@@ -13,6 +15,7 @@ export interface InterviewState {
 export function startInterview(s: InterviewScene): InterviewState {
   return {
     guard: s.meter.start,
+    calms: s.calms,
     asked: [],
     pressed: [],
     shown: [],
@@ -69,10 +72,12 @@ export function press(
   return bumpGuard(s, next, 2);
 }
 
-/** 安撫：戒心 −1。 */
+/** 安撫：戒心 −1，整場只有 s.calms 次。 */
 export function calm(s: InterviewScene, st: InterviewState): InterviewState {
-  if (st.over) return st;
-  return bumpGuard(s, add(st, s.calm), -1);
+  // 舊存檔沒有 calms 欄位，當作還沒用過。
+  const left = st.calms ?? s.calms;
+  if (st.over || left <= 0) return st;
+  return bumpGuard(s, add({ ...st, calms: left - 1 }, s.calm), -1);
 }
 
 /** 關鍵話題問完才能收工，否則玩家會帶著問不完的案子進第二幕。 */
