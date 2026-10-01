@@ -58,7 +58,16 @@ const dialogueStep = z.discriminatedUnion('do', [
     do: z.literal('choose'),
     prompt: z.string().optional(),
     options: z
-      .array(z.object({ text: z.string(), then: z.array(line).default([]) }))
+      .array(
+        z.object({
+          text: z.string(),
+          then: z.array(line).default([]),
+          /** 選了就記下的旗標，之後的場景與集數可以查（例如草稿交給誰）。 */
+          flags: z.array(z.string()).default([]),
+          /** 選了就記進倫理紀錄的項目；玩家看不到，第一季季終的懲戒聽證會翻出來（企劃書 6.12）。 */
+          ethics: z.array(z.string()).default([]),
+        }),
+      )
       .min(2)
       .max(4),
   }),
@@ -411,6 +420,68 @@ const negotiationScene = z.object({
 });
 
 /**
+ * 辯方證人（企劃書 6.9.6）：我方直接詰問。只能用開放式問題，依時間順序問；
+ * 先有證人準備，其中可以選「告訴他該怎麼說」（記倫理紀錄）。
+ * 陪審團沿用前面庭審留下的那一份心證。
+ */
+const defenseScene = z.object({
+  type: z.literal('defense'),
+  id,
+  act: z.string(),
+  day: z.string().default(''),
+  witness: z.object({ name: z.string(), role: z.string() }),
+  intro: z.array(line).default([]),
+  /** 證人準備：審前花的工時（只顯示與記錄），與一組選項。 */
+  prep: z.object({
+    hours: z.number().int().min(0),
+    options: z
+      .array(
+        z.object({
+          id,
+          label: z.string(),
+          detail: z.string(),
+          /** 所有回答的衝擊倍率：沒準備的證人會緊張。 */
+          multiplier: z.number().min(0).default(1),
+          /** 被教過的措辭（標記 rehearsed 的問題）額外的倍率。 */
+          rehearsed: z.number().min(0).default(1),
+          /** 教過證人：檢方反詰問時，問過 rehearsed 問題就會被問「有人教你怎麼說嗎？」。 */
+          coached: z.boolean().default(false),
+          ethics: z.array(z.string()).default([]),
+          flags: z.array(z.string()).default([]),
+        }),
+      )
+      .min(1),
+  }),
+  /** 最多能問幾題。 */
+  asks: z.number().int().min(1),
+  questions: z
+    .array(
+      z.object({
+        id,
+        /** 時間順序；照順序問才連貫，倒著問衝擊減半。 */
+        seq: z.number().int().min(0),
+        q: z.string(),
+        a: z.string(),
+        impact: z.number().min(0),
+        tags: z.array(z.enum(tags)).min(1),
+        rehearsed: z.boolean().default(false),
+        /** 開門陷阱：問了這題，檢方反詰問時可以提本來不能提的事。 */
+        door: z
+          .object({ q: z.string(), a: z.string(), penalty: z.number().int().min(1) })
+          .optional(),
+      }),
+    )
+    .min(1),
+  /** 被教過的證人露餡時，檢方問的那一句與證人的回答，以及全體往有罪移多少。 */
+  leak: z.object({
+    q: z.string().default('證人，有人教過你這些話該怎麼說嗎？'),
+    a: z.string(),
+    penalty: z.number().int().min(1).default(8),
+  }),
+  outro: z.array(line).default([]),
+});
+
+/**
  * 案件理論（企劃書 6.9.2）：開庭前選一個，選了就不能換。
  * 每個理論要有哪些論點才站得住，並列出開場陳述可以許下的承諾。
  */
@@ -540,6 +611,7 @@ const scene = z.discriminatedUnion('type', [
   voirDireScene,
   theoryScene,
   openingScene,
+  defenseScene,
   closingScene,
   negotiationScene,
   /** 片頭或幕與幕之間的標題卡。 */
@@ -570,6 +642,7 @@ export type TrialScene = Extract<Scene, { type: 'trial' }>;
 export type DepositionScene = Extract<Scene, { type: 'deposition' }>;
 export type VoirDireScene = Extract<Scene, { type: 'voirdire' }>;
 export type ClosingScene = Extract<Scene, { type: 'closing' }>;
+export type DefenseScene = Extract<Scene, { type: 'defense' }>;
 export type TheoryScene = Extract<Scene, { type: 'theory' }>;
 export type OpeningScene = Extract<Scene, { type: 'opening' }>;
 export type Theory = TheoryScene['theories'][number];

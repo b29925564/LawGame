@@ -1713,6 +1713,84 @@ scenes:
         text: 我不想贏在她身上。我只是想知道那天晚上發生了什麼。
         thought: true
 
+  # 辯方證人：布魯克斯法醫（企劃書 6.9.6）
+  - type: defense
+    id: defense-brooks-ep1
+    act: 第四幕
+    day: 第三天
+    witness:
+      name: 艾倫・布魯克斯
+      role: 法醫
+    intro:
+      - who: 旁白
+        text: 檢方結束舉證。艾莉絲站起來：「辯方傳喚艾倫・布魯克斯法醫。」
+      - who: 艾莉絲
+        text: 他是檢方自己的驗屍官。讓他在證人席上把時間窗收窄，比我說一百句都有用。
+        thought: true
+    prep:
+      hours: 2
+      options:
+        - id: prep-none
+          label: 不準備
+          detail: 直接上庭。他很專業，但第一次被辯方傳喚，會有點緊張。
+          multiplier: 0.8
+        - id: prep-honest
+          label: 正常準備
+          detail: 兩個小時過一遍心率資料與死亡時間的推論，只講事實，不改他的措辭。
+          multiplier: 1
+        - id: prep-coach
+          label: 告訴他該怎麼說
+          detail: 把每個答案逐字排好。聽起來最有力，但檢方一問就會露餡。
+          multiplier: 1
+          rehearsed: 1.6
+          coached: true
+          ethics: [coached-witness]
+          flags: [coached-brooks]
+    asks: 3
+    questions:
+      - id: bq-window
+        seq: 0
+        q: 布魯克斯醫師，您報告裡的死亡時間是週五晚上十點到十一點半。這個推估是怎麼來的？
+        a: 體溫和屍僵只能給出一個範圍。範圍很寬，這是方法的限制，不是誰的疏失。
+        impact: 8
+        tags: [權威, 邏輯]
+      - id: bq-watch
+        seq: 1
+        q: 死者手腕上的智慧手錶，您在驗屍時是怎麼處理的？
+        a: 錶帶完好，扣在腕上，背面的感測器貼著皮膚。我拍了照，附在報告裡。
+        impact: 10
+        tags: [權威, 邏輯]
+        rehearsed: true
+      - id: bq-hr
+        seq: 2
+        q: 如果手錶一直貼在死者身上，它記錄的心率歸零，代表什麼？
+        a: 代表心臟停止跳動的時間點。比我的體溫推估精確得多。
+        impact: 14
+        tags: [權威, 邏輯]
+        rehearsed: true
+      - id: bq-police
+        seq: 3
+        q: 警方有沒有請您參考手錶的資料？
+        a: 沒有。報告交出去之前，沒有人跟我提過那支手錶。
+        impact: 7
+        tags: [程序]
+        door:
+          q: 布魯克斯醫師，您和檢察官辦公室合作十五年，從來沒有因為對方的要求修改過報告，對嗎？
+          a: ……有過一次。不是這個案子，但確實有過一次。
+          penalty: 6
+    leak:
+      q: 布魯克斯醫師，辯護律師有沒有「教」您該怎麼回答手錶的問題？
+      a: 我們……見過面，她跟我討論過怎麼說比較清楚。
+      penalty: 8
+    outro:
+      - who: 旁白
+        text: 莫羅檢察官的反詰問結束得比平常早，她沒有再追問手錶。
+      - who: 艾莉絲
+        text: 十一點半的窗口，現在有一個點釘在裡面了。
+        thought: true
+      - who: 旁白
+        text: 法官宣布：辯方舉證完畢。
+
   - type: card
     id: day3
     act: 第四幕
@@ -1822,16 +1900,20 @@ scenes:
         mode: chat
         options:
           - text: 交給海爾。事務所的事，先問事務所。
+            flags: [draft-to-hale]
             then:
               - who: 艾莉絲
                 text: 海爾看完草稿，沉默了很久。「這份文件，妳還給過誰？」他問的第一句不是它是真是假。
                 thought: true
           - text: 自己保留。在知道它是什麼之前，誰都不給。
+            flags: [draft-kept]
             then:
               - who: 艾莉絲
                 text: 我把信封放進抽屜最底層，鎖上。鑰匙只有一把。
                 thought: true
           - text: 交給潔德。她會知道怎麼讓它見光。
+            flags: [draft-to-jade]
+            ethics: [leaked-client-doc]
             then:
               - who: 艾莉絲
                 text: 潔德翻了兩頁就抬頭看我。「這是客戶的機密文件，妳知道這是什麼意思嗎？」我知道。

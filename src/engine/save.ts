@@ -12,6 +12,10 @@ export interface Progress {
   choices: Record<string, number>;
   /** 帶著走的卡片與論點（跨場景）。 */
   cards: string[];
+  /** 對話選項記下的旗標（跨場景、跨集）。舊存檔沒有這個欄位。 */
+  flags?: string[];
+  /** 倫理紀錄（企劃書 6.12）：玩家看不到的帳本，記下越過的每一條線。 */
+  ethics?: string[];
   /** 各場景的進行狀態，鍵是場景 id。 */
   scenes: Record<string, unknown>;
 }
@@ -23,12 +27,14 @@ export interface SaveFile {
   progress: Progress;
 }
 
-export const SAVE_VERSION = 4;
+export const SAVE_VERSION = 5;
 export const SLOTS = [1, 2, 3] as const;
 export type Slot = 'auto' | (typeof SLOTS)[number];
 
 /** migrations[n] 把第 n 版的存檔轉成第 n + 1 版。 */
 const migrations: Record<number, (d: SaveFile) => SaveFile> = {
+  // v4 還沒有旗標與倫理紀錄，補上空陣列。
+  4: (d) => ({ ...d, version: 5, progress: { ...d.progress, flags: [], ethics: [] } }),
   // v3 的推理鏈是一步到位（卡片＋關係）；v4 拆成「連線」與「回答疑問」兩步。
   // 已確認的疑問保留，還沒提交的草稿清空（舊草稿放的是卡片，新版要放發現）。
   3: (d) => ({
