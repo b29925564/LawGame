@@ -154,7 +154,37 @@ export function EvidenceCard({ item, pickable }: { item: Item; pickable?: boolea
   const hl = cardHighlights(episodeOf(progress))[item.id];
   const sealed = cardStamps(progress)[item.id];
   const can = pickable && pick && pool.includes(item.id);
-  const cls = (item.kind === '論點' ? 'card arg' : 'card') + (can ? ' pickable' : '');
+  const cls = (item.kind === '論點' ? 'card arg' : 'card') + (can ? ' pickable mini' : '');
+  // 證據板上的小卡（設計稿 board-redesign）：只留名稱、時間、出處，放上連線台的標 A／B。
+  const slot = can ? ['A', 'B'][on.indexOf(item.id)] : undefined;
+  const body = can ? (
+    <>
+      <span className="mini-head">
+        <strong>{item.name}</strong>
+        {stamp(item) && <span className="time">{stamp(item)}</span>}
+      </span>
+      {slot && (
+        <span className="slot-tag" aria-label={`連線台 ${slot}`}>
+          {slot}
+        </span>
+      )}
+      <span className="muted small">
+        {item.kind}・{item.source}
+      </span>
+    </>
+  ) : (
+    <>
+      <strong>
+        {stamp(item) && <span className="time">{stamp(item)}</span>}
+        {item.name}
+      </strong>
+      {sealed && <Stamp text={sealed} sm />}
+      <p>{hl ? <Hl text={item.text} words={hl} live={false} /> : item.text}</p>
+      <span className="muted small">
+        {item.kind}・{item.source}
+      </span>
+    </>
+  );
   return (
     <li
       className={on.includes(item.id) && can ? cls + ' on' : cls}
@@ -166,16 +196,9 @@ export function EvidenceCard({ item, pickable }: { item: Item; pickable?: boolea
         onKeyDown: (e: React.KeyboardEvent) =>
           (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), pick(item.id)),
       })}
+      {...(can && { title: item.text })}
     >
-      <strong>
-        {stamp(item) && <span className="time">{stamp(item)}</span>}
-        {item.name}
-      </strong>
-      {sealed && <Stamp text={sealed} sm />}
-      <p>{hl ? <Hl text={item.text} words={hl} live={false} /> : item.text}</p>
-      <span className="muted small">
-        {item.kind}・{item.source}
-      </span>
+      {body}
     </li>
   );
 }
