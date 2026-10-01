@@ -95,7 +95,7 @@ describe('結辯論點', () => {
       cards: [],
       scenes: {},
     })!.questions;
-    const [a, b] = qs;
+    const [a, b] = qs.filter((q) => !q.argument.motionOnly);
     const p = {
       episode: 'ep1',
       scene: 0,
