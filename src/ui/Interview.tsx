@@ -2,6 +2,7 @@ import { useState } from 'react';
 import * as interview from '../engine/episode/interview';
 import type { InterviewScene } from '../engine/episode/schema';
 import { interviewState, useEpisode } from '../engine/game';
+import { StickyNote } from './Marks';
 import { Portrait, Speech } from './Portrait';
 import { Transcript } from './Shell';
 
@@ -15,6 +16,8 @@ export function Interview({ scene }: { scene: InterviewScene }) {
   const ending = leaving || st.over;
   const topics = interview.openTopics(scene, st, progress.cards);
   const canFinish = interview.canFinish(scene, st);
+  // 便利貼貼在標頭計量表左邊（設計稿 inner-voice 2a）。
+  const note = [...st.log].reverse().find((l) => l.mark?.kind === 'sticky' && l.mark.on);
   const lastMood = [...st.log].reverse().find((l) => l.who === scene.who)?.mood ?? '平';
 
   return (
@@ -27,6 +30,7 @@ export function Interview({ scene }: { scene: InterviewScene }) {
             {scene.role}・{scene.via}
           </p>
         </div>
+        {note && <StickyNote pinned text={note.mark?.text ?? note.text} word={note.mark?.word} />}
         <p className="meter" aria-label={`${scene.meter.label} ${st.guard} / ${scene.meter.max}`}>
           <span className="muted">{scene.meter.label}</span>
           <span className="pips" aria-hidden>

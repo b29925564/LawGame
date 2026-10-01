@@ -2,11 +2,13 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { glossary } from '../content/glossary';
 import {
   deskSceneOf,
+  episodeOf,
   deskState,
   evidence,
   useEpisode,
   type Evidence as Item,
 } from '../engine/game';
+import { cardHighlights, Hl } from './Marks';
 import { useCardPick } from './pick';
 import { TimelineView } from './Timeline';
 
@@ -148,6 +150,8 @@ export function EvidenceDrawer({ note }: { note?: string }) {
 
 export function EvidenceCard({ item, pickable }: { item: Item; pickable?: boolean }) {
   const { pool, on, pick } = useCardPick();
+  const { progress } = useEpisode();
+  const hl = cardHighlights(episodeOf(progress))[item.id];
   const can = pickable && pick && pool.includes(item.id);
   const cls = (item.kind === '論點' ? 'card arg' : 'card') + (can ? ' pickable' : '');
   return (
@@ -166,7 +170,7 @@ export function EvidenceCard({ item, pickable }: { item: Item; pickable?: boolea
         {stamp(item) && <span className="time">{stamp(item)}</span>}
         {item.name}
       </strong>
-      <p>{item.text}</p>
+      <p>{hl ? <Hl text={item.text} words={hl} live={false} /> : item.text}</p>
       <span className="muted small">
         {item.kind}・{item.source}
       </span>

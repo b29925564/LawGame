@@ -11,6 +11,7 @@ import {
   useKindFilter,
   useWide,
 } from './Evidence';
+import { IndexCard, MarkLines, Ruling } from './Marks';
 import { useCardPick } from './pick';
 import { Speech } from './Portrait';
 import { RelationPicker } from './RelationPicker';
@@ -36,20 +37,42 @@ export function Desk({ scene }: { scene: DeskScene }) {
   const unread = scene.mail.filter((m) => st.mail.includes(m.id) && !st.openMail.includes(m.id));
   const finished = desk.done(scene, st);
 
-  if (st.report.length)
+  if (st.report.length) {
+    // 聲請的結果印成裁定單（設計稿 inner-voice 2e）：旁白那句是法官的話，章蓋在紙上。
+    const same = (a: unknown) => JSON.stringify(a) === JSON.stringify(st.report);
+    const m = scene.motions.find((x) => same(x.granted) || same(x.denied));
+    const ok = m ? same(m.granted) : false;
+    const a = m && desk.motionAttempt(st, m.id);
+    const quote = m && st.report.find((l) => l.who === '旁白');
+    const rest = m
+      ? st.report.filter(
+          (l) => l !== quote && !(l.mark?.kind === 'stamp' && !l.text.includes('｜')),
+        )
+      : st.report;
     return (
       <main className="scene report">
-        <p className="eyebrow">回報</p>
+        <p className="eyebrow">{m ? '回報・法院系統' : '回報'}</p>
+        {m && a && (
+          <div className="ruling-wrap">
+            <Ruling
+              label={m.label}
+              basis={a.basis ?? undefined}
+              wrongBasis={!ok && !!a.basis && a.basis !== m.basis}
+              request={a.request ?? undefined}
+              quote={quote?.text.replace(/^「|」$/g, '')}
+              verdict={ok ? '准予' : '駁回'}
+            />
+          </div>
+        )}
         <div className="lines">
-          {st.report.map((l, i) => (
-            <Speech key={i} line={l} />
-          ))}
+          <MarkLines lines={rest} />
         </div>
         <button className="primary next" onClick={clearReport}>
           回到桌面
         </button>
       </main>
     );
+  }
 
   // 對方聲請撤銷傳票，事務所要你收手。這個抉擇擋在桌面前面，非決定不可。
   const twist = desk.pendingTwist(scene, st);
@@ -259,6 +282,7 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
     name: `發現 ${i + 1}`,
     kind: '發現' as const,
     text: l.text,
+    conclusion: l.conclusion,
   }));
   const answers = [...found, ...args];
   // 一打開就停在第一題還沒確認的疑問；還沒有任何發現時先到連線。
@@ -317,6 +341,10 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
           placed={st.timeline}
           onToggle={toggleTimeline}
           onMove={moveTimeline}
+          marks={scene.timelineMarks.map((m) => ({
+            ...m,
+            detail: m.kind === 'gap' ? gapDetail(scene) : undefined,
+          }))}
         />
       )}
       {view === 'links' && (
@@ -384,8 +412,19 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
               <ol className="findings">
                 {found.map((f) => (
                   <li key={f.id}>
-                    <strong>{f.name}</strong>
-                    <p>{f.text}</p>
+                    {f.conclusion ? (
+                      <IndexCard
+                        head={f.name}
+                        printed={f.text}
+                        text={f.conclusion.text}
+                        word={f.conclusion.word}
+                      />
+                    ) : (
+                      <>
+                        <strong>{f.name}</strong>
+                        <p>{f.text}</p>
+                      </>
+                    )}
                   </li>
                 ))}
               </ol>
@@ -596,4 +635,12 @@ function Jobs({ scene, held }: { scene: DeskScene; held: string[] }) {
       })}
     </ul>
   );
+}
+
+/** 回報裡寫好的間距說明（例如「22:44 抵達 → 22:47 刷卡」），時間線上的間距標記沿用。 */
+function gapDetail(scene: DeskScene) {
+  for (const j of scene.jobs)
+    for (const l of j.report)
+      if (l.mark?.kind === 'gap') return l.text.replace(/\s*→\s*/, '\u3000→\u3000');
+  return undefined;
 }
