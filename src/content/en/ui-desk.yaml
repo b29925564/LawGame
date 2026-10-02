@@ -36,10 +36,9 @@
 '疑問 {n}': 'Question {n}'
 '已確認 {n}': '{n} confirmed'
 已確認: Confirmed
-'已確認：{name}': 'Confirmed: {name}'
 進行中: In progress
 尚未開始: Not started
-尚未出現的疑問: Question not yet available
+'還有 {n} 題，查到線索後出現': '{n} more questions appear as you find leads'
 時間線: Timeline
 把事件排在時間軸上: Put the events in order on the timeline
 '已排 {n} / {m}': 'Placed {n} / {m}'
@@ -58,6 +57,8 @@
 還沒有發現: No findings yet
 '：': ': '
 已放進答案: In answer
+展開: More
+收起: Less
 '← 全部疑問': '← All questions'
 目前沒有可以提出的聲請。: No motions to file right now.
 聲請: Motion
