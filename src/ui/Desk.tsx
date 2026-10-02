@@ -150,7 +150,11 @@ export function Desk({ scene }: { scene: DeskScene }) {
         <>
           <EvidenceDrawer noTimeline={app === 'board'} />
           {desk.canWrap(scene, st, progress.cards) ? (
-            <WrapButton hours={st.hours} onWrap={wrapDesk} />
+            <WrapButton
+              hours={st.hours}
+              open={scene.questions.length - st.confirmed.length}
+              onWrap={wrapDesk}
+            />
           ) : (
             st.confirmed.includes(scene.goal) &&
             pending > 0 && (
@@ -228,13 +232,30 @@ function Discovery({ scene }: { scene: DeskScene }) {
                     {t(o.label)}
                   </button>
                 ))}
-                <button
-                  className="primary"
-                  disabled={!sel}
-                  onClick={() => sel && respondDiscovery(r.id, sel)}
-                >
-                  {t('送出')}
-                </button>
+                {sel && (
+                  // 定案列（UX 決策代價規格三）：選了先看帳，按定案鈕才送出。
+                  <CommitBar
+                    what={t(RESPONSES.find((o) => o.id === sel)!.label)}
+                    cost={
+                      sel === 'produce'
+                        ? t('對方拿到這 {n} 份文件', { n: r.cards.length })
+                        : sel === 'privilege'
+                          ? // 固定文案：不可以依 privilege 值改寫，不然等於告訴玩家答案。
+                            t('法官可能不認；沒有正當理由硬藏，之後被揭穿會很重')
+                          : t('由法官決定範圍')
+                    }
+                    action={t(
+                      sel === 'produce'
+                        ? r.cards.length > 1
+                          ? '交出這些文件'
+                          : '交出這份文件'
+                        : sel === 'privilege'
+                          ? '主張特權'
+                          : '以範圍過廣回應',
+                    )}
+                    onCommit={() => respondDiscovery(r.id, sel)}
+                  />
+                )}
               </div>
             )}
           </li>
@@ -1014,7 +1035,38 @@ function FoundNote({
   );
 }
 
-function WrapButton({ hours, onWrap }: { hours: number; onWrap: () => void }) {
+/**
+ * 定案列：不可逆的決定都用這一種（UX 決策代價規格三）。你選了什麼、🔒 選了就不能改、代價，
+ * 然後一顆深底金邊的定案鈕，文字寫動作本身。
+ */
+function CommitBar({
+  what,
+  cost,
+  action,
+  onCommit,
+}: {
+  what: string;
+  cost: string;
+  action: string;
+  onCommit: () => void;
+}) {
+  const t = useT();
+  return (
+    <div className="commit-bar" role="group" aria-label={t('定案')}>
+      <p className="commit-what">
+        <strong>{what}</strong>
+        <span className="muted small">🔒 {t('選了就不能改')}</span>
+      </p>
+      <p className="commit-cost small">{cost}</p>
+      <button className="commit" onClick={onCommit}>
+        <span aria-hidden>🔒 </span>
+        {action}
+      </button>
+    </div>
+  );
+}
+
+function WrapButton({ hours, open, onWrap }: { hours: number; open: number; onWrap: () => void }) {
   const t = useT();
   const [armed, setArmed] = useState(false);
   useEffect(() => {
@@ -1022,9 +1074,14 @@ function WrapButton({ hours, onWrap }: { hours: number; onWrap: () => void }) {
     const timer = setTimeout(() => setArmed(false), 4000);
     return () => clearTimeout(timer);
   }, [armed]);
+  // 第二下是定案鈕：寫出還剩多少工時、多少疑問沒確認（UX 決策代價規格三）。
   return armed ? (
-    <button className="primary wide armed" onClick={onWrap}>
-      {t('確定結束')} <span className="cost">{t('剩 {n} 時', { n: hours })}</span>
+    <button className="commit wide armed" onClick={onWrap}>
+      <span aria-hidden>🔒 </span>
+      {t('確定結束')}{' '}
+      <span className="cost">
+        {open ? t('剩 {n} 時・{m} 題沒確認', { n: hours, m: open }) : t('剩 {n} 時', { n: hours })}
+      </span>
     </button>
   ) : (
     <button className="wide" onClick={() => setArmed(true)}>
