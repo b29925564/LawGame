@@ -4817,3 +4817,27 @@ button.iou[aria-pressed='true'] {
 :root:lang(en) .iou .sig {
   font-style: italic;
 }
+
+/* 法庭光層試做（場景光影規格）：四張關鍵格疊在畫面最底，只改 opacity。 */
+.court-light {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: #0b0e13;
+}
+.court-light img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  will-change: opacity;
+}
+body:has(.court-light) {
+  background: transparent;
+}
+/* 光層是暗的房間：法庭裡一律用深色介面，字才壓得住底圖。 */
+:root:has(.court-light) {
+  color-scheme: dark;
+}

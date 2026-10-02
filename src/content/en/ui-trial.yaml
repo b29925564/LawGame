@@ -1,0 +1,102 @@
+# UI strings: Courtroom, JuryPanel, JuryLegend, Closing, Theory (and Opening), Defense, VoirDire. Key = Chinese source string exactly.
+
+# Jury panel and legend
+陪審團: Jury
+顯示數值: Show numbers
+'{over} / {total} 傾向{yes}': '{over} / {total} lean toward {yes}'
+'數字是每個人的「{lean}」，0 到 100。{n} 以上才會投{yes}，那條線就是「{standard}」。': 'Each number is that juror’s score for “{lean}”, from 0 to 100. At {n} or above they vote {yes}; that line is “{standard}.”'
+'目前 {over} / {total} 在線上。': '{over} of {total} are over the line right now.'
+原型是從檢方舉證完畢開始，所以一開始所有人都在線上，你要把他們拉下來。: The prototype starts after the prosecution rests, so everyone begins over the line. Your job is to pull them back down.
+
+# Courtroom
+要異議嗎？: Object?
+休庭: Recess
+成功彈劾: Successful impeachments
+刪除的證詞: Testimony stricken
+'{n} 句': '{n} lines'
+剩餘法官耐心: Judge’s patience left
+調查花掉的工時: Hours spent investigating
+'法官耐心 {a} / {b}': 'Judge’s patience {a} / {b}'
+法官耐心: Judge’s patience
+開場許下的承諾: Promises made in opening
+'・已兌現': '· Kept'
+（這句話已從陪審團視角刪除）: (This line has been struck from the jury’s view)
+證詞: Testimony
+'證詞 {n}': 'Testimony {n}'
+庭上隨時可以翻。出示哪一個論點，看的就是這裡的強度。: You can open this at any time in court. Which argument to present depends on the strength shown here.
+詰問完畢: Done examining
+聽下一個問題: Hear the next question
+'{who}詰問完畢': '{who} finishes direct'
+開始交互詰問: Begin cross-examination
+'聽{who}問下去。有問題的地方就在問完的那一刻提異議。': 'Listen to {who} continue. If a question is improper, object the moment it is asked.'
+已定錨: Locked in
+她在錄取筆錄裡已經講死這個說法: She already committed to this version in her deposition.
+'1 鎖定': '1 Lock in'
+'2 鋪陳': '2 Set up'
+'3 對質': '3 Confront'
+出示: Present
+（已洩漏，她備好了反擊）: '(Exposed: she’s prepared a rebuttal)'
+手上沒有論點可以出示。: You have no arguments to present.
+其他問題: Other questions
+
+# Jury selection
+開始遴選: Begin jury selection
+陪審團已選定: Jury seated
+'・陪審長': '· Foreperson'
+'沒有根據的聲請有 {n} 次。開庭第一天的法官耐心會少 {n} 點。': 'You made {n} baseless motions. The judge will start trial {n} points less patient.'
+陪審團遴選: Jury selection
+'voirdire::提問': Questions
+無因迴避: Peremptory strike
+'voirdire::無因迴避': Peremptory strikes
+'候選 {n}': 'Pool {n}'
+候選人: Candidates
+'會入座的 {n}': 'Seated {n}'
+還沒問過: Not yet asked
+'就用這 {n} 位（由上往下）': 'Seat these {n} (top to bottom)'
+'・問過': '· Asked'
+聲請有因迴避: Challenge for cause
+這個篩選沒有人。: No one matches this filter.
+
+# Case theory and opening statement
+選擇案件理論: Choose case theory
+案件理論: Case theory
+'確定，就用「{name}」': 'Yes, go with “{name}”'
+就用這個理論: Use this theory
+已選定。: Selected.
+手上的論點撐不起任何理論，直接開庭: Your arguments can’t support any theory. Go to court anyway
+開始陳述: Begin opening
+開場陳述: Opening statement
+沒有選定的案件理論，沒有任何承諾可以許。: No case theory was chosen, so there are no promises to make.
+'承諾 {a} / {b}': 'Promises {a} / {b}'
+'許下 {n} 個承諾': 'Make {n} promises'
+不許任何承諾: Make no promises
+再想想: Think again
+
+# Defense witness
+'準備{name}出庭': 'Prepare {name} to testify'
+'證人準備・{name}（{role}）・{n} 工時': 'Witness prep · {name} ({role}) · {n} hours'
+就這樣準備: Prepare this way
+'直接詰問・{name}': 'Direct · {name}'
+'・還能問 {n} 題': ' · {n} questions left'
+手上沒有能讓證人說這件事的證據。: You have no evidence that would get the witness to say this.
+問完了: Done asking
+
+# Closing argument and verdict
+判決: Verdict
+'第 {n} 輪評議': 'Deliberation round {n}'
+'・ 基調 {state}': '· Tone {state}'
+已選: set
+未選: not set
+'手上的論點不夠，結辯會空 {n} 格，{other}的說法沒人反駁。': 'You’re short on arguments: {n} closing slots will stay empty and nobody rebuts {other}’s account.'
+沒有案件理論，論點說服力打七折。: No case theory, so your arguments are 30% less persuasive.
+'開場許下的 {n} 個承諾沒有兌現，陪審員記得你說過的話。': '{n} promises from your opening went unkept. The jurors remember what you said.'
+結辯: Closing argument
+訴求基調: Appeal tone
+開始結辯: Start closing
+'挑 {n} 個論點，順序就是你講的順序': 'Pick {n} arguments. Your order is the order you deliver them.'
+'手上只有 {n} 個確認過的論點，{rest}': 'You have only {n} confirmed arguments. {rest}'
+只能靠訴求基調結辯。: You can only close on your appeal tone.
+有幾個講幾個。: Use what you have.
+（已洩漏）: (Exposed)
+手上沒有確認過的論點。: You have no confirmed arguments.
+'・最後講，×1.3': '· Delivered last, ×1.3'

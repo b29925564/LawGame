@@ -3,6 +3,8 @@
  * 同一 300ms 內產生的記號合成一行，同一元件重複觸發只播最後一次；
  * 畫外字幕優先，字幕還在畫面上時，其他記號等它結束才播。
  */
+import { t } from '../i18n';
+
 export type Announcement = {
   /** 哪個元件發的，同一個 from 在同一批裡只留最後一次。 */
   from: string;
@@ -18,7 +20,10 @@ export const WINDOW_MS = 300;
 
 export function merge(items: Announcement[]): string {
   if (items.length === 1) return items[0].text;
-  return `盧卡斯標記了 ${items.length} 處：${items.map((i) => i.word ?? i.text).join('、')}`;
+  return t('盧卡斯標記了 {n} 處：{items}', {
+    n: items.length,
+    items: items.map((i) => i.word ?? i.text).join(t('、')),
+  });
 }
 
 export class AnnounceQueue {
@@ -44,7 +49,7 @@ export class AnnounceQueue {
   /** 畫外字幕出完字時呼叫，立刻播；之後到 voiceEnd 之前，其他記號都先等著。 */
   voice(text: string) {
     this.vo = true;
-    this.out(`盧卡斯沒有說出口：${text}`);
+    this.out(t('盧卡斯沒有說出口：{text}', { text }));
   }
 
   /** 畫外字幕退場時呼叫，補播等著的記號。 */

@@ -10,7 +10,9 @@ import {
   juryAfterTrial,
   useEpisode,
 } from '../engine/game';
+import { useT } from '../i18n';
 import { CardPick, EvidenceDrawer } from './Evidence';
+import { useScope } from './lang';
 import { Tally } from './Marks';
 import { Speech } from './Portrait';
 import { Shell, Tabs } from './Shell';
@@ -21,6 +23,8 @@ export function Closing({ scene }: { scene: ClosingScene }) {
   const { progress, pickArg, setTone, deliver, advance } = useEpisode();
   const st = closingState(progress, scene);
   const terms = useCaseTerms();
+  const t = useT();
+  const scope = useScope();
   const exposed = exposedArgs(progress);
   const args = closingArgs(progress);
   const [tab, setTab] = useState<'args' | 'tone'>('args');
@@ -30,15 +34,15 @@ export function Closing({ scene }: { scene: ClosingScene }) {
   if (st.verdict)
     return (
       <main className="scene">
-        <p className="eyebrow">判決</p>
-        <h1>{st.verdict}</h1>
+        <p className="eyebrow">{t('判決')}</p>
+        <h1>{t(st.verdict)}</h1>
         <ol className="stack">
           {st.rounds.map((r, i) => (
             <li key={i} className="panel">
-              <strong>第 {i + 1} 輪評議</strong>
+              <strong>{t('第 {n} 輪評議', { n: i + 1 })}</strong>
               {r.moves.map((m, j) => (
                 <p key={j} className="muted">
-                  {m}
+                  {t(m, scope)}
                 </p>
               ))}
             </li>
@@ -61,7 +65,7 @@ export function Closing({ scene }: { scene: ClosingScene }) {
           )}
         </div>
         <button className="primary next" onClick={advance}>
-          繼續
+          {t('繼續')}
         </button>
       </main>
     );
@@ -72,38 +76,41 @@ export function Closing({ scene }: { scene: ClosingScene }) {
       head={
         <header className="panel-head bench">
           <p className="eyebrow">
-            {scene.act}・{scene.place}
+            {t(scene.act, scope)}・{t(scene.place, scope)}
           </p>
           <p className="patience">
-            論點{' '}
+            {t('論點')}{' '}
             <strong>
               {st.picked.length}/{need}
             </strong>{' '}
-            ・ 基調 {st.tone ? '已選' : '未選'}
+            {t('・ 基調 {state}', { state: st.tone ? t('已選') : t('未選') })}
           </p>
           {need < scene.picks && (
             <p className="bad-text small">
-              手上的論點不夠，結辯會空 {scene.picks - need} 格，{terms.other}的說法沒人反駁。
+              {t('手上的論點不夠，結辯會空 {n} 格，{other}的說法沒人反駁。', {
+                n: scene.picks - need,
+                other: t(terms.other),
+              })}
             </p>
           )}
           {!promisesOf(progress).theory && (
-            <p className="bad-text small">沒有案件理論，論點說服力打七折。</p>
+            <p className="bad-text small">{t('沒有案件理論，論點說服力打七折。')}</p>
           )}
           {(st.broken ?? []).length > 0 && (
             <p className="bad-text small">
-              開場許下的 {st.broken.length} 個承諾沒有兌現，陪審員記得你說過的話。
+              {t('開場許下的 {n} 個承諾沒有兌現，陪審員記得你說過的話。', { n: st.broken.length })}
             </p>
           )}
         </header>
       }
       tabs={
         <Tabs
-          label="結辯"
+          label={t('結辯')}
           value={tab}
           onPick={setTab}
           items={[
-            { id: 'args', label: '論點', done: st.picked.length === need },
-            { id: 'tone', label: '訴求基調', done: !!st.tone },
+            { id: 'args', label: t('論點'), done: st.picked.length === need },
+            { id: 'tone', label: t('訴求基調'), done: !!st.tone },
           ]}
         />
       }
@@ -115,18 +122,20 @@ export function Closing({ scene }: { scene: ClosingScene }) {
             disabled={!closing.canDeliver(scene, st, args.length)}
             onClick={deliver}
           >
-            開始結辯
+            {t('開始結辯')}
           </button>
         </>
       }
     >
       {tab === 'args' && (
         <section className="panel">
-          <h2>挑 {need} 個論點，順序就是你講的順序</h2>
+          <h2>{t('挑 {n} 個論點，順序就是你講的順序', { n: need })}</h2>
           {need < scene.picks && (
             <p className="muted small">
-              手上只有 {args.length} 個確認過的論點，
-              {need === 0 ? '只能靠訴求基調結辯。' : '有幾個講幾個。'}
+              {t('手上只有 {n} 個確認過的論點，{rest}', {
+                n: args.length,
+                rest: need === 0 ? t('只能靠訴求基調結辯。') : t('有幾個講幾個。'),
+              })}
             </p>
           )}
           <div className="stack">
@@ -135,23 +144,23 @@ export function Closing({ scene }: { scene: ClosingScene }) {
               return (
                 <CardPick
                   key={a.id}
-                  item={a}
+                  item={{ ...a, name: t(a.name, scope), text: t(a.text, scope) }}
                   on={i >= 0}
                   verb={i >= 0 ? `${i + 1}.` : undefined}
-                  tag={exposed.includes(a.id) ? '（已洩漏）' : undefined}
+                  tag={exposed.includes(a.id) ? t('（已洩漏）') : undefined}
                   onPick={() => pickArg(a.id)}
                 />
               );
             })}
-            {args.length === 0 && <p className="muted">手上沒有確認過的論點。</p>}
+            {args.length === 0 && <p className="muted">{t('手上沒有確認過的論點。')}</p>}
           </div>
           {st.picked.length > 0 && (
             <ol className="picked">
               {st.picked.map((id, i) => (
                 <li key={id}>
-                  {i + 1}. {args.find((a) => a.id === id)?.name}
+                  {i + 1}. {t(args.find((a) => a.id === id)?.name ?? '', scope)}
                   {i === st.picked.length - 1 && st.picked.length === need && (
-                    <span className="good"> ・最後講，×1.3</span>
+                    <span className="good"> {t('・最後講，×1.3')}</span>
                   )}
                 </li>
               ))}
@@ -162,19 +171,19 @@ export function Closing({ scene }: { scene: ClosingScene }) {
 
       {tab === 'tone' && (
         <section className="panel">
-          <h2>訴求基調</h2>
+          <h2>{t('訴求基調')}</h2>
           <div className="lines">
             {scene.intro.map((l, i) => (
               <Speech key={i} line={l} />
             ))}
           </div>
           <div className="stack">
-            {scene.tones.map((t) => (
+            {scene.tones.map((tone) => (
               <CardPick
-                key={t.id}
-                item={{ id: t.id, name: t.label, text: t.text }}
-                on={st.tone === t.id}
-                onPick={() => setTone(t.id)}
+                key={tone.id}
+                item={{ id: tone.id, name: t(tone.label, scope), text: t(tone.text, scope) }}
+                on={st.tone === tone.id}
+                onPick={() => setTone(tone.id)}
               />
             ))}
           </div>

@@ -8,6 +8,8 @@ import {
   useEpisode,
   type Evidence as Item,
 } from '../engine/game';
+import { translate, useT } from '../i18n';
+import { useScope } from './lang';
 import { cardHighlights, cardStamps, Hl, Stamp } from './Marks';
 import { useCardPick } from './pick';
 import { TimelineView } from './Timeline';
@@ -34,6 +36,8 @@ export function useWide() {
 
 export function EvidenceDrawer({ note }: { note?: string }) {
   const progress = useEpisode((s) => s.progress);
+  const t = useT();
+  const scope = useScope();
   const items = evidence(progress);
   const [open, setOpen] = useState(false);
   const wide = useWide();
@@ -50,21 +54,18 @@ export function EvidenceDrawer({ note }: { note?: string }) {
   const scene = deskSceneOf(progress);
   const placed = scene ? deskState(progress, scene).timeline : [];
   const rows = placed.map((id) => items.find((i) => i.id === id)).filter((i) => !!i);
-  const hit = items.filter(
-    (i) => showKind(i) && (!q || i.name.includes(q) || i.text.includes(q) || i.kind.includes(q)),
-  );
+  // 搜尋同時比對原文和目前語言的顯示字，英文模式下打英文也找得到。
+  const has = (s: string | undefined) =>
+    !!s && (s.includes(q) || t(s, scope).toLowerCase().includes(q.toLowerCase()));
+  const hit = items.filter((i) => showKind(i) && (!q || has(i.name) || has(i.text) || has(i.kind)));
   const terms = glossary.filter(
-    (t) =>
-      !q ||
-      t.term.includes(q) ||
-      t.text.includes(q) ||
-      t.en?.toLowerCase().includes(q.toLowerCase()),
+    (g) => !q || has(g.term) || has(g.text) || g.en?.toLowerCase().includes(q.toLowerCase()),
   );
   return (
     <>
       {!wide && (
         <button className="evidence-tab" aria-expanded={open} onClick={() => setOpen(true)}>
-          證據 <strong>{items.length}</strong>
+          {t('證據')} <strong>{items.length}</strong>
         </button>
       )}
       {(open || wide) && (
@@ -72,37 +73,37 @@ export function EvidenceDrawer({ note }: { note?: string }) {
           {!wide && (
             <button
               className="sheet-back"
-              aria-label="關閉證據抽屜"
+              aria-label={t('關閉證據抽屜')}
               onClick={() => setOpen(false)}
             />
           )}
-          <section className={wide ? 'sheet side' : 'sheet'} aria-label="證據抽屜">
+          <section className={wide ? 'sheet side' : 'sheet'} aria-label={t('證據抽屜')}>
             <div className="panel-head">
-              <nav className="apps sheet-tabs" aria-label="抽屜">
+              <nav className="apps sheet-tabs" aria-label={t('抽屜')}>
                 <button aria-current={page === 'cards'} onClick={() => setPage('cards')}>
-                  證據 {items.length}
+                  {t('證據 {n}', { n: items.length })}
                 </button>
                 <button aria-current={page === 'timeline'} onClick={() => setPage('timeline')}>
-                  時間軸
+                  {t('時間軸')}
                 </button>
                 <button aria-current={page === 'terms'} onClick={() => setPage('terms')}>
-                  法典
+                  {t('法典')}
                 </button>
               </nav>
               {!wide && (
                 <button className="link" onClick={() => setOpen(false)}>
-                  關閉
+                  {t('關閉')}
                 </button>
               )}
             </div>
-            {page === 'cards' && note && <p className="muted small">{note}</p>}
+            {page === 'cards' && note && <p className="muted small">{t(note, scope)}</p>}
             {page !== 'timeline' && (
               <input
                 className="find"
                 type="search"
                 value={q}
-                placeholder={page === 'terms' ? '找名詞，例如「相關性」' : '找卡片'}
-                aria-label={page === 'terms' ? '找名詞' : '找卡片'}
+                placeholder={page === 'terms' ? t('找名詞，例如「相關性」') : t('找卡片')}
+                aria-label={page === 'terms' ? t('找名詞') : t('找卡片')}
                 onChange={(e) => setQ(e.target.value)}
               />
             )}
@@ -115,7 +116,7 @@ export function EvidenceDrawer({ note }: { note?: string }) {
                   ))}
                   {hit.length === 0 && (
                     <li className="muted">
-                      {items.length ? '沒有符合的卡片。' : '還沒有任何卡片。'}
+                      {items.length ? t('沒有符合的卡片。') : t('還沒有任何卡片。')}
                     </li>
                   )}
                 </ul>
@@ -128,17 +129,22 @@ export function EvidenceDrawer({ note }: { note?: string }) {
             )}
             {page === 'terms' && (
               <dl className="terms sheet-list">
-                {terms.map((t) => (
-                  <div key={t.term} className="term">
-                    <dt>
-                      {t.term}
-                      {t.en && <span className="muted small"> {t.en}</span>}
-                    </dt>
-                    <dd>{t.text}</dd>
-                    {t.inGame && <dd className="in-game">{t.inGame}</dd>}
-                  </div>
-                ))}
-                {terms.length === 0 && <p className="muted">沒有符合的名詞。</p>}
+                {terms.map((g) => {
+                  const term = t(g.term, scope);
+                  return (
+                    <div key={g.term} className="term">
+                      <dt>
+                        {term}
+                        {g.en && term.toLowerCase() !== g.en.toLowerCase() && (
+                          <span className="muted small"> {g.en}</span>
+                        )}
+                      </dt>
+                      <dd>{t(g.text, scope)}</dd>
+                      {g.inGame && <dd className="in-game">{t(g.inGame, scope)}</dd>}
+                    </div>
+                  );
+                })}
+                {terms.length === 0 && <p className="muted">{t('沒有符合的名詞。')}</p>}
               </dl>
             )}
           </section>
@@ -149,6 +155,8 @@ export function EvidenceDrawer({ note }: { note?: string }) {
 }
 
 export function EvidenceCard({ item, pickable }: { item: Item; pickable?: boolean }) {
+  const t = useT();
+  const scope = useScope();
   const { pool, on, pick } = useCardPick();
   const { progress } = useEpisode();
   const hl = cardHighlights(episodeOf(progress))[item.id];
@@ -165,31 +173,35 @@ export function EvidenceCard({ item, pickable }: { item: Item; pickable?: boolea
         </span>
       )}
       <span className="mini-head">
-        <strong>{item.name}</strong>
-        {stamp(item) && <span className="time">{stamp(item)}</span>}
+        <strong>{t(item.name, scope)}</strong>
+        {stamp(item, scope) && <span className="time">{stamp(item, scope)}</span>}
       </span>
       {slot && (
-        <span className="slot-tag" aria-label={`連線台 ${slot}`}>
+        <span className="slot-tag" aria-label={t('連線台 {slot}', { slot })}>
           {slot}
         </span>
       )}
       <span className="muted small">
-        {item.kind}・{item.source}
+        {t(item.kind)}
+        {t('・')}
+        {t(item.source, scope)}
       </span>
       <p className="mini-full" role="tooltip">
-        {item.text}
+        {t(item.text, scope)}
       </p>
     </>
   ) : (
     <>
       <strong>
-        {stamp(item) && <span className="time">{stamp(item)}</span>}
-        {item.name}
+        {stamp(item, scope) && <span className="time">{stamp(item, scope)}</span>}
+        {t(item.name, scope)}
       </strong>
       {sealed && <Stamp text={sealed} sm />}
-      <p>{hl ? <Hl text={item.text} words={hl} live={false} /> : item.text}</p>
+      <p>{hl ? <Hl text={item.text} words={hl} live={false} /> : t(item.text, scope)}</p>
       <span className="muted small">
-        {item.kind}・{item.source}
+        {t(item.kind)}
+        {t('・')}
+        {t(item.source, scope)}
       </span>
     </>
   );
@@ -231,6 +243,8 @@ export function CardPick({
   /** 名字後面的補充，例如「已洩漏」。 */
   tag?: string;
 }) {
+  const t = useT();
+  const scope = useScope();
   return (
     <button
       className={on ? 'pick on' : 'pick'}
@@ -240,19 +254,19 @@ export function CardPick({
       onClick={onPick}
     >
       <span className="pick-name">
-        {verb && <span className="verb">{verb} </span>}
-        {stamp(item) && <span className="time">{stamp(item)}</span>}
-        {item.name}
-        {tag && <span className="muted"> {tag}</span>}
+        {verb && <span className="verb">{t(verb)} </span>}
+        {stamp(item, scope) && <span className="time">{stamp(item, scope)}</span>}
+        {t(item.name, scope)}
+        {tag && <span className="muted"> {t(tag, scope)}</span>}
       </span>
-      <span className="pick-text">{item.text}</span>
+      <span className="pick-text">{t(item.text, scope)}</span>
     </button>
   );
 }
 
 /** 卡片上的日期與時間，例如「週五 22:34」。 */
-export function stamp(c: { date?: string; time?: string }): string {
-  return [c.date, c.time].filter(Boolean).join(' ');
+export function stamp(c: { date?: string; time?: string }, scope?: string): string {
+  return [c.date && translate(c.date, scope), c.time].filter(Boolean).join(' ');
 }
 
 /** 依卡片種類篩選；清單一長，玩家通常只想看某一類（例如只看論點）。 */
@@ -271,17 +285,18 @@ export function KindFilter({
   value: string | null;
   onPick: (k: string | null) => void;
 }) {
+  const t = useT();
   const kinds = [...new Set(items.map((i) => i.kind).filter((k) => !!k))] as string[];
   if (kinds.length < 2) return null;
   const count = (k: string) => items.filter((i) => i.kind === k).length;
   return (
-    <div className="chips kinds" role="group" aria-label="卡片種類">
+    <div className="chips kinds" role="group" aria-label={t('卡片種類')}>
       <button aria-pressed={value === null} onClick={() => onPick(null)}>
-        全部 {items.length}
+        {t('全部 {n}', { n: items.length })}
       </button>
       {kinds.map((k) => (
         <button key={k} aria-pressed={value === k} onClick={() => onPick(value === k ? null : k)}>
-          {k} {count(k)}
+          {t(k)} {count(k)}
         </button>
       ))}
     </div>
@@ -301,11 +316,11 @@ export function timeGroups<T extends { id: string; time?: string }>(
   if (!timed.length || !rest.length) return items.map(render);
   return [
     <li key="@timed" className="group-head">
-      有時間的事件 <span>{timed.length}</span>
+      {translate('有時間的事件')} <span>{timed.length}</span>
     </li>,
     ...timed.map(render),
     <li key="@rest" className="group-head">
-      其他資料 <span>{rest.length}</span>
+      {translate('其他資料')} <span>{rest.length}</span>
     </li>,
     ...rest.map(render),
   ];

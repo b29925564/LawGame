@@ -2,6 +2,8 @@ import { useState } from 'react';
 import * as interview from '../engine/episode/interview';
 import type { InterviewScene } from '../engine/episode/schema';
 import { interviewState, useEpisode } from '../engine/game';
+import { useT } from '../i18n';
+import { useScope } from './lang';
 import { StickyNote } from './Marks';
 import { Portrait, Speech } from './Portrait';
 import { Transcript } from './Shell';
@@ -9,6 +11,8 @@ import { Transcript } from './Shell';
 /** 訪談（企劃書 6.3）：提問、施壓、安撫。視訊通話畫面。 */
 export function Interview({ scene }: { scene: InterviewScene }) {
   const { progress, advance, ask, press, calm } = useEpisode();
+  const t = useT();
+  const scope = useScope();
   const st = interviewState(progress, scene);
   const [tab, setTab] = useState<'ask' | 'press'>('ask');
   // 結束會見時先播收尾（獄警敲門之類），再按一次才離開。
@@ -25,14 +29,23 @@ export function Interview({ scene }: { scene: InterviewScene }) {
       <header className="call panel">
         <Portrait who={scene.who} mood={lastMood} />
         <div>
-          <h2>{scene.who}</h2>
+          <h2>{t(scene.who, scope)}</h2>
           <p className="muted">
-            {scene.role}・{scene.via}
+            {t('{a}・{b}', { a: t(scene.role, scope), b: t(scene.via, scope) })}
           </p>
         </div>
-        {note && <StickyNote pinned text={note.mark?.text ?? note.text} word={note.mark?.word} />}
-        <p className="meter" aria-label={`${scene.meter.label} ${st.guard} / ${scene.meter.max}`}>
-          <span className="muted">{scene.meter.label}</span>
+        {note && (
+          <StickyNote
+            pinned
+            text={t(note.mark?.text ?? note.text, scope)}
+            word={note.mark?.word && t(note.mark.word, scope)}
+          />
+        )}
+        <p
+          className="meter"
+          aria-label={`${t(scene.meter.label, scope)} ${st.guard} / ${scene.meter.max}`}
+        >
+          <span className="muted">{t(scene.meter.label, scope)}</span>
           <span className="pips" aria-hidden>
             {Array.from({ length: scene.meter.max }, (_, i) => (
               <span key={i} className={i < st.guard ? 'pip on' : 'pip'} />
@@ -52,25 +65,25 @@ export function Interview({ scene }: { scene: InterviewScene }) {
         <section className="panel actions">
           <div className="row" role="tablist">
             <button role="tab" aria-selected={tab === 'ask'} onClick={() => setTab('ask')}>
-              提問
+              {t('提問')}
             </button>
             <button role="tab" aria-selected={tab === 'press'} onClick={() => setTab('press')}>
-              施壓
+              {t('施壓')}
             </button>
             <button disabled={(st.calms ?? scene.calms) <= 0} onClick={calm}>
-              安撫（剩 {st.calms ?? scene.calms} 次）
+              {t('安撫（剩 {n} 次）', { n: st.calms ?? scene.calms })}
             </button>
           </div>
           {tab === 'ask' ? (
             <ul className="stack">
-              {topics.map((t) => (
-                <li key={t.id}>
-                  <button className="wide" onClick={() => ask(t.id)}>
-                    {t.label}
+              {topics.map((tp) => (
+                <li key={tp.id}>
+                  <button className="wide" onClick={() => ask(tp.id)}>
+                    {t(tp.label, scope)}
                   </button>
                 </li>
               ))}
-              {topics.length === 0 && <li className="muted">沒有別的想問了。</li>}
+              {topics.length === 0 && <li className="muted">{t('沒有別的想問了。')}</li>}
             </ul>
           ) : (
             <ul className="stack">
@@ -79,11 +92,11 @@ export function Interview({ scene }: { scene: InterviewScene }) {
                 .map((p) => (
                   <li key={p.id}>
                     <button className="wide" onClick={() => press(p.id)}>
-                      {p.label}
+                      {t(p.label, scope)}
                     </button>
                   </li>
                 ))}
-              <li className="muted">施壓會讓他更防備。手上有東西撐著再問。</li>
+              <li className="muted">{t('施壓會讓他更防備。手上有東西撐著再問。')}</li>
             </ul>
           )}
         </section>
@@ -91,7 +104,7 @@ export function Interview({ scene }: { scene: InterviewScene }) {
 
       {leaving ? (
         <button className="primary next" onClick={advance}>
-          繼續
+          {t('繼續')}
         </button>
       ) : (
         <button
@@ -99,7 +112,7 @@ export function Interview({ scene }: { scene: InterviewScene }) {
           disabled={!canFinish}
           onClick={() => (!st.over && scene.outro.length ? setLeaving(true) : advance())}
         >
-          {st.over ? '離開會見室' : canFinish ? '結束會見' : '還有關鍵的事沒問'}
+          {st.over ? t('離開會見室') : canFinish ? t('結束會見') : t('還有關鍵的事沒問')}
         </button>
       )}
     </main>

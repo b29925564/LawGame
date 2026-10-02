@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState, type CSSProperties } from 're
 import { createPortal } from 'react-dom';
 import type { Line } from '../engine/episode/schema';
 import { useSettings } from '../engine/settings';
+import { useT } from '../i18n';
+import { useScope } from './lang';
 import { announce } from './Marks';
 import { voTiming } from './voTiming';
 
@@ -17,6 +19,8 @@ const plain = (t: string) => t.replace(/｜/g, '');
  * 筆錄裡留一行 .vo-log；第一次出現時，世界退下、字從光縫漏出來。
  */
 export function VoLine({ line }: { line: Line }) {
+  const t = useT();
+  const scope = useScope();
   const key = beatsOf(line)
     .map((b) => b.text)
     .join('/');
@@ -30,7 +34,7 @@ export function VoLine({ line }: { line: Line }) {
       {beatsOf(line).map((b, i) => (
         <p key={i} className="vo-log">
           <span className="vo-mark" aria-hidden />
-          <span>{plain(b.text)}</span>
+          <span>{plain(t(b.text, scope))}</span>
         </p>
       ))}
       {open && createPortal(<VoiceOver line={line} onDone={close} />, document.body)}
@@ -40,14 +44,16 @@ export function VoLine({ line }: { line: Line }) {
 
 export function VoiceOver({ line, onDone }: { line: Line; onDone: () => void }) {
   const { voAuto, voScale, voBox } = useSettings();
-  const beats = beatsOf(line);
+  const t = useT();
+  const scope = useScope();
+  const beats = beatsOf(line).map((b) => ({ ...b, text: t(b.text, scope) }));
   const [i, setI] = useState(0);
   // waiting：拍與拍之間的靜默；typing：出字中；shown：出完了
   const [phase, setPhase] = useState<'waiting' | 'typing' | 'shown'>('waiting');
   const [p, setP] = useState(0);
   const shownAt = useRef(0);
   const beat = beats[i];
-  const t = voTiming(beat.text);
+  const tm = voTiming(beat.text);
   const reduced =
     typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -77,9 +83,9 @@ export function VoiceOver({ line, onDone }: { line: Line; onDone: () => void }) 
   // 出字：時間到就算出完；減少動態時整段直接出現。
   useEffect(() => {
     if (phase !== 'typing') return;
-    const id = setTimeout(() => setPhase('shown'), reduced ? 0 : t.type + 380);
+    const id = setTimeout(() => setPhase('shown'), reduced ? 0 : tm.type + 380);
     return () => clearTimeout(id);
-  }, [phase, t.type, reduced]);
+  }, [phase, tm.type, reduced]);
 
   // 出完：送一次播報；進度線走滿 H 之後，開了自動前進就自己走。
   useEffect(() => {
@@ -88,12 +94,12 @@ export function VoiceOver({ line, onDone }: { line: Line; onDone: () => void }) 
     announce.voice(plain(beat.text));
     let raf = 0;
     const tick = () => {
-      const k = Math.min(1, (performance.now() - shownAt.current) / t.hold);
+      const k = Math.min(1, (performance.now() - shownAt.current) / tm.hold);
       setP(k);
       if (k < 1) raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
-    const auto = voAuto ? setTimeout(() => next(), t.hold + 400) : undefined;
+    const auto = voAuto ? setTimeout(() => next(), tm.hold + 400) : undefined;
     return () => {
       cancelAnimationFrame(raf);
       clearTimeout(auto);
@@ -116,12 +122,12 @@ export function VoiceOver({ line, onDone }: { line: Line; onDone: () => void }) 
       className="vo"
       role="dialog"
       aria-modal="true"
-      aria-label="盧卡斯沒有說出口"
+      aria-label={t('盧卡斯沒有說出口')}
       data-subbox={voBox ? 'on' : undefined}
       style={{ '--sub-scale': voScale } as CSSProperties}
     >
       <div className="vo-veil" />
-      <button className="vo-hit" aria-label="繼續" onClick={click} autoFocus />
+      <button className="vo-hit" aria-label={t('繼續')} onClick={click} autoFocus />
       <div className="vo-frame" aria-hidden>
         <span className="vo-mark" />
         <p className={phase === 'shown' ? 'vo-text now' : 'vo-text'}>
@@ -132,7 +138,7 @@ export function VoiceOver({ line, onDone }: { line: Line; onDone: () => void }) 
                   <span
                     key={j}
                     className="ch"
-                    style={{ '--i': 0, '--p': `${t.starts[n++]}ms` } as CSSProperties}
+                    style={{ '--i': 0, '--p': `${tm.starts[n++]}ms` } as CSSProperties}
                   >
                     {c}
                   </span>
@@ -142,7 +148,7 @@ export function VoiceOver({ line, onDone }: { line: Line; onDone: () => void }) 
         </p>
         <span className="vo-progress" style={{ '--p': p } as CSSProperties} />
       </div>
-      <span className={phase === 'shown' ? 'vo-cue on' : 'vo-cue'}>點擊繼續</span>
+      <span className={phase === 'shown' ? 'vo-cue on' : 'vo-cue'}>{t('點擊繼續')}</span>
     </div>
   );
 }

@@ -1,7 +1,9 @@
 import { reaction, type Jury } from '../engine/jury';
+import { useT } from '../i18n';
 import { useSettings } from '../engine/settings';
 import { episode } from '../engine/store';
 import { JuryLegend } from './JuryLegend';
+import { useScope } from './lang';
 
 const glyph: Record<string, string> = {
   點頭: '◡',
@@ -22,15 +24,17 @@ export function JuryPanel({
   compact?: boolean;
 }) {
   const { showNumbers, set } = useSettings();
+  const t = useT();
+  const scope = useScope();
   return (
-    <section className={compact ? 'jury compact' : 'panel jury'} aria-label="陪審團">
+    <section className={compact ? 'jury compact' : 'panel jury'} aria-label={t('陪審團')}>
       <div className="panel-head">
-        <h2>陪審團</h2>
+        <h2>{t('陪審團')}</h2>
         {compact && (
           <span className="legend" aria-hidden>
             {(['點頭', '抄筆記', '皺眉', '看向被告'] as const).map((r) => (
               <span key={r}>
-                {glyph[r]} {r}
+                {glyph[r]} {t(r)}
               </span>
             ))}
           </span>
@@ -42,7 +46,7 @@ export function JuryPanel({
             checked={showNumbers}
             onChange={(e) => set({ showNumbers: e.target.checked })}
           />
-          顯示數值
+          {t('顯示數值')}
         </label>
       </div>
       {showNumbers && (
@@ -61,8 +65,8 @@ export function JuryPanel({
               <span className="face" aria-hidden>
                 {glyph[r]}
               </span>
-              <span className="label">{j.label}</span>
-              <span className="state">{r || '　'}</span>
+              <span className="label">{t(j.label, scope)}</span>
+              <span className="state">{r ? t(r) : '　'}</span>
               {showNumbers && <span className={guilty ? 'num guilty' : 'num'}>{jury[j.id]}</span>}
             </li>
           );

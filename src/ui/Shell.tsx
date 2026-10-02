@@ -1,4 +1,5 @@
 import { useEffect, useRef, type ReactNode } from 'react';
+import { useT } from '../i18n';
 
 /**
  * 所有操作畫面共用的外框。
@@ -74,17 +75,18 @@ export function Tabs<T extends string>({
   onPick: (v: T) => void;
   items: { id: T; label: string; badge?: ReactNode; done?: boolean }[];
 }) {
+  const t = useT();
   return (
-    <nav className="apps" aria-label={label}>
-      {items.map((t) => (
-        <button key={t.id} aria-current={value === t.id} onClick={() => onPick(t.id)}>
-          {t.done && (
-            <span className="tick" aria-label="已完成">
+    <nav className="apps" aria-label={t(label)}>
+      {items.map((it) => (
+        <button key={it.id} aria-current={value === it.id} onClick={() => onPick(it.id)}>
+          {it.done && (
+            <span className="tick" aria-label={t('已完成')}>
               ✓
             </span>
           )}
-          {t.label}
-          {t.badge !== undefined && <span className="dot">{t.badge}</span>}
+          {t(it.label)}
+          {it.badge !== undefined && <span className="dot">{it.badge}</span>}
         </button>
       ))}
     </nav>
