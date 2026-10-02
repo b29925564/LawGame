@@ -4834,6 +4834,20 @@ button.iou[aria-pressed='true'] {
   object-fit: cover;
   will-change: opacity;
 }
+/* 手機圖是 4:5（法官席與證人席都要入鏡）：貼在畫面上方，下緣淡進底色。 */
+@media (max-width: 700px) {
+  .court-light img {
+    bottom: auto;
+    height: 125vw;
+  }
+  .court-light::after {
+    content: '';
+    position: absolute;
+    inset: calc(125vw - 32vw) 0 auto;
+    height: 32vw;
+    background: linear-gradient(transparent, #0b0e13);
+  }
+}
 body:has(.court-light) {
   background: transparent;
 }
