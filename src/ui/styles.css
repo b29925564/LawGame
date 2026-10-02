@@ -4763,6 +4763,18 @@ button.iou[aria-pressed='true'] {
 .found-body.long:not(.open) {
   mask-image: linear-gradient(#000 55%, transparent);
 }
+.found-used > summary {
+  cursor: pointer;
+  padding: 6px 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+.found-used[open] > summary {
+  margin-bottom: 8px;
+}
+.found-used .found:not([aria-pressed='true']) {
+  opacity: 0.6;
+}
 .found-item {
   position: relative;
   display: flex;
