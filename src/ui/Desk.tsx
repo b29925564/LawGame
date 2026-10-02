@@ -113,7 +113,7 @@ export function Desk({ scene }: { scene: DeskScene }) {
       </main>
     );
 
-  const pending = scene.discovery.filter((r) => !discovery.answered(st)[r.id]).length;
+  const pending = discovery.unanswered(scene, st, progress.cards);
   const apps = (Object.keys(labels) as App[])
     .filter((id) => id !== 'discovery' || scene.discovery.length > 0)
     .map((id) => ({
@@ -146,7 +146,7 @@ export function Desk({ scene }: { scene: DeskScene }) {
       foot={
         <>
           <EvidenceDrawer />
-          {desk.canWrap(scene, st) ? (
+          {desk.canWrap(scene, st, progress.cards) ? (
             <WrapButton hours={st.hours} onWrap={wrapDesk} />
           ) : (
             st.confirmed.includes(scene.goal) &&
@@ -194,7 +194,7 @@ function Discovery({ scene }: { scene: DeskScene }) {
   const name = (id: string) => scene.cards.find((c) => c.id === id)?.name ?? id;
   return (
     <ol className="stack discovery">
-      {scene.discovery.map((r, i) => {
+      {discovery.openRequests(scene, st, progress.cards).map((r, i) => {
         const res = done[r.id];
         const sel = pick[r.id];
         return (

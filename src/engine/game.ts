@@ -630,7 +630,7 @@ export const useEpisode = create<GameState>()((set, get) => {
       ),
     wrapDesk: () => onDesk((_s, st) => desk.wrap(st)),
     respondDiscovery: (r, resp) => {
-      onDesk((s, st) => discovery.respond(s, st, r, resp));
+      onDesk((s, st) => discovery.respond(s, st, r, resp, get().progress.cards));
       // 硬藏記進倫理帳本（之後在庭上被揭穿）。
       const p = get().progress;
       const s = sceneOf(p);

@@ -53,6 +53,9 @@ function Screen({
             <strong>{s.message.from}</strong>
             <span>{s.message.text}</span>
           </button>
+          <span className="notif-hint" aria-hidden>
+            點一下查看
+          </span>
         </div>
       );
     case 'say':

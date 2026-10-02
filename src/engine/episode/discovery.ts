@@ -1,5 +1,5 @@
 import type { DeskScene, Line } from './schema';
-import type { DeskState } from './desk';
+import { heldCards, type DeskState } from './desk';
 
 /** 玩家對一項開示請求的回應。 */
 export type Response = 'produce' | 'privilege' | 'overbroad';
@@ -35,6 +35,21 @@ export function resultOf(r: Request, resp: Response): Result {
 
 export const answered = (st: DeskState) => st.discovery ?? {};
 
+/** 請求看得到了嗎：unlock 的卡片或發現全部到手（含前面幕帶進來的）。 */
+export function requestOpen(s: DeskScene, st: DeskState, r: Request, carried: string[] = []) {
+  if (!r.unlock.length) return true;
+  const have = new Set([...heldCards(s, st, carried), ...st.found]);
+  return r.unlock.every((id) => have.has(id));
+}
+
+/** 現在看得到的請求，照劇本順序。 */
+export const openRequests = (s: DeskScene, st: DeskState, carried: string[] = []) =>
+  s.discovery.filter((r) => requestOpen(s, st, r, carried));
+
+/** 看得到但還沒回應的請求數。 */
+export const unanswered = (s: DeskScene, st: DeskState, carried: string[] = []) =>
+  openRequests(s, st, carried).filter((r) => !answered(st)[r.id]).length;
+
 /** 對方最後拿到的文件：交出的，和被裁定照交的。 */
 export function handedOver(s: DeskScene, st: DeskState): string[] {
   const a = answered(st);
@@ -44,9 +59,15 @@ export function handedOver(s: DeskScene, st: DeskState): string[] {
 }
 
 /** 回應一項請求。送出就定案，不能改。結果寫成旗標 discovery:<id>:<結果>，劇本用 when.flags 接。 */
-export function respond(s: DeskScene, st: DeskState, id: string, resp: Response): DeskState {
+export function respond(
+  s: DeskScene,
+  st: DeskState,
+  id: string,
+  resp: Response,
+  carried: string[] = [],
+): DeskState {
   const r = s.discovery.find((x) => x.id === id);
-  if (!r || answered(st)[id]) return st;
+  if (!r || answered(st)[id] || !requestOpen(s, st, r, carried)) return st;
   const result = resultOf(r, resp);
   const lines: Line[] = r.lines[result] ?? [];
   return {
@@ -57,9 +78,9 @@ export function respond(s: DeskScene, st: DeskState, id: string, resp: Response)
   };
 }
 
-/** 每項請求都回應了才能結束調查（開示有期限）。 */
-export const allAnswered = (s: DeskScene, st: DeskState) =>
-  s.discovery.every((r) => answered(st)[r.id]);
+/** 看得到的請求都回應了才能結束調查（開示有期限）。還沒出現的不擋路。 */
+export const allAnswered = (s: DeskScene, st: DeskState, carried: string[] = []) =>
+  unanswered(s, st, carried) === 0;
 
 /** 開庭時法官因為開示少掉的耐心。 */
 export function patienceCost(st: DeskState): number {

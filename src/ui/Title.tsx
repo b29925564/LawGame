@@ -66,10 +66,6 @@ export function Title() {
         </h1>
       </div>
       <div className="title-foot">
-        <p className="title-episode">
-          <span>第一集</span>
-          <strong>已收回的訊息</strong>
-        </p>
         <div className="stack">
           {auto && (
             <button className="primary" onClick={() => load('auto')}>

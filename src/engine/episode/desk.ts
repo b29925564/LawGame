@@ -438,8 +438,8 @@ export function done(_s: DeskScene, st: DeskState): boolean {
 }
 
 /** 過關的推理鏈確認之後，才能收工進下一幕。 */
-export function canWrap(s: DeskScene, st: DeskState): boolean {
-  return st.confirmed.includes(s.goal) && allAnswered(s, st);
+export function canWrap(s: DeskScene, st: DeskState, carried: string[] = []): boolean {
+  return st.confirmed.includes(s.goal) && allAnswered(s, st, carried);
 }
 
 export function wrap(st: DeskState): DeskState {

@@ -16,6 +16,7 @@ const withRequests = (s: DeskScene): DeskScene => {
         id: 'contract',
         text: '承攬合約',
         cards: [a],
+        unlock: [],
         privilege: 'none',
         overbroad: false,
         lines: {},
@@ -24,15 +25,25 @@ const withRequests = (s: DeskScene): DeskScene => {
         id: 'opinion',
         text: '法務意見',
         cards: [b],
+        unlock: [],
         privilege: 'valid',
         overbroad: false,
         lines: {},
       },
-      { id: 'change', text: '變更單', cards: [c], privilege: 'weak', overbroad: true, lines: {} },
+      {
+        id: 'change',
+        text: '變更單',
+        cards: [c],
+        unlock: [],
+        privilege: 'weak',
+        overbroad: true,
+        lines: {},
+      },
       {
         id: 'chat',
         text: '營運群組',
         cards: [a],
+        unlock: [],
         privilege: 'none',
         overbroad: false,
         lines: { concealed: say('……好。') },
@@ -93,6 +104,31 @@ describe('開示', () => {
     } finally {
       ep.scenes[at] = orig;
     }
+  });
+
+  it('unlock 的東西到手前，請求看不到、不能回應，也不擋結束調查', () => {
+    const s = desk();
+    const key = s.cards.find((c) => !c.held)!.id;
+    s.discovery[1].unlock = [key];
+    let st: DeskState = { ...startDesk(s), confirmed: [s.goal] };
+    expect(discovery.openRequests(s, st).map((r) => r.id)).not.toContain('opinion');
+    expect(discovery.respond(s, st, 'opinion', 'privilege')).toBe(st);
+    for (const r of discovery.openRequests(s, st)) st = discovery.respond(s, st, r.id, 'produce');
+    expect(canWrap(s, st)).toBe(true);
+    // 前面幕帶進來的也算到手，出現之後就要回應。
+    expect(discovery.unanswered(s, st, [key])).toBe(1);
+    expect(canWrap(s, st, [key])).toBe(false);
+    st = { ...st, marked: [key] };
+    expect(discovery.respond(s, st, 'opinion', 'privilege').discovery?.opinion).toBe('withheld');
+  });
+
+  it('驗證：出現條件要拿得到', () => {
+    const ep = structuredClone(episodes.ep1) as Episode;
+    const at = ep.scenes.findIndex((s) => s.type === 'desk');
+    const s = withRequests(ep.scenes[at] as DeskScene);
+    s.discovery[0].unlock = ['no-such-card'];
+    ep.scenes[at] = s;
+    expect(validateEpisode(ep)).toContain('開示請求 contract 的出現條件 no-such-card 玩家拿不到');
   });
 
   it('驗證：請求 id 不重複，文件要存在', () => {
