@@ -69,6 +69,8 @@ const when = z.object({
   deal: z.array(id).optional(),
   /** 這些卡片或論點全部都要在手上。 */
   cards: z.array(id).optional(),
+  /** 這些卡片或論點一張都不能在手上。 */
+  notCards: z.array(id).optional(),
   /** 倫理帳本裡至少有其中一筆。 */
   ethics: z.array(z.string()).optional(),
   /** 這些論點全部都在庭上出示過（對質或逼出緘默權）或結辯用過。 */
@@ -412,9 +414,16 @@ const trialScene = z.object({
           a: z.string(),
           /** 這個問題可以異議的正確理由；null 代表問題沒有毛病。 */
           objection: z
-            .enum(['誘導', '傳聞', '推測', '無關', '已問已答', '缺乏基礎'])
+            .enum(['誘導', '傳聞', '推測', '無關', '已問已答', '缺乏基礎', '違反裁定'])
             .nullable()
             .default(null),
+          /** 條件不符就不問（例如沒有排除裁定時才問）。條件要在開庭前就確定，庭審中途不能變。 */
+          when: when.optional(),
+          /**
+           * 審前裁定排除了這題要帶出的證據：條件成立時檢方照問，正確的異議變成「違反裁定」，
+           * sustained 不填就用法官的預設台詞。
+           */
+          barred: z.object({ when, sustained: z.string().optional() }).optional(),
           /** 沒異議的話，這句證詞往有罪方向推的力道。 */
           impact: z.number().int().min(0).default(0),
           tags: z.array(z.enum(tags)).default([]),

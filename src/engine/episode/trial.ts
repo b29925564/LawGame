@@ -3,8 +3,18 @@ import type { Tag } from '../schema';
 import type { TrialScene } from './schema';
 
 export type Lock = 'none' | 'weak' | 'strong';
-export type Objection = '誘導' | '傳聞' | '推測' | '無關' | '已問已答' | '缺乏基礎';
+export type Objection = '誘導' | '傳聞' | '推測' | '無關' | '已問已答' | '缺乏基礎' | '違反裁定';
 export const OBJECTIONS: Objection[] = ['誘導', '傳聞', '推測', '無關', '已問已答', '缺乏基礎'];
+/** 審前裁定排除的證據被檢方照樣帶出來，法官的預設台詞。 */
+export const BARRED =
+  '異議成立。本庭已經裁定排除這項證據，不得在陪審團面前提出。陪審團請不要理會。';
+
+/** 這一場可以用的異議：有排除裁定被違反的題目時，多一個「違反裁定」。 */
+export function objectionsFor(s: TrialScene): Objection[] {
+  return s.witness.direct.some((q) => q.objection === '違反裁定')
+    ? [...OBJECTIONS, '違反裁定']
+    : OBJECTIONS;
+}
 
 export interface LogLine {
   who: string;

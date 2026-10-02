@@ -283,7 +283,7 @@ export function presentedArgs(p: Progress): string[] {
     if (!st) continue;
     if (s.type === 'trial') {
       const t = st as trial.TrialState;
-      for (const c of courtScene(p, s).witness.claims)
+      for (const c of s.witness.claims)
         if ((t.claims?.[c.id]?.result ?? 'none') !== 'none') out.add(c.argument);
       if (s.fifth && (t.pleaded || t.stricken)) out.add(s.fifth.argument);
     }
@@ -324,11 +324,29 @@ export function courtScene(p: Progress, s: TrialScene): TrialScene {
   const jurors = vd && st?.seated ? voirdire.panel(vd, st) : s.jurors;
   return {
     ...s,
+    witness: { ...s.witness, direct: directFor(p, s) },
     jurors: shift
       ? jurors.map((j) => ({ ...j, start: Math.max(0, Math.min(100, j.start - shift)) }))
       : jurors,
     patience: Math.max(1, s.patience - (vd && st?.seated ? st.wrong : 0) - cost),
   };
+}
+
+/**
+ * 這一場檢方真正會問的題目：條件不符的不問；審前裁定排除的證據照樣被問出來時，
+ * 正確的異議變成「違反裁定」。
+ */
+function directFor(p: Progress, s: TrialScene): TrialScene['witness']['direct'] {
+  const direct = s.witness.direct;
+  if (!direct.some((q) => q.when || q.barred)) return direct;
+  const c = branchContext(p);
+  return direct
+    .filter((q) => branch.matches(q.when, c))
+    .map((q) =>
+      q.barred && branch.matches(q.barred.when, c)
+        ? { ...q, objection: '違反裁定' as const, sustained: q.barred.sustained ?? trial.BARRED }
+        : q,
+    );
 }
 
 function motionShift(p: Progress): number {
