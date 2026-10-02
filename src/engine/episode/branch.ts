@@ -1,6 +1,7 @@
 import type { ClosingScene, Line, When } from './schema';
 
-export type Verdict = '無罪' | '有罪' | '陪審團僵局';
+export type { Verdict } from '../jury';
+import type { Verdict } from '../jury';
 export type Outcome = 'deal' | 'dismissed';
 
 /** 判斷分支條件時看得到的事：判決、選定的理論、旗標、倫理帳本。 */
@@ -35,5 +36,5 @@ export function matches(w: When | undefined, c: BranchContext): boolean {
 export function endingLines(s: ClosingScene, c: BranchContext): Line[] {
   if (!c.verdict) return [];
   const hit = s.endings.find((e) => matches(e.when, c));
-  return hit ? hit.lines : s.verdicts[c.verdict];
+  return hit ? hit.lines : (s.verdicts[c.verdict] ?? []);
 }

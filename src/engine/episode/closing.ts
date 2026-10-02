@@ -6,6 +6,7 @@ import {
   type Jury,
   type JuryRules,
   type Round,
+  type Verdict,
 } from '../jury';
 import type { Tag } from '../schema';
 import type { ClosingScene, Question } from './schema';
@@ -19,7 +20,7 @@ export interface ClosingState {
   spoken: Jury | null;
   deltas: Jury;
   rounds: Round[];
-  verdict: '無罪' | '有罪' | '陪審團僵局' | null;
+  verdict: Verdict | null;
   /** 開場許下卻沒兌現的承諾；結辯開始前已經反噬進心證。 */
   broken: string[];
 }

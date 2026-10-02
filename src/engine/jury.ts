@@ -4,7 +4,31 @@ import type { Juror, Tag } from './schema';
 export interface JuryRules {
   jurors: Juror[];
   threshold: number;
+  /** criminal：檢方要超越合理懷疑；civil：原告只要優勢證據（線通常畫在 50）。 */
+  burden?: Burden;
+  /** 幾個人站在同一邊才算判決；不填＝全體一致。民事常見 6 人中 5 人。 */
+  quorum?: number;
 }
+
+export type Burden = 'criminal' | 'civil';
+
+/** 陪審團量表與判決的用詞：數字一律是「對舉證方有利」的傾向，越高越不利於辯方。 */
+export const TERMS = {
+  criminal: {
+    lean: '有罪傾向',
+    standard: '超越合理懷疑',
+    yes: '有罪',
+    no: '無罪',
+  },
+  civil: {
+    lean: '有責傾向',
+    standard: '優勢證據',
+    yes: '有責',
+    no: '無責',
+  },
+} as const;
+
+export const termsOf = (c: Pick<JuryRules, 'burden'>) => TERMS[c.burden ?? 'criminal'];
 
 export type Jury = Record<string, number>;
 export type Reaction = '點頭' | '抄筆記' | '皺眉' | '看向被告' | '';
@@ -97,18 +121,26 @@ export function deliberate(c: JuryRules, jury: Jury): Round[] {
     }
     const foreDir = cur[fore.id] >= t ? 1 : -1;
     for (const j of c.jurors) if (j.id !== fore.id) next[j.id] = clamp(next[j.id] + 2 * foreDir);
-    moves.push(`陪審長（${fore.label}）主張${foreDir > 0 ? '有罪' : '無罪'}。`);
+    const w = termsOf(c);
+    moves.push(`陪審長（${fore.label}）主張${foreDir > 0 ? w.yes : w.no}。`);
     cur = next;
     rounds.push({ moves, jury: cur });
   }
   return rounds;
 }
 
-export type Verdict = '無罪' | '有罪' | '陪審團僵局';
+export type Verdict = '無罪' | '有罪' | '有責' | '無責' | '陪審團僵局';
 
+/**
+ * 判決：過線（≥ 門檻）的人數達到法定人數，舉證方勝；沒過線的人數達到法定人數，辯方勝；
+ * 都不到就是僵局。刑事預設全體一致。
+ */
 export function verdict(c: JuryRules, jury: Jury): Verdict {
-  const guilty = c.jurors.filter((j) => jury[j.id] >= c.threshold).length;
-  if (guilty === c.jurors.length) return '有罪';
-  if (guilty === 0) return '無罪';
+  const n = c.jurors.length;
+  const need = Math.min(n, Math.max(1, c.quorum ?? n));
+  const over = c.jurors.filter((j) => jury[j.id] >= c.threshold).length;
+  const w = termsOf(c);
+  if (over >= need) return w.yes;
+  if (n - over >= need) return w.no;
   return '陪審團僵局';
 }
