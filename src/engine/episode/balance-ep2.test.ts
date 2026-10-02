@@ -102,8 +102,8 @@ describe('第 2 集的庭審平衡', () => {
     expect(verdict({})).toBe('有責');
   });
 
-  it('只對質不異議：贏不了', () => {
-    expect(verdict({ confront: true })).not.toBe('無責');
+  it('只對質不異議：維加太太多了兩項主張可以對質，勉強能贏；只異議不行', () => {
+    expect(verdict({ confront: true })).toBe('無責');
   });
 
   it('硬藏一項被揭穿（不利推定）又輔導露餡：有責', () => {

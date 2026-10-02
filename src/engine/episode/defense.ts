@@ -23,6 +23,8 @@ export const YOU = '伊恩';
 /** 辯方自己傳的證人，陪審團本來就打折聽：直接詰問的衝擊只算這麼多，彈劾檢方證人才是主力。 */
 export const OWN_WITNESS = 0.4;
 export const DA = '莫羅檢察官';
+/** 自己的證人被抓到照稿念，陪審團連你先前替他們建立的懷疑也一起打折：往有責拉回這一部分。 */
+export const TAINT = 0.5;
 
 export function startDefense(jury: Jury): DefenseState {
   return { stage: 'prep', prep: null, asked: [], jury, deltas: {}, leaked: false, log: [] };
@@ -108,7 +110,11 @@ export function finish(s: DefenseScene, st: DefenseState, rules: JuryRules): Def
   const exposed =
     !!o?.coached && st.asked.some((id) => s.questions.find((x) => x.id === id)?.rehearsed);
   if (exposed) {
-    const r = shiftAll(rules, next.jury, s.leak.penalty);
+    const back: Jury = { ...next.jury };
+    for (const j of rules.jurors)
+      if (back[j.id] !== undefined && back[j.id] < j.start)
+        back[j.id] = Math.round(back[j.id] + (j.start - back[j.id]) * TAINT);
+    const r = shiftAll(rules, back, s.leak.penalty);
     next = say(
       { ...next, jury: r.jury, leaked: true },
       { who: s.examiner ?? DA, text: s.leak.q },
