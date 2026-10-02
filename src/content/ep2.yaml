@@ -311,7 +311,6 @@ scenes:
       - 這一次，是對方來跟妳要東西。
 
   # 第二幕：辯方調查。開示分頁（交出／主張特權）等系統進來再加，先用桌面跑推理。
-  # TODO(系統)：change-ticket、chat-peak、legal-memo 三張要從「開示請求」裡決定交不交。
   - type: desk
     id: investigate
     act: 第二幕
@@ -410,6 +409,64 @@ scenes:
           - who: 羅根・普萊斯
             text: 這份是律師與委託人之間的通訊。開示的時候，我們可以主張特權。我建議主張。
             mood: 硬
+    discovery:
+      - id: rq-contract
+        text: 請求一：被告與死者之間的全部契約文件。
+        cards: [contract]
+        lines:
+          produced:
+            - who: 戴文
+              text: 承攬合約交出去了。這份本來就在起訴狀附件裡，他們只是要我們確認。
+      - id: rq-logs
+        text: 請求二：被告派單系統內，全體司機過去三年的上線與派單紀錄。
+        cards: [app-log]
+        overbroad: true
+        lines:
+          produced:
+            - who: 戴文
+              text: 四千多個司機、三年。光是匯出就跑了一整晚。奧卡福的助理回信說「謝謝，我們會慢慢看」。
+          narrowed:
+            - who: 旁白
+              text: 法官把範圍限縮為死者本人最後九十天的紀錄。61 次略過，照樣在裡面。
+      - id: rq-change
+        text: 請求三：與疲勞提醒或強制下線功能有關的一切設定變更紀錄。
+        cards: [change-ticket]
+        privilege: weak
+        lines:
+          produced:
+            - who: 羅根・普萊斯
+              text: 妳把變更單交出去了。上面寫著「依法務意見」，奧卡福會順著這四個字一路要下去。
+              mood: 硬
+          strained:
+            - who: 旁白
+              text: 法官看了一眼特權清單：「設定變更單是營運文件，不是律師意見。本庭命令交出。」
+            - who: 艾莉絲
+              text: 駁回
+              mark: { kind: stamp, text: 駁回 }
+      - id: rq-chat
+        text: 請求四：被告營運主管於事發前一年內，關於司機排班的內部通訊。
+        cards: [chat-peak]
+        lines:
+          produced:
+            - who: 戴文
+              text: 群組截圖交出去了。我把「旺季不准任何人被踢下線」那一張放在最上面……不是故意的，是照日期排的。
+          concealed:
+            - who: 戴文
+              text: 韓律師，截圖沒有放進去。我照妳的意思打包了。
+            - who: 戴文
+              text: ……我們這樣是對的嗎？
+      - id: rq-memo
+        text: 請求五：被告就取消強制下線一事所取得之任何意見或評估。
+        cards: [legal-memo]
+        privilege: valid
+        lines:
+          produced:
+            - who: 羅根・普萊斯
+              text: 妳把我們自己事務所的意見書交給原告。惠特洛克明天早上就會知道。
+              mood: 硬
+          withheld:
+            - who: 旁白
+              text: 特權清單列了一行：「法律意見書，三月，律師與委託人通訊。」奧卡福沒有爭執。
     links:
       - id: l-knew
         cards: [med-record, pharmacy]
