@@ -236,6 +236,8 @@ function deskErrors(s: DeskScene, available: Set<string>, args: Set<string>, err
     rids.add(r.id);
     for (const c of r.cards)
       if (!cards.has(c)) errors.push(`開示請求 ${r.id} 涵蓋了不存在的卡片 ${c}`);
+    for (const u of r.unlock)
+      if (!reachable.has(u)) errors.push(`開示請求 ${r.id} 的出現條件 ${u} 玩家拿不到`);
   }
 
   // 連線：兩張卡都要存在（證據或論點），id 不能和卡片撞名。

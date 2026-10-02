@@ -331,6 +331,8 @@ const deskScene = z.object({
         text: z.string(),
         /** 這項請求涵蓋的文件（卡片 id）。 */
         cards: z.array(id).min(1),
+        /** 這些卡片或發現全部到手，請求才出現（免得文件名稱先爆了推理鏈的轉折）。 */
+        unlock: z.array(id).default([]),
         privilege: z.enum(['valid', 'weak', 'none']).default('none'),
         overbroad: z.boolean().default(false),
         /** 回應之後的旁白或對白（依結果），沒寫就不播。 */
