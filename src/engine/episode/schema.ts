@@ -389,7 +389,8 @@ const trialScene = z.object({
         foreperson: z.boolean().default(false),
       }),
     )
-    .length(12),
+    // 刑事 12 人；民事可以更少（第 2 集 6 人）。有陪審團遴選時人數要等於 seats（驗證器檢查）。
+    .min(1),
   witness: z.object({
     name: z.string(),
     role: z.string(),
@@ -713,7 +714,7 @@ const openingScene = z.object({
 });
 
 /**
- * 陪審團遴選（企劃書 6.9.1）：18 位候選人取 12 位。
+ * 陪審團遴選（企劃書 6.9.1）：候選人取 seats 位（刑事 12、民事 6）。
  * 問卷看得到的寫在 sheet，提問才看得到的寫在 hidden。
  */
 const voirDireScene = z.object({
@@ -747,7 +748,7 @@ const voirDireScene = z.object({
         cause: z.boolean().default(false),
       }),
     )
-    .min(12),
+    .min(1),
 });
 
 /**

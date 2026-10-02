@@ -95,6 +95,12 @@ function burdenErrors(e: Episode, errors: string[]) {
       errors.push(`法庭 ${t.id} 的判決人數 ${t.quorum} 沒有過半，兩邊可能同時成立`);
   }
   const vd = e.scenes.find((x) => x.type === 'voirdire');
+  // 預設陪審團（沒走遴選時用）和遴選選出來的人數要一致，量表與判決才不會跟著路線變。
+  for (const t of trials)
+    if (vd && t.jurors.length !== vd.seats)
+      errors.push(
+        `法庭 ${t.id} 寫了 ${t.jurors.length} 位陪審員，遴選 ${vd.id} 卻選 ${vd.seats} 位`,
+      );
   if (vd && trials.some((t) => t.quorum && t.quorum > vd.seats))
     errors.push(`遴選 ${vd.id} 只選 ${vd.seats} 位，少於判決需要的人數`);
   const wrong = (v: string[] | undefined, where: string) => {
