@@ -59,3 +59,19 @@ describe('民事門檻（優勢證據）', () => {
     expect(validateEpisode(episodes.ep1)).toEqual([]);
   });
 });
+
+describe('民事 6 人陪審', () => {
+  it('人數可以少於 12，但要和遴選的 seats 一致', async () => {
+    const { episodes } = await import('../content');
+    const { validateEpisode } = await import('./episode/validate');
+    const ep = structuredClone(episodes.ep1) as import('./episode/schema').Episode;
+    const t = ep.scenes.find((x) => x.type === 'trial')!;
+    if (t.type !== 'trial') throw new Error('no trial');
+    t.jurors = t.jurors.slice(0, 6);
+    expect(validateEpisode(ep).some((e) => e.includes('寫了 6 位陪審員'))).toBe(true);
+    const vd = ep.scenes.find((x) => x.type === 'voirdire');
+    if (vd?.type === 'voirdire') vd.seats = 6;
+    for (const x of ep.scenes) if (x.type === 'trial') x.jurors = x.jurors.slice(0, 6);
+    expect(validateEpisode(ep).filter((e) => e.includes('陪審員'))).toEqual([]);
+  });
+});
