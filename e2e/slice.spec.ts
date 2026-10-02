@@ -23,9 +23,7 @@ async function solve(
   relation: RegExp,
   n: number,
 ) {
-  // 手機版一次一欄：工作台開著就先回到疑問清單。
-  const back = page.getByRole('button', { name: '← 全部疑問' });
-  if (await back.isVisible()) await back.click();
+  await toList(page);
   await page.locator('.q-item', { hasText: title }).click();
   const q = page.locator('section.workbench');
   await expect(q).toContainText(title);
@@ -48,6 +46,12 @@ async function solve(
   await q.getByRole('button', { name: new RegExp(`^發現 ${n}：`) }).click();
   await q.getByRole('button', { name: /^提交/ }).click();
   await expect(q).toContainText('已確認');
+}
+
+/** 手機版一次一欄：工作台開著就先回到疑問清單（工作台裡答案列取代底列，「結束調查」在清單頁）。 */
+async function toList(page: Page) {
+  const back = page.getByRole('button', { name: '← 全部疑問' });
+  if (await back.isVisible()) await back.click();
 }
 
 /** 一直按「繼續」直到某個東西出現；對話長度改了測試也不會壞。 */
@@ -129,6 +133,7 @@ async function playToRachelLast(page: Page) {
   await page.getByRole('button', { name: '證據板' }).click();
   await solve(page, '疑問 1', '沃斯叫他上去的', ['手錶通知紀錄', '叫車收據'], /支持/, 1);
   // 過關的推理鏈確認了，但要玩家自己收工，剩下的工時還能查。
+  await toList(page);
   await expect(page.getByRole('button', { name: '結束調查' })).toBeVisible();
 
   // 第二幕後半：先把手錶相關性鏈確認起來，才提得出傳票聲請。
@@ -191,6 +196,7 @@ async function playToRachelLast(page: Page) {
     await solve(page, tab, title, names, relation, n++);
 
   // 收工，海爾在開庭前說出彈劾三步驟的那句話。
+  await toList(page);
   await page.getByRole('button', { name: '結束調查' }).click();
   await page.getByRole('button', { name: /^確定結束/ }).click();
   await expect(page.getByText('先讓他把話說死，再拿出證據。')).toBeVisible();

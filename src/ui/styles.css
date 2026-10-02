@@ -4548,6 +4548,39 @@ button.iou[aria-pressed='true'] {
   align-items: baseline;
   flex-wrap: wrap;
 }
+.step-num {
+  display: inline-grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1px solid var(--border-strong);
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text);
+}
+/* 答案列：工作台怎麼捲都看得到，點發現時立刻看到它進答案（UX 規格）。 */
+.answer-bar {
+  position: sticky;
+  bottom: 0;
+  z-index: 3;
+  box-shadow:
+    0 -12px 24px -8px rgb(0 0 0 / 35%),
+    var(--shadow-1);
+}
+.found-empty {
+  display: grid;
+  place-items: center;
+  min-height: 72px;
+  margin: 0;
+  padding: 12px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  font-size: 13px;
+  color: var(--faint);
+  text-align: center;
+}
 .step.answer.done {
   border-color: color-mix(in srgb, var(--good) 60%, var(--border));
 }
@@ -5134,5 +5167,13 @@ body:has(.court-light) {
     position: sticky;
     bottom: 0;
     z-index: 5;
+  }
+  /* 工作台裡答案列取代底列：這裡不需要「結束調查」，挑卡片在連線台底下。 */
+  .shell:has(.board-one) > .shell-foot {
+    display: none;
+  }
+  .board-one .answer-bar {
+    margin-inline: -2px;
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
   }
 }
