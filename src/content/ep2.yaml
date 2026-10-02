@@ -525,6 +525,14 @@ scenes:
         cards: [change-ticket, chat-peak]
         relation: 說明動機
         text: 變更單上寫依法務意見；同一個月，崔佛在群組說旺季不准任何人被踢下線。
+      - id: l-free
+        cards: [contract, trevor-says]
+        relation: 支持
+        text: 合約寫明上線和接單由他自己決定；營運主管也說，休不休息是司機的事。
+      - id: l-last
+        cards: [voice-memo, app-log]
+        relation: 支持
+        text: 他在語音裡說再跑兩單就回家吃藥；同一個傍晚，他又按了一次略過。
     questions:
       - id: q1
         text: 赫克托知道自己的身體出了問題嗎？有紀錄嗎？
@@ -548,6 +556,15 @@ scenes:
           text: 疲勞提醒 14 天跳了 61 次，合約寫明他隨時可以下線。他每一次都按了略過。
           strength: 8
           tags: [邏輯]
+      - id: q6
+        text: 公司有沒有要求他一定要上線、一定要接單？
+        answer: [l-free]
+        argument:
+          id: arg-d
+          name: 論點 D：上不上線，一直是他自己決定
+          text: 合約沒有排班、沒有最低接單數。他是承攬人，什麼時候收工，由他自己決定。
+          strength: 7
+          tags: [邏輯, 程序]
       - id: q3
         text: 費雪醫師的 2.4 倍，算的是哪一種司機？
         unlock: [fisher-report]
@@ -584,6 +601,16 @@ scenes:
           strength: 5
           motionOnly: true
           tags: [邏輯, 情感]
+      - id: q7
+        text: 就算疲勞鎖是公司改掉的，赫克托自己的那一份是什麼？
+        unlock: [arg-e]
+        answer: [l-last]
+        argument:
+          id: arg-h
+          name: 論點 H：最後兩單，是他自己選的
+          text: 他知道該回家吃藥，也說了要回家。系統沒有攔住他，但按下略過的，是他自己。
+          strength: 7
+          tags: [情感, 邏輯]
     goal: q4
     goalLines:
       - who: 羅根・普萊斯
@@ -932,21 +959,27 @@ scenes:
       - id: warned
         name: 公司已盡告知義務
         summary: 不談他的病，只談公司做了什麼：提醒、合約、隨時可以下線。
-        needs: [arg-b]
-        cost: 不碰病史，對瑪莉索比較公平。但只有一張牌，對方拿出死後扣分，就很難撐。
+        needs: [arg-b, arg-d]
+        cost: 不碰病史，對瑪莉索比較公平。但對方拿出死後扣分，「由他自己決定」就很難撐。
         promises:
           - id: p-told
             text: 你們會聽到，公司提醒過他，而且每一次都讓他自己決定。
             argument: arg-b
+          - id: p-free
+            text: 你們會聽到，沒有人規定他什麼時候上線、什麼時候收工。
+            argument: arg-d
       - id: shared
         name: 責任該分攤
         summary: 系統有問題，赫克托也有責任。我們不說公司沒錯，我們說錯不全在公司。
-        needs: [arg-a, arg-e]
+        needs: [arg-a, arg-h]
         cost: 最接近真相。陪審團多半會判有責，但金額會低。亞瑟不會喜歡。
         promises:
           - id: p-both
             text: 你們會聽到，赫克托知道自己的身體出了問題。這筆帳，不該只記在一邊。
             argument: arg-a
+          - id: p-last
+            text: 你們會聽到，他那天傍晚說過要回家吃藥。最後兩單，是他自己選的。
+            argument: arg-h
 
   - type: voirdire
     id: voir-dire
@@ -1214,6 +1247,40 @@ scenes:
           confront:
             strong: （她看著藥局紀錄看了很久）……三個月的藥，他只拿了一次。他說等這個月的錢下來。
             weak: 他有在看醫生。我不知道他有沒有去拿藥。
+        - id: c-forced
+          text: 公司逼他一直跑，他沒有辦法停下來。
+          argument: arg-d
+          needs: contract
+          lock:
+            strong:
+              q: 維加太太，您說公司「逼」他。是有人規定他每天要跑幾個小時嗎？
+              a: 沒有人規定。可是大家都知道，不跑就排不到單。
+            weak:
+              q: 他工作壓力很大吧？
+              a: 很大。
+          setup:
+            q: 他什麼時候出門、什麼時候收工，是誰決定的？
+            a: ……他自己。他說這是這份工作唯一的好處。
+          confront:
+            strong: （她看著合約那一行）……上面是這樣寫。可是不跑，就沒有錢。
+            weak: 合約怎麼寫是一回事。
+        - id: c-home
+          text: 他那天是要回家的，是 App 不讓他走。
+          argument: arg-h
+          needs: voice-memo
+          lock:
+            strong:
+              q: 您說那天是 App 不讓他走。他有跟您說過他想收工嗎？
+              a: 有。他傳了語音給我，說要回家。
+            weak:
+              q: 他那天很想回家吧？
+              a: 他每天都想回家。
+          setup:
+            q: 那則語音，您後來聽了幾次？
+            a: （停了很久）每天。
+          confront:
+            strong: （語音播出來，她閉上眼睛）……「再跑兩單」。是他自己說的。
+            weak: 他說了要回家。他只是沒有回來。
       irrelevant:
         - q: 您和赫克托結婚多久了？
           a: 二十二年。
