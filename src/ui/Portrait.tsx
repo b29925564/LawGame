@@ -26,12 +26,21 @@ const palette: Record<string, string> = {
   語音: '#4a5866',
 };
 
-const brows: Record<Line['mood'], string> = { 平: '0', 緊: '-10', 暖: '4', 硬: '-4' };
+const brows: Record<Line['mood'], string> = {
+  平: '0',
+  緊: '-10',
+  暖: '4',
+  硬: '-4',
+  慌: '-14',
+  默: '-2',
+};
 const mouths: Record<Line['mood'], string> = {
   平: 'M 22 42 q 10 4 20 0',
   緊: 'M 22 44 q 10 -3 20 0',
   暖: 'M 22 41 q 10 8 20 0',
   硬: 'M 22 43 h 20',
+  慌: 'M 24 45 q 8 -6 16 0',
+  默: 'M 25 43 h 14',
 };
 
 export function Portrait({ who, mood = '平' }: { who: string; mood?: Line['mood'] }) {
