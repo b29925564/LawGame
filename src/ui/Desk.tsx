@@ -13,6 +13,7 @@ import {
   useKindFilter,
   useWide,
 } from './Evidence';
+import { CommitBar } from './Commit';
 import { MarkLines, Ruling } from './Marks';
 import { useScope } from './lang';
 import { useCardPick } from './pick';
@@ -1032,37 +1033,6 @@ function FoundNote({
         </button>
       )}
     </li>
-  );
-}
-
-/**
- * 定案列：不可逆的決定都用這一種（UX 決策代價規格三）。你選了什麼、🔒 選了就不能改、代價，
- * 然後一顆深底金邊的定案鈕，文字寫動作本身。
- */
-function CommitBar({
-  what,
-  cost,
-  action,
-  onCommit,
-}: {
-  what: string;
-  cost: string;
-  action: string;
-  onCommit: () => void;
-}) {
-  const t = useT();
-  return (
-    <div className="commit-bar" role="group" aria-label={t('定案')}>
-      <p className="commit-what">
-        <strong>{what}</strong>
-        <span className="muted small">🔒 {t('選了就不能改')}</span>
-      </p>
-      <p className="commit-cost small">{cost}</p>
-      <button className="commit" onClick={onCommit}>
-        <span aria-hidden>🔒 </span>
-        {action}
-      </button>
-    </div>
   );
 }
 
