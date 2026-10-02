@@ -49,6 +49,7 @@ export function Closing({ scene }: { scene: ClosingScene }) {
                 <Tally
                   key={i}
                   round={st.rounds.length}
+                  burden={rules.burden}
                   guilty={rules.jurors.map((j) => st.jury[j.id] >= rules.threshold)}
                 />
               )
