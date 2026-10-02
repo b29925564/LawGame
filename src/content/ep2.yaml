@@ -205,10 +205,10 @@ scenes:
         text: 門開了。一個穿深灰西裝的男人走進來，沒等人招呼，就在窗邊坐下。
       - do: say
         who: 亞瑟・卡爾德
-        text: 葛雷律師。我是亞瑟・卡爾德。伊森・蕭的案子我看了，你很會挑別人證詞裡的縫。
+        text: 葛雷律師。我是亞瑟・卡爾德。伊森・蕭的案子我從頭看到尾。你把我們的合規長叫去問了十二個問題，問得很細。
       - do: say
         who: 亞瑟・卡爾德
-        text: 這次，請你幫我把縫補起來。一百五十萬以內，你自己決定。超過，打給我。
+        text: 這次，請你把那份細心用在我們這邊。一百五十萬以內，你自己決定。超過，打給我。
       - do: choose
         prompt: 亞瑟在等你回答。
         options:
@@ -395,15 +395,15 @@ scenes:
           - 我本來覺得這對我們很有利。後來看到最後那三筆派單，我就不太確定了。
     jobs:
       - id: job-pharmacy
-        who: 法院系統
-        label: 聲請傳票：赫克托的藥局領藥紀錄
+        who: 戴文
+        label: 發傳票：赫克托的藥局領藥紀錄
         detail: 病歷說開了藥。有沒有去領，是另一回事。
         cost: 2
         needs: [med-record]
         gives: [pharmacy]
         report:
           - who: 旁白
-            text: 傳票核發。藥局的回函只有一頁：降壓藥處方三個月，領藥紀錄一次。
+            text: 傳票以法院名義發出，通知原告律師十四天。藥局的回函只有一頁：降壓藥處方三個月，領藥紀錄一次。
           - who: 盧卡斯
             text: 他知道。他沒吃。
             mark: { kind: highlight, word: 一次, on: pharmacy }
@@ -435,6 +435,9 @@ scenes:
             mood: 硬
           - who: 羅根・普萊斯
             text: 這份是律師與委託人之間的通訊。開示的時候，我們可以主張特權。我建議主張。
+            mood: 硬
+          - who: 羅根・普萊斯
+            text: 還有一件事。這份意見是我們寫的，現在它變成爭點。嚴格說，該先告訴亞瑟這是利益衝突，請他簽字。
             mood: 硬
     discovery:
       - id: rq-contract
@@ -687,7 +690,6 @@ scenes:
           - id: d-legal
             q: 你在做決定之前，有沒有詢問過法律意見？
             a: 我們每一個決定都會問法務。你應該知道是哪一家。
-            objection: 特權
 
   # 對方主導：奧卡福錄取普莉亞前，先錄取卡爾德的系統工程師。玩家只能異議。
   - type: deposition
@@ -719,7 +721,7 @@ scenes:
       - id: e-ticket
         q: 三月那次設定變更，崔佛・米爾斯有沒有告訴妳，法務是怎麼說的？
         a: 他說法務那邊說沒問題。
-        objection: 傳聞
+        objection: 特權
       - id: e-could
         q: 技術上，把疲勞鎖改回強制下線，需要多久？
         a: 一個下午。只要改一個參數。
@@ -736,6 +738,12 @@ scenes:
     deadline: 調解會議　一週後
     cards: *cards
     docs:
+      - id: doc-sj
+        title: 裁定：被告簡易判決聲請
+        from: 雷耶斯法官
+        lines:
+          - text: 被告主張死者為承攬人，公司不負注意義務，聲請簡易判決。
+          - text: 公司對司機上線與接單的控制程度有事實爭議，應交由陪審團認定。聲請駁回。
       - id: doc-transcript
         title: 崔佛・米爾斯　錄取逐字稿
         from: 法院書記官
@@ -820,7 +828,7 @@ scenes:
   - type: negotiation
     id: mediation
     act: 第四幕
-    place: 卡爾德郡法院　調解室 2
+    place: 卡爾德郡高等法院　調解室 2
     opponent:
       name: 丹尼爾・奧卡福
       role: 原告律師
@@ -830,6 +838,8 @@ scenes:
     confidence: 85
     rounds: 5
     intro:
+      - who: 旁白
+        text: 調解人是退休法官霍華德・陳。他唸完規則，把兩邊留在同一個房間裡：「有決定權的人要在場。卡爾德先生電話待命，法院准了。」
       - who: 旁白
         text: 調解室很小。瑪莉索・維加坐在奧卡福旁邊，手裡握著一支舊手機，螢幕裂了一角。
       - who: 丹尼爾・奧卡福
@@ -1163,7 +1173,7 @@ scenes:
       - who: 旁白
         text: 盧卡斯把瀏海撥上去，額頭露出來。這是他留給法庭的那張臉。
       - who: 法官
-        text: 被告，開場陳述。
+        text: 辯方，開場陳述。
       - who: 盧卡斯
         text: 每張承諾一張借據
         mark: { kind: iou }
@@ -1475,15 +1485,15 @@ scenes:
         - id: t3
           q: 如果他那天早點休息，就不會死，對吧？
           a: 很可能。
-          objection: 推測
-          sustained: 異議成立。證人無法得知假設情況下的結果。
+          objection: 誘導
+          sustained: 異議成立。請律師不要替證人作答。
           impact: 7
           tags: [情感]
         - id: t4
           q: 費雪醫師的研究說風險是二點四倍，您同意嗎？
           a: 我讀過那份研究，數字是那樣寫的。
           objection: 傳聞
-          sustained: 異議成立。該研究已被本庭排除，證人不得轉述。
+          sustained: 異議成立。本庭已排除那項證詞，律師不得迂迴帶入。
           impact: 6
           tags: [權威]
         - id: t5
@@ -1543,7 +1553,7 @@ scenes:
       role: 卡爾德快遞　營運副總
     intro:
       - who: 旁白
-        text: 盧卡斯站起來：「被告傳喚崔佛・米爾斯。」崔佛扣上西裝的第一顆釦子，走向證人席。
+        text: 盧卡斯站起來：「辯方傳喚崔佛・米爾斯。」崔佛扣上西裝的第一顆釦子，走向證人席。
     prep:
       hours: 2
       options:
@@ -1612,6 +1622,8 @@ scenes:
           - when: { flags: [discovery:rq-chat:concealed] }
             bonus: 8
     intro:
+      - who: 法官
+        text: 各位陪審員，結辯之後各位會退庭評議。原告要證明的是「比較可能」，不是超越合理懷疑；若各位認定死者自己也有過失，請在判決表上寫下比例。
       - who: 馬庫斯・海爾
         text: 兩個論點。民事陪審團不需要被說服，只需要被說動一點點。
         mood: 暖
@@ -1699,7 +1711,7 @@ scenes:
     when:
       outcome: [deal]
       deal: [o-full, o-high, o-mid]
-    place: 卡爾德郡法院　調解室外的走廊
+    place: 卡爾德郡高等法院　調解室外的走廊
     steps:
       - do: say
         who: 旁白
@@ -1718,7 +1730,7 @@ scenes:
     when:
       outcome: [deal]
       deal: [o-low]
-    place: 卡爾德郡法院　調解室外的走廊
+    place: 卡爾德郡高等法院　調解室外的走廊
     steps:
       - do: say
         who: 旁白
@@ -1770,7 +1782,7 @@ scenes:
       - do: notify
         time: '23:40'
         message:
-          from: 卡爾德港州立監獄
+          from: 卡爾德州立監獄
           text: 您有一通來自受刑人的電話。本通話將被錄音。
       - do: talk
         time: '23:41'
