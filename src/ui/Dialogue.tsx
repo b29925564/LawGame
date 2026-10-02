@@ -14,7 +14,7 @@ export function Dialogue({ scene }: { scene: DialogueScene }) {
       lines.push({ who: s.who, text: s.text, mood: s.mood, thought: s.thought });
     } else if (picks[i] !== undefined) {
       const o = s.options[picks[i]];
-      lines.push({ who: '伊恩', text: o.text, mood: '平', thought: false }, ...o.then);
+      lines.push({ who: '盧卡斯', text: o.text, mood: '平', thought: false }, ...o.then);
     }
   }
   const step = scene.steps[progress.step];

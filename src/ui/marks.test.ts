@@ -25,7 +25,7 @@ describe('播報佇列', () => {
     q.mark({ from: 'c', text: '標記了 22:47', word: '22:47' });
     expect(said).toEqual([]);
     tick();
-    expect(said).toEqual(['伊恩標記了 3 處：每天、22:24、22:47']);
+    expect(said).toEqual(['盧卡斯標記了 3 處：每天、22:24、22:47']);
   });
 
   it('同一元件重複觸發只播最後一次', () => {
@@ -41,9 +41,9 @@ describe('播報佇列', () => {
     q.voice('他死在裡面。');
     q.mark({ from: 'a', text: '已排除' });
     tick();
-    expect(said).toEqual(['伊恩沒有說出口：他死在裡面。']);
+    expect(said).toEqual(['盧卡斯沒有說出口：他死在裡面。']);
     q.voiceEnd();
-    expect(said).toEqual(['伊恩沒有說出口：他死在裡面。', '已排除']);
+    expect(said).toEqual(['盧卡斯沒有說出口：他死在裡面。', '已排除']);
   });
 });
 
