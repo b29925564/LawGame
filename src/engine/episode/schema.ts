@@ -471,10 +471,34 @@ const depositionScene = z.object({
   id,
   act: z.string(),
   place: z.string(),
-  budget: z.number().int().min(1),
+  /** ours：我方發問（預設）。theirs：對方主導，玩家只能替自己的證人異議。 */
+  side: z.enum(['ours', 'theirs']).default('ours'),
+  budget: z.number().int().min(1).default(1),
   witness: z.object({ name: z.string(), role: z.string() }),
+  /** 對方主導時發問的律師。 */
+  examiner: z.string().default('對造律師'),
   intro: z.array(line).default([]),
   outro: z.array(line).default([]),
+  /**
+   * 對方主導的問題，依序問。objection 是這題真正的毛病（null＝沒毛病）：
+   * 異議對了，答案留下異議紀錄（旗標 depo:<場景>:<題>:preserved，庭上用不了）；
+   * 「特權」異議對了，證人不回答，gives 也不會出現。異議錯了，法官讀筆錄時記一筆。
+   */
+  script: z
+    .array(
+      z.object({
+        id,
+        q: z.string(),
+        a: z.string(),
+        objection: z
+          .enum(['誘導', '傳聞', '推測', '無關', '已問已答', '缺乏基礎', '特權'])
+          .nullable()
+          .default(null),
+        /** 這個回答讓雙方都看到的新卡片。 */
+        gives: z.array(id).default([]),
+      }),
+    )
+    .default([]),
   topics: z
     .array(
       z.object({
@@ -499,7 +523,7 @@ const depositionScene = z.object({
           .min(1),
       }),
     )
-    .min(1),
+    .default([]),
 });
 
 /**

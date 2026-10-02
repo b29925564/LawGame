@@ -260,7 +260,7 @@ export function voirDireState(p: Progress, s: VoirDireScene) {
 export function courtScene(p: Progress, s: TrialScene): TrialScene {
   const vd = episodeOf(p).scenes.find((x) => x.type === 'voirdire') as VoirDireScene | undefined;
   const st = vd ? (p.scenes[vd.id] as voirdire.VoirDireState | undefined) : undefined;
-  // 開示時勉強過關、被裁定照交、硬藏被揭穿，法官都記得。
+  // 開示時勉強過關、被裁定照交、硬藏被揭穿，錄取時亂異議，法官都記得。
   const cost = discoveryCost(p);
   // 審前動議核准（例如排除對方專家），陪審團一開始就沒那麼偏向對方。
   const shift = motionShift(p);
@@ -284,18 +284,21 @@ function motionShift(p: Progress): number {
 
 /** 開示讓法官少掉的耐心（所有桌面加總）。 */
 function discoveryCost(p: Progress): number {
-  return episodeOf(p)
-    .scenes.filter((x) => x.type === 'desk')
-    .reduce((n, d) => {
-      const st = p.scenes[d.id] as desk.DeskState | undefined;
+  return episodeOf(p).scenes.reduce((n, x) => {
+    if (x.type === 'desk') {
+      const st = p.scenes[x.id] as desk.DeskState | undefined;
       return n + (st ? discovery.patienceCost(st) : 0);
-    }, 0);
+    }
+    // 對方主導的錄取裡亂異議，法官讀筆錄時記得。
+    if (x.type === 'deposition') return n + ((p.scenes[x.id] as depo.DepoState)?.wrong ?? 0);
+    return n;
+  }, 0);
 }
 
-/** 分支看得到的旗標：對話選項留下的，加上桌面（動議、開示）與談判（請示電話）留下的。 */
+/** 分支看得到的旗標：對話選項留下的，加上桌面（動議、開示）、談判（請示電話）與錄取（異議）留下的。 */
 export function allFlags(p: Progress): string[] {
   const fromScenes = episodeOf(p).scenes.flatMap((x) =>
-    x.type === 'desk' || x.type === 'negotiation'
+    x.type === 'desk' || x.type === 'negotiation' || x.type === 'deposition'
       ? ((p.scenes[x.id] as { flags?: string[] } | undefined)?.flags ?? [])
       : [],
   );
@@ -414,6 +417,8 @@ interface GameState {
   /** 證詞錄取 */
   askDepo: (question: string) => void;
   finishDepo: () => void;
+  /** 對方主導的錄取：對現在這一題異議（null＝不異議）。 */
+  defendDepo: (reason: depo.DepoObjection | null) => void;
   /** 談判 */
   revealArg: (id: string, strength: number, name: string) => void;
   bluff: (id: string) => void;
@@ -688,6 +693,11 @@ export const useEpisode = create<GameState>()((set, get) => {
     askDepo: (q) =>
       onDepo(
         (s, st) => depo.ask(s, st, q),
+        (_s, st) => st.gained,
+      ),
+    defendDepo: (reason) =>
+      onDepo(
+        (s, st) => depo.defend(s, st, reason),
         (_s, st) => st.gained,
       ),
     finishDepo: () => onDepo((_s, st) => depo.finish(st)),
