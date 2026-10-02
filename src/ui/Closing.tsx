@@ -196,33 +196,39 @@ export function Closing({ scene }: { scene: ClosingScene }) {
   );
 }
 
-/** 民事特別判決表：損害總額、死者過失比例、判賠金額、懲罰性賠償。 */
+/** 民事特別判決表：損害總額、死者過失比例、判賠金額、懲罰性賠償，成立時加總。 */
 function VerdictForm({ award }: { award: closing.Award }) {
   const t = useT();
   const money = useMoney();
+  const p = award.punitive;
   return (
-    <dl className="stats panel">
-      <dt>{t('損害總額')}</dt>
-      <dd>{money(award.total)}</dd>
-      <dt>{t('死者過失比例')}</dt>
-      <dd>{award.fault}%</dd>
-      <dt>{t('判賠金額')}</dt>
-      <dd>
-        <strong>{money(award.amount)}</strong>
-      </dd>
-      {award.punitive && (
-        <>
-          <dt>{t('懲罰性賠償')}</dt>
-          <dd>
-            {award.punitive.found
-              ? money(award.punitive.amount)
-              : t('不成立（{votes} 票，需要 {need} 票）', {
-                  votes: award.punitive.votes,
-                  need: award.punitive.need,
-                })}
-          </dd>
-        </>
-      )}
-    </dl>
+    <section className="verdict-form" aria-labelledby="verdict-form-title">
+      <h2 id="verdict-form-title">{t('特別判決表')}</h2>
+      <dl className="stats">
+        <dt>{t('損害總額')}</dt>
+        <dd>{money(award.total)}</dd>
+        <dt>{t('死者過失比例')}</dt>
+        <dd>{award.fault}%</dd>
+        <dt>{t('判賠金額')}</dt>
+        <dd>
+          {money(award.amount)}
+          <small>{t('損害總額扣掉死者過失的部分')}</small>
+        </dd>
+        {p && (
+          <>
+            <dt>{t('懲罰性賠償')}</dt>
+            <dd className={p.found ? undefined : 'muted'}>
+              {p.found
+                ? money(p.amount)
+                : t('不成立（{votes} 票，需要 {need} 票）', { votes: p.votes, need: p.need })}
+            </dd>
+          </>
+        )}
+        <dt className="sum">{t('被告應付')}</dt>
+        <dd className="sum">
+          <strong>{money(award.amount + (p?.found ? p.amount : 0))}</strong>
+        </dd>
+      </dl>
+    </section>
   );
 }

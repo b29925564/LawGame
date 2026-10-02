@@ -72,16 +72,6 @@ export function Negotiation({ scene }: { scene: NegotiationScene }) {
           <p className="eyebrow">
             {t('{a}・{b}', { a: t(scene.opponent.name, scope), b: t(scene.opponent.role, scope) })}
           </p>
-          {risk && (
-            <p className="muted small">
-              {t(
-                risk.punitive
-                  ? '開庭若判有責：約 {low} 到 {high}，懲罰性賠償另計'
-                  : '開庭若判有責：約 {low} 到 {high}',
-                { low: money(risk.low), high: money(risk.high) },
-              )}
-            </p>
-          )}
           <p className="patience" aria-label={`${t('剩餘回合')} ${st.rounds}`}>
             {t('剩餘回合')} <strong>{st.rounds}</strong>
           </p>
@@ -134,6 +124,16 @@ export function Negotiation({ scene }: { scene: NegotiationScene }) {
                   <dt>{t('附帶條款')}</dt>
                   <dd className={st.termsOk ? undefined : 'over'}>
                     {st.termsOk ? t('已同意') : t('未同意')}
+                  </dd>
+                </>
+              )}
+              {/* 和解金額旁邊直接放開庭的風險，兩個數字放在一起比。 */}
+              {risk && (
+                <>
+                  <dt className="risk">{t('開庭若判有責')}</dt>
+                  <dd className="risk">
+                    {t('約 {low} 到 {high}', { low: money(risk.low), high: money(risk.high) })}
+                    {risk.punitive && <small>{t('懲罰性賠償另計')}</small>}
                   </dd>
                 </>
               )}

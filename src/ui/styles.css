@@ -5179,3 +5179,43 @@ body:has(.court-light) {
     z-index: 5;
   }
 }
+
+/* 調解室：開庭風險和和解條件同一張表，放在最後一列對照 */
+.stats.authority dt.risk,
+.stats.authority dd.risk {
+  border-top: 1px dashed var(--border);
+  background: var(--surface-2);
+}
+.stats dd small,
+.verdict-form dd small {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+/* 判決：民事特別判決表，像一張法院表格，合計列加粗 */
+.verdict-form {
+  display: grid;
+  gap: 8px;
+}
+.verdict-form h2 {
+  margin: 0;
+  font-family: var(--font-doc);
+  font-size: 15px;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+.verdict-form dd {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.verdict-form .sum {
+  border-top: 2px solid var(--text);
+  color: var(--text);
+  font-weight: 700;
+}
+.verdict-form dd.sum strong {
+  font-size: 1.25em;
+}
