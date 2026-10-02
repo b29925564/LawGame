@@ -58,16 +58,25 @@ describe('認罪協商', () => {
     expect(st.rounds).toBe(plea.rounds - 1);
   });
 
-  it('虛張聲勢：證據都在清單上她就信，缺一張就被識破，之後攤牌打折', () => {
-    const ok = nego.bluff(plea, nego.startNegotiation(plea), 'b-time');
+  it('虛張聲勢：需要的證據你手上都有她就信，缺一張就被識破，之後攤牌打折', () => {
+    const held = ['autopsy', 'watch-photo'];
+    const ok = nego.bluff(plea, nego.startNegotiation(plea), 'b-time', held);
     expect(ok.confidence).toBe(plea.confidence - 10);
     expect(ok.credit).toBe(0);
 
-    const caught = nego.bluff(plea, nego.startNegotiation(plea), 'b-witness');
+    const caught = nego.bluff(plea, nego.startNegotiation(plea), 'b-witness', held);
     expect(caught.confidence).toBe(plea.confidence);
     expect(caught.credit).toBe(1);
     const after = nego.reveal(plea, caught, 'arg-b', 25, '論點 B');
     expect(plea.confidence - after.confidence).toBeLessThan(25);
+  });
+
+  it('同一句虛張聲勢，拿到證據前後結果不同', () => {
+    const before = nego.bluff(plea, nego.startNegotiation(plea), 'b-witness', []);
+    const after = nego.bluff(plea, nego.startNegotiation(plea), 'b-witness', ['meeting-name']);
+    expect(before.credit).toBe(1);
+    expect(after.credit).toBe(0);
+    expect(after.confidence).toBeLessThan(plea.confidence);
   });
 
   it('決定權在伊森手上：勸他撐下去會磨掉信任，信任見底他就自己點頭', () => {

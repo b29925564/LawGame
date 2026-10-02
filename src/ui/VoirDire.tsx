@@ -54,6 +54,21 @@ export function VoirDire({ scene }: { scene: VoirDireScene }) {
             </li>
           ))}
         </ul>
+        {(st.theirCause ?? []).length > 0 && (
+          <p className="muted">
+            {t('對方以有因迴避剔除：{names}', {
+              names: (st.theirCause ?? [])
+                .map((id) => scene.candidates.find((c) => c.id === id)!)
+                .map((c) =>
+                  t('{name}（{why}）', {
+                    name: t(c.name, scope),
+                    why: t(c.hidden ?? c.sheet, scope),
+                  }),
+                )
+                .join(t('、')),
+            })}
+          </p>
+        )}
         {st.wrong > 0 && (
           <p className="muted">
             {t('沒有根據的聲請有 {n} 次。開庭第一天的法官耐心會少 {n} 點。', { n: st.wrong })}

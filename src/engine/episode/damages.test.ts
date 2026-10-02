@@ -29,7 +29,7 @@ describe('判決表', () => {
   it('懲罰性賠償要過 65 的人數達到法定人數才成立，金額是判賠的兩倍', () => {
     const jury = { ...all(60), [court.jurors[0].id]: 70, [court.jurors[1].id]: 70 };
     const no = closing.award(close, rules, jury, 10, 0)!;
-    expect(no.punitive).toEqual({ found: false, amount: 0, votes: 2, need: 4 });
+    expect(no.punitive).toEqual({ found: false, amount: 0, votes: 2, need: court.quorum });
     const yes = closing.award(close, rules, jury, 10, 8)!;
     expect(yes.punitive?.found).toBe(true);
     expect(yes.punitive?.amount).toBe(yes.amount * 2);
