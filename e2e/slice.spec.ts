@@ -243,7 +243,7 @@ async function playToRachelLast(page: Page) {
   await page.getByRole('button', { name: '攤牌' }).click();
   await card(page, /亮出 論點 A/).click();
   await page.getByRole('button', { name: '她開的條件' }).click();
-  await page.getByRole('button', { name: '建議他撐下去' }).click();
+  await page.getByRole('button', { name: '建議撐下去' }).click();
   await page.getByRole('button', { name: '離席' }).click();
   await expect(page.getByText('那就法庭見')).toBeVisible();
   await next(page);
