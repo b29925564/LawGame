@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { glossary } from '../content/glossary';
 import {
@@ -167,50 +167,76 @@ export function EvidenceCard({ item, pickable }: { item: Item; pickable?: boolea
   const hl = cardHighlights(episodeOf(progress))[item.id];
   const sealed = cardStamps(progress)[item.id];
   const can = pickable && pick && pool.includes(item.id);
-  const cls = (item.kind === '論點' ? 'card arg' : 'card') + (can ? ' pickable mini' : '');
-  // 證據板上的小卡（設計稿 board-redesign）：只留名稱、時間、出處，放上連線台的標 A／B。
-  const slot = can ? ['A', 'B'][on.indexOf(item.id)] : undefined;
+  const cls = item.kind === '論點' ? 'card arg' : 'card';
   // 全文浮出卡畫在 body 上：證據欄會捲動，放在卡片裡會被裁掉。
   const ref = useRef<HTMLLIElement>(null);
+  const tipId = useId();
   const [tip, setTip] = useState<{ top: number; right: number } | null>(null);
-  const show = () => {
-    const r = ref.current?.getBoundingClientRect();
-    if (r)
-      setTip({
-        top: Math.min(r.top, window.innerHeight - 220),
-        right: window.innerWidth - r.left + 10,
-      });
-  };
-  const hide = () => setTip(null);
-  const body = can ? (
-    <>
-      {item.kind === '物品' && (
-        <span className="thumb" aria-hidden>
-          {typeof item.image === 'string' && <img src={item.image} alt="" />}
-        </span>
-      )}
-      {stamp(item, scope) && <span className="time">{stamp(item, scope)}</span>}
-      <strong>{t(item.name, scope)}</strong>
-      {slot && (
-        <span className="slot-tag" aria-label={t('連線台 {slot}', { slot })}>
-          {slot}
-        </span>
-      )}
-      <span className="muted small">
-        {t(item.kind)}
-        {t('・')}
-        {t(item.source, scope)}
-      </span>
-      {tip &&
-        createPortal(
-          <p className="mini-full" role="tooltip" style={{ top: tip.top, right: tip.right }}>
-            {t(item.text, scope)}
-          </p>,
-          document.body,
-        )}
-    </>
-  ) : (
-    <>
+  if (can) {
+    // 證據板右欄的小卡（UX 規格 P1-12）：一行一張，名稱靠左、時間或種類靠右；內容與出處在浮出卡。
+    // 外層 li 保留清單語意，裡面是真的按鈕（無障礙審查第 8 條）。
+    const slot = ['A', 'B'][on.indexOf(item.id)];
+    const show = () => {
+      const r = ref.current?.getBoundingClientRect();
+      if (r)
+        setTip({
+          top: Math.min(r.top, window.innerHeight - 240),
+          right: window.innerWidth - r.left + 10,
+        });
+    };
+    const hide = () => setTip(null);
+    return (
+      <li
+        ref={ref}
+        className={cls + ' pickable mini' + (slot ? ' on' : '')}
+        onMouseEnter={show}
+        onMouseLeave={hide}
+      >
+        <button
+          type="button"
+          className="mini-btn"
+          aria-pressed={!!slot}
+          aria-describedby={tip ? tipId : undefined}
+          onClick={() => pick(item.id)}
+          onFocus={show}
+          onBlur={hide}
+          onKeyDown={(e) => e.key === 'Escape' && tip && (e.stopPropagation(), hide())}
+        >
+          {item.kind === '物品' && (
+            <span className="thumb" aria-hidden>
+              {typeof item.image === 'string' && <img src={item.image} alt="" />}
+            </span>
+          )}
+          <strong>{t(item.name, scope)}</strong>
+          <span className="mini-meta">{stamp(item, scope) || t(item.kind)}</span>
+          {slot && (
+            <span className="slot-tag" aria-label={t('連線台 {slot}', { slot })}>
+              {slot}
+            </span>
+          )}
+        </button>
+        {tip &&
+          createPortal(
+            <div
+              className="mini-full"
+              id={tipId}
+              role="tooltip"
+              style={{ top: tip.top, right: tip.right }}
+            >
+              <p>{t(item.text, scope)}</p>
+              <p className="mini-src">
+                {t(item.kind)}
+                {t('・')}
+                {t(item.source, scope)}
+              </p>
+            </div>,
+            document.body,
+          )}
+      </li>
+    );
+  }
+  return (
+    <li className={cls}>
       <strong>
         {stamp(item, scope) && <span className="time">{stamp(item, scope)}</span>}
         {t(item.name, scope)}
@@ -222,26 +248,6 @@ export function EvidenceCard({ item, pickable }: { item: Item; pickable?: boolea
         {t('・')}
         {t(item.source, scope)}
       </span>
-    </>
-  );
-  return (
-    <li
-      ref={ref}
-      className={on.includes(item.id) && can ? cls + ' on' : cls}
-      {...(can && {
-        onMouseEnter: show,
-        onMouseLeave: hide,
-        onFocus: show,
-        onBlur: hide,
-        role: 'button',
-        tabIndex: 0,
-        'aria-pressed': on.includes(item.id),
-        onClick: () => pick(item.id),
-        onKeyDown: (e: React.KeyboardEvent) =>
-          (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), pick(item.id)),
-      })}
-    >
-      {body}
     </li>
   );
 }
