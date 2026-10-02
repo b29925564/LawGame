@@ -7,6 +7,7 @@ import {
   keptPromises,
   promisesOf,
   courtScene,
+  closingArgs,
   deskSceneOf,
   deskState,
   exposedArgs,
@@ -183,9 +184,7 @@ export function Courtroom({ scene: raw }: { scene: TrialScene }) {
 
   // 手上確認過的論點，用來對質。論點的強度與標籤定義在調查那一幕的疑問裡。
   const deskScene = deskSceneOf(progress);
-  const args = (deskScene?.questions ?? [])
-    .filter((q) => progress.cards.includes(q.argument.id))
-    .map((q) => q.argument);
+  const args = closingArgs(progress);
   const deskDone = deskScene ? deskState(progress, deskScene) : null;
   // 談判攤牌過、或錄取時問到底牌話題的論點，對方已經備好反擊，衝擊減半（企劃書 6.8）。
   const exposed = exposedArgs(progress);
@@ -319,7 +318,9 @@ export function Courtroom({ scene: raw }: { scene: TrialScene }) {
           {st.stage === 'direct' && !st.window && (
             <>
               <button className="primary wide" onClick={nextQuestion}>
-                {st.i < scene.witness.direct.length ? '聽下一個問題' : `${terms.other}詰問完畢`}
+                {st.i < scene.witness.direct.length
+                  ? '聽下一個問題'
+                  : `${scene.examiner ?? terms.other}詰問完畢`}
               </button>
               {st.i >= scene.witness.direct.length && (
                 <button onClick={toCross}>開始交互詰問</button>
@@ -331,7 +332,9 @@ export function Courtroom({ scene: raw }: { scene: TrialScene }) {
     >
       {st.stage === 'direct' && st.window && <ObjectionWindow onPass={letPass} onObject={object} />}
       {st.stage === 'direct' && !st.window && (
-        <p className="muted">聽{terms.other}問下去。有問題的地方就在問完的那一刻提異議。</p>
+        <p className="muted">
+          聽{scene.examiner ?? terms.other}問下去。有問題的地方就在問完的那一刻提異議。
+        </p>
       )}
 
       {st.stage === 'cross' && (
