@@ -136,10 +136,15 @@ scenes:
         message:
           from: 卡爾德快遞
           text: 您已連續上線 10 小時。休息將使今日評分下降。
-      # TODO(系統)：「休息」要畫成可按但標出代價，按下後回到同一則提醒。現在先只給一個選項。
       - do: choose
         mode: chat
         options:
+          - text: 休息
+            then:
+              - who: 卡爾德快遞
+                text: 確定要休息嗎？今日評分將從 4.6 降為 4.4，明日派單優先順序降低。
+              - who: 赫克托
+                text: ……再兩單。
           - text: 略過
       - do: caption
         time: '18:16'
@@ -490,6 +495,10 @@ scenes:
         cards: [med-record, pharmacy]
         relation: 支持
         text: 三個月前確診高血壓，開了三個月的藥，只領過一次。
+      - id: l-knew-memo
+        cards: [med-record, voice-memo]
+        relation: 支持
+        text: 病歷說他有高血壓；他自己在語音裡說「回家吃藥」。他知道。
       - id: l-warned
         cards: [app-log, contract]
         relation: 支持
@@ -504,6 +513,10 @@ scenes:
           lock-spec: [trevor-says]
         relation: 矛盾
         text: 疲勞鎖原本會強制下線。是三月那張變更單，把它改成可以略過的提醒。
+      - id: l-lock-trevor
+        cards: [lock-spec, trevor-says]
+        relation: 矛盾
+        text: 崔佛說提醒一直都在；舊版規格書寫的卻是強制下線八小時。
       - id: l-peak
         cards: [change-ticket, chat-peak]
         relation: 說明動機
@@ -513,6 +526,8 @@ scenes:
         text: 赫克托知道自己的身體出了問題嗎？有紀錄嗎？
         unlock: [med-record]
         answer: [l-knew]
+        accept:
+          l-knew: [l-knew-memo]
         argument:
           id: arg-a
           name: 論點 A：他確診高血壓，卻沒有持續服藥
@@ -545,6 +560,8 @@ scenes:
         text: 疲勞提醒本來就是現在這樣嗎？如果不是，是誰改的？
         unlock: [lock-spec]
         answer: [l-lock]
+        accept:
+          l-lock: [l-lock-trevor]
         argument:
           id: arg-e
           name: 風險評估：疲勞鎖是被改掉的
@@ -875,3 +892,12 @@ scenes:
       - who: 艾莉絲
         text: 和解書上，｜沒有任何一個字寫著「我們錯了」。
         voice: 'off'
+
+  # 第五幕庭審還在寫，先用字卡收在調解之後。
+  - type: card
+    id: to-be-continued
+    act: 待續
+    title: 待續
+    lines:
+      - 第二集到此（製作中）
+      - 第五幕　庭審，即將開放
