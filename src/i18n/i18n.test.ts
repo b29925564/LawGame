@@ -27,6 +27,14 @@ describe('雙語查表', () => {
     expect(translate('邏輯、別的')).toBe('邏輯、別的');
   });
 
+  it('介面句子用變數代入，中英文都可以', () => {
+    install({ '剩 {n} 工時': '{n} hours left' });
+    expect(t('剩 {n} 工時', { n: 3 })).toBe('剩 3 工時');
+    useLang.setState({ lang: 'en' });
+    expect(t('剩 {n} 工時', { n: 3 })).toBe('3 hours left');
+    expect(t('沒翻的 {n}', { n: 1 })).toBe('沒翻的 1');
+  });
+
   it('中文模式原樣顯示；切到英文才載入英文檔', async () => {
     expect(t('誘導')).toBe('誘導');
     await setLang('en');

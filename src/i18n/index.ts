@@ -113,12 +113,25 @@ export function translate(zh: string, scope?: string): string {
   return zh;
 }
 
-/** 依目前語言顯示一句。元件請用 useT()，切換語言時才會重畫。 */
-export function t(zh: string, scope?: string): string {
-  return useLang.getState().lang === 'en' ? translate(zh, scope) : zh;
+type Vars = Record<string, string | number>;
+
+const fill = (s: string, vars: Vars) =>
+  Object.entries(vars).reduce((out, [k, v]) => out.split(`{${k}}`).join(String(v)), s);
+
+/**
+ * 依目前語言顯示一句。第二個參數是場景 id（劇本句子）或樣板變數（介面句子，key 寫成「辯方可以詰問{name}。」）。
+ * 元件請用 useT()，切換語言時才會重畫。
+ */
+export function t(zh: string, arg?: string | Vars): string {
+  return show(useLang.getState().lang, zh, arg);
+}
+
+function show(lang: Lang, zh: string, arg?: string | Vars): string {
+  if (typeof arg === 'object') return fill(lang === 'en' ? (catalog[zh] ?? zh) : zh, arg);
+  return lang === 'en' ? translate(zh, arg) : zh;
 }
 
 export function useT() {
   const lang = useLang((s) => s.lang);
-  return (zh: string, scope?: string) => (lang === 'en' ? translate(zh, scope) : zh);
+  return (zh: string, arg?: string | Vars) => show(lang, zh, arg);
 }
