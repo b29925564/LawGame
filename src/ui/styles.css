@@ -1411,8 +1411,12 @@ fieldset.relations.compact {
     0 6px 18px -8px light-dark(rgb(160 120 0 / 55%), rgb(244 197 61 / 45%));
 }
 
-/* 清單裡的分組小標：有時間的事件、其他資料。 */
+/* 清單裡的分組小標：有時間的事件、其他資料。捲動時黏在頂端，才知道在哪一組。 */
 .group-head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--surface);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -4614,10 +4618,18 @@ button.iou[aria-pressed='true'] {
   font-family: var(--font-doc);
   font-size: 14px;
   line-height: 1.65;
-  color: var(--muted);
-}
-.found-note {
   color: var(--text);
+}
+/* 盧卡斯的結論：手寫感的斜體，跟連線內容分開。 */
+.found-note {
+  padding-left: 10px;
+  border-left: 2px solid var(--border-strong);
+  font-style: italic;
+}
+/* 疑問已確認時便條不能再點，但不要看起來像作廢。 */
+.found:disabled {
+  opacity: 1;
+  cursor: default;
 }
 @keyframes found-in {
   0% {

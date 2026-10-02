@@ -13,7 +13,7 @@ import {
   useKindFilter,
   useWide,
 } from './Evidence';
-import { Hl, MarkLines, Ruling } from './Marks';
+import { MarkLines, Ruling } from './Marks';
 import { useScope } from './lang';
 import { useCardPick } from './pick';
 import { Speech } from './Portrait';
@@ -546,12 +546,16 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
           </button>
         </div>
         {st.linkNote && (
-          // 連錯不寫字：兩張卡抖一下、頂端工時閃紅（設計稿 board-redesign 修訂）。
+          // 連錯：兩張卡抖一下、頂端工時閃紅，也寫出來（體驗評測：只抖一下，第一次玩看不懂）。
           // 連成功也不另外寫：新的發現便條會亮一下，內容就在便條上（試玩回報：兩處同一句太雜）。
           <p
             role="status"
             className={
-              st.link.cards.length || st.linkNote.startsWith('連起來了') ? 'sr-only' : 'board-note'
+              st.linkNote.startsWith('連起來了')
+                ? 'sr-only'
+                : st.linkMiss
+                  ? 'board-note bad'
+                  : 'board-note'
             }
           >
             {t(st.linkNote, scope)}
@@ -683,13 +687,7 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
                           <strong className="found-pair">{showPair(f.pair)}</strong>
                           <span className="found-text">{t(f.text, scope)}</span>
                           {f.conclusion && (
-                            <span className="found-note">
-                              <Hl
-                                text={f.conclusion.text}
-                                words={[f.conclusion.word]}
-                                live={false}
-                              />
-                            </span>
+                            <span className="found-note">{t(f.conclusion.text, scope)}</span>
                           )}
                         </button>
                       </li>
