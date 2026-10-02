@@ -45,7 +45,7 @@ async function solve(
   await links.getByRole('radio', { name: relation }).click();
   await links.getByRole('button', { name: '連起來' }).click();
   await expect(links.getByRole('status')).toContainText('連起來了');
-  await q.locator('.found', { hasText: `發現 ${n}：` }).click();
+  await q.getByRole('button', { name: new RegExp(`^發現 ${n}：`) }).click();
   await q.getByRole('button', { name: /^提交/ }).click();
   await expect(q).toContainText('已確認');
 }

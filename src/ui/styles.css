@@ -1099,9 +1099,16 @@ details summary {
   font-size: 0.78em;
   letter-spacing: 0.04em;
 }
-.card.arg {
-  background: linear-gradient(90deg, var(--hl-wash), transparent 70%), var(--surface);
-  border-left: 3px solid var(--hl);
+/* 論點：名字前一顆黃色菱形。不用黃邊，黃邊留給「選中」。 */
+.card.arg > strong::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 8px;
+  vertical-align: 0.15em;
+  background: var(--hl);
+  transform: rotate(45deg);
 }
 .card-head {
   display: flex;
@@ -1539,9 +1546,9 @@ fieldset.relations.compact {
   gap: 8px;
 }
 .timeline-tray .chips {
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  scrollbar-width: none;
+  flex-wrap: wrap;
+  max-height: 30vh;
+  overflow-y: auto;
 }
 .timeline-tray .chips button {
   flex: 0 0 auto;
@@ -2877,7 +2884,8 @@ fieldset.relations.compact {
     background-color 0.15s;
 }
 .card.pickable:hover {
-  border-color: var(--hl);
+  border-color: var(--border-strong);
+  background: var(--surface-2);
 }
 .card.pickable.on {
   border-color: var(--hl);
@@ -4561,29 +4569,77 @@ button.iou[aria-pressed='true'] {
   background: none;
   box-shadow: none;
 }
-.found-chips {
+/* 發現：一條一張便條。編號與關係用打字機字，連線內容用文件字，盧卡斯的結論畫螢光筆。 */
+.found-list {
   list-style: none;
   margin: 0;
   padding: 0;
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 8px;
 }
 .found {
+  width: 100%;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
-  min-height: 52px;
-  padding: 8px 12px;
+  align-items: stretch;
+  gap: 4px;
+  padding: 10px 14px 12px;
   text-align: left;
+  font-weight: 400;
 }
-.found.arg {
-  border-left: 3px solid var(--hl);
+.found-head {
+  display: flex;
+  gap: 10px;
+  font-family: var(--font-mono);
+  font-size: 12px;
   font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--accent);
+}
+.found-head > span {
+  color: var(--muted);
+  font-weight: 500;
+}
+.found-head > .good {
+  margin-left: auto;
+  color: var(--good);
+}
+.found-pair {
+  font-size: 0.95em;
+  line-height: 1.5;
+}
+.found-text,
+.found-note {
+  font-family: var(--font-doc);
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--muted);
+}
+.found-note {
+  color: var(--text);
+}
+@keyframes found-in {
+  0% {
+    box-shadow: 0 0 0 3px var(--hl);
+    transform: translateY(-4px);
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+    transform: none;
+  }
+}
+.found.fresh {
+  animation: found-in 0.9s var(--ease);
+}
+@media (prefers-reduced-motion: reduce) {
+  .found.fresh {
+    animation: none;
+  }
 }
 .found[aria-pressed='true'] {
-  opacity: 0.6;
+  border-color: var(--hl);
+  background: linear-gradient(var(--hl-wash), var(--hl-wash)), var(--surface);
 }
 .bench-cards summary {
   cursor: pointer;
@@ -4599,17 +4655,15 @@ button.iou[aria-pressed='true'] {
   padding: 10px 12px;
   gap: 2px;
 }
-.card.mini .mini-head {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-}
-.card.mini .mini-head .time {
-  order: 2;
+.card.mini > .time {
   font-family: var(--font-mono, monospace);
   font-weight: 500;
   font-size: 12px;
+  letter-spacing: 0.02em;
   color: var(--muted);
+}
+.card.mini > strong {
+  line-height: 1.45;
 }
 .card.mini .slot-tag {
   top: -8px;
@@ -4690,13 +4744,10 @@ button.iou[aria-pressed='true'] {
     animation: none;
   }
 }
-/* 滑過小卡浮出全文：只有全文，不加標題。證據欄在右邊，所以往左浮。 */
-.card.mini .mini-full {
-  display: none;
-  position: absolute;
-  z-index: 20;
-  right: calc(100% + 10px);
-  top: 0;
+/* 滑過小卡浮出全文：只有全文，不加標題。證據欄在右邊，所以往左浮；畫在 body 上，不會被證據欄裁掉。 */
+.mini-full {
+  position: fixed;
+  z-index: 60;
   width: 300px;
   margin: 0;
   padding: 12px 14px;
@@ -4709,10 +4760,6 @@ button.iou[aria-pressed='true'] {
   color: var(--text);
   pointer-events: none;
 }
-.card.mini:hover .mini-full,
-.card.mini:focus-visible .mini-full {
-  display: block;
-}
 .card.mini {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
@@ -4722,7 +4769,7 @@ button.iou[aria-pressed='true'] {
   grid-column: 2;
 }
 .card.mini .thumb {
-  grid-row: 1 / 3;
+  grid-row: 1 / 4;
   width: 40px;
   height: 40px;
   border-radius: 6px;
@@ -4738,6 +4785,65 @@ button.iou[aria-pressed='true'] {
   object-fit: cover;
 }
 
+/*
+ * 窄的電腦畫面（1024–1279，或放大瀏覽器）：左邊的應用程式欄改成上方一排、證據欄縮到 320px，
+ * 讓證據板中間的工作台不會被擠成一條（試玩回報）。
+ */
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .shell {
+    padding-right: 364px;
+  }
+  .side-wrap {
+    width: 320px;
+  }
+  .shell:has(> .shell-tabs > .apps) {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
+  }
+  .shell:has(> .shell-tabs > .apps) > .shell-tabs {
+    grid-row: 2;
+    grid-column: 1;
+  }
+  .shell:has(> .shell-tabs > .apps) > .shell-body,
+  .shell:has(> .shell-tabs > .apps) > .shell-foot {
+    grid-column: 1;
+  }
+  .shell-tabs > .apps {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  .shell-tabs > .apps [aria-current='true'] {
+    box-shadow: inset 0 -3px 0 var(--hl);
+  }
+  .board3 {
+    grid-template-columns: minmax(200px, 240px) minmax(0, 1fr);
+    gap: 16px;
+  }
+}
+/* 時間線入口：在疑問清單最上面，帶一條進度。 */
+.q-item.timeline-entry {
+  border-color: color-mix(in srgb, var(--hl) 45%, var(--border));
+}
+.q-item.timeline-entry[aria-current='true'] {
+  border-color: var(--hl);
+}
+.q-item.timeline-entry .q-num {
+  color: var(--accent);
+  font-weight: 700;
+}
+.tl-meter {
+  display: block;
+  height: 4px;
+  margin-top: 6px;
+  border-radius: 2px;
+  background: var(--border);
+  overflow: hidden;
+}
+.tl-meter i {
+  display: block;
+  height: 100%;
+  background: var(--hl);
+}
 .q-item.locked {
   border-style: dashed;
   background: none;
