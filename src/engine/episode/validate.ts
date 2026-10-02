@@ -217,6 +217,8 @@ function deskErrors(s: DeskScene, available: Set<string>, args: Set<string>, err
     if (!m.bases.includes(m.basis)) errors.push(`動議 ${m.id} 的正解理由 ${m.basis} 不在選項裡`);
     if (!m.requests.includes(m.request))
       errors.push(`動議 ${m.id} 的正解請求 ${m.request} 不在選項裡`);
+    if (m.twist && (m.flags.length || m.jury))
+      errors.push(`動議 ${m.id} 有對方反擊，旗標與陪審團效果要寫在反擊選項裡`);
     const out = [...m.gives, ...(m.twist?.options.flatMap((o) => o.gives) ?? [])];
     for (const g of out) if (!cards.has(g)) errors.push(`動議 ${m.id} 給了不存在的卡片 ${g}`);
   }

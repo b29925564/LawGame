@@ -397,7 +397,7 @@ export function file(s: DeskScene, st: DeskState, id: string, carried: string[] 
   return {
     ...setAttempt(next, id, { ...a, ruling: ok ? 'granted' : 'denied' }),
     report: ok ? m.granted : m.denied,
-    flags: ok ? next.flags : [...new Set([...next.flags, 'motion-denied'])],
+    flags: [...new Set([...next.flags, ...(ok ? m.flags : ['motion-denied'])])],
   };
 }
 

@@ -295,6 +295,10 @@ const deskScene = z.object({
         granted: z.array(line).min(1),
         denied: z.array(line).min(1),
         gives: z.array(id).default([]),
+        /** 核准後記下的旗標（例如排除對方專家：那場庭審用 when.notFlags 跳過）。 */
+        flags: z.array(z.string()).default([]),
+        /** 核准後陪審團起始傾向降幾點（例如對方專家被排除，只剩一般證詞）。 */
+        jury: z.number().int().min(0).default(0),
         /** 對方反擊：核准後卡爾德聲請撤銷，事務所要你收手（企劃書 10.7 中段反轉）。 */
         twist: z
           .object({
