@@ -30,7 +30,7 @@ const labels: Record<App, string> = {
   discovery: '開示',
 };
 
-/** 第二幕的桌面：伊恩的工作電腦，每個 App 是一個系統入口（企劃書 6.1）。 */
+/** 第二幕的桌面：盧卡斯的工作電腦，每個 App 是一個系統入口（企劃書 6.1）。 */
 export function Desk({ scene }: { scene: DeskScene }) {
   const { progress, advance, clearReport, resolveTwist, wrapDesk } = useEpisode();
   const st = deskState(progress, scene);

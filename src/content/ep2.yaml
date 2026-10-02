@@ -58,7 +58,7 @@ _cards: &cards
     name: 崔佛的說法：提醒一直都在
     kind: 陳述
     text: 疲勞提醒從系統上線就有，司機要不要休息是他們自己決定的。
-    source: 會議（崔佛・林）
+    source: 會議（崔佛・米爾斯）
   - id: lock-spec
     name: 舊版規格書：疲勞鎖
     kind: 文件
@@ -68,13 +68,13 @@ _cards: &cards
     name: 設定變更單：改為提醒
     kind: 文件
     date: 三月
-    text: 「疲勞鎖改為提醒，司機可略過。依法務意見。」簽核人：崔佛・林。
+    text: 「疲勞鎖改為提醒，司機可略過。依法務意見。」簽核人：崔佛・米爾斯。
     source: 卡爾德快遞系統文件
   - id: chat-peak
     name: 營運群組：「旺季不准任何人被踢下線」
     kind: 陳述
     date: 三月
-    text: 崔佛・林在營運群組：「旺季不准任何人被踢下線。我不管系統怎麼寫。」
+    text: 崔佛・米爾斯在營運群組：「旺季不准任何人被踢下線。我不管系統怎麼寫。」
     source: 卡爾德快遞內部通訊
   - id: legal-memo
     name: 法務意見書（惠特洛克・海爾）
@@ -175,7 +175,7 @@ scenes:
     lines:
       - 第二集　和解的價格
 
-  # 第一幕：指派。惠特洛克把案子交給伊恩，亞瑟・卡爾德第一次在場。
+  # 第一幕：指派。惠特洛克把案子交給盧卡斯，亞瑟・卡爾德第一次在場。
   - type: dialogue
     id: assign
     act: 第一幕
@@ -193,7 +193,7 @@ scenes:
         text: 上一個案子，你讓卡爾德的名字上了三週新聞。這一個，你替他們把名字拿下來。
         mood: 硬
       - do: say
-        who: 伊恩
+        who: 盧卡斯
         text: 妳要我替卡爾德辯護。
       - do: say
         who: 維多莉亞・惠特洛克
@@ -204,7 +204,7 @@ scenes:
         text: 門開了。一個穿深灰西裝的男人走進來，沒等人招呼，就在窗邊坐下。
       - do: say
         who: 亞瑟・卡爾德
-        text: 林律師。我是亞瑟・卡爾德。伊森・蕭的案子我看了，你很會挑別人證詞裡的縫。
+        text: 葛雷律師。我是亞瑟・卡爾德。伊森・蕭的案子我看了，你很會挑別人證詞裡的縫。
       - do: say
         who: 亞瑟・卡爾德
         text: 這次，請你幫我把縫補起來。一百五十萬以內，你自己決定。超過，打給我。
@@ -218,16 +218,16 @@ scenes:
           - text: 他死在你的 App 還在派單的時候。
             then:
               - who: 亞瑟・卡爾德
-                text: 他是承攬人，林律師。上線是他按的，下線也是。
+                text: 他是承攬人，葛雷律師。上線是他按的，下線也是。
               - who: 維多莉亞・惠特洛克
-                text: 林律師是在預演對方會怎麼說。對吧？
+                text: 葛雷律師是在預演對方會怎麼說。對吧？
                 mood: 硬
       - do: say
         who: 維多莉亞・惠特洛克
         text: 羅根當你的二席。對方律師是丹尼爾・奧卡福，我想你認識。
         mood: 硬
       - do: say
-        who: 伊恩
+        who: 盧卡斯
         text: 我們以前一起輸過很多案子。
 
   - type: dialogue
@@ -240,7 +240,7 @@ scenes:
         text: 民事案。你沒打過幾場吧。
         mood: 暖
       - do: say
-        who: 伊恩
+        who: 盧卡斯
         text: 公設辯護人不接民事。
       - do: say
         who: 馬庫斯・海爾
@@ -252,11 +252,11 @@ scenes:
         text: 一半多一點點。這次站在線上的是你。
         mood: 暖
 
-  # 會見崔佛・林：自己的客戶也會對自己的律師說一半。
+  # 會見崔佛・米爾斯：自己的客戶也會對自己的律師說一半。
   - type: interview
     id: meet-trevor
     act: 第一幕
-    who: 崔佛・林
+    who: 崔佛・米爾斯
     role: 卡爾德快遞・營運副總
     via: 卡爾德大樓 12 樓會議室
     meter:
@@ -264,38 +264,38 @@ scenes:
       start: 1
       max: 4
     intro:
-      - who: 崔佛・林
-        text: 林律師。法務說你要問排班的事。我十點半有會。
+      - who: 崔佛・米爾斯
+        text: 葛雷律師。法務說你要問排班的事。我十點半有會。
         mood: 硬
     topics:
       - id: t-alert
         label: 疲勞提醒是怎麼運作的？
         key: true
         lines:
-          - who: 崔佛・林
+          - who: 崔佛・米爾斯
             text: 連續上線十個小時，App 跳一則提醒。要不要休息，司機自己決定。
-          - who: 崔佛・林
+          - who: 崔佛・米爾斯
             text: 他們是承攬人，不是員工。我們不能替成年人決定什麼時候睡覺。
         gives: [trevor-says]
       - id: t-hector
         label: 赫克托・維加這個人，你有印象嗎？
         key: true
         lines:
-          - who: 崔佛・林
+          - who: 崔佛・米爾斯
             text: 系統裡有四千多個司機。他評分 4.6，很穩，沒有客訴。
-          - who: 崔佛・林
+          - who: 崔佛・米爾斯
             text: 就這樣。
       - id: t-history
         label: 提醒一直都是這樣嗎？
         guard: 1
         needs: [trevor-says]
         lines:
-          - who: 崔佛・林
+          - who: 崔佛・米爾斯
             text: 系統每一季都在改版。你要問哪一版？
             mood: 硬
-          - who: 伊恩
+          - who: 盧卡斯
             text: 他死的時候那一版。
-          - who: 崔佛・林
+          - who: 崔佛・米爾斯
             text: 那一版就是提醒。
             mood: 硬
     press:
@@ -303,23 +303,23 @@ scenes:
         label: 你說他們自己決定。可是不接單，評分就會被扣。
         needs: trevor-says
         lines:
-          - who: 崔佛・林
+          - who: 崔佛・米爾斯
             text: 評分是服務品質，不是懲罰。
             mood: 硬
-          - who: 崔佛・林
+          - who: 崔佛・米爾斯
             text: 而且那套系統，我們問過法務。你應該知道是哪一家。
             mood: 硬
         blank:
-          - who: 崔佛・林
+          - who: 崔佛・米爾斯
             text: 我說過了，提醒一直都在。
             mood: 硬
     calm:
-      - who: 伊恩
-        text: 林先生，我是你們的律師。你在這裡說的話，我要先聽到，才不會在法庭上第一次聽到。
-      - who: 崔佛・林
+      - who: 盧卡斯
+        text: 米爾斯先生，我是你們的律師。你在這裡說的話，我要先聽到，才不會在法庭上第一次聽到。
+      - who: 崔佛・米爾斯
         text: ……好。
     guarded:
-      - who: 崔佛・林
+      - who: 崔佛・米爾斯
         text: 十點半了。剩下的請找法務。
         mood: 硬
     outro:
@@ -378,16 +378,16 @@ scenes:
         from: 丹尼爾・奧卡福　原告律師
         subject: 維加案　第一批開示
         body:
-          - 伊恩，附上我們這邊的開示：病歷、語音、死亡證明。
+          - 盧卡斯，附上我們這邊的開示：病歷、語音、死亡證明。
           - 我不會假裝這些對我有利。你也別假裝你那邊沒東西。
         gives: [med-record, voice-memo]
       - id: mail-devon
-        from: 戴文・帕克　助理
+        from: 戴文・瑞斯　助理
         subject: App 日誌我整理好了（有點多）
         afterHours: 3
         gives: [app-log]
         body:
-          - 林律師，赫克托最後 14 天的日誌整理成一張表了。疲勞提醒跳了 61 次，他每次都按略過。
+          - 葛雷律師，赫克托最後 14 天的日誌整理成一張表了。疲勞提醒跳了 61 次，他每次都按略過。
           - 我本來覺得這對我們很有利。後來看到最後那三筆派單，我就不太確定了。
     jobs:
       - id: job-pharmacy
@@ -400,7 +400,7 @@ scenes:
         report:
           - who: 旁白
             text: 傳票核發。藥局的回函只有一頁：降壓藥處方三個月，領藥紀錄一次。
-          - who: 伊恩
+          - who: 盧卡斯
             text: 他知道。他沒吃。
             mark: { kind: highlight, word: 一次, on: pharmacy }
       - id: job-it
@@ -412,10 +412,10 @@ scenes:
         gives: [change-ticket, chat-peak]
         report:
           - who: 戴文
-            text: 資訊部給了。三月十四日，崔佛・林簽的。理由欄只寫四個字：依法務意見。
+            text: 資訊部給了。三月十四日，崔佛・米爾斯簽的。理由欄只寫四個字：依法務意見。
           - who: 戴文
             text: 還有……他們連營運群組的截圖一起寄來了。我想他們沒看就寄了。
-          - who: 伊恩
+          - who: 盧卡斯
             text: 依法務意見
             mark: { kind: highlight, word: 依法務意見, on: change-ticket }
       - id: job-memo
@@ -465,7 +465,7 @@ scenes:
           strained:
             - who: 旁白
               text: 法官看了一眼特權清單：「設定變更單是營運文件，不是律師意見。本庭命令交出。」
-            - who: 伊恩
+            - who: 盧卡斯
               text: 駁回
               mark: { kind: stamp, text: 駁回 }
       - id: rq-chat
@@ -478,7 +478,7 @@ scenes:
               text: 群組截圖交出去了。我把「旺季不准任何人被踢下線」那一張放在最上面……不是故意的，是照日期排的。
           concealed:
             - who: 戴文
-              text: 林律師，截圖沒有放進去。我照你的意思打包了。
+              text: 葛雷律師，截圖沒有放進去。我照你的意思打包了。
             - who: 戴文
               text: ……我們這樣是對的嗎？
       - id: rq-memo
@@ -616,10 +616,10 @@ scenes:
       - who: 羅根・普萊斯
         text: 你要把變更單交出去？
         mood: 硬
-      - who: 伊恩
+      - who: 盧卡斯
         text: 我還沒決定。但我現在知道，這案子值多少了。
       - who: 戴文
-        text: 林律師……法務意見的保存紀錄我也調出來了。附件裡有一張很舊的東西，上面寫著碼頭九號。
+        text: 葛雷律師……法務意見的保存紀錄我也調出來了。附件裡有一張很舊的東西，上面寫著碼頭九號。
 
   - type: card
     id: act3
@@ -636,7 +636,7 @@ scenes:
     place: 惠特洛克・海爾　會議室 C
     budget: 6
     witness:
-      name: 崔佛・林
+      name: 崔佛・米爾斯
       role: 卡爾德快遞　營運副總
     intro:
       - who: 馬庫斯・海爾
@@ -646,7 +646,7 @@ scenes:
         text: 你要先知道他會在哪裡說謊，才知道要不要讓他說。
         mood: 暖
     outro:
-      - who: 崔佛・林
+      - who: 崔佛・米爾斯
         text: 這樣可以了吧。我還要回去排下週的班。
         mood: 硬
     topics:
@@ -654,7 +654,7 @@ scenes:
         label: 那套系統
         questions:
           - id: d-alert
-            q: 林先生，赫克托・維加死亡當天，疲勞提醒是怎麼運作的？
+            q: 米爾斯先生，赫克托・維加死亡當天，疲勞提醒是怎麼運作的？
             a: 連續上線十小時跳出提醒。司機可以休息，也可以略過。
           - id: d-always
             q: 這個機制一直都是這樣嗎？
@@ -693,16 +693,16 @@ scenes:
     side: theirs
     examiner: 丹尼爾・奧卡福
     witness:
-      name: 葛瑞絲・吳
+      name: 艾瑪・徐
       role: 卡爾德快遞　資深系統工程師
     intro:
       - who: 丹尼爾・奧卡福
-        text: 伊恩，好久不見。你坐在那一邊，看起來很不習慣。
-      - who: 伊恩
+        text: 盧卡斯，好久不見。你坐在那一邊，看起來很不習慣。
+      - who: 盧卡斯
         text: 問你的問題吧，丹尼爾。
     script:
       - id: e-role
-        q: 吳小姐，妳負責卡爾德快遞派單系統的哪一部分？
+        q: 徐小姐，妳負責卡爾德快遞派單系統的哪一部分？
         a: 派單演算法和司機端的提醒功能。
       - id: e-after
         q: 赫克托・維加的車停下之後，系統做了什麼？
@@ -713,7 +713,7 @@ scenes:
         a: 我……我只是寫程式的。
         objection: 推測
       - id: e-ticket
-        q: 三月那次設定變更，崔佛・林有沒有告訴妳，法務是怎麼說的？
+        q: 三月那次設定變更，崔佛・米爾斯有沒有告訴妳，法務是怎麼說的？
         a: 他說法務那邊說沒問題。
         objection: 傳聞
       - id: e-could
@@ -721,9 +721,9 @@ scenes:
         a: 一個下午。只要改一個參數。
     outro:
       - who: 丹尼爾・奧卡福
-        text: 一個下午。謝謝妳，吳小姐。
+        text: 一個下午。謝謝妳，徐小姐。
       - who: 旁白
-        text: 錄取結束。葛瑞絲收拾筆電的時候，一直沒有抬頭看伊恩。
+        text: 錄取結束。艾瑪收拾筆電的時候，一直沒有抬頭看盧卡斯。
 
   - type: desk
     id: pretrial
@@ -733,7 +733,7 @@ scenes:
     cards: *cards
     docs:
       - id: doc-transcript
-        title: 崔佛・林　錄取逐字稿
+        title: 崔佛・米爾斯　錄取逐字稿
         from: 法院書記官
         lines:
           - text: 問：這個機制一直都是這樣嗎？
@@ -744,7 +744,7 @@ scenes:
         from: 丹尼爾・奧卡福　原告律師
         subject: 調解會議
         body:
-          - 伊恩，調解會議排在下週二。瑪莉索會親自來。
+          - 盧卡斯，調解會議排在下週二。瑪莉索會親自來。
           - 她要的東西，不全是錢。你到時候就知道了。
     jobs: []
     motions:
@@ -765,13 +765,13 @@ scenes:
         granted:
           - who: 旁白
             text: 雷耶斯法官翻到附註 7，看了很久：「長途貨車和市區外送不是同一件事。本庭排除費雪醫師關於風險倍數的證詞。」
-          - who: 伊恩
+          - who: 盧卡斯
             text: 已排除
             mark: { kind: stamp, text: 已排除, on: fisher-report }
         denied:
           - who: 旁白
             text: 「樣本差異屬於證明力問題，交給陪審團判斷。聲請駁回。」
-          - who: 伊恩
+          - who: 盧卡斯
             text: 駁回
             mark: { kind: stamp, text: 駁回 }
         gives: [daubert-ruling]
@@ -799,7 +799,7 @@ scenes:
       - who: 羅根・普萊斯
         text: 開庭的時候，奧卡福一拿出變更單，崔佛就完了。
         mood: 硬
-      - who: 伊恩
+      - who: 盧卡斯
         text: 所以我們不能讓這案子開庭。
       - who: 羅根・普萊斯
         text: 還是不能讓它變貴。亞瑟給的數字是一百五十萬。
@@ -829,7 +829,7 @@ scenes:
       - who: 旁白
         text: 調解室很小。瑪莉索・維加坐在奧卡福旁邊，手裡握著一支舊手機，螢幕裂了一角。
       - who: 丹尼爾・奧卡福
-        text: 我們有派單日誌、死後的扣分，還有一個說「一個下午就能改回去」的工程師。你有什麼，伊恩？
+        text: 我們有派單日誌、死後的扣分，還有一個說「一個下午就能改回去」的工程師。你有什麼，盧卡斯？
       - who: 瑪莉索・維加
         text: 我不要聽數字。我要知道那個按鈕，以後能不能按。
     offers:
@@ -889,14 +889,14 @@ scenes:
             text: ……專家的事我會處理。我還有一般醫學證人。
         caught:
           - who: 丹尼爾・奧卡福
-            text: 專家撐不撐得到開庭，不是你說了算，伊恩。就算她不來，我還有一般醫學證人。
+            text: 專家撐不撐得到開庭，不是你說了算，盧卡斯。就算她不來，我還有一般醫學證人。
     authority:
       cap: 1500000
       raise: 500000
       terms: true
       calls:
         - - who: 亞瑟・卡爾德
-            text: 一百五十萬是我說的數字，林律師。你現在打來，是要我改數字。
+            text: 一百五十萬是我說的數字，葛雷律師。你現在打來，是要我改數字。
           - who: 亞瑟・卡爾德
             text: 好。再加五十萬。修改演算法的事，法務評估過再說……算了，寫進去。我不想上新聞。
         - - who: 亞瑟・卡爾德
@@ -904,7 +904,7 @@ scenes:
           - who: 亞瑟・卡爾德
             text: 最後五十萬。之後不要再打來。
       over:
-        - who: 伊恩
+        - who: 盧卡斯
           text: 超過授權了。｜要嘛打給亞瑟，｜要嘛放手。
           voice: 'off'
     reveals:
@@ -912,15 +912,15 @@ scenes:
         text: ……讓我跟我的委託人談一下。
     walkOut:
       - who: 丹尼爾・奧卡福
-        text: 那就法庭見。陪審團會看到那三筆派單，伊恩。
+        text: 那就法庭見。陪審團會看到那三筆派單，盧卡斯。
       - who: 瑪莉索・維加
         text: 他死了之後，你們的 App 還在叫他接單。
     accepted:
       - who: 瑪莉索・維加
         text: 好。
       - who: 丹尼爾・奧卡福
-        text: 你打得很公平，伊恩。不管你信不信。
-      - who: 伊恩
+        text: 你打得很公平，盧卡斯。不管你信不信。
+      - who: 盧卡斯
         text: 和解書上，｜沒有任何一個字寫著「我們錯了」。
         voice: 'off'
 
@@ -1146,7 +1146,7 @@ scenes:
     intro:
       - who: 法官
         text: 被告，開場陳述。
-      - who: 伊恩
+      - who: 盧卡斯
         text: 每張承諾一張借據
         mark: { kind: iou }
 
@@ -1288,7 +1288,7 @@ scenes:
     outro:
       - who: 旁白
         text: 法官宣布休庭十分鐘。瑪莉索走下證人席，經過被告席時停了一下，沒有說話。
-      - who: 伊恩
+      - who: 盧卡斯
         text: 我贏了這一題。｜我寧可輸。
         voice: 'off'
 
@@ -1503,11 +1503,11 @@ scenes:
     act: 第五幕
     day: 第三天
     witness:
-      name: 崔佛・林
+      name: 崔佛・米爾斯
       role: 卡爾德快遞　營運副總
     intro:
       - who: 旁白
-        text: 伊恩站起來：「被告傳喚崔佛・林。」崔佛扣上西裝的第一顆釦子，走向證人席。
+        text: 盧卡斯站起來：「被告傳喚崔佛・米爾斯。」崔佛扣上西裝的第一顆釦子，走向證人席。
     prep:
       hours: 2
       options:
@@ -1527,7 +1527,7 @@ scenes:
     questions:
       - id: tq-contract
         seq: 0
-        q: 林先生，承攬司機可以自己決定什麼時候上線、什麼時候下線嗎？
+        q: 米爾斯先生，承攬司機可以自己決定什麼時候上線、什麼時候下線嗎？
         a: 可以。合約寫得很清楚，App 上也有下線的按鈕，隨時可以按。
         impact: 5
         tags: [權威]
@@ -1546,11 +1546,11 @@ scenes:
         tags: [權威]
         rehearsed: true
         door:
-          q: 林先生，這是三月十四日的設定變更單。簽名的是您嗎？
+          q: 米爾斯先生，這是三月十四日的設定變更單。簽名的是您嗎？
           a: ……是我。
           penalty: 12
     leak:
-      q: 林先生，「從來沒有」這四個字，是誰教您說的？
+      q: 米爾斯先生，「從來沒有」這四個字，是誰教您說的？
       a: 我……律師跟我對過答案。
       penalty: 10
     outro:
@@ -1567,7 +1567,7 @@ scenes:
       - who: 馬庫斯・海爾
         text: 兩個論點。民事陪審團不需要被說服，只需要被說動一點點。
         mood: 暖
-      - who: 伊恩
+      - who: 盧卡斯
         text: 我知道他們會往哪邊動。我只是不確定，我希望他們往哪邊動。
     tones:
       - id: t-logic
@@ -1605,7 +1605,7 @@ scenes:
           - who: 亞瑟・卡爾德
             text: （訊息）漂亮。下一件也交給你。
           - who: 旁白
-            text: 法院台階上，瑪莉索・維加站在最下面一階，看著伊恩走出來。她什麼都沒有說。
+            text: 法院台階上，瑪莉索・維加站在最下面一階，看著盧卡斯走出來。她什麼都沒有說。
       - id: shared-liable
         when:
           verdict: [有責]
@@ -1614,7 +1614,7 @@ scenes:
           - who: 旁白
             text: 陪審長站起來。「我們認定被告有責。死者本人就其損害，與有過失百分之四十。」
           - who: 丹尼爾・奧卡福
-            text: 你打得很公平，伊恩。我是說真的。
+            text: 你打得很公平，盧卡斯。我是說真的。
           - who: 瑪莉索・維加
             text: 他們承認了。判決書上寫的，他們承認了。
     verdicts:
@@ -1637,8 +1637,8 @@ scenes:
         - who: 旁白
           text: 陪審長站起來。「庭上，我們沒有辦法達到所需的票數。」
         - who: 旁白
-          text: 法官宣布審判無效。走廊上，奧卡福遞給伊恩一張名片，背面寫著一個數字。
-        - who: 伊恩
+          text: 法官宣布審判無效。走廊上，奧卡福遞給盧卡斯一張名片，背面寫著一個數字。
+        - who: 盧卡斯
           text: 評議票數
           mark: { kind: tally }
 
@@ -1660,7 +1660,7 @@ scenes:
         text: 謝謝你。我知道你是他們的律師。
       - do: say
         who: 亞瑟・卡爾德
-        text: （訊息）第七條。你讓我多付了一個條款，林律師。我會記得。
+        text: （訊息）第七條。你讓我多付了一個條款，葛雷律師。我會記得。
 
   - type: dialogue
     id: epilogue-deal-low
@@ -1680,7 +1680,7 @@ scenes:
         mood: 暖
       - do: say
         who: 旁白
-        text: 瑪莉索從調解室出來，經過伊恩身邊，沒有停下來。
+        text: 瑪莉索從調解室出來，經過盧卡斯身邊，沒有停下來。
 
   # 所有路線都接：戴文與那張銷毀令，然後是父親的電話。
   - type: dialogue
@@ -1694,7 +1694,7 @@ scenes:
         text: 影印機還在出紙。戴文把一張舊文件放上掃描台，放大到百分之四百。
       - do: say
         who: 戴文
-        text: 林律師，你還在嗎？那份文件保存政策的附件，二〇一六年那張。
+        text: 葛雷律師，你還在嗎？那份文件保存政策的附件，二〇一六年那張。
       - do: say
         who: 戴文
         text: 「碼頭九號倉庫維修紀錄備份：依政策銷毀。」核准人簽名……我放大了。
@@ -1705,7 +1705,7 @@ scenes:
         who: 戴文
         text: 羅根叫我別多事。我……我想先讓你知道。
       - do: say
-        who: 伊恩
+        who: 盧卡斯
         text: V.
         mark: { kind: highlight, word: V. }
 
@@ -1713,11 +1713,11 @@ scenes:
     id: epilogue-father
     act: 尾聲
     epilogue: true
-    owner: 伊恩
+    owner: 盧卡斯
     steps:
       - do: caption
         time: '23:40'
-        text: 港灣大道一號，頂樓只剩一盞燈。伊恩的手機響了。
+        text: 港灣大道一號，頂樓只剩一盞燈。盧卡斯的手機響了。
       - do: notify
         time: '23:40'
         message:
@@ -1725,20 +1725,20 @@ scenes:
           text: 您有一通來自受刑人的電話。本通話將被錄音。
       - do: talk
         time: '23:41'
-        who: 理查・索恩
+        who: 林肯・高
         text: 我聽說你替卡爾德打了一場官司。
       - do: choose
         mode: talk
         options:
           - text: 爸。二〇一六年，是誰下令銷毀維修紀錄的？
             then:
-              - who: 理查・索恩
+              - who: 林肯・高
                 text: ……你在那裡找到了什麼？
           - text: 我只是做我的工作。
             then:
-              - who: 理查・索恩
+              - who: 林肯・高
                 text: 我以前也是這樣跟你媽說的。
       - do: talk
         time: '23:43'
-        who: 理查・索恩
-        text: 伊恩，小心那棟樓裡簽名的人。
+        who: 林肯・高
+        text: 承曦，小心那棟樓裡簽名的人。

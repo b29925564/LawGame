@@ -39,7 +39,7 @@ export interface CrossState {
 }
 
 export const JUDGE = '法官';
-export const YOU = '伊恩';
+export const YOU = '盧卡斯';
 
 export function startCross(c: CaseData, jury: Jury): CrossState {
   return {
