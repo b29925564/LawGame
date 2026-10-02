@@ -13,7 +13,7 @@
 休庭: Recess
 成功彈劾: Successful impeachments
 刪除的證詞: Testimony stricken
-'{n} 句': '{n} lines'
+'{n} 句': '{n} line(s)'
 剩餘法官耐心: Judge’s patience left
 調查花掉的工時: Hours spent investigating
 '法官耐心 {a} / {b}': 'Judge’s patience {a} / {b}'
@@ -107,7 +107,7 @@
 '「{text}」': '“{text}”'
 特別判決表: Special verdict form
 損害總額扣掉死者過失的部分: Total damages less the decedent's share
-被告應付: Defendants owe
+被告應付: Defendant owes
 開庭若判有責: If the jury finds liability at trial
 '約 {low} 到 {high}': 'About {low} to {high}'
 懲罰性賠償另計: Punitive damages on top
