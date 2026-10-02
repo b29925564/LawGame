@@ -58,8 +58,9 @@ export const CARRY = 0.5;
  * 只延續交互詰問的成果（主詰問每場都會重新把心證推高，那一段不重複算），
  * 前幾場的成果累加，每過一天回彈一半。前面什麼都沒拆，就從起點開始。
  */
-export function creditOf(previous: TrialState): Jury {
-  const from = previous.directEnd ?? previous.jury;
+export function creditOf(previous: TrialState, all = false): Jury {
+  // 民事：原告一天一天把案子堆起來，陪審團記得整天的印象（主詰問也算），同樣每天回彈一半。
+  const from = (all ? previous.opening : previous.directEnd) ?? previous.jury;
   const before = previous.credit ?? {};
   return Object.fromEntries(
     Object.keys(previous.jury).map((id) => [
@@ -70,7 +71,7 @@ export function creditOf(previous: TrialState): Jury {
 }
 
 export function carryJury(s: TrialScene, previous: TrialState): Jury {
-  const credit = creditOf(previous);
+  const credit = creditOf(previous, s.burden === 'civil');
   return Object.fromEntries(
     Object.entries(startJury(s)).map(([id, v]) => [
       id,
@@ -93,7 +94,7 @@ export function startTrial(
     patience: s.patience,
     jury,
     opening: jury,
-    credit: previous ? creditOf(previous) : {},
+    credit: previous ? creditOf(previous, s.burden === 'civil') : {},
     deltas: {},
     claims: Object.fromEntries(
       s.witness.claims.map((c) => [
@@ -137,7 +138,7 @@ export function nextQuestion(s: TrialScene, st: TrialState): TrialState {
   if (st.stage !== 'direct' || st.window) return st;
   const q = s.witness.direct[st.i];
   if (!q) return toCross(s, st);
-  return say({ ...st, window: true, deltas: {} }, { who: DA, text: q.q });
+  return say({ ...st, window: true, deltas: {} }, { who: s.examiner ?? DA, text: q.q });
 }
 
 /** 不異議：證詞留在陪審團腦中，往有罪方向推。 */
@@ -180,7 +181,7 @@ export function toCross(s: TrialScene, st: TrialState): TrialState {
   if (st.stage !== 'direct') return st;
   return say(
     { ...st, stage: 'cross', window: false, deltas: {}, directEnd: st.jury },
-    { who: JUDGE, text: `辯方可以詰問${s.witness.name}警探。` },
+    { who: JUDGE, text: `辯方可以詰問${s.witness.name}。` },
   );
 }
 
@@ -238,7 +239,7 @@ export function confront(
   if (!cur.setup)
     return losePatience(
       s,
-      say(st, { who: DA, text: '異議，缺乏證據基礎。這份資料還沒有被本庭採納。' }),
+      say(st, { who: s.examiner ?? DA, text: '異議，缺乏證據基礎。這份資料還沒有被本庭採納。' }),
       '異議成立。律師，先建立基礎。',
     );
   if (cur.lock === 'none') return say(st, { who: JUDGE, text: '律師，證人還沒有就這一點作證。' });
@@ -249,7 +250,7 @@ export function confront(
   const broke = !arg.exposed ? true : counter ? (arg.cards ?? []).includes(counter.needs) : false;
   const rebuttal: LogLine[] = counter
     ? [
-        { who: DA, text: counter.text },
+        { who: s.examiner ?? DA, text: counter.text },
         { who: YOU, text: broke ? counter.broken : counter.failed },
       ]
     : [];

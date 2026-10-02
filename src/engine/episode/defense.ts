@@ -101,7 +101,7 @@ export function finish(s: DefenseScene, st: DefenseState, rules: JuryRules): Def
     const r = shiftAll(rules, next.jury, d.penalty);
     next = say(
       { ...next, jury: r.jury },
-      { who: DA, text: d.q },
+      { who: s.examiner ?? DA, text: d.q },
       { who: s.witness.name, text: d.a },
     );
   }
@@ -111,7 +111,7 @@ export function finish(s: DefenseScene, st: DefenseState, rules: JuryRules): Def
     const r = shiftAll(rules, next.jury, s.leak.penalty);
     next = say(
       { ...next, jury: r.jury, leaked: true },
-      { who: DA, text: s.leak.q },
+      { who: s.examiner ?? DA, text: s.leak.q },
       { who: s.witness.name, text: s.leak.a },
     );
   }

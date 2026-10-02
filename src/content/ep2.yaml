@@ -3,6 +3,7 @@
 id: ep2
 number: 2
 title: 和解的價格
+counsel: 丹尼爾・奧卡福
 _cards: &cards
   - id: contract
     name: 承攬合約
@@ -968,7 +969,7 @@ scenes:
         job: 退休公車司機
         sheet: 開了三十年公車，排班表比家裡的月曆還熟。
         leans: [情感]
-        start: 52
+        start: 57
         lead: 3
         value: 2
         question:
@@ -980,7 +981,7 @@ scenes:
         job: 保險精算師
         sheet: 四十五歲，工作是把風險算成數字。
         leans: [邏輯]
-        start: 46
+        start: 51
         lead: 6
         value: 9
         question:
@@ -992,7 +993,7 @@ scenes:
         job: 小型物流行老闆
         sheet: 自己開了一家八台車的貨運行。
         leans: [權威]
-        start: 42
+        start: 47
         lead: 4
         value: 10
         question:
@@ -1004,7 +1005,7 @@ scenes:
         job: 急診護理師
         sheet: 夜班十年，看過很多心肌梗塞。
         leans: [情感, 邏輯]
-        start: 54
+        start: 59
         lead: 5
         value: 3
         question:
@@ -1015,7 +1016,7 @@ scenes:
         job: 法律系學生
         sheet: 二十三歲，正在修侵權行為法。
         leans: [程序]
-        start: 50
+        start: 55
         lead: 2
         value: 6
         question:
@@ -1026,7 +1027,7 @@ scenes:
         job: 超市夜班主管
         sheet: 管二十個夜班員工，自己也上夜班。
         leans: [權威, 情感]
-        start: 48
+        start: 53
         lead: 4
         value: 5
         question:
@@ -1038,7 +1039,7 @@ scenes:
         job: 退休教師
         sheet: 丈夫三年前在工地過世。
         leans: [情感]
-        start: 62
+        start: 67
         lead: 3
         value: 0
         question:
@@ -1051,7 +1052,7 @@ scenes:
         job: 銀行分行經理
         sheet: 五十歲，負責企業貸款。
         leans: [權威, 邏輯]
-        start: 40
+        start: 45
         lead: 7
         value: 10
         question:
@@ -1062,7 +1063,7 @@ scenes:
         job: 咖啡店店員
         sheet: 二十六歲，下班後兼職外送。
         leans: [情感]
-        start: 58
+        start: 63
         lead: 1
         value: 1
         question:
@@ -1074,7 +1075,7 @@ scenes:
         job: 百貨公司櫃姐
         sheet: 三十八歲，按業績抽成。
         leans: [情感, 權威]
-        start: 51
+        start: 56
         lead: 3
         value: 4
         question:
@@ -1085,7 +1086,7 @@ scenes:
         job: 退役空軍飛行員
         sheet: 飛了二十年，現在教模擬機。
         leans: [程序, 權威]
-        start: 45
+        start: 50
         lead: 6
         value: 8
         question:
@@ -1097,7 +1098,7 @@ scenes:
         job: 土木工程師
         sheet: 負責橋梁的安全檢查。
         leans: [邏輯, 程序]
-        start: 47
+        start: 52
         lead: 5
         value: 7
         question:
@@ -1130,28 +1131,28 @@ scenes:
       - id: j1
         label: 退休公車司機
         leans: [情感]
-        start: 52
+        start: 57
       - id: j2
         label: 保險精算師
         leans: [邏輯]
-        start: 46
+        start: 51
         foreperson: true
       - id: j3
         label: 小型物流行老闆
         leans: [權威]
-        start: 42
+        start: 47
       - id: j4
         label: 急診護理師
         leans: [情感, 邏輯]
-        start: 54
+        start: 59
       - id: j5
         label: 法律系學生
         leans: [程序]
-        start: 50
+        start: 55
       - id: j6
         label: 超市夜班主管
         leans: [權威, 情感]
-        start: 48
+        start: 53
     intro:
       - who: 羅根・普萊斯
         text: 原告的直接詰問。她說的每一句都會讓陪審團心軟，你只能在問題本身有毛病的時候異議。
@@ -1240,28 +1241,28 @@ scenes:
       - id: j1
         label: 退休公車司機
         leans: [情感]
-        start: 52
+        start: 57
       - id: j2
         label: 保險精算師
         leans: [邏輯]
-        start: 46
+        start: 51
         foreperson: true
       - id: j3
         label: 小型物流行老闆
         leans: [權威]
-        start: 42
+        start: 47
       - id: j4
         label: 急診護理師
         leans: [情感, 邏輯]
-        start: 54
+        start: 59
       - id: j5
         label: 法律系學生
         leans: [程序]
-        start: 50
+        start: 55
       - id: j6
         label: 超市夜班主管
         leans: [權威, 情感]
-        start: 48
+        start: 53
     witness:
       name: 喬安娜・費雪醫師
       role: 原告專家・職業醫學
@@ -1347,28 +1348,28 @@ scenes:
       - id: j1
         label: 退休公車司機
         leans: [情感]
-        start: 52
+        start: 57
       - id: j2
         label: 保險精算師
         leans: [邏輯]
-        start: 46
+        start: 51
         foreperson: true
       - id: j3
         label: 小型物流行老闆
         leans: [權威]
-        start: 42
+        start: 47
       - id: j4
         label: 急診護理師
         leans: [情感, 邏輯]
-        start: 54
+        start: 59
       - id: j5
         label: 法律系學生
         leans: [程序]
-        start: 50
+        start: 55
       - id: j6
         label: 超市夜班主管
         leans: [權威, 情感]
-        start: 48
+        start: 53
     intro:
       - who: 羅根・普萊斯
         text: 費雪不能來了。他們找的是急診科醫師，只能講死因，不能講倍數。
@@ -1485,7 +1486,7 @@ scenes:
     leak:
       q: 林先生，「從來沒有」這四個字，是誰教您說的？
       a: 我……律師跟我對過答案。
-      penalty: 10
+      penalty: 20
     outro:
       - who: 旁白
         text: 崔佛走下證人席，沒有看被告席。羅根在筆記本上畫了一條線，又把它塗掉。

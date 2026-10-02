@@ -293,11 +293,14 @@ export function courtScene(p: Progress, s: TrialScene): TrialScene {
   // 開示時勉強過關、被裁定照交、硬藏被揭穿，錄取時亂異議，法官都記得。
   const cost = discoveryCost(p);
   // 審前動議核准（例如排除對方專家），陪審團一開始就沒那麼偏向對方。
-  const shift = motionShift(p);
+  // 硬藏的文件被揭穿，法官指示陪審團可以做不利推定：一開始就更偏向對方。
+  const shift = motionShift(p) - adverseShift(p);
   const jurors = vd && st?.seated ? voirdire.panel(vd, st) : s.jurors;
   return {
     ...s,
-    jurors: shift ? jurors.map((j) => ({ ...j, start: Math.max(0, j.start - shift) })) : jurors,
+    jurors: shift
+      ? jurors.map((j) => ({ ...j, start: Math.max(0, Math.min(100, j.start - shift)) }))
+      : jurors,
     patience: Math.max(1, s.patience - (vd && st?.seated ? st.wrong : 0) - cost),
   };
 }
@@ -313,6 +316,13 @@ function motionShift(p: Progress): number {
 }
 
 /** 開示讓法官少掉的耐心（所有桌面加總）。 */
+function adverseShift(p: Progress): number {
+  return episodeOf(p).scenes.reduce((n, x) => {
+    const st = x.type === 'desk' ? (p.scenes[x.id] as desk.DeskState | undefined) : undefined;
+    return n + (st ? discovery.adverse(st) : 0);
+  }, 0);
+}
+
 function discoveryCost(p: Progress): number {
   return episodeOf(p).scenes.reduce((n, x) => {
     if (x.type === 'desk') {
@@ -744,7 +754,11 @@ export const useEpisode = create<GameState>()((set, get) => {
       ),
     finishDepo: () => onDepo((_s, st) => depo.finish(st)),
 
-    revealArg: (id, strength, name) => onNego((s, st) => nego.reveal(s, st, id, strength, name)),
+    revealArg: (id, strength, name) => {
+      // 只用於聲請的程序論點（例如我方自己的風險評估）不能拿去攤牌。
+      if (!closingArgs(get().progress).some((a) => a.id === id)) return;
+      onNego((s, st) => nego.reveal(s, st, id, strength, name));
+    },
     bluff: (id) => onNego((s, st) => nego.bluff(s, st, id)),
     advise: (take) => onNego((s, st) => nego.advise(s, st, take)),
     walkOut: () => onNego((s, st) => nego.walk(s, st)),

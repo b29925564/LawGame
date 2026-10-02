@@ -22,6 +22,14 @@ export const PATIENCE_COST: Record<Result, number> = {
   concealed: 2,
 };
 
+/** 每一項硬藏被揭穿，開庭時陪審團起始傾向往對方推這麼多（不利推定的指示）。 */
+export const ADVERSE = 8;
+
+/** 硬藏造成的不利推定。 */
+export function adverse(st: DeskState): number {
+  return Object.values(answered(st)).filter((r) => r === 'concealed').length * ADVERSE;
+}
+
 /** 硬藏寫進倫理帳本的那一筆。 */
 export const CONCEALED = 'concealed-evidence';
 

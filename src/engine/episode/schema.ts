@@ -375,6 +375,10 @@ const trialScene = z.object({
   id,
   act: z.string(),
   day: z.string(),
+  /** 條件不符就整場跳過（例如對方專家被 Daubert 排除）。 */
+  when: when.optional(),
+  /** 對方發問的律師；不填用這一集的 counsel。 */
+  examiner: z.string().optional(),
   threshold: z.number().int(),
   /** 舉證門檻：刑事（預設）或民事。民事的門檻通常是 50，由原告負責把量表推過線。 */
   burden: z.enum(['criminal', 'civil']).default('criminal'),
@@ -606,6 +610,8 @@ const defenseScene = z.object({
   type: z.literal('defense'),
   id,
   act: z.string(),
+  /** 反詰問的對方律師；不填用這一集的 counsel。 */
+  examiner: z.string().optional(),
   /** 條件不符就跳過這位證人（例如玩家決定不讓他作證）。 */
   when: when.optional(),
   day: z.string().default(''),
@@ -825,12 +831,24 @@ const scene = z.discriminatedUnion('type', [
   }),
 ]);
 
-export const episodeSchema = z.object({
-  id,
-  number: z.number().int().min(1),
-  title: z.string(),
-  scenes: z.array(scene).min(1),
-});
+export const episodeSchema = z
+  .object({
+    id,
+    number: z.number().int().min(1),
+    title: z.string(),
+    /** 對造律師（第 1 集是檢察官）：庭上發問、反詰問的人。 */
+    counsel: z.string().default('莫羅檢察官'),
+    scenes: z.array(scene).min(1),
+  })
+  // 庭審與辯方證人場景沒寫 examiner 的，補上這一集的對造律師。
+  .transform((e) => ({
+    ...e,
+    scenes: e.scenes.map((s) =>
+      (s.type === 'trial' || s.type === 'defense') && !s.examiner
+        ? { ...s, examiner: e.counsel }
+        : s,
+    ),
+  }));
 
 export type Episode = z.infer<typeof episodeSchema>;
 export type Scene = Episode['scenes'][number];

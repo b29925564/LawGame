@@ -169,3 +169,14 @@ describe('對方主導的證詞錄取', () => {
     expect(depo.defend(s, st, null)).toBe(st);
   });
 });
+
+describe('談判的最後一回合', () => {
+  it('回合用完還沒結束：可以接受最後的條件；勸他撐下去就是離席', () => {
+    let st = nego.startNegotiation(plea);
+    st = { ...st, rounds: 0 };
+    expect(nego.done(st)).toBe(false);
+    expect(nego.canAct(st)).toBe(false);
+    expect(nego.advise(plea, st, true).outcome).toBe('deal');
+    expect(nego.advise(plea, { ...st, trust: 5 }, false).outcome).toBe('walk');
+  });
+});
