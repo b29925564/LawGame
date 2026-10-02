@@ -87,7 +87,7 @@
 '・ 基調 {state}': '· Tone {state}'
 已選: set
 未選: not set
-'手上的論點不夠，結辯會空 {n} 格，{other}的說法沒人反駁。': 'You’re short on arguments: {n} closing slots will stay empty and nobody rebuts {other}’s account.'
+'手上的論點不夠，結辯會空 {n} 格，{other}的說法沒人反駁。': 'You’re short on arguments: {n} closing slots will stay empty, and the other side’s account goes unanswered.'
 沒有案件理論，論點說服力打七折。: No case theory, so your arguments are 30% less persuasive.
 '開場許下的 {n} 個承諾沒有兌現，陪審員記得你說過的話。': '{n} promises from your opening went unkept. The jurors remember what you said.'
 結辯: Closing argument

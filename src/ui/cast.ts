@@ -3,7 +3,7 @@ import lucasYaml from './cast/lucas/lucas.yaml?raw';
 /**
  * 正式立繪（視覺設計師的立繪包，art-bible/cast/lead/pack）。
  * 圖檔照包裡的結構放：根目錄 1024×1280、512/、144/；每個表情用哪一張看 yaml 的 default。
- * 補新表情（例如硬）只要把圖和新的 yaml 放進來，這裡不用改。
+ * 補新表情或換預設張，只要把圖和新的 yaml 放進來，這裡不用改。
  */
 export type Expr = 'plain' | 'tense' | 'warm' | 'hard' | 'panic' | 'silent';
 
@@ -43,12 +43,15 @@ function dir(size: Size) {
 
 const picks = defaults(lucasYaml);
 
-/** 盧卡斯某個 mood 的圖；這個表情還沒生（例如硬）就用緊代打，緊也沒有就用平。 */
+/** 盧卡斯某個 mood 的圖；這個表情還沒生就用緊代打，緊也沒有就用平。 */
 export function lucas(mood: string | undefined, size: Size): string | undefined {
   const want = EXPR[mood ?? '平'] ?? 'plain';
   for (const expr of [want, 'tense', 'plain'] as Expr[]) {
     const v = picks[expr];
-    const url = v && urls[`${dir(size)}lucas__F__${expr}__${v}.webp`];
+    if (!v) continue;
+    // 值是「v02」或「tense-light v01」（同一表情的變體）。
+    const [a, b] = v.split(/\s+/);
+    const url = urls[`${dir(size)}lucas__F__${b ? a : expr}__${b ?? a}.webp`];
     if (url) return url;
   }
   return undefined;

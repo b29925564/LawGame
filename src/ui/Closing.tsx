@@ -90,7 +90,7 @@ export function Closing({ scene }: { scene: ClosingScene }) {
             <p className="bad-text small">
               {t('手上的論點不夠，結辯會空 {n} 格，{other}的說法沒人反駁。', {
                 n: scene.picks - need,
-                other: t(terms.other),
+                other: t(terms.other, scope),
               })}
             </p>
           )}
