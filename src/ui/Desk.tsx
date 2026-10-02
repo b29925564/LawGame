@@ -689,7 +689,12 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
                               <strong>{showPair(c.pair)}</strong>
                               <span className="muted small">{t(c.relation)}</span>
                             </button>
-                          ) : null}
+                          ) : (
+                            // 連起來之後下一步要點發現再提交（體驗評測：沒有提示，會以為連起來就解完了）。
+                            <span className="slot-hint">
+                              {found.length ? t('點一條發現放到這裡') : t('先連線，得到發現')}
+                            </span>
+                          )}
                         </li>
                       );
                     })}
@@ -966,7 +971,7 @@ function FoundNote({
     return () => ro.disconnect();
   }, [open, text, note]);
   return (
-    <li className="found-item">
+    <li className={long || open ? 'found-item long' : 'found-item'}>
       <button
         className={fresh ? 'found fresh' : 'found'}
         aria-pressed={used}

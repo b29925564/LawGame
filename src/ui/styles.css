@@ -4519,6 +4519,10 @@ button.iou[aria-pressed='true'] {
   background: var(--bg);
   border-bottom: 1px solid var(--border);
 }
+.board-one .wb-head {
+  /* 黏頂時右上的「選單」鈕會蓋住長題目的尾巴（體驗評測）。 */
+  padding-right: 88px;
+}
 .board-one .wb-head h2 {
   font-size: 1.15em;
 }
@@ -4687,6 +4691,7 @@ button.iou[aria-pressed='true'] {
   mask-image: linear-gradient(#000 55%, transparent);
 }
 .found-item {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -4694,9 +4699,25 @@ button.iou[aria-pressed='true'] {
 .found-item > .found {
   align-self: stretch;
 }
+/* 「展開」放在它那張便條的右下角，不掛在兩張便條中間（體驗評測）。 */
+.found-item.long > .found {
+  padding-bottom: 30px;
+}
 .found-more {
-  margin-top: 2px;
+  position: absolute;
+  right: 12px;
+  bottom: 8px;
   font-size: 13px;
+}
+.slot-hint {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  min-height: 72px;
+  padding: 8px 12px;
+  font-size: 13px;
+  color: var(--faint);
+  text-align: center;
 }
 .found-text,
 .found-note {
