@@ -111,7 +111,9 @@ for (const ep of episodes) {
   const all = new Set([...zh.values()].flat());
   const stale = Object.keys(en).filter((k) => {
     const [id, text] = k.includes('::') ? k.split('::') : [null, k];
-    return id ? !(zh.get(id) ?? []).includes(text) : !all.has(text);
+    if (id) return !(zh.get(id) ?? []).includes(text);
+    // 人名、地名這類片語會被樣板代入，只要還出現在某句中文裡就不算過期。
+    return !all.has(text) && ![...all].some((s) => s.includes(text));
   });
   const done = (s, id) => en[`${id}::${s}`] !== undefined || en[s] !== undefined;
   let total = 0;

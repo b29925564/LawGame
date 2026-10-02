@@ -98,8 +98,8 @@ async function playToRachelLast(page: Page) {
   await page.getByRole('button', { name: '結束會見' }).click();
 
   // 接案
-  await until(page, page.getByRole('button', { name: '謝謝。四十小時夠了。' }));
-  await page.getByRole('button', { name: '謝謝。四十小時夠了。' }).click();
+  await until(page, page.getByRole('button', { name: '四十小時。那我把午餐省下來。' }));
+  await page.getByRole('button', { name: '四十小時。那我把午餐省下來。' }).click();
   await until(page, page.getByRole('button', { name: '卷宗', exact: true }));
 
   // 第二幕：讀卷宗、標記事實、委託、推理鏈
