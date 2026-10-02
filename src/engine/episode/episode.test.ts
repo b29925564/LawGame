@@ -47,6 +47,7 @@ describe('劇本驗證器（集數）', () => {
     id: 'bad',
     number: 9,
     title: '壞劇本',
+    counsel: '莫羅檢察官',
     scenes: [
       {
         type: 'phone',

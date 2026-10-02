@@ -101,6 +101,10 @@ describe('開示', () => {
       expect(branchContext(p).flags).toContain('discovery:chat:concealed');
       const trial = ep.scenes.find((s) => s.type === 'trial') as TrialScene;
       expect(courtScene(p, trial).patience).toBe(Math.max(1, trial.patience - 2));
+      // 硬藏被揭穿：不利推定，陪審團一開始就更偏向對方。
+      courtScene(p, trial).jurors.forEach((j, i) =>
+        expect(j.start).toBe(Math.min(100, trial.jurors[i].start + discovery.ADVERSE)),
+      );
     } finally {
       ep.scenes[at] = orig;
     }

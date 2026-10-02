@@ -136,6 +136,8 @@ export function advise(s: NegotiationScene, st: NegoState, take: boolean): NegoS
   if (take && !authorized(s, st, o)) return { ...st, log: [...st.log, ...s.authority!.over] };
   if (take)
     return { ...st, outcome: 'deal', deal: o.label, dealId: o.id, log: [...st.log, ...s.accepted] };
+  // 回合用完還勸他撐，就是不談了，上法庭。
+  if (st.rounds <= 0) return walk(s, st);
   // 勸他撐下去：信任低的委託人會自己點頭。
   if (st.trust <= 1)
     return { ...st, outcome: 'deal', deal: o.label, dealId: o.id, log: [...st.log, ...s.accepted] };
@@ -147,6 +149,7 @@ export function walk(s: NegotiationScene, st: NegoState): NegoState {
   return { ...st, outcome: 'walk', log: [...st.log, ...s.walkOut] };
 }
 
+/** 回合用完不算結束：最後談到的條件還要交給委託人決定（接受，或離席上法庭）。 */
 export function done(st: NegoState): boolean {
-  return st.outcome !== null || st.rounds <= 0;
+  return st.outcome !== null;
 }
