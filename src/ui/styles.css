@@ -23,6 +23,11 @@
   /* 螢光筆：填色與填色上的字。 */
   --hl: light-dark(#ffd02e, #f4c53d);
   --hl-ink: #16130a;
+  /* 定案（不可逆）按鈕：全遊戲唯一深底金邊＋🔒（視覺設計師定稿；UX 決策代價規格三）。 */
+  --commit-bg: light-dark(#1d232b, #161c25);
+  --commit-bg-hover: light-dark(#262e38, #1f2731);
+  --commit-ink: #f1ece0;
+  --commit-edge: light-dark(#c9a24a, #b8893a);
   /* 鍵盤焦點框：淺色底上螢光黃只有 1.4:1，改深色；深色模式維持黃。 */
   --focus: light-dark(#16130a, #f4c53d);
   --hl-wash: light-dark(rgb(255 208 46 / 22%), rgb(244 197 61 / 8%));
@@ -155,6 +160,18 @@ button.primary {
   box-shadow:
     inset 0 -2px 0 rgb(0 0 0 / 14%),
     0 6px 18px -8px light-dark(rgb(160 120 0 / 55%), rgb(244 197 61 / 45%));
+}
+/* 定案鈕：只給不可逆的動作。黃色實心是「主要」，深底描金邊是「定案」，形狀就分得開。 */
+button.commit {
+  background: var(--commit-bg);
+  border: 1px solid var(--commit-edge);
+  color: var(--commit-ink);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+button.commit:hover:not(:disabled) {
+  background: var(--commit-bg-hover);
+  border-color: var(--commit-edge);
 }
 /* 還不能按的主要按鈕是一格虛線的空位，不是一塊褪色的黃。 */
 button.primary:disabled {
@@ -5085,6 +5102,42 @@ button.iou[aria-pressed='true'] {
 .req-actions button[aria-pressed='true'] {
   outline: 2px solid currentColor;
   outline-offset: 1px;
+}
+.commit-bar {
+  flex-basis: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 4px 12px;
+  align-items: center;
+  margin-top: 4px;
+  padding: 10px 12px;
+  border-top: 1px dashed var(--border);
+}
+.commit-bar p {
+  margin: 0;
+}
+.commit-what {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  align-items: baseline;
+}
+.commit-cost {
+  grid-column: 1;
+  color: var(--muted);
+}
+.commit-bar .commit {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+}
+@media (max-width: 520px) {
+  .commit-bar {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .commit-bar .commit {
+    grid-column: 1;
+    grid-row: auto;
+  }
 }
 .req-actions .primary {
   margin-left: auto;

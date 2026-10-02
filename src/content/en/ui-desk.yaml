@@ -155,3 +155,12 @@
 '盧卡斯標記了 {n} 處：{items}': 'Lucas marked {n} places: {items}'
 '盧卡斯沒有說出口：{text}': "Lucas didn't say it aloud: {text}"
 '、': ', '
+定案: Final decision
+選了就不能改: You can’t undo this
+'對方拿到這 {n} 份文件': 'The other side gets these {n} documents'
+法官可能不認；沒有正當理由硬藏，之後被揭穿會很重: The judge may reject it. Hiding something without good grounds hurts badly if it comes out later.
+由法官決定範圍: The judge decides the scope
+交出這份文件: Hand over this document
+交出這些文件: Hand over these documents
+以範圍過廣回應: Object as overbroad
+'剩 {n} 時・{m} 題沒確認': '{n} h left · {m} questions unconfirmed'
