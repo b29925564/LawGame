@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { episodes } from '../content';
 import { useEpisode } from '../engine/game';
-import { useT } from '../i18n';
+import { useLang, useT } from '../i18n';
 import { LangSwitch } from './lang';
 import { readSave, SLOTS, type Slot } from '../engine/save';
 
@@ -24,6 +24,7 @@ export function SlotList({
   onPick: (slot: Slot) => void;
 }) {
   const t = useT();
+  const lang = useLang((s) => s.lang);
   return (
     <ul className="stack slots">
       {slots.map((slot) => {
@@ -35,7 +36,7 @@ export function SlotList({
               className="slot"
               disabled={verb === '讀取' && !f}
               onClick={() => onPick(slot)}
-              aria-label={t('{verb}{name}', { verb: t(verb), name })}
+              aria-label={lang === 'en' ? `${t(verb)} ${name}` : `${verb}${name}`}
             >
               <strong>{name}</strong>
               <span className="muted">{f ? `${t(f.label)}・${when(f.savedAt)}` : t('空')}</span>

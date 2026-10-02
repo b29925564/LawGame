@@ -12,7 +12,6 @@
 讀取存檔: Load game
 讀取: Load
 存到: Save to
-'{verb}{name}': '{verb} {name}'
 系統原型（證據板、彈劾、陪審團）: System prototype (board, impeachment, jury)
 垂直切片: Vertical slice
 自動存檔: Autosave
@@ -39,3 +38,7 @@
 字幕自動前進: Auto-advance subtitles
 音效: Sound
 法庭光影（試做）: Courtroom lighting (test)
+陳述: Statement
+文件: Document
+物品: Object
+宣誓陳述: Affidavit
