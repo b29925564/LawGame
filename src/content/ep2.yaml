@@ -441,6 +441,7 @@ scenes:
             - who: 戴文
               text: 承攬合約交出去了。這份本來就在起訴狀附件裡，他們只是要我們確認。
       - id: rq-logs
+        unlock: [app-log]
         text: 請求二：被告派單系統內，全體司機過去三年的上線與派單紀錄。
         cards: [app-log]
         overbroad: true
@@ -452,6 +453,7 @@ scenes:
             - who: 旁白
               text: 法官把範圍限縮為死者本人最後九十天的紀錄。61 次略過，照樣在裡面。
       - id: rq-change
+        unlock: [lock-spec]
         text: 請求三：與疲勞提醒或強制下線功能有關的一切設定變更紀錄。
         cards: [change-ticket]
         privilege: weak
@@ -467,6 +469,7 @@ scenes:
               text: 駁回
               mark: { kind: stamp, text: 駁回 }
       - id: rq-chat
+        unlock: [lock-spec]
         text: 請求四：被告營運主管於事發前一年內，關於司機排班的內部通訊。
         cards: [chat-peak]
         lines:
@@ -479,6 +482,7 @@ scenes:
             - who: 戴文
               text: ……我們這樣是對的嗎？
       - id: rq-memo
+        unlock: [change-ticket]
         text: 請求五：被告就取消強制下線一事所取得之任何意見或評估。
         cards: [legal-memo]
         privilege: valid
