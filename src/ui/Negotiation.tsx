@@ -1,3 +1,4 @@
+import { useCaseTerms } from './terms';
 import { useState } from 'react';
 import * as nego from '../engine/episode/negotiation';
 import type { NegotiationScene } from '../engine/episode/schema';
@@ -10,6 +11,7 @@ import { Shell, Tabs, Transcript } from './Shell';
 export function Negotiation({ scene }: { scene: NegotiationScene }) {
   const { progress, revealArg, bluff, advise, walkOut, advance, callClient } = useEpisode();
   const st = negoState(progress, scene);
+  const terms = useCaseTerms();
   const [intro, setIntro] = useState(st.log.length <= scene.intro.length);
   const [tab, setTab] = useState<'offer' | 'reveal' | 'bluff'>('offer');
   const deskScene = deskSceneOf(progress);
@@ -39,7 +41,7 @@ export function Negotiation({ scene }: { scene: NegotiationScene }) {
   if (nego.done(st))
     return (
       <main className="scene">
-        <p className="eyebrow">{st.outcome === 'deal' ? '認罪協商成立' : '談判結束'}</p>
+        <p className="eyebrow">{st.outcome === 'deal' ? terms.deal : '談判結束'}</p>
         <div className="lines">
           {st.log.slice(-4).map((l, i) => (
             <Speech key={i} line={l} />

@@ -1,3 +1,4 @@
+import { useCaseTerms } from './terms';
 import { useEffect, useRef, useState } from 'react';
 import type { TrialScene } from '../engine/episode/schema';
 import * as trial from '../engine/episode/trial';
@@ -168,6 +169,7 @@ export function Courtroom({ scene: raw }: { scene: TrialScene }) {
   // 上場的是遴選留下的陪審團，法官耐心也已經扣過遴選時的失誤。
   const scene = courtScene(progress, raw);
   const st = trialState(progress, scene);
+  const terms = useCaseTerms();
   const [intro, setIntro] = useState(st.log.length === 0);
   // 一次只處理一項證詞，預設停在還沒打完的那一項。
   const pending = scene.witness.claims.find((c) => st.claims[c.id]?.result === 'none');
@@ -317,7 +319,7 @@ export function Courtroom({ scene: raw }: { scene: TrialScene }) {
           {st.stage === 'direct' && !st.window && (
             <>
               <button className="primary wide" onClick={nextQuestion}>
-                {st.i < scene.witness.direct.length ? '聽下一個問題' : '檢方詰問完畢'}
+                {st.i < scene.witness.direct.length ? '聽下一個問題' : `${terms.other}詰問完畢`}
               </button>
               {st.i >= scene.witness.direct.length && (
                 <button onClick={toCross}>開始交互詰問</button>
@@ -329,7 +331,7 @@ export function Courtroom({ scene: raw }: { scene: TrialScene }) {
     >
       {st.stage === 'direct' && st.window && <ObjectionWindow onPass={letPass} onObject={object} />}
       {st.stage === 'direct' && !st.window && (
-        <p className="muted">聽檢方問下去。有問題的地方就在問完的那一刻提異議。</p>
+        <p className="muted">聽{terms.other}問下去。有問題的地方就在問完的那一刻提異議。</p>
       )}
 
       {st.stage === 'cross' && (

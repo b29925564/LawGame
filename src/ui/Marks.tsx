@@ -1,3 +1,4 @@
+import { useCaseTerms } from './terms';
 import { termsOf, type Burden } from '../engine/jury';
 import { useEffect, useState, type CSSProperties } from 'react';
 import { motionAttempt } from '../engine/episode/desk';
@@ -158,6 +159,7 @@ export function Ruling({
   quote?: string;
   verdict: string;
 }) {
+  const { caseNo } = useCaseTerms();
   useEffect(
     () =>
       announce.mark({
@@ -170,7 +172,7 @@ export function Ruling({
     <article className="ruling" aria-label={`裁定：${verdict}${wrongBasis ? '。依據選錯' : ''}`}>
       <header>
         <span>{'卡爾德郡高等法院\u3000裁定'}</span>
-        <span className="case-no">No. 26-CR-0417</span>
+        <span className="case-no">{caseNo}</span>
       </header>
       <dl>
         <dt>聲請</dt>
@@ -352,6 +354,7 @@ export function Iou({
   state: 'draft' | 'signed' | 'kept' | 'broken';
 }) {
   const n = String(no).padStart(2, '0');
+  const { yes } = useCaseTerms();
   return (
     <div className="iou" data-state={state}>
       <div className="iou-stub">借據 {n}</div>
@@ -373,7 +376,9 @@ export function Iou({
           </div>
           <div>
             <dt>逾期</dt>
-            <dd className="due">全體往有罪 {broken}</dd>
+            <dd className="due">
+              全體往{yes} {broken}
+            </dd>
           </div>
         </dl>
         <footer>
