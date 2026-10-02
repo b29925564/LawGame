@@ -5,6 +5,7 @@ import * as branch from './episode/branch';
 import * as closing from './episode/closing';
 import * as defense from './episode/defense';
 import * as depo from './episode/deposition';
+import * as discovery from './episode/discovery';
 import * as desk from './episode/desk';
 import * as interview from './episode/interview';
 import * as nego from './episode/negotiation';
@@ -211,7 +212,7 @@ export function branchContext(p: Progress): branch.BranchContext {
     outcome: closed?.outcome ?? null,
     deal: closed?.deal ?? null,
     theory: promisesOf(p).theory?.id ?? null,
-    flags: p.flags ?? [],
+    flags: allFlags(p),
     ethics: p.ethics ?? [],
     cards: p.cards,
     presented: presentedArgs(p),
@@ -259,12 +260,32 @@ export function voirDireState(p: Progress, s: VoirDireScene) {
 export function courtScene(p: Progress, s: TrialScene): TrialScene {
   const vd = episodeOf(p).scenes.find((x) => x.type === 'voirdire') as VoirDireScene | undefined;
   const st = vd ? (p.scenes[vd.id] as voirdire.VoirDireState | undefined) : undefined;
-  if (!vd || !st?.seated) return s;
+  // 開示時勉強過關、被裁定照交、硬藏被揭穿，法官都記得。
+  const cost = discoveryCost(p);
+  if (!vd || !st?.seated) return cost ? { ...s, patience: Math.max(1, s.patience - cost) } : s;
   return {
     ...s,
     jurors: voirdire.panel(vd, st),
-    patience: Math.max(1, s.patience - st.wrong),
+    patience: Math.max(1, s.patience - st.wrong - cost),
   };
+}
+
+/** 開示讓法官少掉的耐心（所有桌面加總）。 */
+function discoveryCost(p: Progress): number {
+  return episodeOf(p)
+    .scenes.filter((x) => x.type === 'desk')
+    .reduce((n, d) => {
+      const st = p.scenes[d.id] as desk.DeskState | undefined;
+      return n + (st ? discovery.patienceCost(st) : 0);
+    }, 0);
+}
+
+/** 分支看得到的旗標：對話選項留下的，加上桌面（動議、開示）留下的。 */
+export function allFlags(p: Progress): string[] {
+  const fromDesk = episodeOf(p).scenes.flatMap((x) =>
+    x.type === 'desk' ? ((p.scenes[x.id] as desk.DeskState | undefined)?.flags ?? []) : [],
+  );
+  return [...new Set([...(p.flags ?? []), ...fromDesk])];
 }
 
 /** 前一場庭審的狀態（同一個陪審團，隔天繼續聽）。 */
@@ -339,6 +360,8 @@ interface GameState {
   fileMotion: (motion: string) => void;
   resolveTwist: (motion: string, option: number) => void;
   wrapDesk: () => void;
+  /** 證據開示：回應對方的一項請求（交出／主張特權／主張範圍過廣），送出就定案。 */
+  respondDiscovery: (request: string, response: discovery.Response) => void;
   toggleCard: (qid: string, card: string) => void;
   toggleTimeline: (card: string) => void;
   moveTimeline: (card: string, dir: -1 | 1) => void;
@@ -543,6 +566,15 @@ export const useEpisode = create<GameState>()((set, get) => {
         (s, st) => desk.heldCards(s, st, get().progress.cards),
       ),
     wrapDesk: () => onDesk((_s, st) => desk.wrap(st)),
+    respondDiscovery: (r, resp) => {
+      onDesk((s, st) => discovery.respond(s, st, r, resp));
+      // 硬藏記進倫理帳本（之後在庭上被揭穿）。
+      const p = get().progress;
+      const s = sceneOf(p);
+      const result = s?.type === 'desk' ? deskState(p, s).discovery?.[r] : undefined;
+      if (result === 'concealed' && !(p.ethics ?? []).includes(discovery.CONCEALED))
+        set({ progress: { ...p, ethics: [...(p.ethics ?? []), discovery.CONCEALED] } });
+    },
     toggleCard: (qid, card) =>
       onDesk((s, st) => desk.toggleCard(s, st, qid, card, get().progress.cards)),
     toggleTimeline: (card) => onDesk((_s, st) => desk.toggleTimeline(st, card)),

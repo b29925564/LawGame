@@ -316,6 +316,35 @@ const deskScene = z.object({
     .default([]),
   links: z.array(link).default([]),
   /**
+   * 證據開示（被動方，第 2 集）：對方的請求清單，每項回應一次——交出、主張特權、主張範圍過廣。
+   * privilege：valid 站得住；weak 法官勉強准了但記一筆；none 沒有理由，等於硬藏（之後會被揭穿）。
+   * overbroad：主張範圍過廣站不站得住；站不住就被裁定照交，法官也記一筆。
+   */
+  discovery: z
+    .array(
+      z.object({
+        id,
+        text: z.string(),
+        /** 這項請求涵蓋的文件（卡片 id）。 */
+        cards: z.array(id).min(1),
+        privilege: z.enum(['valid', 'weak', 'none']).default('none'),
+        overbroad: z.boolean().default(false),
+        /** 回應之後的旁白或對白（依結果），沒寫就不播。 */
+        lines: z
+          .object({
+            produced: z.array(line),
+            withheld: z.array(line),
+            strained: z.array(line),
+            concealed: z.array(line),
+            narrowed: z.array(line),
+            compelled: z.array(line),
+          })
+          .partial()
+          .default({}),
+      }),
+    )
+    .default([]),
+  /**
    * 時間線上的手的記號（設計稿 inner-voice 2d）。
    * gap：兩張卡的時間先後正確時，在較晚那張上方標出間距。sync：兩列同時亮起，when 的旗標有了才播。
    */
