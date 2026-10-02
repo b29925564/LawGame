@@ -46,6 +46,16 @@ export function VoLine({ line }: { line: Line }) {
   );
 }
 
+/** 獨白蓋住的那顆主要按鈕（繼續、回到桌面）；點在別的地方就不算。 */
+function buttonUnder(x: number, y: number): HTMLButtonElement | null {
+  for (const el of document.elementsFromPoint(x, y)) {
+    if (el.closest('.vo')) continue;
+    const b = el.closest('button');
+    return b && b.matches('button.primary, button.next') && !b.disabled ? b : null;
+  }
+  return null;
+}
+
 export function VoiceOver({ line, onDone }: { line: Line; onDone: () => void }) {
   const { voAuto, voScale, voBox } = useSettings();
   const t = useT();
@@ -61,25 +71,29 @@ export function VoiceOver({ line, onDone }: { line: Line; onDone: () => void }) 
   const reduced =
     typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  const next = () => {
+  const next = (at?: { x: number; y: number }) => {
     if (i + 1 < beats.length) {
       setI(i + 1);
       setP(0);
       setPhase('waiting');
     } else {
+      // 收掉最後一拍的那一下如果正好點在底下的「繼續」「回到桌面」上，就順便按下去
+      // （體驗評測：第一下只收掉獨白，畫面看起來沒變，玩家以為按鈕壞了）。選項不轉，免得誤選。
+      const under = at && buttonUnder(at.x, at.y);
       announce.voiceEnd();
       onDone();
+      if (under) setTimeout(() => under.click(), 0);
     }
   };
   // 出字途中點擊＝立刻出完。防的是連點：上一下點擊 400ms 內的第二下不算。
   // 以前是「出完後 600ms 內一律不算」，字自己出完時玩家點下去也會被吃掉，看起來像按了沒反應。
   const lastClick = useRef(-Infinity);
-  const click = () => {
+  const click = (e?: { clientX: number; clientY: number }) => {
     const now = performance.now();
     const double = now - lastClick.current < 400;
     lastClick.current = now;
     if (phase === 'typing') setPhase('shown');
-    else if (phase === 'shown' && !double) next();
+    else if (phase === 'shown' && !double) next(e && { x: e.clientX, y: e.clientY });
   };
   // 拍前的靜默：第一拍 0，之後 700ms，重句前 1200ms。
   useEffect(() => {
@@ -136,7 +150,7 @@ export function VoiceOver({ line, onDone }: { line: Line; onDone: () => void }) 
       style={{ '--sub-scale': voScale } as CSSProperties}
     >
       <div className="vo-veil" />
-      <button className="vo-hit" aria-label={t('繼續')} onClick={click} autoFocus />
+      <button className="vo-hit" aria-label={t('繼續')} onClick={(e) => click(e)} autoFocus />
       <div className="vo-frame" aria-hidden>
         <span className="vo-mark" />
         <p className={phase === 'shown' ? 'vo-text now' : 'vo-text'}>

@@ -4562,6 +4562,10 @@ button.iou[aria-pressed='true'] {
   background: var(--bg);
   border-bottom: 1px solid var(--border);
 }
+.board-one .wb-head {
+  /* 黏頂時右上的「選單」鈕會蓋住長題目的尾巴（體驗評測）。 */
+  padding-right: 88px;
+}
 .board-one .wb-head h2 {
   font-size: 1.15em;
 }
@@ -4590,6 +4594,39 @@ button.iou[aria-pressed='true'] {
   gap: 8px;
   align-items: baseline;
   flex-wrap: wrap;
+}
+.step-num {
+  display: inline-grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1px solid var(--border-strong);
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text);
+}
+/* 答案列：工作台怎麼捲都看得到，點發現時立刻看到它進答案（UX 規格）。 */
+.answer-bar {
+  position: sticky;
+  bottom: 0;
+  z-index: 3;
+  box-shadow:
+    0 -12px 24px -8px rgb(0 0 0 / 35%),
+    var(--shadow-1);
+}
+.found-empty {
+  display: grid;
+  place-items: center;
+  min-height: 72px;
+  margin: 0;
+  padding: 12px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  font-size: 13px;
+  color: var(--faint);
+  text-align: center;
 }
 .step.answer.done {
   border-color: color-mix(in srgb, var(--good) 60%, var(--border));
@@ -4697,6 +4734,7 @@ button.iou[aria-pressed='true'] {
   mask-image: linear-gradient(#000 55%, transparent);
 }
 .found-item {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -4704,9 +4742,25 @@ button.iou[aria-pressed='true'] {
 .found-item > .found {
   align-self: stretch;
 }
+/* 「展開」放在它那張便條的右下角，不掛在兩張便條中間（體驗評測）。 */
+.found-item.long > .found {
+  padding-bottom: 30px;
+}
 .found-more {
-  margin-top: 2px;
+  position: absolute;
+  right: 12px;
+  bottom: 8px;
   font-size: 13px;
+}
+.slot-hint {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  min-height: 72px;
+  padding: 8px 12px;
+  font-size: 13px;
+  color: var(--faint);
+  text-align: center;
 }
 .found-text,
 .found-note {
@@ -5177,6 +5231,14 @@ body:has(.court-light) {
     position: sticky;
     bottom: 0;
     z-index: 5;
+  }
+  /* 工作台裡答案列取代底列：這裡不需要「結束調查」，挑卡片在連線台底下。 */
+  .shell:has(.board-one) > .shell-foot {
+    display: none;
+  }
+  .board-one .answer-bar {
+    margin-inline: -2px;
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
   }
 }
 

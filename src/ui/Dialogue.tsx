@@ -15,7 +15,8 @@ export function Dialogue({ scene }: { scene: DialogueScene }) {
   for (let i = 0; i <= progress.step && i < scene.steps.length; i++) {
     const s = scene.steps[i];
     if (s.do === 'say') {
-      lines.push({ who: s.who, text: s.text, mood: s.mood, thought: s.thought });
+      // 整行帶過去：畫外字幕（voice/beats）和記號（mark）要靠這些欄位，只抄 who/text 會變成普通台詞（體驗評測：尾聲露出「｜」）。
+      lines.push(s);
     } else if (picks[i] !== undefined) {
       const o = s.options[picks[i]];
       lines.push({ who: '盧卡斯', text: o.text, mood: '平', thought: false }, ...o.then);

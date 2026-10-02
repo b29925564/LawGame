@@ -65,6 +65,23 @@ describe('陪審團遴選', () => {
     expect(vd.done(st)).toBe(true);
   });
 
+  it('明確偏向辯方的候選人，檢方入席前會以有因迴避剔除；偏向檢方的留給玩家處理', () => {
+    const st = vd.seat(scene, vd.startVoirDire(scene));
+    expect(st.theirCause).toEqual(['c-fired']);
+    expect(st.seated).not.toContain('c-fired');
+    expect(st.seated).toContain('c-broker');
+  });
+
+  it('候選席只剩 12 位時，檢方的有因迴避不會把席位剔到坐不滿', () => {
+    let st = vd.startVoirDire(scene);
+    while (vd.pool(scene, st).some((c) => c.id !== 'c-fired' && vd.canStrike(scene, st, c.id)))
+      st = vd.strike(scene, st, vd.pool(scene, st).find((c) => c.id !== 'c-fired')!.id);
+    const room = vd.pool(scene, st).length - scene.seats;
+    st = vd.seat(scene, st);
+    expect(st.seated).toHaveLength(scene.seats);
+    expect(st.theirCause!.length).toBeLessThanOrEqual(room);
+  });
+
   it('候選席剩 12 位就不能再無因迴避，檢方也不會再砍', () => {
     let st = vd.startVoirDire(scene);
     for (const c of scene.candidates.filter((c) => c.cause)) {

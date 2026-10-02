@@ -532,7 +532,10 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
 
   const bench = (
     <section className="panel step links">
-      <h3 className="step-head">{t('連線')}</h3>
+      <h3 className="step-head">
+        <span className="step-num">1</span>
+        {t('連線')}
+      </h3>
       <div
         className={
           (desk.canConnect(st) ? 'link-bench ready' : 'link-bench') +
@@ -615,8 +618,51 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
               <p className="eyebrow">{t('疑問 {n}', { n: num(i) })}</p>
               <h2>{t(q.text, scope)}</h2>
             </header>
-            <section className={done ? 'panel step answer done' : 'panel step answer'}>
-              <h3 className="step-head">{t('答案')}</h3>
+            {bench}
+            <section className="panel step mine">
+              <h3 className="step-head">
+                <span className="step-num">2</span>
+                {t('發現')}
+              </h3>
+              {found.length === 0 ? (
+                <p className="slot-card found-empty">
+                  {t('在上面把兩張卡連起來，發現會出現在這裡。')}
+                </p>
+              ) : (
+                // 一條發現就是一張便條：編號與關係、連起來的兩張卡、連線的內容；點了放進答案。
+                <ol className="found-list">
+                  {found.map((f) => (
+                    <FoundNote
+                      key={f.id}
+                      fresh={f.id === fresh}
+                      used={a.cards.includes(f.id)}
+                      done={done}
+                      label={`${t(f.name, scope)}${t('：')}${showPair(f.pair)}`}
+                      onPick={() => toggleCard(q.id, f.id)}
+                      head={
+                        <>
+                          {t(f.name, scope)}
+                          <span>{t(f.relation)}</span>
+                        </>
+                      }
+                      pair={showPair(f.pair)}
+                      text={t(f.text, scope)}
+                      note={f.conclusion && t(f.conclusion.text, scope)}
+                    />
+                  ))}
+                </ol>
+              )}
+            </section>
+            {/* 工作台順序＝動作順序：連線 → 發現 → 答案；答案列釘在底部（UX 規格）。 */}
+            <section
+              className={
+                done ? 'panel step answer answer-bar done' : 'panel step answer answer-bar'
+              }
+            >
+              <h3 className="step-head">
+                <span className="step-num">3</span>
+                {t('答案')}
+              </h3>
               {done ? (
                 <p className="good">
                   {t('已確認')}
@@ -643,7 +689,12 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
                               <strong>{showPair(c.pair)}</strong>
                               <span className="muted small">{t(c.relation)}</span>
                             </button>
-                          ) : null}
+                          ) : (
+                            // 連起來之後下一步要點發現再提交（體驗評測：沒有提示，會以為連起來就解完了）。
+                            <span className="slot-hint">
+                              {found.length ? t('點一條發現放到這裡') : t('先連線，得到發現')}
+                            </span>
+                          )}
                         </li>
                       );
                     })}
@@ -677,36 +728,6 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
                 <p role="status" className="board-note">
                   {t(st.feedback[q.id], scope)}
                 </p>
-              )}
-            </section>
-            {bench}
-            <section className="panel step mine">
-              <h3 className="step-head">{t('發現')}</h3>
-              {found.length === 0 ? (
-                <div className="slot-card" aria-label={t('還沒有發現')} />
-              ) : (
-                // 一條發現就是一張便條：編號與關係、連起來的兩張卡、連線的內容；點了放進答案。
-                <ol className="found-list">
-                  {found.map((f) => (
-                    <FoundNote
-                      key={f.id}
-                      fresh={f.id === fresh}
-                      used={a.cards.includes(f.id)}
-                      done={done}
-                      label={`${t(f.name, scope)}${t('：')}${showPair(f.pair)}`}
-                      onPick={() => toggleCard(q.id, f.id)}
-                      head={
-                        <>
-                          {t(f.name, scope)}
-                          <span>{t(f.relation)}</span>
-                        </>
-                      }
-                      pair={showPair(f.pair)}
-                      text={t(f.text, scope)}
-                      note={f.conclusion && t(f.conclusion.text, scope)}
-                    />
-                  ))}
-                </ol>
               )}
             </section>
           </section>
@@ -965,7 +986,7 @@ function FoundNote({
     return () => ro.disconnect();
   }, [open, text, note]);
   return (
-    <li className="found-item">
+    <li className={long || open ? 'found-item long' : 'found-item'}>
       <button
         className={fresh ? 'found fresh' : 'found'}
         aria-pressed={used}

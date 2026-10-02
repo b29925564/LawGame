@@ -367,7 +367,7 @@ describe('瑞秋的詰問', () => {
       cards: [],
     });
     expect(failed.impeachments).toBe(0);
-    expect(failed.log.some((l) => l.text.includes('手錶在搏鬥中可能脫落'))).toBe(true);
+    expect(failed.log.some((l) => l.text.includes('手錶在搏鬥中有沒有可能脫落'))).toBe(true);
 
     const broken = trial.confront(rachel, st, c.id, 25, ['邏輯'], {
       id: 'arg-b',

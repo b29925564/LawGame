@@ -44,7 +44,7 @@ _cards: &cards
   - id: indictment
     name: 起訴書
     kind: 文件
-    text: 二級謀殺。卡爾德港州訴伊森・蕭。
+    text: 二級謀殺。卡爾德州訴伊森・蕭。
     source: 檢方證據開示
     held: true
   - id: arrest-time
@@ -503,6 +503,9 @@ scenes:
         who: 馬庫斯・海爾
         text: 利益衝突豁免書，亞瑟・卡爾德早上就簽了。他說這案子很單純。
       - do: say
+        who: 馬庫斯・海爾
+        text: 伊森那邊也要一份書面同意：他得知道替他辯護的事務所，收著卡爾德的錢。羅根下午送去看守所。
+      - do: say
         who: 盧卡斯
         text: 早上？我還沒開口。
       - do: say
@@ -541,7 +544,7 @@ scenes:
                 mood: 硬
       - do: say
         who: 旁白
-        text: 16:05，地檢署送來三箱開示資料。箱子側面貼著承辦檢察官的名字：凱瑟琳・莫羅。
+        text: 16:05，地方檢察官辦公室送來三箱開示資料。箱子側面貼著承辦檢察官的名字：凱瑟琳・莫羅。
 
   - type: card
     id: act2
@@ -893,6 +896,7 @@ scenes:
           options:
             - text: 撤回傳票。
               flags: [whitlock-up, chat-audit-lost]
+              ethics: [client-sold-out]
               then:
                 - who: 維多莉亞・惠特洛克
                   text: 聰明。這件事我記著。
@@ -1016,6 +1020,9 @@ scenes:
       role: 卡爾德物流　合規長
     intro:
       - who: 馬庫斯・海爾
+        text: 卡爾德州是少數允許刑事案辯方做取證錄取的州。好好用。
+        mood: 暖
+      - who: 馬庫斯・海爾
         text: 十二個問題。宣誓過的話，她在庭上改一個字，你就能拿逐字稿打她。
         mood: 暖
       - who: 馬庫斯・海爾
@@ -1104,7 +1111,7 @@ scenes:
   - type: negotiation
     id: plea-morrow
     act: 第三幕
-    place: 地方檢察署　四樓
+    place: 地方檢察官辦公室　四樓
     opponent:
       name: 凱瑟琳・莫羅
       role: 地方助理檢察官
@@ -1131,10 +1138,10 @@ scenes:
             mood: 緊
       - id: o-manslaughter
         min: 60
-        label: 故意殺人，八年
+        label: 非預謀殺人，八年
         lines:
           - who: 凱瑟琳・莫羅
-            text: 故意殺人，八年。你的那些東西還不足以讓陪審團轉向。
+            text: 非預謀殺人，八年。你的那些東西還不足以讓陪審團轉向。
             mood: 硬
         asks:
           - who: 伊森・蕭
@@ -1156,7 +1163,7 @@ scenes:
         label: 過失致死，緩刑五年
         lines:
           - who: 凱瑟琳・莫羅
-            text: 過失致死，緩刑五年。他明天就能回家。但我不會撤回起訴——我有目擊證人。
+            text: 過失致死，緩刑五年。他明天就能回家。但他得站上法庭，親口認罪。
             mood: 硬
         asks:
           - who: 伊森・蕭
@@ -1295,14 +1302,14 @@ scenes:
     act: 第四幕
     title: 第四幕　庭審　第一天
     lines:
-      - 卡爾德港高等法院　第三法庭
+      - 卡爾德郡高等法院　第三法庭
       - 先選出十二位陪審員，接著是開場陳述，然後檢方傳喚第一位證人。
 
   # 第四幕第一天之前：陪審團遴選（企劃書 6.9.1）
   - type: voirdire
     id: voir-dire
     act: 第四幕
-    place: 卡爾德港高等法院　第三法庭
+    place: 卡爾德郡高等法院　第三法庭
     questions: 6
     peremptories: 3
     seats: 12
@@ -1573,7 +1580,7 @@ scenes:
   - type: opening
     id: opening
     act: 第四幕
-    place: 卡爾德港高等法院　第三法庭
+    place: 卡爾德郡高等法院　第三法庭
     picks: 3
     intro:
       - who: 旁白
@@ -1642,6 +1649,8 @@ scenes:
         leans: [權威, 情感]
         start: 55
     intro:
+      - who: 旁白
+        text: 開庭前，雙方合意以書面帶過法醫的證詞：驗屍報告直接列為證據，不傳布魯克斯醫師。
       - who: 羅根
         text: 檢方直接詰問的時候，每個問題你都有一次異議的機會。理由錯了，法官的耐心就少一格。
         mood: 硬
@@ -1681,8 +1690,8 @@ scenes:
         - id: d5
           q: 被告四年前也曾經被逮捕，您知道嗎？
           a: 我調過他的紀錄，持有毒品。
-          objection: 無關
-          sustained: 異議成立。陪審團請忽略這個問題。檢察官，你很清楚不能這樣問。
+          objection: 品格證據
+          sustained: 異議成立。前科是品格證據，不能用來證明被告這一次做了什麼。陪審團請忽略這個問題。
           impact: 6
           tags: [情感, 權威]
         - id: d6
@@ -1690,6 +1699,10 @@ scenes:
           a: 他自己開口說：「我只是想讓他住手。」沒有人問他任何問題。
           impact: 8
           tags: [情感, 權威]
+          # 米蘭達動議准了之後，檢方還是會用「他自己開口」繞過裁定；玩家要用「違反裁定」擋下。
+          barred:
+            when: { cards: [statement-excluded] }
+            sustained: 異議成立。本庭已排除該項供述，檢方不得提起。陪審團請不要理會。
       claims:
         - id: c-checked
           text: 我們檢查了所有跟被告有關的證據。
@@ -1710,7 +1723,7 @@ scenes:
             weak: 我說的是該查的都查了。手錶那種東西，我們通常不會特別去調。
           counter:
             argument: arg-a
-            text: 異議。那則通知預覽也可能是被告自己用別的帳號傳給自己的。
+            text: 警探，那則通知預覽有沒有可能是被告自己用別的帳號傳給自己的？
             needs: chat-audit
             broken: 庭上，稽核紀錄顯示發送裝置是死者辦公室的桌機，不是被告的手機。
             failed: 庭上……我手上沒有能證明是誰傳的東西。
@@ -1731,6 +1744,7 @@ scenes:
     act: 第四幕
     title: 第四幕　庭審　第二天
     lines:
+      - 緩刑五年。伊森在看守所聽完莫羅的條件，只說了一句：「我沒有做。」
       - 檢方先傳喚死者的執行助理蘇菲・馬丁內斯，用她建立動機。
       - 最後一位證人是瑞秋・艾德勒：她是唯一聽見聲音的人，也是全案最無懈可擊的證人。
 
@@ -1816,8 +1830,8 @@ scenes:
           impact: 8
           tags: [情感]
         - id: s4
-          q: 沃斯先生事後跟您說過，他很怕被告，是嗎？
-          a: 他說他不想再看到伊森。
+          q: 沃斯先生跟您說過，伊森那天下午動了公司的錢，是嗎？
+          a: 他說伊森動了帳上的錢，他已經抓到了。
           objection: 傳聞
           sustained: 異議成立。死者的話，本庭不能經由證人轉述。
           impact: 5
@@ -1948,8 +1962,8 @@ scenes:
         - id: r4
           q: 以一位在公司九年的主管來看，被告是個什麼樣的人？
           a: 情緒化。他跟沃斯吵過不只一次。
-          objection: 推測
-          sustained: 異議成立。證人不是心理專家，也不是來替被告作人格鑑定的。
+          objection: 品格證據
+          sustained: 異議成立。證人對被告的評價是品格證據，不能拿來證明他那天晚上做了什麼。
           impact: 5
           tags: [情感]
         - id: r5
@@ -1992,7 +2006,7 @@ scenes:
             weak: 我說的是大概。人不會每分每秒都在看時鐘。
           counter:
             argument: arg-b
-            text: 異議。手錶在搏鬥中可能脫落，心率歸零不等於死亡時間。
+            text: 艾德勒女士，手錶在搏鬥中有沒有可能脫落？心率歸零，就一定是死亡的時間嗎？
             needs: watch-photo
             broken: 庭上，驗屍照片顯示手錶仍扣在死者腕上，錶帶完好。它沒有脫落。
             failed: 庭上……我手上沒有能證明手錶沒有脫落的東西。
@@ -2033,7 +2047,7 @@ scenes:
             weak: 那不代表什麼。有人可以跟著別人進來，不刷卡。
           counter:
             argument: arg-d
-            text: 異議。證人稍早補充過，她二十三點十分去敲過沃斯的門，沒有人應門就離開了。
+            text: 艾德勒女士，您稍早補充過，二十三點十分您去敲過沃斯的門，沒有人應門就離開了，對嗎？
             needs: chat-audit
             broken: 庭上，二十三點十四分有人在那個房間的桌機上操作。她若在門口，就一定進過房間。
             failed: 庭上……如果她只是敲了門，那的確不能證明什麼。
@@ -2065,16 +2079,14 @@ scenes:
     outro:
       - who: 旁白
         text: 法官宣布休庭到明天上午。旁聽席的人還沒有散。
-      - who: 馬庫斯・海爾
-        text: 我做了三十年，看過三次這種場面。
-        mood: 暖
 
   - type: card
     id: day3
     act: 第四幕
     title: 第四幕　庭審　第三天
     lines:
-      - 檢方舉證完畢。今天輪到辯方傳喚證人，然後是結辯。
+      - 檢方舉證完畢。盧卡斯站起來：「辯方聲請無罪判決。」法官：「駁回。辯方傳喚證人。」
+      - 今天輪到辯方傳喚證人，然後是結辯。
 
   # 辯方證人：布魯克斯法醫（企劃書 6.9.6）
   - type: defense
@@ -2140,12 +2152,12 @@ scenes:
         impact: 7
         tags: [程序]
         door:
-          q: 布魯克斯醫師，您和檢察官辦公室合作十五年，從來沒有因為對方的要求修改過報告，對嗎？
+          q: 布魯克斯醫師，您和地方檢察官辦公室合作十五年，從來沒有因為對方的要求修改過報告，對嗎？
           a: ……有過一次。不是這個案子，但確實有過一次。
           penalty: 6
     leak:
       q: 布魯克斯醫師，辯護律師有沒有「教」您該怎麼回答手錶的問題？
-      a: 我們……見過面，她跟我討論過怎麼說比較清楚。
+      a: 我們……見過面，他跟我討論過怎麼說比較清楚。
       penalty: 8
     outro:
       - who: 旁白
@@ -2215,7 +2227,7 @@ scenes:
           penalty: 5
     leak:
       q: 奈爾博士，辯方律師有沒有替您擬過證詞？
-      a: 她給過我問題的順序。答案是我自己的。
+      a: 他給過我問題的順序。答案是我自己的。
       penalty: 4
     outro:
       - who: 旁白
@@ -2362,12 +2374,14 @@ scenes:
   - type: closing
     id: closing
     act: 第四幕
-    place: 卡爾德港高等法院　第三法庭
+    place: 卡爾德郡高等法院　第三法庭
     picks: 3
     threshold: 70
     intro:
       - who: 旁白
         text: 法官宣布：辯方舉證完畢。
+      - who: 法官
+        text: 各位陪審員，結辯之後各位會退庭評議。本席先提醒：檢方必須證明到超越合理懷疑；被告有權不作證，各位不得因此推定他有罪。
       - who: 馬庫斯・海爾
         text: 挑三個。講最後的那一個，他們記得最清楚。
         mood: 暖
@@ -2456,7 +2470,7 @@ scenes:
     epilogue: true
     when:
       outcome: [dismissed]
-    place: 郡法院　第三法庭外走廊　隔天上午
+    place: 卡爾德郡高等法院　第三法庭外走廊　隔天上午
     steps:
       - do: say
         who: 旁白
@@ -2478,6 +2492,13 @@ scenes:
         who: 凱瑟琳・莫羅
         text: 下次，早點打給我。
         mood: 硬
+      - do: say
+        who: 旁白
+        text: 電梯門關上。海爾從走廊另一頭走過來。
+      - do: say
+        who: 馬庫斯・海爾
+        text: 我做了三十年，看過三次這種場面。
+        mood: 暖
 
   - type: dialogue
     id: epilogue-deal-murder2
@@ -2486,11 +2507,11 @@ scenes:
     when:
       outcome: [deal]
       deal: [o-murder2]
-    place: 郡法院　量刑庭
+    place: 卡爾德郡高等法院　量刑庭
     steps:
       - do: say
         who: 旁白
-        text: 法官接受認罪協商：二級謀殺，有期徒刑十五年。法官准他下週一自行到案服刑。
+        text: 法官接受認罪協商：二級謀殺，有期徒刑十五年。法官當庭宣判，法警把他帶回看守所，等候移監。
 
   - type: dialogue
     id: epilogue-deal-manslaughter
@@ -2499,11 +2520,11 @@ scenes:
     when:
       outcome: [deal]
       deal: [o-manslaughter]
-    place: 郡法院　量刑庭
+    place: 卡爾德郡高等法院　量刑庭
     steps:
       - do: say
         who: 旁白
-        text: 法官接受認罪協商：故意殺人，有期徒刑八年。法官准他下週一自行到案服刑。
+        text: 法官接受認罪協商：非預謀殺人，有期徒刑八年。法官當庭宣判，法警把他帶回看守所，等候移監。
 
   - type: dialogue
     id: epilogue-deal-negligent
@@ -2512,11 +2533,11 @@ scenes:
     when:
       outcome: [deal]
       deal: [o-negligent]
-    place: 郡法院　量刑庭
+    place: 卡爾德郡高等法院　量刑庭
     steps:
       - do: say
         who: 旁白
-        text: 法官接受認罪協商：過失致死，有期徒刑三年。法官准他下週一自行到案服刑。
+        text: 法官接受認罪協商：過失致死，有期徒刑三年。法官當庭宣判，法警把他帶回看守所，等候移監。
 
   - type: dialogue
     id: epilogue-deal-probation
@@ -2525,7 +2546,7 @@ scenes:
     when:
       outcome: [deal]
       deal: [o-probation]
-    place: 郡法院　量刑庭
+    place: 卡爾德郡高等法院　量刑庭
     steps:
       - do: say
         who: 旁白
@@ -2537,7 +2558,7 @@ scenes:
     epilogue: true
     when:
       outcome: [deal]
-    place: 郡法院　台階
+    place: 卡爾德郡高等法院　台階
     steps:
       - do: say
         who: 旁白
@@ -2580,6 +2601,9 @@ scenes:
     id: epilogue-review
     act: 尾聲
     epilogue: true
+    when:
+      verdict: [無罪, 有罪, 陪審團僵局]
+      notFlags: [whitlock-up]
     place: 惠特洛克・海爾律師事務所　會議室　結案後
     steps:
       - do: say
@@ -2589,6 +2613,83 @@ scenes:
       - do: say
         who: 維多莉亞・惠特洛克
         text: 卡爾德物流的法務今天早上打來了。他們問，你下一次會不會也這樣查到底。
+        mood: 硬
+      - do: say
+        who: 維多莉亞・惠特洛克
+        text: 事務所不是公設辯護室。記住這一點。
+        mood: 硬
+      - do: say
+        who: 旁白
+        text: 她走出會議室，沒有等盧卡斯回答。
+
+  # 撤回起訴（E1）：同一段評語，判決欄是空的，所以另寫一份條件。
+  - type: dialogue
+    id: epilogue-review-dismissed
+    act: 尾聲
+    epilogue: true
+    when:
+      outcome: [dismissed]
+      notFlags: [whitlock-up]
+    place: 惠特洛克・海爾律師事務所　會議室　結案後
+    steps:
+      - do: say
+        who: 馬庫斯・海爾
+        text: 不管結果怎麼寫，這一仗你打得比我預期的乾淨。
+        mood: 暖
+      - do: say
+        who: 維多莉亞・惠特洛克
+        text: 卡爾德物流的法務今天早上打來了。他們問，你下一次會不會也這樣查到底。
+        mood: 硬
+      - do: say
+        who: 維多莉亞・惠特洛克
+        text: 事務所不是公設辯護室。記住這一點。
+        mood: 硬
+      - do: say
+        who: 旁白
+        text: 她走出會議室，沒有等盧卡斯回答。
+
+  # 撤回了傳票：惠特洛克記得，是好的那種。
+  - type: dialogue
+    id: epilogue-review-withdrew
+    act: 尾聲
+    epilogue: true
+    when:
+      flags: [whitlock-up]
+    place: 惠特洛克・海爾律師事務所　會議室　結案後
+    steps:
+      - do: say
+        who: 馬庫斯・海爾
+        text: 不管結果怎麼寫，這一仗你打得比我預期的乾淨。
+        mood: 暖
+      - do: say
+        who: 維多莉亞・惠特洛克
+        text: 卡爾德物流的法務今天早上打來了。他們要我謝謝你撤了那張傳票。
+        mood: 硬
+      - do: say
+        who: 維多莉亞・惠特洛克
+        text: 事務所不是公設辯護室。這一點你這次記住了。
+        mood: 硬
+      - do: say
+        who: 旁白
+        text: 她走出會議室，沒有等盧卡斯回答。
+
+  # 認罪協商：沒有審判可評，評的是省下的錢。
+  - type: dialogue
+    id: epilogue-review-deal
+    act: 尾聲
+    epilogue: true
+    when:
+      outcome: [deal]
+      notFlags: [whitlock-up]
+    place: 惠特洛克・海爾律師事務所　會議室　結案後
+    steps:
+      - do: say
+        who: 馬庫斯・海爾
+        text: 認罪協商。你替他省了一場審判，也替事務所省了十六個工時。
+        mood: 暖
+      - do: say
+        who: 維多莉亞・惠特洛克
+        text: 卡爾德物流的法務今天早上打來了。他們問，你那張傳票是不是還掛在他們的稽核紀錄上。
         mood: 硬
       - do: say
         who: 維多莉亞・惠特洛克
@@ -2666,6 +2767,7 @@ scenes:
     act: 尾聲
     when:
       theory: [sophie]
+      verdict: [無罪]
     place: 盧卡斯的辦公室　一週後
     steps:
       - do: say
@@ -2681,6 +2783,29 @@ scenes:
       - do: say
         who: 潔德
         text: （訊息）她那晚在車上，是在把沃斯的行事曆交給我。你贏了。
+        mood: 緊
+
+  - type: dialogue
+    id: epilogue-smear-lost
+    act: 尾聲
+    when:
+      theory: [sophie]
+      verdict: [有罪, 陪審團僵局]
+    place: 盧卡斯的辦公室　一週後
+    steps:
+      - do: say
+        who: 旁白
+        text: 新聞 App 的頭條不是伊森。是蘇菲：〈卡爾德物流助理涉偽證？停車場紀錄曝光她命案當晚的行蹤〉。
+      - do: say
+        who: 旁白
+        text: 有人翻出她的社群帳號，有人貼出她租屋處的地址。卡爾德物流發了一則兩行的聲明，她被解僱了。
+      - do: say
+        who: 盧卡斯
+        text: 我沒有說她殺人。｜我只說她說了謊。
+        voice: 'off'
+      - do: say
+        who: 潔德
+        text: （訊息）她那晚在車上，是在把沃斯的行事曆交給我。你沒有贏。她也沒有。
         mood: 緊
 
   - type: dialogue

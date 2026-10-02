@@ -376,9 +376,6 @@ function negoErrors(
   for (const b of s.bluffs) {
     for (const n of b.needs)
       if (!available.has(n)) errors.push(`談判 ${s.id} 的虛張聲勢 ${b.id} 指到不存在的證據 ${n}`);
-    // 撐得起來的說法要真的撐得起來：需要的證據全在開示清單上才算可信。
-    if (b.needs.every((n) => s.disclosed.includes(n)) === false && b.caught.length === 0)
-      errors.push(`談判 ${s.id} 的虛張聲勢 ${b.id} 沒有被識破時的台詞`);
   }
   for (const d of s.disclosed)
     if (!available.has(d)) errors.push(`談判 ${s.id} 開示了不存在的證據 ${d}`);

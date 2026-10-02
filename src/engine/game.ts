@@ -831,7 +831,7 @@ export const useEpisode = create<GameState>()((set, get) => {
       if (!closingArgs(get().progress).some((a) => a.id === id)) return;
       onNego((s, st) => nego.reveal(s, st, id, strength, name));
     },
-    bluff: (id) => onNego((s, st) => nego.bluff(s, st, id)),
+    bluff: (id) => onNego((s, st) => nego.bluff(s, st, id, get().progress.cards)),
     advise: (take) => onNego((s, st) => nego.advise(s, st, take)),
     walkOut: () => onNego((s, st) => nego.walk(s, st)),
     callClient: () => onNego((s, st) => nego.call(s, st)),
