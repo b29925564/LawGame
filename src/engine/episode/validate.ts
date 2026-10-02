@@ -323,6 +323,22 @@ function depoErrors(
   args: Set<string>,
   errors: string[],
 ) {
+  if (s.side === 'theirs') {
+    // 對方主導：要有題目，而且有該異議的和不該異議的，才是在練判斷。
+    if (!s.script.length) errors.push(`錄取 ${s.id} 是對方主導，卻沒有任何問題`);
+    const sids = new Set<string>();
+    for (const q of s.script) {
+      if (sids.has(q.id)) errors.push(`錄取 ${s.id} 的問題 id 重複：${q.id}`);
+      sids.add(q.id);
+      q.gives.forEach((g) => available.add(g));
+    }
+    if (s.script.length && !s.script.some((q) => q.objection))
+      errors.push(`錄取 ${s.id} 沒有任何該異議的問題`);
+    if (s.script.length && !s.script.some((q) => !q.objection))
+      errors.push(`錄取 ${s.id} 沒有任何不該異議的問題`);
+    return;
+  }
+  if (!s.topics.length) errors.push(`錄取 ${s.id} 沒有任何話題`);
   const qs = s.topics.flatMap((t) => t.questions);
   // 額度要真的是取捨：問題必須比額度多，否則玩家可以全問。
   if (qs.length <= s.budget)

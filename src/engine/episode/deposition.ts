@@ -1,4 +1,5 @@
 import type { DepoQuestion, DepositionScene, Line } from './schema';
+import type { Objection } from './trial';
 
 export interface DepoState {
   /** 剩下幾個提問額度。 */
@@ -12,10 +13,74 @@ export interface DepoState {
   exposed: string[];
   log: Line[];
   over: boolean;
+  /** 對方主導：問到第幾題、異議錯了幾次、留下的旗標。 */
+  i?: number;
+  wrong?: number;
+  flags?: string[];
 }
 
+/** 對方主導的錄取，玩家能用的異議：庭上那幾種，加上指示證人不回答的「特權」。 */
+export type DepoObjection = Objection | '特權';
+export const DEPO_OBJECTIONS: DepoObjection[] = [
+  '誘導',
+  '傳聞',
+  '推測',
+  '無關',
+  '已問已答',
+  '缺乏基礎',
+  '特權',
+];
+
 export function startDeposition(s: DepositionScene): DepoState {
-  return { left: s.budget, asked: [], anchored: [], gained: [], exposed: [], log: [], over: false };
+  return {
+    left: s.budget,
+    asked: [],
+    anchored: [],
+    gained: [],
+    exposed: [],
+    log: [],
+    over: s.side === 'theirs' && s.script.length === 0,
+    i: 0,
+    wrong: 0,
+    flags: [],
+  };
+}
+
+/** 對方主導時，現在輪到的問題。 */
+export function current(s: DepositionScene, st: DepoState) {
+  return st.over ? undefined : s.script[st.i ?? 0];
+}
+
+/**
+ * 對方主導：對方問一題，玩家選擇異議（或不異議）。錄取時沒有法官當場裁決，
+ * 證人照樣回答，異議只記在筆錄上，開庭時才算數；只有「特權」可以指示證人不回答。
+ */
+export function defend(s: DepositionScene, st: DepoState, reason: DepoObjection | null): DepoState {
+  const q = current(s, st);
+  if (s.side !== 'theirs' || !q) return st;
+  const right = reason !== null && reason === q.objection;
+  const silenced = right && reason === '特權';
+  const flag = right ? 'preserved' : reason === null && q.objection ? 'waived' : null;
+  const log: Line[] = [
+    { who: s.examiner, text: q.q, mood: '平', thought: false },
+    ...(reason
+      ? [{ who: '艾莉絲', text: `異議，${reason}。`, mood: '硬' as const, thought: false }]
+      : []),
+    ...(silenced
+      ? [{ who: '艾莉絲', text: '我指示證人不要回答。', mood: '硬' as const, thought: false }]
+      : [{ who: s.witness.name, text: q.a, mood: '平' as const, thought: false }]),
+  ];
+  const i = (st.i ?? 0) + 1;
+  return {
+    ...st,
+    i,
+    wrong: (st.wrong ?? 0) + (reason !== null && !right ? 1 : 0),
+    asked: [...st.asked, q.id],
+    gained: silenced ? st.gained : [...new Set([...st.gained, ...q.gives])],
+    flags: flag ? [...(st.flags ?? []), `depo:${s.id}:${q.id}:${flag}`] : (st.flags ?? []),
+    log: [...st.log, ...log],
+    over: i >= s.script.length,
+  };
 }
 
 export function questionsOf(s: DepositionScene, topic: string): DepoQuestion[] {
@@ -29,7 +94,7 @@ export function canAsk(st: DepoState, id: string): boolean {
 /** 提問：證人宣誓回答，不管對方律師異議與否（錄取時法官不在場）。 */
 export function ask(s: DepositionScene, st: DepoState, id: string): DepoState {
   const q = s.topics.flatMap((t) => t.questions).find((x) => x.id === id);
-  if (!q || !canAsk(st, id)) return st;
+  if (s.side === 'theirs' || !q || !canAsk(st, id)) return st;
   const log: Line[] = [
     { who: '艾莉絲', text: q.q, mood: '平', thought: false },
     ...(q.objection

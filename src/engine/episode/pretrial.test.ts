@@ -134,3 +134,38 @@ describe('和解授權', () => {
     expect(nego.call(plea, st)).toBe(st);
   });
 });
+
+describe('對方主導的證詞錄取', () => {
+  const theirs = (): DepositionScene => ({
+    ...structuredClone(rachel),
+    side: 'theirs',
+    examiner: '奧卡福',
+    topics: [],
+    script: [
+      { id: 't-name', q: '請說名字。', a: '普莉亞。', objection: null, gives: [] },
+      { id: 't-lead', q: '妳同意吧？', a: '同意。', objection: '誘導', gives: [] },
+      { id: 't-memo', q: '法務說了什麼？', a: '說風險可控。', objection: '特權', gives: ['memo'] },
+      { id: 't-log', q: '他死後還被扣分？', a: '對。', objection: null, gives: ['d11'] },
+    ],
+  });
+
+  it('依序問；對的異議留紀錄，特權不回答，亂異議記一筆，沒異議就放棄', () => {
+    const s = theirs();
+    let st = depo.startDeposition(s);
+    expect(depo.ask(s, st, 'd-heard')).toBe(st);
+    expect(depo.current(s, st)?.id).toBe('t-name');
+    st = depo.defend(s, st, '無關');
+    expect(st.wrong).toBe(1);
+    st = depo.defend(s, st, null);
+    expect(st.flags).toEqual([`depo:${s.id}:t-lead:waived`]);
+    st = depo.defend(s, st, '特權');
+    expect(st.flags).toContain(`depo:${s.id}:t-memo:preserved`);
+    expect(st.gained).not.toContain('memo');
+    expect(st.log.at(-1)?.text).toBe('我指示證人不要回答。');
+    expect(st.over).toBe(false);
+    st = depo.defend(s, st, null);
+    expect(st.gained).toEqual(['d11']);
+    expect(st.over).toBe(true);
+    expect(depo.defend(s, st, null)).toBe(st);
+  });
+});
