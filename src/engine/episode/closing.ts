@@ -42,8 +42,8 @@ const avg = (j: Jury) => {
   const v = Object.values(j);
   return v.length ? v.reduce((a, b) => a + b, 0) / v.length : 0;
 };
-/** 金額取到十萬。 */
-const round = (n: number) => Math.round(n / 100000) * 100000;
+/** 金額取到元，不另外取整：判決表上的數字要跟「總額扣掉比例」對得起來。 */
+const round = (n: number) => Math.round(n);
 
 /**
  * 判決表：票數離門檻越近，陪審團越覺得死者自己也有錯（過失比例往上浮動 swing），

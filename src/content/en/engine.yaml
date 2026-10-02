@@ -47,6 +47,7 @@
 看向被告: Looks at the defendant
 '{juror}被多數說服，改變了立場。': '{juror} is swayed by the majority and changes sides.'
 '陪審長（{juror}）主張{verdict}。': 'The foreperson ({juror}) argues for {verdict}.'
+'表決：{yes} 票{a}，{no} 票{b}。': 'Vote: {yes} {a}, {no} {b}.'
 
 # 庭審
 '異議，{reason}。': 'Objection, {reason}.'

@@ -366,6 +366,23 @@ function directFor(p: Progress, s: TrialScene): TrialScene['witness']['direct'] 
     );
 }
 
+/**
+ * 生效中的排除裁定：本集任何一題的 barred 條件成立時，條件裡點名的卡就是那張裁定。
+ * 回傳卡名，異議窗用來說明「違反裁定」的依據。
+ */
+export function rulingsIn(p: Progress): string[] {
+  const ep = episodeOf(p);
+  const c = branchContext(p);
+  const ids = new Set<string>();
+  for (const s of ep.scenes)
+    if (s.type === 'trial')
+      for (const q of s.witness.direct)
+        if (q.barred && branch.matches(q.barred.when, c))
+          for (const id of q.barred.when.cards ?? ['審前裁定']) ids.add(id);
+  const cards = ep.scenes.flatMap((s) => (s.type === 'desk' ? s.cards : []));
+  return [...ids].map((id) => cards.find((x) => x.id === id)?.name ?? id);
+}
+
 function motionShift(p: Progress): number {
   return episodeOf(p).scenes.reduce((n, d) => {
     if (d.type !== 'desk') return n;

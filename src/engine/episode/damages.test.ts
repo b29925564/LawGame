@@ -17,9 +17,14 @@ describe('判決表', () => {
     const heavy = closing.award(close, rules, all(90), 40, null)!;
     expect(close50.fault).toBe(45);
     expect(heavy.fault).toBe(35);
-    expect(close50.amount).toBe(3600000);
-    expect(heavy.amount).toBe(4200000);
+    expect(close50.amount).toBe(3575000);
+    expect(heavy.amount).toBe(4225000);
     expect(close50.total).toBe(6500000);
+  });
+
+  it('判賠金額就是總額扣掉比例，不另外取整（650 萬 × 65% = 422.5 萬）', () => {
+    const a = closing.award(close, rules, all(90), 40, null)!;
+    expect(a.amount).toBe((a.total * (100 - a.fault)) / 100);
   });
 
   it('沒有進入懲罰性賠償評議時，punitive 是 null', () => {
@@ -42,7 +47,7 @@ describe('判決表', () => {
   });
 
   it('調解室的風險區間：最高過失比例再浮動一次到全額', () => {
-    expect(closing.exposure(close, [25, 10, 40])).toEqual({ low: 3600000, high: 6500000 });
+    expect(closing.exposure(close, [25, 10, 40])).toEqual({ low: 3575000, high: 6500000 });
   });
 });
 

@@ -42,6 +42,16 @@ describe('民事門檻（優勢證據）', () => {
     expect(moves.some((m) => m.includes('主張有責'))).toBe(true);
   });
 
+  it('每一輪評議都寫出票數，看得到票怎麼移動', () => {
+    const rounds = deliberate(civil(5), jury([62, 55, 52, 46, 44, 30]));
+    const tallies = rounds.map((r) => r.moves.at(-1));
+    expect(tallies).toEqual([
+      '表決：3 票有責，3 票無責。',
+      '表決：4 票有責，2 票無責。',
+      '表決：5 票有責，1 票無責。',
+    ]);
+  });
+
   it('驗證器：民事的結辯要寫有責／無責，判決人數要過半而且不多於陪審員', () => {
     const e = structuredClone(episodes.ep1) as Episode;
     for (const s of e.scenes) if (s.type === 'trial') (s as TrialScene).burden = 'civil';

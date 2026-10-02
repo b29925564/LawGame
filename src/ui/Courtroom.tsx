@@ -11,6 +11,7 @@ import {
   deskSceneOf,
   deskState,
   exposedArgs,
+  rulingsIn,
   trialState,
   useEpisode,
 } from '../engine/game';
@@ -116,16 +117,17 @@ function Jurors({
 
 /** 異議窗：預設回合制，設定裡可以改成限時（企劃書 6.9.5 與 6.14 的輔助選項）。 */
 function ObjectionWindow({
-  reasons,
+  rulings,
   onPass,
   onObject,
 }: {
-  reasons: trial.Objection[];
+  rulings: string[];
   onPass: () => void;
   onObject: (r: trial.Objection) => void;
 }) {
   const seconds = useSettings((s) => s.objectionSeconds);
   const t = useT();
+  const scope = useScope();
   const [left, setLeft] = useState(seconds);
   useEffect(() => {
     if (!seconds) return;
@@ -146,7 +148,7 @@ function ObjectionWindow({
         {seconds > 0 && <span className="muted">{t('{n} 秒', { n: Math.max(0, left) })}</span>}
       </div>
       <div className="row">
-        {reasons.map((r) => (
+        {trial.objectionsFor(rulings).map((r) => (
           <button
             key={r}
             onClick={() => {
@@ -158,6 +160,13 @@ function ObjectionWindow({
           </button>
         ))}
       </div>
+      {rulings.length > 0 && (
+        <p className="muted small">
+          {t('生效中的裁定：{rulings}', {
+            rulings: rulings.map((r) => t(r, scope)).join(t('、')),
+          })}
+        </p>
+      )}
       <button className="wide" onClick={onPass}>
         {t('不異議')}
       </button>
@@ -362,11 +371,7 @@ export function Courtroom({ scene: raw }: { scene: TrialScene }) {
         }
       >
         {st.stage === 'direct' && st.window && (
-          <ObjectionWindow
-            reasons={trial.objectionsFor(scene)}
-            onPass={letPass}
-            onObject={object}
-          />
+          <ObjectionWindow rulings={rulingsIn(progress)} onPass={letPass} onObject={object} />
         )}
         {st.stage === 'direct' && !st.window && (
           <p className="muted">
