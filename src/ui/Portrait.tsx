@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react';
 import type { Line } from '../engine/episode/schema';
+import { useT } from '../i18n';
+import { useScope } from './lang';
 import { MarkLine } from './Marks';
 import { VoLine } from './VoiceOver';
 
@@ -52,7 +54,11 @@ export function Portrait({ who, mood = '平' }: { who: string; mood?: Line['mood
 }
 
 /** 一行台詞。盧卡斯沒說出口的話不進對白框：記號交給 Marks，畫外字幕交給 VoiceOver。 */
-export function Speech({ line, body }: { line: Line; body?: ReactNode }) {
+export function Speech({ line: raw, body }: { line: Line; body?: ReactNode }) {
+  const t = useT();
+  const scope = useScope();
+  // 英文模式查表；說話者的 who 留著中文給立繪配色用，畫面上顯示譯名。
+  const line = { ...raw, text: t(raw.text, scope) };
   // 記號不是說出口的話，不進對白框（設計稿 inner-voice）。
   if (line.mark) return <MarkLine line={line} />;
   if (line.voice === 'off') return <VoLine line={line} />;
@@ -69,7 +75,7 @@ export function Speech({ line, body }: { line: Line; body?: ReactNode }) {
     <p className="speech">
       <Portrait who={line.who} mood={line.mood} />
       <span>
-        <span className="who">{line.who}</span>
+        <span className="who">{t(line.who)}</span>
         {body ?? line.text}
       </span>
     </p>

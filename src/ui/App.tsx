@@ -20,10 +20,14 @@ import { Title } from './Title';
 import { Defense } from './Defense';
 import { Opening, Theory } from './Theory';
 import { VoirDire } from './VoirDire';
+import { useT } from '../i18n';
+import { SceneScope, useDocumentLang } from './lang';
 
 export function App() {
   const { mode, progress, advance, toTitle, nextEpisode } = useEpisode();
   const textScale = useSettings((s) => s.textScale);
+  const t = useT();
+  useDocumentLang();
   useEffect(() => {
     document.documentElement.style.setProperty('--text-scale', String(textScale));
   }, [textScale]);
@@ -33,7 +37,7 @@ export function App() {
     return (
       <>
         <button className="link back" onClick={toTitle}>
-          ← 回標題
+          ← {t('回標題')}
         </button>
         <Prototype />
       </>
@@ -42,7 +46,7 @@ export function App() {
   const scene = sceneOf(progress);
   const next = scene ? null : followingEpisode(progress);
   return (
-    <>
+    <SceneScope.Provider value={scene?.id}>
       <Announcer />
       <GameMenu />
       {scene?.type === 'phone' && <Phone key={scene.id} scene={scene} />}
@@ -59,28 +63,28 @@ export function App() {
       {scene?.type === 'closing' && <Closing key={scene.id} scene={scene} />}
       {(!scene || scene.type === 'card') && (
         <main className="scene title-card">
-          <p className="eyebrow">{scene?.act ?? '本集完'}</p>
-          <h1>{scene?.type === 'card' ? scene.title : '本集完'}</h1>
-          {scene?.type === 'card' && scene.lines.map((l) => <p key={l}>{l}</p>)}
+          <p className="eyebrow">{t(scene?.act ?? '本集完')}</p>
+          <h1>{t(scene?.type === 'card' ? scene.title : '本集完', scene?.id)}</h1>
+          {scene?.type === 'card' && scene.lines.map((l) => <p key={l}>{t(l, scene.id)}</p>)}
           {scene ? (
             <button className="primary" onClick={advance}>
-              繼續
+              {t('繼續')}
             </button>
           ) : (
             <div className="stack">
               {next && (
                 <button className="primary" onClick={nextEpisode}>
-                  繼續第 {episodes[next as keyof typeof episodes].number} 集
+                  {t('繼續第 {n} 集', { n: episodes[next as keyof typeof episodes].number })}
                 </button>
               )}
               <button className={next ? '' : 'primary'} onClick={toTitle}>
-                回標題
+                {t('回標題')}
               </button>
             </div>
           )}
         </main>
       )}
-    </>
+    </SceneScope.Provider>
   );
 }
 

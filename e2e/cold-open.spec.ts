@@ -39,3 +39,14 @@ test('冷開場：看過的訊息被收回，換場自動存檔，可從標題�
   await page.getByRole('button', { name: '讀取存檔 1' }).click();
   await expect(page.getByRole('heading', { name: '合理懷疑' })).toBeVisible();
 });
+
+test('語言切換：標題畫面切成英文，重新整理後保留，切回中文', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'English' }).click();
+  await expect(page.getByRole('button', { name: 'New game' })).toBeVisible();
+  await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+  await page.reload();
+  await expect(page.getByRole('button', { name: 'New game' })).toBeVisible();
+  await page.getByRole('button', { name: '中文' }).click();
+  await expect(page.getByRole('button', { name: '新遊戲' })).toBeVisible();
+});
