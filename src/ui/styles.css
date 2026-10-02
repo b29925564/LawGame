@@ -4585,6 +4585,19 @@ button.iou[aria-pressed='true'] {
   color: var(--faint);
   text-align: center;
 }
+.result-card {
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.result-card .good {
+  margin: 0;
+  flex: 1 1 260px;
+}
+.result-note {
+  margin: 0;
+}
 .step.answer.done {
   border-color: color-mix(in srgb, var(--good) 60%, var(--border));
 }

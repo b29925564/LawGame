@@ -530,11 +530,17 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
     );
   };
 
+  // 確認之後連線台照常能用（發現是共用的），但不再是頁面主角（UX 規格四之 3）。
+  const qDone = !!q && st.confirmed.includes(q.id);
+  // 「下一題 →」：先找後面還沒確認的，再從頭找；都確認了就去時間線，時間線也排完就回清單收工。
+  const after = q ? questions.slice(questions.indexOf(q) + 1) : [];
+  const nextQ = [...after, ...questions].find((x) => !st.confirmed.includes(x.id));
+  const nextView = nextQ?.id ?? (st.timeline.length < timedN ? 'timeline' : null);
   const bench = (
     <section className="panel step links">
       <h3 className="step-head">
         <span className="step-num">1</span>
-        {t('連線')}
+        {qDone ? t('繼續連線') : t('連線')}
       </h3>
       <div
         className={
@@ -664,11 +670,21 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
                 {t('答案')}
               </h3>
               {done ? (
-                <p className="good">
-                  {t('已確認')}
-                  {t('：')}
-                  <span className="arg-name">{t(q.argument.name, scope)}</span>
-                </p>
+                // 結果卡：確認了什麼、得到哪張論點，旁邊直接去下一題。
+                <div className="row result-card">
+                  <p className="good">
+                    ✓ {t('已確認')} → <span className="arg-name">{t(q.argument.name, scope)}</span>
+                  </p>
+                  {(nextView || !wide) && (
+                    <button className="primary" onClick={() => setView(nextView)}>
+                      {nextView === 'timeline'
+                        ? t('去排時間線 →')
+                        : nextView
+                          ? t('下一題 →')
+                          : t('回疑問清單 →')}
+                    </button>
+                  )}
+                </div>
               ) : (
                 <>
                   <ul
@@ -725,7 +741,7 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
                 </>
               )}
               {done && st.feedback[q.id] && (
-                <p role="status" className="board-note">
+                <p role="status" className="muted small result-note">
                   {t(st.feedback[q.id], scope)}
                 </p>
               )}

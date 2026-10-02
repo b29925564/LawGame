@@ -45,6 +45,10 @@
 '拿下 {name}': 'Remove {name}'
 連線: Link
 連起來: Link
+繼續連線: Keep linking
+'下一題 →': 'Next question →'
+'去排時間線 →': 'Go to the timeline →'
+'回疑問清單 →': 'Back to questions →'
 '？': '?'
 '挑卡片（{n}）': 'Pick cards ({n})'
 答案: Answer
