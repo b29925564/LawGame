@@ -2,7 +2,7 @@ import { useCaseTerms } from './terms';
 import { useState } from 'react';
 import * as nego from '../engine/episode/negotiation';
 import type { NegotiationScene } from '../engine/episode/schema';
-import { deskSceneOf, negoState, useEpisode } from '../engine/game';
+import { closingArgs, negoState, useEpisode } from '../engine/game';
 import { CardPick, EvidenceDrawer } from './Evidence';
 import { Speech } from './Portrait';
 import { Shell, Tabs, Transcript } from './Shell';
@@ -14,10 +14,7 @@ export function Negotiation({ scene }: { scene: NegotiationScene }) {
   const terms = useCaseTerms();
   const [intro, setIntro] = useState(st.log.length <= scene.intro.length);
   const [tab, setTab] = useState<'offer' | 'reveal' | 'bluff'>('offer');
-  const deskScene = deskSceneOf(progress);
-  const args = (deskScene?.questions ?? [])
-    .filter((q) => progress.cards.includes(q.argument.id))
-    .map((q) => q.argument);
+  const args = closingArgs(progress);
   const offer = nego.offerOf(scene, st);
   const ok = nego.authorized(scene, st, offer);
 
