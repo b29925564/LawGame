@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { episodes } from '../content';
 import { useEpisode } from '../engine/game';
 import { readSave, SLOTS, type Slot } from '../engine/save';
 
@@ -46,6 +47,7 @@ export function SlotList({
 export function Title() {
   const { newGame, load, openProto } = useEpisode();
   const [loading, setLoading] = useState(false);
+  const [picking, setPicking] = useState(false);
   const auto = readSave('auto');
   return (
     <main className="scene title-screen">
@@ -74,9 +76,25 @@ export function Title() {
               繼續（{auto.label}）
             </button>
           )}
-          <button className={auto ? '' : 'primary'} onClick={() => newGame()}>
+          <button
+            className={auto ? '' : 'primary'}
+            onClick={() => setPicking(!picking)}
+            aria-expanded={picking}
+          >
             新遊戲
           </button>
+          {picking && (
+            <ul className="stack slots">
+              {Object.entries(episodes).map(([id, ep]) => (
+                <li key={id}>
+                  <button className="slot" onClick={() => newGame(id)}>
+                    <strong>第 {ep.number} 集</strong>
+                    <span className="muted">{ep.title}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
           <button onClick={() => setLoading(!loading)} aria-expanded={loading}>
             讀取存檔
           </button>
