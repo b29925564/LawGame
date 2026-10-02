@@ -292,12 +292,14 @@ function discoveryCost(p: Progress): number {
     }, 0);
 }
 
-/** 分支看得到的旗標：對話選項留下的，加上桌面（動議、開示）留下的。 */
+/** 分支看得到的旗標：對話選項留下的，加上桌面（動議、開示）與談判（請示電話）留下的。 */
 export function allFlags(p: Progress): string[] {
-  const fromDesk = episodeOf(p).scenes.flatMap((x) =>
-    x.type === 'desk' ? ((p.scenes[x.id] as desk.DeskState | undefined)?.flags ?? []) : [],
+  const fromScenes = episodeOf(p).scenes.flatMap((x) =>
+    x.type === 'desk' || x.type === 'negotiation'
+      ? ((p.scenes[x.id] as { flags?: string[] } | undefined)?.flags ?? [])
+      : [],
   );
-  return [...new Set([...(p.flags ?? []), ...fromDesk])];
+  return [...new Set([...(p.flags ?? []), ...fromScenes])];
 }
 
 /** 前一場庭審的狀態（同一個陪審團，隔天繼續聽）。 */
@@ -417,6 +419,8 @@ interface GameState {
   bluff: (id: string) => void;
   advise: (take: boolean) => void;
   walkOut: () => void;
+  /** 和解金額超過授權上限時，打電話請示委託人。 */
+  callClient: () => void;
 }
 
 /** 出示這個論點會兌現的承諾（還沒兌現過的那一個）。 */
@@ -692,6 +696,7 @@ export const useEpisode = create<GameState>()((set, get) => {
     bluff: (id) => onNego((s, st) => nego.bluff(s, st, id)),
     advise: (take) => onNego((s, st) => nego.advise(s, st, take)),
     walkOut: () => onNego((s, st) => nego.walk(s, st)),
+    callClient: () => onNego((s, st) => nego.call(s, st)),
 
     finishTrial: () => onTrial((_s, st) => trial.finish(st)),
   };
