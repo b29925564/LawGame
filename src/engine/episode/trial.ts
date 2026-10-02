@@ -18,11 +18,12 @@ export const OBJECTIONS: Objection[] = [
 export const BARRED =
   '異議成立。本庭已經裁定排除這項證據，不得在陪審團面前提出。陪審團請不要理會。';
 
-/** 這一場可以用的異議：有排除裁定被違反的題目時，多一個「違反裁定」。 */
-export function objectionsFor(s: TrialScene): Objection[] {
-  return s.witness.direct.some((q) => q.objection === '違反裁定')
-    ? [...OBJECTIONS, '違反裁定']
-    : OBJECTIONS;
+/**
+ * 可以用的異議：手上有生效的排除裁定時，每一場都多一個「違反裁定」，
+ * 不會只在有題目要擋的那一場才出現（不然按鈕本身就洩題）。
+ */
+export function objectionsFor(rulings: readonly string[]): Objection[] {
+  return rulings.length ? [...OBJECTIONS, '違反裁定'] : OBJECTIONS;
 }
 
 export interface LogLine {

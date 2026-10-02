@@ -123,6 +123,8 @@ export function deliberate(c: JuryRules, jury: Jury): Round[] {
     for (const j of c.jurors) if (j.id !== fore.id) next[j.id] = clamp(next[j.id] + 2 * foreDir);
     const w = termsOf(c);
     moves.push(`陪審長（${fore.label}）主張${foreDir > 0 ? w.yes : w.no}。`);
+    const yes = c.jurors.filter((j) => next[j.id] >= t).length;
+    moves.push(`表決：${yes} 票${w.yes}，${c.jurors.length - yes} 票${w.no}。`);
     cur = next;
     rounds.push({ moves, jury: cur });
   }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { episodes } from '../../content';
-import { courtScene } from '../game';
+import { courtScene, rulingsIn } from '../game';
 import type { TrialScene } from './schema';
 import * as trial from './trial';
 
@@ -24,15 +24,13 @@ describe('主詰問題目的條件與排除裁定', () => {
     expect(at(['statement-excluded'], s).witness.direct.some((q) => q.id === 'd6')).toBe(false);
   });
 
-  it('違反排除裁定的題目，正確異議變成「違反裁定」，異議清單也多這一項', () => {
+  it('違反排除裁定的題目，正確異議變成「違反裁定」', () => {
     const s = withD6({ barred: { when: { cards: ['statement-excluded'] } } });
     const open = at([], s);
     expect(open.witness.direct.find((q) => q.id === 'd6')!.objection).toBeNull();
-    expect(trial.objectionsFor(open)).not.toContain('違反裁定');
 
     const ruled = at(['statement-excluded'], s);
     expect(ruled.witness.direct.find((q) => q.id === 'd6')!.objection).toBe('違反裁定');
-    expect(trial.objectionsFor(ruled)).toContain('違反裁定');
 
     // 玩家異議成立：證詞刪除、心證不動。
     let st = trial.startTrial(ruled, []);
@@ -46,5 +44,14 @@ describe('主詰問題目的條件與排除裁定', () => {
     expect(st.jury).toEqual(before);
     expect(st.log.at(-2)?.text).toBe(trial.BARRED);
     expect(st.log.at(-1)?.struck).toBe(true);
+  });
+
+  it('手上有生效的裁定時，每一場的異議清單都有「違反裁定」，並寫出依據的裁定', () => {
+    const ep1 = { ...base, episode: 'ep1' };
+    expect(rulingsIn({ ...ep1, cards: [] })).toEqual([]);
+    expect(trial.objectionsFor([])).not.toContain('違反裁定');
+    const names = rulingsIn({ ...ep1, cards: ['statement-excluded'] });
+    expect(names).toEqual(['裁定：車上供述已排除']);
+    expect(trial.objectionsFor(names)).toContain('違反裁定');
   });
 });
