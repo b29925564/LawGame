@@ -205,6 +205,15 @@ export function closingState(p: Progress, s: ClosingScene) {
 }
 
 /** 結辯能挑的論點：手上已確認、而且不是只用於聲請的程序論點。 */
+/** 手上所有論點，不管是在哪一個桌面推出來的（審前聲請要用調查階段的論點）。 */
+export function heldArgs(p: Progress) {
+  return episodeOf(p)
+    .scenes.filter((s): s is DeskScene => s.type === 'desk')
+    .flatMap((d) => d.questions)
+    .filter((q) => p.cards.includes(q.argument.id))
+    .map((q) => q.argument);
+}
+
 export function closingArgs(p: Progress) {
   return (deskSceneOf(p)?.questions ?? [])
     .filter((q) => p.cards.includes(q.argument.id) && !q.argument.motionOnly)
