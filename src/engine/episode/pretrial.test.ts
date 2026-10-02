@@ -89,3 +89,48 @@ describe('認罪協商', () => {
     expect(nego.walk(plea, nego.startNegotiation(plea)).outcome).toBe('walk');
   });
 });
+
+describe('和解授權', () => {
+  const say = (text: string) => [{ who: '亞瑟', text, mood: '平' as const, thought: false }];
+  const civil = (): NegotiationScene => ({
+    ...structuredClone(plea),
+    offers: plea.offers.map((o, i) => ({
+      ...o,
+      amount: 3_000_000 - i * 1_000_000,
+      terms: i === 0,
+    })),
+    authority: {
+      cap: 1_500_000,
+      raise: 1_000_000,
+      terms: true,
+      calls: [say('一'), say('二')],
+      over: say('超過了'),
+    },
+  });
+
+  it('超過上限不能接受，請示一次用掉一回合、上限提高、留下旗標', () => {
+    const s = civil();
+    let st = nego.startNegotiation(s);
+    const o = nego.offerOf(s, st);
+    expect(nego.authorized(s, st, o)).toBe(false);
+    const tried = nego.advise(s, st, true);
+    expect(tried.outcome).toBeNull();
+    expect(tried.log.at(-1)?.text).toBe('超過了');
+    st = nego.call(s, st);
+    expect(st.rounds).toBe(s.rounds - 1);
+    expect(st.cap).toBe(2_500_000);
+    expect(st.termsOk).toBe(true);
+    expect(st.flags).toEqual([`call:${s.id}:1`]);
+    st = nego.call(s, st);
+    st = nego.call(s, st);
+    expect(st.log.at(-1)?.text).toBe('二');
+    expect(st.flags).toContain(`call:${s.id}:3`);
+    expect(nego.advise(s, st, true).outcome).toBe('deal');
+  });
+
+  it('沒有授權設定的談判照舊', () => {
+    const st = nego.startNegotiation(plea);
+    expect(nego.authorized(plea, st)).toBe(true);
+    expect(nego.call(plea, st)).toBe(st);
+  });
+});

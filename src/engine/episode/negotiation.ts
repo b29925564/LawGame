@@ -16,6 +16,12 @@ export interface NegoState {
   deal: string | null;
   /** 成交的條件 id，結局依此分支（企劃書 10.9 的 E4）。 */
   dealId?: string;
+  /** 和解授權：目前上限、打過幾通電話、非金錢條款是否已獲同意。 */
+  cap?: number;
+  calls?: number;
+  termsOk?: boolean;
+  /** 請示留下的旗標，分支看得到。 */
+  flags?: string[];
 }
 
 export function startNegotiation(s: NegotiationScene): NegoState {
@@ -30,6 +36,33 @@ export function startNegotiation(s: NegotiationScene): NegoState {
     log: [...s.intro],
     outcome: null,
     deal: null,
+    cap: s.authority?.cap,
+    calls: 0,
+    termsOk: false,
+    flags: [],
+  };
+}
+
+/** 這個條件在授權範圍內嗎（沒有授權機制的談判一律可以）。 */
+export function authorized(s: NegotiationScene, st: NegoState, o: Offer = offerOf(s, st)): boolean {
+  if (!s.authority) return true;
+  const cap = st.cap ?? s.authority.cap;
+  return (o.amount ?? 0) <= cap && (!o.terms || !!st.termsOk);
+}
+
+/** 打電話請示委託人：用掉一回合，上限提高，評價下降。 */
+export function call(s: NegotiationScene, st: NegoState): NegoState {
+  const a = s.authority;
+  if (!a || !canAct(st)) return st;
+  const n = (st.calls ?? 0) + 1;
+  const next = spend(st);
+  return {
+    ...next,
+    cap: (st.cap ?? a.cap) + a.raise,
+    calls: n,
+    termsOk: st.termsOk || a.terms,
+    flags: [...(st.flags ?? []), `call:${s.id}:${n}`],
+    log: [...next.log, ...a.calls[Math.min(n, a.calls.length) - 1]],
   };
 }
 
@@ -100,6 +133,7 @@ export function bluff(s: NegotiationScene, st: NegoState, id: string): NegoState
 export function advise(s: NegotiationScene, st: NegoState, take: boolean): NegoState {
   if (st.outcome !== null) return st;
   const o = offerOf(s, st);
+  if (take && !authorized(s, st, o)) return { ...st, log: [...st.log, ...s.authority!.over] };
   if (take)
     return { ...st, outcome: 'deal', deal: o.label, dealId: o.id, log: [...st.log, ...s.accepted] };
   // 勸他撐下去：信任低的委託人會自己點頭。

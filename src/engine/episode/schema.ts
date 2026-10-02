@@ -526,6 +526,10 @@ const negotiationScene = z.object({
         lines: z.array(line).min(1),
         /** 委託人問「妳覺得我該接受嗎」的那一句。 */
         asks: z.array(line).default([]),
+        /** 金額（民事和解）；超過授權上限就要先請示委託人。 */
+        amount: z.number().int().min(0).optional(),
+        /** 附帶非金錢條款（例如修改演算法），要委託人另外點頭。 */
+        terms: z.boolean().default(false),
       }),
     )
     .min(2),
@@ -543,6 +547,22 @@ const negotiationScene = z.object({
       }),
     )
     .default([]),
+  /**
+   * 和解授權（第 2 集）：替公司談，金額超過上限要打電話請示。
+   * 每通電話用掉一回合，上限提高 raise，委託人對你的評價下降（旗標 call:<場景 id>:<第幾通>）。
+   */
+  authority: z
+    .object({
+      cap: z.number().int().min(0),
+      raise: z.number().int().min(0),
+      /** 請示時是否同意非金錢條款。 */
+      terms: z.boolean().default(false),
+      /** 每通電話委託人的回應；通數超過就重複最後一段。 */
+      calls: z.array(z.array(line).min(1)).min(1),
+      /** 超過授權還想接受時，艾莉絲自己的提醒。 */
+      over: z.array(line).min(1),
+    })
+    .optional(),
   /** 已開示給對方的證據清單（審前交換過的）。 */
   disclosed: z.array(id).default([]),
   reveals: z.array(line).default([]),

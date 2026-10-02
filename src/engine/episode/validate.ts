@@ -358,6 +358,12 @@ function negoErrors(
   }
   for (const d of s.disclosed)
     if (!available.has(d)) errors.push(`談判 ${s.id} 開示了不存在的證據 ${d}`);
+  // 授權上限：每個條件都要有金額，否則上限比不出來。
+  if (s.authority)
+    for (const o of s.offers)
+      if (o.amount === undefined) errors.push(`談判 ${s.id} 有授權上限，條件 ${o.id} 卻沒寫金額`);
+  if (!s.authority && s.offers.some((o) => o.terms))
+    errors.push(`談判 ${s.id} 的條件附帶條款，但沒有授權設定可以請示`);
 }
 
 function voirDireErrors(s: VoirDireScene, errors: string[]) {
