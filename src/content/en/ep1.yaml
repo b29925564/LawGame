@@ -1,12 +1,12 @@
 # ep1: English for the protagonist's lines. Key = the zh line exactly as in ep1.yaml.
 可以走了。回家吧，伊森。: You can go. Go home, Ethan.
-認罪書上寫的是他做過的事。｜我到現在都不知道，那是不是真的。: The plea says what he did. | I still don't know if it's true.
-碼頭九號。｜十二年前，我父親的那場火。: Pier Nine. | Twelve years ago. My father's fire.
+認罪書上寫的是他做過的事。｜我到現在都不知道，那是不是真的。: The plea says what he did.｜I still don't know if it's true.
+碼頭九號。｜十二年前，我父親的那場火。: Pier Nine.｜Twelve years ago. My father's fire.
 交給海爾。事務所的事，先問事務所。: Give it to Hale. Firm business goes to the firm first.
 自己保留。在知道它是什麼之前，誰都不給。: Keep it. Nobody gets it until I know what it is.
 交給潔德。她會知道怎麼讓它見光。: Give it to Jade. She'll know how to get it out.
 我知道。: I know.
-我沒有說她殺人。｜我只說她說了謊。: I never said she killed him. | I only said she lied.
+我沒有說她殺人。｜我只說她說了謊。: I never said she killed him.｜I only said she lied.
 我知道她為什麼說謊。: I knew why she lied.
 你怎麼知道我在哪裡做事。: How do you know where I work.
 謝謝。這個我很擅長。: Thank you. It's one of my strengths.
@@ -16,7 +16,7 @@
 22:44 抵達 → 22:47 刷卡: 22:44 drop-off → 22:47 badge-in
 訊息可以從兩支手機上收回。通知紀錄不行。: A message can be unsent from either phone. A notification log can't.
 一個每天看的人，那支錶裡就一定有東西可以查。: He looks at that watch every day. There's something in it.
-22:24 心率歸零｜22:47 伊森刷卡進門｜23 分鐘: 22:24 heart rate flatlines | 22:47 Ethan badges in | 23 minutes
+22:24 心率歸零｜22:47 伊森刷卡進門｜23 分鐘: 22:24 heart rate flatlines｜22:47 Ethan badges in｜23 minutes
 那張紀錄是唯一能證明訊息存在過的東西。: That log is the only thing that proves the message ever existed.
 我要拿這個去問柯瓦斯基警探，他到底查了什麼、沒查什麼。: I'm taking this to Detective Kowalski. I want to know what he checked, and what he didn't.
 撤回傳票。: Withdraw the subpoena.
@@ -40,7 +40,7 @@
 已排除: EXCLUDED
 駁回: DENIED
 十二個問題，替第十三個打掩護。: Twelve questions, running cover for the thirteenth.
-這是最好的選擇。｜上一次我這樣說，｜他死在裡面。: It's the right call. | The last time I said that, | he died in there.
+這是最好的選擇。｜上一次我這樣說，｜他死在裡面。: It's the right call.｜The last time I said that,｜he died in there.
 選了就不能換。中途改口，陪審團只會記得你改過口。: Pick one and keep it. Change the story halfway and all they remember is that you changed it.
 你一站上去，莫羅就能問四年前的事。: The second you're up there, Morrow gets to ask about four years ago.
 好。從今天開始，每天練一遍最難聽的問題。: Okay. Starting today we rehearse the ugliest questions. Every day.
@@ -413,7 +413,7 @@
 審前該做的都做了。接下來是錄取瑞秋的證詞。: Pretrial is done. Next is Rachel's deposition.
 你手上有什麼，就拿出來；沒有的話，我的條件會一直在桌上。: If you've got something, put it on the table. If you don't, my offer stays there.
 開庭前你會看到名單。: You'll see the list before trial.
-我也記著。｜記著我沒去拿的那張紙。: So will I. | I'll remember the piece of paper I didn't go get.
+我也記著。｜記著我沒去拿的那張紙。: So will I.｜I'll remember the piece of paper I didn't go get.
 我也記著。: So will I.
 記著我沒去拿的那張紙。: I'll remember the piece of paper I didn't go get.
 惠特洛克・海爾　會議室 B: Whitlock & Hale, Conference Room B
@@ -483,7 +483,7 @@
 那就法庭見。我的條件在開庭前會回到原點。: Then I'll see you in court. The offer goes back to where it started before trial.
 好。就這樣吧。: Okay. Let's do it.
 這是最好的選擇。: It's the right call.
-上一次我這樣說，｜他死在裡面。: The last time I said that, | he died in there.
+上一次我這樣說，｜他死在裡面。: The last time I said that,｜he died in there.
 惠特洛克・海爾　會議室 A: Whitlock & Hale, Conference Room A
 明天開庭。你要告訴陪審團一個故事，一個就好。故事要靠你手上的論點撐起來。: Trial is tomorrow. You tell the jury one story. Just one. And it has to stand on the arguments you've actually got.
 檢方的證據有漏洞。我們不指認任何人，只證明他們沒有證明。: The prosecution's case has holes. We don't point at anyone. We prove they haven't proved it.
@@ -641,7 +641,7 @@
 檢方直接詰問的時候，每個問題你都有一次異議的機會。理由錯了，法官的耐心就少一格。: On direct, you get one shot at an objection per question. Pick the wrong ground and the judge's patience drops a notch.
 五次。用完之前，讓陪審團看到這個警探什麼都沒查。: Five. Before you run out, let the jury see this detective checked nothing.
 柯瓦斯基: Kowalski
-重案組警探・服務 22 年: Detective, Major Crimes. 22 years on the force
+重案組警探・服務 22 年: Detective, Major Crimes, 22 years on the force
 警探，請說明您到達現場時看到的情況。: Detective, please describe what you saw when you arrived at the scene.
 死者倒在辦公桌旁，頭部有重擊傷。桌上的水晶獎盃掉在地毯上，上面有血。: The victim was on the floor beside his desk with a blunt-force wound to the head. A crystal award from the desk was on the carpet. It had blood on it.
 門禁紀錄顯示被告 22:47 上樓。這代表他在案發時間在場，對不對？: The access log shows the defendant went upstairs at 10:47 p.m. That means he was present at the time of the killing, correct?
@@ -685,7 +685,7 @@
 最後一位證人是瑞秋・艾德勒：她是唯一聽見聲音的人，也是全案最無懈可擊的證人。: 'Their last witness is Rachel Adler: the only person who heard anything, and the most untouchable witness in the case.'
 第二天: Day Two
 她只聽到半句。整個法庭，只有你會替被告講這一點。: She heard half a sentence. In this whole courtroom, you're the only one who'll say that for the defendant.
-死者的執行助理・三十歲: The victim's executive assistant. Thirty
+死者的執行助理・三十歲: The victim's executive assistant, thirty
 馬丁內斯小姐，您替沃斯先生工作多久了？: Ms. Martinez, how long did you work for Mr. Voss?
 四年。我負責他的行事曆、信件，還有他想不到要自己處理的事。: Four years. I handled his calendar, his mail, and everything he never thought to handle himself.
 被告那天下午威脅了沃斯先生，是不是？: The defendant threatened Mr. Voss that afternoon, didn't he?
@@ -946,3 +946,4 @@
 認罪協商。你替他省了一場審判，也替事務所省了十六個工時。: A plea. You saved him a trial, and you saved the firm sixteen hours.
 卡爾德物流的法務今天早上打來了。他們問，你那張傳票是不是還掛在他們的稽核紀錄上。: Calder Logistics' general counsel called this morning. They want to know whether your subpoena is still sitting on their audit log.
 （訊息）她那晚在車上，是在把沃斯的行事曆交給我。你沒有贏。她也沒有。: (Text) That night in her car, she was handing me Voss's calendar. You didn't win. Neither did she.
+異議成立。本庭已排除該項供述，檢方不得提起。陪審團請不要理會。: Sustained. The court has excluded that statement and the prosecution may not raise it. The jury will disregard.

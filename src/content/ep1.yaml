@@ -1699,6 +1699,10 @@ scenes:
           a: 他自己開口說：「我只是想讓他住手。」沒有人問他任何問題。
           impact: 8
           tags: [情感, 權威]
+          # 米蘭達動議准了之後，檢方還是會用「他自己開口」繞過裁定；玩家要用「違反裁定」擋下。
+          barred:
+            when: { cards: [statement-excluded] }
+            sustained: 異議成立。本庭已排除該項供述，檢方不得提起。陪審團請不要理會。
       claims:
         - id: c-checked
           text: 我們檢查了所有跟被告有關的證據。
