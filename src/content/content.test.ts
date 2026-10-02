@@ -31,9 +31,7 @@ describe('心聲的新寫法', () => {
   });
   it('beats 只能用在畫外字幕，記號和字幕不能混用', () => {
     expect(errs({ who: '伊恩', text: '', beats: [{ text: 'a' }] })).toHaveLength(1);
-    expect(errs({ who: '伊恩', text: '', voice: 'off', mark: { kind: 'sticky' } })).toHaveLength(
-      1,
-    );
+    expect(errs({ who: '伊恩', text: '', voice: 'off', mark: { kind: 'sticky' } })).toHaveLength(1);
     expect(errs({ who: '伊恩', text: 'a', voice: 'off', beats: [{ text: 'a' }] })).toEqual([]);
   });
 });
