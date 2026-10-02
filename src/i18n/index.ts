@@ -145,3 +145,17 @@ export function useT() {
   const lang = useLang((s) => s.lang);
   return (zh: string, arg?: string | Vars) => show(lang, zh, arg);
 }
+
+/** 金額：中文用「萬」，英文用 $ 與 million。 */
+export function money(n: number, lang: Lang): string {
+  if (lang === 'en')
+    return n >= 1_000_000
+      ? `$${+(n / 1_000_000).toFixed(2)} million`
+      : `$${n.toLocaleString('en-US')}`;
+  return `${+(n / 10_000).toFixed(1)} 萬`;
+}
+
+export function useMoney() {
+  const lang = useLang((s) => s.lang);
+  return (n: number) => money(n, lang);
+}

@@ -272,7 +272,24 @@ export function branchContext(p: Progress): branch.BranchContext {
     ethics: p.ethics ?? [],
     cards: p.cards,
     presented: presentedArgs(p),
+    punitive: st?.award?.punitive?.found ?? (st?.verdict ? false : null),
   };
+}
+
+/** 懲罰性賠償要不要評議：符合 damages.punitive.when 其中一項才進入，回傳那一項的加成；都不符合是 null。 */
+export function punitiveBonus(p: Progress, s: ClosingScene): number | null {
+  const c = branchContext(p);
+  const hit = s.damages?.punitive?.when.find((x) => branch.matches(x.when, c));
+  return hit ? hit.bonus : null;
+}
+
+/** 調解室看到的開庭風險：判有責的金額區間，以及懲罰性賠償會不會進入評議。 */
+export function trialRisk(p: Progress) {
+  const cs = episodeOf(p).scenes.find((x): x is ClosingScene => x.type === 'closing');
+  const ts = theorySceneOf(p);
+  const range = cs && closing.exposure(cs, ts?.theories.map((x) => x.fault ?? 0) ?? []);
+  if (!cs || !range) return null;
+  return { ...range, punitive: punitiveBonus(p, cs) !== null };
 }
 
 /** 庭上出示過（對質過、逼出緘默權）或結辯講過的論點。 */
@@ -729,7 +746,7 @@ export const useEpisode = create<GameState>()((set, get) => {
         const p = get().progress;
         const after = juryAfterTrial(p);
         if (!after) return st;
-        return closing.deliver(
+        const out = closing.deliver(
           s,
           st,
           after.rules,
@@ -737,6 +754,17 @@ export const useEpisode = create<GameState>()((set, get) => {
           exposedArgs(p),
           !!promisesOf(p).theory,
         );
+        if (out.verdict !== '有責') return out;
+        return {
+          ...out,
+          award: closing.award(
+            s,
+            after.rules,
+            out.jury,
+            promisesOf(p).theory?.fault ?? 0,
+            punitiveBonus(p, s),
+          ),
+        };
       }),
 
     prepareWitness: (id) => {

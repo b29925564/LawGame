@@ -16,6 +16,8 @@ export interface BranchContext {
   cards: string[];
   /** 庭上出示過（對質或逼出緘默權）或結辯用過的論點。 */
   presented: string[];
+  /** 懲罰性賠償成立與否；還沒判決是 null。 */
+  punitive?: boolean | null;
 }
 
 export function matches(w: When | undefined, c: BranchContext): boolean {
@@ -30,6 +32,7 @@ export function matches(w: When | undefined, c: BranchContext): boolean {
   if (w.notCards && w.notCards.some((x) => c.cards.includes(x))) return false;
   if (w.presented && !w.presented.every((x) => c.presented.includes(x))) return false;
   if (w.ethics && !w.ethics.some((e) => c.ethics.includes(e))) return false;
+  if (w.punitive !== undefined && (c.punitive ?? false) !== w.punitive) return false;
   return true;
 }
 
