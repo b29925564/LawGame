@@ -373,7 +373,7 @@ export function Courtroom({ scene: raw }: { scene: TrialScene }) {
         {st.stage === 'cross' && (
           <section className="panel">
             <article className="claim">
-              <p className="claim-text">「{t(claim.text, scope)}」</p>
+              <p className="claim-text">{t('「{text}」', { text: t(claim.text, scope) })}</p>
               <ol className="steps">
                 {claim.anchor && anchored.includes(claim.anchor) ? (
                   <li className="done anchored">
