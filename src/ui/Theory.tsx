@@ -51,6 +51,7 @@ export function Theory({ scene }: { scene: TheoryScene }) {
   return (
     <main className="scene theory-pick">
       <p className="eyebrow">{t('案件理論')}</p>
+      {!done && <p className="muted">{t('點一張卡比較，再按下面的「以這個理論開庭」定案。')}</p>}
       <ul className="theory-grid">
         {scene.theories.map((th) => {
           const ok = theory.unlocked(th, held);
