@@ -54,7 +54,7 @@ const line = z.object({
  * 每一項都要成立才算符合；沒寫的項目不限制。
  */
 const when = z.object({
-  verdict: z.array(z.enum(['無罪', '有罪', '陪審團僵局'])).optional(),
+  verdict: z.array(z.enum(['無罪', '有罪', '有責', '無責', '陪審團僵局'])).optional(),
   theory: z.array(id).optional(),
   /** 這些旗標全部都要有。 */
   flags: z.array(z.string()).optional(),
@@ -341,6 +341,10 @@ const trialScene = z.object({
   act: z.string(),
   day: z.string(),
   threshold: z.number().int(),
+  /** 舉證門檻：刑事（預設）或民事。民事的門檻通常是 50，由原告負責把量表推過線。 */
+  burden: z.enum(['criminal', 'civil']).default('criminal'),
+  /** 判決需要幾位陪審員同一邊；不填＝全體一致。 */
+  quorum: z.number().int().min(1).optional(),
   patience: z.number().int().min(1),
   jurors: z
     .array(
@@ -684,9 +688,12 @@ const closingScene = z.object({
   intro: z.array(line).default([]),
   tones: z.array(z.object({ id, label: z.string(), tag: z.enum(tags), text: z.string() })).min(2),
   /** 判決之後的結局：依判決分開寫。 */
+  /** 刑事寫無罪／有罪／僵局，民事寫無責／有責／僵局；驗證器依庭審的 burden 檢查。 */
   verdicts: z.object({
-    無罪: z.array(line).min(1),
-    有罪: z.array(line).min(1),
+    無罪: z.array(line).min(1).optional(),
+    有罪: z.array(line).min(1).optional(),
+    有責: z.array(line).min(1).optional(),
+    無責: z.array(line).min(1).optional(),
     陪審團僵局: z.array(line).min(1),
   }),
   /** 依條件改寫的結局，第一個符合的取代 verdicts 裡的那一段。 */

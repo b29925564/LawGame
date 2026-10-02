@@ -1,3 +1,4 @@
+import { TERMS } from '../jury';
 import type {
   When,
   DefenseScene,
@@ -71,8 +72,46 @@ export function validateEpisode(e: Episode): string[] {
     branchErrors(s, e, errors);
   }
   openingErrors(e, errors);
+  burdenErrors(e, errors);
   lineErrors(e, errors);
   return errors;
+}
+
+/**
+ * 舉證門檻：同一集的庭審用同一種（刑事或民事）；結辯要寫這種門檻會出現的判決；
+ * 分支條件用的判決詞也要對（民事寫有責／無責，不寫有罪／無罪）。
+ */
+function burdenErrors(e: Episode, errors: string[]) {
+  const trials = e.scenes.filter((x) => x.type === 'trial');
+  const kinds = new Set(trials.map((t) => t.burden));
+  if (kinds.size > 1) errors.push('同一集的庭審混用了刑事與民事門檻');
+  const burden = trials[0]?.burden ?? 'criminal';
+  const w = TERMS[burden];
+  const other = TERMS[burden === 'civil' ? 'criminal' : 'civil'];
+  for (const t of trials) {
+    if (t.quorum && t.quorum > t.jurors.length)
+      errors.push(`法庭 ${t.id} 的判決人數 ${t.quorum} 多於陪審員 ${t.jurors.length} 位`);
+    if (t.quorum && t.quorum * 2 <= t.jurors.length)
+      errors.push(`法庭 ${t.id} 的判決人數 ${t.quorum} 沒有過半，兩邊可能同時成立`);
+  }
+  const vd = e.scenes.find((x) => x.type === 'voirdire');
+  if (vd && trials.some((t) => t.quorum && t.quorum > vd.seats))
+    errors.push(`遴選 ${vd.id} 只選 ${vd.seats} 位，少於判決需要的人數`);
+  const wrong = (v: string[] | undefined, where: string) => {
+    for (const x of v ?? [])
+      if (x === other.yes || x === other.no)
+        errors.push(`${where} 用了「${x}」，這一集是${w.standard}，判決是${w.yes}或${w.no}`);
+  };
+  for (const s of e.scenes) {
+    if ('when' in s) wrong(s.when?.verdict, `場景 ${s.id}`);
+    if (s.type === 'closing') {
+      for (const v of [w.yes, w.no] as const)
+        if (!s.verdicts[v]) errors.push(`結辯 ${s.id} 少了判決「${v}」的結局`);
+      for (const v of [other.yes, other.no] as const)
+        if (s.verdicts[v]) errors.push(`結辯 ${s.id} 寫了這一集不會出現的判決「${v}」`);
+      for (const x of s.endings) wrong(x.when.verdict, `結辯 ${s.id} 的結局 ${x.id}`);
+    }
+  }
 }
 
 /**
