@@ -99,6 +99,13 @@ export function translate(zh: string, scope?: string): string {
   if (!zh) return zh;
   const hit = (scope && catalog[`${scope}::${zh}`]) ?? catalog[zh];
   if (hit !== undefined) return hit;
+  // 「華特・班奈特・退休警察」：人名本身也有「・」，從最長的前段開始試，兩邊都查得到才算。
+  // 要排在樣板前面，不然「{a}・{b}」會在第一個「・」就切開。
+  for (let i = zh.lastIndexOf('・'); i > 0; i = zh.lastIndexOf('・', i - 1)) {
+    const [a, b] = [zh.slice(0, i), zh.slice(i + 1)];
+    const [ta, tb] = [translate(a, scope), translate(b, scope)];
+    if (ta !== a && tb !== b) return `${ta} · ${tb}`;
+  }
   for (const t of templates) {
     const m = t.re.exec(zh);
     if (!m) continue;
