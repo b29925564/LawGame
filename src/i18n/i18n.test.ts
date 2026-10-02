@@ -26,6 +26,17 @@ describe('雙語查表', () => {
     expect(translate('還沒翻的句子')).toBe('還沒翻的句子');
   });
 
+  it('人名本身有「・」時，從最長的前段切，名字和職業都翻得到', () => {
+    install({
+      '{a}・{b}': '{a} · {b}',
+      華特・班奈特: 'Walter Bennett',
+      退休警察: 'Retired police officer',
+    });
+    expect(translate('華特・班奈特・退休警察')).toBe('Walter Bennett · Retired police officer');
+    expect(translate('華特・班奈特')).toBe('Walter Bennett');
+    expect(translate('路人・甲')).toBe('路人 · 甲');
+  });
+
   it('頓號清單每一項都查得到才翻', () => {
     install({ 邏輯: 'Logic', 情感: 'Emotion' });
     expect(translate('邏輯、情感')).toBe('Logic, Emotion');
