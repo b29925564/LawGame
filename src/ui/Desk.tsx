@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import * as desk from '../engine/episode/desk';
 import * as discovery from '../engine/episode/discovery';
 import type { DeskScene } from '../engine/episode/schema';
@@ -148,7 +148,7 @@ export function Desk({ scene }: { scene: DeskScene }) {
       tabs={<Tabs label={t('應用程式')} value={app} onPick={setApp} items={apps} />}
       foot={
         <>
-          <EvidenceDrawer />
+          <EvidenceDrawer noTimeline={app === 'board'} />
           {desk.canWrap(scene, st, progress.cards) ? (
             <WrapButton hours={st.hours} onWrap={wrapDesk} />
           ) : (
@@ -405,6 +405,10 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
     wide ? (firstOpen?.id ?? 'timeline') : null,
   );
   const shown = view ?? (wide ? (firstOpen?.id ?? 'timeline') : null);
+  // 手機版整頁捲動：換題或回清單時回到頁首，不然會停在上一題捲到的地方。
+  useEffect(() => {
+    if (!wide) window.scrollTo({ top: 0 });
+  }, [shown, wide]);
   const q = questions.find((x) => x.id === shown);
   // 電腦版：右邊證據欄的卡片直接點就放上連線台（先 A 再 B）。
   const linking = wide && !!q;
@@ -458,6 +462,27 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
         </li>
         {questions.map((x, i) => {
           const s = status(x.id);
+          if (s === 'done') {
+            // 確認過的縮成一行：✓ 編號、論點的短句、◆字母（UX 規格：清單只留還要做的事）。
+            const [head, gist] = splitArg(t(x.argument.name, scope));
+            return (
+              <li key={x.id}>
+                <button
+                  className="q-item done"
+                  aria-current={shown === x.id}
+                  aria-label={`${num(i)} ${t(x.text, scope)}：${t('已確認')}`}
+                  onClick={() => setView(x.id)}
+                >
+                  <span className="good" aria-hidden>
+                    ✓
+                  </span>
+                  <span className="q-num">{num(i)}</span>
+                  <span className="q-gist">{gist ?? head}</span>
+                  <span className="arg-mark">{argLetter(head)}</span>
+                </button>
+              </li>
+            );
+          }
           return (
             <li key={x.id}>
               <button
@@ -468,28 +493,18 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
                 <span className="q-num">{num(i)}</span>
                 <span className="q-text">{t(x.text, scope)}</span>
                 <span className="q-meta">
-                  {s === 'done' ? (
-                    <>
-                      <span className="good">✓ {t('已確認')}</span>
-                      <span>{t(x.argument.name, scope).split(/：|: /)[0]}</span>
-                    </>
-                  ) : (
-                    <span>{s === 'open' ? t('進行中') : t('尚未開始')}</span>
-                  )}
+                  <span>{s === 'open' ? t('進行中') : t('尚未開始')}</span>
                 </span>
               </button>
             </li>
           );
         })}
-        {/* 還沒出現的疑問畫成鎖住的空格：玩家看得出案子還沒查完（試玩回報）。 */}
-        {Array.from({ length: scene.questions.length - questions.length }, (_, i) => (
-          <li key={`locked-${i}`}>
-            <span className="q-item locked" aria-label={t('尚未出現的疑問')}>
-              <span className="q-num">{num(questions.length + i)}</span>
-              <span className="q-text">{t('？')}</span>
-            </span>
+        {/* 還沒出現的疑問只留一行：看得出案子還沒查完，又不佔一排空框（UX 規格）。 */}
+        {scene.questions.length > questions.length && (
+          <li className="q-locked">
+            {t('還有 {n} 題，查到線索後出現', { n: scene.questions.length - questions.length })}
           </li>
-        ))}
+        )}
       </ul>
     </nav>
   );
@@ -603,7 +618,11 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
             <section className={done ? 'panel step answer done' : 'panel step answer'}>
               <h3 className="step-head">{t('答案')}</h3>
               {done ? (
-                <p className="good">{t('已確認：{name}', { name: t(q.argument.name, scope) })}</p>
+                <p className="good">
+                  {t('已確認')}
+                  {t('：')}
+                  <span className="arg-name">{t(q.argument.name, scope)}</span>
+                </p>
               ) : (
                 <>
                   <ul
@@ -668,31 +687,25 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
               ) : (
                 // 一條發現就是一張便條：編號與關係、連起來的兩張卡、連線的內容；點了放進答案。
                 <ol className="found-list">
-                  {found.map((f) => {
-                    const used = a.cards.includes(f.id);
-                    return (
-                      <li key={f.id}>
-                        <button
-                          className={f.id === fresh ? 'found fresh' : 'found'}
-                          aria-pressed={used}
-                          aria-label={`${t(f.name, scope)}${t('：')}${showPair(f.pair)}`}
-                          disabled={done}
-                          onClick={() => toggleCard(q.id, f.id)}
-                        >
-                          <span className="found-head">
-                            {t(f.name, scope)}
-                            <span>{t(f.relation)}</span>
-                            {used && <span className="good">{t('已放進答案')}</span>}
-                          </span>
-                          <strong className="found-pair">{showPair(f.pair)}</strong>
-                          <span className="found-text">{t(f.text, scope)}</span>
-                          {f.conclusion && (
-                            <span className="found-note">{t(f.conclusion.text, scope)}</span>
-                          )}
-                        </button>
-                      </li>
-                    );
-                  })}
+                  {found.map((f) => (
+                    <FoundNote
+                      key={f.id}
+                      fresh={f.id === fresh}
+                      used={a.cards.includes(f.id)}
+                      done={done}
+                      label={`${t(f.name, scope)}${t('：')}${showPair(f.pair)}`}
+                      onPick={() => toggleCard(q.id, f.id)}
+                      head={
+                        <>
+                          {t(f.name, scope)}
+                          <span>{t(f.relation)}</span>
+                        </>
+                      }
+                      pair={showPair(f.pair)}
+                      text={t(f.text, scope)}
+                      note={f.conclusion && t(f.conclusion.text, scope)}
+                    />
+                  ))}
                 </ol>
               )}
             </section>
@@ -898,6 +911,72 @@ function Jobs({ scene, held }: { scene: DeskScene; held: string[] }) {
  * 結束調查要按兩次：第一次只把按鈕換成確認，標出還剩幾小時（試玩回報：解完一題就以為查完了）。
  * 四秒沒按就恢復原狀。
  */
+/**
+ * 一條發現一張便條：編號與關係、連起來的兩張卡、內容。點了放進答案。
+ * 內容預設兩行，超過才出現「展開」（UX 規格：便條一長，發現區就要捲好幾屏）。
+ */
+function FoundNote({
+  fresh,
+  used,
+  done,
+  label,
+  onPick,
+  head,
+  pair,
+  text,
+  note,
+}: {
+  fresh: boolean;
+  used: boolean;
+  done: boolean;
+  label: string;
+  onPick: () => void;
+  head: ReactNode;
+  pair: string;
+  text: string;
+  note?: string;
+}) {
+  const t = useT();
+  const body = useRef<HTMLSpanElement>(null);
+  const [long, setLong] = useState(false);
+  const [open, setOpen] = useState(false);
+  useLayoutEffect(() => {
+    const el = body.current;
+    if (!el || open) return;
+    const check = () => setLong(el.scrollHeight > el.clientHeight + 1);
+    check();
+    const ro = new ResizeObserver(check);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [open, text, note]);
+  return (
+    <li className="found-item">
+      <button
+        className={fresh ? 'found fresh' : 'found'}
+        aria-pressed={used}
+        aria-label={label}
+        disabled={done}
+        onClick={onPick}
+      >
+        <span className="found-head">
+          {head}
+          {used && <span className="good">{t('已放進答案')}</span>}
+        </span>
+        <strong className="found-pair">{pair}</strong>
+        <span ref={body} className={'found-body' + (long ? ' long' : '') + (open ? ' open' : '')}>
+          <span className="found-text">{text}</span>
+          {note && <span className="found-note">{note}</span>}
+        </span>
+      </button>
+      {(long || open) && (
+        <button className="link found-more" aria-expanded={open} onClick={() => setOpen(!open)}>
+          {open ? t('收起') : t('展開')}
+        </button>
+      )}
+    </li>
+  );
+}
+
 function WrapButton({ hours, onWrap }: { hours: number; onWrap: () => void }) {
   const t = useT();
   const [armed, setArmed] = useState(false);
@@ -926,6 +1005,18 @@ function useBump(n: number) {
     return () => clearTimeout(t);
   }, [n, base]);
   return n > base;
+}
+
+/** 「論點 A：伊森是被叫上樓的」→ ['論點 A', '伊森是被叫上樓的']；英文用「: 」分。 */
+function splitArg(name: string): [string, string | undefined] {
+  const [head, ...rest] = name.split(/：|: /);
+  return [head, rest.length ? rest.join('：') : undefined];
+}
+
+/** 「論點 A」「Argument A」→ ◆A；沒有字母的論點只畫菱形。 */
+function argLetter(head: string) {
+  const m = /\s([A-Z])$/.exec(head);
+  return m ? m[1] : '';
 }
 
 function gapDetail(scene: DeskScene, tr: (s: string) => string) {

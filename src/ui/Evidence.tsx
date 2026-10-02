@@ -35,7 +35,7 @@ export function useWide() {
   return wide;
 }
 
-export function EvidenceDrawer({ note }: { note?: string }) {
+export function EvidenceDrawer({ note, noTimeline }: { note?: string; noTimeline?: boolean }) {
   const progress = useEpisode((s) => s.progress);
   const t = useT();
   const scope = useScope();
@@ -51,7 +51,9 @@ export function EvidenceDrawer({ note }: { note?: string }) {
   }, [open]);
   const [kind, setKind, showKind] = useKindFilter();
   // 抽屜分三頁：手上的證據、排好的時間軸、法典百科。庭上、談判時都翻得到。
-  const [page, setPage] = useState<'cards' | 'timeline' | 'terms'>('cards');
+  const [want, setPage] = useState<'cards' | 'timeline' | 'terms'>('cards');
+  // 證據板上時間軸的家是疑問清單第一列，抽屜不再放一份（UX 規格：一樣東西只有一個家）。
+  const page = noTimeline && want === 'timeline' ? 'cards' : want;
   const scene = deskSceneOf(progress);
   const placed = scene ? deskState(progress, scene).timeline : [];
   const rows = placed.map((id) => items.find((i) => i.id === id)).filter((i) => !!i);
@@ -84,9 +86,11 @@ export function EvidenceDrawer({ note }: { note?: string }) {
                 <button aria-current={page === 'cards'} onClick={() => setPage('cards')}>
                   {t('證據 {n}', { n: items.length })}
                 </button>
-                <button aria-current={page === 'timeline'} onClick={() => setPage('timeline')}>
-                  {t('時間軸')}
-                </button>
+                {!noTimeline && (
+                  <button aria-current={page === 'timeline'} onClick={() => setPage('timeline')}>
+                    {t('時間軸')}
+                  </button>
+                )}
                 <button aria-current={page === 'terms'} onClick={() => setPage('terms')}>
                   {t('法典')}
                 </button>

@@ -17,12 +17,19 @@
   --border-strong: light-dark(#a9b3bf, #3a4757);
   --text: light-dark(#111720, #e7eaee);
   --muted: light-dark(#536071, #8e99a7);
-  --faint: light-dark(#7d8896, #5f6a79);
+  /* 有資訊的淡字也要 4.5:1（無障礙審查 2026-10-02）。 */
+  --faint: light-dark(#5a6676, #8a95a2);
 
   /* 螢光筆：填色與填色上的字。 */
   --hl: light-dark(#ffd02e, #f4c53d);
   --hl-ink: #16130a;
+  /* 鍵盤焦點框：淺色底上螢光黃只有 1.4:1，改深色；深色模式維持黃。 */
+  --focus: light-dark(#16130a, #f4c53d);
   --hl-wash: light-dark(rgb(255 208 46 / 22%), rgb(244 197 61 / 8%));
+  /* 論點的金（視覺設計師定）：「重要」，比螢光黃（「選中」）暗、濁，深色下對黃 1.9:1。 */
+  --gold: light-dark(#9a6b14, #b8893a);
+  /* 金落在淺色紙面（便條、索引卡）時固定用深金，不隨主題變。 */
+  --gold-paper: #8f6a1f;
   /* 當成文字色用的強調色：淺色模式要夠深才讀得到。 */
   --accent: light-dark(#7f5a00, #f4c53d);
   --accent-text: var(--hl-ink);
@@ -136,7 +143,7 @@ button:focus-visible,
 input:focus-visible,
 select:focus-visible,
 summary:focus-visible {
-  outline: 2px solid var(--hl);
+  outline: 2px solid var(--focus);
   outline-offset: 2px;
 }
 button.primary {
@@ -1099,15 +1106,27 @@ details summary {
   font-size: 0.78em;
   letter-spacing: 0.04em;
 }
-/* 論點：名字前一顆黃色菱形。不用黃邊，黃邊留給「選中」。 */
-.card.arg > strong::before {
+/*
+ * 論點：◆ 加左側 3px 金線，一直都在，不論 hover 與否（UX 規格：重要性不用黃色講）。
+ * 證據欄、手機挑卡片、清單的 ◆A、確認後的答案四處同一個記號。
+ */
+.card.arg {
+  border-left: 3px solid var(--gold);
+}
+.pick[data-kind='論點'] {
+  border-left: 3px solid var(--gold);
+}
+.card.arg > strong::before,
+.pick[data-kind='論點'] > .pick-name::before,
+.arg-mark::before,
+.arg-name::before {
   content: '';
   display: inline-block;
   width: 8px;
   height: 8px;
   margin-right: 8px;
   vertical-align: 0.15em;
-  background: var(--hl);
+  background: var(--gold);
   transform: rotate(45deg);
 }
 .card-head {
@@ -1166,9 +1185,17 @@ details summary {
 }
 .chips.kinds {
   flex-shrink: 0;
+  /* 篩選一排，放不下就橫向捲，不換行（UX 規格）。 */
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+  /* 右緣淡出，看得出後面還有。 */
+  mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent);
 }
 .chips.kinds button {
+  flex-shrink: 0;
   min-height: 34px;
+  white-space: nowrap;
 }
 /* 抽屜是直排：篩選列不准被清單擠扁，清單自己捲。 */
 .sheet > * {
@@ -4382,7 +4409,7 @@ button.iou[aria-pressed='true'] {
   cursor: default;
 }
 .iou-pick:focus-visible {
-  outline: 2px solid var(--hl);
+  outline: 2px solid var(--focus);
   outline-offset: 3px;
 }
 .iou-pick[aria-pressed='true'] .iou {
@@ -4550,7 +4577,7 @@ button.iou[aria-pressed='true'] {
   width: 100%;
 }
 .slot-clear:focus-visible {
-  outline: 2px solid var(--hl);
+  outline: 2px solid var(--focus);
   outline-offset: 2px;
 }
 .slot-tag {
@@ -4612,6 +4639,31 @@ button.iou[aria-pressed='true'] {
 .found-pair {
   font-size: 0.95em;
   line-height: 1.5;
+}
+.found-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+/* 內容預設兩行（14px × 1.65），超過的點「展開」看全文。 */
+.found-body:not(.open) {
+  max-height: calc(2 * 14px * 1.65);
+  overflow: hidden;
+}
+.found-body.long:not(.open) {
+  mask-image: linear-gradient(#000 55%, transparent);
+}
+.found-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.found-item > .found {
+  align-self: stretch;
+}
+.found-more {
+  margin-top: 2px;
+  font-size: 13px;
 }
 .found-text,
 .found-note {
@@ -4856,12 +4908,39 @@ button.iou[aria-pressed='true'] {
   height: 100%;
   background: var(--hl);
 }
-.q-item.locked {
-  border-style: dashed;
-  background: none;
-  color: var(--faint);
+/* 確認過的疑問：一行 ✓ 01 短句 ◆A。 */
+.q-item.done {
+  flex-direction: row;
+  align-items: baseline;
+  gap: 8px;
+  padding: 8px 14px;
 }
-.q-item.locked .q-text {
+.q-item.done .q-gist {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--muted);
+}
+.arg-mark {
+  font-family: var(--font-mono, monospace);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--gold);
+  white-space: nowrap;
+}
+.arg-mark::before {
+  width: 6px;
+  height: 6px;
+  margin-right: 4px;
+}
+/* 還沒出現的疑問：清單底部一行。 */
+.q-locked {
+  padding: 10px 14px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  font-size: 13px;
   color: var(--faint);
 }
 
@@ -5033,5 +5112,27 @@ body:has(.court-light) {
   :root:lang(en) .apps button {
     padding-inline: 7px;
     font-size: 0.9em;
+  }
+}
+
+/*
+ * 手機證據板整頁捲動：外框不再是一個視窗高的框、中間再捲一層（UX 規格「框中框」）。
+ * 底列仍釘在下緣；題目在 .board-one .wb-head 自己 sticky。
+ */
+@media (max-width: 1023px) {
+  .shell:has(.board-one, .shell-body > .q-list) {
+    height: auto;
+    min-height: 100dvh;
+    overflow: visible;
+    /* 不再裁切之後，一排橫捲的篩選會把欄寬撐開；欄寬鎖在視窗內。 */
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .shell:has(.board-one, .shell-body > .q-list) > .shell-body {
+    overflow: visible;
+  }
+  .shell:has(.board-one, .shell-body > .q-list) > .shell-foot {
+    position: sticky;
+    bottom: 0;
+    z-index: 5;
   }
 }

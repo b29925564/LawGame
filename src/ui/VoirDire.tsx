@@ -123,7 +123,9 @@ export function VoirDire({ scene }: { scene: VoirDireScene }) {
                 <div className="candidate-body">
                   {asked && (
                     <>
-                      <p className="claim-text">「{t(c.question.q, scope)}」</p>
+                      <p className="claim-text">
+                        {t('「{text}」', { text: t(c.question.q, scope) })}
+                      </p>
                       <p>{t(c.question.a, scope)}</p>
                       {c.hidden && <p className="muted small">{t(c.hidden, scope)}</p>}
                     </>
