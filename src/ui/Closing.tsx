@@ -29,6 +29,7 @@ export function Closing({ scene }: { scene: ClosingScene }) {
   const args = closingArgs(progress);
   const [tab, setTab] = useState<'args' | 'tone'>('args');
   const need = closing.needed(scene, args.length);
+  const cost = promisesOf(progress).theory?.jury?.note;
   const rules = juryAfterTrial(progress)?.rules;
 
   if (st.verdict)
@@ -96,6 +97,7 @@ export function Closing({ scene }: { scene: ClosingScene }) {
           {!promisesOf(progress).theory && (
             <p className="bad-text small">{t('沒有案件理論，論點說服力打七折。')}</p>
           )}
+          {cost && <p className="bad-text small">{t(cost)}</p>}
           {(st.broken ?? []).length > 0 && (
             <p className="bad-text small">
               {t('開場許下的 {n} 個承諾沒有兌現，陪審員記得你說過的話。', { n: st.broken.length })}

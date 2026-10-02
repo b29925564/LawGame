@@ -693,6 +693,17 @@ const theoryScene = z.object({
         ethicsIf: z
           .object({ has: z.array(id).min(1), ethics: z.array(z.string()).min(1) })
           .optional(),
+        /**
+         * 這個理論在陪審團心裡的代價：結辯開始時，全體往有責／有罪移 all，
+         * 取向符合 leans 的陪審員另外再移（例如同情原告的人反彈）。note 在結辯畫面上告訴玩家為什麼。
+         */
+        jury: z
+          .object({
+            all: z.number().int().default(0),
+            leans: z.partialRecord(z.enum(tags), z.number().int()).default({}),
+            note: z.string(),
+          })
+          .optional(),
         promises: z
           .array(
             z.object({

@@ -9,7 +9,7 @@ import {
   type Verdict,
 } from '../jury';
 import type { Tag } from '../schema';
-import type { ClosingScene, Question } from './schema';
+import type { ClosingScene, Question, Theory } from './schema';
 
 export interface ClosingState {
   /** 挑出來的論點，順序就是講的順序。 */
@@ -31,6 +31,15 @@ const RECAP = 0.25;
 export const EMPTY_SLOT = 6;
 /** 沒有案件理論，論點散成一盤，結辯力道打七折。 */
 export const NO_THEORY = 0.7;
+
+/** 案件理論本身的代價（schema 的 theory.jury）：結辯開始時全體、再依取向另外往有責／有罪移。 */
+export function theoryCost(rules: JuryRules, jury: Jury, cost: Theory['jury']): Jury {
+  if (!cost) return jury;
+  let out = cost.all ? shiftAll(rules, jury, cost.all).jury : jury;
+  for (const [tag, n] of Object.entries(cost.leans))
+    if (n) out = shiftAll(rules, out, n, tag as Tag).jury;
+  return out;
+}
 
 export function startClosing(jury: Jury, broken: string[] = []): ClosingState {
   return {

@@ -190,14 +190,18 @@ export function brokenPromises(p: Progress): string[] {
     .filter((id) => !kept.includes(id));
 }
 
-/** 結辯的起點：庭審留下的心證，再扣掉沒兌現的承諾（企劃書 6.9.3，陪審員記得你說過的話）。 */
+/**
+ * 結辯的起點：庭審留下的心證，再扣掉沒兌現的承諾（企劃書 6.9.3，陪審員記得你說過的話），
+ * 再加上案件理論本身的代價（例如承認部分過失，陪審團評議時先記得這一點）。
+ */
 function closingStart(p: Progress): closing.ClosingState {
   const after = juryAfterTrial(p);
   if (!after) return closing.startClosing({});
   const broken = brokenPromises(p);
-  const amount = (promisesOf(p).opening?.broken ?? 8) * broken.length;
+  const { theory: t, opening } = promisesOf(p);
+  const amount = (opening?.broken ?? 8) * broken.length;
   const jury = amount > 0 ? shiftAll(after.rules, after.jury, amount).jury : after.jury;
-  return closing.startClosing(jury, broken);
+  return closing.startClosing(closing.theoryCost(after.rules, jury, t?.jury), broken);
 }
 
 export function closingState(p: Progress, s: ClosingScene) {

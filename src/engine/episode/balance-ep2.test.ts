@@ -3,7 +3,7 @@ import { episodes } from '../../content';
 import * as closing from './closing';
 import * as defense from './defense';
 import { ADVERSE } from './discovery';
-import type { ClosingScene, DefenseScene, DeskScene, TrialScene } from './schema';
+import type { ClosingScene, DefenseScene, DeskScene, TheoryScene, TrialScene } from './schema';
 import * as trial from './trial';
 
 const ep = episodes.ep2;
@@ -23,6 +23,8 @@ interface Route {
   always?: boolean;
   /** 開示時硬藏了幾項（不利推定）。 */
   concealed?: number;
+  /** 案件理論：結辯講它要的論點，並承擔它在陪審團心裡的代價。沒給就講論點 A、B、不算代價。 */
+  theory?: string;
 }
 
 /** 第五幕整段：瑪莉索 → 費雪或唐醫師 → 崔佛 → 結辯（論點 A、B）。 */
@@ -68,8 +70,9 @@ function verdict(r: Route) {
   for (const q of witness.questions)
     if (q.id !== 'tq-always' || r.always) d = defense.ask(witness, d, rules, q.id, ['app-log']);
   d = defense.finish(witness, d, rules);
-  const picks = ['arg-a', 'arg-b'];
-  let cs = closing.startClosing(d.jury);
+  const th = scene<TheoryScene>('theory').theories.find((x) => x.id === r.theory);
+  const picks = th?.needs ?? ['arg-a', 'arg-b'];
+  let cs = closing.startClosing(closing.theoryCost(rules, d.jury, th?.jury));
   for (const p of picks) cs = closing.togglePick(close, cs, p);
   cs = closing.setTone(close, cs, 't-logic');
   return closing.deliver(
@@ -108,5 +111,16 @@ describe('第 2 集的庭審平衡', () => {
 
   it('硬藏一項被揭穿（不利推定）又輔導露餡：有責', () => {
     expect(verdict({ ...best, concealed: 1, coach: true, always: true })).toBe('有責');
+  });
+
+  it('理論的風險不同：每一場都打到最好，三種理論都能贏', () => {
+    expect(verdict({ ...best, theory: 'own-choice' })).toBe('無責');
+    expect(verdict({ ...best, theory: 'warned' })).toBe('無責');
+    expect(verdict({ ...best, theory: 'shared' })).toBe('無責');
+  });
+
+  it('打得普通（只對質不異議）：他自己的選擇還撐得住，分攤就判有責', () => {
+    expect(verdict({ confront: true, theory: 'own-choice' })).toBe('無責');
+    expect(verdict({ confront: true, theory: 'shared' })).toBe('有責');
   });
 });
