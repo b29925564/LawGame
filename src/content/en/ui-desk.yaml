@@ -50,7 +50,10 @@
 '去排時間線 →': 'Go to the timeline →'
 '回疑問清單 →': 'Back to questions →'
 '？': '?'
-'挑卡片（{n}）': 'Pick cards ({n})'
+點右邊的卡片放上來: Click a card on the right to place it
+放一張卡: Add a card
+'放到 {slot}': 'Place in {slot}'
+'已在 {slot}': 'In {slot}'
 答案: Answer
 '從答案拿下 {name}': 'Remove {name} from the answer'
 '交錯 {n} 次': '{n} wrong answers'
