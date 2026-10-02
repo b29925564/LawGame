@@ -14,7 +14,7 @@ _cards: &cards
   - id: complaint
     name: 起訴狀
     kind: 文件
-    text: 原告瑪莉索・維加請求過失致死損害賠償 1,200 萬美元，另請求懲罰性賠償。
+    text: 原告瑪莉索・維加請求過失致死損害賠償 1,200 萬，另請求懲罰性賠償。
     source: 原告
     held: true
   - id: autopsy2
