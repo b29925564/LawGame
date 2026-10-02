@@ -370,12 +370,63 @@ details summary {
   line-height: 1.7;
 }
 .portrait {
-  width: 44px;
-  height: 44px;
-  flex: 0 0 44px;
-  border-radius: 50%;
+  /* 4:5（立繪包的頭像比例）；手機 56×70，桌機 72×90。 */
+  width: 56px;
+  height: 70px;
+  flex: 0 0 56px;
+  border-radius: 6px;
   background: var(--surface-2);
   box-shadow: 0 0 0 1px var(--border);
+}
+.portrait.art {
+  position: relative;
+  overflow: hidden;
+}
+/* 立繪是半身構圖，頭像放大 1.5 倍取頭肩；全組依頭部中心 x=45.6% 對齊，往左移讓臉置中。 */
+.portrait.art > img {
+  position: absolute;
+  top: 3%;
+  left: -18.4%;
+  width: 150%;
+  height: auto;
+}
+@media (min-width: 768px) {
+  .portrait {
+    width: 72px;
+    height: 90px;
+    flex-basis: 72px;
+  }
+}
+/* 對話場景旁的盧卡斯大圖：寬螢幕才有，貼在台詞欄左邊、底部對齊。 */
+.lucas-stage {
+  position: fixed;
+  bottom: 0;
+  /* 台詞欄寬 880px；大圖取左邊剩下的空間，最多 300px。1360px 以下不出現（Portrait.tsx）。 */
+  right: calc(50% + 440px + 8px);
+  width: min(300px, calc(50vw - 456px));
+  aspect-ratio: 4 / 5;
+  margin: 0;
+  pointer-events: none;
+  z-index: 0;
+  /* 原圖右肩被 4:5 裁切成一道直邊，淡掉。 */
+  mask-image: linear-gradient(to left, transparent, #000 14%);
+}
+.lucas-stage img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  opacity: 0;
+  transition: opacity 0.35s ease-out;
+}
+.lucas-stage img.on {
+  opacity: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .lucas-stage img {
+    transition: none;
+  }
 }
 .who {
   display: block;
@@ -1780,7 +1831,7 @@ fieldset.relations.compact {
 }
 .call .portrait {
   width: 60px;
-  height: 60px;
+  height: 75px;
   flex-basis: 60px;
 }
 .call > div > .muted {
@@ -1856,12 +1907,6 @@ fieldset.relations.compact {
 }
 .transcript p {
   margin: 0;
-}
-.transcript .portrait {
-  width: 32px;
-  height: 32px;
-  flex-basis: 32px;
-  box-shadow: 0 0 0 1px var(--border);
 }
 .struck .speech > span:last-child {
   text-decoration: line-through;
