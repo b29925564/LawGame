@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { episodes } from '../../content';
 import { matches } from './branch';
-import { branchContext, heldArgs } from '../game';
+import { branchContext, courtArgs, heldArgs } from '../game';
 import type { InterviewScene } from './schema';
 
 const ep = episodes.ep2;
@@ -33,6 +33,15 @@ describe('第 2 集審前聲請', () => {
   it('調查階段推出的論點 C，審前聲請的支撐清單也看得到', () => {
     const ids = heldArgs({ ...base, cards: ['arg-c', 'fisher-sample'] }).map((a) => a.id);
     expect(ids).toContain('arg-c');
+  });
+
+  it('沒聲請 Daubert 也能在庭上用論點 C 拆費雪；我方的風險評估仍然不能出示', () => {
+    const ids = courtArgs({ ...base, cards: ['arg-a', 'arg-c', 'arg-e', 'arg-f'] }).map(
+      (a) => a.id,
+    );
+    expect(ids).toEqual(expect.arrayContaining(['arg-a', 'arg-c']));
+    expect(ids).not.toContain('arg-e');
+    expect(ids).not.toContain('arg-f');
   });
 });
 
