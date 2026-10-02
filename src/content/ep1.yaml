@@ -1724,6 +1724,7 @@ scenes:
           counter:
             argument: arg-a
             text: 再主詰問。警探，那則通知預覽有沒有可能是被告自己用別的帳號傳給自己的？
+            answer: 技術上可以。我們沒有排除這個可能。
             needs: chat-audit
             broken: 庭上，稽核紀錄顯示發送裝置是死者辦公室的桌機，不是被告的手機。
             failed: 庭上……我手上沒有能證明是誰傳的東西。
@@ -2007,6 +2008,7 @@ scenes:
           counter:
             argument: arg-b
             text: 再主詰問。艾德勒女士，手錶在搏鬥中有沒有可能脫落？心率歸零，就一定是死亡的時間嗎？
+            answer: 有可能。手錶不在手腕上，心率就是零。
             needs: watch-photo
             broken: 庭上，驗屍照片顯示手錶仍扣在死者腕上，錶帶完好。它沒有脫落。
             failed: 庭上……我手上沒有能證明手錶沒有脫落的東西。
@@ -2048,6 +2050,7 @@ scenes:
           counter:
             argument: arg-d
             text: 再主詰問。艾德勒女士，您稍早補充過，二十三點十分您去敲過沃斯的門，沒有人應門就離開了，對嗎？
+            answer: 對。我敲了兩次，沒有人應。
             needs: chat-audit
             broken: 庭上，二十三點十四分有人在那個房間的桌機上操作。她若在門口，就一定進過房間。
             failed: 庭上……如果她只是敲了門，那的確不能證明什麼。
