@@ -3,6 +3,7 @@ import { expect, test } from '@playwright/test';
 test('冷開場：看過的訊息被收回，換場自動存檔，可從標題繼續', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: '新遊戲' }).click();
+  await page.getByRole('button', { name: /^第 1 集/ }).click();
 
   const next = () => page.getByRole('button', { name: '繼續' }).click();
   await next();

@@ -63,6 +63,7 @@ async function until(page: Page, target: ReturnType<Page['getByRole']>, limit = 
 async function playToRachelLast(page: Page) {
   await page.goto('/');
   await page.getByRole('button', { name: '新遊戲' }).click();
+  await page.getByRole('button', { name: /^第 1 集/ }).click();
 
   // 冷開場
   await next(page);
