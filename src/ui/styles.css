@@ -2850,40 +2850,42 @@ fieldset.relations.compact {
 @media (min-width: 1024px) {
   .shell {
     max-width: 1480px;
-    padding: 16px 404px 0 24px;
+    padding: 16px 396px 0 24px;
     column-gap: 20px;
   }
+  /*
+   * 應用程式列一律放在上方（UX 規格 P1-13）：證據板要三欄，左邊直排選單是最大的空間浪費；
+   * 其他 App 也照做，切換時版面不跳。
+   */
   .shell:has(> .shell-tabs > .apps) {
-    grid-template-columns: 188px minmax(0, 1fr);
-    grid-template-rows: auto minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
   }
   .shell:has(> .shell-tabs > .apps) > .shell-head {
     grid-column: 1 / -1;
   }
   .shell:has(> .shell-tabs > .apps) > .shell-tabs {
-    grid-row: 2 / 4;
+    grid-row: 2;
     grid-column: 1;
   }
   .shell:has(> .shell-tabs > .apps) > .shell-body,
   .shell:has(> .shell-tabs > .apps) > .shell-foot {
-    grid-column: 2;
+    grid-column: 1;
   }
   .shell-tabs > .apps {
-    flex-direction: column;
-    overflow: visible;
+    flex-direction: row;
+    overflow-x: auto;
     gap: 2px;
   }
   .shell-tabs > .apps button {
-    justify-content: flex-start;
-    text-align: left;
-    padding: 10px 12px;
+    padding: 10px 14px;
   }
   .shell-tabs > .apps button::after {
     display: none;
   }
   .shell-tabs > .apps [aria-current='true'] {
     background: var(--surface-2);
-    box-shadow: inset 3px 0 0 var(--hl);
+    box-shadow: inset 0 -3px 0 var(--hl);
   }
   .shell-foot {
     margin-inline: 0;
@@ -2896,7 +2898,7 @@ fieldset.relations.compact {
     top: 16px;
     bottom: 16px;
     right: max(24px, calc((100vw - 1480px) / 2 + 24px));
-    width: 360px;
+    width: 352px;
     z-index: 5;
   }
   .sheet.side {
@@ -4520,6 +4522,15 @@ button.iou[aria-pressed='true'] {
   max-height: calc(100dvh - 120px);
   overflow-y: auto;
 }
+/* 桌機三欄：清單 260、工作台彈性、證據欄 352（UX 規格三）。「結束調查」只佔清單欄寬，不橫跨工作台。 */
+@media (min-width: 1280px) {
+  .board3 {
+    grid-template-columns: 260px minmax(0, 1fr);
+  }
+  .shell:has(.board3) > .shell-foot {
+    width: 260px;
+  }
+}
 .q-list ul {
   list-style: none;
   margin: 0;
@@ -5056,28 +5067,12 @@ button.iou[aria-pressed='true'] {
   .side-wrap {
     width: 320px;
   }
-  .shell:has(> .shell-tabs > .apps) {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: auto auto minmax(0, 1fr) auto;
-  }
-  .shell:has(> .shell-tabs > .apps) > .shell-tabs {
-    grid-row: 2;
-    grid-column: 1;
-  }
-  .shell:has(> .shell-tabs > .apps) > .shell-body,
-  .shell:has(> .shell-tabs > .apps) > .shell-foot {
-    grid-column: 1;
-  }
-  .shell-tabs > .apps {
-    flex-direction: row;
-    flex-wrap: wrap;
-  }
-  .shell-tabs > .apps [aria-current='true'] {
-    box-shadow: inset 0 -3px 0 var(--hl);
-  }
   .board3 {
-    grid-template-columns: minmax(200px, 240px) minmax(0, 1fr);
+    grid-template-columns: 220px minmax(0, 1fr);
     gap: 16px;
+  }
+  .shell:has(.board3) > .shell-foot {
+    width: 220px;
   }
 }
 /* 時間線入口：在疑問清單最上面，帶一條進度。 */
