@@ -75,6 +75,8 @@ const when = z.object({
   ethics: z.array(z.string()).optional(),
   /** 這些論點全部都在庭上出示過（對質或逼出緘默權）或結辯用過。 */
   presented: z.array(id).optional(),
+  /** 懲罰性賠償成立（true）或沒有成立（false，包括根本沒進入那一輪）。 */
+  punitive: z.boolean().optional(),
 });
 
 /**
@@ -716,6 +718,8 @@ const theoryScene = z.object({
             note: z.string(),
           })
           .optional(),
+        /** 判有責時，陪審團認定死者自己的過失比例（百分比），判賠金額照比例扣。 */
+        fault: z.number().int().min(0).max(100).optional(),
         promises: z
           .array(
             z.object({
@@ -807,6 +811,23 @@ const closingScene = z.object({
   }),
   /** 依條件改寫的結局，第一個符合的取代 verdicts 裡的那一段。 */
   endings: z.array(z.object({ id, when, lines: z.array(line).min(1) })).default([]),
+  /**
+   * 民事判決的金額：判有責時，損害總額扣掉死者過失比例（理論的 fault，依票數離門檻多近浮動 swing 個百分點）。
+   * punitive：懲罰性賠償另外評議一輪，門檻較高（明確且令人信服）；符合 when 其中一項才進入，bonus 是不利推定之類的加成。
+   */
+  damages: z
+    .object({
+      total: z.number().int().min(0),
+      swing: z.number().int().min(0).default(5),
+      punitive: z
+        .object({
+          threshold: z.number().int().min(1).max(100).default(65),
+          ratio: z.number().min(0).default(2),
+          when: z.array(z.object({ when, bonus: z.number().int().default(0) })).min(1),
+        })
+        .optional(),
+    })
+    .optional(),
 });
 
 const scene = z.discriminatedUnion('type', [

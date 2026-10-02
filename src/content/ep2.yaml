@@ -956,6 +956,7 @@ scenes:
         jury:
           leans: { 情感: 8 }
           note: 你把責任放回赫克托身上。同情瑪莉索的那幾位陪審員，會把這句話帶進評議室。
+        fault: 25
         promises:
           - id: p-meds
             text: 你們會聽到，赫克托知道自己有高血壓，而且沒有吃藥。
@@ -971,6 +972,7 @@ scenes:
         jury:
           all: 15
           note: 你談的是公司做了什麼，沒有回答他為什麼停不下來。進了評議室，這個問題會回來。
+        fault: 10
         promises:
           - id: p-told
             text: 你們會聽到，公司提醒過他，而且每一次都讓他自己決定。
@@ -986,6 +988,7 @@ scenes:
         jury:
           all: 35
           note: 你在開場就承認公司有錯。評議的時候，陪審員會從這一句開始算。
+        fault: 40
         promises:
           - id: p-both
             text: 你們會聽到，赫克托知道自己的身體出了問題。這筆帳，不該只記在一邊。
@@ -1596,6 +1599,18 @@ scenes:
     place: 卡爾德郡高等法院　第五法庭
     picks: 2
     threshold: 50
+    # 判有責時的判決表：損害總額扣掉死者過失比例（理論的 fault）。
+    # 營運群組進了證據（照實交出，或硬藏後被揭穿）才會評議懲罰性賠償；硬藏的不利推定讓門檻更容易過。
+    damages:
+      total: 6500000
+      swing: 5
+      punitive:
+        threshold: 65
+        ratio: 2
+        when:
+          - when: { flags: [discovery:rq-chat:produced] }
+          - when: { flags: [discovery:rq-chat:concealed] }
+            bonus: 8
     intro:
       - who: 馬庫斯・海爾
         text: 兩個論點。民事陪審團不需要被說服，只需要被說動一點點。
@@ -1619,6 +1634,7 @@ scenes:
       - id: punitive
         when:
           verdict: [有責]
+          punitive: true
           flags: [discovery:rq-chat:concealed]
         lines:
           - who: 旁白

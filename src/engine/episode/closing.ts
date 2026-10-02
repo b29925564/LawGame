@@ -23,6 +23,63 @@ export interface ClosingState {
   verdict: Verdict | null;
   /** 開場許下卻沒兌現的承諾；結辯開始前已經反噬進心證。 */
   broken: string[];
+  /** 民事判有責時的判決表；其他判決或沒設定金額時沒有。 */
+  award?: Award | null;
+}
+
+export interface Award {
+  /** 損害總額。 */
+  total: number;
+  /** 死者自己的過失比例（百分比）。 */
+  fault: number;
+  /** 扣掉過失比例後的判賠金額。 */
+  amount: number;
+  /** 懲罰性賠償：null＝沒有進入這一輪；found＝成立與否，votes＝過門檻的人數。 */
+  punitive: { found: boolean; amount: number; votes: number; need: number } | null;
+}
+
+const avg = (j: Jury) => {
+  const v = Object.values(j);
+  return v.length ? v.reduce((a, b) => a + b, 0) / v.length : 0;
+};
+/** 金額取到十萬。 */
+const round = (n: number) => Math.round(n / 100000) * 100000;
+
+/**
+ * 判決表：票數離門檻越近，陪審團越覺得死者自己也有錯（過失比例往上浮動 swing），
+ * 判得越重則往下。懲罰性賠償用較高的門檻再評一輪，達到法定人數才成立。
+ */
+export function award(
+  s: ClosingScene,
+  rules: JuryRules,
+  jury: Jury,
+  fault: number,
+  punitiveBonus: number | null,
+): Award | null {
+  const d = s.damages;
+  if (!d) return null;
+  const lean = Math.max(-1, Math.min(1, (rules.threshold + 20 - avg(jury)) / 20));
+  const f = Math.max(0, Math.min(100, Math.round(fault + d.swing * lean)));
+  const amount = round((d.total * (100 - f)) / 100);
+  let punitive: Award['punitive'] = null;
+  if (d.punitive && punitiveBonus !== null) {
+    const n = rules.jurors.length;
+    const need = Math.min(n, Math.max(1, rules.quorum ?? n));
+    const votes = rules.jurors.filter(
+      (j) => (jury[j.id] ?? 0) + punitiveBonus >= d.punitive!.threshold,
+    ).length;
+    const found = votes >= need;
+    punitive = { found, amount: found ? round(amount * d.punitive.ratio) : 0, votes, need };
+  }
+  return { total: d.total, fault: f, amount, punitive };
+}
+
+/** 調解時估的開庭風險：最好情況（死者過失最高）到最壞情況（全額）。 */
+export function exposure(s: ClosingScene, faults: number[]): { low: number; high: number } | null {
+  const d = s.damages;
+  if (!d) return null;
+  const most = Math.min(100, Math.max(0, ...faults) + d.swing);
+  return { low: round((d.total * (100 - most)) / 100), high: d.total };
 }
 
 /** 結辯重述已經呈現過的論點，力道打對折（企劃書 6.9.8 的近因效應仍然疊在上面）。 */

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { install, reset, setLang, t, translate, useLang } from '.';
+import { install, money, reset, setLang, t, translate, useLang } from '.';
 
 afterEach(() => {
   reset();
@@ -35,6 +35,12 @@ describe('雙語查表', () => {
     expect(translate('華特・班奈特・退休警察')).toBe('Walter Bennett · Retired police officer');
     expect(translate('華特・班奈特')).toBe('Walter Bennett');
     expect(translate('路人・甲')).toBe('路人 · 甲');
+  });
+
+  it('金額：中文用萬，英文用 million', () => {
+    expect(money(4900000, 'zh')).toBe('490 萬');
+    expect(money(4900000, 'en')).toBe('$4.9 million');
+    expect(money(900000, 'en')).toBe('$900,000');
   });
 
   it('頓號清單每一項都查得到才翻', () => {

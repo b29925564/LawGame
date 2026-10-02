@@ -10,7 +10,7 @@ import {
   juryAfterTrial,
   useEpisode,
 } from '../engine/game';
-import { useT } from '../i18n';
+import { useMoney, useT } from '../i18n';
 import { CardPick, EvidenceDrawer } from './Evidence';
 import { useScope } from './lang';
 import { Tally } from './Marks';
@@ -37,6 +37,7 @@ export function Closing({ scene }: { scene: ClosingScene }) {
       <main className="scene">
         <p className="eyebrow">{t('判決')}</p>
         <h1>{t(st.verdict)}</h1>
+        {st.award && <VerdictForm award={st.award} />}
         <ol className="stack">
           {st.rounds.map((r, i) => (
             <li key={i} className="panel">
@@ -192,5 +193,36 @@ export function Closing({ scene }: { scene: ClosingScene }) {
         </section>
       )}
     </Shell>
+  );
+}
+
+/** 民事特別判決表：損害總額、死者過失比例、判賠金額、懲罰性賠償。 */
+function VerdictForm({ award }: { award: closing.Award }) {
+  const t = useT();
+  const money = useMoney();
+  return (
+    <dl className="stats panel">
+      <dt>{t('損害總額')}</dt>
+      <dd>{money(award.total)}</dd>
+      <dt>{t('死者過失比例')}</dt>
+      <dd>{award.fault}%</dd>
+      <dt>{t('判賠金額')}</dt>
+      <dd>
+        <strong>{money(award.amount)}</strong>
+      </dd>
+      {award.punitive && (
+        <>
+          <dt>{t('懲罰性賠償')}</dt>
+          <dd>
+            {award.punitive.found
+              ? money(award.punitive.amount)
+              : t('不成立（{votes} 票，需要 {need} 票）', {
+                  votes: award.punitive.votes,
+                  need: award.punitive.need,
+                })}
+          </dd>
+        </>
+      )}
+    </dl>
   );
 }
