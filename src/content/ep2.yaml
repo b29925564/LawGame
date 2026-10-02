@@ -93,6 +93,24 @@ _cards: &cards
     text: 附註 7：研究樣本為州際長途貨車司機，單趟平均 9 小時，不含市區短程配送。
     source: 原告專家報告
 
+  - id: trevor-sworn
+    name: 崔佛的宣誓陳述：提醒一直都在
+    kind: 宣誓陳述
+    text: 他在錄取時宣誓說，疲勞提醒「從系統上線就是提醒，從來沒有強制下線過」。
+    source: 證詞錄取
+  - id: rating-penalty
+    name: 普莉亞的證詞：死後還在扣分
+    kind: 宣誓陳述
+    date: 週二
+    time: '18:25'
+    text: 普莉亞在錄取時證稱：GPS 靜止之後，系統仍判定拒單三次，扣了他 0.3 分。
+    source: 證詞錄取（原告方）
+  - id: daubert-ruling
+    name: 裁定：費雪醫師證詞排除
+    kind: 文件
+    text: 本庭排除費雪醫師關於風險倍數之證詞。原告得另以一般醫學證人說明死因。
+    source: 雷耶斯法官
+
 scenes:
   # 冷開場：玩家拿著赫克托的手機。休息不是不能按，只是每次都有代價。
   - type: phone
@@ -554,3 +572,306 @@ scenes:
         text: 我還沒決定。但我現在知道，這案子值多少了。
       - who: 戴文
         text: 韓律師……法務意見的保存紀錄我也調出來了。附件裡有一張很舊的東西，上面寫著碼頭九號。
+
+  - type: card
+    id: act3
+    act: 第三幕
+    title: 第三幕　審前
+    lines:
+      - 宣誓過的話，在法庭上改一個字，就是別人的武器。
+      - 包括妳自己的證人。
+
+  # 我方錄取崔佛：問得太淺，他在庭上會被拆；問得太深，等於替原告鋪路。
+  - type: deposition
+    id: depo-trevor
+    act: 第三幕
+    place: 惠特洛克・海爾　會議室 C
+    budget: 6
+    witness:
+      name: 崔佛・林
+      role: 卡爾德快遞　營運副總
+    intro:
+      - who: 馬庫斯・海爾
+        text: 自己人的錄取，比對方的難。妳讓他說的每一句，奧卡福都會拿到逐字稿。
+        mood: 暖
+      - who: 馬庫斯・海爾
+        text: 妳要先知道他會在哪裡說謊，才知道要不要讓他說。
+        mood: 暖
+    outro:
+      - who: 崔佛・林
+        text: 這樣可以了吧。我還要回去排下週的班。
+        mood: 硬
+    topics:
+      - id: d-system
+        label: 那套系統
+        questions:
+          - id: d-alert
+            q: 林先生，赫克托・維加死亡當天，疲勞提醒是怎麼運作的？
+            a: 連續上線十小時跳出提醒。司機可以休息，也可以略過。
+          - id: d-always
+            q: 這個機制一直都是這樣嗎？
+            a: 從系統上線就是提醒，從來沒有強制下線過。
+            anchors: trevor-sworn
+          - id: d-change
+            q: 三月份，系統是不是有一次設定變更？
+            a: ……系統每一季都在改版。我不記得每一張變更單。
+            objection: 缺乏基礎
+            tips: [arg-e]
+      - id: d-hector
+        label: 赫克托
+        questions:
+          - id: d-rating
+            q: 司機拒單，評分會怎麼樣？
+            a: 會下降。那是服務品質指標，所有平台都有。
+          - id: d-know
+            q: 你知道赫克托連續上線十四天嗎？
+            a: 系統裡有四千多個司機。我不可能每一個都看。
+      - id: d-people
+        label: 誰決定的
+        questions:
+          - id: d-who
+            q: 疲勞管理的設定，最後是誰核准的？
+            a: 營運部。我是營運部的主管。
+          - id: d-legal
+            q: 你在做決定之前，有沒有詢問過法律意見？
+            a: 我們每一個決定都會問法務。妳應該知道是哪一家。
+            objection: 特權
+
+  # 對方主導：奧卡福錄取普莉亞前，先錄取卡爾德的系統工程師。玩家只能異議。
+  - type: deposition
+    id: depo-engineer
+    act: 第三幕
+    place: 奧卡福勞工法律事務所　會議室
+    side: theirs
+    examiner: 丹尼爾・奧卡福
+    witness:
+      name: 葛瑞絲・吳
+      role: 卡爾德快遞　資深系統工程師
+    intro:
+      - who: 丹尼爾・奧卡福
+        text: 艾莉絲，好久不見。妳坐在那一邊，看起來很不習慣。
+      - who: 艾莉絲
+        text: 問你的問題吧，丹尼爾。
+    script:
+      - id: e-role
+        q: 吳小姐，妳負責卡爾德快遞派單系統的哪一部分？
+        a: 派單演算法和司機端的提醒功能。
+      - id: e-after
+        q: 赫克托・維加的車停下之後，系統做了什麼？
+        a: 系統繼續派單。三次都沒有接，系統自動判定拒單，扣了他的評分。
+        gives: [rating-penalty]
+      - id: e-feel
+        q: 妳覺得公司是不是根本不在乎司機的死活？
+        a: 我……我只是寫程式的。
+        objection: 推測
+      - id: e-ticket
+        q: 三月那次設定變更，崔佛・林有沒有告訴妳，法務是怎麼說的？
+        a: 他說法務那邊說沒問題。
+        objection: 傳聞
+      - id: e-could
+        q: 技術上，把疲勞鎖改回強制下線，需要多久？
+        a: 一個下午。只要改一個參數。
+    outro:
+      - who: 丹尼爾・奧卡福
+        text: 一個下午。謝謝妳，吳小姐。
+      - who: 旁白
+        text: 錄取結束。葛瑞絲收拾筆電的時候，一直沒有抬頭看艾莉絲。
+
+  - type: desk
+    id: pretrial
+    act: 第三幕
+    hours: 10
+    deadline: 調解會議　一週後
+    cards: *cards
+    docs:
+      - id: doc-transcript
+        title: 崔佛・林　錄取逐字稿
+        from: 法院書記官
+        lines:
+          - text: 問：這個機制一直都是這樣嗎？
+          - text: 答：從系統上線就是提醒，從來沒有強制下線過。
+            fact: trevor-sworn
+    mail:
+      - id: mail-okafor2
+        from: 丹尼爾・奧卡福　原告律師
+        subject: 調解會議
+        body:
+          - 艾莉絲，調解會議排在下週二。瑪莉索會親自來。
+          - 她要的東西，不全是錢。妳到時候就知道了。
+    jobs: []
+    motions:
+      - id: m-daubert
+        label: 聲請排除專家證詞：費雪醫師
+        detail: 專家說的不是事實，是方法。方法套錯了對象，結論就不該進法庭。
+        cost: 3
+        needs: [arg-c]
+        bases: [專家證詞可靠性, 相關性, 傳聞例外, 特權]
+        basis: 專家證詞可靠性
+        support: [arg-c]
+        accept:
+          arg-c: [fisher-sample]
+        requests: [排除該專家證詞, 限制證人作證範圍, 核發傳票給研究機構]
+        request: 排除該專家證詞
+        flags: [daubert-fisher]
+        jury: 8
+        granted:
+          - who: 旁白
+            text: 雷耶斯法官翻到附註 7，看了很久：「長途貨車和市區外送不是同一件事。本庭排除費雪醫師關於風險倍數的證詞。」
+          - who: 艾莉絲
+            text: 已排除
+            mark: { kind: stamp, text: 已排除, on: fisher-report }
+        denied:
+          - who: 旁白
+            text: 「樣本差異屬於證明力問題，交給陪審團判斷。聲請駁回。」
+          - who: 艾莉絲
+            text: 駁回
+            mark: { kind: stamp, text: 駁回 }
+        gives: [daubert-ruling]
+    links:
+      - id: l-perjury
+        cards: [trevor-sworn, change-ticket]
+        accept:
+          change-ticket: [lock-spec]
+        relation: 矛盾
+        text: 崔佛宣誓說從來沒有強制下線過；三月的變更單，是他自己簽的。
+    questions:
+      - id: q-trevor
+        text: 崔佛在錄取時說的，和公司自己的文件對得上嗎？
+        unlock: [trevor-sworn]
+        answer: [l-perjury]
+        argument:
+          id: arg-g
+          name: 風險評估：我方證人宣誓說了假話
+          text: 崔佛宣誓說疲勞鎖從來不存在。變更單一曝光，陪審團不會只懷疑他，會懷疑整家公司。
+          strength: 5
+          motionOnly: true
+          tags: [邏輯]
+    goal: q-trevor
+    goalLines:
+      - who: 羅根・普萊斯
+        text: 開庭的時候，奧卡福一拿出變更單，崔佛就完了。
+        mood: 硬
+      - who: 艾莉絲
+        text: 所以我們不能讓這案子開庭。
+      - who: 羅根・普萊斯
+        text: 還是不能讓它變貴。亞瑟給的數字是一百五十萬。
+        mood: 硬
+
+  - type: card
+    id: act4
+    act: 第四幕
+    title: 第四幕　調解
+    lines:
+      - 和解不是認輸。是兩邊都承認，自己可能會輸。
+
+  # 調解：替公司談。對方開的價由高到低；超過授權要打給亞瑟。
+  - type: negotiation
+    id: mediation
+    act: 第四幕
+    place: 卡爾德郡法院　調解室 2
+    opponent:
+      name: 丹尼爾・奧卡福
+      role: 原告律師
+    client:
+      name: 亞瑟・卡爾德
+      trust: 3
+    confidence: 75
+    rounds: 5
+    intro:
+      - who: 旁白
+        text: 調解室很小。瑪莉索・維加坐在奧卡福旁邊，手裡握著一支舊手機，螢幕裂了一角。
+      - who: 丹尼爾・奧卡福
+        text: 我們有派單日誌、死後的扣分，還有一個說「一個下午就能改回去」的工程師。妳有什麼，艾莉絲？
+      - who: 瑪莉索・維加
+        text: 我不要聽數字。我要知道那個按鈕，以後能不能按。
+    offers:
+      - id: o-full
+        min: 80
+        label: 400 萬，含修改演算法
+        amount: 4000000
+        terms: true
+        lines:
+          - who: 丹尼爾・奧卡福
+            text: 四百萬，外加疲勞鎖改回強制下線，寫進和解書。少一樣，我們法庭見。
+      - id: o-high
+        min: 60
+        label: 250 萬，含修改演算法
+        amount: 2500000
+        terms: true
+        lines:
+          - who: 丹尼爾・奧卡福
+            text: 兩百五十萬，疲勞鎖照改。這是瑪莉索願意坐下來的底線。
+      - id: o-mid
+        min: 40
+        label: 180 萬，含修改演算法
+        amount: 1800000
+        terms: true
+        lines:
+          - who: 瑪莉索・維加
+            text: 錢少一點沒關係。那個按鈕一定要能按。
+      - id: o-low
+        min: 0
+        label: 90 萬，不含任何條款
+        amount: 900000
+        lines:
+          - who: 丹尼爾・奧卡福
+            text: 九十萬。……瑪莉索，我們談過這個數字。妳說過，如果真的打不贏。
+          - who: 瑪莉索・維加
+            text: 我知道。我只是想聽他們說一次，是他們錯了。
+    disclosed: [contract, med-record, voice-memo, app-log, autopsy2]
+    bluffs:
+      - id: b-meds
+        label: 他知道自己有高血壓，而且沒吃藥。陪審團會聽到這件事。
+        needs: [med-record, pharmacy]
+        strength: 20
+        believed:
+          - who: 丹尼爾・奧卡福
+            text: ……藥局紀錄。妳拿到了。
+          - who: 瑪莉索・維加
+            text: 他說等這個月的錢下來，就去拿藥。
+        caught:
+          - who: 丹尼爾・奧卡福
+            text: 病歷是我給妳的。妳開示清單上沒有任何證明他沒吃藥的東西。
+      - id: b-expert
+        label: 你的專家撐不到開庭。
+        needs: [daubert-ruling]
+        strength: 15
+        believed:
+          - who: 丹尼爾・奧卡福
+            text: 我知道雷耶斯怎麼裁的。我還有一般醫學證人。
+        caught:
+          - who: 丹尼爾・奧卡福
+            text: 費雪醫師還站在我的證人名單上，艾莉絲。法官沒有排除她。
+    authority:
+      cap: 1500000
+      raise: 500000
+      terms: true
+      calls:
+        - - who: 亞瑟・卡爾德
+            text: 一百五十萬是我說的數字，韓律師。妳現在打來，是要我改數字。
+          - who: 亞瑟・卡爾德
+            text: 好。再加五十萬。修改演算法的事，法務評估過再說……算了，寫進去。我不想上新聞。
+        - - who: 亞瑟・卡爾德
+            text: 第二通了。我開始懷疑，我付錢請的是誰的律師。
+          - who: 亞瑟・卡爾德
+            text: 最後五十萬。之後不要再打來。
+      over:
+        - who: 艾莉絲
+          text: 超過授權了。｜要嘛打給亞瑟，｜要嘛放手。
+          voice: 'off'
+    reveals:
+      - who: 丹尼爾・奧卡福
+        text: ……讓我跟我的委託人談一下。
+    walkOut:
+      - who: 丹尼爾・奧卡福
+        text: 那就法庭見。陪審團會看到那三筆派單，艾莉絲。
+      - who: 瑪莉索・維加
+        text: 他死了之後，你們的 App 還在叫他接單。
+    accepted:
+      - who: 瑪莉索・維加
+        text: 好。
+      - who: 丹尼爾・奧卡福
+        text: 妳打得很公平，艾莉絲。不管妳信不信。
+      - who: 艾莉絲
+        text: 和解書上，｜沒有任何一個字寫著「我們錯了」。
+        voice: 'off'
