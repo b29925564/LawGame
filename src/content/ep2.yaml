@@ -229,7 +229,7 @@ scenes:
         mood: 硬
       - do: say
         who: 盧卡斯
-        text: 我們以前一起輸過很多案子。
+        text: 認識。我們一起輸過很多案子。
 
   - type: dialogue
     id: hale-civil
@@ -252,6 +252,9 @@ scenes:
         who: 馬庫斯・海爾
         text: 一半多一點點。這次站在線上的是你。
         mood: 暖
+      - do: say
+        who: 盧卡斯
+        text: 一半多一點點。聽起來像我的大學成績。
 
   # 會見崔佛・米爾斯：自己的客戶也會對自己的律師說一半。
   - type: interview
@@ -700,7 +703,7 @@ scenes:
       - who: 丹尼爾・奧卡福
         text: 盧卡斯，好久不見。你坐在那一邊，看起來很不習慣。
       - who: 盧卡斯
-        text: 問你的問題吧，丹尼爾。
+        text: 椅子比較好坐。問你的問題吧。
     script:
       - id: e-role
         q: 徐小姐，妳負責卡爾德快遞派單系統的哪一部分？
