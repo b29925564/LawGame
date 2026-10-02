@@ -26,14 +26,14 @@ describe('心聲的新寫法', () => {
     validateEpisode(withLine(line) as typeof e).filter((m) => m.startsWith('場景 x'));
 
   it('擋下「（心裡）」', () => {
-    expect(errs({ who: '艾莉絲（心裡）', text: '嗯。' })).toHaveLength(1);
-    expect(errs({ who: '艾莉絲', text: '（心裡）嗯。' })).toHaveLength(1);
+    expect(errs({ who: '以安（心裡）', text: '嗯。' })).toHaveLength(1);
+    expect(errs({ who: '以安', text: '（心裡）嗯。' })).toHaveLength(1);
   });
   it('beats 只能用在畫外字幕，記號和字幕不能混用', () => {
-    expect(errs({ who: '艾莉絲', text: '', beats: [{ text: 'a' }] })).toHaveLength(1);
-    expect(errs({ who: '艾莉絲', text: '', voice: 'off', mark: { kind: 'sticky' } })).toHaveLength(
+    expect(errs({ who: '以安', text: '', beats: [{ text: 'a' }] })).toHaveLength(1);
+    expect(errs({ who: '以安', text: '', voice: 'off', mark: { kind: 'sticky' } })).toHaveLength(
       1,
     );
-    expect(errs({ who: '艾莉絲', text: 'a', voice: 'off', beats: [{ text: 'a' }] })).toEqual([]);
+    expect(errs({ who: '以安', text: 'a', voice: 'off', beats: [{ text: 'a' }] })).toEqual([]);
   });
 });

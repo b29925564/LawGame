@@ -8,7 +8,7 @@ import { VoLine } from './VoiceOver';
  * 正式立繪進來時只要換掉這個元件（製作流程第 4 節的素材管線）。
  */
 const palette: Record<string, string> = {
-  艾莉絲: '#1f4e8c',
+  以安: '#1f4e8c',
   伊森: '#2d6b57',
   '伊森・蕭': '#2d6b57',
   '馬庫斯・海爾': '#5b3f86',
@@ -51,7 +51,7 @@ export function Portrait({ who, mood = '平' }: { who: string; mood?: Line['mood
   );
 }
 
-/** 一行台詞。艾莉絲沒說出口的話不進對白框：記號交給 Marks，畫外字幕交給 VoiceOver。 */
+/** 一行台詞。以安沒說出口的話不進對白框：記號交給 Marks，畫外字幕交給 VoiceOver。 */
 export function Speech({ line, body }: { line: Line; body?: ReactNode }) {
   // 記號不是說出口的話，不進對白框（設計稿 inner-voice）。
   if (line.mark) return <MarkLine line={line} />;

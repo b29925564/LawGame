@@ -13,7 +13,7 @@ const beatsOf = (line: Line) =>
 const plain = (t: string) => t.replace(/｜/g, '');
 
 /**
- * 畫外字幕（設計稿 inner-voice 3）：艾莉絲沒說出口的話，不掛名字框。
+ * 畫外字幕（設計稿 inner-voice 3）：以安沒說出口的話，不掛名字框。
  * 筆錄裡留一行 .vo-log；第一次出現時，世界退下、字從光縫漏出來。
  */
 export function VoLine({ line }: { line: Line }) {
@@ -116,7 +116,7 @@ export function VoiceOver({ line, onDone }: { line: Line; onDone: () => void }) 
       className="vo"
       role="dialog"
       aria-modal="true"
-      aria-label="艾莉絲沒有說出口"
+      aria-label="以安沒有說出口"
       data-subbox={voBox ? 'on' : undefined}
       style={{ '--sub-scale': voScale } as CSSProperties}
     >

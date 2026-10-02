@@ -99,7 +99,7 @@ export function reveal(
     exposed: [...new Set([...next.exposed, id])],
     log: [
       ...next.log,
-      { who: '艾莉絲', text: `我手上有這個：${name}。`, mood: '平', thought: false },
+      { who: '以安', text: `我手上有這個：${name}。`, mood: '平', thought: false },
       ...s.reveals,
     ],
   };
@@ -119,13 +119,13 @@ export function bluff(s: NegotiationScene, st: NegoState, id: string): NegoState
       ...next,
       credit: next.credit + 1,
       bluffed: [...next.bluffed, id],
-      log: [...next.log, { who: '艾莉絲', text: b.label, mood: '平', thought: false }, ...b.caught],
+      log: [...next.log, { who: '以安', text: b.label, mood: '平', thought: false }, ...b.caught],
     };
   return {
     ...next,
     confidence: Math.max(0, next.confidence - Math.max(1, Math.round(b.strength / 2))),
     bluffed: [...next.bluffed, id],
-    log: [...next.log, { who: '艾莉絲', text: b.label, mood: '平', thought: false }, ...b.believed],
+    log: [...next.log, { who: '以安', text: b.label, mood: '平', thought: false }, ...b.believed],
   };
 }
 

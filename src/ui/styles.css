@@ -393,7 +393,7 @@ details summary {
   line-height: 1.9;
   border-left: 2px solid var(--border-strong);
 }
-/* 艾莉絲的內心獨白：提示的主要載體，用螢光筆底色和一般台詞分開。 */
+/* 以安的內心獨白：提示的主要載體，用螢光筆底色和一般台詞分開。 */
 .thought {
   margin: 0 0 0 56px;
   padding: 10px 14px;
@@ -2998,7 +2998,7 @@ fieldset.relations.compact {
 }
 
 /* ── 記號元件（inner-voice.css 全文，R2 覆寫在後） ── */
-/* ══ a. 便利貼：艾莉絲的手寫便條（LXGW WenKai TC） ══ */
+/* ══ a. 便利貼：以安的手寫便條（LXGW WenKai TC） ══ */
 .sticky {
   --tilt: -1.4deg;
   position: relative;
@@ -3039,7 +3039,7 @@ fieldset.relations.compact {
   position: absolute;
   z-index: 3;
 }
-/* 推理結論卡：3×5 索引卡（1:1.667），上面一行印刷字＋艾莉絲的手寫結論 */
+/* 推理結論卡：3×5 索引卡（1:1.667），上面一行印刷字＋以安的手寫結論 */
 .sticky.index {
   --tilt: -0.6deg;
   max-inline-size: 420px;
@@ -3443,7 +3443,7 @@ mark.hl::after {
   right: 26px;
   bottom: 18px;
 }
-/* 鉛筆圈：圈出選錯的依據（艾莉絲的手） */
+/* 鉛筆圈：圈出選錯的依據（以安的手） */
 .circled {
   position: relative;
   white-space: nowrap;

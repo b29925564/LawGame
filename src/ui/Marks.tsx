@@ -9,7 +9,7 @@ import { AnnounceQueue, type Announcement } from './announce';
 import { claimHand, topHand, useHandStore, type Hand } from './hand';
 
 /**
- * 艾莉絲的手留在畫面上的記號（設計稿 inner-voice）。
+ * 以安的手留在畫面上的記號（設計稿 inner-voice）。
  * 這裡放共用的地基：播報與一格一黃；各個記號元件隨後續 PR 加進來。
  */
 
@@ -62,7 +62,7 @@ export function Hl({
     <>
       {text.slice(0, i)}
       <mark className={live ? 'hl enter live' : 'hl'}>{w}</mark>
-      <span className="sr-only">（艾莉絲標記）</span>
+      <span className="sr-only">（以安標記）</span>
       {text.slice(i + w.length)}
     </>
   );
@@ -87,7 +87,7 @@ function Hand({ text, word }: { text: string; word?: string }) {
   );
 }
 
-/** 便利貼：艾莉絲沒說出口的提醒。pinned＝貼在某個元件旁邊（電腦版浮起來，手機回到文件流）。 */
+/** 便利貼：以安沒說出口的提醒。pinned＝貼在某個元件旁邊（電腦版浮起來，手機回到文件流）。 */
 export function StickyNote({
   text,
   word,
@@ -97,19 +97,19 @@ export function StickyNote({
   word?: string;
   pinned?: boolean;
 }) {
-  useEffect(() => announce.mark({ from: 'sticky', text: `艾莉絲的便條：${text}` }), [text]);
+  useEffect(() => announce.mark({ from: 'sticky', text: `以安的便條：${text}` }), [text]);
   return (
     <figure
       className={pinned ? 'sticky pinned enter' : 'sticky enter'}
       role="note"
-      aria-label={`艾莉絲的便條：${text}`}
+      aria-label={`以安的便條：${text}`}
     >
       <Hand text={text} word={word} />
     </figure>
   );
 }
 
-/** 推理結論卡：連線成立時，3×5 索引卡上印出連線，下面是艾莉絲手寫的結論。 */
+/** 推理結論卡：連線成立時，3×5 索引卡上印出連線，下面是以安手寫的結論。 */
 export function IndexCard({
   head,
   printed,
@@ -222,7 +222,7 @@ export function MarkLines({ lines }: { lines: Line[] }) {
     if (words.length)
       announce.mark({
         from: 'highlight',
-        text: `艾莉絲標記了「${words.join('、')}」`,
+        text: `以安標記了「${words.join('、')}」`,
         word: words.join('、'),
       });
   }, [words.join()]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -231,7 +231,7 @@ export function MarkLines({ lines }: { lines: Line[] }) {
       {lines.map((l, i) =>
         l.mark ? (
           <MarkLine key={i} line={l} />
-        ) : words.length && l.who !== '艾莉絲' ? (
+        ) : words.length && l.who !== '以安' ? (
           <Speech key={i} line={l} body={<Hl text={l.text} words={words} live={live} />} />
         ) : (
           <Speech key={i} line={l} />
@@ -377,7 +377,7 @@ export function Iou({
           </div>
         </dl>
         <footer>
-          <span className="sig">韓</span>
+          <span className="sig">林</span>
           <span className="to">{'債權人\u3000陪審團'}</span>
         </footer>
         {state === 'kept' && <Stamp text="已兌現" sm />}

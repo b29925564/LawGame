@@ -8,7 +8,7 @@ const time = z.string().regex(/^\d\d:\d\d$/, '時間格式是 HH:MM');
 const message = z.object({ id: id.optional(), from: z.string(), text: z.string() });
 
 /**
- * 介面記號（設計稿 inner-voice 2）：艾莉絲沒說出口的話不進對白框，改由她的手留在畫面上。
+ * 介面記號（設計稿 inner-voice 2）：以安沒說出口的話不進對白框，改由她的手留在畫面上。
  * text 是記號上顯示的字；word 是螢光筆或結論卡來源要標的那個詞；on 是記號貼在哪張卡或哪個元件上。
  */
 export const markKinds = [
@@ -586,7 +586,7 @@ const negotiationScene = z.object({
       terms: z.boolean().default(false),
       /** 每通電話委託人的回應；通數超過就重複最後一段。 */
       calls: z.array(z.array(line).min(1)).min(1),
-      /** 超過授權還想接受時，艾莉絲自己的提醒。 */
+      /** 超過授權還想接受時，以安自己的提醒。 */
       over: z.array(line).min(1),
     })
     .optional(),
