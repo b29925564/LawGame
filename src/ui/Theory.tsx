@@ -40,7 +40,6 @@ export function Theory({ scene }: { scene: TheoryScene }) {
     );
 
   const noneOpen = !scene.theories.some((th) => theory.unlocked(th, held));
-  const warn = scene.intro.find((l) => l.mark?.kind === 'confirm')?.text;
   const civil = episodeOf(progress).scenes.some((x) => x.type === 'trial' && x.burden === 'civil');
   const argName = (id: string) =>
     episodeOf(progress)
@@ -76,7 +75,7 @@ export function Theory({ scene }: { scene: TheoryScene }) {
                     </span>
                   )}
                   <span className="theory-row">
-                    <span className="jury-start-key">{t('人')}</span>
+                    <span className="jury-start-key">{t('代價')}</span>
                     {t(th.cost, scope)}
                   </span>
                 </span>
@@ -111,9 +110,7 @@ export function Theory({ scene }: { scene: TheoryScene }) {
       {!done && sel && (
         <TheoryCommit
           what={t(sel.name, scope)}
-          cost={[sel.jury?.note && t(sel.jury.note, scope), warn && t(warn, scope)]
-            .filter(Boolean)
-            .join(' ')}
+          cost={t(sel.jury?.note ?? sel.cost, scope)}
           onCommit={() => chooseTheory(sel.id)}
         />
       )}
