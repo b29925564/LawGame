@@ -1134,6 +1134,7 @@ details summary {
   border-left: 3px solid var(--gold);
 }
 .card.arg > strong::before,
+.card.arg .mini-btn > strong::before,
 .pick[data-kind='論點'] > .pick-name::before,
 .arg-mark::before,
 .arg-name::before {
@@ -4874,31 +4875,6 @@ button.iou[aria-pressed='true'] {
 .board-one .back {
   align-self: flex-start;
 }
-/* 證據欄小卡：兩行，全文放在 title 與之後的浮出卡。 */
-.card.mini {
-  position: relative;
-  padding: 10px 12px;
-  gap: 2px;
-}
-.card.mini > .time {
-  font-family: var(--font-mono, monospace);
-  font-weight: 500;
-  font-size: 12px;
-  letter-spacing: 0.02em;
-  color: var(--muted);
-}
-.card.mini > strong {
-  line-height: 1.45;
-}
-.card.mini .slot-tag {
-  top: -8px;
-  left: auto;
-  right: 10px;
-}
-.card.mini.on {
-  border-color: var(--hl);
-  background: var(--hl-wash);
-}
 .cost {
   margin-left: 6px;
   padding: 1px 6px;
@@ -4969,12 +4945,83 @@ button.iou[aria-pressed='true'] {
     animation: none;
   }
 }
-/* 滑過小卡浮出全文：只有全文，不加標題。證據欄在右邊，所以往左浮；畫在 body 上，不會被證據欄裁掉。 */
+/*
+ * 證據欄小卡（UX 規格 P1-12）：一行一張，高 40。名稱靠左、時間或種類靠右；
+ * 內容與出處在浮出卡。外層 li 是清單項，點的是裡面的按鈕，焦點框沿用全域樣式。
+ */
+.cards .card.mini {
+  padding: 0;
+  gap: 0;
+  box-shadow: none;
+}
+.card.mini > .mini-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 40px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: inherit;
+  background: none;
+  box-shadow: none;
+  color: inherit;
+  text-align: left;
+}
+.card.mini > .mini-btn:hover:not(:disabled) {
+  background: none;
+}
+.card.mini > .mini-btn:active:not(:disabled) {
+  transform: none;
+}
+.card.mini > .mini-btn:focus-visible {
+  outline-offset: -2px;
+}
+.card.mini .mini-btn > strong {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+.card.mini .mini-meta {
+  flex: none;
+  font-family: var(--font-mono, monospace);
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  color: var(--muted);
+}
+.card.mini .slot-tag {
+  top: -8px;
+  left: auto;
+  right: 10px;
+}
+.card.mini.on {
+  border-color: var(--hl);
+  background: var(--hl-wash);
+}
+.card.mini .thumb {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 38%, var(--border-strong) 0 5px, transparent 6px),
+    radial-gradient(ellipse at 50% 100%, var(--border-strong) 0 10px, transparent 11px),
+    var(--surface-2);
+}
+.card.mini .thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+/* 浮出卡：內容加一行出處。證據欄在右邊，所以往左浮；畫在 body 上，不會被證據欄裁掉。 */
 .mini-full {
   position: fixed;
   z-index: 60;
   width: 300px;
-  margin: 0;
   padding: 12px 14px;
   border-radius: var(--radius);
   background: var(--surface-2);
@@ -4985,29 +5032,17 @@ button.iou[aria-pressed='true'] {
   color: var(--text);
   pointer-events: none;
 }
-.card.mini {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  column-gap: 10px;
+.mini-full p {
+  margin: 0;
 }
-.card.mini > :not(.thumb) {
-  grid-column: 2;
-}
-.card.mini .thumb {
-  grid-row: 1 / 4;
-  width: 40px;
-  height: 40px;
-  border-radius: 6px;
-  overflow: hidden;
-  background:
-    radial-gradient(circle at 50% 38%, var(--border-strong) 0 9px, transparent 10px),
-    radial-gradient(ellipse at 50% 100%, var(--border-strong) 0 16px, transparent 17px),
-    var(--surface-2);
-}
-.card.mini .thumb img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+.mini-full .mini-src {
+  margin-top: 8px;
+  padding-top: 6px;
+  border-top: 1px dashed var(--border);
+  font-family: var(--font);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: var(--muted);
 }
 
 /*
