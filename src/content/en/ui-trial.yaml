@@ -43,6 +43,8 @@
 開始遴選: Begin jury selection
 陪審團已選定: Jury seated
 '・陪審長': '· Foreperson'
+'對方以有因迴避剔除：{names}': 'Struck for cause by the other side: {names}'
+'{name}（{why}）': '{name} ({why})'
 '沒有根據的聲請有 {n} 次。開庭第一天的法官耐心會少 {n} 點。': 'You made {n} baseless motions. The judge will start trial {n} points less patient.'
 陪審團遴選: Jury selection
 'voirdire::提問': Questions
@@ -84,6 +86,11 @@
 # Closing argument and verdict
 判決: Verdict
 '第 {n} 輪評議': 'Deliberation round {n}'
+損害總額: Total damages
+死者過失比例: Decedent's share of fault
+判賠金額: Award
+懲罰性賠償: Punitive damages
+'不成立（{votes} 票，需要 {need} 票）': 'Not found ({votes} votes, {need} needed)'
 '・ 基調 {state}': '· Tone {state}'
 已選: set
 未選: not set
