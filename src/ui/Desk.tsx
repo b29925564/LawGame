@@ -873,13 +873,28 @@ function Motions({ scene, held }: { scene: DeskScene; held: string[] }) {
                   ))}
                 </div>
               </fieldset>
-              <button
-                className="primary pin-bottom"
-                disabled={!desk.canFile(scene, st, m.id, progress.cards)}
-                onClick={() => fileMotion(m.id)}
-              >
-                {t('送出（{n} 工時）', { n: m.cost })}
-              </button>
+              {/* 送出列：不透明、自成一條，鈕靠右不滿版。點到被它蓋住的卡片邊緣只會點到底色，不會誤送。 */}
+              <div className="file-bar">
+                <ul className="file-check" aria-label={t('送出前檢查')}>
+                  <li className={a.basis ? 'ok' : undefined}>
+                    {t('依據')} {a.basis ? '✓' : '—'}
+                  </li>
+                  <li className={a.request ? 'ok' : undefined}>
+                    {t('請求')} {a.request ? '✓' : '—'}
+                  </li>
+                  <li className={a.support.length === m.support.length ? 'ok' : undefined}>
+                    {t('支撐 {a}/{b}', { a: a.support.length, b: m.support.length })}
+                  </li>
+                  {st.hours < m.cost && <li className="short">{t('工時不足')}</li>}
+                </ul>
+                <button
+                  className="primary"
+                  disabled={!desk.canFile(scene, st, m.id, progress.cards)}
+                  onClick={() => fileMotion(m.id)}
+                >
+                  {t('送出（{n} 工時）', { n: m.cost })}
+                </button>
+              </div>
             </>
           ))}
       </section>

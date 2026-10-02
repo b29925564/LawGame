@@ -41,8 +41,6 @@
 '{name}的信任': "{name}'s trust"
 最後的條件: Final terms
 剩餘回合: Rounds left
-'開庭若判有責：約 {low} 到 {high}': 'If the jury finds liability: roughly {low} to {high}'
-'開庭若判有責：約 {low} 到 {high}，懲罰性賠償另計': 'If the jury finds liability: roughly {low} to {high}, punitive damages extra'
 談判: Negotiation
 她開的條件: Her terms
 攤牌: Lay it out

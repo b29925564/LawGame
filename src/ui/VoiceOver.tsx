@@ -28,6 +28,10 @@ export function VoLine({ line }: { line: Line }) {
   const close = useCallback(() => {
     played.add(key);
     setOpen(false);
+    // 字幕收掉後，焦點和視線交給這個畫面的主要動作（休庭的「繼續」、回報的「回到桌面」）。
+    requestAnimationFrame(() =>
+      document.querySelector<HTMLElement>('main .primary.next')?.focus({ preventScroll: true }),
+    );
   }, [key]);
   return (
     <>
@@ -81,11 +85,15 @@ export function VoiceOver({ line, onDone }: { line: Line; onDone: () => void }) 
       if (under) setTimeout(() => under.click(), 0);
     }
   };
-  // 出字途中點擊＝立刻出完；出完後 600ms 內點擊無效。
+  // 出字途中點擊＝立刻出完。防的是連點：上一下點擊 400ms 內的第二下不算。
+  // 以前是「出完後 600ms 內一律不算」，字自己出完時玩家點下去也會被吃掉，看起來像按了沒反應。
+  const lastClick = useRef(-Infinity);
   const click = (e?: { clientX: number; clientY: number }) => {
+    const now = performance.now();
+    const double = now - lastClick.current < 400;
+    lastClick.current = now;
     if (phase === 'typing') setPhase('shown');
-    else if (phase === 'shown' && performance.now() - shownAt.current >= 600)
-      next(e && { x: e.clientX, y: e.clientY });
+    else if (phase === 'shown' && !double) next(e && { x: e.clientX, y: e.clientY });
   };
   // 拍前的靜默：第一拍 0，之後 700ms，重句前 1200ms。
   useEffect(() => {

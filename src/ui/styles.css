@@ -1426,16 +1426,59 @@ fieldset.relations.compact {
   white-space: nowrap;
 }
 
-/* 長清單底下的主要動作釘在視窗底部，不必捲到底才找得到。 */
-.pin-bottom {
+/*
+ * 聲請的送出列：釘在視窗底部，但自成一條不透明的列（上緣一條線），
+ * 左邊是三項檢查，鈕靠右不滿版。被它蓋住的卡片看得出是被蓋住，
+ * 點到列的底色不會誤送；卡片捲到列上方時留出一列的空間。
+ */
+.file-bar {
   position: sticky;
   bottom: 0;
   z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 4px -16px -14px;
+
+  padding: 10px 16px;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  border-radius: 0 0 var(--radius) var(--radius);
+  box-shadow: 0 -8px 16px -12px rgb(0 0 0 / 35%);
 }
-.pin-bottom:not(:disabled) {
-  box-shadow:
-    0 0 0 6px var(--surface),
-    0 6px 18px -8px light-dark(rgb(160 120 0 / 55%), rgb(244 197 61 / 45%));
+/* 捲動容器底下還有內距：列的下方補一塊底色，免得卡片從列底下露出來。 */
+.file-bar::after {
+  content: '';
+  position: absolute;
+  inset: 100% 0 auto;
+  height: 32px;
+  background: var(--surface);
+}
+.file-bar > .primary {
+  flex: none;
+  width: auto;
+  min-width: 10em;
+}
+.file-check {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.file-check .ok {
+  color: var(--text);
+  font-weight: 600;
+}
+.file-check .short {
+  color: var(--bad);
+}
+.job .relations button {
+  scroll-margin-bottom: 72px;
 }
 
 /* 清單裡的分組小標：有時間的事件、其他資料。捲動時黏在頂端，才知道在哪一組。 */
@@ -5210,4 +5253,44 @@ body:has(.court-light) {
     margin-inline: -2px;
     padding-bottom: max(12px, env(safe-area-inset-bottom));
   }
+}
+
+/* 調解室：開庭風險和和解條件同一張表，放在最後一列對照 */
+.stats.authority dt.risk,
+.stats.authority dd.risk {
+  border-top: 1px dashed var(--border);
+  background: var(--surface-2);
+}
+.stats dd small,
+.verdict-form dd small {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+/* 判決：民事特別判決表，像一張法院表格，合計列加粗 */
+.verdict-form {
+  display: grid;
+  gap: 8px;
+}
+.verdict-form h2 {
+  margin: 0;
+  font-family: var(--font-doc);
+  font-size: 15px;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+.verdict-form dd {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.verdict-form .sum {
+  border-top: 2px solid var(--text);
+  color: var(--text);
+  font-weight: 700;
+}
+.verdict-form dd.sum strong {
+  font-size: 1.25em;
 }
