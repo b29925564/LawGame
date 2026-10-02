@@ -37,10 +37,13 @@ const mark = z.object({
  * voice:'off'＝畫外字幕：不掛名字框，置中於畫面 46%，text 裡的「｜」是唯一可斷行處。
  * beats＝多拍字幕，每拍一段；hush 的那一拍前面先全靜 1200ms。
  */
+/** 立繪表情。慌、默對應立繪包的 panic、silent。 */
+export const moods = ['平', '緊', '暖', '硬', '慌', '默'] as const;
+
 const line = z.object({
   who: z.string(),
   text: z.string(),
-  mood: z.enum(['平', '緊', '暖', '硬']).default('平'),
+  mood: z.enum(moods).default('平'),
   thought: z.boolean().default(false),
   voice: z.literal('off').optional(),
   beats: z.array(z.object({ text: z.string(), hush: z.boolean().default(false) })).optional(),
@@ -881,6 +884,7 @@ export type NegotiationScene = Extract<Scene, { type: 'negotiation' }>;
 export type DepoQuestion = DepositionScene['topics'][number]['questions'][number];
 export type Offer = NegotiationScene['offers'][number];
 export type Line = z.infer<typeof line>;
+export const lineSchema = line;
 export type When = z.infer<typeof when>;
 export type Card = z.infer<typeof card>;
 export type Question = z.infer<typeof question>;

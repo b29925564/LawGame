@@ -3,7 +3,7 @@ import { episodes } from '../../content';
 import { migrate, readSave, writeSave, SAVE_VERSION } from '../save';
 import type * as desk from './desk';
 import { canAdvance, phoneView } from './phone';
-import type { Episode, PhoneScene } from './schema';
+import { lineSchema, type Episode, type PhoneScene } from './schema';
 import { validateEpisode } from './validate';
 
 const cold = episodes.ep1.scenes[0] as PhoneScene;
@@ -176,5 +176,14 @@ describe('存檔', () => {
       },
     };
     expect(writeSave('auto', 'x', progress, broken)).toBe(false);
+  });
+});
+
+describe('台詞表情', () => {
+  it('劇本可以標慌、默；沒標就是平；不認得的表情擋下來', () => {
+    expect(lineSchema.parse({ who: '盧卡斯', text: '……', mood: '慌' }).mood).toBe('慌');
+    expect(lineSchema.parse({ who: '盧卡斯', text: '……', mood: '默' }).mood).toBe('默');
+    expect(lineSchema.parse({ who: '盧卡斯', text: '……' }).mood).toBe('平');
+    expect(lineSchema.safeParse({ who: '盧卡斯', text: '……', mood: '怒' }).success).toBe(false);
   });
 });
