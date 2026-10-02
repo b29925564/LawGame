@@ -43,6 +43,8 @@
 開始遴選: Begin jury selection
 陪審團已選定: Jury seated
 '・陪審長': '· Foreperson'
+'對方以有因迴避剔除：{names}': 'Struck for cause by the other side: {names}'
+'{name}（{why}）': '{name} ({why})'
 '沒有根據的聲請有 {n} 次。開庭第一天的法官耐心會少 {n} 點。': 'You made {n} baseless motions. The judge will start trial {n} points less patient.'
 陪審團遴選: Jury selection
 'voirdire::提問': Questions
