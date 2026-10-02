@@ -1,11 +1,15 @@
 import { optionOpen, useEpisode, sceneChoices } from '../engine/game';
 import type { DialogueScene, Line } from '../engine/episode/schema';
+import { useT } from '../i18n';
+import { useScope } from './lang';
 import { Speech } from './Portrait';
 import { Transcript } from './Shell';
 
 /** 對話場景：一路往下讀，遇到選擇就停。之前的台詞留在畫面上，方便回頭看。 */
 export function Dialogue({ scene }: { scene: DialogueScene }) {
   const { progress, advance, choose } = useEpisode();
+  const t = useT();
+  const scope = useScope();
   const picks = sceneChoices(progress);
   const lines: Line[] = [];
   for (let i = 0; i <= progress.step && i < scene.steps.length; i++) {
@@ -22,26 +26,30 @@ export function Dialogue({ scene }: { scene: DialogueScene }) {
 
   return (
     <main className="scene dialogue">
-      <p className="eyebrow">{scene.place}</p>
+      <p className="eyebrow">{t(scene.place, scope)}</p>
       <Transcript count={lines.length}>
         {lines.map((l, i) => (
           <Speech key={i} line={l} />
         ))}
       </Transcript>
       {choosing && step.do === 'choose' ? (
-        <div className="choices" role="group" aria-label={step.prompt ?? '選擇'}>
-          {step.prompt && <p className="muted">{step.prompt}</p>}
+        <div
+          className="choices"
+          role="group"
+          aria-label={step.prompt ? t(step.prompt, scope) : t('選擇')}
+        >
+          {step.prompt && <p className="muted">{t(step.prompt, scope)}</p>}
           {step.options.map((o, i) =>
             optionOpen(progress, o) ? (
               <button key={i} onClick={() => choose(i)}>
-                {o.text}
+                {t(o.text, scope)}
               </button>
             ) : null,
           )}
         </div>
       ) : (
         <button className="primary next" onClick={advance}>
-          繼續
+          {t('繼續')}
         </button>
       )}
     </main>

@@ -1,5 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent } from 'react';
+import { useT } from '../i18n';
 import { stamp } from './Evidence';
+import { useScope } from './lang';
 import { announce, useHand } from './Marks';
 /** 時間線：順序由玩家自己排。遊戲不會自動排序，也不會標出衝突（企劃書 6.5）。 */
 export interface TimelineCard {
@@ -36,6 +38,8 @@ export function Timeline({
   onMove: (id: string, dir: -1 | 1) => void;
   marks?: TimelineMark[];
 }) {
+  const t = useT();
+  const scope = useScope();
   const timed = cards.filter((c) => c.time);
   const rows = placed.map((id) => timed.find((c) => c.id === id)).filter((c) => !!c);
   // 間距標記：兩張卡的先後排對了（不必相鄰），就標在較晚那張上方。
@@ -59,13 +63,16 @@ export function Timeline({
     const [a, b] = sync!.cards.map((id) => timed.find((c) => c.id === id));
     announce.mark({
       from: 'sync',
-      text: `兩點同時亮起：${a?.time} ${a?.name}，${b?.time} ${b?.name}`,
+      text: t('兩點同時亮起：{a}，{b}', {
+        a: `${a?.time} ${a ? t(a.name, scope) : ''}`,
+        b: `${b?.time} ${b ? t(b.name, scope) : ''}`,
+      }),
     });
-    const t = setTimeout(() => {
+    const timer = setTimeout(() => {
       synced.add(syncKey);
       setDone((n) => n + 1);
     }, 2400);
-    return () => clearTimeout(t);
+    return () => clearTimeout(timer);
   }, [syncKey]); // eslint-disable-line react-hooks/exhaustive-deps
   useHand('sync', lit);
   useHand('gap', gaps.size > 0);
@@ -144,27 +151,27 @@ export function Timeline({
       {/* 還沒放上去的卡片釘在上緣：時間軸再長，加卡片也不必捲回去。 */}
       <div className="timeline-tray">
         <h2>
-          時間軸{' '}
+          {t('時間軸')}{' '}
           <span className="muted small">
             {rows.length} / {timed.length}
           </span>
         </h2>
         {loose.length > 0 ? (
-          <div className="chips kinds" role="group" aria-label="還沒放上時間軸的卡片">
+          <div className="chips kinds" role="group" aria-label={t('還沒放上時間軸的卡片')}>
             {loose.map((c) => (
               <button key={c.id} aria-pressed={false} onClick={() => onToggle(c.id)}>
-                ＋ {stamp(c)} {c.name}
+                ＋ {stamp(c, scope)} {t(c.name, scope)}
               </button>
             ))}
           </div>
         ) : (
           <p className="muted small">
-            {timed.length ? '有時間的卡片都放上去了。' : '目前沒有帶時間的卡片。'}
+            {timed.length ? t('有時間的卡片都放上去了。') : t('目前沒有帶時間的卡片。')}
           </p>
         )}
       </div>
       {rows.length === 0 ? (
-        <p className="muted">點上面的卡片，把它放上時間軸。</p>
+        <p className="muted">{t('點上面的卡片，把它放上時間軸。')}</p>
       ) : (
         <ol className={drag ? 'timeline sorting' : 'timeline'} ref={list}>
           {rows.map((c, i) => (
@@ -186,15 +193,18 @@ export function Timeline({
                 <span
                   className="gap-mark enter"
                   role="note"
-                  aria-label={`間距 ${gaps.get(c.id)!.min} 分鐘：${gaps.get(c.id)!.detail}`}
+                  aria-label={t('間距 {n} 分鐘：{detail}', {
+                    n: gaps.get(c.id)!.min,
+                    detail: gaps.get(c.id)!.detail,
+                  })}
                 >
-                  <b>{gaps.get(c.id)!.min} 分鐘</b>
+                  <b>{t('{n} 分鐘', { n: gaps.get(c.id)!.min })}</b>
                   <span>{gaps.get(c.id)!.detail}</span>
                 </span>
               )}
               <button
                 className="grip"
-                aria-label={`移動「${c.name}」：拖曳，或用上下鍵`}
+                aria-label={t('移動「{name}」：拖曳，或用上下鍵', { name: t(c.name, scope) })}
                 onPointerDown={(e) => grab(e, c.id, i)}
                 onPointerMove={slide}
                 onPointerUp={drop}
@@ -208,14 +218,14 @@ export function Timeline({
               >
                 <span aria-hidden>⋮⋮</span>
               </button>
-              <time>{stamp(c)}</time>
+              <time>{stamp(c, scope)}</time>
               <div>
-                <strong>{c.name}</strong>
-                <p>{c.text}</p>
+                <strong>{t(c.name, scope)}</strong>
+                <p>{t(c.text, scope)}</p>
               </div>
               <button
                 className="drop-off"
-                aria-label={`把「${c.name}」拿下來`}
+                aria-label={t('把「{name}」拿下來', { name: t(c.name, scope) })}
                 onClick={() => onToggle(c.id)}
               >
                 ✕
@@ -231,16 +241,18 @@ export function Timeline({
 
 /** 唯讀的時間軸：庭上、談判時從證據抽屜翻出來對照。 */
 export function TimelineView({ rows }: { rows: TimelineCard[] }) {
+  const t = useT();
+  const scope = useScope();
   if (rows.length === 0)
-    return <p className="muted">時間軸上還沒有東西。調查時在證據板排好，這裡就看得到。</p>;
+    return <p className="muted">{t('時間軸上還沒有東西。調查時在證據板排好，這裡就看得到。')}</p>;
   return (
     <ol className="timeline readonly">
       {rows.map((c) => (
         <li key={c.id}>
-          <time>{stamp(c)}</time>
+          <time>{stamp(c, scope)}</time>
           <div>
-            <strong>{c.name}</strong>
-            <p>{c.text}</p>
+            <strong>{t(c.name, scope)}</strong>
+            <p>{t(c.text, scope)}</p>
           </div>
         </li>
       ))}

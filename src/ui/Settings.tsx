@@ -1,5 +1,6 @@
 import { useSettings } from '../engine/settings';
 import { useT } from '../i18n';
+import { useCourtLight } from './courtLight';
 import { LangSwitch } from './lang';
 
 /** 輔助選項（企劃書 6.14）：字級、異議窗、數值顯示、畫外字幕、音效。 */
@@ -7,6 +8,7 @@ export function SettingsPanel() {
   const { objectionSeconds, showNumbers, textScale, sound, voAuto, voScale, voBox, set } =
     useSettings();
   const t = useT();
+  const { on: light, setOn: setLight } = useCourtLight();
   return (
     <div className="stack settings">
       <LangSwitch />
@@ -64,6 +66,10 @@ export function SettingsPanel() {
       <label className="toggle">
         <input type="checkbox" checked={sound} onChange={(e) => set({ sound: e.target.checked })} />
         {t('音效')}
+      </label>
+      <label className="toggle">
+        <input type="checkbox" checked={light} onChange={(e) => setLight(e.target.checked)} />
+        {t('法庭光影（試做）')}
       </label>
     </div>
   );

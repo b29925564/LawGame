@@ -4,6 +4,7 @@ import * as discovery from '../engine/episode/discovery';
 import type { DeskScene } from '../engine/episode/schema';
 import { deskState, heldArgs, useEpisode } from '../engine/game';
 import { play } from '../engine/sound';
+import { useT } from '../i18n';
 import {
   CardPick,
   EvidenceDrawer,
@@ -13,6 +14,7 @@ import {
   useWide,
 } from './Evidence';
 import { IndexCard, MarkLines, Ruling } from './Marks';
+import { useScope } from './lang';
 import { useCardPick } from './pick';
 import { Speech } from './Portrait';
 import { relationMark, RelationPicker } from './RelationPicker';
@@ -33,6 +35,8 @@ const labels: Record<App, string> = {
 /** 第二幕的桌面：盧卡斯的工作電腦，每個 App 是一個系統入口（企劃書 6.1）。 */
 export function Desk({ scene }: { scene: DeskScene }) {
   const { progress, advance, clearReport, resolveTwist, wrapDesk } = useEpisode();
+  const t = useT();
+  const scope = useScope();
   const st = deskState(progress, scene);
   const [app, setApp] = useState<App>('mail');
   const held = desk.heldCards(scene, st, progress.cards);
@@ -54,15 +58,15 @@ export function Desk({ scene }: { scene: DeskScene }) {
       : st.report;
     return (
       <main className="scene report">
-        <p className="eyebrow">{m ? '回報・法院系統' : '回報'}</p>
+        <p className="eyebrow">{m ? t('回報・法院系統') : t('回報')}</p>
         {m && a && (
           <div className="ruling-wrap">
             <Ruling
-              label={m.label}
-              basis={a.basis ?? undefined}
+              label={t(m.label, scope)}
+              basis={a.basis ? t(a.basis, scope) : undefined}
               wrongBasis={!ok && !!a.basis && a.basis !== m.basis}
-              request={a.request ?? undefined}
-              quote={quote?.text.replace(/^「|」$/g, '')}
+              request={a.request ? t(a.request, scope) : undefined}
+              quote={quote ? t(quote.text, scope).replace(/^「|」$/g, '') : undefined}
               verdict={ok ? '准予' : '駁回'}
             />
           </div>
@@ -71,7 +75,7 @@ export function Desk({ scene }: { scene: DeskScene }) {
           <MarkLines lines={rest} />
         </div>
         <button className="primary next" onClick={clearReport}>
-          回到桌面
+          {t('回到桌面')}
         </button>
       </main>
     );
@@ -82,7 +86,7 @@ export function Desk({ scene }: { scene: DeskScene }) {
   if (twist?.twist)
     return (
       <main className="scene report">
-        <p className="eyebrow">事務所</p>
+        <p className="eyebrow">{t('事務所')}</p>
         <div className="lines">
           {twist.twist.lines.map((l, i) => (
             <Speech key={i} line={l} />
@@ -91,7 +95,7 @@ export function Desk({ scene }: { scene: DeskScene }) {
         <div className="choices">
           {twist.twist.options.map((o, i) => (
             <button key={i} onClick={() => resolveTwist(twist.id, i)}>
-              {o.text}
+              {t(o.text, scope)}
             </button>
           ))}
         </div>
@@ -101,14 +105,14 @@ export function Desk({ scene }: { scene: DeskScene }) {
   if (finished)
     return (
       <main className="scene report">
-        <p className="eyebrow">{scene.act}</p>
+        <p className="eyebrow">{t(scene.act, scope)}</p>
         <div className="lines">
           {scene.goalLines.map((l, i) => (
             <Speech key={i} line={l} />
           ))}
         </div>
         <button className="primary next" onClick={advance}>
-          開庭
+          {t('開庭')}
         </button>
       </main>
     );
@@ -118,7 +122,7 @@ export function Desk({ scene }: { scene: DeskScene }) {
     .filter((id) => id !== 'discovery' || scene.discovery.length > 0)
     .map((id) => ({
       id,
-      label: labels[id],
+      label: t(labels[id]),
       badge:
         id === 'mail' && unread.length > 0
           ? unread.length
@@ -134,15 +138,14 @@ export function Desk({ scene }: { scene: DeskScene }) {
         <header className="taskbar">
           <span
             className={hoursDrop ? 'hours drop' : 'hours'}
-
-            aria-label={`剩餘工時 ${st.hours} 小時`}
+            aria-label={t('剩餘工時 {n} 小時', { n: st.hours })}
           >
-            <strong>{st.hours}</strong> 工時
+            <strong>{st.hours}</strong> {t('工時')}
           </span>
-          <span className="muted small">{scene.deadline}</span>
+          <span className="muted small">{t(scene.deadline, scope)}</span>
         </header>
       }
-      tabs={<Tabs label="應用程式" value={app} onPick={setApp} items={apps} />}
+      tabs={<Tabs label={t('應用程式')} value={app} onPick={setApp} items={apps} />}
       foot={
         <>
           <EvidenceDrawer />
@@ -152,7 +155,7 @@ export function Desk({ scene }: { scene: DeskScene }) {
             st.confirmed.includes(scene.goal) &&
             pending > 0 && (
               <button className="wide" onClick={() => setApp('discovery')}>
-                結束調查 <span className="cost">開示未回應 {pending}</span>
+                {t('結束調查')} <span className="cost">{t('開示未回應 {n}', { n: pending })}</span>
               </button>
             )
           )}
@@ -188,10 +191,12 @@ const RESULT: Record<discovery.Result, string> = {
 /** 證據開示：對方的每項請求選一種回應，送出就定案。 */
 function Discovery({ scene }: { scene: DeskScene }) {
   const { progress, respondDiscovery } = useEpisode();
+  const t = useT();
+  const scope = useScope();
   const st = deskState(progress, scene);
   const done = discovery.answered(st);
   const [pick, setPick] = useState<Record<string, discovery.Response>>({});
-  const name = (id: string) => scene.cards.find((c) => c.id === id)?.name ?? id;
+  const name = (id: string) => t(scene.cards.find((c) => c.id === id)?.name ?? id, scope);
   return (
     <ol className="stack discovery">
       {discovery.openRequests(scene, st, progress.cards).map((r, i) => {
@@ -199,24 +204,28 @@ function Discovery({ scene }: { scene: DeskScene }) {
         const sel = pick[r.id];
         return (
           <li key={r.id} className={res ? 'panel req answered' : 'panel req'}>
-            <p className="eyebrow">請求 {i + 1}</p>
-            <p className="claim-text">{r.text}</p>
+            <p className="eyebrow">{t('請求 {n}', { n: i + 1 })}</p>
+            <p className="claim-text">{t(r.text, scope)}</p>
             <ul className="req-cards">
               {r.cards.map((c) => (
                 <li key={c}>{name(c)}</li>
               ))}
             </ul>
             {res ? (
-              <p className={`req-result ${res}`}>{RESULT[res]}</p>
+              <p className={`req-result ${res}`}>{t(RESULT[res])}</p>
             ) : (
-              <div className="req-actions" role="group" aria-label={`請求 ${i + 1} 的回應`}>
+              <div
+                className="req-actions"
+                role="group"
+                aria-label={t('請求 {n} 的回應', { n: i + 1 })}
+              >
                 {RESPONSES.map((o) => (
                   <button
                     key={o.id}
                     aria-pressed={sel === o.id}
                     onClick={() => setPick({ ...pick, [r.id]: o.id })}
                   >
-                    {o.label}
+                    {t(o.label)}
                   </button>
                 ))}
                 <button
@@ -224,7 +233,7 @@ function Discovery({ scene }: { scene: DeskScene }) {
                   disabled={!sel}
                   onClick={() => sel && respondDiscovery(r.id, sel)}
                 >
-                  送出
+                  {t('送出')}
                 </button>
               </div>
             )}
@@ -237,6 +246,8 @@ function Discovery({ scene }: { scene: DeskScene }) {
 
 function Mail({ scene }: { scene: DeskScene }) {
   const { progress, openMail } = useEpisode();
+  const t = useT();
+  const scope = useScope();
   const st = deskState(progress, scene);
   const [open, setOpen] = useState<string | null>(null);
   const inbox = scene.mail.filter((m) => st.mail.includes(m.id));
@@ -245,12 +256,12 @@ function Mail({ scene }: { scene: DeskScene }) {
     return (
       <article className="panel doc">
         <button className="link" onClick={() => setOpen(null)}>
-          ← 收件匣
+          {t('← 收件匣')}
         </button>
-        <h2>{mail.subject}</h2>
-        <p className="muted">寄件者：{mail.from}</p>
+        <h2>{t(mail.subject, scope)}</h2>
+        <p className="muted">{t('寄件者：{from}', { from: t(mail.from, scope) })}</p>
         {mail.body.map((b) => (
-          <p key={b}>{b}</p>
+          <p key={b}>{t(b, scope)}</p>
         ))}
       </article>
     );
@@ -265,8 +276,8 @@ function Mail({ scene }: { scene: DeskScene }) {
               setOpen(m.id);
             }}
           >
-            <strong>{m.subject}</strong>
-            <span className="muted">{m.from}</span>
+            <strong>{t(m.subject, scope)}</strong>
+            <span className="muted">{t(m.from, scope)}</span>
           </button>
         </li>
       ))}
@@ -277,6 +288,8 @@ function Mail({ scene }: { scene: DeskScene }) {
 /** 文件以句子為單位。點一句話可以標記，命中關鍵事實才生成卡片，點錯沒有懲罰。 */
 function Docs({ scene }: { scene: DeskScene }) {
   const { progress, openDoc, mark } = useEpisode();
+  const t = useT();
+  const scope = useScope();
   const st = deskState(progress, scene);
   const [open, setOpen] = useState<string | null>(null);
   const [notes, setNotes] = useState<string[]>([]);
@@ -285,10 +298,10 @@ function Docs({ scene }: { scene: DeskScene }) {
     return (
       <article className="panel doc">
         <button className="link" onClick={() => setOpen(null)}>
-          ← 卷宗
+          {t('← 卷宗')}
         </button>
-        <h2>{doc.title}</h2>
-        <p className="muted">{doc.from}</p>
+        <h2>{t(doc.title, scope)}</h2>
+        <p className="muted">{t(doc.from, scope)}</p>
         <ol className="doc-lines">
           {doc.lines.map((l, i) => {
             const key = `${doc.id}:${i}`;
@@ -308,7 +321,7 @@ function Docs({ scene }: { scene: DeskScene }) {
                       setNotes((n) => (n.includes(key) ? n.filter((x) => x !== key) : [...n, key]));
                   }}
                 >
-                  <span>{l.text}</span>
+                  <span>{t(l.text, scope)}</span>
                 </button>
               </li>
             );
@@ -327,8 +340,8 @@ function Docs({ scene }: { scene: DeskScene }) {
               setOpen(d.id);
             }}
           >
-            <strong>{d.title}</strong>
-            <span className="muted">{d.from}</span>
+            <strong>{t(d.title, scope)}</strong>
+            <span className="muted">{t(d.from, scope)}</span>
           </button>
         </li>
       ))}
@@ -357,6 +370,8 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
     toggleTimeline,
     moveTimeline,
   } = useEpisode();
+  const t = useT();
+  const scope = useScope();
   const st = deskState(progress, scene);
   // 確認過的論點也是卡片，可以拿來連線或回答後面的疑問（例如「那則訊息是誰傳的」要用論點 B）。
   const args = scene.questions
@@ -374,11 +389,12 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
     name: `發現 ${i + 1}`,
     kind: '發現' as const,
     text: l.text,
-    pair: `${nameOf(l.cards[0])} ⟷ ${nameOf(l.cards[1])}`,
+    pair: [nameOf(l.cards[0]), nameOf(l.cards[1])] as const,
     relation: l.relation,
     conclusion: l.conclusion,
   }));
   const answers = [...found, ...args];
+  const showPair = (p: readonly [string, string]) => `${t(p[0], scope)} ⟷ ${t(p[1], scope)}`;
   // 還沒解鎖的疑問不列出來，免得題目先把還沒查到的線索講出來。
   const questions = desk.openQuestions(scene, st, progress.cards);
   const firstOpen = questions.find((q) => !st.confirmed.includes(q.id));
@@ -405,7 +421,7 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
   const [kind, setKind, showKind] = useKindFilter();
   // 連錯、交錯的那一下才抖；之後重開畫面不再抖。
   const badShake = useBump(st.badLinks);
-  const missTotal = Object.values(st.tried ?? {}).reduce((n, t) => n + t.length, 0);
+  const missTotal = Object.values(st.tried ?? {}).reduce((n, v) => n + v.length, 0);
   const missShake = useBump(missTotal) ? shown : null;
   const status = (id: string) =>
     st.confirmed.includes(id)
@@ -416,8 +432,8 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
   const num = (i: number) => String(i + 1).padStart(2, '0');
 
   const list = (
-    <nav className="q-list" aria-label="疑問">
-      <p className="eyebrow">已確認 {st.confirmed.length}</p>
+    <nav className="q-list" aria-label={t('疑問')}>
+      <p className="eyebrow">{t('已確認 {n}', { n: st.confirmed.length })}</p>
       <ul>
         {questions.map((x, i) => {
           const s = status(x.id);
@@ -429,15 +445,15 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
                 onClick={() => setView(x.id)}
               >
                 <span className="q-num">{num(i)}</span>
-                <span className="q-text">{x.text}</span>
+                <span className="q-text">{t(x.text, scope)}</span>
                 <span className="q-meta">
                   {s === 'done' ? (
                     <>
-                      <span className="good">✓ 已確認</span>
-                      <span>{x.argument.name.split('：')[0]}</span>
+                      <span className="good">✓ {t('已確認')}</span>
+                      <span>{t(x.argument.name, scope).split(/：|: /)[0]}</span>
                     </>
                   ) : (
-                    <span>{s === 'open' ? '進行中' : '尚未開始'}</span>
+                    <span>{s === 'open' ? t('進行中') : t('尚未開始')}</span>
                   )}
                 </span>
               </button>
@@ -447,9 +463,9 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
         {/* 還沒出現的疑問畫成鎖住的空格：玩家看得出案子還沒查完（試玩回報）。 */}
         {Array.from({ length: scene.questions.length - questions.length }, (_, i) => (
           <li key={`locked-${i}`}>
-            <span className="q-item locked" aria-label="尚未出現的疑問">
+            <span className="q-item locked" aria-label={t('尚未出現的疑問')}>
               <span className="q-num">{num(questions.length + i)}</span>
-              <span className="q-text">？</span>
+              <span className="q-text">{t('？')}</span>
             </span>
           </li>
         ))}
@@ -459,10 +475,12 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
             aria-current={shown === 'timeline'}
             onClick={() => setView('timeline')}
           >
-            <span className="q-num">時間線</span>
-            <span className="q-text">把事件排在時間軸上</span>
+            <span className="q-num">{t('時間線')}</span>
+            <span className="q-text">{t('把事件排在時間軸上')}</span>
             <span className="q-meta">
-              <span>{pool.filter((c) => 'time' in c && c.time).length} 張卡可排</span>
+              <span>
+                {t('{n} 張卡可排', { n: pool.filter((c) => 'time' in c && c.time).length })}
+              </span>
             </span>
           </button>
         </li>
@@ -482,9 +500,9 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
           <button
             className="slot-clear"
             onClick={() => toggleLinkCard(c.id)}
-            aria-label={`拿下 ${c.name}`}
+            aria-label={t('拿下 {name}', { name: t(c.name, scope) })}
           >
-            {c.name}
+            {t(c.name, scope)}
           </button>
         ) : null}
       </li>
@@ -493,7 +511,7 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
 
   const bench = (
     <section className="panel step links">
-      <h3 className="step-head">連線</h3>
+      <h3 className="step-head">{t('連線')}</h3>
       <div
         className={
           (desk.canConnect(st) ? 'link-bench ready' : 'link-bench') +
@@ -504,7 +522,7 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
           {slot(0)}
           <li className="link-knot" aria-hidden>
             <span className={st.link.relation ? 'set' : undefined}>
-              {st.link.relation ? relationMark[st.link.relation] : '？'}
+              {st.link.relation ? relationMark[st.link.relation] : t('？')}
             </span>
           </li>
           {slot(1)}
@@ -518,19 +536,19 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
         <div className="row bench-foot">
           <span />
           <button className="primary" disabled={!desk.canConnect(st)} onClick={connect}>
-            連起來
+            {t('連起來')}
           </button>
         </div>
         {st.linkNote && (
           // 連錯不寫字：兩張卡抖一下、頂端工時閃紅（設計稿 board-redesign 修訂）。
           <p role="status" className={st.link.cards.length ? 'sr-only' : 'board-note'}>
-            {st.linkNote}
+            {t(st.linkNote, scope)}
           </p>
         )}
       </div>
       {!wide && (
         <details className="bench-cards">
-          <summary>挑卡片（{pool.length}）</summary>
+          <summary>{t('挑卡片（{n}）', { n: pool.length })}</summary>
           <KindFilter items={pool} value={kind} onPick={setKind} />
           <ul className="stack">
             {timeGroups(
@@ -561,15 +579,15 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
         const i = questions.indexOf(q);
         const item = (id: string) => answers.find((c) => c.id === id);
         return (
-          <section className="workbench chain" aria-label={q.text}>
+          <section className="workbench chain" aria-label={t(q.text, scope)}>
             <header className="wb-head">
-              <p className="eyebrow">疑問 {num(i)}</p>
-              <h2>{q.text}</h2>
+              <p className="eyebrow">{t('疑問 {n}', { n: num(i) })}</p>
+              <h2>{t(q.text, scope)}</h2>
             </header>
             <section className={done ? 'panel step answer done' : 'panel step answer'}>
-              <h3 className="step-head">答案</h3>
+              <h3 className="step-head">{t('答案')}</h3>
               {done ? (
-                <p className="good">已確認：{q.argument.name}</p>
+                <p className="good">{t('已確認：{name}', { name: t(q.argument.name, scope) })}</p>
               ) : (
                 <>
                   <ul
@@ -585,11 +603,11 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
                             <button
                               className="slot-clear"
                               onClick={() => toggleCard(q.id, c.id)}
-                              aria-label={`從答案拿下 ${c.name}`}
+                              aria-label={t('從答案拿下 {name}', { name: t(c.name, scope) })}
                             >
-                              <strong>{'pair' in c ? c.pair : c.name}</strong>
+                              <strong>{'pair' in c ? showPair(c.pair) : t(c.name, scope)}</strong>
                               <span className="muted small">
-                                {'relation' in c ? c.relation : '論點'}
+                                {t('relation' in c ? c.relation : '論點')}
                               </span>
                             </button>
                           ) : null}
@@ -601,7 +619,7 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
                     <span
                       className="tries"
                       role="img"
-                      aria-label={`交錯 ${desk.misses(st, q.id)} 次`}
+                      aria-label={t('交錯 {n} 次', { n: desk.misses(st, q.id) })}
                     >
                       {Array.from({ length: Math.max(3, desk.misses(st, q.id)) }, (_, k) => (
                         <i key={k} className={k < desk.misses(st, q.id) ? 'miss' : undefined} />
@@ -609,7 +627,7 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
                     </span>
                     {st.feedback[q.id] && (
                       <p role="status" className="sr-only">
-                        {st.feedback[q.id]}
+                        {t(st.feedback[q.id], scope)}
                       </p>
                     )}
                     <button
@@ -617,22 +635,22 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
                       disabled={!desk.canSubmit(scene, st, q.id, progress.cards)}
                       onClick={() => submit(q.id)}
                     >
-                      提交 <span className="cost">−1 時</span>
+                      {t('提交')} <span className="cost">{t('−1 時')}</span>
                     </button>
                   </div>
                 </>
               )}
               {done && st.feedback[q.id] && (
                 <p role="status" className="board-note">
-                  {st.feedback[q.id]}
+                  {t(st.feedback[q.id], scope)}
                 </p>
               )}
             </section>
             {bench}
             <section className="panel step mine">
-              <h3 className="step-head">發現</h3>
+              <h3 className="step-head">{t('發現')}</h3>
               {answers.length === 0 ? (
-                <div className="slot-card" aria-label="還沒有發現" />
+                <div className="slot-card" aria-label={t('還沒有發現')} />
               ) : (
                 <ul className="found-chips">
                   {answers.map((c) => {
@@ -644,14 +662,16 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
                           aria-pressed={used}
                           disabled={done}
                           onClick={() => toggleCard(q.id, c.id)}
-                          title={c.text}
+                          title={t(c.text, scope)}
                         >
                           <span className="pick-name">
-                            {'pair' in c ? `${c.name}：${c.pair}` : c.name}
+                            {'pair' in c
+                              ? `${t(c.name, scope)}${t('：')}${showPair(c.pair)}`
+                              : t(c.name, scope)}
                           </span>
                           <span className="muted small">
-                            {'relation' in c ? c.relation : '論點'}
-                            {used && '・已放進答案'}
+                            {t('relation' in c ? c.relation : '論點')}
+                            {used && t('・已放進答案')}
                           </span>
                         </button>
                       </li>
@@ -687,7 +707,7 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
           onMove={moveTimeline}
           marks={scene.timelineMarks.map((m) => ({
             ...m,
-            detail: m.kind === 'gap' ? gapDetail(scene) : undefined,
+            detail: m.kind === 'gap' ? gapDetail(scene, (s) => t(s, scope)) : undefined,
           }))}
         />
       );
@@ -696,7 +716,7 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
     return shown ? (
       <div className="stack board-one">
         <button className="link back" onClick={() => setView(null)}>
-          ← 全部疑問
+          {t('← 全部疑問')}
         </button>
         {work}
       </div>
@@ -717,13 +737,15 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
  */
 function Motions({ scene, held }: { scene: DeskScene; held: string[] }) {
   const { progress, pickBasis, pickRequest, toggleSupport, fileMotion } = useEpisode();
+  const t = useT();
+  const scope = useScope();
   const st = deskState(progress, scene);
   const pool = scene.cards.filter((c) => held.includes(c.id));
   const args = heldArgs(progress);
   // 一打開就停在還沒裁定的那一份上。
   const open = scene.motions.find((m) => desk.motionAttempt(st, m.id).ruling !== 'granted');
   const [pick, setPick] = useState<string>(open?.id ?? scene.motions[0]?.id ?? '');
-  if (scene.motions.length === 0) return <p className="muted">目前沒有可以提出的聲請。</p>;
+  if (scene.motions.length === 0) return <p className="muted">{t('目前沒有可以提出的聲請。')}</p>;
   const m = scene.motions.find((x) => x.id === pick) ?? scene.motions[0];
   const a = desk.motionAttempt(st, m.id);
   const missing = m.needs.filter((n) => !held.includes(n));
@@ -731,31 +753,33 @@ function Motions({ scene, held }: { scene: DeskScene; held: string[] }) {
     <div className="stack">
       {scene.motions.length > 1 && (
         <Tabs
-          label="聲請"
+          label={t('聲請')}
           value={pick}
           onPick={setPick}
           items={scene.motions.map((x, i) => ({
             id: x.id,
-            label: `聲請 ${i + 1}`,
+            label: t('聲請 {n}', { n: i + 1 }),
             done: desk.motionAttempt(st, x.id).ruling === 'granted',
           }))}
         />
       )}
       <section className="panel job">
-        <strong>{m.label}</strong>
-        <p className="muted">{m.cost} 工時</p>
-        <p>{m.detail}</p>
-        {a.ruling === 'granted' && <p className="good">法官准了。</p>}
+        <strong>{t(m.label, scope)}</strong>
+        <p className="muted">{t('{n} 工時', { n: m.cost })}</p>
+        <p>{t(m.detail, scope)}</p>
+        {a.ruling === 'granted' && <p className="good">{t('法官准了。')}</p>}
         {a.ruling === 'denied' && (
-          <p className="bad-text">駁回。法官記得你浪費了他的時間。修正後可以重送，工時照扣。</p>
+          <p className="bad-text">
+            {t('駁回。法官記得你浪費了他的時間。修正後可以重送，工時照扣。')}
+          </p>
         )}
         {a.ruling !== 'granted' &&
           (missing.length ? (
-            <p className="muted">還缺前提：先把相關的論點確認起來。</p>
+            <p className="muted">{t('還缺前提：先把相關的論點確認起來。')}</p>
           ) : (
             <>
               <fieldset className="relations">
-                <legend>法律依據</legend>
+                <legend>{t('法律依據')}</legend>
                 <div className="stack">
                   {m.bases.map((b) => (
                     <button
@@ -765,13 +789,13 @@ function Motions({ scene, held }: { scene: DeskScene; held: string[] }) {
                       className={a.basis === b ? 'wide on' : 'wide'}
                       onClick={() => pickBasis(m.id, b)}
                     >
-                      {b}
+                      {t(b, scope)}
                     </button>
                   ))}
                 </div>
               </fieldset>
               <fieldset className="relations">
-                <legend>請求</legend>
+                <legend>{t('請求')}</legend>
                 <div className="stack">
                   {m.requests.map((r) => (
                     <button
@@ -781,13 +805,13 @@ function Motions({ scene, held }: { scene: DeskScene; held: string[] }) {
                       className={a.request === r ? 'wide on' : 'wide'}
                       onClick={() => pickRequest(m.id, r)}
                     >
-                      {r}
+                      {t(r, scope)}
                     </button>
                   ))}
                 </div>
               </fieldset>
               <fieldset className="relations">
-                <legend>支撐（{m.support.length} 張）</legend>
+                <legend>{t('支撐（{n} 張）', { n: m.support.length })}</legend>
                 <div className="stack">
                   {[...args, ...pool].map((c) => (
                     <CardPick
@@ -804,7 +828,7 @@ function Motions({ scene, held }: { scene: DeskScene; held: string[] }) {
                 disabled={!desk.canFile(scene, st, m.id, progress.cards)}
                 onClick={() => fileMotion(m.id)}
               >
-                送出（{m.cost} 工時）
+                {t('送出（{n} 工時）', { n: m.cost })}
               </button>
             </>
           ))}
@@ -815,6 +839,8 @@ function Motions({ scene, held }: { scene: DeskScene; held: string[] }) {
 
 function Jobs({ scene, held }: { scene: DeskScene; held: string[] }) {
   const { progress, commission } = useEpisode();
+  const t = useT();
+  const scope = useScope();
   const st = deskState(progress, scene);
   // 前提還沒出現的委託不顯示：先有線索，才知道可以查什麼。
   const shown = scene.jobs.filter(
@@ -825,37 +851,39 @@ function Jobs({ scene, held }: { scene: DeskScene; held: string[] }) {
     scene.questions.find((q) => q.argument.id === id)?.argument.name ??
     id;
   if (shown.length === 0)
-    return <p className="muted">目前沒有可以委託的事。多讀卷宗、多問委託人。</p>;
+    return <p className="muted">{t('目前沒有可以委託的事。多讀卷宗、多問委託人。')}</p>;
   return (
     <ul className="stack">
       {shown.map((j) => {
         const done = st.jobs.includes(j.id);
         return (
           <li key={j.id} className="panel job">
-            <strong>{j.label}</strong>
+            <strong>{t(j.label, scope)}</strong>
             <p className="muted">
-              {j.who}・{j.cost} 工時
+              {t(j.who, scope)}
+              {t('・')}
+              {t('{n} 工時', { n: j.cost })}
             </p>
-            <p>{j.detail}</p>
+            <p>{t(j.detail, scope)}</p>
             {/* 前提寫在卡上：沒寫的話，玩家會以為不必任何證據就能委託。 */}
             {j.needs.length > 0 && !done && (
-              <ul className="needs" aria-label="需要">
+              <ul className="needs" aria-label={t('需要')}>
                 {j.needs.map((n) => (
                   <li key={n} className={held.includes(n) ? 'have' : 'lack'}>
-                    {held.includes(n) ? '✓' : '需要'} {nameOf(n)}
+                    {held.includes(n) ? '✓' : t('需要')} {t(nameOf(n), scope)}
                   </li>
                 ))}
               </ul>
             )}
             {done ? (
-              <p className="good">已回報。</p>
+              <p className="good">{t('已回報。')}</p>
             ) : (
               <button
                 className="primary"
                 disabled={!desk.canCommission(scene, st, j.id, progress.cards)}
                 onClick={() => commission(j.id)}
               >
-                {`委託（${j.cost} 工時）`}
+                {t('委託（{n} 工時）', { n: j.cost })}
               </button>
             )}
           </li>
@@ -871,19 +899,20 @@ function Jobs({ scene, held }: { scene: DeskScene; held: string[] }) {
  * 四秒沒按就恢復原狀。
  */
 function WrapButton({ hours, onWrap }: { hours: number; onWrap: () => void }) {
+  const t = useT();
   const [armed, setArmed] = useState(false);
   useEffect(() => {
     if (!armed) return;
-    const t = setTimeout(() => setArmed(false), 4000);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setArmed(false), 4000);
+    return () => clearTimeout(timer);
   }, [armed]);
   return armed ? (
     <button className="primary wide armed" onClick={onWrap}>
-      確定結束 <span className="cost">剩 {hours} 時</span>
+      {t('確定結束')} <span className="cost">{t('剩 {n} 時', { n: hours })}</span>
     </button>
   ) : (
     <button className="wide" onClick={() => setArmed(true)}>
-      結束調查
+      {t('結束調查')}
     </button>
   );
 }
@@ -899,9 +928,9 @@ function useBump(n: number) {
   return n > base;
 }
 
-function gapDetail(scene: DeskScene) {
+function gapDetail(scene: DeskScene, tr: (s: string) => string) {
   for (const j of scene.jobs)
     for (const l of j.report)
-      if (l.mark?.kind === 'gap') return l.text.replace(/\s*→\s*/, '\u3000→\u3000');
+      if (l.mark?.kind === 'gap') return tr(l.text).replace(/\s*→\s*/, '\u3000→\u3000');
   return undefined;
 }

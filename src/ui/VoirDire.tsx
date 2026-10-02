@@ -2,6 +2,8 @@ import { useState } from 'react';
 import type { VoirDireScene } from '../engine/episode/schema';
 import * as vd from '../engine/episode/voirdire';
 import { useEpisode, voirDireState } from '../engine/game';
+import { useT } from '../i18n';
+import { useScope } from './lang';
 import { Speech } from './Portrait';
 import { Shell, Tabs } from './Shell';
 
@@ -17,6 +19,8 @@ type Filter = 'all' | 'seated' | 'unasked';
 export function VoirDire({ scene }: { scene: VoirDireScene }) {
   const { progress, askJuror, challengeJuror, strikeJuror, seatJury, advance } = useEpisode();
   const st = voirDireState(progress, scene);
+  const t = useT();
+  const scope = useScope();
   const [intro, setIntro] = useState(st.asked.length === 0 && st.struck.length === 0);
   const [filter, setFilter] = useState<Filter>('all');
   const [open, setOpen] = useState<string | null>(null);
@@ -25,7 +29,7 @@ export function VoirDire({ scene }: { scene: VoirDireScene }) {
     return (
       <main className="scene">
         <p className="eyebrow">
-          {scene.act}・{scene.place}
+          {t(scene.act, scope)}・{t(scene.place, scope)}
         </p>
         <div className="lines">
           {scene.intro.map((l, i) => (
@@ -33,7 +37,7 @@ export function VoirDire({ scene }: { scene: VoirDireScene }) {
           ))}
         </div>
         <button className="primary next" onClick={() => setIntro(false)}>
-          開始遴選
+          {t('開始遴選')}
         </button>
       </main>
     );
@@ -41,22 +45,22 @@ export function VoirDire({ scene }: { scene: VoirDireScene }) {
   if (vd.done(st))
     return (
       <main className="scene">
-        <p className="eyebrow">陪審團已選定</p>
+        <p className="eyebrow">{t('陪審團已選定')}</p>
         <ul className="stack">
           {vd.panel(scene, st).map((j) => (
             <li key={j.id} className="panel">
-              <strong>{j.label}</strong>
-              {j.foreperson && <span className="muted"> ・陪審長</span>}
+              <strong>{t(j.label, scope)}</strong>
+              {j.foreperson && <span className="muted"> {t('・陪審長')}</span>}
             </li>
           ))}
         </ul>
         {st.wrong > 0 && (
           <p className="muted">
-            沒有根據的聲請有 {st.wrong} 次。開庭第一天的法官耐心會少 {st.wrong} 點。
+            {t('沒有根據的聲請有 {n} 次。開庭第一天的法官耐心會少 {n} 點。', { n: st.wrong })}
           </p>
         )}
         <button className="primary next" onClick={advance}>
-          繼續
+          {t('繼續')}
         </button>
       </main>
     );
@@ -70,28 +74,29 @@ export function VoirDire({ scene }: { scene: VoirDireScene }) {
       resetKey={filter}
       head={
         <header className="panel-head bench">
-          <p className="eyebrow">陪審團遴選</p>
+          <p className="eyebrow">{t('陪審團遴選')}</p>
           <p className="patience">
-            提問 <strong>{st.left}</strong> ・ 無因迴避{' '}
-            <strong>{scene.peremptories - st.struck.length}</strong> ・ 候選 {pool.length}
+            {t('提問', 'voirdire')} <strong>{st.left}</strong> ・ {t('無因迴避', 'voirdire')}{' '}
+            <strong>{scene.peremptories - st.struck.length}</strong> ・{' '}
+            {t('候選 {n}', { n: pool.length })}
           </p>
         </header>
       }
       tabs={
         <Tabs
-          label="候選人"
+          label={t('候選人')}
           value={filter}
           onPick={setFilter}
           items={[
-            { id: 'all', label: `全部 ${pool.length}` },
-            { id: 'seated', label: `會入座的 ${scene.seats}` },
-            { id: 'unasked', label: '還沒問過' },
+            { id: 'all', label: t('全部 {n}', { n: pool.length }) },
+            { id: 'seated', label: t('會入座的 {n}', { n: scene.seats }) },
+            { id: 'unasked', label: t('還沒問過') },
           ]}
         />
       }
       foot={
         <button className="primary wide" disabled={!vd.canSeat(scene, st)} onClick={seatJury}>
-          就用這 {scene.seats} 位（由上往下）
+          {t('就用這 {n} 位（由上往下）', { n: scene.seats })}
         </button>
       }
     >
@@ -109,30 +114,30 @@ export function VoirDire({ scene }: { scene: VoirDireScene }) {
               >
                 <strong>
                   <span className="seat">{seat < scene.seats ? seat + 1 : '—'}</span>
-                  {c.name}・{c.job}
-                  {asked && <span className="good"> ・問過</span>}
+                  {t(c.name, scope)}・{t(c.job, scope)}
+                  {asked && <span className="good"> {t('・問過')}</span>}
                 </strong>
-                <span className="muted small">{c.sheet}</span>
+                <span className="muted small">{t(c.sheet, scope)}</span>
               </button>
               {isOpen && (
                 <div className="candidate-body">
                   {asked && (
                     <>
-                      <p className="claim-text">「{c.question.q}」</p>
-                      <p>{c.question.a}</p>
-                      {c.hidden && <p className="muted small">{c.hidden}</p>}
+                      <p className="claim-text">「{t(c.question.q, scope)}」</p>
+                      <p>{t(c.question.a, scope)}</p>
+                      {c.hidden && <p className="muted small">{t(c.hidden, scope)}</p>}
                     </>
                   )}
                   <div className="row">
                     <button disabled={!vd.canAsk(st, c.id)} onClick={() => askJuror(c.id)}>
-                      提問
+                      {t('提問')}
                     </button>
-                    <button onClick={() => challengeJuror(c.id)}>聲請有因迴避</button>
+                    <button onClick={() => challengeJuror(c.id)}>{t('聲請有因迴避')}</button>
                     <button
                       disabled={!vd.canStrike(scene, st, c.id)}
                       onClick={() => strikeJuror(c.id)}
                     >
-                      無因迴避
+                      {t('無因迴避')}
                     </button>
                   </div>
                 </div>
@@ -140,7 +145,7 @@ export function VoirDire({ scene }: { scene: VoirDireScene }) {
             </li>
           );
         })}
-        {shown.length === 0 && <li className="muted">這個篩選沒有人。</li>}
+        {shown.length === 0 && <li className="muted">{t('這個篩選沒有人。')}</li>}
       </ul>
     </Shell>
   );

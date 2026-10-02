@@ -3,7 +3,9 @@ import { useState } from 'react';
 import * as nego from '../engine/episode/negotiation';
 import type { NegotiationScene } from '../engine/episode/schema';
 import { closingArgs, negoState, useEpisode } from '../engine/game';
+import { useT } from '../i18n';
 import { CardPick, EvidenceDrawer } from './Evidence';
+import { useScope } from './lang';
 import { Speech } from './Portrait';
 import { Shell, Tabs, Transcript } from './Shell';
 
@@ -12,6 +14,8 @@ export function Negotiation({ scene }: { scene: NegotiationScene }) {
   const { progress, revealArg, bluff, advise, walkOut, advance, callClient } = useEpisode();
   const st = negoState(progress, scene);
   const terms = useCaseTerms();
+  const t = useT();
+  const scope = useScope();
   const [intro, setIntro] = useState(st.log.length <= scene.intro.length);
   const [tab, setTab] = useState<'offer' | 'reveal' | 'bluff'>('offer');
   const args = closingArgs(progress);
@@ -22,7 +26,7 @@ export function Negotiation({ scene }: { scene: NegotiationScene }) {
     return (
       <main className="scene">
         <p className="eyebrow">
-          {scene.act}・{scene.place}
+          {t('{a}・{b}', { a: t(scene.act, scope), b: t(scene.place, scope) })}
         </p>
         <div className="lines">
           {scene.intro.map((l, i) => (
@@ -30,7 +34,7 @@ export function Negotiation({ scene }: { scene: NegotiationScene }) {
           ))}
         </div>
         <button className="primary next" onClick={() => setIntro(false)}>
-          坐下
+          {t('坐下')}
         </button>
       </main>
     );
@@ -38,22 +42,22 @@ export function Negotiation({ scene }: { scene: NegotiationScene }) {
   if (nego.done(st))
     return (
       <main className="scene">
-        <p className="eyebrow">{st.outcome === 'deal' ? terms.deal : '談判結束'}</p>
+        <p className="eyebrow">{st.outcome === 'deal' ? t(terms.deal) : t('談判結束')}</p>
         <div className="lines">
           {st.log.slice(-4).map((l, i) => (
             <Speech key={i} line={l} />
           ))}
         </div>
         <dl className="stats">
-          <dt>{scene.opponent.name}的信心</dt>
+          <dt>{t('{name}的信心', { name: t(scene.opponent.name, scope) })}</dt>
           <dd>{st.confidence}</dd>
-          <dt>最後的條件</dt>
-          <dd>{st.deal ?? offer.label}</dd>
-          <dt>{scene.client.name}的信任</dt>
+          <dt>{t('最後的條件')}</dt>
+          <dd>{t(st.deal ?? offer.label, scope)}</dd>
+          <dt>{t('{name}的信任', { name: t(scene.client.name, scope) })}</dt>
           <dd>{st.trust} / 5</dd>
         </dl>
         <button className="primary next" onClick={advance}>
-          繼續
+          {t('繼續')}
         </button>
       </main>
     );
@@ -64,10 +68,10 @@ export function Negotiation({ scene }: { scene: NegotiationScene }) {
       head={
         <header className="panel-head bench">
           <p className="eyebrow">
-            {scene.opponent.name}・{scene.opponent.role}
+            {t('{a}・{b}', { a: t(scene.opponent.name, scope), b: t(scene.opponent.role, scope) })}
           </p>
-          <p className="patience" aria-label={`剩餘回合 ${st.rounds}`}>
-            剩餘回合 <strong>{st.rounds}</strong>
+          <p className="patience" aria-label={`${t('剩餘回合')} ${st.rounds}`}>
+            {t('剩餘回合')} <strong>{st.rounds}</strong>
           </p>
         </header>
       }
@@ -79,13 +83,13 @@ export function Negotiation({ scene }: { scene: NegotiationScene }) {
             ))}
           </Transcript>
           <Tabs
-            label="談判"
+            label={t('談判')}
             value={tab}
             onPick={setTab}
             items={[
-              { id: 'offer', label: '她開的條件' },
-              { id: 'reveal', label: '攤牌' },
-              { id: 'bluff', label: '虛張聲勢' },
+              { id: 'offer', label: t('她開的條件') },
+              { id: 'reveal', label: t('攤牌') },
+              { id: 'bluff', label: t('虛張聲勢') },
             ]}
           />
         </>
@@ -94,30 +98,30 @@ export function Negotiation({ scene }: { scene: NegotiationScene }) {
         <>
           <EvidenceDrawer />
           <button className="wide" onClick={walkOut}>
-            離席
+            {t('離席')}
           </button>
         </>
       }
     >
       {tab === 'offer' && (
         <section className="panel">
-          <h2>她現在開的條件</h2>
-          <p className="claim-text">{offer.label}</p>
+          <h2>{t('她現在開的條件')}</h2>
+          <p className="claim-text">{t(offer.label, scope)}</p>
           {scene.authority && (
             <dl className="stats authority">
               {offer.amount !== undefined && (
                 <>
-                  <dt>條件</dt>
+                  <dt>{t('條件')}</dt>
                   <dd>{money(offer.amount)}</dd>
                 </>
               )}
-              <dt>授權上限</dt>
+              <dt>{t('授權上限')}</dt>
               <dd className={ok ? undefined : 'over'}>{money(st.cap ?? scene.authority.cap)}</dd>
               {offer.terms && (
                 <>
-                  <dt>附帶條款</dt>
+                  <dt>{t('附帶條款')}</dt>
                   <dd className={st.termsOk ? undefined : 'over'}>
-                    {st.termsOk ? '已同意' : '未同意'}
+                    {st.termsOk ? t('已同意') : t('未同意')}
                   </dd>
                 </>
               )}
@@ -128,16 +132,18 @@ export function Negotiation({ scene }: { scene: NegotiationScene }) {
           ))}
           <div className="stack">
             <button className="wide" onClick={() => advise(true)}>
-              建議{scene.client.name}接受{ok ? '' : '（超過授權）'}
+              {t(ok ? '建議{name}接受' : '建議{name}接受（超過授權）', {
+                name: t(scene.client.name, scope),
+              })}
             </button>
             {!ok && (
               <button className="wide primary" disabled={!nego.canAct(st)} onClick={callClient}>
-                打電話請示 {scene.client.name}
-                <span className="cost">−1 回合</span>
+                {t('打電話請示 {name}', { name: t(scene.client.name, scope) })}
+                <span className="cost">{t('−1 回合')}</span>
               </button>
             )}
             <button className="wide" onClick={() => advise(false)}>
-              建議撐下去
+              {t('建議撐下去')}
             </button>
           </div>
         </section>
@@ -145,26 +151,26 @@ export function Negotiation({ scene }: { scene: NegotiationScene }) {
 
       {tab === 'reveal' && (
         <section className="panel">
-          <h2>攤牌</h2>
+          <h2>{t('攤牌')}</h2>
           <div className="stack">
             {args.map((a) => (
               <CardPick
                 key={a.id}
                 item={a}
-                verb="亮出"
+                verb={t('亮出')}
                 disabled={st.played.includes(a.id) || !nego.canAct(st)}
-                tag={st.played.includes(a.id) ? '（已亮出）' : undefined}
+                tag={st.played.includes(a.id) ? t('（已亮出）') : undefined}
                 onPick={() => revealArg(a.id, a.strength, a.name)}
               />
             ))}
-            {args.length === 0 && <span className="muted">手上沒有確認過的論點。</span>}
+            {args.length === 0 && <span className="muted">{t('手上沒有確認過的論點。')}</span>}
           </div>
         </section>
       )}
 
       {tab === 'bluff' && (
         <section className="panel">
-          <h2>虛張聲勢</h2>
+          <h2>{t('虛張聲勢')}</h2>
           <div className="stack">
             {scene.bluffs.map((b) => (
               <button
@@ -173,7 +179,7 @@ export function Negotiation({ scene }: { scene: NegotiationScene }) {
                 disabled={st.bluffed.includes(b.id) || !nego.canAct(st)}
                 onClick={() => bluff(b.id)}
               >
-                {b.label}
+                {t(b.label, scope)}
               </button>
             ))}
           </div>

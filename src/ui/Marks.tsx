@@ -4,10 +4,12 @@ import { useEffect, useState, type CSSProperties } from 'react';
 import { motionAttempt } from '../engine/episode/desk';
 import type { Episode, Line } from '../engine/episode/schema';
 import { deskState, episodeOf } from '../engine/game';
+import { t as tr, useT } from '../i18n';
 import type { Progress } from '../engine/save';
 import { Speech } from './Portrait';
 import { AnnounceQueue, type Announcement } from './announce';
 import { claimHand, topHand, useHandStore, type Hand } from './hand';
+import { useScope } from './lang';
 
 /**
  * 盧卡斯的手留在畫面上的記號（設計稿 inner-voice）。
@@ -56,15 +58,18 @@ export function Hl({
   words: string[];
   live?: boolean;
 }) {
-  const w = words.find((x) => x && text.includes(x));
-  if (!w) return <>{text}</>;
-  const i = text.indexOf(w);
+  const t = useT();
+  const scope = useScope();
+  const shown = t(text, scope);
+  const w = words.map((x) => t(x, scope)).find((x) => x && shown.includes(x));
+  if (!w) return <>{shown}</>;
+  const i = shown.indexOf(w);
   return (
     <>
-      {text.slice(0, i)}
+      {shown.slice(0, i)}
       <mark className={live ? 'hl enter live' : 'hl'}>{w}</mark>
-      <span className="sr-only">（盧卡斯標記）</span>
-      {text.slice(i + w.length)}
+      <span className="sr-only">{t('（盧卡斯標記）')}</span>
+      {shown.slice(i + w.length)}
     </>
   );
 }
@@ -98,14 +103,24 @@ export function StickyNote({
   word?: string;
   pinned?: boolean;
 }) {
-  useEffect(() => announce.mark({ from: 'sticky', text: `盧卡斯的便條：${text}` }), [text]);
+  const t = useT();
+  const scope = useScope();
+  const shown = t(text, scope);
+  useEffect(
+    () =>
+      announce.mark({
+        from: 'sticky',
+        text: tr('盧卡斯的便條：{text}', { text: tr(text, scope) }),
+      }),
+    [text, scope],
+  );
   return (
     <figure
       className={pinned ? 'sticky pinned enter' : 'sticky enter'}
       role="note"
-      aria-label={`盧卡斯的便條：${text}`}
+      aria-label={t('盧卡斯的便條：{text}', { text: shown })}
     >
-      <Hand text={text} word={word} />
+      <Hand text={shown} word={word && t(word, scope)} />
     </figure>
   );
 }
@@ -122,21 +137,34 @@ export function IndexCard({
   text: string;
   word?: string;
 }) {
+  const t = useT();
+  const scope = useScope();
+  const shown = t(text, scope);
   return (
-    <figure className="sticky index enter" role="note" aria-label={`推理結論：${text}`}>
-      <div className="index-head">連線成立 {head && <span className="rel">{head}</span>}</div>
-      <p className="printed">{printed}</p>
-      <Hand text={text} word={word} />
+    <figure
+      className="sticky index enter"
+      role="note"
+      aria-label={t('推理結論：{text}', { text: shown })}
+    >
+      <div className="index-head">
+        {t('連線成立')} {head && <span className="rel">{t(head, scope)}</span>}
+      </div>
+      <p className="printed">{t(printed, scope)}</p>
+      <Hand text={shown} word={word && t(word, scope)} />
     </figure>
   );
 }
 
 /** 章。sm＝介面上的小章（只有中文）；大章帶法院紙本的英文副標。 */
 export function Stamp({ text, sub, sm }: { text: string; sub?: string; sm?: boolean }) {
+  const t = useT();
+  const scope = useScope();
+  const shown = t(text, scope);
   return (
-    <span className={sm ? 'stamp sm enter' : 'stamp enter'} role="img" aria-label={text}>
-      <b>{text}</b>
-      {!sm && sub && <i>{sub}</i>}
+    <span className={sm ? 'stamp sm enter' : 'stamp enter'} role="img" aria-label={shown}>
+      <b>{shown}</b>
+      {/* 英文模式章面本來就是英文，副標會重複。 */}
+      {!sm && sub && shown.toUpperCase() !== sub && <i>{sub}</i>}
     </span>
   );
 }
@@ -160,32 +188,43 @@ export function Ruling({
   verdict: string;
 }) {
   const { caseNo } = useCaseTerms();
+  const t = useT();
   useEffect(
     () =>
       announce.mark({
         from: 'ruling',
-        text: `聲請${verdict}。${wrongBasis && basis ? `依據選錯：${basis}。` : ''}`,
+        text:
+          wrongBasis && basis
+            ? tr('聲請{verdict}。依據選錯：{basis}。', { verdict: tr(verdict), basis })
+            : tr('聲請{verdict}。', { verdict: tr(verdict) }),
       }),
     [verdict, wrongBasis, basis],
   );
   return (
-    <article className="ruling" aria-label={`裁定：${verdict}${wrongBasis ? '。依據選錯' : ''}`}>
+    <article
+      className="ruling"
+      aria-label={
+        wrongBasis
+          ? t('裁定：{verdict}。依據選錯', { verdict: t(verdict) })
+          : t('裁定：{verdict}', { verdict: t(verdict) })
+      }
+    >
       <header>
-        <span>{'卡爾德郡高等法院\u3000裁定'}</span>
+        <span>{t('卡爾德郡高等法院\u3000裁定')}</span>
         <span className="case-no">{caseNo}</span>
       </header>
       <dl>
-        <dt>聲請</dt>
+        <dt>{t('聲請')}</dt>
         <dd>{label}</dd>
         {basis && (
           <>
-            <dt>依據</dt>
+            <dt>{t('依據')}</dt>
             <dd>{wrongBasis ? <span className="circled">{basis}</span> : basis}</dd>
           </>
         )}
         {request && (
           <>
-            <dt>請求</dt>
+            <dt>{t('請求')}</dt>
             <dd>{request}</dd>
           </>
         )}
@@ -198,15 +237,27 @@ export function Ruling({
 
 /** 兩個時間點之間的間距（回報畫面用；時間線上的版本畫在列與列之間）。 */
 export function GapNote({ minutes, detail }: { minutes: string; detail: string }) {
+  const t = useT();
+  const scope = useScope();
+  const min = t(minutes, scope);
+  const note = t(detail, scope);
   useHand('gap');
-  useEffect(
-    () => announce.mark({ from: 'gap', text: `間距 ${minutes}：${detail}`, word: minutes }),
-    [minutes, detail],
-  );
+  useEffect(() => {
+    const m = tr(minutes, scope);
+    announce.mark({
+      from: 'gap',
+      text: tr('間距 {minutes}：{detail}', { minutes: m, detail: tr(detail, scope) }),
+      word: m,
+    });
+  }, [minutes, detail, scope]);
   return (
-    <p className="gap-note" role="note" aria-label={`間距 ${minutes}：${detail}`}>
-      <b>{minutes}</b>
-      <span>{detail}</span>
+    <p
+      className="gap-note"
+      role="note"
+      aria-label={t('間距 {minutes}：{detail}', { minutes: min, detail: note })}
+    >
+      <b>{min}</b>
+      <span>{note}</span>
     </p>
   );
 }
@@ -216,18 +267,21 @@ export function GapNote({ minutes, detail }: { minutes: string; detail: string }
  * 螢光筆不自成一行，而是標在前面那幾句裡；其他記號照各自的樣子畫。
  */
 export function MarkLines({ lines }: { lines: Line[] }) {
+  const scope = useScope();
   const words = lines.flatMap((l) =>
     l.mark?.kind === 'highlight' && l.mark.word ? [l.mark.word] : [],
   );
   const live = useHand('highlight', words.length > 0);
   useEffect(() => {
-    if (words.length)
+    if (words.length) {
+      const shown = words.map((w) => tr(w, scope)).join(tr('、'));
       announce.mark({
         from: 'highlight',
-        text: `盧卡斯標記了「${words.join('、')}」`,
-        word: words.join('、'),
+        text: tr('盧卡斯標記了「{words}」', { words: shown }),
+        word: shown,
       });
-  }, [words.join()]); // eslint-disable-line react-hooks/exhaustive-deps
+    }
+  }, [words.join(), scope]); // eslint-disable-line react-hooks/exhaustive-deps
   return (
     <>
       {lines.map((l, i) =>
@@ -245,6 +299,8 @@ export function MarkLines({ lines }: { lines: Line[] }) {
 
 /** 一行記號單獨出現時的樣子。貼在別的元件上的（on）由那個元件自己畫。 */
 export function MarkLine({ line }: { line: Line }) {
+  const t = useT();
+  const scope = useScope();
   const m = line.mark;
   if (!m) return null;
   const text = m.text ?? line.text;
@@ -252,7 +308,7 @@ export function MarkLine({ line }: { line: Line }) {
   if (m.kind === 'gap') return <GapNote minutes={m.text ?? ''} detail={line.text} />;
   if (m.kind === 'stamp' && line.text.includes('｜')) {
     // 准予之後的時間尺：「22:24 心率歸零｜22:47 伊森刷卡進門｜23 分鐘」
-    const parts = line.text.split('｜');
+    const parts = t(line.text, scope).split('｜');
     return (
       <GapNote minutes={parts.at(-1) ?? ''} detail={parts.slice(0, -1).join('\u3000→\u3000')} />
     );
@@ -291,12 +347,16 @@ export function WindowRuler({ text }: { text: string }) {
   const m = text.match(/(\d\d:\d\d)\s*[–-]\s*(\d\d:\d\d)\s*→\s*(\d\d:\d\d)/);
   const [narrow, setNarrow] = useState(false);
   useEffect(() => {
-    const t = requestAnimationFrame(() => setNarrow(true));
-    return () => cancelAnimationFrame(t);
+    const raf = requestAnimationFrame(() => setNarrow(true));
+    return () => cancelAnimationFrame(raf);
   }, []);
+  const t = useT();
   useEffect(() => {
     if (m)
-      announce.mark({ from: 'window', text: `死亡時間窗從 ${m[1]} 到 ${m[2]}，收窄到 ${m[3]}` });
+      announce.mark({
+        from: 'window',
+        text: tr('死亡時間窗從 {a} 到 {b}，收窄到 {c}', { a: m[1], b: m[2], c: m[3] }),
+      });
   }, [text]); // eslint-disable-line react-hooks/exhaustive-deps
   if (!m) return null;
   const min = (t: string) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3));
@@ -308,11 +368,14 @@ export function WindowRuler({ text }: { text: string }) {
     `${String(Math.floor(t / 60)).padStart(2, '0')}:${String(t % 60).padStart(2, '0')}`;
   const style = (v: Record<string, number>) => v as CSSProperties;
   return (
-    <section className="panel ruler-panel" aria-label="死亡時間窗">
-      <figure className="ruler" aria-label={`推估窗口 ${m[1]} 到 ${m[2]}，收窄到 ${m[3]}`}>
+    <section className="panel ruler-panel" aria-label={t('死亡時間窗')}>
+      <figure
+        className="ruler"
+        aria-label={t('推估窗口 {a} 到 {b}，收窄到 {c}', { a: m[1], b: m[2], c: m[3] })}
+      >
         <div className="ruler-track">
           <span className="ruler-window ghost" style={style({ '--a': 0, '--b': 1 })}>
-            <span className="lbl">{`原本推估 ${m[1]}–${m[2]}`}</span>
+            <span className="lbl">{t('原本推估 {a}–{b}', { a: m[1], b: m[2] })}</span>
           </span>
           <span
             className="ruler-window narrow"
@@ -355,35 +418,35 @@ export function Iou({
 }) {
   const n = String(no).padStart(2, '0');
   const { yes } = useCaseTerms();
+  const t = useT();
+  const scope = useScope();
   return (
     <div className="iou" data-state={state}>
-      <div className="iou-stub">借據 {n}</div>
+      <div className="iou-stub">{t('借據 {n}', { n })}</div>
       <div className="iou-body">
         <header>
-          <b>借據</b>
+          <b>{t('借據')}</b>
         </header>
-        <p className="iou-text">{text}</p>
+        <p className="iou-text">{t(text, scope)}</p>
         <dl className="iou-terms">
           {backing && (
             <div>
-              <dt>擔保</dt>
-              <dd>{backing}</dd>
+              <dt>{t('擔保')}</dt>
+              <dd>{t(backing, scope)}</dd>
             </div>
           )}
           <div>
-            <dt>兌現</dt>
-            <dd>陪審員往辯方 {kept}</dd>
+            <dt>{t('兌現')}</dt>
+            <dd>{t('陪審員往辯方 {n}', { n: kept })}</dd>
           </div>
           <div>
-            <dt>逾期</dt>
-            <dd className="due">
-              全體往{yes} {broken}
-            </dd>
+            <dt>{t('逾期')}</dt>
+            <dd className="due">{t('全體往{yes} {n}', { yes: t(yes), n: broken })}</dd>
           </div>
         </dl>
         <footer>
-          <span className="sig">葛雷</span>
-          <span className="to">{'債權人\u3000陪審團'}</span>
+          <span className="sig">{t('葛雷')}</span>
+          <span className="to">{t('債權人\u3000陪審團')}</span>
         </footer>
         {state === 'kept' && <Stamp text="已兌現" sm />}
         {state === 'broken' && <Stamp text="逾期未兌現" sm />}
@@ -402,11 +465,12 @@ export function Tally({
   round: number;
   burden?: Burden;
 }) {
+  const t = useT();
   const w = termsOf({ burden });
   const [out, setOut] = useState(false);
   useEffect(() => {
-    const t = setTimeout(() => setOut(true), 400);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setOut(true), 400);
+    return () => clearTimeout(timer);
   }, []);
   const g = guilty.filter(Boolean).length;
   const ng = guilty.length - g;
@@ -414,17 +478,31 @@ export function Tally({
     () =>
       announce.mark({
         from: 'tally',
-        text: `陪審團僵局，第${round}輪，${w.no} ${ng}，${w.yes} ${g}，未達一致`,
+        text: tr('陪審團僵局，第{round}輪，{no} {ng}，{yes} {g}，未達一致', {
+          round,
+          no: tr(w.no),
+          ng,
+          yes: tr(w.yes),
+          g,
+        }),
       }),
     [round, ng, g, w],
   );
   let k = 0;
   return (
-    <section className="panel stack" aria-label="評議票數">
+    <section className="panel stack" aria-label={t('評議票數')}>
       <div className="tally-head">
-        <b>陪審團僵局</b>
-        <span className="count">{`第 ${round} 輪\u3000${w.no} ${ng}\u3000${w.yes} ${g}`}</span>
-        <span className="muted small">未達一致</span>
+        <b>{t('陪審團僵局')}</b>
+        <span className="count">
+          {t('第 {round} 輪\u3000{no} {ng}\u3000{yes} {g}', {
+            round,
+            no: t(w.no),
+            ng,
+            yes: t(w.yes),
+            g,
+          })}
+        </span>
+        <span className="muted small">{t('未達一致')}</span>
       </div>
       <ol className="tally">
         {guilty.map((v, i) => (
@@ -434,7 +512,7 @@ export function Tally({
             style={v ? undefined : ({ '--k': k++ } as CSSProperties)}
           >
             <span className="no">{i + 1}</span>
-            <span className="vote">{v ? w.yes : w.no}</span>
+            <span className="vote">{t(v ? w.yes : w.no)}</span>
           </li>
         ))}
       </ol>

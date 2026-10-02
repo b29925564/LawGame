@@ -35,10 +35,11 @@ const mouths: Record<Line['mood'], string> = {
 };
 
 export function Portrait({ who, mood = '平' }: { who: string; mood?: Line['mood'] }) {
+  const t = useT();
   const color = palette[who] ?? '#4a5866';
   if (who === '旁白') return null;
   return (
-    <svg className="portrait" viewBox="0 0 64 64" role="img" aria-label={who} focusable="false">
+    <svg className="portrait" viewBox="0 0 64 64" role="img" aria-label={t(who)} focusable="false">
       <circle cx="32" cy="32" r="30" fill={color} opacity="0.16" />
       <circle cx="32" cy="27" r="17" fill={color} opacity="0.32" />
       <path d="M 8 62 q 24 -18 48 0 z" fill={color} opacity="0.32" />

@@ -1,0 +1,146 @@
+# UI strings: src/ui/Desk.tsx, Timeline.tsx, Evidence.tsx, Marks.tsx, announce.ts. Key = Chinese source string exactly.
+
+# Desk
+回報・法院系統: Report · Court portal
+回報: Report
+准予: Granted
+回到桌面: Back to desk
+事務所: The firm
+開庭: Go to court
+'剩餘工時 {n} 小時': '{n} hours remaining'
+工時: hours
+應用程式: Apps
+結束調查: End investigation
+'開示未回應 {n}': 'Discovery: {n} unanswered'
+郵件: Mail
+卷宗: Case file
+證據板: Board
+委託: Assign
+開示: Discovery
+交出: Produce
+主張特權: Claim privilege
+範圍過廣: Overbroad
+已交出: Produced
+特權成立: Privilege upheld
+特權勉強成立: Privilege barely upheld
+範圍過廣成立: Overbreadth sustained
+裁定照交: Ordered to produce
+'請求 {n}': 'Request {n}'
+'請求 {n} 的回應': 'Response to request {n}'
+請求: Request
+送出: Send
+'← 收件匣': '← Inbox'
+'寄件者：{from}': 'From: {from}'
+'← 卷宗': '← Case file'
+疑問: Questions
+'疑問 {n}': 'Question {n}'
+'已確認 {n}': '{n} confirmed'
+已確認: Confirmed
+'已確認：{name}': 'Confirmed: {name}'
+進行中: In progress
+尚未開始: Not started
+尚未出現的疑問: Question not yet available
+時間線: Timeline
+把事件排在時間軸上: Put the events in order on the timeline
+'{n} 張卡可排': '{n} cards to place'
+'拿下 {name}': 'Remove {name}'
+連線: Link
+連起來: Link
+'？': '?'
+'挑卡片（{n}）': 'Pick cards ({n})'
+答案: Answer
+'從答案拿下 {name}': 'Remove {name} from the answer'
+'交錯 {n} 次': '{n} wrong answers'
+提交: Submit
+'−1 時': '−1 h'
+發現: Findings
+'發現 {n}': 'Finding {n}'
+還沒有發現: No findings yet
+'：': ': '
+'・已放進答案': ' · In answer'
+'← 全部疑問': '← All questions'
+目前沒有可以提出的聲請。: No motions to file right now.
+聲請: Motion
+'聲請 {n}': 'Motion {n}'
+'{n} 工時': '{n} hours'
+法官准了。: The judge granted it.
+駁回。法官記得你浪費了他的時間。修正後可以重送，工時照扣。: Denied. The judge remembers you wasted his time. Fix it and refile; the hours are still spent.
+還缺前提：先把相關的論點確認起來。: 'A prerequisite is missing: confirm the related arguments first.'
+法律依據: Legal basis
+'支撐（{n} 張）': 'Support ({n} cards)'
+'送出（{n} 工時）': 'File ({n} hours)'
+目前沒有可以委託的事。多讀卷宗、多問委託人。: Nothing to assign right now. Read more of the case file and ask the client more questions.
+需要: Needs
+已回報。: Reported.
+'委託（{n} 工時）': 'Assign ({n} hours)'
+確定結束: Confirm end
+'剩 {n} 時': '{n} h left'
+
+# Evidence
+證據: Evidence
+'證據 {n}': 'Evidence {n}'
+關閉證據抽屜: Close evidence drawer
+證據抽屜: Evidence drawer
+抽屜: Drawer
+時間軸: Timeline
+法典: Legal terms
+關閉: Close
+找名詞，例如「相關性」: 'Find a term, e.g. "relevance"'
+找卡片: Find a card
+找名詞: Find a term
+沒有符合的卡片。: No matching cards.
+還沒有任何卡片。: No cards yet.
+沒有符合的名詞。: No matching terms.
+'連線台 {slot}': 'Link bench {slot}'
+'・': ' · '
+卡片種類: Card types
+'全部 {n}': 'All {n}'
+有時間的事件: Timed events
+其他資料: Other records
+
+# Timeline
+還沒放上時間軸的卡片: Cards not on the timeline yet
+有時間的卡片都放上去了。: All timed cards are on the timeline.
+目前沒有帶時間的卡片。: No cards have a time.
+點上面的卡片，把它放上時間軸。: Click a card above to put it on the timeline.
+'間距 {n} 分鐘：{detail}': 'Gap of {n} minutes: {detail}'
+'{n} 分鐘': '{n} min'
+'移動「{name}」：拖曳，或用上下鍵': 'Move "{name}": drag, or use the up and down keys'
+'把「{name}」拿下來': 'Remove "{name}" from the timeline'
+'兩點同時亮起：{a}，{b}': 'Two points light up together: {a}, {b}'
+時間軸上還沒有東西。調查時在證據板排好，這裡就看得到。: "Nothing on the timeline yet. Arrange events on the board while investigating and they'll show up here."
+
+# Marks / announcements
+'（盧卡斯標記）': '(marked by Lucas)'
+'盧卡斯的便條：{text}': "Lucas's note: {text}"
+'推理結論：{text}': 'Conclusion: {text}'
+連線成立: Link made
+'聲請{verdict}。': 'Motion {verdict}.'
+'聲請{verdict}。依據選錯：{basis}。': 'Motion {verdict}. Wrong basis: {basis}.'
+'裁定：{verdict}。依據選錯': 'Order: {verdict}. Wrong basis'
+'裁定：{verdict}': 'Order: {verdict}'
+"卡爾德郡高等法院\u3000裁定": Calder County Superior Court — Order
+依據: Basis
+'間距 {minutes}：{detail}': 'Gap {minutes}: {detail}'
+'盧卡斯標記了「{words}」': 'Lucas marked "{words}"'
+'死亡時間窗從 {a} 到 {b}，收窄到 {c}': 'Time-of-death window narrowed from {a}–{b} to {c}'
+死亡時間窗: Time-of-death window
+'推估窗口 {a} 到 {b}，收窄到 {c}': 'Estimated window {a} to {b}, narrowed to {c}'
+'原本推估 {a}–{b}': 'Original estimate {a}–{b}'
+'借據 {n}': 'IOU {n}'
+借據: IOU
+擔保: Backing
+兌現: If kept
+'陪審員往辯方 {n}': 'Jurors toward defense {n}'
+逾期: If broken
+'全體往{yes} {n}': 'All jurors toward {yes} {n}'
+葛雷: Gray
+"債權人\u3000陪審團": 'Creditor: the jury'
+已兌現: Kept
+逾期未兌現: Broken
+"第 {round} 輪\u3000{no} {ng}\u3000{yes} {g}": 'Round {round} · {no} {ng} · {yes} {g}'
+未達一致: No unanimity
+'陪審團僵局，第{round}輪，{no} {ng}，{yes} {g}，未達一致': 'Jury deadlocked, round {round}: {no} {ng}, {yes} {g}, no unanimity'
+'盧卡斯標記了 {n} 處：{items}': 'Lucas marked {n} places: {items}'
+'盧卡斯沒有說出口：{text}': "Lucas didn't say it aloud: {text}"
+'、': ', '

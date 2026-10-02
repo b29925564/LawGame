@@ -1,0 +1,95 @@
+# UI strings: Phone, Dialogue, Interview, Negotiation, Deposition, RelationPicker, Portrait, Shell, VoiceOver. Key = Chinese source string exactly.
+
+# Shared
+'{a}・{b}': '{a} · {b}'
+'{r}：{s}': '{r}: {s}'
+已完成: Done
+
+# Phone
+'{owner}的手機': "{owner}'s phone"
+'打開 {from} 的訊息': 'Open message from {from}'
+聊天: Chat
+點一下查看: Tap to view
+此訊息已被收回: This message was unsent
+回覆: Reply
+叫車: Request ride
+上車: Pickup
+下車: Drop-off
+'最近的司機：{driver}，2 分鐘': 'Nearest driver: {driver}, 2 min'
+感應員工證: Tap employee badge
+'{owner}要說什麼': 'What does {owner} say?'
+
+# Dialogue
+選擇: Choose
+
+# Interview
+提問: Ask
+施壓: Press
+'安撫（剩 {n} 次）': 'Reassure ({n} left)'
+沒有別的想問了。: Nothing else to ask.
+施壓會讓他更防備。手上有東西撐著再問。: Pressing makes him more guarded. Ask when you have something to back it up.
+離開會見室: Leave the meeting room
+結束會見: End meeting
+還有關鍵的事沒問: Key questions remain
+
+# Negotiation
+坐下: Sit down
+認罪協商成立: Plea deal reached
+和解成立: Settlement reached
+談判結束: Negotiation over
+'{name}的信心': "{name}'s confidence"
+'{name}的信任': "{name}'s trust"
+最後的條件: Final terms
+剩餘回合: Rounds left
+談判: Negotiation
+她開的條件: Her terms
+攤牌: Lay it out
+虛張聲勢: Bluff
+離席: Walk out
+她現在開的條件: Her current terms
+條件: Terms
+授權上限: Authority cap
+附帶條款: Side terms
+已同意: Agreed
+未同意: Not agreed
+'建議{name}接受': 'Advise {name} to accept'
+'建議{name}接受（超過授權）': 'Advise {name} to accept (over authority)'
+'打電話請示 {name}': 'Call {name} for approval'
+−1 回合: −1 round
+建議撐下去: Advise holding out
+亮出: Reveal
+（已亮出）: (revealed)
+
+# Deposition
+開始錄取: Begin deposition
+錄取結束: Deposition over
+問過的題目: Questions asked
+站不住的異議: Objections that failed
+用掉的提問: Questions used
+宣誓下定錨的說法: Statements anchored under oath
+'{n} 項': '{n} items'
+洩漏給對方的方向: Directions tipped off to the other side
+'{n} 個': '{n} directions'
+對方知道你往哪裡查了。這些論點在庭上的衝擊減半，除非你先破解他們的反擊。: The other side knows where you're looking. These arguments hit half as hard in court unless you break their rebuttal first.
+'{examiner} 發問・第': '{examiner} asking · Question'
+'{n} 題': '{n}'
+剩餘提問: Questions left
+'剩餘提問 {n} 個': 'Questions left: {n}'
+話題: Topics
+結束錄取: End deposition
+異議: Objection
+不異議: No objection
+
+# RelationPicker
+第一張卡: The first card
+第二張卡: The second card
+'{x}和{y}講的是同一件事，互相印證': '{x} and {y} say the same thing and back each other up'
+'{x}留下一個範圍或缺口，{y}把它收窄或補上': '{x} leaves a range or a gap, and {y} narrows or fills it'
+'{x}和{y}不可能同時成立': '{x} and {y} cannot both be true'
+'{x}說明了{y}背後的動機': '{x} explains the motive behind {y}'
+'{x}說明了{y}的人有機會做到': '{x} shows the person in {y} had the opportunity'
+這兩張卡之間是什麼關係？: How are these two cards related?
+
+# VoiceOver
+盧卡斯沒有說出口: What Lucas didn't say aloud
+點擊繼續: Click to continue
