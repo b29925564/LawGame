@@ -823,7 +823,7 @@ scenes:
     client:
       name: 亞瑟・卡爾德
       trust: 3
-    confidence: 75
+    confidence: 85
     rounds: 5
     intro:
       - who: 旁白
@@ -850,7 +850,7 @@ scenes:
           - who: 丹尼爾・奧卡福
             text: 兩百五十萬，疲勞鎖照改。這是瑪莉索願意坐下來的底線。
       - id: o-mid
-        min: 40
+        min: 45
         label: 180 萬，含修改演算法
         amount: 1800000
         terms: true
@@ -866,7 +866,7 @@ scenes:
             text: 九十萬。……瑪莉索，我們談過這個數字。妳說過，如果真的打不贏。
           - who: 瑪莉索・維加
             text: 我知道。我只是想聽他們說一次，是他們錯了。
-    disclosed: [contract, med-record, voice-memo, app-log, autopsy2]
+    disclosed: [contract, med-record, pharmacy, voice-memo, app-log, autopsy2]
     bluffs:
       - id: b-meds
         label: 他知道自己有高血壓，而且沒吃藥。陪審團會聽到這件事。
@@ -886,10 +886,10 @@ scenes:
         strength: 15
         believed:
           - who: 丹尼爾・奧卡福
-            text: 我知道雷耶斯怎麼裁的。我還有一般醫學證人。
+            text: ……專家的事我會處理。我還有一般醫學證人。
         caught:
           - who: 丹尼爾・奧卡福
-            text: 費雪醫師還站在我的證人名單上，伊恩。法官沒有排除她。
+            text: 專家撐不撐得到開庭，不是你說了算，伊恩。就算她不來，我還有一般醫學證人。
     authority:
       cap: 1500000
       raise: 500000
