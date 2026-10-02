@@ -16,6 +16,7 @@
 已問已答: Asked and answered
 缺乏基礎: Lack of foundation
 特權: Privilege
+違反裁定: Violates the court's ruling
 
 # 推理關係與論點標籤
 矛盾: Contradicts
@@ -55,6 +56,7 @@
 '檢方傳喚{name}。辯方可以開始詰問。': 'The prosecution calls {name}. The defense may begin.'
 異議，缺乏證據基礎。這份資料還沒有被本庭採納。: Objection, lack of foundation. That material hasn't been admitted.
 異議成立。律師，先建立基礎。: Sustained. Lay a foundation first, counsel.
+異議成立。本庭已經裁定排除這項證據，不得在陪審團面前提出。陪審團請不要理會。: 'Sustained. This court has already excluded that evidence, and it may not be put before the jury. The jury will disregard it.'
 律師，證人還沒有就這一點作證。: Counsel, the witness hasn't testified to that yet.
 開場時你許下的承諾，兌現了。陪審團記得。: You kept the promise you made in your opening. The jury remembers.
 陪審團請注意：本席裁定，證人的證詞全部刪除。各位評議時不得列入考慮。: "Members of the jury: the witness's testimony is stricken in its entirety. You may not consider it in your deliberations."

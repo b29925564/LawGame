@@ -116,9 +116,11 @@ function Jurors({
 
 /** 異議窗：預設回合制，設定裡可以改成限時（企劃書 6.9.5 與 6.14 的輔助選項）。 */
 function ObjectionWindow({
+  reasons,
   onPass,
   onObject,
 }: {
+  reasons: trial.Objection[];
   onPass: () => void;
   onObject: (r: trial.Objection) => void;
 }) {
@@ -144,7 +146,7 @@ function ObjectionWindow({
         {seconds > 0 && <span className="muted">{t('{n} 秒', { n: Math.max(0, left) })}</span>}
       </div>
       <div className="row">
-        {trial.OBJECTIONS.map((r) => (
+        {reasons.map((r) => (
           <button
             key={r}
             onClick={() => {
@@ -360,7 +362,11 @@ export function Courtroom({ scene: raw }: { scene: TrialScene }) {
         }
       >
         {st.stage === 'direct' && st.window && (
-          <ObjectionWindow onPass={letPass} onObject={object} />
+          <ObjectionWindow
+            reasons={trial.objectionsFor(scene)}
+            onPass={letPass}
+            onObject={object}
+          />
         )}
         {st.stage === 'direct' && !st.window && (
           <p className="muted">
