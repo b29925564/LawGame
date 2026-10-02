@@ -454,6 +454,8 @@ const trialScene = z.object({
             .object({
               argument: id,
               text: z.string(),
+              /** 證人回答再主詰問的那一句；有寫才插在盧卡斯回應之前。 */
+              answer: z.string().optional(),
               /** 破解要出示的卡片。 */
               needs: id,
               broken: z.string(),
@@ -720,6 +722,8 @@ const theoryScene = z.object({
           .optional(),
         /** 判有責時，陪審團認定死者自己的過失比例（百分比），判賠金額照比例扣。 */
         fault: z.number().int().min(0).max(100).optional(),
+        /** 判決表上過失比例旁的一句理由：陪審團為什麼認為死者有這麼多錯。 */
+        faultWhy: z.string().optional(),
         promises: z
           .array(
             z.object({

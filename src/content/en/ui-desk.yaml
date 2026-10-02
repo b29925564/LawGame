@@ -155,7 +155,8 @@
 逾期未兌現: Broken
 "第 {round} 輪\u3000{no} {ng}\u3000{yes} {g}": 'Round {round} · {no} {ng} · {yes} {g}'
 未達一致: No unanimity
-'陪審團僵局，第{round}輪，{no} {ng}，{yes} {g}，未達一致': 'Jury deadlocked, round {round}: {no} {ng}, {yes} {g}, no unanimity'
+'陪審團僵局，第{round}輪，{no} {ng}，{yes} {g}，{why}': 'Jury deadlocked, round {round}: {no} {ng}, {yes} {g}, {why:lower}'
+兩邊都未達法定票數: Neither side has the votes it needs
 '盧卡斯標記了 {n} 處：{items}': 'Lucas marked {n} places: {items}'
 '盧卡斯沒有說出口：{text}': "Lucas didn't say it aloud: {text}"
 '、': ', '

@@ -132,7 +132,7 @@ export function Negotiation({ scene }: { scene: NegotiationScene }) {
                 <>
                   <dt className="risk">{t('開庭若判有責')}</dt>
                   <dd className="risk">
-                    {t('約 {low} 到 {high}', { low: money(risk.low), high: money(risk.high) })}
+                    {t('約 {low}到 {high}', { low: money(risk.low), high: money(risk.high) })}
                     {risk.punitive && <small>{t('懲罰性賠償另計')}</small>}
                   </dd>
                 </>

@@ -109,10 +109,7 @@ export function translate(zh: string, scope?: string): string {
   for (const t of templates) {
     const m = t.re.exec(zh);
     if (!m) continue;
-    return t.names.reduce(
-      (out, name, i) => out.split(`{${name}}`).join(translate(m[i + 1], scope)),
-      t.out,
-    );
+    return t.names.reduce((out, name, i) => put(out, name, translate(m[i + 1], scope)), t.out);
   }
   // 「邏輯、情感」這種清單逐項查。
   if (zh.includes('、')) {
@@ -125,8 +122,13 @@ export function translate(zh: string, scope?: string): string {
 
 type Vars = Record<string, string | number>;
 
+/** 英文句中要小寫的代入值（「Objection, hearsay.」）：樣板裡寫成 {name:lower}。 */
+const lower = (v: string) => v.charAt(0).toLowerCase() + v.slice(1);
+const put = (out: string, name: string, v: string) =>
+  out.split(`{${name}:lower}`).join(lower(v)).split(`{${name}}`).join(v);
+
 const fill = (s: string, vars: Vars) =>
-  Object.entries(vars).reduce((out, [k, v]) => out.split(`{${k}}`).join(String(v)), s);
+  Object.entries(vars).reduce((out, [k, v]) => put(out, k, String(v)), s);
 
 /**
  * 依目前語言顯示一句。第二個參數是場景 id（劇本句子）或樣板變數（介面句子，key 寫成「辯方可以詰問{name}。」）。

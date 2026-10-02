@@ -27,6 +27,13 @@ describe('判決表', () => {
     expect(a.amount).toBe((a.total * (100 - a.fault)) / 100);
   });
 
+  it('理論寫了 faultWhy，判決表帶著這句理由', () => {
+    expect(closing.award(close, rules, all(90), 40, null, '他知道自己有病。')!.why).toBe(
+      '他知道自己有病。',
+    );
+    expect(closing.award(close, rules, all(90), 40, null)!.why).toBeUndefined();
+  });
+
   it('沒有進入懲罰性賠償評議時，punitive 是 null', () => {
     expect(closing.award(close, rules, all(90), 10, null)!.punitive).toBeNull();
   });

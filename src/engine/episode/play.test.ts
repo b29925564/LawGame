@@ -378,6 +378,27 @@ describe('瑞秋的詰問', () => {
     expect(before - lean(broken)).toBeGreaterThan(before - lean(failed));
   });
 
+  it('再主詰問寫了證人的回答，就插在檢方問題和盧卡斯回應之間', () => {
+    const c = claim('rc-2250');
+    const withAnswer: TrialScene = {
+      ...rachel,
+      witness: {
+        ...rachel.witness,
+        claims: rachel.witness.claims.map((x) =>
+          x.id === c.id ? { ...x, counter: { ...x.counter!, answer: '有可能。' } } : x,
+        ),
+      },
+    };
+    const st = trial.confront(withAnswer, ready('rc-2250'), c.id, 25, ['邏輯'], {
+      id: 'arg-b',
+      exposed: true,
+      cards: [],
+    });
+    const i = st.log.findIndex((l) => l.text === c.counter!.text);
+    expect(st.log[i + 1]).toMatchObject({ who: rachel.witness.name, text: '有可能。' });
+    expect(st.log[i + 2].text).toBe(c.counter!.failed);
+  });
+
   it('沒洩漏過就沒有反擊這一關', () => {
     const st = trial.confront(rachel, ready('rc-2250'), 'rc-2250', 25, ['邏輯'], { id: 'arg-b' });
     expect(st.impeachments).toBe(1);
