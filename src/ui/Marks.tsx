@@ -1,3 +1,4 @@
+import { termsOf, type Burden } from '../engine/jury';
 import { useEffect, useState, type CSSProperties } from 'react';
 import { motionAttempt } from '../engine/episode/desk';
 import type { Episode, Line } from '../engine/episode/schema';
@@ -387,7 +388,16 @@ export function Iou({
 }
 
 /** 陪審團僵局的票數：12 席先全亮，再一席一席熄，只剩投有罪的亮著。 */
-export function Tally({ guilty, round }: { guilty: boolean[]; round: number }) {
+export function Tally({
+  guilty,
+  round,
+  burden,
+}: {
+  guilty: boolean[];
+  round: number;
+  burden?: Burden;
+}) {
+  const w = termsOf({ burden });
   const [out, setOut] = useState(false);
   useEffect(() => {
     const t = setTimeout(() => setOut(true), 400);
@@ -399,16 +409,16 @@ export function Tally({ guilty, round }: { guilty: boolean[]; round: number }) {
     () =>
       announce.mark({
         from: 'tally',
-        text: `陪審團僵局，第${round}輪，無罪 ${ng}，有罪 ${g}，未達一致`,
+        text: `陪審團僵局，第${round}輪，${w.no} ${ng}，${w.yes} ${g}，未達一致`,
       }),
-    [round, ng, g],
+    [round, ng, g, w],
   );
   let k = 0;
   return (
     <section className="panel stack" aria-label="評議票數">
       <div className="tally-head">
         <b>陪審團僵局</b>
-        <span className="count">{`第 ${round} 輪\u3000無罪 ${ng}\u3000有罪 ${g}`}</span>
+        <span className="count">{`第 ${round} 輪\u3000${w.no} ${ng}\u3000${w.yes} ${g}`}</span>
         <span className="muted small">未達一致</span>
       </div>
       <ol className="tally">
@@ -419,7 +429,7 @@ export function Tally({ guilty, round }: { guilty: boolean[]; round: number }) {
             style={v ? undefined : ({ '--k': k++ } as CSSProperties)}
           >
             <span className="no">{i + 1}</span>
-            <span className="vote">{v ? '有罪' : '無罪'}</span>
+            <span className="vote">{v ? w.yes : w.no}</span>
           </li>
         ))}
       </ol>

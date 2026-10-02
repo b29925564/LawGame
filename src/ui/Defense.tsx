@@ -62,7 +62,7 @@ export function Defense({ scene }: { scene: DefenseScene }) {
         直接詰問・{scene.witness.name}
         {st.stage === 'direct' ? `・還能問 ${left} 題` : ''}
       </p>
-      {rules && <JuryLegend jury={st.jury} threshold={rules.threshold} />}
+      {rules && <JuryLegend jury={st.jury} threshold={rules.threshold} burden={rules.burden} />}
       <Transcript count={st.log.length}>
         {st.log.map((l, i) => (
           <Speech key={i} line={{ who: l.who, text: l.text, mood: '平', thought: false }} />

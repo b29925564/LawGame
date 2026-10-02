@@ -12,7 +12,7 @@ import {
   trialState,
   useEpisode,
 } from '../engine/game';
-import { reaction, type Jury } from '../engine/jury';
+import { reaction, termsOf, type Jury } from '../engine/jury';
 import type { Tag } from '../engine/schema';
 import { useSettings } from '../engine/settings';
 import { play } from '../engine/sound';
@@ -56,7 +56,10 @@ function Jurors({
         {strip ? (
           <button className="link" aria-expanded={open} onClick={() => setOpen(!open)}>
             陪審團 {open ? '▾' : '▸'}
-            <span className="muted"> {over} / 12 傾向有罪</span>
+            <span className="muted">
+              {' '}
+              {over} / {scene.jurors.length} 傾向{termsOf(scene).yes}
+            </span>
           </button>
         ) : (
           <h2>陪審團</h2>
@@ -72,7 +75,9 @@ function Jurors({
       </div>
       {(!strip || open) && (
         <>
-          {showNumbers && <JuryLegend jury={jury} threshold={scene.threshold} />}
+          {showNumbers && (
+            <JuryLegend jury={jury} threshold={scene.threshold} burden={scene.burden} />
+          )}
           <ul className="jurors">
             {scene.jurors.map((j) => {
               const r = reaction(deltas[j.id] ?? 0);
