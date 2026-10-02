@@ -1,0 +1,499 @@
+# 第二集《和解的價格》。大綱見 /mnt/project-files/ep2-content/ep2-outline-v0.2.md（方向 A）。
+# 這一版只有冷開場到第二幕，用現有 schema。民事門檻、開示分頁、Daubert 動議等系統進來之後再補第三幕以後。
+id: ep2
+number: 2
+title: 和解的價格
+_cards: &cards
+  - id: contract
+    name: 承攬合約
+    kind: 文件
+    text: 「承攬人得自行決定上線時間與接單與否，本公司不負勞動法上之照顧義務。」
+    source: 卡爾德快遞
+    held: true
+  - id: complaint
+    name: 起訴狀
+    kind: 文件
+    text: 原告瑪莉索・維加請求過失致死損害賠償 1,200 萬美元，另請求懲罰性賠償。
+    source: 原告
+    held: true
+  - id: autopsy2
+    name: 死亡證明：急性心肌梗塞
+    kind: 文件
+    date: 週二
+    time: '18:21'
+    text: 死因急性心肌梗塞。發現時坐在駕駛座，安全帶未解。
+    source: 卡爾德郡法醫室
+  - id: med-record
+    name: 家醫病歷：高血壓
+    kind: 文件
+    text: 事發前三個月診斷第二期高血壓，開立降壓藥，囑咐三個月後回診。沒有回診。
+    source: 原告開示
+  - id: pharmacy
+    name: 藥局紀錄：只領過一次藥
+    kind: 文件
+    text: 降壓藥處方三個月，領藥紀錄只有第一個月。
+    source: 藥局（傳票）
+  - id: app-log
+    name: App 日誌：疲勞提醒被略過 61 次
+    kind: 文件
+    date: 週二
+    time: '18:09'
+    text: 事發前 14 天，「已連續上線 10 小時」提醒共跳出 61 次，每次都按了「略過」。最後一次是 18:09。
+    source: 卡爾德快遞系統
+  - id: app-dispatch
+    name: App 日誌：死後仍在派單
+    kind: 文件
+    date: 週二
+    time: '18:21'
+    text: 18:21 起車輛 GPS 靜止。之後系統派單 3 次，均自動判定拒單，扣評分 0.3。
+    source: 卡爾德快遞系統
+  - id: voice-memo
+    name: 赫克托的語音：「回家吃藥」
+    kind: 陳述
+    date: 週二
+    time: '17:52'
+    text: 「再跑兩單就回家，回家吃藥。妳先吃，不用等我。」
+    source: 原告開示
+  - id: trevor-says
+    name: 崔佛的說法：提醒一直都在
+    kind: 陳述
+    text: 疲勞提醒從系統上線就有，司機要不要休息是他們自己決定的。
+    source: 會議（崔佛・林）
+  - id: lock-spec
+    name: 舊版規格書：疲勞鎖
+    kind: 文件
+    text: 「連續上線 10 小時，強制下線 8 小時，期間不派單。」版本 2.3，兩年前。
+    source: 卡爾德快遞系統文件
+  - id: change-ticket
+    name: 設定變更單：改為提醒
+    kind: 文件
+    date: 三月
+    text: 「疲勞鎖改為提醒，司機可略過。依法務意見。」簽核人：崔佛・林。
+    source: 卡爾德快遞系統文件
+  - id: chat-peak
+    name: 營運群組：「旺季不准任何人被踢下線」
+    kind: 陳述
+    date: 三月
+    text: 崔佛・林在營運群組：「旺季不准任何人被踢下線。我不管系統怎麼寫。」
+    source: 卡爾德快遞內部通訊
+  - id: legal-memo
+    name: 法務意見書（惠特洛克・海爾）
+    kind: 文件
+    date: 三月
+    text: 「承攬人非受僱人，貴公司無照顧義務。取消強制下線之法律風險可控。」
+    source: 惠特洛克・海爾律師事務所
+  - id: fisher-report
+    name: 費雪醫師報告
+    kind: 文件
+    text: 每週工時超過 60 小時的司機，心血管事件風險是一般人的 2.4 倍。
+    source: 原告專家（喬安娜・費雪醫師）
+  - id: fisher-sample
+    name: 費雪報告附註：樣本是長途卡車司機
+    kind: 文件
+    text: 附註 7：研究樣本為州際長途貨車司機，單趟平均 9 小時，不含市區短程配送。
+    source: 原告專家報告
+
+scenes:
+  # 冷開場：玩家拿著赫克托的手機。休息不是不能按，只是每次都有代價。
+  - type: phone
+    id: cold-open
+    act: 冷開場
+    owner: 赫克托
+    steps:
+      - do: caption
+        time: '17:52'
+        text: 週二傍晚，卡爾德港東區。一台白色廂型車停在紅燈前，儀表板上夾著一支手機。
+      - do: say
+        time: '17:52'
+        message:
+          from: 赫克托
+          text: 再跑兩單就回家，回家吃藥。妳先吃，不用等我。
+      - do: notify
+        time: '18:04'
+        message:
+          from: 卡爾德快遞
+          text: 新訂單：港灣大道 41 號 → 東河街 7 號，預計 18 分鐘。
+      - do: notify
+        time: '18:09'
+        message:
+          from: 卡爾德快遞
+          text: 您已連續上線 10 小時。休息將使今日評分下降。
+      # TODO(系統)：「休息」要畫成可按但標出代價，按下後回到同一則提醒。現在先只給一個選項。
+      - do: choose
+        mode: chat
+        options:
+          - text: 略過
+      - do: caption
+        time: '18:16'
+        text: 東河街。他把車靠邊，手按在胸口，等了一下，又把手放回方向盤。
+      - do: caption
+        time: '18:21'
+        text: 車停在路邊，雙黃燈沒有打。手機地圖上的藍點不再移動。
+      - do: notify
+        time: '18:24'
+        message:
+          from: 卡爾德快遞
+          text: 新訂單：港灣大道 12 號 → 碼頭路 3 號。請於 60 秒內接單。
+      - do: notify
+        time: '18:25'
+        message:
+          from: 卡爾德快遞
+          text: 您已拒絕訂單。今日評分 4.6 → 4.5。
+      - do: notify
+        time: '18:31'
+        message:
+          from: 卡爾德快遞
+          text: 新訂單：南港市場 → 港灣大道 88 號。請於 60 秒內接單。
+
+  - type: card
+    id: title
+    act: 片頭
+    title: 合理懷疑
+    lines:
+      - 第二集　和解的價格
+
+  # 第一幕：指派。惠特洛克把案子交給艾莉絲，亞瑟・卡爾德第一次在場。
+  - type: dialogue
+    id: assign
+    act: 第一幕
+    place: 惠特洛克的辦公室　週一 09:00
+    steps:
+      - do: say
+        who: 旁白
+        text: 惠特洛克的桌上只有一份卷宗，封面貼著藍色標籤：維加訴卡爾德物流。
+      - do: say
+        who: 維多莉亞・惠特洛克
+        text: 一名外送司機在車上心臟病發。家屬要一千兩百萬，還要懲罰性賠償。
+        mood: 硬
+      - do: say
+        who: 維多莉亞・惠特洛克
+        text: 上一個案子，妳讓卡爾德的名字上了三週新聞。這一個，妳替他們把名字拿下來。
+        mood: 硬
+      - do: say
+        who: 艾莉絲
+        text: 妳要我替卡爾德辯護。
+      - do: say
+        who: 維多莉亞・惠特洛克
+        text: 我要妳替這家事務所的客戶辯護。妳以為之前那四十個小時是誰付的？
+        mood: 硬
+      - do: say
+        who: 旁白
+        text: 門開了。一個穿深灰西裝的男人走進來，沒等人招呼，就在窗邊坐下。
+      - do: say
+        who: 亞瑟・卡爾德
+        text: 韓律師。我是亞瑟・卡爾德。伊森・蕭的案子我看了，妳很會挑別人證詞裡的縫。
+      - do: say
+        who: 亞瑟・卡爾德
+        text: 這次，請妳幫我把縫補起來。一百五十萬以內，妳自己決定。超過，打給我。
+      - do: choose
+        prompt: 亞瑟在等妳回答。
+        options:
+          - text: 我會先看完卷宗，再告訴你這案子值多少。
+            then:
+              - who: 亞瑟・卡爾德
+                text: 很好。我喜歡先看帳本的人。
+          - text: 他死在你的 App 還在派單的時候。
+            then:
+              - who: 亞瑟・卡爾德
+                text: 他是承攬人，韓律師。上線是他按的，下線也是。
+              - who: 維多莉亞・惠特洛克
+                text: 韓律師是在預演對方會怎麼說。對吧？
+                mood: 硬
+      - do: say
+        who: 維多莉亞・惠特洛克
+        text: 羅根當妳的二席。對方律師是丹尼爾・奧卡福，我想妳認識。
+        mood: 硬
+      - do: say
+        who: 艾莉絲
+        text: 我們以前一起輸過很多案子。
+
+  - type: dialogue
+    id: hale-civil
+    act: 第一幕
+    place: 走廊　週一 09:40
+    steps:
+      - do: say
+        who: 馬庫斯・海爾
+        text: 民事案。妳沒打過幾場吧。
+        mood: 暖
+      - do: say
+        who: 艾莉絲
+        text: 公設辯護人不接民事。
+      - do: say
+        who: 馬庫斯・海爾
+        text: 刑事案，妳要讓陪審團懷疑。民事案，對方只要讓他們覺得「比較可能」。
+        mood: 暖
+      # TODO(系統)：民事門檻 50 上線後，這裡讓量表的線從 70 滑到 50。
+      - do: say
+        who: 馬庫斯・海爾
+        text: 一半多一點點。這次站在線上的是妳。
+        mood: 暖
+
+  # 會見崔佛・林：自己的客戶也會對自己的律師說一半。
+  - type: interview
+    id: meet-trevor
+    act: 第一幕
+    who: 崔佛・林
+    role: 卡爾德快遞・營運副總
+    via: 卡爾德大樓 12 樓會議室
+    meter:
+      label: 防備
+      start: 1
+      max: 4
+    intro:
+      - who: 崔佛・林
+        text: 韓律師。法務說妳要問排班的事。我十點半有會。
+        mood: 硬
+    topics:
+      - id: t-alert
+        label: 疲勞提醒是怎麼運作的？
+        key: true
+        lines:
+          - who: 崔佛・林
+            text: 連續上線十個小時，App 跳一則提醒。要不要休息，司機自己決定。
+          - who: 崔佛・林
+            text: 他們是承攬人，不是員工。我們不能替成年人決定什麼時候睡覺。
+        gives: [trevor-says]
+      - id: t-hector
+        label: 赫克托・維加這個人，你有印象嗎？
+        key: true
+        lines:
+          - who: 崔佛・林
+            text: 系統裡有四千多個司機。他評分 4.6，很穩，沒有客訴。
+          - who: 崔佛・林
+            text: 就這樣。
+      - id: t-history
+        label: 提醒一直都是這樣嗎？
+        guard: 1
+        needs: [trevor-says]
+        lines:
+          - who: 崔佛・林
+            text: 系統每一季都在改版。妳要問哪一版？
+            mood: 硬
+          - who: 艾莉絲
+            text: 他死的時候那一版。
+          - who: 崔佛・林
+            text: 那一版就是提醒。
+            mood: 硬
+    press:
+      - id: p-rating
+        label: 你說他們自己決定。可是不接單，評分就會被扣。
+        needs: trevor-says
+        lines:
+          - who: 崔佛・林
+            text: 評分是服務品質，不是懲罰。
+            mood: 硬
+          - who: 崔佛・林
+            text: 而且那套系統，我們問過法務。妳應該知道是哪一家。
+            mood: 硬
+        blank:
+          - who: 崔佛・林
+            text: 我說過了，提醒一直都在。
+            mood: 硬
+    calm:
+      - who: 艾莉絲
+        text: 林先生，我是你們的律師。你在這裡說的話，我要先聽到，才不會在法庭上第一次聽到。
+      - who: 崔佛・林
+        text: ……好。
+    guarded:
+      - who: 崔佛・林
+        text: 十點半了。剩下的請找法務。
+        mood: 硬
+    outro:
+      - who: 旁白
+        text: 崔佛起身的時候，順手把桌上的平板扣過來，螢幕朝下。
+
+  - type: card
+    id: act2
+    act: 第二幕
+    title: 第二幕　開示
+    lines:
+      - 這一次，是對方來跟妳要東西。
+
+  # 第二幕：辯方調查。開示分頁（交出／主張特權）等系統進來再加，先用桌面跑推理。
+  # TODO(系統)：change-ticket、chat-peak、legal-memo 三張要從「開示請求」裡決定交不交。
+  - type: desk
+    id: investigate
+    act: 第二幕
+    hours: 20
+    deadline: 證據開示截止　兩週後
+    cards: *cards
+    docs:
+      - id: doc-complaint
+        title: 起訴狀
+        from: 奧卡福勞工法律事務所
+        lines:
+          - text: 原告瑪莉索・維加，死者赫克托・維加之配偶。
+          - text: 被告卡爾德物流及其子公司卡爾德快遞。
+          - text: 請求過失致死損害賠償 1,200 萬美元，另請求懲罰性賠償。
+            fact: complaint
+          - text: 死者於事發當日連續上線逾 11 小時，被告派單系統持續派單至其死後。
+            fact: app-dispatch
+      - id: doc-death
+        title: 死亡證明與現場報告
+        from: 卡爾德郡法醫室
+        lines:
+          - text: 週二 19:40 路人報案。死者坐於駕駛座，安全帶未解，引擎熄火。
+          - text: 死因：急性心肌梗塞。推估發作時間約 18:20。
+            fact: autopsy2
+      - id: doc-specs
+        title: 派單系統文件夾
+        from: 卡爾德快遞　資訊部
+        lines:
+          - text: 版本 2.3 規格書，疲勞管理章節：連續上線 10 小時，強制下線 8 小時，期間不派單。
+            fact: lock-spec
+          - text: 版本 2.4 起，疲勞管理改為提醒，司機可略過。變更紀錄另見變更單。
+      - id: doc-fisher
+        title: 原告專家報告
+        from: 喬安娜・費雪醫師
+        lines:
+          - text: 每週工時超過 60 小時的司機，心血管事件風險是一般人的 2.4 倍。
+            fact: fisher-report
+          - text: 附註 7：研究樣本為州際長途貨車司機，單趟平均 9 小時，不含市區短程配送。
+            fact: fisher-sample
+    mail:
+      - id: mail-okafor
+        from: 丹尼爾・奧卡福　原告律師
+        subject: 維加案　第一批開示
+        body:
+          - 艾莉絲，附上我們這邊的開示：病歷、語音、死亡證明。
+          - 我不會假裝這些對我有利。妳也別假裝妳那邊沒東西。
+        gives: [med-record, voice-memo]
+      - id: mail-devon
+        from: 戴文・帕克　助理
+        subject: App 日誌我整理好了（有點多）
+        afterHours: 3
+        gives: [app-log]
+        body:
+          - 韓律師，赫克托最後 14 天的日誌整理成一張表了。疲勞提醒跳了 61 次，他每次都按略過。
+          - 我本來覺得這對我們很有利。後來看到最後那三筆派單，我就不太確定了。
+    jobs:
+      - id: job-pharmacy
+        who: 法院系統
+        label: 聲請傳票：赫克托的藥局領藥紀錄
+        detail: 病歷說開了藥。有沒有去領，是另一回事。
+        cost: 2
+        needs: [med-record]
+        gives: [pharmacy]
+        report:
+          - who: 旁白
+            text: 傳票核發。藥局的回函只有一頁：降壓藥處方三個月，領藥紀錄一次。
+          - who: 艾莉絲
+            text: 他知道。他沒吃。
+            mark: { kind: highlight, word: 一次, on: pharmacy }
+      - id: job-it
+        who: 戴文
+        label: 請戴文向資訊部調派單系統的設定變更紀錄
+        detail: 規格書說「另見變更單」。要看是誰、什麼時候、為什麼改的。
+        cost: 1
+        needs: [lock-spec]
+        gives: [change-ticket, chat-peak]
+        report:
+          - who: 戴文
+            text: 資訊部給了。三月十四日，崔佛・林簽的。理由欄只寫四個字：依法務意見。
+          - who: 戴文
+            text: 還有……他們連營運群組的截圖一起寄來了。我想他們沒看就寄了。
+          - who: 艾莉絲
+            text: 依法務意見
+            mark: { kind: highlight, word: 依法務意見, on: change-ticket }
+      - id: job-memo
+        who: 羅根
+        label: 請羅根從事務所檔案調出那份法務意見
+        detail: 寫這份意見的是事務所自己。羅根知道放在哪裡。
+        cost: 1
+        needs: [change-ticket]
+        gives: [legal-memo]
+        report:
+          - who: 羅根・普萊斯
+            text: 找到了。三月，勞動組出的，簽名的是我以前的組長。
+            mood: 硬
+          - who: 羅根・普萊斯
+            text: 這份是律師與委託人之間的通訊。開示的時候，我們可以主張特權。我建議主張。
+            mood: 硬
+    links:
+      - id: l-knew
+        cards: [med-record, pharmacy]
+        relation: 支持
+        text: 三個月前確診高血壓，開了三個月的藥，只領過一次。
+      - id: l-warned
+        cards: [app-log, contract]
+        relation: 支持
+        text: 提醒跳了 61 次；合約寫明他可以自行下線。每一次，他都選擇繼續。
+      - id: l-sample
+        cards: [fisher-report, fisher-sample]
+        relation: 縮小範圍
+        text: 2.4 倍的數字來自長途卡車司機，不是一天跑二十單的市區外送。
+      - id: l-lock
+        cards: [lock-spec, change-ticket]
+        accept:
+          lock-spec: [trevor-says]
+        relation: 矛盾
+        text: 疲勞鎖原本會強制下線。是三月那張變更單，把它改成可以略過的提醒。
+      - id: l-peak
+        cards: [change-ticket, chat-peak]
+        relation: 說明動機
+        text: 變更單上寫依法務意見；同一個月，崔佛在群組說旺季不准任何人被踢下線。
+    questions:
+      - id: q1
+        text: 赫克托知道自己的身體出了問題嗎？有紀錄嗎？
+        unlock: [med-record]
+        answer: [l-knew]
+        argument:
+          id: arg-a
+          name: 論點 A：他確診高血壓，卻沒有持續服藥
+          text: 事發前三個月確診，處方三個月，只領過一次藥。
+          strength: 10
+          tags: [邏輯, 權威]
+      - id: q2
+        text: 公司的提醒，有沒有送到他手上？他怎麼回應？
+        unlock: [app-log]
+        answer: [l-warned]
+        argument:
+          id: arg-b
+          name: 論點 B：公司提醒了 61 次，他每次都選擇繼續
+          text: 疲勞提醒 14 天跳了 61 次，合約寫明他隨時可以下線。他每一次都按了略過。
+          strength: 8
+          tags: [邏輯]
+      - id: q3
+        text: 費雪醫師的 2.4 倍，算的是哪一種司機？
+        unlock: [fisher-report]
+        answer: [l-sample]
+        argument:
+          id: arg-c
+          name: 論點 C：費雪的樣本不適用於市區外送
+          text: 研究樣本是州際長途貨車司機，單趟平均 9 小時，不能直接套到市區短程配送。
+          strength: 8
+          motionOnly: true
+          tags: [權威, 程序]
+      # 本集的轉折：玩家用自己的推理證明了自己的客戶有錯。不是給陪審團的牌。
+      - id: q4
+        text: 疲勞提醒本來就是現在這樣嗎？如果不是，是誰改的？
+        unlock: [lock-spec]
+        answer: [l-lock]
+        argument:
+          id: arg-e
+          name: 風險評估：疲勞鎖是被改掉的
+          text: 系統原本會強制他下線。三月，公司依法務意見把它改成可以略過的提醒。
+          strength: 5
+          motionOnly: true
+          tags: [邏輯]
+      - id: q5
+        text: 公司為什麼要改？改的人當時在想什麼？
+        unlock: [arg-e]
+        answer: [l-peak]
+        argument:
+          id: arg-f
+          name: 風險評估：改掉它是為了旺季業績
+          text: 崔佛在同一個月說「旺季不准任何人被踢下線」。對方拿到這句話，懲罰性賠償就談得下去。
+          strength: 5
+          motionOnly: true
+          tags: [邏輯, 情感]
+    goal: q4
+    goalLines:
+      - who: 羅根・普萊斯
+        text: 妳要把變更單交出去？
+        mood: 硬
+      - who: 艾莉絲
+        text: 我還沒決定。但我現在知道，這案子值多少了。
+      - who: 戴文
+        text: 韓律師……法務意見的保存紀錄我也調出來了。附件裡有一張很舊的東西，上面寫著碼頭九號。
