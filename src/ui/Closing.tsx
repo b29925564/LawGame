@@ -13,6 +13,7 @@ import {
 import { useMoney, useT } from '../i18n';
 import { CardPick, EvidenceDrawer } from './Evidence';
 import { useScope } from './lang';
+import { JuryStart } from './JuryStart';
 import { Tally } from './Marks';
 import { Speech } from './Portrait';
 import { Shell, Tabs } from './Shell';
@@ -29,7 +30,8 @@ export function Closing({ scene }: { scene: ClosingScene }) {
   const args = closingArgs(progress);
   const [tab, setTab] = useState<'args' | 'tone'>('args');
   const need = closing.needed(scene, args.length);
-  const cost = promisesOf(progress).theory?.jury?.note;
+  const th = promisesOf(progress).theory;
+  const cost = th?.jury?.note;
   const rules = juryAfterTrial(progress)?.rules;
 
   if (st.verdict)
@@ -37,6 +39,14 @@ export function Closing({ scene }: { scene: ClosingScene }) {
       <main className="scene">
         <p className="eyebrow">{t('判決')}</p>
         <h1>{t(st.verdict)}</h1>
+        {rules && (
+          <JuryLedger
+            rules={rules}
+            trial={juryAfterTrial(progress)?.jury}
+            spoken={st.spoken}
+            final={st.jury}
+          />
+        )}
         {st.award && <VerdictForm award={st.award} />}
         <ol className="stack">
           {st.rounds.map((r, i) => (
@@ -98,7 +108,15 @@ export function Closing({ scene }: { scene: ClosingScene }) {
           {!promisesOf(progress).theory && (
             <p className="bad-text small">{t('沒有案件理論，論點說服力打七折。')}</p>
           )}
-          {cost && <p className="bad-text small">{t(cost)}</p>}
+          {/* 你帶進評議室的東西：理論的代價是選擇，不是失誤，用中性色（UX 規格 decision-cost §二）。 */}
+          {th && (
+            <div className="carry">
+              <span className="carry-key">{t('你帶進評議室的')}</span>
+              <strong>{t(th.name, scope)}</strong>
+              <JuryStart jury={th.jury} civil={rules?.burden === 'civil'} />
+              {cost && <p className="small">{t(cost, scope)}</p>}
+            </div>
+          )}
           {(st.broken ?? []).length > 0 && (
             <p className="bad-text small">
               {t('開場許下的 {n} 個承諾沒有兌現，陪審員記得你說過的話。', { n: st.broken.length })}
@@ -161,7 +179,8 @@ export function Closing({ scene }: { scene: ClosingScene }) {
             <ol className="picked">
               {st.picked.map((id, i) => (
                 <li key={id}>
-                  {i + 1}. {t(args.find((a) => a.id === id)?.name ?? '', scope)}
+                  <span className="num">{i + 1}.</span>{' '}
+                  {t(args.find((a) => a.id === id)?.name ?? '', scope)}
                   {i === st.picked.length - 1 && st.picked.length === need && (
                     <span className="good"> {t('・最後講，×1.3')}</span>
                   )}
@@ -229,6 +248,68 @@ function VerdictForm({ award }: { award: closing.Award }) {
           <strong>{money(award.amount + (p?.found ? p.amount : 0))}</strong>
         </dd>
       </dl>
+    </section>
+  );
+}
+
+/**
+ * 判決的帳（UX 規格 decision-cost §四 P0）：票數與走勢。
+ * 玩家永遠是辯方：心證沒過門檻的陪審員才是「站你這邊」。
+ */
+function JuryLedger({
+  rules,
+  trial,
+  spoken,
+  final,
+}: {
+  rules: { jurors: { id: string; label: string }[]; threshold: number; quorum?: number };
+  trial?: Record<string, number>;
+  spoken: Record<string, number> | null;
+  final: Record<string, number>;
+}) {
+  const t = useT();
+  const scope = useScope();
+  const n = rules.jurors.length;
+  const need = Math.min(n, Math.max(1, rules.quorum ?? n));
+  const ours = (j: Record<string, number>) =>
+    rules.jurors.filter((x) => (j[x.id] ?? 0) < rules.threshold).length;
+  const now = ours(final);
+  const steps = [
+    trial && { label: t('庭審結束'), n: ours(trial) },
+    spoken && { label: t('結辯後'), n: ours(spoken) },
+    { label: t('評議後'), n: now },
+  ].filter((x): x is { label: string; n: number } => !!x);
+  return (
+    <section className="jury-ledger panel" aria-labelledby="jury-ledger-title">
+      <h2 id="jury-ledger-title">{t('這一案的帳')}</h2>
+      <div className="ledger-row">
+        <span className="ledger-key">{t('票數')}</span>
+        <div>
+          <ul className="ledger-dots" aria-hidden>
+            {rules.jurors.map((x) => (
+              <li
+                key={x.id}
+                className={(final[x.id] ?? 0) < rules.threshold ? 'on' : undefined}
+                title={t(x.label, scope)}
+              />
+            ))}
+          </ul>
+          <p>
+            {t('站你這邊 {a} 位，需要 {b} 位', { a: now, b: need })}
+            {now < need && <strong> {t('差 {k} 位', { k: need - now })}</strong>}
+          </p>
+        </div>
+      </div>
+      {steps.length > 1 && (
+        <div className="ledger-row">
+          <span className="ledger-key">{t('走勢')}</span>
+          <ol className="ledger-trend">
+            {steps.map((x, i) => (
+              <li key={i}>{t('{label} {n} 位', { label: x.label, n: x.n })}</li>
+            ))}
+          </ol>
+        </div>
+      )}
     </section>
   );
 }

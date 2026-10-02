@@ -62,8 +62,6 @@
 # Case theory and opening statement
 選擇案件理論: Choose case theory
 案件理論: Case theory
-'確定，就用「{name}」': 'Yes, go with “{name}”'
-就用這個理論: Use this theory
 已選定。: Selected.
 手上的論點撐不起任何理論，直接開庭: Your arguments can’t support any theory. Go to court anyway
 開始陳述: Begin opening
@@ -72,7 +70,6 @@
 '承諾 {a} / {b}': 'Promises {a} / {b}'
 '許下 {n} 個承諾': 'Make {n} promises'
 不許任何承諾: Make no promises
-再想想: Think again
 
 # Defense witness
 '準備{name}出庭': 'Prepare {name} to testify'
@@ -114,3 +111,23 @@
 開庭若判有責: If the jury finds liability at trial
 '約 {low} 到 {high}': 'About {low} to {high}'
 懲罰性賠償另計: Punitive damages on top
+這一案的帳: How this case added up
+票數: Votes
+'站你這邊 {a} 位，需要 {b} 位': '{a} with you, {b} needed'
+'差 {k} 位': '{k} short'
+庭審結束: After testimony
+結辯後: After closing
+評議後: After deliberation
+'{label} {n} 位': '{label}: {n}'
+走勢: Trend
+陪審團起點: Jury starts
+判你方有責: finding your side liable
+判你方有罪: finding your side guilty
+'一開始就偏向{toward}：{n} / 3': 'Leaning toward {toward} from the start: {n} / 3'
+'{tags}取向的陪審員反彈': 'Jurors who lead with {tags} push back'
+你帶進評議室的: What you carry into deliberation
+承諾: Promises
+'可許 {n} 個承諾，沒兌現會反噬': 'Up to {n} promises; broken ones come back at you'
+人: People
+'還缺 {list}': 'Still missing {list}'
+以這個理論開庭: Go to trial on this theory
