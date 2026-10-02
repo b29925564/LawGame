@@ -1576,6 +1576,8 @@ scenes:
     place: 卡爾德港高等法院　第三法庭
     picks: 3
     intro:
+      - who: 旁白
+        text: 盧卡斯把瀏海往後撥，露出額頭。
       - who: 法官
         text: 辯方，開場陳述。
       - who: 盧卡斯
