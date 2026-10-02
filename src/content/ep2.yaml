@@ -897,11 +897,781 @@ scenes:
         text: 和解書上，｜沒有任何一個字寫著「我們錯了」。
         voice: 'off'
 
-  # 第五幕庭審還在寫，先用字卡收在調解之後。
   - type: card
-    id: to-be-continued
-    act: 待續
-    title: 待續
+    id: act5
+    act: 第五幕
+    title: 第五幕　庭審
     lines:
-      - 第二集到此（製作中）
-      - 第五幕　庭審，即將開放
+      - 六個人。過半數就夠。
+      - 這一次，站在線上的是妳。
+
+  - type: theory
+    id: theory
+    act: 第五幕
+    place: 惠特洛克・海爾　會議室 A
+    intro:
+      - who: 馬庫斯・海爾
+        text: 民事案沒有無罪，只有責任多少。妳要告訴陪審團，這筆帳該怎麼算。
+        mood: 暖
+      - who: 羅根・普萊斯
+        text: 亞瑟要的是無責。他不在乎妳怎麼講，只在乎判決書上那兩個字。
+        mood: 硬
+    theories:
+      - id: own-choice
+        name: 他自己的選擇
+        summary: 他知道自己有病，沒有吃藥；App 提醒了他六十一次，他每次都選擇繼續。
+        needs: [arg-a, arg-b]
+        cost: 最容易贏。瑪莉索會坐在旁聽席上，聽妳說她丈夫是自己害死自己的。
+        promises:
+          - id: p-meds
+            text: 你們會聽到，赫克托知道自己有高血壓，而且沒有吃藥。
+            argument: arg-a
+          - id: p-skip
+            text: 你們會聽到，公司提醒過他六十一次。
+            argument: arg-b
+      - id: warned
+        name: 公司已盡告知義務
+        summary: 不談他的病，只談公司做了什麼：提醒、合約、隨時可以下線。
+        needs: [arg-b]
+        cost: 不碰病史，對瑪莉索比較公平。但只有一張牌，對方拿出死後扣分，就很難撐。
+        promises:
+          - id: p-told
+            text: 你們會聽到，公司提醒過他，而且每一次都讓他自己決定。
+            argument: arg-b
+      - id: shared
+        name: 責任該分攤
+        summary: 系統有問題，赫克托也有責任。我們不說公司沒錯，我們說錯不全在公司。
+        needs: [arg-a, arg-e]
+        cost: 最接近真相。陪審團多半會判有責，但金額會低。亞瑟不會喜歡。
+        promises:
+          - id: p-both
+            text: 你們會聽到，赫克托知道自己的身體出了問題。這筆帳，不該只記在一邊。
+            argument: arg-a
+
+  - type: voirdire
+    id: voir-dire
+    act: 第五幕
+    place: 卡爾德郡高等法院　第五法庭
+    questions: 4
+    peremptories: 2
+    seats: 6
+    intro:
+      - who: 馬庫斯・海爾
+        text: 民事庭，六個人。十個候選人，四次提問，兩次無因迴避，對方也有兩次。
+        mood: 暖
+      - who: 馬庫斯・海爾
+        text: 這次妳要找的，是會替公司算帳的人。妳自己知道那有多難受。
+        mood: 暖
+    candidates:
+      - id: c-bus
+        name: 雷蒙・葛林
+        job: 退休公車司機
+        sheet: 開了三十年公車，排班表比家裡的月曆還熟。
+        leans: [情感]
+        start: 52
+        lead: 3
+        value: 2
+        question:
+          q: 您開車的那些年，有沒有過累到不該開、卻還是開了的時候？
+          a: 每個禮拜都有。公司不會叫你停，你自己也不敢停。
+        hidden: 對過勞的司機有切身的同情。
+      - id: c-actuary
+        name: 茱蒂絲・柯恩
+        job: 保險精算師
+        sheet: 四十五歲，工作是把風險算成數字。
+        leans: [邏輯]
+        start: 46
+        lead: 6
+        value: 9
+        question:
+          q: 一個人知道自己有病卻不吃藥，這個風險該算在誰頭上？
+          a: 先算在他自己頭上。然後再看有沒有別人把風險加大。
+        hidden: 取向「邏輯」，比較過失的論點對她特別有效。
+      - id: c-logistics
+        name: 馬可・費拉拉
+        job: 小型物流行老闆
+        sheet: 自己開了一家八台車的貨運行。
+        leans: [權威]
+        start: 42
+        lead: 4
+        value: 10
+        question:
+          q: 您的司機如果累了，您會怎麼做？
+          a: 叫他回家睡覺。但我的司機是我的員工，不是什麼承攬人。
+        hidden: 同情雇主，但看不起把司機叫成承攬人的大公司。
+      - id: c-nurse
+        name: 安娜・洛佩茲
+        job: 急診護理師
+        sheet: 夜班十年，看過很多心肌梗塞。
+        leans: [情感, 邏輯]
+        start: 54
+        lead: 5
+        value: 3
+        question:
+          q: 心肌梗塞的病人，多半事前知道自己有問題嗎？
+          a: 很多人知道。知道和有時間去處理，是兩回事。
+      - id: c-student
+        name: 凱文・吳
+        job: 法律系學生
+        sheet: 二十三歲，正在修侵權行為法。
+        leans: [程序]
+        start: 50
+        lead: 2
+        value: 6
+        question:
+          q: 公司把文件交出來了，或沒交出來，您會怎麼想？
+          a: 交出來的我會看。沒交出來的，我會想為什麼。
+      - id: c-night
+        name: 朵琳・貝克
+        job: 超市夜班主管
+        sheet: 管二十個夜班員工，自己也上夜班。
+        leans: [權威, 情感]
+        start: 48
+        lead: 4
+        value: 5
+        question:
+          q: 規定說可以休息，但休息會被扣分。這算可以休息嗎？
+          a: 那叫「可以休息，但你最好別休」。我們店裡也有這種規定。
+        hidden: 對「名義上可以休息」的說法很敏感。
+      - id: c-widow
+        name: 葛蘿莉亞・桑契斯
+        job: 退休教師
+        sheet: 丈夫三年前在工地過世。
+        leans: [情感]
+        start: 62
+        lead: 3
+        value: 0
+        question:
+          q: 您先生的事，會影響您看這個案子嗎？
+          a: 會。我沒辦法假裝不會。
+        cause: true
+        hidden: 親口承認無法公正。
+      - id: c-banker
+        name: 亞歷山大・韋伯
+        job: 銀行分行經理
+        sheet: 五十歲，負責企業貸款。
+        leans: [權威, 邏輯]
+        start: 40
+        lead: 7
+        value: 10
+        question:
+          q: 大公司被告，您會先怎麼想？
+          a: 先想原告要多少錢。然後想那個數字合不合理。
+      - id: c-barista
+        name: 蘇米・帕特爾
+        job: 咖啡店店員
+        sheet: 二十六歲，下班後兼職外送。
+        leans: [情感]
+        start: 58
+        lead: 1
+        value: 1
+        question:
+          q: 您兼職外送的時候，App 有提醒過您休息嗎？
+          a: 有啊。我每次都按略過。不按的話，那天就白跑了。
+        hidden: 自己就是外送員，對 App 的處境感同身受。
+      - id: c-retail
+        name: 琳達・莫瑞
+        job: 百貨公司櫃姐
+        sheet: 三十八歲，按業績抽成。
+        leans: [情感, 權威]
+        start: 51
+        lead: 3
+        value: 4
+        question:
+          q: 業績不好的那個月，您會多上幾天班嗎？
+          a: 會。沒有人逼我，可是也沒有人會幫我付房租。
+      - id: c-pilot
+        name: 艾德華・齊
+        job: 退役空軍飛行員
+        sheet: 飛了二十年，現在教模擬機。
+        leans: [程序, 權威]
+        start: 45
+        lead: 6
+        value: 8
+        question:
+          q: 飛行員有強制休息的規定嗎？
+          a: 有，而且沒有人可以按「略過」。那是因為以前有人死過。
+        hidden: 對「強制休息被拿掉」非常敏感，但也重視個人責任。
+      - id: c-engineer
+        name: 彼得・羅斯
+        job: 土木工程師
+        sheet: 負責橋梁的安全檢查。
+        leans: [邏輯, 程序]
+        start: 47
+        lead: 5
+        value: 7
+        question:
+          q: 一個安全機制被改掉，您會先問什麼？
+          a: 誰改的，為什麼改，改之前有沒有人評估。
+        hidden: 對「安全機制被改掉」非常在意，D7 曝光時會轉向。
+
+  - type: opening
+    id: opening
+    act: 第五幕
+    place: 卡爾德郡高等法院　第五法庭
+    picks: 2
+    intro:
+      - who: 法官
+        text: 被告，開場陳述。
+      - who: 艾莉絲
+        text: 每張承諾一張借據
+        mark: { kind: iou }
+
+  # 原告第一位證人：瑪莉索。對她做交互詰問，是本集最難受的一場。
+  - type: trial
+    id: court-marisol
+    act: 第五幕
+    day: 第一天
+    threshold: 50
+    burden: civil
+    quorum: 4
+    patience: 5
+    jurors:
+      - id: j1
+        label: 退休公車司機
+        leans: [情感]
+        start: 52
+      - id: j2
+        label: 保險精算師
+        leans: [邏輯]
+        start: 46
+        foreperson: true
+      - id: j3
+        label: 小型物流行老闆
+        leans: [權威]
+        start: 42
+      - id: j4
+        label: 急診護理師
+        leans: [情感, 邏輯]
+        start: 54
+      - id: j5
+        label: 法律系學生
+        leans: [程序]
+        start: 50
+      - id: j6
+        label: 超市夜班主管
+        leans: [權威, 情感]
+        start: 48
+    intro:
+      - who: 羅根・普萊斯
+        text: 原告的直接詰問。她說的每一句都會讓陪審團心軟，妳只能在問題本身有毛病的時候異議。
+        mood: 硬
+    witness:
+      name: 瑪莉索・維加
+      role: 原告・死者遺孀
+      direct:
+        - id: m1
+          q: 維加太太，請告訴陪審團，赫克托是什麼樣的人。
+          a: 他很安靜。每天早上七點出門，晚上回來會先去看女兒的房間，再吃飯。
+          impact: 4
+          tags: [情感]
+        - id: m2
+          q: 他最後那兩個禮拜，為什麼每天跑那麼久？
+          a: 女兒的註冊費。他說跑完這兩個禮拜就好。
+          impact: 5
+          tags: [情感]
+        - id: m3
+          q: 赫克托有沒有跟妳說過，公司的人告訴他不准休息？
+          a: 他說主管講過，旺季誰下線誰就等著被降級。
+          objection: 傳聞
+          sustained: 異議成立。證人只能說她自己知道的事。
+          impact: 6
+          tags: [情感, 權威]
+        - id: m4
+          q: 妳覺得卡爾德物流在乎他的命嗎？
+          a: 他死了以後，他們的 App 還在叫他接單。
+          objection: 推測
+          sustained: 異議成立。陪審團請忽略。
+          impact: 7
+          tags: [情感]
+        - id: m5
+          q: 那天傍晚五點五十二分，妳收到了什麼？
+          a: 一則語音。他說再跑兩單就回家，叫我先吃，不用等他。
+          impact: 6
+          tags: [情感]
+        - id: m6
+          q: 公司的 App 在他死後還扣了他的分，這難道不是冷血嗎？
+          a: 是。他們連他死了都不放過。
+          objection: 誘導
+          sustained: 異議成立。律師，請讓證人自己回答。
+          impact: 6
+          tags: [情感]
+      claims:
+        - id: c-healthy
+          text: 他身體一直很好，從來沒有生過病。
+          argument: arg-a
+          needs: pharmacy
+          lock:
+            strong:
+              q: 維加太太，您剛才說他身體一直很好。「一直」，是指包括最後那三個月嗎？
+              a: ……對。他從來不喊累，也沒有生過病。
+            weak:
+              q: 他身體應該還不錯吧？
+              a: 他不常看醫生。
+          setup:
+            q: 您先生的語音裡說「回家吃藥」。他吃的是什麼藥？
+            a: 我……我不知道。他沒有跟我說過。
+          confront:
+            strong: （她看著藥局紀錄看了很久）……三個月的藥，他只拿了一次。他說等這個月的錢下來。
+            weak: 他有在看醫生。我不知道他有沒有去拿藥。
+      irrelevant:
+        - q: 您和赫克托結婚多久了？
+          a: 二十二年。
+      breakdown: （瑪莉索低下頭。旁聽席有人倒抽一口氣。陪審席上，那位精算師在筆記本上寫了一行字。）
+    outro:
+      - who: 旁白
+        text: 法官宣布休庭十分鐘。瑪莉索走下證人席，經過被告席時停了一下，沒有說話。
+      - who: 艾莉絲
+        text: 我贏了這一題。｜我寧可輸。
+        voice: 'off'
+
+  # 費雪醫師沒被排除時出庭。
+  - type: trial
+    id: court-fisher
+    act: 第五幕
+    day: 第二天
+    when:
+      notFlags: [daubert-fisher]
+    threshold: 50
+    burden: civil
+    quorum: 4
+    patience: 5
+    jurors:
+      - id: j1
+        label: 退休公車司機
+        leans: [情感]
+        start: 52
+      - id: j2
+        label: 保險精算師
+        leans: [邏輯]
+        start: 46
+        foreperson: true
+      - id: j3
+        label: 小型物流行老闆
+        leans: [權威]
+        start: 42
+      - id: j4
+        label: 急診護理師
+        leans: [情感, 邏輯]
+        start: 54
+      - id: j5
+        label: 法律系學生
+        leans: [程序]
+        start: 50
+      - id: j6
+        label: 超市夜班主管
+        leans: [權威, 情感]
+        start: 48
+    witness:
+      name: 喬安娜・費雪醫師
+      role: 原告專家・職業醫學
+      direct:
+        - id: f1
+          q: 費雪醫師，您的研究結論是什麼？
+          a: 每週工時超過六十小時的司機，心血管事件的風險是一般人的二點四倍。
+          impact: 8
+          tags: [權威, 邏輯]
+        - id: f2
+          q: 所以赫克托的死，就是過勞造成的，對嗎？
+          a: 是的。
+          objection: 誘導
+          sustained: 異議成立。請律師不要替證人作答。
+          impact: 7
+          tags: [權威]
+        - id: f3
+          q: 卡爾德物流的高層，應該早就知道這份研究吧？
+          a: 這份研究發表在主要期刊上，業界應該都知道。
+          objection: 推測
+          sustained: 異議成立。證人無從得知被告高層讀過什麼。
+          impact: 5
+          tags: [權威]
+        - id: f4
+          q: 您的同事也告訴過您，外送司機的情況更糟，對嗎？
+          a: 有幾位同業這樣跟我說過。
+          objection: 傳聞
+          sustained: 異議成立。證人只能就自己的研究作證。
+          impact: 5
+          tags: [權威]
+      claims:
+        - id: c-applies
+          text: 這個倍數適用於所有長時間駕駛的司機，包括赫克托。
+          argument: arg-c
+          needs: fisher-sample
+          lock:
+            strong:
+              q: 醫師，您說「所有」長時間駕駛的司機。您的樣本裡，有市區外送司機嗎？
+              a: 我的結論適用於長時間駕駛這件事本身。
+            weak:
+              q: 您的研究應該也適用於外送司機吧？
+              a: 原則上是一樣的。
+          setup:
+            q: 長途貨車司機一趟平均開多久？市區外送一單呢？
+            a: 長途大約九小時。市區外送……一單大概二、三十分鐘。
+          confront:
+            strong: （她翻到附註 7）……樣本是州際長途貨車司機。市區配送不在研究範圍內。
+            weak: 樣本確實以長途司機為主，但我認為可以類推。
+        - id: c-nowarn
+          text: 赫克托根本沒有機會意識到自己需要休息。
+          argument: arg-b
+          needs: app-log
+          lock:
+            strong:
+              q: 醫師，您是說他「根本沒有機會」知道自己該休息？
+              a: 在那種工作節奏下，沒有。
+            weak:
+              q: 他可能沒注意到自己很累吧？
+              a: 很多司機都沒注意到。
+          setup:
+            q: 您看過被告提出的 App 日誌嗎？
+            a: 我看的是工時紀錄，沒有看提醒的部分。
+          confront:
+            strong: ……六十一次。我不知道系統提醒過他這麼多次。
+            weak: 提醒是一回事，能不能停下來是另一回事。
+      irrelevant:
+        - q: 醫師，您的研究經費是誰出的？
+          a: 州立大學和運輸工會。
+      breakdown: （精算師把筆放下，看著證人席上的附註頁。）
+
+  # 費雪被排除時，原告改傳一般醫學證人。
+  - type: trial
+    id: court-doctor
+    act: 第五幕
+    day: 第二天
+    when:
+      flags: [daubert-fisher]
+    threshold: 50
+    burden: civil
+    quorum: 4
+    patience: 5
+    jurors:
+      - id: j1
+        label: 退休公車司機
+        leans: [情感]
+        start: 52
+      - id: j2
+        label: 保險精算師
+        leans: [邏輯]
+        start: 46
+        foreperson: true
+      - id: j3
+        label: 小型物流行老闆
+        leans: [權威]
+        start: 42
+      - id: j4
+        label: 急診護理師
+        leans: [情感, 邏輯]
+        start: 54
+      - id: j5
+        label: 法律系學生
+        leans: [程序]
+        start: 50
+      - id: j6
+        label: 超市夜班主管
+        leans: [權威, 情感]
+        start: 48
+    intro:
+      - who: 羅根・普萊斯
+        text: 費雪不能來了。他們找的是急診科醫師，只能講死因，不能講倍數。
+        mood: 硬
+    witness:
+      name: 麥可・唐醫師
+      role: 原告證人・急診科主治醫師
+      direct:
+        - id: t1
+          q: 醫師，赫克托・維加的死因是什麼？
+          a: 急性心肌梗塞。
+          impact: 4
+          tags: [權威]
+        - id: t2
+          q: 長時間工作會增加心肌梗塞的風險嗎？
+          a: 一般而言會。疲勞、壓力、睡眠不足都是因素。
+          impact: 5
+          tags: [權威, 邏輯]
+        - id: t3
+          q: 如果他那天早點休息，就不會死，對吧？
+          a: 很可能。
+          objection: 推測
+          sustained: 異議成立。證人無法得知假設情況下的結果。
+          impact: 7
+          tags: [情感]
+        - id: t4
+          q: 費雪醫師的研究說風險是二點四倍，您同意嗎？
+          a: 我讀過那份研究，數字是那樣寫的。
+          objection: 傳聞
+          sustained: 異議成立。該研究已被本庭排除，證人不得轉述。
+          impact: 6
+          tags: [權威]
+        - id: t5
+          q: 公司明明可以讓他下線，卻沒有這麼做，對嗎？
+          a: 從醫學角度，強制休息確實能降低風險。
+          objection: 缺乏基礎
+          sustained: 異議成立。證人是醫師，不是派單系統的專家。
+          impact: 5
+          tags: [邏輯]
+      claims:
+        - id: c-cause
+          text: 疲勞是這次發作最主要的原因。
+          argument: arg-a
+          needs: pharmacy
+          lock:
+            strong:
+              q: 醫師，您說「最主要」的原因。比沒有控制的高血壓還主要？
+              a: 我說的是疲勞是重要因素。
+            weak:
+              q: 疲勞應該是原因之一吧？
+              a: 是原因之一。
+          setup:
+            q: 第二期高血壓沒有服藥，三個月後發生心肌梗塞的風險高嗎？
+            a: 很高。這是最主要的危險因子之一。
+          confront:
+            strong: （停頓）……如果他三個月只領了一次藥，那高血壓本身就是最主要的危險因子。
+            weak: 兩者都有關係，我沒辦法區分。
+      irrelevant:
+        - q: 醫師，您在急診室工作多久了？
+          a: 十五年。
+      breakdown: （護理師陪審員點了點頭，像是在說：我看過太多這種病人。）
+
+  - type: defense
+    id: defense-trevor
+    act: 第五幕
+    day: 第三天
+    witness:
+      name: 崔佛・林
+      role: 卡爾德快遞　營運副總
+    intro:
+      - who: 旁白
+        text: 艾莉絲站起來：「被告傳喚崔佛・林。」崔佛扣上西裝的第一顆釦子，走向證人席。
+    prep:
+      hours: 2
+      options:
+        - id: trevor-honest
+          label: 只問他確定的事
+          detail: 不碰疲勞鎖的歷史。他說得越少，奧卡福能拆的越少。
+          multiplier: 1
+        - id: trevor-coach
+          label: 替他寫好答案
+          detail: 把「提醒一直都在」那句話再說一遍，說得更穩。他在錄取時已經宣誓過這句話了。
+          multiplier: 1
+          rehearsed: 1.6
+          coached: true
+          ethics: [coached-witness]
+          flags: [coached-trevor]
+    asks: 3
+    questions:
+      - id: tq-contract
+        seq: 0
+        q: 林先生，承攬司機可以自己決定什麼時候上線、什麼時候下線嗎？
+        a: 可以。合約寫得很清楚，App 上也有下線的按鈕，隨時可以按。
+        impact: 5
+        tags: [權威]
+      - id: tq-alert
+        seq: 1
+        q: 赫克托・維加連續上線十小時的時候，App 做了什麼？
+        a: 跳出提醒。他最後十四天，一共收到六十一次。
+        impact: 8
+        tags: [邏輯]
+        needs: [app-log]
+      - id: tq-always
+        seq: 2
+        q: 疲勞提醒的設計，一直都是這樣嗎？
+        a: 從系統上線就是提醒，從來沒有強制下線過。
+        impact: 6
+        tags: [權威]
+        rehearsed: true
+        door:
+          q: 林先生，這是三月十四日的設定變更單。簽名的是您嗎？
+          a: ……是我。
+          penalty: 12
+    leak:
+      q: 林先生，「從來沒有」這四個字，是誰教您說的？
+      a: 我……律師跟我對過答案。
+      penalty: 10
+    outro:
+      - who: 旁白
+        text: 崔佛走下證人席，沒有看被告席。羅根在筆記本上畫了一條線，又把它塗掉。
+
+  - type: closing
+    id: closing
+    act: 第五幕
+    place: 卡爾德郡高等法院　第五法庭
+    picks: 2
+    threshold: 50
+    intro:
+      - who: 馬庫斯・海爾
+        text: 兩個論點。民事陪審團不需要被說服，只需要被說動一點點。
+        mood: 暖
+      - who: 艾莉絲
+        text: 我知道他們會往哪邊動。我只是不確定，我希望他們往哪邊動。
+    tones:
+      - id: t-logic
+        label: 邏輯
+        tag: 邏輯
+        text: 一張病歷、一張領藥紀錄、六十一次提醒。數字不替任何人難過，它們只記錄發生了什麼。
+      - id: t-feel
+        label: 情感
+        tag: 情感
+        text: 赫克托的死是一場悲劇。但悲劇不等於有人該為它負全責。
+      - id: t-due
+        label: 程序
+        tag: 程序
+        text: 原告要證明的是「比較可能」。不是可能，不是同情，是比較可能。
+    endings:
+      - id: punitive
+        when:
+          verdict: [有責]
+          flags: [discovery:rq-chat:concealed]
+        lines:
+          - who: 旁白
+            text: 陪審長站起來。「我們認定被告有責。另外，就懲罰性賠償，我們認定成立。」
+          - who: 旁白
+            text: 奧卡福在結辯裡唸出了那張截圖。一位前營運專員在開庭前兩天，把它交給了原告。
+          - who: 維多莉亞・惠特洛克
+            text: （電話）我們的客戶剛剛付了一筆他本來不必付的錢。下一次預算會議，妳的名字會被提到。
+            mood: 硬
+      - id: own-choice-win
+        when:
+          verdict: [無責]
+          theory: [own-choice]
+        lines:
+          - who: 旁白
+            text: 陪審長站起來。「我們認定被告無責。」
+          - who: 亞瑟・卡爾德
+            text: （訊息）漂亮。下一件也交給妳。
+          - who: 旁白
+            text: 法院台階上，瑪莉索・維加站在最下面一階，看著艾莉絲走出來。她什麼都沒有說。
+      - id: shared-liable
+        when:
+          verdict: [有責]
+          theory: [shared]
+        lines:
+          - who: 旁白
+            text: 陪審長站起來。「我們認定被告有責。死者本人就其損害，與有過失百分之四十。」
+          - who: 丹尼爾・奧卡福
+            text: 妳打得很公平，艾莉絲。我是說真的。
+          - who: 瑪莉索・維加
+            text: 他們承認了。判決書上寫的，他們承認了。
+    verdicts:
+      無責:
+        - who: 旁白
+          text: 陪審長站起來。「我們認定被告無責。」
+        - who: 亞瑟・卡爾德
+          text: （訊息）謝謝。我就知道這案子很單純。
+        - who: 旁白
+          text: 瑪莉索把那支螢幕裂了一角的手機收進包包，跟著奧卡福走出法庭。
+      有責:
+        - who: 旁白
+          text: 陪審長站起來。「我們認定被告有責。」
+        - who: 旁白
+          text: 亞瑟・卡爾德的位子是空的。羅根替他簽收了判決書。
+        - who: 維多莉亞・惠特洛克
+          text: （電話）上訴的事，明天早上來我辦公室談。
+          mood: 硬
+      陪審團僵局:
+        - who: 旁白
+          text: 陪審長站起來。「庭上，我們沒有辦法達到所需的票數。」
+        - who: 旁白
+          text: 法官宣布審判無效。走廊上，奧卡福遞給艾莉絲一張名片，背面寫著一個數字。
+        - who: 艾莉絲
+          text: 評議票數
+          mark: { kind: tally }
+
+  # 尾聲：調解成交時跳過庭審，直接到這裡。
+  - type: dialogue
+    id: epilogue-deal-terms
+    act: 尾聲
+    epilogue: true
+    when:
+      outcome: [deal]
+      deal: [o-full, o-high, o-mid]
+    place: 卡爾德郡法院　調解室外的走廊
+    steps:
+      - do: say
+        who: 旁白
+        text: 和解書第七條：「被告承諾於六十日內，恢復派單系統之強制下線功能。」
+      - do: say
+        who: 瑪莉索・維加
+        text: 謝謝妳。我知道妳是他們的律師。
+      - do: say
+        who: 亞瑟・卡爾德
+        text: （訊息）第七條。妳讓我多付了一個條款，韓律師。我會記得。
+
+  - type: dialogue
+    id: epilogue-deal-low
+    act: 尾聲
+    epilogue: true
+    when:
+      outcome: [deal]
+      deal: [o-low]
+    place: 卡爾德郡法院　調解室外的走廊
+    steps:
+      - do: say
+        who: 旁白
+        text: 九十萬。沒有條款，沒有道歉。和解書最後一行寫著：「被告不因本和解承認任何責任。」
+      - do: say
+        who: 馬庫斯・海爾
+        text: 漂亮。
+        mood: 暖
+      - do: say
+        who: 旁白
+        text: 瑪莉索從調解室出來，經過艾莉絲身邊，沒有停下來。
+
+  # 所有路線都接：戴文與那張銷毀令，然後是父親的電話。
+  - type: dialogue
+    id: epilogue-devon
+    act: 尾聲
+    epilogue: true
+    place: 惠特洛克・海爾　影印室　晚上 22:10
+    steps:
+      - do: say
+        who: 旁白
+        text: 影印機還在出紙。戴文把一張舊文件放上掃描台，放大到百分之四百。
+      - do: say
+        who: 戴文
+        text: 韓律師，妳還在嗎？那份文件保存政策的附件，二〇一六年那張。
+      - do: say
+        who: 戴文
+        text: 「碼頭九號倉庫維修紀錄備份：依政策銷毀。」核准人簽名……我放大了。
+      - do: say
+        who: 戴文
+        text: 是 V. 惠特洛克。
+      - do: say
+        who: 戴文
+        text: 羅根叫我別多事。我……我想先讓妳知道。
+      - do: say
+        who: 艾莉絲
+        text: V.
+        mark: { kind: highlight, word: V. }
+
+  - type: phone
+    id: epilogue-father
+    act: 尾聲
+    epilogue: true
+    owner: 艾莉絲
+    steps:
+      - do: caption
+        time: '23:40'
+        text: 港灣大道一號，頂樓只剩一盞燈。艾莉絲的手機響了。
+      - do: notify
+        time: '23:40'
+        message:
+          from: 卡爾德港州立監獄
+          text: 您有一通來自受刑人的電話。本通話將被錄音。
+      - do: talk
+        time: '23:41'
+        who: 理查・索恩
+        text: 我聽說妳替卡爾德打了一場官司。
+      - do: choose
+        mode: talk
+        options:
+          - text: 爸。二〇一六年，是誰下令銷毀維修紀錄的？
+            then:
+              - who: 理查・索恩
+                text: ……妳在那裡找到了什麼？
+          - text: 我只是做我的工作。
+            then:
+              - who: 理查・索恩
+                text: 我以前也是這樣跟妳媽說的。
+      - do: talk
+        time: '23:43'
+        who: 理查・索恩
+        text: 莉絲，小心那棟樓裡簽名的人。
