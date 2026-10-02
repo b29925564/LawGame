@@ -55,3 +55,582 @@ V.: V.
 你把責任放回赫克托身上。同情瑪莉索的那幾位陪審員，會把這句話帶進評議室。: You put the blame back on Hector. The jurors who feel for Marisol will carry that line into the deliberation room.
 你談的是公司做了什麼，沒有回答他為什麼停不下來。進了評議室，這個問題會回來。: You argued what the company did, not why he could not stop. In the deliberation room, that question comes back.
 你在開場就承認公司有錯。評議的時候，陪審員會從這一句開始算。: You conceded the company's fault in your opening. When the jury deliberates, that is where the count starts.
+旁白: Narrator
+硬: hard
+暖: warm
+第一幕: Act One
+第二幕: Act Two
+第三幕: Act Three
+第四幕: Act Four
+第五幕: Act Five
+冷開場: Cold open
+片頭: Title
+合理懷疑: Reasonable Doubt
+尾聲: Epilogue
+文件: Document
+陳述: Statement
+原告: Plaintiff
+週二: Tuesday
+三月: March
+宣誓陳述: Sworn statement
+證詞錄取: Deposition
+證詞錄取（原告方）: Deposition (plaintiff)
+支持: Supports
+縮小範圍: Narrows
+矛盾: Contradiction
+說明動機: Shows motive
+邏輯: Logic
+權威: Authority
+情感: Emotion
+程序: Procedure
+推測: Speculation
+傳聞: Hearsay
+誘導: Leading
+特權: Privilege
+缺乏基礎: Lack of foundation
+第一天: Day One
+第二天: Day Two
+第三天: Day Three
+和解的價格: The Price of a Settlement
+承攬合約: Contractor agreement
+「承攬人得自行決定上線時間與接單與否，本公司不負勞動法上之照顧義務。」: '"The contractor decides when to go online and whether to accept orders. The company owes no duty of care under labor law."'
+起訴狀: Complaint
+原告瑪莉索・維加請求過失致死損害賠償 1,200 萬美元，另請求懲罰性賠償。: Plaintiff Marisol Vega seeks $12 million in wrongful-death damages, plus punitive damages.
+死亡證明：急性心肌梗塞: 'Death certificate: acute myocardial infarction'
+死因急性心肌梗塞。發現時坐在駕駛座，安全帶未解。: "Cause of death: acute myocardial infarction. Found in the driver's seat, seat belt still fastened."
+卡爾德郡法醫室: Calder County Medical Examiner
+家醫病歷：高血壓: 'Medical record: hypertension'
+事發前三個月診斷第二期高血壓，開立降壓藥，囑咐三個月後回診。沒有回診。: Diagnosed with stage 2 hypertension three months before his death. Prescribed blood-pressure medication, told to return in three months. He never did.
+原告開示: Plaintiff's disclosure
+藥局紀錄：只領過一次藥: 'Pharmacy record: filled only once'
+降壓藥處方三個月，領藥紀錄只有第一個月。: A three-month prescription for blood-pressure medication. Filled only the first month.
+藥局（傳票）: Pharmacy (subpoena)
+App 日誌：疲勞提醒被略過 61 次: 'App log: fatigue reminder skipped 61 times'
+事發前 14 天，「已連續上線 10 小時」提醒共跳出 61 次，每次都按了「略過」。最後一次是 18:09。: In the 14 days before his death, the "You have been online for 10 hours" reminder appeared 61 times. He tapped "Skip" every time. The last was at 6:09 p.m.
+卡爾德快遞系統: Calder Express system
+App 日誌：死後仍在派單: 'App log: orders kept coming after death'
+18:21 起車輛 GPS 靜止。之後系統派單 3 次，均自動判定拒單，扣評分 0.3。: Vehicle GPS stationary from 6:21 p.m. The system dispatched 3 more orders, each auto-marked as declined. Rating docked 0.3.
+赫克托的語音：「回家吃藥」: 'Hector''s voice message: "home to take my pills"'
+「再跑兩單就回家，回家吃藥。妳先吃，不用等我。」: '"Two more runs and I''m coming home. Home to take my pills. Eat without me, don''t wait."'
+崔佛的說法：提醒一直都在: "Trevor's account: the reminder was always there"
+疲勞提醒從系統上線就有，司機要不要休息是他們自己決定的。: The fatigue reminder has existed since the system launched. Whether to rest is the driver's own decision.
+會議（崔佛・米爾斯）: Meeting (Trevor Mills)
+舊版規格書：疲勞鎖: 'Old spec: fatigue lock'
+「連續上線 10 小時，強制下線 8 小時，期間不派單。」版本 2.3，兩年前。: '"After 10 hours online, forced offline for 8 hours. No orders dispatched during that time." Version 2.3, two years ago.'
+卡爾德快遞系統文件: Calder Express system documentation
+設定變更單：改為提醒: 'Change ticket: switched to reminder'
+「疲勞鎖改為提醒，司機可略過。依法務意見。」簽核人：崔佛・米爾斯。: '"Fatigue lock changed to reminder; driver may skip. Per legal advice." Approved by: Trevor Mills.'
+營運群組：「旺季不准任何人被踢下線」: 'Ops chat: "Nobody gets kicked offline in peak season"'
+崔佛・米爾斯在營運群組：「旺季不准任何人被踢下線。我不管系統怎麼寫。」: 'Trevor Mills in the ops group chat: "Nobody gets kicked offline in peak season. I don''t care what the system says."'
+卡爾德快遞內部通訊: Calder Express internal messages
+法務意見書（惠特洛克・海爾）: Legal opinion (Whitlock & Hale)
+「承攬人非受僱人，貴公司無照顧義務。取消強制下線之法律風險可控。」: '"Contractors are not employees; the company owes no duty of care. The legal risk of removing forced offline is manageable."'
+惠特洛克・海爾律師事務所: Whitlock & Hale LLP
+費雪醫師報告: Dr. Fisher's report
+每週工時超過 60 小時的司機，心血管事件風險是一般人的 2.4 倍。: Drivers working more than 60 hours a week face 2.4 times the risk of a cardiovascular event.
+原告專家（喬安娜・費雪醫師）: Plaintiff's expert (Dr. Joanna Fisher)
+費雪報告附註：樣本是長途卡車司機: 'Fisher report footnote: the sample was long-haul truckers'
+附註 7：研究樣本為州際長途貨車司機，單趟平均 9 小時，不含市區短程配送。: 'Footnote 7: the study sample was interstate long-haul truck drivers, averaging 9 hours per run. Urban short-range delivery was not included.'
+原告專家報告: Plaintiff's expert report
+崔佛的宣誓陳述：提醒一直都在: 'Trevor under oath: the reminder was always there'
+他在錄取時宣誓說，疲勞提醒「從系統上線就是提醒，從來沒有強制下線過」。: At his deposition he swore the fatigue reminder "has been a reminder since the system launched. There was never a forced offline."
+普莉亞的證詞：死後還在扣分: "Priya's testimony: docked after death"
+普莉亞在錄取時證稱：GPS 靜止之後，系統仍判定拒單三次，扣了他 0.3 分。: 'At her deposition Priya testified: after the GPS went stationary, the system marked three orders declined and docked him 0.3 points.'
+裁定：費雪醫師證詞排除: "Ruling: Dr. Fisher's testimony excluded"
+本庭排除費雪醫師關於風險倍數之證詞。原告得另以一般醫學證人說明死因。: The court excludes Dr. Fisher's testimony on the risk multiplier. The plaintiff may call an ordinary medical witness on cause of death.
+週二傍晚，卡爾德港東區。一台白色廂型車停在紅燈前，儀表板上夾著一支手機。: Tuesday evening, east Calder Harbor. A white van waits at a red light, a phone clipped to the dashboard.
+再跑兩單就回家，回家吃藥。妳先吃，不用等我。: Two more runs and I'm coming home. Home to take my pills. Eat without me, don't wait.
+新訂單：港灣大道 41 號 → 東河街 7 號，預計 18 分鐘。: 'New order: 41 Harbor Avenue → 7 East River Street, est. 18 min.'
+您已連續上線 10 小時。休息將使今日評分下降。: You have been online for 10 hours. Resting will lower today's rating.
+休息: Rest
+確定要休息嗎？今日評分將從 4.6 降為 4.4，明日派單優先順序降低。: Rest now? Today's rating will drop from 4.6 to 4.4, and tomorrow's dispatch priority will be lowered.
+……再兩單。: '...Two more.'
+略過: Skip
+東河街。他把車靠邊，手按在胸口，等了一下，又把手放回方向盤。: East River Street. He pulls over, presses a hand to his chest, waits a moment, then puts the hand back on the wheel.
+車停在路邊，雙黃燈沒有打。手機地圖上的藍點不再移動。: The van sits at the curb. The hazard lights are off. On the phone's map, the blue dot stops moving.
+新訂單：港灣大道 12 號 → 碼頭路 3 號。請於 60 秒內接單。: 'New order: 12 Harbor Avenue → 3 Pier Road. Accept within 60 seconds.'
+您已拒絕訂單。今日評分 4.6 → 4.5。: Order declined. Today's rating 4.6 → 4.5.
+新訂單：南港市場 → 港灣大道 88 號。請於 60 秒內接單。: 'New order: South Harbor Market → 88 Harbor Avenue. Accept within 60 seconds.'
+第二集　和解的價格: 'Episode Two: The Price of a Settlement'
+惠特洛克的辦公室　週一 09:00: Whitlock's office, Monday 9:00 a.m.
+惠特洛克的桌上只有一份卷宗，封面貼著藍色標籤：維加訴卡爾德物流。: "There is one file on Whitlock's desk, a blue label on the cover: Vega v. Calder Logistics."
+一名外送司機在車上心臟病發。家屬要一千兩百萬，還要懲罰性賠償。: A delivery driver had a heart attack in his van. The family wants twelve million, plus punitive damages.
+上一個案子，你讓卡爾德的名字上了三週新聞。這一個，你替他們把名字拿下來。: Last case, you put Calder's name in the news for three weeks. This one, you take it back out.
+我要你替這家事務所的客戶辯護。你以為之前那四十個小時是誰付的？: I want you to defend this firm's client. Who do you think paid for those forty hours last time?
+門開了。一個穿深灰西裝的男人走進來，沒等人招呼，就在窗邊坐下。: The door opens. A man in a charcoal suit walks in and, without waiting to be asked, sits down by the window.
+葛雷律師。我是亞瑟・卡爾德。伊森・蕭的案子我看了，你很會挑別人證詞裡的縫。: Mr. Grey. Arthur Calder. I followed the Ethan Shaw case. You're good at finding the seams in other people's testimony.
+這次，請你幫我把縫補起來。一百五十萬以內，你自己決定。超過，打給我。: This time I'd like you to sew them shut. Up to one and a half million, your call. Above that, you call me.
+亞瑟在等你回答。: Arthur is waiting for your answer.
+很好。我喜歡先看帳本的人。: Good. I like a man who reads the books first.
+他是承攬人，葛雷律師。上線是他按的，下線也是。: He was a contractor, Mr. Grey. He tapped online. He could have tapped offline.
+葛雷律師是在預演對方會怎麼說。對吧？: Mr. Grey is rehearsing what the other side will say. Aren't you?
+羅根當你的二席。對方律師是丹尼爾・奧卡福，我想你認識。: Logan is your second chair. Opposing counsel is Daniel Okafor. I believe you know him.
+走廊　週一 09:40: Hallway, Monday 9:40 a.m.
+民事案。你沒打過幾場吧。: A civil case. You haven't tried many of those.
+刑事案，你要讓陪審團懷疑。民事案，對方只要讓他們覺得「比較可能」。: In a criminal case, you make the jury doubt. In a civil case, the other side only has to make them think it's "more likely than not."
+一半多一點點。這次站在線上的是你。: A little over half. And this time you're the one standing on the line.
+卡爾德快遞・營運副總: Calder Express, VP of Operations
+卡爾德大樓 12 樓會議室: Calder Building, 12th-floor conference room
+防備: Guarded
+葛雷律師。法務說你要問排班的事。我十點半有會。: Mr. Grey. Legal says you want to ask about scheduling. I have a meeting at ten thirty.
+疲勞提醒是怎麼運作的？: How does the fatigue reminder work?
+連續上線十個小時，App 跳一則提醒。要不要休息，司機自己決定。: Ten hours online, the app shows a reminder. Whether to rest is the driver's decision.
+他們是承攬人，不是員工。我們不能替成年人決定什麼時候睡覺。: They're contractors, not employees. We can't decide when a grown adult goes to sleep.
+赫克托・維加這個人，你有印象嗎？: Hector Vega. Does the name mean anything to you?
+系統裡有四千多個司機。他評分 4.6，很穩，沒有客訴。: There are over four thousand drivers in the system. He was a 4.6. Steady. No complaints.
+就這樣。: That's it.
+提醒一直都是這樣嗎？: Has the reminder always worked this way?
+系統每一季都在改版。你要問哪一版？: The system changes every quarter. Which version are you asking about?
+那一版就是提醒。: That version was a reminder.
+你說他們自己決定。可是不接單，評分就會被扣。: You say it's their decision. But decline an order and the rating drops.
+評分是服務品質，不是懲罰。: The rating measures service quality. It's not a punishment.
+而且那套系統，我們問過法務。你應該知道是哪一家。: And we ran that system past legal. You know which firm.
+我說過了，提醒一直都在。: I've told you. The reminder was always there.
+……好。: '...Okay.'
+十點半了。剩下的請找法務。: It's ten thirty. Anything else goes through legal.
+崔佛起身的時候，順手把桌上的平板扣過來，螢幕朝下。: As Trevor stands, he flips the tablet on the table face down.
+第二幕　開示: 'Act Two: Discovery'
+這一次，是對方來跟你要東西。: This time, the other side is asking you for things.
+證據開示截止　兩週後: 'Discovery deadline: two weeks'
+奧卡福勞工法律事務所: Okafor Labor Law
+原告瑪莉索・維加，死者赫克托・維加之配偶。: Plaintiff Marisol Vega, spouse of the deceased, Hector Vega.
+被告卡爾德物流及其子公司卡爾德快遞。: Defendants Calder Logistics and its subsidiary Calder Express.
+請求過失致死損害賠償 1,200 萬美元，另請求懲罰性賠償。: Seeking $12 million in wrongful-death damages, plus punitive damages.
+死者於事發當日連續上線逾 11 小時，被告派單系統持續派單至其死後。: On the day of his death the deceased had been online for over 11 hours. The defendants' dispatch system kept sending him orders after he died.
+死亡證明與現場報告: Death certificate and scene report
+週二 19:40 路人報案。死者坐於駕駛座，安全帶未解，引擎熄火。: Tuesday, 7:40 p.m., a passerby called it in. The deceased was in the driver's seat, seat belt fastened, engine off.
+死因：急性心肌梗塞。推估發作時間約 18:20。: 'Cause of death: acute myocardial infarction. Estimated onset around 6:20 p.m.'
+派單系統文件夾: Dispatch system folder
+卡爾德快遞　資訊部: Calder Express, IT
+版本 2.3 規格書，疲勞管理章節：連續上線 10 小時，強制下線 8 小時，期間不派單。: 'Version 2.3 spec, fatigue management: after 10 hours online, forced offline for 8 hours, no orders dispatched.'
+版本 2.4 起，疲勞管理改為提醒，司機可略過。變更紀錄另見變更單。: From version 2.4, fatigue management becomes a reminder the driver may skip. See the change ticket for the change record.
+丹尼爾・奧卡福　原告律師: Daniel Okafor, counsel for the plaintiff
+維加案　第一批開示: 'Vega: first disclosure'
+盧卡斯，附上我們這邊的開示：病歷、語音、死亡證明。: 'Lucas, attached is our disclosure: the medical record, the voice message, the death certificate.'
+我不會假裝這些對我有利。你也別假裝你那邊沒東西。: I won't pretend these help me. Don't you pretend there's nothing on your side.
+戴文・艾許　助理: Devon Ash, paralegal
+App 日誌我整理好了（有點多）: App log sorted (it's a lot)
+葛雷律師，赫克托最後 14 天的日誌整理成一張表了。疲勞提醒跳了 61 次，他每次都按略過。: Mr. Grey, Hector's last 14 days are in one table. The fatigue reminder came up 61 times. He tapped skip every time.
+我本來覺得這對我們很有利。後來看到最後那三筆派單，我就不太確定了。: I thought that was good for us. Then I saw the last three dispatches, and I'm not so sure.
+聲請傳票：赫克托的藥局領藥紀錄: "Subpoena: Hector's pharmacy records"
+病歷說開了藥。有沒有去領，是另一回事。: The record says the medication was prescribed. Whether he picked it up is another matter.
+傳票核發。藥局的回函只有一頁：降壓藥處方三個月，領藥紀錄一次。: "Subpoena granted. The pharmacy's reply is one page: a three-month prescription, filled once."
+一次: Once
+請戴文向資訊部調派單系統的設定變更紀錄: Have Devon pull the dispatch system's change records from IT
+規格書說「另見變更單」。要看是誰、什麼時候、為什麼改的。: The spec says "see the change ticket." Who changed it, when, and why.
+資訊部給了。三月十四日，崔佛・米爾斯簽的。理由欄只寫四個字：依法務意見。: 'IT sent it. March 14, signed by Trevor Mills. The reason field says three words: per legal advice.'
+還有……他們連營運群組的截圖一起寄來了。我想他們沒看就寄了。: Also... they sent the ops chat screenshots along with it. I don't think they looked before sending.
+請羅根從事務所檔案調出那份法務意見: Have Logan pull the legal opinion from the firm's files
+寫這份意見的是事務所自己。羅根知道放在哪裡。: The firm wrote that opinion itself. Logan knows where it's kept.
+找到了。三月，勞動組出的，簽名的是我以前的組長。: Found it. March, from the labor group. Signed by my old group head.
+這份是律師與委託人之間的通訊。開示的時候，我們可以主張特權。我建議主張。: This is attorney-client communication. In discovery we can claim privilege. I recommend we do.
+請求一：被告與死者之間的全部契約文件。: 'Request 1: all contract documents between the defendants and the deceased.'
+承攬合約交出去了。這份本來就在起訴狀附件裡，他們只是要我們確認。: The contractor agreement is produced. It was already attached to the complaint. They just wanted us to confirm it.
+請求二：被告派單系統內，全體司機過去三年的上線與派單紀錄。: "Request 2: online and dispatch records for every driver in the defendants' system for the past three years."
+四千多個司機、三年。光是匯出就跑了一整晚。奧卡福的助理回信說「謝謝，我們會慢慢看」。: 'Four thousand drivers, three years. The export alone ran all night. Okafor''s assistant wrote back: "Thanks, we''ll take our time."'
+法官把範圍限縮為死者本人最後九十天的紀錄。61 次略過，照樣在裡面。: The judge narrows it to the deceased's own last ninety days. The 61 skips are still in there.
+請求三：與疲勞提醒或強制下線功能有關的一切設定變更紀錄。: 'Request 3: all change records relating to the fatigue reminder or forced-offline function.'
+你把變更單交出去了。上面寫著「依法務意見」，奧卡福會順著這四個字一路要下去。: You produced the change ticket. It says "per legal advice," and Okafor will follow those three words all the way down.
+法官看了一眼特權清單：「設定變更單是營運文件，不是律師意見。本庭命令交出。」: 'The judge glances at the privilege log: "A change ticket is an operations document, not legal advice. The court orders it produced."'
+請求四：被告營運主管於事發前一年內，關於司機排班的內部通訊。: "Request 4: internal communications by the defendants' operations managers about driver scheduling in the year before the death."
+群組截圖交出去了。我把「旺季不准任何人被踢下線」那一張放在最上面……不是故意的，是照日期排的。: The chat screenshots are produced. I put "nobody gets kicked offline in peak season" on top... not on purpose. They're sorted by date.
+葛雷律師，截圖沒有放進去。我照你的意思打包了。: Mr. Grey, the screenshots aren't in there. I packed it the way you wanted.
+……我們這樣是對的嗎？: "...Is this right? What we're doing?"
+請求五：被告就取消強制下線一事所取得之任何意見或評估。: 'Request 5: any opinion or assessment the defendants obtained regarding the removal of forced offline.'
+你把我們自己事務所的意見書交給原告。惠特洛克明天早上就會知道。: You handed our own firm's opinion to the plaintiff. Whitlock will know by tomorrow morning.
+特權清單列了一行：「法律意見書，三月，律師與委託人通訊。」奧卡福沒有爭執。: 'The privilege log has one line: "Legal opinion, March, attorney-client communication." Okafor doesn''t contest it.'
+三個月前確診高血壓，開了三個月的藥，只領過一次。: Diagnosed with hypertension three months earlier, prescribed three months of medication, filled once.
+病歷說他有高血壓；他自己在語音裡說「回家吃藥」。他知道。: The record says hypertension. In his own voice message he says "home to take my pills." He knew.
+提醒跳了 61 次；合約寫明他可以自行下線。每一次，他都選擇繼續。: The reminder came up 61 times. The contract says he could go offline at will. Every time, he chose to keep going.
+2.4 倍的數字來自長途卡車司機，不是一天跑二十單的市區外送。: The 2.4 figure comes from long-haul truckers, not an urban courier running twenty orders a day.
+疲勞鎖原本會強制下線。是三月那張變更單，把它改成可以略過的提醒。: The fatigue lock used to force drivers offline. The March change ticket turned it into a reminder they could skip.
+崔佛說提醒一直都在；舊版規格書寫的卻是強制下線八小時。: Trevor says the reminder was always there. The old spec says forced offline for eight hours.
+變更單上寫依法務意見；同一個月，崔佛在群組說旺季不准任何人被踢下線。: The change ticket says per legal advice. The same month, Trevor told the ops chat nobody gets kicked offline in peak season.
+合約寫明上線和接單由他自己決定；營運主管也說，休不休息是司機的事。: "The contract says going online and taking orders was his decision. The ops VP says the same: resting is the driver's business."
+他在語音裡說再跑兩單就回家吃藥；同一個傍晚，他又按了一次略過。: In the voice message he says two more runs, then home for his pills. The same evening, he tapped skip one more time.
+赫克托知道自己的身體出了問題嗎？有紀錄嗎？: Did Hector know something was wrong with his health? Is there a record?
+論點 A：他確診高血壓，卻沒有持續服藥: "Argument A: diagnosed with hypertension, he didn't keep taking his medication"
+事發前三個月確診，處方三個月，只領過一次藥。: Diagnosed three months before his death, prescribed three months of medication, filled once.
+公司的提醒，有沒有送到他手上？他怎麼回應？: Did the company's reminder reach him? How did he respond?
+論點 B：公司提醒了 61 次，他每次都選擇繼續: 'Argument B: the company reminded him 61 times, and every time he chose to keep going'
+疲勞提醒 14 天跳了 61 次，合約寫明他隨時可以下線。他每一次都按了略過。: The fatigue reminder came up 61 times in 14 days. The contract says he could go offline at any time. He tapped skip every time.
+公司有沒有要求他一定要上線、一定要接單？: Did the company require him to be online, or to accept orders?
+論點 D：上不上線，一直是他自己決定: 'Argument D: going online was always his own decision'
+合約沒有排班、沒有最低接單數。他是承攬人，什麼時候收工，由他自己決定。: No schedule in the contract, no minimum orders. He was a contractor. When to stop was his call.
+費雪醫師的 2.4 倍，算的是哪一種司機？: Dr. Fisher's 2.4 times. Which kind of driver was she counting?
+論點 C：費雪的樣本不適用於市區外送: "Argument C: Fisher's sample doesn't apply to urban delivery"
+研究樣本是州際長途貨車司機，單趟平均 9 小時，不能直接套到市區短程配送。: The study sample was interstate long-haul truckers averaging 9 hours a run. It can't be applied directly to short urban deliveries.
+疲勞提醒本來就是現在這樣嗎？如果不是，是誰改的？: Was the fatigue reminder always like this? If not, who changed it?
+風險評估：疲勞鎖是被改掉的: 'Risk: the fatigue lock was changed away'
+系統原本會強制他下線。三月，公司依法務意見把它改成可以略過的提醒。: The system used to force him offline. In March, on legal advice, the company turned it into a reminder he could skip.
+公司為什麼要改？改的人當時在想什麼？: Why did the company change it? What was the person who changed it thinking?
+風險評估：改掉它是為了旺季業績: 'Risk: it was changed for peak-season numbers'
+崔佛在同一個月說「旺季不准任何人被踢下線」。對方拿到這句話，懲罰性賠償就談得下去。: The same month, Trevor said "nobody gets kicked offline in peak season." Once the other side has that line, punitive damages are on the table.
+就算疲勞鎖是公司改掉的，赫克托自己的那一份是什麼？: Even if the company removed the fatigue lock, what was Hector's own share?
+論點 H：最後兩單，是他自己選的: 'Argument H: the last two runs were his own choice'
+他知道該回家吃藥，也說了要回家。系統沒有攔住他，但按下略過的，是他自己。: He knew he should go home for his pills, and he said he would. The system didn't stop him. But the one who tapped skip was him.
+你要把變更單交出去？: You're going to hand over the change ticket?
+葛雷律師……法務意見的保存紀錄我也調出來了。附件裡有一張很舊的東西，上面寫著碼頭九號。: Mr. Grey... I pulled the retention record for the legal opinion too. There's something very old in the attachments. It says Pier Nine.
+第三幕　審前: 'Act Three: Pretrial'
+宣誓過的話，在法庭上改一個字，就是別人的武器。: Once it's said under oath, changing a single word in court hands the other side a weapon.
+包括你自己的證人。: Your own witnesses included.
+惠特洛克・海爾　會議室 C: Whitlock & Hale, Conference Room C
+卡爾德快遞　營運副總: VP of Operations, Calder Express
+自己人的錄取，比對方的難。你讓他說的每一句，奧卡福都會拿到逐字稿。: Deposing your own man is harder than deposing theirs. Every word you let him say, Okafor gets in the transcript.
+你要先知道他會在哪裡說謊，才知道要不要讓他說。: You need to know where he's going to lie before you decide whether to let him talk.
+這樣可以了吧。我還要回去排下週的班。: Are we done? I still have next week's schedule to do.
+那套系統: The system
+米爾斯先生，赫克托・維加死亡當天，疲勞提醒是怎麼運作的？: Mr. Mills, on the day Hector Vega died, how did the fatigue reminder work?
+連續上線十小時跳出提醒。司機可以休息，也可以略過。: After ten hours online, a reminder appears. The driver can rest or skip it.
+這個機制一直都是這樣嗎？: Has this mechanism always worked this way?
+從系統上線就是提醒，從來沒有強制下線過。: It's been a reminder since the system launched. There was never a forced offline.
+三月份，系統是不是有一次設定變更？: In March, was there a configuration change to the system?
+……系統每一季都在改版。我不記得每一張變更單。: "...The system changes every quarter. I don't remember every change ticket."
+司機拒單，評分會怎麼樣？: When a driver declines an order, what happens to the rating?
+會下降。那是服務品質指標，所有平台都有。: It goes down. It's a service-quality metric. Every platform has one.
+你知道赫克托連續上線十四天嗎？: Did you know Hector had been online fourteen days straight?
+系統裡有四千多個司機。我不可能每一個都看。: There are over four thousand drivers in the system. I can't watch every one.
+誰決定的: Who decided
+疲勞管理的設定，最後是誰核准的？: The fatigue management setting. Who gave the final approval?
+營運部。我是營運部的主管。: Operations. I run Operations.
+你在做決定之前，有沒有詢問過法律意見？: Before you made that decision, did you seek legal advice?
+我們每一個決定都會問法務。你應該知道是哪一家。: We run every decision past legal. You know which firm.
+奧卡福勞工法律事務所　會議室: Okafor Labor Law, conference room
+卡爾德快遞　資深系統工程師: Senior Systems Engineer, Calder Express
+盧卡斯，好久不見。你坐在那一邊，看起來很不習慣。: Lucas. It's been a while. You look uncomfortable on that side of the table.
+徐小姐，妳負責卡爾德快遞派單系統的哪一部分？: Ms. Hsu, which part of the Calder Express dispatch system are you responsible for?
+派單演算法和司機端的提醒功能。: The dispatch algorithm and the driver-side reminders.
+赫克托・維加的車停下之後，系統做了什麼？: After Hector Vega's van stopped, what did the system do?
+系統繼續派單。三次都沒有接，系統自動判定拒單，扣了他的評分。: It kept dispatching. Three orders went unanswered, the system marked them declined, and it docked his rating.
+妳覺得公司是不是根本不在乎司機的死活？: Would you say the company simply doesn't care whether its drivers live or die?
+我……我只是寫程式的。: I... I just write the code.
+三月那次設定變更，崔佛・米爾斯有沒有告訴妳，法務是怎麼說的？: The March configuration change. Did Trevor Mills tell you what legal had said?
+他說法務那邊說沒問題。: He said legal said it was fine.
+技術上，把疲勞鎖改回強制下線，需要多久？: Technically, how long would it take to switch the fatigue lock back to forced offline?
+一個下午。只要改一個參數。: An afternoon. It's one parameter.
+一個下午。謝謝妳，徐小姐。: An afternoon. Thank you, Ms. Hsu.
+錄取結束。艾瑪收拾筆電的時候，一直沒有抬頭看盧卡斯。: The deposition ends. Emma packs up her laptop without once looking up at Lucas.
+調解會議　一週後: 'Mediation: one week'
+崔佛・米爾斯　錄取逐字稿: Trevor Mills, deposition transcript
+法院書記官: Court reporter
+問：這個機制一直都是這樣嗎？: 'Q: Has this mechanism always worked this way?'
+答：從系統上線就是提醒，從來沒有強制下線過。: "A: It's been a reminder since the system launched. There was never a forced offline."
+調解會議: Mediation
+盧卡斯，調解會議排在下週二。瑪莉索會親自來。: Lucas, mediation is set for next Tuesday. Marisol will be there in person.
+她要的東西，不全是錢。你到時候就知道了。: What she wants isn't all money. You'll see.
+聲請排除專家證詞：費雪醫師: 'Motion to exclude expert testimony: Dr. Fisher'
+專家說的不是事實，是方法。方法套錯了對象，結論就不該進法庭。: An expert doesn't testify to facts. She testifies to a method. Apply the method to the wrong population and the conclusion doesn't belong in court.
+專家證詞可靠性: Expert reliability
+相關性: Relevance
+傳聞例外: Hearsay exception
+排除該專家證詞: Exclude the expert testimony
+限制證人作證範圍: Limit the scope of testimony
+核發傳票給研究機構: Subpoena the research institution
+雷耶斯法官翻到附註 7，看了很久：「長途貨車和市區外送不是同一件事。本庭排除費雪醫師關於風險倍數的證詞。」: 'Judge Reyes turns to footnote 7 and reads it for a long time: "Long-haul trucking and urban delivery are not the same thing. The court excludes Dr. Fisher''s testimony on the risk multiplier."'
+「樣本差異屬於證明力問題，交給陪審團判斷。聲請駁回。」: '"Differences in the sample go to weight, which is for the jury. Motion denied."'
+崔佛宣誓說從來沒有強制下線過；三月的變更單，是他自己簽的。: Trevor swore there was never a forced offline. The March change ticket carries his own signature.
+崔佛在錄取時說的，和公司自己的文件對得上嗎？: Does what Trevor said at his deposition match the company's own documents?
+風險評估：我方證人宣誓說了假話: 'Risk: our own witness lied under oath'
+崔佛宣誓說疲勞鎖從來不存在。變更單一曝光，陪審團不會只懷疑他，會懷疑整家公司。: Trevor swore the fatigue lock never existed. Once the change ticket comes out, the jury won't just doubt him. They'll doubt the whole company.
+開庭的時候，奧卡福一拿出變更單，崔佛就完了。: The moment Okafor shows the change ticket at trial, Trevor's finished.
+還是不能讓它變貴。亞瑟給的數字是一百五十萬。: It still can't get expensive. Arthur's number is one and a half million.
+第四幕　調解: 'Act Four: Mediation'
+和解不是認輸。是兩邊都承認，自己可能會輸。: A settlement isn't surrender. It's both sides admitting they might lose.
+卡爾德郡法院　調解室 2: Calder County Courthouse, Mediation Room 2
+原告律師: Counsel for the plaintiff
+調解室很小。瑪莉索・維加坐在奧卡福旁邊，手裡握著一支舊手機，螢幕裂了一角。: The mediation room is small. Marisol Vega sits beside Okafor, an old phone in her hand, one corner of the screen cracked.
+我們有派單日誌、死後的扣分，還有一個說「一個下午就能改回去」的工程師。你有什麼，盧卡斯？: We have the dispatch log, the rating docked after he died, and an engineer who says it takes "an afternoon" to change back. What do you have, Lucas?
+我不要聽數字。我要知道那個按鈕，以後能不能按。: I don't want to hear numbers. I want to know whether that button can be pressed. From now on.
+400 萬，含修改演算法: $4 million, with the algorithm change
+四百萬，外加疲勞鎖改回強制下線，寫進和解書。少一樣，我們法庭見。: Four million, plus the fatigue lock restored to forced offline, written into the settlement. Anything less, we go to trial.
+250 萬，含修改演算法: $2.5 million, with the algorithm change
+兩百五十萬，疲勞鎖照改。這是瑪莉索願意坐下來的底線。: Two and a half million, and the fatigue lock still gets fixed. That's the floor Marisol will sit down for.
+180 萬，含修改演算法: $1.8 million, with the algorithm change
+錢少一點沒關係。那個按鈕一定要能按。: Less money is fine. That button has to work.
+90 萬，不含任何條款: $900,000, no terms
+九十萬。……瑪莉索，我們談過這個數字。妳說過，如果真的打不贏。: Nine hundred thousand. ...Marisol, we talked about this number. You said, if we really couldn't win.
+我知道。我只是想聽他們說一次，是他們錯了。: I know. I just wanted to hear them say it once. That they were wrong.
+他知道自己有高血壓，而且沒吃藥。陪審團會聽到這件事。: He knew he had hypertension, and he didn't take his medication. The jury will hear that.
+……藥局紀錄。你拿到了。: '...The pharmacy record. You got it.'
+他說等這個月的錢下來，就去拿藥。: He said he'd pick up the pills once this month's money came in.
+病歷是我給你的。你開示清單上沒有任何證明他沒吃藥的東西。: I gave you that medical record. There's nothing on your disclosure list that proves he wasn't taking it.
+你的專家撐不到開庭。: Your expert won't make it to trial.
+……專家的事我會處理。我還有一般醫學證人。: "...I'll deal with the expert. I still have an ordinary medical witness."
+專家撐不撐得到開庭，不是你說了算，盧卡斯。就算她不來，我還有一般醫學證人。: Whether my expert makes it to trial isn't your call, Lucas. Even if she doesn't, I have an ordinary medical witness.
+一百五十萬是我說的數字，葛雷律師。你現在打來，是要我改數字。: One and a half million was my number, Mr. Grey. You're calling to ask me to change it.
+好。再加五十萬。修改演算法的事，法務評估過再說……算了，寫進去。我不想上新聞。: Fine. Another five hundred thousand. The algorithm change, legal will have to assess... forget it, write it in. I don't want to be in the news.
+第二通了。我開始懷疑，我付錢請的是誰的律師。: That's the second call. I'm starting to wonder whose lawyer I'm paying for.
+最後五十萬。之後不要再打來。: Last five hundred thousand. Don't call again.
+……讓我跟我的委託人談一下。: '...Let me talk to my client.'
+那就法庭見。陪審團會看到那三筆派單，盧卡斯。: Then we'll see you in court. The jury is going to see those three dispatches, Lucas.
+他死了之後，你們的 App 還在叫他接單。: After he died, your app was still telling him to take orders.
+好。: Okay.
+你打得很公平，盧卡斯。不管你信不信。: You played it fair, Lucas. Whether you believe that or not.
+第五幕　庭審: 'Act Five: Trial'
+六個人。過半數就夠。: Six people. A majority is enough.
+這一次，站在線上的是你。: This time, you're the one standing on the line.
+惠特洛克・海爾　會議室 A: Whitlock & Hale, Conference Room A
+民事案沒有無罪，只有責任多少。你要告訴陪審團，這筆帳該怎麼算。: There's no "not guilty" in a civil case. Only how much of the fault. You tell the jury how to do the math.
+亞瑟要的是無責。他不在乎你怎麼講，只在乎判決書上那兩個字。: Arthur wants no liability. He doesn't care how you argue it. He cares about the words on the verdict form.
+他自己的選擇: His own choice
+他知道自己有病，沒有吃藥；App 提醒了他六十一次，他每次都選擇繼續。: He knew he was sick and didn't take his medication. The app reminded him sixty-one times, and every time he chose to keep going.
+最容易贏。瑪莉索會坐在旁聽席上，聽你說她丈夫是自己害死自己的。: Easiest to win. Marisol will sit in the gallery and listen to you say her husband killed himself.
+你們會聽到，赫克托知道自己有高血壓，而且沒有吃藥。: You will hear that Hector knew he had hypertension, and that he didn't take his medication.
+你們會聽到，公司提醒過他六十一次。: You will hear that the company reminded him sixty-one times.
+公司已盡告知義務: The company gave fair warning
+不談他的病，只談公司做了什麼：提醒、合約、隨時可以下線。: 'Leave his illness out of it. Talk only about what the company did: the reminders, the contract, offline at any time.'
+不碰病史，對瑪莉索比較公平。但對方拿出死後扣分，「由他自己決定」就很難撐。: Staying off the medical history is fairer to Marisol. But once the other side shows the rating docked after his death, "his own decision" is hard to hold.
+你們會聽到，公司提醒過他，而且每一次都讓他自己決定。: You will hear that the company reminded him, and left the decision to him every time.
+你們會聽到，沒有人規定他什麼時候上線、什麼時候收工。: You will hear that nobody told him when to go online or when to stop.
+責任該分攤: Shared fault
+系統有問題，赫克托也有責任。我們不說公司沒錯，我們說錯不全在公司。: The system had a problem, and Hector had his share. We don't say the company did nothing wrong. We say the fault isn't all theirs.
+最接近真相。陪審團多半會判有責，但金額會低。亞瑟不會喜歡。: Closest to the truth. The jury will most likely find liability, but the number will be low. Arthur won't like it.
+你們會聽到，赫克托知道自己的身體出了問題。這筆帳，不該只記在一邊。: You will hear that Hector knew something was wrong with his health. This bill shouldn't go to one side only.
+你們會聽到，他那天傍晚說過要回家吃藥。最後兩單，是他自己選的。: You will hear that he said that evening he was going home for his pills. The last two runs were his own choice.
+卡爾德郡高等法院　第五法庭: Calder County Superior Court, Courtroom 5
+民事庭，六個人。十個候選人，四次提問，兩次無因迴避，對方也有兩次。: Civil jury, six seats. Ten candidates, four questions, two peremptory strikes. The other side gets two as well.
+這次你要找的，是會替公司算帳的人。你自己知道那有多難受。: This time you're looking for people who'll do the math for a company. You know how that feels.
+雷蒙・葛林: Raymond Green
+退休公車司機: Retired bus driver
+開了三十年公車，排班表比家裡的月曆還熟。: Thirty years driving buses. Knows a shift schedule better than the calendar at home.
+您開車的那些年，有沒有過累到不該開、卻還是開了的時候？: In your years of driving, was there ever a time you were too tired to drive, and drove anyway?
+每個禮拜都有。公司不會叫你停，你自己也不敢停。: Every week. The company won't tell you to stop, and you don't dare stop on your own.
+對過勞的司機有切身的同情。: Feels for overworked drivers from his own experience.
+茱蒂絲・柯恩: Judith Cohen
+保險精算師: Insurance actuary
+四十五歲，工作是把風險算成數字。: Forty-five. Her job is turning risk into numbers.
+一個人知道自己有病卻不吃藥，這個風險該算在誰頭上？: A man knows he's sick and doesn't take his medication. Whose account does that risk go on?
+先算在他自己頭上。然後再看有沒有別人把風險加大。: His own, first. Then you look at whether anyone else made the risk bigger.
+取向「邏輯」，比較過失的論點對她特別有效。: Leans logic. Comparative-fault arguments work especially well on her.
+馬可・費拉拉: Marco Ferrara
+小型物流行老闆: Small freight company owner
+自己開了一家八台車的貨運行。: Runs his own eight-truck freight outfit.
+您的司機如果累了，您會怎麼做？: If one of your drivers is tired, what do you do?
+叫他回家睡覺。但我的司機是我的員工，不是什麼承攬人。: Send him home to sleep. But my drivers are my employees, not "contractors."
+同情雇主，但看不起把司機叫成承攬人的大公司。: Sympathetic to employers, but despises big companies that call drivers contractors.
+安娜・洛佩茲: Ana Lopez
+急診護理師: ER nurse
+夜班十年，看過很多心肌梗塞。: Ten years of night shifts. Has seen a lot of heart attacks.
+心肌梗塞的病人，多半事前知道自己有問題嗎？: Heart attack patients. Do most of them know beforehand that something is wrong?
+很多人知道。知道和有時間去處理，是兩回事。: Many do. Knowing and having the time to deal with it are two different things.
+凱文・吳: Kevin Wu
+法律系學生: Law student
+二十三歲，正在修侵權行為法。: Twenty-three, currently taking torts.
+公司把文件交出來了，或沒交出來，您會怎麼想？: When a company produces a document, or doesn't, what do you make of it?
+交出來的我會看。沒交出來的，我會想為什麼。: What they produce, I read. What they don't, I wonder why.
+朵琳・貝克: Doreen Baker
+超市夜班主管: Supermarket night-shift supervisor
+管二十個夜班員工，自己也上夜班。: Supervises twenty night-shift staff and works nights herself.
+規定說可以休息，但休息會被扣分。這算可以休息嗎？: The rules say you can rest, but resting costs you points. Does that count as being allowed to rest?
+那叫「可以休息，但你最好別休」。我們店裡也有這種規定。: That's "you can rest, but you'd better not." We have rules like that at my store too.
+對「名義上可以休息」的說法很敏感。: Sensitive to "technically allowed to rest" arguments.
+葛蘿莉亞・桑契斯: Gloria Sanchez
+退休教師: Retired teacher
+丈夫三年前在工地過世。: Her husband died on a construction site three years ago.
+您先生的事，會影響您看這個案子嗎？: Would what happened to your husband affect how you see this case?
+會。我沒辦法假裝不會。: Yes. I can't pretend it wouldn't.
+親口承認無法公正。: Admitted in her own words that she can't be impartial.
+亞歷山大・韋伯: Alexander Weber
+銀行分行經理: Bank branch manager
+五十歲，負責企業貸款。: Fifty, handles business loans.
+大公司被告，您會先怎麼想？: When a big company gets sued, what's your first thought?
+先想原告要多少錢。然後想那個數字合不合理。: How much the plaintiff is asking for. Then whether the number makes sense.
+蘇米・帕特爾: Sumi Patel
+咖啡店店員: Barista
+二十六歲，下班後兼職外送。: Twenty-six, does delivery runs after work.
+您兼職外送的時候，App 有提醒過您休息嗎？: When you're doing deliveries, has the app ever reminded you to rest?
+有啊。我每次都按略過。不按的話，那天就白跑了。: Sure. I hit skip every time. If you don't, the whole day was for nothing.
+自己就是外送員，對 App 的處境感同身受。: A delivery driver herself. Knows exactly what the app puts you through.
+琳達・莫瑞: Linda Murray
+百貨公司櫃姐: Department store sales associate
+三十八歲，按業績抽成。: Thirty-eight, paid on commission.
+業績不好的那個月，您會多上幾天班嗎？: In a slow month, do you work extra days?
+會。沒有人逼我，可是也沒有人會幫我付房租。: I do. Nobody makes me. But nobody's going to pay my rent either.
+艾德華・齊: Edward Chi
+退役空軍飛行員: Retired Air Force pilot
+飛了二十年，現在教模擬機。: Flew for twenty years. Now teaches on the simulator.
+飛行員有強制休息的規定嗎？: Do pilots have mandatory rest rules?
+有，而且沒有人可以按「略過」。那是因為以前有人死過。: Yes. And nobody gets to hit "skip." That's because people died before the rule existed.
+對「強制休息被拿掉」非常敏感，但也重視個人責任。: Very sensitive to "mandatory rest was removed," but also values personal responsibility.
+彼得・羅斯: Peter Ross
+土木工程師: Civil engineer
+負責橋梁的安全檢查。: Does safety inspections on bridges.
+一個安全機制被改掉，您會先問什麼？: When a safety mechanism gets changed, what's your first question?
+誰改的，為什麼改，改之前有沒有人評估。: Who changed it, why, and whether anyone assessed it first.
+對「安全機制被改掉」非常在意，D7 曝光時會轉向。: Cares deeply about "a safety mechanism was changed." Turns when the change ticket comes out.
+被告，開場陳述。: Defense. Opening statement.
+原告的直接詰問。她說的每一句都會讓陪審團心軟，你只能在問題本身有毛病的時候異議。: The plaintiff's direct. Every word she says will soften the jury. You can only object when the question itself is defective.
+原告・死者遺孀: Plaintiff. The deceased's widow
+維加太太，請告訴陪審團，赫克托是什麼樣的人。: Mrs. Vega, please tell the jury what kind of man Hector was.
+他很安靜。每天早上七點出門，晚上回來會先去看女兒的房間，再吃飯。: He was quiet. Out the door at seven every morning. When he came home at night, he'd look in on our daughter's room before he ate.
+他最後那兩個禮拜，為什麼每天跑那麼久？: Those last two weeks, why was he driving so long every day?
+女兒的註冊費。他說跑完這兩個禮拜就好。: Our daughter's tuition. He said just these two weeks and that would be enough.
+赫克托有沒有跟妳說過，公司的人告訴他不准休息？: Did Hector ever tell you that someone at the company told him he wasn't allowed to rest?
+他說主管講過，旺季誰下線誰就等著被降級。: He said a manager had told them, anyone who goes offline in peak season can expect to be downgraded.
+異議成立。證人只能說她自己知道的事。: Sustained. The witness may only testify to what she knows herself.
+妳覺得卡爾德物流在乎他的命嗎？: Do you think Calder Logistics cared whether he lived?
+他死了以後，他們的 App 還在叫他接單。: After he died, their app was still telling him to take orders.
+異議成立。陪審團請忽略。: Sustained. The jury will disregard.
+那天傍晚五點五十二分，妳收到了什麼？: That evening at 5:52, what did you receive?
+一則語音。他說再跑兩單就回家，叫我先吃，不用等他。: A voice message. He said two more runs and he'd be home. Told me to eat without him.
+公司的 App 在他死後還扣了他的分，這難道不是冷血嗎？: The company's app docked his rating after he died. Isn't that cold-blooded?
+是。他們連他死了都不放過。: Yes. They wouldn't even leave him alone when he was dead.
+異議成立。律師，請讓證人自己回答。: Sustained. Counsel, let the witness answer for herself.
+他身體一直很好，從來沒有生過病。: His health was always good. He was never sick.
+維加太太，您剛才說他身體一直很好。「一直」，是指包括最後那三個月嗎？: Mrs. Vega, you just said his health was always good. "Always." Does that include the last three months?
+……對。他從來不喊累，也沒有生過病。: '...Yes. He never complained of being tired, and he was never sick.'
+他身體應該還不錯吧？: His health was pretty good, I take it?
+他不常看醫生。: He didn't see doctors much.
+您先生的語音裡說「回家吃藥」。他吃的是什麼藥？: In your husband's voice message he says "home to take my pills." What pills was he taking?
+我……我不知道。他沒有跟我說過。: I... I don't know. He never told me.
+（她看著藥局紀錄看了很久）……三個月的藥，他只拿了一次。他說等這個月的錢下來。: (She looks at the pharmacy record for a long time) ...Three months of pills, and he only picked them up once. He said he'd go when this month's money came in.
+他有在看醫生。我不知道他有沒有去拿藥。: He was seeing a doctor. I don't know if he picked up the pills.
+公司逼他一直跑，他沒有辦法停下來。: The company forced him to keep driving. He couldn't stop.
+維加太太，您說公司「逼」他。是有人規定他每天要跑幾個小時嗎？: Mrs. Vega, you said the company "forced" him. Did someone set how many hours a day he had to drive?
+沒有人規定。可是大家都知道，不跑就排不到單。: Nobody set it. But everyone knows, if you don't drive, you don't get orders.
+他工作壓力很大吧？: He was under a lot of pressure at work?
+很大。: A lot.
+他什麼時候出門、什麼時候收工，是誰決定的？: When he went out and when he stopped for the day. Who decided that?
+……他自己。他說這是這份工作唯一的好處。: '...He did. He said it was the one good thing about the job.'
+（她看著合約那一行）……上面是這樣寫。可是不跑，就沒有錢。: (She looks at the line in the contract) ...That's what it says. But if you don't drive, there's no money.
+合約怎麼寫是一回事。: What the contract says is one thing.
+他那天是要回家的，是 App 不讓他走。: He was going home that day. The app wouldn't let him.
+您說那天是 App 不讓他走。他有跟您說過他想收工嗎？: You said the app wouldn't let him go. Did he tell you he wanted to stop for the day?
+有。他傳了語音給我，說要回家。: Yes. He sent me the voice message. He said he was coming home.
+他那天很想回家吧？: He really wanted to come home that day?
+他每天都想回家。: He wanted to come home every day.
+那則語音，您後來聽了幾次？: That voice message. How many times have you listened to it since?
+（停了很久）每天。: (A long pause) Every day.
+（語音播出來，她閉上眼睛）……「再跑兩單」。是他自己說的。: (The message plays. She closes her eyes) ..."Two more runs." He said it himself.
+他說了要回家。他只是沒有回來。: He said he was coming home. He just didn't.
+您和赫克托結婚多久了？: How long were you and Hector married?
+二十二年。: Twenty-two years.
+（瑪莉索低下頭。旁聽席有人倒抽一口氣。陪審席上，那位精算師在筆記本上寫了一行字。）: (Marisol lowers her head. Someone in the gallery draws a sharp breath. In the jury box, the actuary writes a line in her notebook.)
+法官宣布休庭十分鐘。瑪莉索走下證人席，經過被告席時停了一下，沒有說話。: The judge calls a ten-minute recess. Marisol steps down and pauses as she passes the defense table. She says nothing.
+原告專家・職業醫學: Plaintiff's expert. Occupational medicine
+費雪醫師，您的研究結論是什麼？: Dr. Fisher, what did your study conclude?
+每週工時超過六十小時的司機，心血管事件的風險是一般人的二點四倍。: Drivers working more than sixty hours a week face 2.4 times the risk of a cardiovascular event.
+所以赫克托的死，就是過勞造成的，對嗎？: So Hector's death was caused by overwork, correct?
+是的。: Yes.
+異議成立。請律師不要替證人作答。: Sustained. Counsel will not answer for the witness.
+卡爾德物流的高層，應該早就知道這份研究吧？: Calder Logistics' executives must have known about this study?
+這份研究發表在主要期刊上，業界應該都知道。: It was published in a major journal. The industry should be aware of it.
+異議成立。證人無從得知被告高層讀過什麼。: Sustained. The witness has no way of knowing what the defendants' executives have read.
+您的同事也告訴過您，外送司機的情況更糟，對嗎？: Your colleagues have also told you that delivery drivers have it worse, haven't they?
+有幾位同業這樣跟我說過。: Several colleagues have told me that.
+異議成立。證人只能就自己的研究作證。: Sustained. The witness may testify only to her own research.
+這個倍數適用於所有長時間駕駛的司機，包括赫克托。: This multiplier applies to all drivers who drive long hours, including Hector.
+醫師，您說「所有」長時間駕駛的司機。您的樣本裡，有市區外送司機嗎？: Doctor, you said "all" drivers who drive long hours. Were there any urban delivery drivers in your sample?
+我的結論適用於長時間駕駛這件事本身。: My conclusion applies to long hours of driving as such.
+您的研究應該也適用於外送司機吧？: Your study would apply to delivery drivers too, I suppose?
+原則上是一樣的。: In principle, it's the same.
+長途貨車司機一趟平均開多久？市區外送一單呢？: How long is an average run for a long-haul trucker? And an urban delivery?
+長途大約九小時。市區外送……一單大概二、三十分鐘。: Long-haul, about nine hours. Urban delivery... twenty or thirty minutes an order.
+（她翻到附註 7）……樣本是州際長途貨車司機。市區配送不在研究範圍內。: (She turns to footnote 7) ...The sample was interstate long-haul truckers. Urban delivery was outside the scope of the study.
+樣本確實以長途司機為主，但我認為可以類推。: The sample was mainly long-haul drivers, yes, but I believe the finding extends.
+赫克托根本沒有機會意識到自己需要休息。: Hector never had a chance to realize he needed to rest.
+醫師，您是說他「根本沒有機會」知道自己該休息？: Doctor, you're saying he "never had a chance" to know he should rest?
+在那種工作節奏下，沒有。: Not at that pace of work, no.
+他可能沒注意到自己很累吧？: He may not have noticed how tired he was?
+很多司機都沒注意到。: Many drivers don't.
+您看過被告提出的 App 日誌嗎？: Have you seen the app log the defendants produced?
+我看的是工時紀錄，沒有看提醒的部分。: I looked at the hours. I didn't look at the reminders.
+……六十一次。我不知道系統提醒過他這麼多次。: "...Sixty-one times. I didn't know the system had reminded him that many times."
+提醒是一回事，能不能停下來是另一回事。: A reminder is one thing. Being able to stop is another.
+醫師，您的研究經費是誰出的？: Doctor, who funded your study?
+州立大學和運輸工會。: The state university and the transport workers' union.
+（精算師把筆放下，看著證人席上的附註頁。）: (The actuary puts down her pen and looks at the footnote page on the witness stand.)
+費雪不能來了。他們找的是急診科醫師，只能講死因，不能講倍數。: Fisher's out. They've brought in an ER doctor. He can speak to cause of death, not to the multiplier.
+麥可・唐醫師: Dr. Michael Tang
+原告證人・急診科主治醫師: Plaintiff's witness. Attending physician, Emergency Medicine
+醫師，赫克托・維加的死因是什麼？: Doctor, what was the cause of Hector Vega's death?
+急性心肌梗塞。: Acute myocardial infarction.
+長時間工作會增加心肌梗塞的風險嗎？: Do long working hours increase the risk of a heart attack?
+一般而言會。疲勞、壓力、睡眠不足都是因素。: Generally, yes. Fatigue, stress and lack of sleep are all factors.
+如果他那天早點休息，就不會死，對吧？: If he had rested earlier that day, he wouldn't have died, right?
+很可能。: Very likely.
+異議成立。證人無法得知假設情況下的結果。: Sustained. The witness cannot know the outcome of a hypothetical.
+費雪醫師的研究說風險是二點四倍，您同意嗎？: Dr. Fisher's study puts the risk at 2.4 times. Do you agree?
+我讀過那份研究，數字是那樣寫的。: I've read the study. That's the number it gives.
+異議成立。該研究已被本庭排除，證人不得轉述。: Sustained. That study has been excluded by this court. The witness may not relay it.
+公司明明可以讓他下線，卻沒有這麼做，對嗎？: The company could have taken him offline and chose not to, correct?
+從醫學角度，強制休息確實能降低風險。: From a medical standpoint, mandatory rest does reduce the risk.
+異議成立。證人是醫師，不是派單系統的專家。: Sustained. The witness is a physician, not an expert on dispatch systems.
+疲勞是這次發作最主要的原因。: Fatigue was the main cause of this attack.
+醫師，您說「最主要」的原因。比沒有控制的高血壓還主要？: Doctor, you said the "main" cause. More than uncontrolled hypertension?
+我說的是疲勞是重要因素。: What I said is that fatigue was an important factor.
+疲勞應該是原因之一吧？: Fatigue would be one of the causes, I suppose?
+是原因之一。: One of them.
+第二期高血壓沒有服藥，三個月後發生心肌梗塞的風險高嗎？: Stage 2 hypertension, untreated. Three months on, is the risk of a heart attack high?
+很高。這是最主要的危險因子之一。: Very high. It's one of the primary risk factors.
+（停頓）……如果他三個月只領了一次藥，那高血壓本身就是最主要的危險因子。: (A pause) ...If he filled the prescription only once in three months, then the hypertension itself was the primary risk factor.
+兩者都有關係，我沒辦法區分。: Both played a part. I can't separate them.
+以他的狀況，他自己很難察覺身體已經到極限了。: In his condition, he would have had a hard time noticing his body was at its limit.
+醫師，您是說他沒有任何方式可以知道自己太累了？: Doctor, are you saying he had no way of knowing he was too tired?
+醫學上，疲勞是很難自我察覺的。: Medically, fatigue is very hard to perceive in oneself.
+疲勞很難自己察覺，對嗎？: Fatigue is hard to notice in yourself, isn't it?
+對。: Yes.
+如果有一個系統，每隔一段時間就跳出來提醒他該休息了，那算不算一種方式？: If a system popped up at intervals to remind him it was time to rest, would that count as a way of knowing?
+……算。: '...It would.'
+（看了一眼 App 日誌）六十一次……如果他每一次都看到了，那他知道。: (Glances at the app log) Sixty-one times... If he saw every one of them, then he knew.
+提醒是一回事，身體的感覺是另一回事。: A reminder is one thing. What the body feels is another.
+醫師，您在急診室工作多久了？: Doctor, how long have you worked in the ER?
+十五年。: Fifteen years.
+（護理師陪審員點了點頭，像是在說：我看過太多這種病人。）: "(The nurse on the jury nods, as if to say: I've seen too many of these patients.)"
+盧卡斯站起來：「被告傳喚崔佛・米爾斯。」崔佛扣上西裝的第一顆釦子，走向證人席。: 'Lucas stands: "The defense calls Trevor Mills." Trevor fastens the top button of his jacket and walks to the stand.'
+只問他確定的事: Ask only what he's sure of
+不碰疲勞鎖的歷史。他說得越少，奧卡福能拆的越少。: Stay off the history of the fatigue lock. The less he says, the less Okafor can take apart.
+替他寫好答案: Write his answers
+把「提醒一直都在」那句話再說一遍，說得更穩。他在錄取時已經宣誓過這句話了。: Have him say "the reminder was always there" again, steadier this time. He already swore to it at his deposition.
+米爾斯先生，承攬司機可以自己決定什麼時候上線、什麼時候下線嗎？: Mr. Mills, can contract drivers decide for themselves when to go online and when to go offline?
+可以。合約寫得很清楚，App 上也有下線的按鈕，隨時可以按。: They can. The contract is clear, and there's an offline button in the app. They can press it any time.
+赫克托・維加連續上線十小時的時候，App 做了什麼？: When Hector Vega had been online for ten hours, what did the app do?
+跳出提醒。他最後十四天，一共收到六十一次。: It showed a reminder. In his last fourteen days, he got sixty-one of them.
+疲勞提醒的設計，一直都是這樣嗎？: Has the fatigue reminder always been designed this way?
+米爾斯先生，這是三月十四日的設定變更單。簽名的是您嗎？: Mr. Mills, this is the change ticket dated March 14. Is that your signature?
+……是我。: '...It is.'
+米爾斯先生，「從來沒有」這四個字，是誰教您說的？: Mr. Mills, the word "never." Who taught you to say it?
+我……律師跟我對過答案。: I... the lawyer went over the answers with me.
+崔佛走下證人席，沒有看被告席。羅根在筆記本上畫了一條線，又把它塗掉。: Trevor steps down without looking at the defense table. Logan draws a line in his notebook, then scribbles it out.
+兩個論點。民事陪審團不需要被說服，只需要被說動一點點。: Two arguments. A civil jury doesn't need convincing. It only needs a nudge.
+一張病歷、一張領藥紀錄、六十一次提醒。數字不替任何人難過，它們只記錄發生了什麼。: One medical record, one pharmacy record, sixty-one reminders. Numbers don't grieve for anyone. They only record what happened.
+赫克托的死是一場悲劇。但悲劇不等於有人該為它負全責。: Hector's death is a tragedy. But a tragedy doesn't mean someone has to bear all of the blame for it.
+原告要證明的是「比較可能」。不是可能，不是同情，是比較可能。: What the plaintiff has to prove is "more likely than not." Not possible. Not sympathetic. More likely than not.
+有責: Liable
+陪審長站起來。「我們認定被告有責。另外，就懲罰性賠償，我們認定成立。」: The foreperson stands. "We find the defendant liable. And on punitive damages, we find for the plaintiff."
+奧卡福在結辯裡唸出了那張截圖。一位前營運專員在開庭前兩天，把它交給了原告。: Okafor read the screenshot aloud in his closing. A former operations staffer handed it to the plaintiff two days before trial.
+（電話）我們的客戶剛剛付了一筆他本來不必付的錢。下一次預算會議，你的名字會被提到。: (Phone) Our client just paid a sum he never had to pay. Your name will come up at the next budget meeting.
+無責: Not liable
+陪審長站起來。「我們認定被告無責。」: The foreperson stands. "We find the defendant not liable."
+（訊息）漂亮。下一件也交給你。: (Text) Nicely done. The next one's yours too.
+法院台階上，瑪莉索・維加站在最下面一階，看著盧卡斯走出來。她什麼都沒有說。: On the courthouse steps, Marisol Vega stands on the bottom step and watches Lucas come out. She says nothing.
+陪審長站起來。「我們認定被告有責。死者本人就其損害，與有過失百分之四十。」: The foreperson stands. "We find the defendant liable. We find the deceased forty percent at fault for his own harm."
+你打得很公平，盧卡斯。我是說真的。: You played it fair, Lucas. I mean that.
+他們承認了。判決書上寫的，他們承認了。: They admitted it. It's on the verdict form. They admitted it.
+（訊息）謝謝。我就知道這案子很單純。: (Text) Thank you. I knew this one was simple.
+瑪莉索把那支螢幕裂了一角的手機收進包包，跟著奧卡福走出法庭。: Marisol puts the phone with the cracked corner back in her bag and follows Okafor out of the courtroom.
+陪審長站起來。「我們認定被告有責。」: The foreperson stands. "We find the defendant liable."
+亞瑟・卡爾德的位子是空的。羅根替他簽收了判決書。: Arthur Calder's seat is empty. Logan signs for the verdict on his behalf.
+（電話）上訴的事，明天早上來我辦公室談。: (Phone) The appeal. My office, tomorrow morning.
+陪審長站起來。「庭上，我們沒有辦法達到所需的票數。」: The foreperson stands. "Your Honor, we are unable to reach the required number of votes."
+法官宣布審判無效。走廊上，奧卡福遞給盧卡斯一張名片，背面寫著一個數字。: The judge declares a mistrial. In the hallway, Okafor hands Lucas a business card. There is a number written on the back.
+卡爾德郡法院　調解室外的走廊: Calder County Courthouse, hallway outside the mediation room
+和解書第七條：「被告承諾於六十日內，恢復派單系統之強制下線功能。」: 'Settlement, clause seven: "The defendant undertakes to restore the dispatch system''s forced-offline function within sixty days."'
+謝謝你。我知道你是他們的律師。: Thank you. I know you're their lawyer.
+（訊息）第七條。你讓我多付了一個條款，葛雷律師。我會記得。: (Text) Clause seven. You cost me an extra term, Mr. Grey. I'll remember that.
+九十萬。沒有條款，沒有道歉。和解書最後一行寫著：「被告不因本和解承認任何責任。」: 'Nine hundred thousand. No terms, no apology. The last line of the settlement reads: "The defendant admits no liability by this settlement."'
+漂亮。: Nicely done.
+瑪莉索從調解室出來，經過盧卡斯身邊，沒有停下來。: Marisol comes out of the mediation room and passes Lucas without stopping.
+惠特洛克・海爾　影印室　晚上 22:10: Whitlock & Hale, copy room. 10:10 p.m.
+影印機還在出紙。戴文把一張舊文件放上掃描台，放大到百分之四百。: The copier is still feeding out pages. Devon lays an old document on the scanner and zooms to four hundred percent.
+葛雷律師，你還在嗎？那份文件保存政策的附件，二〇一六年那張。: Mr. Grey, are you still here? The attachment to the records retention policy. The one from 2016.
+「碼頭九號倉庫維修紀錄備份：依政策銷毀。」核准人簽名……我放大了。: '"Pier Nine warehouse maintenance record backups: destroyed per policy." The approver''s signature... I zoomed in.'
+是 V. 惠特洛克。: It's V. Whitlock.
+羅根叫我別多事。我……我想先讓你知道。: Logan told me not to go poking around. I... I wanted you to know first.
+港灣大道一號，頂樓只剩一盞燈。盧卡斯的手機響了。: One Harbor Avenue. A single light is left on the top floor. Lucas's phone rings.
+卡爾德港州立監獄: Calder Harbor State Prison
+您有一通來自受刑人的電話。本通話將被錄音。: You have a call from an inmate. This call will be recorded.
+我聽說你替卡爾德打了一場官司。: I heard you tried a case for Calder.
+……你在那裡找到了什麼？: '...What did you find in there?'
+我以前也是這樣跟你媽說的。: That's what I used to tell your mother.
+承曦，小心那棟樓裡簽名的人。: Cheng-hsi. Be careful of the people who sign things in that building.
