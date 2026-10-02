@@ -293,14 +293,14 @@ scenes:
         text: 港灣大道一號，頂樓。接待櫃台後的銅牌寫著「惠特洛克・海爾」。「海爾」兩個字底下的漆，比旁邊新。
       - do: say
         who: 馬庫斯・海爾
-        text: 韓律師，歡迎。四年公設辯護人，兩百多件案子。
+        text: 林律師，歡迎。四年公設辯護人，兩百多件案子。
         mood: 暖
       - do: say
         who: 馬庫斯・海爾
-        text: 我挖妳過來，不是看妳履歷漂亮，是看妳輸得起。
+        text: 我挖你過來，不是看你履歷漂亮，是看你輸得起。
         mood: 暖
       - do: say
-        who: 艾莉絲
+        who: 伊恩
         text: 我還以為是因為我贏過幾場。
       - do: say
         who: 馬庫斯・海爾
@@ -308,7 +308,7 @@ scenes:
         mood: 暖
       - do: say
         who: 維多莉亞・惠特洛克
-        text: 韓律師。我們最大的客戶卡爾德物流，週末出了點事。這陣子在外面提到他們，請謹慎。
+        text: 林律師。我們最大的客戶卡爾德物流，週末出了點事。這陣子在外面提到他們，請謹慎。
         mood: 硬
       - do: say
         who: 羅根・普萊斯
@@ -319,10 +319,10 @@ scenes:
         mood: 硬
       - do: say
         who: 羅根・普萊斯
-        text: 羅根・普萊斯。妳的辦公室在走廊盡頭，影印機旁邊那間。
+        text: 羅根・普萊斯。你的辦公室在走廊盡頭，影印機旁邊那間。
         mood: 硬
       - do: say
-        who: 艾莉絲
+        who: 伊恩
         text: 影印機旁邊，消息最多。
       - do: say
         who: 旁白
@@ -331,17 +331,17 @@ scenes:
   - type: dialogue
     id: jail-call
     act: 第一幕
-    place: 艾莉絲的辦公室　週一 09:40
+    place: 伊恩的辦公室　週一 09:40
     steps:
       - do: say
         who: 語音
         text: 您有一通來自卡爾德港看守所的電話。本通話將被錄音。接聽請按 1。
       - do: say
         who: 伊森
-        text: 艾莉絲？是我，伊森・蕭。四年前……妳當過我的公設辯護人。對不起，我只背得出妳的號碼。
+        text: 伊恩？是我，伊森・蕭。四年前……你當過我的公設辯護人。對不起，我只背得出你的號碼。
         mood: 緊
       - do: say
-        who: 艾莉絲
+        who: 伊恩
         text: 我記得你。伊森，發生什麼事？
       - do: say
         who: 伊森
@@ -355,20 +355,20 @@ scenes:
               - who: 伊森
                 text: 好。好。……十點半多一點，他傳訊息給我，叫我——
                 mood: 緊
-              - who: 艾莉絲
+              - who: 伊恩
                 text: 等一下。這支電話有錄音。
           - text: 你跟警察說過什麼嗎？
             then:
               - who: 伊森
                 text: 在警車上，他們一直問、一直問……我就說，我只是想讓他住手。我是說，讓他別再誣賴我——
                 mood: 緊
-              - who: 艾莉絲
+              - who: 伊恩
                 text: 伊森，停。這支電話有錄音。
       - do: say
-        who: 艾莉絲
+        who: 伊恩
         text: 下午我過去看你。在那之前，誰問你都別開口，包括同房的人。
 
-  # 教學：訪談（企劃書 10.10，由艾莉絲的心聲提示；說成她對伊森的直覺，不寫成規則）
+  # 教學：訪談（企劃書 10.10，由伊恩的心聲提示；說成他對伊森的直覺，不寫成規則）
   - type: interview
     id: meet-ethan
     act: 第一幕
@@ -383,7 +383,7 @@ scenes:
       - who: 伊森
         text: 他們說我逃了兩天。我不是逃，我只是……不知道還能去哪。
         mood: 緊
-      - who: 艾莉絲
+      - who: 伊恩
         text: 先讓他講。
         mark: { kind: sticky, on: meter }
     topics:
@@ -403,7 +403,7 @@ scenes:
         lines:
           - who: 伊森
             text: 叫車。我沒車。司機是個中年大叔，一路上都在跟我聊天。
-          - who: 艾莉絲
+          - who: 伊恩
             text: 幾點上車？
           - who: 伊森
             text: 十點半過一點……三十四？三十五？我不確定。手機被收走了，沒辦法查。
@@ -427,7 +427,7 @@ scenes:
             text: 因為我有前科。
             mood: 緊
           - who: 伊森
-            text: 警察查到我的名字，就不會再去查別人了。妳看過他們怎麼對我的。
+            text: 警察查到我的名字，就不會再去查別人了。你看過他們怎麼對我的。
         gives: [ethan-flee]
       - id: t-report
         label: 你說的稽核報告，是什麼意思？
@@ -437,7 +437,7 @@ scenes:
             text: 禮拜三，我匿名檢舉了一筆應收帳款。三千八百萬美金，掛在一家叫北門貨運的公司下面。
           - who: 伊森
             text: 我查過。北門貨運沒有倉庫，沒有車，只有一個信箱地址。
-          - who: 艾莉絲
+          - who: 伊恩
             text: 這件事，你還跟誰說過？
           - who: 伊森
             text: 沒有。系統是匿名的。它會給一個編號……我背得出來。
@@ -451,14 +451,14 @@ scenes:
             text: 我不知道。我真的不知道。我蹲下去摸他脖子，站起來的時候，它就在我手上了。
             mood: 緊
           - who: 伊森
-            text: 妳信我嗎？
+            text: 你信我嗎？
         gives: [ethan-trophy]
         blank:
           - who: 伊森
             text: 我不想講那個。
             mood: 緊
     calm:
-      - who: 艾莉絲
+      - who: 伊恩
         text: 伊森，深呼吸。我哪裡都不去。
         mood: 暖
       - who: 伊森
@@ -474,7 +474,7 @@ scenes:
       - who: 旁白
         text: 獄警在門外敲了兩下。
       - who: 伊森
-        text: 艾莉絲……妳會接我的案子嗎？
+        text: 伊恩……你會接我的案子嗎？
         mood: 緊
 
   - type: dialogue
@@ -483,24 +483,24 @@ scenes:
     place: 海爾的辦公室　週一 15:20
     steps:
       - do: say
-        who: 艾莉絲
+        who: 伊恩
         text: 我要接這個案子。
       - do: say
         who: 維多莉亞・惠特洛克
-        text: 妳要卡爾德物流簽字，同意妳替殺了他們財務長的人辯護。
+        text: 你要卡爾德物流簽字，同意你替殺了他們財務長的人辯護。
         mood: 硬
       - do: say
-        who: 艾莉絲
+        who: 伊恩
         text: 涉嫌。
       - do: say
         who: 馬庫斯・海爾
         text: 利益衝突豁免書，亞瑟・卡爾德早上就簽了。他說這案子很單純。
       - do: say
-        who: 艾莉絲
+        who: 伊恩
         text: 早上？我還沒開口。
       - do: say
         who: 馬庫斯・海爾
-        text: 妳會開口的。
+        text: 你會開口的。
         mood: 暖
       - do: say
         who: 維多莉亞・惠特洛克
@@ -508,9 +508,9 @@ scenes:
         mood: 硬
       - do: say
         who: 維多莉亞・惠特洛克
-        text: 還有，羅根當妳的二席。
+        text: 還有，羅根當你的二席。
       - do: say
-        who: 艾莉絲
+        who: 伊恩
         text: 我不需要二席。
       - do: say
         who: 維多莉亞・惠特洛克
@@ -600,7 +600,7 @@ scenes:
         from: 凱瑟琳・莫羅　檢察官
         subject: 州訴蕭案　證據開示（第一批）
         body:
-          - 韓律師，附上第一批開示資料：起訴書、逮捕報告、警方報告與附件、驗屍報告。
+          - 林律師，附上第一批開示資料：起訴書、逮捕報告、警方報告與附件、驗屍報告。
           - 我手上有目擊證人。這案子不複雜，早點打給我。
       - id: mail-blood
         from: 凱瑟琳・莫羅　檢察官
@@ -612,10 +612,10 @@ scenes:
           - 附帶一提，我的條件還在桌上。
       - id: mail-devon
         from: 戴文・帕克　助理
-        subject: 我把妳可能還沒看的東西列一下
+        subject: 我把你可能還沒看的東西列一下
         afterHours: 6
         body:
-          - 韓律師，兩件事：警方報告的附件三是原始門禁檔，報告內文只標了被告那幾行。
+          - 林律師，兩件事：警方報告的附件三是原始門禁檔，報告內文只標了被告那幾行。
           - 還有看守所財物清單上有一支智慧手錶。手錶通常會同步手機通知。
     jobs:
       - id: job-ride
@@ -628,7 +628,7 @@ scenes:
         report:
           - who: 戴文
             text: 叫車公司回了。22:34 東河街 118 號上車，22:44 到卡爾德大樓。司機叫奧瑪・哈桑。
-          - who: 艾莉絲
+          - who: 伊恩
             text: 22:44 抵達 → 22:47 刷卡
             mark: { kind: gap, text: 3 分鐘 }
       - id: job-watch
@@ -641,11 +641,11 @@ scenes:
         report:
           - who: 旁白
             text: 雷耶斯法官核准。手錶的通知紀錄裡，22:33 那一則還在。
-          - who: 艾莉絲
+          - who: 伊恩
             text: 訊息可以從兩支手機上收回。通知紀錄不行。
             mark: { kind: highlight, word: 通知紀錄 }
       - id: job-sophie
-        who: 艾莉絲
+        who: 伊恩
         label: 打電話給蘇菲，問沃斯平常的習慣
         detail: 執行助理最清楚他的日常。她是檢方證人，問得出什麼不一定。
         cost: 1
@@ -653,7 +653,7 @@ scenes:
         report:
           - who: 蘇菲
             text: 他那支錶是去年買的。每天早上、每次開完會，他都低頭看健康 App，數字不好看就發脾氣。
-          - who: 艾莉絲
+          - who: 伊恩
             text: 一個每天看的人，那支錶裡就一定有東西可以查。
             mark: { kind: highlight, word: 每天, on: sophie-health-app }
         gives: [sophie-health-app]
@@ -674,36 +674,36 @@ scenes:
             text: 監視器拍到她副駕駛還坐著一個人。我認得那張臉：《卡爾德論壇報》的潔德・莫里斯，跑卡爾德物流跑了好幾年。
         gives: [parking-log]
       - id: job-jade
-        who: 艾莉絲
+        who: 伊恩
         label: 打電話給記者潔德・莫里斯
         detail: 她不會白白開口。要她說出那晚的事，得先答應不公開她的消息來源。
         cost: 1
         needs: [parking-log]
         report:
           - who: 潔德
-            text: 韓律師。妳想知道蘇菲那晚在哪裡，我可以告訴妳，但她的名字不能出現在任何一份文件上。
-          - who: 艾莉絲
+            text: 林律師。你想知道蘇菲那晚在哪裡，我可以告訴你，但她的名字不能出現在任何一份文件上。
+          - who: 伊恩
             text: 我答應妳。
           - who: 潔德
             text: 八點半到十點四十，她都在我車上。她給了我一份沃斯的行事曆副本，然後哭了很久。她沒有上樓。
-          - who: 艾莉絲
+          - who: 伊恩
             text: 蘇菲說謊，是為了保護消息來源，不是為了掩蓋命案。
             mark: { kind: highlight, word: 消息來源 }
         gives: [jade-alibi]
       - id: job-morrow
-        who: 艾莉絲
+        who: 伊恩
         label: 打電話給莫羅，聽聽她開的條件
         detail: 她在信裡說「早點打給我」，補充開示又說條件還在桌上。現在談，手上沒什麼牌。
         cost: 1
         needs: [blood-report]
         report:
           - who: 莫羅
-            text: 韓律師，早。二級謀殺，十五年。這已經是看在他年輕的份上。
-          - who: 艾莉絲
+            text: 林律師，早。二級謀殺，十五年。這已經是看在他年輕的份上。
+          - who: 伊恩
             text: 血跡報告我收到了。妳的目擊證人是誰？
           - who: 莫羅
-            text: 開庭前妳會看到名單。妳手上有什麼，就拿出來；沒有的話，我的條件會一直在桌上。
-          - who: 艾莉絲
+            text: 開庭前你會看到名單。你手上有什麼，就拿出來；沒有的話，我的條件會一直在桌上。
+          - who: 伊恩
             text: 我會再打給妳。等我手上有東西，也等我的委託人點頭。
     links:
       - id: l-called
@@ -839,13 +839,13 @@ scenes:
         granted:
           - who: 旁白
             text: 雷耶斯法官當庭核發傳票。三天後，廠商的資料到了。
-          - who: 艾莉絲
+          - who: 伊恩
             text: 22:24 心率歸零｜22:47 伊森刷卡進門｜23 分鐘
             mark: { kind: stamp, text: 准予 }
         denied:
           - who: 旁白
             text: 「本庭看不出這支手錶和本案的關聯。聲請駁回。」
-          - who: 艾莉絲
+          - who: 伊恩
             text: 駁回
             mark: { kind: stamp, text: 駁回 }
       - id: m-chat
@@ -866,7 +866,7 @@ scenes:
         denied:
           - who: 旁白
             text: 「聲請駁回。」
-          - who: 艾莉絲
+          - who: 伊恩
             text: 駁回
             mark: { kind: stamp, text: 駁回 }
         twist:
@@ -874,7 +874,7 @@ scenes:
             - who: 維多莉亞・惠特洛克
               text: 卡爾德會簽豁免書，是因為他們以為這件案子很單純。撤回那張傳票。
               mood: 硬
-            - who: 艾莉絲
+            - who: 伊恩
               text: 那張紀錄是唯一能證明訊息存在過的東西。
             - who: 維多莉亞・惠特洛克
               text: 我知道。我也知道誰付我們薪水。
@@ -886,7 +886,7 @@ scenes:
                 - who: 維多莉亞・惠特洛克
                   text: 聰明。這件事我記著。
                   mood: 硬
-                - who: 艾莉絲
+                - who: 伊恩
                   text: 我也記著。｜記著我沒去拿的那張紙。
                   voice: 'off'
             - text: 我出庭答辯。
@@ -901,9 +901,9 @@ scenes:
     goal: q1
     goalLines:
       - who: 羅根
-        text: 案情會議通過了。妳要拿這個去開庭？
+        text: 案情會議通過了。你要拿這個去開庭？
         mood: 硬
-      - who: 艾莉絲
+      - who: 伊恩
         text: 我要拿這個去問柯瓦斯基警探，他到底查了什麼、沒查什麼。
       - who: 馬庫斯・海爾
         text: 記住一句話。先讓他把話說死，再拿出證據。
@@ -952,13 +952,13 @@ scenes:
         granted:
           - who: 旁白
             text: 雷耶斯法官看完錄影，只說了一句：「本庭排除該項供述。」
-          - who: 艾莉絲
+          - who: 伊恩
             text: 已排除
             mark: { kind: stamp, text: 已排除, on: car-statement }
         denied:
           - who: 旁白
             text: 「本庭認為該項陳述屬自願。聲請駁回。」
-          - who: 艾莉絲
+          - who: 伊恩
             text: 駁回
             mark: { kind: stamp, text: 駁回 }
         gives: [statement-excluded]
@@ -991,7 +991,7 @@ scenes:
       - who: 馬庫斯・海爾
         text: 審前該做的都做了。接下來是錄取瑞秋的證詞。
         mood: 暖
-      - who: 艾莉絲
+      - who: 伊恩
         text: 她是唯一聽見聲音的人。我想知道她聽見的是幾點。
 
   # 第三幕之二：證詞錄取（教學：定錨 vs 探路）
@@ -1005,10 +1005,10 @@ scenes:
       role: 卡爾德物流　合規長
     intro:
       - who: 馬庫斯・海爾
-        text: 十二個問題。宣誓過的話，她在庭上改一個字，妳就能拿逐字稿打她。
+        text: 十二個問題。宣誓過的話，她在庭上改一個字，你就能拿逐字稿打她。
         mood: 暖
       - who: 馬庫斯・海爾
-        text: 但妳問什麼，對面就知道妳往哪裡查。問到痛處，他們開庭前就補好了。
+        text: 但你問什麼，對面就知道你往哪裡查。問到痛處，他們開庭前就補好了。
         mood: 暖
       - who: 馬庫斯・海爾
         text: 所以問些不痛不癢的，讓她把話講死。真正的武器，留到法庭上。
@@ -1047,7 +1047,7 @@ scenes:
             q: 會議全程開著鏡頭嗎？
             a: 我不記得了。
       - id: d-cards
-        label: 妳手上的牌
+        label: 你手上的牌
         questions:
           - id: d-watch
             q: 沃斯那支手錶的健康資料，妳知道裡面有什麼嗎？
@@ -1102,7 +1102,7 @@ scenes:
     rounds: 5
     intro:
       - who: 凱瑟琳・莫羅
-        text: 我有一位目擊證人、一件帶血的外套，還有他自己跑了兩天。妳有什麼？
+        text: 我有一位目擊證人、一件帶血的外套，還有他自己跑了兩天。你有什麼？
         mood: 硬
     offers:
       - id: o-murder2
@@ -1114,29 +1114,29 @@ scenes:
             mood: 硬
         asks:
           - who: 伊森・蕭
-            text: 十五年。我出來的時候……妳覺得我該接受嗎？
+            text: 十五年。我出來的時候……你覺得我該接受嗎？
             mood: 緊
       - id: o-manslaughter
         min: 60
         label: 故意殺人，八年
         lines:
           - who: 凱瑟琳・莫羅
-            text: 故意殺人，八年。妳的那些東西還不足以讓陪審團轉向。
+            text: 故意殺人，八年。你的那些東西還不足以讓陪審團轉向。
             mood: 硬
         asks:
           - who: 伊森・蕭
-            text: 八年還是八年。妳覺得我該接受嗎？
+            text: 八年還是八年。你覺得我該接受嗎？
             mood: 緊
       - id: o-negligent
         min: 40
         label: 過失致死，三年
         lines:
           - who: 凱瑟琳・莫羅
-            text: 過失致死，三年。妳讓我有點不舒服了，韓律師。
+            text: 過失致死，三年。你讓我有點不舒服了，林律師。
             mood: 硬
         asks:
           - who: 伊森・蕭
-            text: 三年。我姊說她可以等。妳覺得呢？
+            text: 三年。我姊說她可以等。你覺得呢？
             mood: 緊
       - id: o-probation
         min: 0
@@ -1147,7 +1147,7 @@ scenes:
             mood: 硬
         asks:
           - who: 伊森・蕭
-            text: 明天就能回家。可是我這輩子都是殺人犯了。妳覺得我該接受嗎？
+            text: 明天就能回家。可是我這輩子都是殺人犯了。你覺得我該接受嗎？
             mood: 緊
     disclosed: [autopsy, watch-photo, ride-receipt, watch-notice, indictment, blood-report]
     bluffs:
@@ -1157,14 +1157,14 @@ scenes:
         strength: 20
         believed:
           - who: 凱瑟琳・莫羅
-            text: 手錶。……妳拿到那支手錶的資料了。
+            text: 手錶。……你拿到那支手錶的資料了。
             mood: 硬
         caught:
           - who: 凱瑟琳・莫羅
-            text: 妳開示給我的清單裡沒有那種東西。別在我這裡唬人，韓律師。
+            text: 你開示給我的清單裡沒有那種東西。別在我這裡唬人，林律師。
             mood: 硬
       - id: b-witness
-        label: 我有人可以證明妳的證人整晚不在座位上。
+        label: 我有人可以證明你的證人整晚不在座位上。
         needs: [meeting-name]
         strength: 25
         believed:
@@ -1173,7 +1173,7 @@ scenes:
             mood: 硬
         caught:
           - who: 凱瑟琳・莫羅
-            text: 清單上沒有這個人。妳在虛張聲勢，而且我記住了。
+            text: 清單上沒有這個人。你在虛張聲勢，而且我記住了。
             mood: 硬
     reveals:
       - who: 凱瑟琳・莫羅
@@ -1187,7 +1187,7 @@ scenes:
       - who: 伊森・蕭
         text: 好。就這樣吧。
         mood: 緊
-      - who: 艾莉絲
+      - who: 伊恩
         text: 這是最好的選擇。｜上一次我這樣說，｜他死在裡面。
         voice: 'off'
         beats:
@@ -1202,9 +1202,9 @@ scenes:
     place: 惠特洛克・海爾　會議室 A
     intro:
       - who: 馬庫斯・海爾
-        text: 明天開庭。妳要告訴陪審團一個故事，一個就好。故事要靠妳手上的論點撐起來。
+        text: 明天開庭。你要告訴陪審團一個故事，一個就好。故事要靠你手上的論點撐起來。
         mood: 暖
-      - who: 艾莉絲
+      - who: 伊恩
         text: 選了就不能換。中途改口，陪審團會覺得妳在瞎掰。
         mark: { kind: confirm }
     theories:
@@ -1224,7 +1224,7 @@ scenes:
         name: 另有其人：蘇菲
         summary: 命案當晚還在大樓的人，對警方說了謊。她是檢方的證人。
         needs: [arg-h]
-        cost: 情感取向的陪審員容易被說服，但蘇菲的人生會被毀掉。要在庭上讓她自己鬆口，沒有別的證據能替妳補。
+        cost: 情感取向的陪審員容易被說服，但蘇菲的人生會被毀掉。要在庭上讓她自己鬆口，沒有別的證據能替你補。
         ethicsIf:
           has: [arg-i]
           ethics: [smeared-knowing, smeared-knowing]
@@ -1248,7 +1248,7 @@ scenes:
             text: 你們會知道，那一晚 31 樓只剩下一個人。
             argument: arg-d
 
-  # 第三幕收尾：被告要不要作證（企劃書 10.7 第三幕 6）。決定權在伊森，艾莉絲只能建議。
+  # 第三幕收尾：被告要不要作證（企劃書 10.7 第三幕 6）。決定權在伊森，伊恩只能建議。
   - type: dialogue
     id: ethan-testify
     act: 第三幕
@@ -1259,10 +1259,10 @@ scenes:
         text: 他們會說我跑了兩天。我想上去講。我想自己講。
         mood: 緊
       - do: say
-        who: 艾莉絲
+        who: 伊恩
         text: 你一站上去，莫羅就能問四年前的事。
       - do: choose
-        prompt: 伊森在等妳的意見。
+        prompt: 伊森在等你的意見。
         options:
           - text: 好。從今天開始，每天練一遍最難聽的問題。
             flags: [ethan-testifies]
@@ -1274,7 +1274,7 @@ scenes:
             flags: [ethan-silent]
             then:
               - who: 伊森・蕭
-                text: ……如果妳覺得這樣比較好。
+                text: ……如果你覺得這樣比較好。
                 mood: 緊
 
   - type: card
@@ -1295,10 +1295,10 @@ scenes:
     seats: 12
     intro:
       - who: 馬庫斯・海爾
-        text: 二十一個人，妳挑十二個。六次提問，三次無因迴避，檢方也有三次。
+        text: 二十一個人，你挑十二個。六次提問，三次無因迴避，檢方也有三次。
         mood: 暖
       - who: 馬庫斯・海爾
-        text: 記住：妳不是在挑喜歡的人，妳是在挑聽得懂妳那套說法的人。
+        text: 記住：你不是在挑喜歡的人，你是在挑聽得懂你那套說法的人。
         mood: 暖
       - who: 法官
         text: 辯方若要以有因迴避剔除候選人，請指出他親口承認的偏見。沒有根據的聲請，本席不會聽第二次。
@@ -1565,7 +1565,7 @@ scenes:
     intro:
       - who: 法官
         text: 辯方，開場陳述。
-      - who: 艾莉絲
+      - who: 伊恩
         text: 每張承諾一張借據
         mark: { kind: iou }
 
@@ -1628,7 +1628,7 @@ scenes:
         start: 55
     intro:
       - who: 羅根
-        text: 檢方直接詰問的時候，每個問題妳都有一次異議的機會。理由錯了，法官的耐心就少一格。
+        text: 檢方直接詰問的時候，每個問題你都有一次異議的機會。理由錯了，法官的耐心就少一格。
         mood: 硬
       - who: 羅根
         text: 五次。用完之前，讓陪審團看到這個警探什麼都沒查。
@@ -1667,7 +1667,7 @@ scenes:
           q: 被告四年前也曾經被逮捕，您知道嗎？
           a: 我調過他的紀錄，持有毒品。
           objection: 無關
-          sustained: 異議成立。陪審團請忽略這個問題。檢察官，妳很清楚不能這樣問。
+          sustained: 異議成立。陪審團請忽略這個問題。檢察官，你很清楚不能這樣問。
           impact: 6
           tags: [情感, 權威]
         - id: d6
@@ -1709,7 +1709,7 @@ scenes:
       - who: 旁白
         text: 法官宣布休庭。走廊上，莫羅檢察官從後面追上來。
       - who: 莫羅
-        text: 韓律師。過失致死，緩刑五年。這是我最後的條件。
+        text: 林律師。過失致死，緩刑五年。這是我最後的條件。
 
   - type: card
     id: day2
@@ -1777,7 +1777,7 @@ scenes:
         start: 55
     intro:
       - who: 羅根
-        text: 她只聽到半句。整個法庭，只有妳會替被告講這一點。
+        text: 她只聽到半句。整個法庭，只有你會替被告講這一點。
         mood: 硬
     witness:
       name: 蘇菲・馬丁內斯
@@ -1908,7 +1908,7 @@ scenes:
       - who: 馬庫斯・海爾
         text: 她會很穩。穩的證人只有一種拆法：讓她把話說死，再拿時間去對。
         mood: 暖
-      - who: 艾莉絲
+      - who: 伊恩
         text: 已定錨
         mark: { kind: anchored }
     witness:
@@ -2071,7 +2071,7 @@ scenes:
       role: 法醫
     intro:
       - who: 旁白
-        text: 檢方結束舉證。艾莉絲站起來：「辯方傳喚艾倫・布魯克斯法醫。」
+        text: 檢方結束舉證。伊恩站起來：「辯方傳喚艾倫・布魯克斯法醫。」
       - who: 羅根
         text: 她是檢方自己的法醫。由她把時間窗縮小，陪審團會比較信。
         mood: 硬
@@ -2135,7 +2135,7 @@ scenes:
     outro:
       - who: 旁白
         text: 莫羅檢察官的反詰問結束得比平常早，她沒有再追問手錶。
-      - who: 艾莉絲
+      - who: 伊恩
         text: 22:00–23:30 → 22:24
         mark: { kind: window }
 
@@ -2150,7 +2150,7 @@ scenes:
       role: 數位鑑識專家
     intro:
       - who: 旁白
-        text: 艾莉絲站起來：「辯方傳喚普莉亞・奈爾博士。」
+        text: 伊恩站起來：「辯方傳喚普莉亞・奈爾博士。」
       - who: 馬庫斯・海爾
         text: 專家費的帳單寄到我這裡。不必謝我，記得就好。
         mood: 暖
@@ -2159,7 +2159,7 @@ scenes:
       options:
         - id: priya-none
           label: 不準備
-          detail: 她出庭過幾十次，不需要人教。但她不知道妳想先講哪一段。
+          detail: 她出庭過幾十次，不需要人教。但她不知道你想先講哪一段。
           multiplier: 0.9
         - id: priya-honest
           label: 對一次順序
@@ -2265,7 +2265,7 @@ scenes:
           penalty: 7
     leak:
       q: 哈桑先生，那句話您記得這麼清楚，是不是有人幫您複習過？
-      a: 律師小姐有說，那句話一個字都不要改……這樣不行喔？
+      a: 律師先生有說，那句話一個字都不要改……這樣不行喔？
       penalty: 8
     outro:
       - who: 旁白
@@ -2282,7 +2282,7 @@ scenes:
       role: 被告
     intro:
       - who: 旁白
-        text: 艾莉絲站起來：「辯方傳喚被告，伊森・蕭。」旁聽席有人坐直了。
+        text: 伊恩站起來：「辯方傳喚被告，伊森・蕭。」旁聽席有人坐直了。
     prep:
       hours: 3
       options:
@@ -2337,7 +2337,7 @@ scenes:
         needs: [ethan-report]
     leak:
       q: 蕭先生，這些答案是誰幫你寫的？
-      a: 我……我們練習過。艾莉絲說——韓律師說，照順序講就好。
+      a: 我……我們練習過。伊恩說——林律師說，照順序講就好。
       penalty: 10
     outro:
       - who: 旁白
@@ -2357,9 +2357,9 @@ scenes:
         text: 挑三個。講最後的那一個，他們記得最清楚。
         mood: 暖
       - who: 馬庫斯・海爾
-        text: 還有，決定妳要對誰說話。十二個人不是同一種人。
+        text: 還有，決定你要對誰說話。十二個人不是同一種人。
         mood: 暖
-      - who: 艾莉絲
+      - who: 伊恩
         text: 我不打算說伊森是好人。我要讓他們看到另一種可能。
     tones:
       - id: t-logic
@@ -2383,7 +2383,7 @@ scenes:
           - who: 旁白
             text: 陪審長站起來。「就第一項罪名，我們認定被告無罪。」
           - who: 旁白
-            text: 伊森的姊姊在旁聽席上哭出聲。伊森看著證人席旁的那張空椅子，沒有看艾莉絲。
+            text: 伊森的姊姊在旁聽席上哭出聲。伊森看著證人席旁的那張空椅子，沒有看伊恩。
       # E3：陪審團僵局，但論點 A、B 都在庭上講過，檢方放棄重審（企劃書 10.9）。
       - id: retrial-dropped
         when:
@@ -2402,7 +2402,7 @@ scenes:
           - who: 伊森・蕭
             text: 所以……我不用再回去了？不用了，對吧？
             mood: 緊
-          - who: 艾莉絲
+          - who: 伊恩
             text: 不用了。回家吧，伊森。
           - who: 旁白
             text: 卡爾德大樓三十一樓。瑞秋・艾德勒把電腦裡的資料夾一個一個拖進垃圾桶，然後清空。
@@ -2411,14 +2411,14 @@ scenes:
         - who: 旁白
           text: 陪審長站起來。「就第一項罪名，我們認定被告無罪。」
         - who: 旁白
-          text: 伊森的姊姊在旁聽席上哭出聲。伊森沒有回頭看她，他看著艾莉絲。
+          text: 伊森的姊姊在旁聽席上哭出聲。伊森沒有回頭看她，他看著伊恩。
         - who: 旁白
           text: 卡爾德大樓三十一樓。瑞秋・艾德勒把電腦裡的資料夾一個一個拖進垃圾桶，然後清空。
       有罪:
         - who: 旁白
           text: 陪審長站起來。「就第一項罪名，我們認定被告有罪。」
         - who: 伊森・蕭
-          text: （他沒有看她）沒關係。妳已經比上一個律師努力了。
+          text: （他沒有回頭）沒關係。你已經比上一個律師努力了。
           mood: 緊
         - who: 旁白
           text: 法警走過來。伊森自己把雙手背到身後。
@@ -2428,9 +2428,9 @@ scenes:
         - who: 旁白
           text: 法官宣布審判無效，另定期日重新審理。伊森交保候傳，在書記官面前簽了三次名。
         - who: 凱瑟琳・莫羅
-          text: 下個月見，韓律師。我會帶更好的證人來。
+          text: 下個月見，林律師。我會帶更好的證人來。
           mood: 硬
-        - who: 艾莉絲
+        - who: 伊恩
           text: 評議票數
           mark: { kind: tally }
 
@@ -2454,7 +2454,7 @@ scenes:
         text: 就這樣？我……可以走了？
         mood: 緊
       - do: say
-        who: 艾莉絲
+        who: 伊恩
         text: 可以走了。回家吧，伊森。
       - do: say
         who: 旁白
@@ -2526,15 +2526,15 @@ scenes:
     steps:
       - do: say
         who: 旁白
-        text: 法院台階上，伊森的姊姊在等他。他走到一半停下來，回頭看艾莉絲。
+        text: 法院台階上，伊森的姊姊在等他。他走到一半停下來，回頭看伊恩。
       - do: say
         who: 伊森・蕭
-        text: 謝謝妳。
+        text: 謝謝你。
       - do: say
         who: 旁白
-        text: 他伸出手。艾莉絲握了，笑不出來。
+        text: 他伸出手。伊恩握了，笑不出來。
       - do: say
-        who: 艾莉絲
+        who: 伊恩
         text: 認罪書上寫的是他做過的事。｜我到現在都不知道，那是不是真的。
         voice: 'off'
 
@@ -2544,22 +2544,22 @@ scenes:
     act: 尾聲
     when:
       verdict: [有罪]
-    place: 艾莉絲的辦公室　兩週後
+    place: 伊恩的辦公室　兩週後
     steps:
       - do: say
         who: 旁白
         text: 兩週後。郵件堆裡有一封從州立監獄寄來的信，信封上的字寫得很用力。
       - do: say
         who: 伊森・蕭
-        text: （信）艾莉絲，這裡晚上十點就熄燈。我每天晚上都在想那則訊息。它真的存在過，對吧？
+        text: （信）伊恩，這裡晚上十點就熄燈。我每天晚上都在想那則訊息。它真的存在過，對吧？
         mood: 緊
       - do: say
         who: 伊森・蕭
-        text: （信）我姊說妳還在找上訴的理由。如果找不到，也不是妳的錯。
+        text: （信）我姊說你還在找上訴的理由。如果找不到，也不是你的錯。
         mood: 緊
       - do: say
         who: 旁白
-        text: 艾莉絲把信夾進伊森的卷宗，在卷宗的標籤上用鉛筆加了兩個字：上訴。
+        text: 伊恩把信夾進伊森的卷宗，在卷宗的標籤上用鉛筆加了兩個字：上訴。
 
   - type: dialogue
     id: epilogue-review
@@ -2569,11 +2569,11 @@ scenes:
     steps:
       - do: say
         who: 馬庫斯・海爾
-        text: 不管結果怎麼寫，這一仗妳打得比我預期的乾淨。
+        text: 不管結果怎麼寫，這一仗你打得比我預期的乾淨。
         mood: 暖
       - do: say
         who: 維多莉亞・惠特洛克
-        text: 卡爾德物流的法務今天早上打來了。他們問，妳下一次會不會也這樣查到底。
+        text: 卡爾德物流的法務今天早上打來了。他們問，你下一次會不會也這樣查到底。
         mood: 硬
       - do: say
         who: 維多莉亞・惠特洛克
@@ -2581,7 +2581,7 @@ scenes:
         mood: 硬
       - do: say
         who: 旁白
-        text: 她走出會議室，沒有等艾莉絲回答。
+        text: 她走出會議室，沒有等伊恩回答。
 
   # 蘇菲理論：信封由潔德轉交。信封本身每條路線都會出現（父親的電話要接得上碼頭九號）。
   - type: dialogue
@@ -2590,18 +2590,18 @@ scenes:
     epilogue: true
     when:
       theory: [sophie]
-    place: 艾莉絲的辦公室　影印機旁邊
+    place: 伊恩的辦公室　影印機旁邊
     steps:
       - do: say
         who: 潔德
-        text: （訊息）蘇菲託我在妳桌上放了一個信封。她說妳不配，但真相配。
+        text: （訊息）蘇菲託我在你桌上放了一個信封。她說你不配，但真相配。
         mood: 緊
 
   - type: dialogue
     id: epilogue-envelope
     act: 尾聲
     epilogue: true
-    place: 艾莉絲的辦公室　影印機旁邊
+    place: 伊恩的辦公室　影印機旁邊
     steps:
       - do: say
         who: 旁白
@@ -2611,7 +2611,7 @@ scenes:
         text: （便條）那天晚上，沃斯先生在寫的不是辭退信。是這個。
         mood: 緊
       - do: say
-        who: 艾莉絲
+        who: 伊恩
         text: 碼頭九號。｜十二年前，我父親的那場火。
         voice: 'off'
         beats:
@@ -2627,13 +2627,13 @@ scenes:
               - who: 旁白
                 text: 海爾看完草稿，很久沒有說話。
               - who: 馬庫斯・海爾
-                text: 這份文件，妳還給過誰？
+                text: 這份文件，你還給過誰？
                 mood: 硬
           - text: 自己保留。在知道它是什麼之前，誰都不給。
             flags: [draft-kept]
             then:
               - who: 旁白
-                text: 艾莉絲把信封放進抽屜最底層，鎖上。鑰匙只有一把。
+                text: 伊恩把信封放進抽屜最底層，鎖上。鑰匙只有一把。
           - text: 交給潔德。她會知道怎麼讓它見光。
             when:
               cards: [parking-log]
@@ -2641,9 +2641,9 @@ scenes:
             ethics: [leaked-client-doc]
             then:
               - who: 潔德
-                text: （翻了兩頁就抬頭）這是客戶的機密文件。妳知道這代表什麼吧？
+                text: （翻了兩頁就抬頭）這是客戶的機密文件。你知道這代表什麼吧？
                 mood: 緊
-              - who: 艾莉絲
+              - who: 伊恩
                 text: 我知道。
 
   - type: dialogue
@@ -2651,7 +2651,7 @@ scenes:
     act: 尾聲
     when:
       theory: [sophie]
-    place: 艾莉絲的辦公室　一週後
+    place: 伊恩的辦公室　一週後
     steps:
       - do: say
         who: 旁白
@@ -2660,12 +2660,12 @@ scenes:
         who: 旁白
         text: 有人翻出她的社群帳號，有人貼出她租屋處的地址。卡爾德物流發了一則兩行的聲明，她被解僱了。
       - do: say
-        who: 艾莉絲
+        who: 伊恩
         text: 我沒有說她殺人。｜我只說她說了謊。
         voice: 'off'
       - do: say
         who: 潔德
-        text: （訊息）她那晚在車上，是在把沃斯的行事曆交給我。妳贏了。
+        text: （訊息）她那晚在車上，是在把沃斯的行事曆交給我。你贏了。
         mood: 緊
 
   - type: dialogue
@@ -2674,14 +2674,14 @@ scenes:
     when:
       theory: [sophie]
       cards: [arg-i]
-    place: 艾莉絲的辦公室　一週後
+    place: 伊恩的辦公室　一週後
     steps:
       - do: say
         who: 潔德
-        text: （訊息）而且妳知道。我在電話裡親口告訴過妳，妳也答應過我。
+        text: （訊息）而且你知道。我在電話裡親口告訴過你，你也答應過我。
         mood: 緊
       - do: say
-        who: 艾莉絲
+        who: 伊恩
         text: 我知道她為什麼說謊。
         voice: 'off'
 
@@ -2689,17 +2689,17 @@ scenes:
     id: epilogue-call
     act: 尾聲
     epilogue: true
-    place: 艾莉絲的公寓　深夜
+    place: 伊恩的公寓　深夜
     steps:
       - do: say
         who: 旁白
         text: 手機響起。來電顯示：州立監獄，受刑人付費電話。
       - do: say
         who: 父親
-        text: 艾莉絲。我聽說葛蘭特・沃斯死了。妳現在在惠特洛克做事？
+        text: 伊恩。我聽說葛蘭特・沃斯死了。你現在在惠特洛克做事？
         mood: 緊
       - do: say
-        who: 艾莉絲
+        who: 伊恩
         text: 你怎麼知道我在哪裡做事。
       - do: say
         who: 父親

@@ -120,7 +120,7 @@ export function Closing({ scene }: { scene: ClosingScene }) {
     >
       {tab === 'args' && (
         <section className="panel">
-          <h2>挑 {need} 個論點，順序就是妳講的順序</h2>
+          <h2>挑 {need} 個論點，順序就是你講的順序</h2>
           {need < scene.picks && (
             <p className="muted small">
               手上只有 {args.length} 個確認過的論點，

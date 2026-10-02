@@ -57,7 +57,7 @@ export function Deposition({ scene }: { scene: DepositionScene }) {
         )}
         {st.exposed.length > 0 && (
           <p className="muted">
-            對方知道妳往哪裡查了。這些論點在庭上的衝擊減半，除非妳先破解他們的反擊。
+            對方知道你往哪裡查了。這些論點在庭上的衝擊減半，除非你先破解他們的反擊。
           </p>
         )}
         <div className="lines">

@@ -239,8 +239,8 @@ async function playToRachelLast(page: Page) {
   await expect(page.getByText('二級謀殺，十五年').first()).toBeVisible();
   // 條件、攤牌、虛張聲勢各是一個分頁，筆錄留在上面不會被換掉。
   await page.getByRole('button', { name: '虛張聲勢' }).click();
-  await page.getByRole('button', { name: /證明妳的證人整晚不在座位上/ }).click();
-  await expect(page.getByText('妳在虛張聲勢')).toBeVisible();
+  await page.getByRole('button', { name: /證明你的證人整晚不在座位上/ }).click();
+  await expect(page.getByText('你在虛張聲勢')).toBeVisible();
   await page.getByRole('button', { name: '攤牌' }).click();
   await card(page, /亮出 論點 A/).click();
   await page.getByRole('button', { name: '她開的條件' }).click();

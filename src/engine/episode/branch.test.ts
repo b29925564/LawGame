@@ -26,7 +26,7 @@ const ctx = (o: Partial<BranchContext> = {}): BranchContext => ({
 });
 const closing = () =>
   structuredClone(episodes.ep1.scenes.find((s) => s.type === 'closing') as ClosingScene);
-const say = (text: string) => [{ who: '艾莉絲', text, mood: '平' as const, thought: false }];
+const say = (text: string) => [{ who: '伊恩', text, mood: '平' as const, thought: false }];
 
 describe('分支條件', () => {
   it('每一項都要成立，沒寫的不限制', () => {

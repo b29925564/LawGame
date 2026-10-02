@@ -30,7 +30,7 @@ const labels: Record<App, string> = {
   discovery: '開示',
 };
 
-/** 第二幕的桌面：艾莉絲的工作電腦，每個 App 是一個系統入口（企劃書 6.1）。 */
+/** 第二幕的桌面：伊恩的工作電腦，每個 App 是一個系統入口（企劃書 6.1）。 */
 export function Desk({ scene }: { scene: DeskScene }) {
   const { progress, advance, clearReport, resolveTwist, wrapDesk } = useEpisode();
   const st = deskState(progress, scene);
@@ -747,7 +747,7 @@ function Motions({ scene, held }: { scene: DeskScene; held: string[] }) {
         <p>{m.detail}</p>
         {a.ruling === 'granted' && <p className="good">法官准了。</p>}
         {a.ruling === 'denied' && (
-          <p className="bad-text">駁回。法官記得妳浪費了他的時間。修正後可以重送，工時照扣。</p>
+          <p className="bad-text">駁回。法官記得你浪費了他的時間。修正後可以重送，工時照扣。</p>
         )}
         {a.ruling !== 'granted' &&
           (missing.length ? (

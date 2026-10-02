@@ -121,7 +121,7 @@ function burdenErrors(e: Episode, errors: string[]) {
 }
 
 /**
- * 心聲的新寫法（設計稿 inner-voice）。對白框裡不再出現「艾莉絲（心裡）」：
+ * 心聲的新寫法（設計稿 inner-voice）。對白框裡不再出現「伊恩（心裡）」：
  * 沒說出口的話改成介面記號（mark）或畫外字幕（voice:'off'）。
  */
 function lineErrors(e: Episode, errors: string[]) {
