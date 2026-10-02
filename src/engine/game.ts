@@ -262,12 +262,24 @@ export function courtScene(p: Progress, s: TrialScene): TrialScene {
   const st = vd ? (p.scenes[vd.id] as voirdire.VoirDireState | undefined) : undefined;
   // 開示時勉強過關、被裁定照交、硬藏被揭穿，法官都記得。
   const cost = discoveryCost(p);
-  if (!vd || !st?.seated) return cost ? { ...s, patience: Math.max(1, s.patience - cost) } : s;
+  // 審前動議核准（例如排除對方專家），陪審團一開始就沒那麼偏向對方。
+  const shift = motionShift(p);
+  const jurors = vd && st?.seated ? voirdire.panel(vd, st) : s.jurors;
   return {
     ...s,
-    jurors: voirdire.panel(vd, st),
-    patience: Math.max(1, s.patience - st.wrong - cost),
+    jurors: shift ? jurors.map((j) => ({ ...j, start: Math.max(0, j.start - shift) })) : jurors,
+    patience: Math.max(1, s.patience - (vd && st?.seated ? st.wrong : 0) - cost),
   };
+}
+
+function motionShift(p: Progress): number {
+  return episodeOf(p).scenes.reduce((n, d) => {
+    if (d.type !== 'desk') return n;
+    const st = p.scenes[d.id] as desk.DeskState | undefined;
+    return (
+      n + d.motions.reduce((m, x) => m + (st?.motions[x.id]?.ruling === 'granted' ? x.jury : 0), 0)
+    );
+  }, 0);
 }
 
 /** 開示讓法官少掉的耐心（所有桌面加總）。 */
