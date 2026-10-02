@@ -13,7 +13,7 @@ import {
   useKindFilter,
   useWide,
 } from './Evidence';
-import { IndexCard, MarkLines, Ruling } from './Marks';
+import { Hl, MarkLines, Ruling } from './Marks';
 import { useScope } from './lang';
 import { useCardPick } from './pick';
 import { Speech } from './Portrait';
@@ -393,7 +393,8 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
     relation: l.relation,
     conclusion: l.conclusion,
   }));
-  const answers = [...found, ...args];
+  // 疑問的答案都是發現；論點只在證據欄出現，拿來連線（試玩回報：兩邊各列一次太亂）。
+  const answers = found;
   const showPair = (p: readonly [string, string]) => `${t(p[0], scope)} ⟷ ${t(p[1], scope)}`;
   // 還沒解鎖的疑問不列出來，免得題目先把還沒查到的線索講出來。
   const questions = desk.openQuestions(scene, st, progress.cards);
@@ -421,6 +422,8 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
   const [kind, setKind, showKind] = useKindFilter();
   // 連錯、交錯的那一下才抖；之後重開畫面不再抖。
   const badShake = useBump(st.badLinks);
+  // 剛連出來的那條發現亮一下；畫面一打開就有的不亮。
+  const fresh = useBump(st.found.length) ? st.found[st.found.length - 1] : null;
   const missTotal = Object.values(st.tried ?? {}).reduce((n, v) => n + v.length, 0);
   const missShake = useBump(missTotal) ? shown : null;
   const status = (id: string) =>
@@ -430,11 +433,29 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
         ? 'open'
         : 'idle';
   const num = (i: number) => String(i + 1).padStart(2, '0');
+  const timedN = pool.filter((c) => 'time' in c && c.time).length;
 
   const list = (
     <nav className="q-list" aria-label={t('疑問')}>
       <p className="eyebrow">{t('已確認 {n}', { n: st.confirmed.length })}</p>
       <ul>
+        {/* 時間線排在最上面：整理時間是每個疑問的底（試玩回報：放在最下面要捲才看得到）。 */}
+        <li>
+          <button
+            className="q-item timeline-entry"
+            aria-current={shown === 'timeline'}
+            onClick={() => setView('timeline')}
+          >
+            <span className="q-num">{t('時間線')}</span>
+            <span className="q-text">{t('把事件排在時間軸上')}</span>
+            <span className="q-meta">
+              <span>{t('已排 {n} / {m}', { n: st.timeline.length, m: timedN })}</span>
+            </span>
+            <span className="tl-meter" aria-hidden>
+              <i style={{ width: `${timedN ? (st.timeline.length / timedN) * 100 : 0}%` }} />
+            </span>
+          </button>
+        </li>
         {questions.map((x, i) => {
           const s = status(x.id);
           return (
@@ -469,21 +490,6 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
             </span>
           </li>
         ))}
-        <li>
-          <button
-            className="q-item idle"
-            aria-current={shown === 'timeline'}
-            onClick={() => setView('timeline')}
-          >
-            <span className="q-num">{t('時間線')}</span>
-            <span className="q-text">{t('把事件排在時間軸上')}</span>
-            <span className="q-meta">
-              <span>
-                {t('{n} 張卡可排', { n: pool.filter((c) => 'time' in c && c.time).length })}
-              </span>
-            </span>
-          </button>
-        </li>
       </ul>
     </nav>
   );
@@ -541,7 +547,13 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
         </div>
         {st.linkNote && (
           // 連錯不寫字：兩張卡抖一下、頂端工時閃紅（設計稿 board-redesign 修訂）。
-          <p role="status" className={st.link.cards.length ? 'sr-only' : 'board-note'}>
+          // 連成功也不另外寫：新的發現便條會亮一下，內容就在便條上（試玩回報：兩處同一句太雜）。
+          <p
+            role="status"
+            className={
+              st.link.cards.length || st.linkNote.startsWith('連起來了') ? 'sr-only' : 'board-note'
+            }
+          >
             {t(st.linkNote, scope)}
           </p>
         )}
@@ -605,10 +617,8 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
                               onClick={() => toggleCard(q.id, c.id)}
                               aria-label={t('從答案拿下 {name}', { name: t(c.name, scope) })}
                             >
-                              <strong>{'pair' in c ? showPair(c.pair) : t(c.name, scope)}</strong>
-                              <span className="muted small">
-                                {t('relation' in c ? c.relation : '論點')}
-                              </span>
+                              <strong>{showPair(c.pair)}</strong>
+                              <span className="muted small">{t(c.relation)}</span>
                             </button>
                           ) : null}
                         </li>
@@ -649,50 +659,42 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
             {bench}
             <section className="panel step mine">
               <h3 className="step-head">{t('發現')}</h3>
-              {answers.length === 0 ? (
+              {found.length === 0 ? (
                 <div className="slot-card" aria-label={t('還沒有發現')} />
               ) : (
-                <ul className="found-chips">
-                  {answers.map((c) => {
-                    const used = a.cards.includes(c.id);
+                // 一條發現就是一張便條：編號與關係、連起來的兩張卡、連線的內容；點了放進答案。
+                <ol className="found-list">
+                  {found.map((f) => {
+                    const used = a.cards.includes(f.id);
                     return (
-                      <li key={c.id}>
+                      <li key={f.id}>
                         <button
-                          className={c.kind === '論點' ? 'found arg' : 'found'}
+                          className={f.id === fresh ? 'found fresh' : 'found'}
                           aria-pressed={used}
+                          aria-label={`${t(f.name, scope)}${t('：')}${showPair(f.pair)}`}
                           disabled={done}
-                          onClick={() => toggleCard(q.id, c.id)}
-                          title={t(c.text, scope)}
+                          onClick={() => toggleCard(q.id, f.id)}
                         >
-                          <span className="pick-name">
-                            {'pair' in c
-                              ? `${t(c.name, scope)}${t('：')}${showPair(c.pair)}`
-                              : t(c.name, scope)}
+                          <span className="found-head">
+                            {t(f.name, scope)}
+                            <span>{t(f.relation)}</span>
+                            {used && <span className="good">{t('已放進答案')}</span>}
                           </span>
-                          <span className="muted small">
-                            {t('relation' in c ? c.relation : '論點')}
-                            {used && t('・已放進答案')}
-                          </span>
+                          <strong className="found-pair">{showPair(f.pair)}</strong>
+                          <span className="found-text">{t(f.text, scope)}</span>
+                          {f.conclusion && (
+                            <span className="found-note">
+                              <Hl
+                                text={f.conclusion.text}
+                                words={[f.conclusion.word]}
+                                live={false}
+                              />
+                            </span>
+                          )}
                         </button>
                       </li>
                     );
                   })}
-                </ul>
-              )}
-              {found.some((f) => f.conclusion) && (
-                <ol className="findings">
-                  {found
-                    .filter((f) => f.conclusion)
-                    .map((f) => (
-                      <li key={f.id}>
-                        <IndexCard
-                          head={f.name}
-                          printed={f.text}
-                          text={f.conclusion!.text}
-                          word={f.conclusion!.word}
-                        />
-                      </li>
-                    ))}
                 </ol>
               )}
             </section>

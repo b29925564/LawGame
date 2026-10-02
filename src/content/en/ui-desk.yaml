@@ -42,7 +42,7 @@
 尚未出現的疑問: Question not yet available
 時間線: Timeline
 把事件排在時間軸上: Put the events in order on the timeline
-'{n} 張卡可排': '{n} cards to place'
+'已排 {n} / {m}': 'Placed {n} / {m}'
 '拿下 {name}': 'Remove {name}'
 連線: Link
 連起來: Link
@@ -57,7 +57,7 @@
 '發現 {n}': 'Finding {n}'
 還沒有發現: No findings yet
 '：': ': '
-'・已放進答案': ' · In answer'
+已放進答案: In answer
 '← 全部疑問': '← All questions'
 目前沒有可以提出的聲請。: No motions to file right now.
 聲請: Motion

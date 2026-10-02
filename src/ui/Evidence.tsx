@@ -1,4 +1,5 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { glossary } from '../content/glossary';
 import {
   deskSceneOf,
@@ -8,7 +9,7 @@ import {
   useEpisode,
   type Evidence as Item,
 } from '../engine/game';
-import { translate, useT } from '../i18n';
+import { t as tr, useT } from '../i18n';
 import { useScope } from './lang';
 import { cardHighlights, cardStamps, Hl, Stamp } from './Marks';
 import { useCardPick } from './pick';
@@ -165,6 +166,18 @@ export function EvidenceCard({ item, pickable }: { item: Item; pickable?: boolea
   const cls = (item.kind === '論點' ? 'card arg' : 'card') + (can ? ' pickable mini' : '');
   // 證據板上的小卡（設計稿 board-redesign）：只留名稱、時間、出處，放上連線台的標 A／B。
   const slot = can ? ['A', 'B'][on.indexOf(item.id)] : undefined;
+  // 全文浮出卡畫在 body 上：證據欄會捲動，放在卡片裡會被裁掉。
+  const ref = useRef<HTMLLIElement>(null);
+  const [tip, setTip] = useState<{ top: number; right: number } | null>(null);
+  const show = () => {
+    const r = ref.current?.getBoundingClientRect();
+    if (r)
+      setTip({
+        top: Math.min(r.top, window.innerHeight - 220),
+        right: window.innerWidth - r.left + 10,
+      });
+  };
+  const hide = () => setTip(null);
   const body = can ? (
     <>
       {item.kind === '物品' && (
@@ -172,10 +185,8 @@ export function EvidenceCard({ item, pickable }: { item: Item; pickable?: boolea
           {typeof item.image === 'string' && <img src={item.image} alt="" />}
         </span>
       )}
-      <span className="mini-head">
-        <strong>{t(item.name, scope)}</strong>
-        {stamp(item, scope) && <span className="time">{stamp(item, scope)}</span>}
-      </span>
+      {stamp(item, scope) && <span className="time">{stamp(item, scope)}</span>}
+      <strong>{t(item.name, scope)}</strong>
       {slot && (
         <span className="slot-tag" aria-label={t('連線台 {slot}', { slot })}>
           {slot}
@@ -186,9 +197,13 @@ export function EvidenceCard({ item, pickable }: { item: Item; pickable?: boolea
         {t('・')}
         {t(item.source, scope)}
       </span>
-      <p className="mini-full" role="tooltip">
-        {t(item.text, scope)}
-      </p>
+      {tip &&
+        createPortal(
+          <p className="mini-full" role="tooltip" style={{ top: tip.top, right: tip.right }}>
+            {t(item.text, scope)}
+          </p>,
+          document.body,
+        )}
     </>
   ) : (
     <>
@@ -207,8 +222,13 @@ export function EvidenceCard({ item, pickable }: { item: Item; pickable?: boolea
   );
   return (
     <li
+      ref={ref}
       className={on.includes(item.id) && can ? cls + ' on' : cls}
       {...(can && {
+        onMouseEnter: show,
+        onMouseLeave: hide,
+        onFocus: show,
+        onBlur: hide,
         role: 'button',
         tabIndex: 0,
         'aria-pressed': on.includes(item.id),
@@ -266,7 +286,7 @@ export function CardPick({
 
 /** 卡片上的日期與時間，例如「週五 22:34」。 */
 export function stamp(c: { date?: string; time?: string }, scope?: string): string {
-  return [c.date && translate(c.date, scope), c.time].filter(Boolean).join(' ');
+  return [c.date && tr(c.date, scope), c.time].filter(Boolean).join(' ');
 }
 
 /** 依卡片種類篩選；清單一長，玩家通常只想看某一類（例如只看論點）。 */
@@ -316,11 +336,11 @@ export function timeGroups<T extends { id: string; time?: string }>(
   if (!timed.length || !rest.length) return items.map(render);
   return [
     <li key="@timed" className="group-head">
-      {translate('有時間的事件')} <span>{timed.length}</span>
+      {tr('有時間的事件')} <span>{timed.length}</span>
     </li>,
     ...timed.map(render),
     <li key="@rest" className="group-head">
-      {translate('其他資料')} <span>{rest.length}</span>
+      {tr('其他資料')} <span>{rest.length}</span>
     </li>,
     ...rest.map(render),
   ];
