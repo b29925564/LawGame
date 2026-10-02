@@ -1,4 +1,5 @@
 import type { InterviewScene, Line, Topic } from './schema';
+import { YOU } from './trial';
 
 export interface InterviewState {
   guard: number;
@@ -25,6 +26,9 @@ export function startInterview(s: InterviewScene): InterviewState {
   };
 }
 
+/** 玩家選的問題本身也要出現在筆錄裡，不然只看得到證人的回答。 */
+const asks = (text: string): Line => ({ who: YOU, text, mood: '平', thought: false });
+
 const add = (st: InterviewState, lines: Line[]): InterviewState => ({
   ...st,
   log: [...st.log, ...lines],
@@ -48,10 +52,10 @@ export function openTopics(s: InterviewScene, st: InterviewState, held: string[]
 export function ask(s: InterviewScene, st: InterviewState, topicId: string): InterviewState {
   const t = s.topics.find((x) => x.id === topicId);
   if (!t || st.over || st.asked.includes(t.id)) return st;
-  const next = add(
-    { ...st, asked: [...st.asked, t.id], gained: [...st.gained, ...t.gives] },
-    t.lines,
-  );
+  const next = add({ ...st, asked: [...st.asked, t.id], gained: [...st.gained, ...t.gives] }, [
+    asks(t.label),
+    ...t.lines,
+  ]);
   return t.guard ? bumpGuard(s, next, t.guard) : next;
 }
 
@@ -67,7 +71,7 @@ export function press(
   const has = held.includes(p.needs) || st.gained.includes(p.needs);
   const next = add(
     { ...st, pressed: [...st.pressed, p.id], gained: has ? [...st.gained, ...p.gives] : st.gained },
-    has ? p.lines : p.blank,
+    [asks(p.label), ...(has ? p.lines : p.blank)],
   );
   return bumpGuard(s, next, 2);
 }
