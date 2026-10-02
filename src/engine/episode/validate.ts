@@ -221,6 +221,15 @@ function deskErrors(s: DeskScene, available: Set<string>, args: Set<string>, err
     for (const g of out) if (!cards.has(g)) errors.push(`動議 ${m.id} 給了不存在的卡片 ${g}`);
   }
 
+  // 開示：請求 id 不重複，涵蓋的文件都要是這一幕的卡片。
+  const rids = new Set<string>();
+  for (const r of s.discovery) {
+    if (rids.has(r.id)) errors.push(`桌面 ${s.id} 的開示請求 id 重複：${r.id}`);
+    rids.add(r.id);
+    for (const c of r.cards)
+      if (!cards.has(c)) errors.push(`開示請求 ${r.id} 涵蓋了不存在的卡片 ${c}`);
+  }
+
   // 連線：兩張卡都要存在（證據或論點），id 不能和卡片撞名。
   const sceneArgs = new Set(s.questions.map((q) => q.argument.id));
   const lids = new Set<string>();

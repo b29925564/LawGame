@@ -1,3 +1,4 @@
+import { allAnswered, type Result } from './discovery';
 import type { Relation } from '../schema';
 import type { DeskScene, Line } from './schema';
 
@@ -45,6 +46,8 @@ export interface DeskState {
   flags: string[];
   /** 玩家按下結束調查才進下一幕。 */
   wrapped: boolean;
+  /** 證據開示：每項請求的結果（見 discovery.ts）。 */
+  discovery?: Record<string, Result>;
 }
 
 export function startDesk(s: DeskScene): DeskState {
@@ -436,7 +439,7 @@ export function done(_s: DeskScene, st: DeskState): boolean {
 
 /** 過關的推理鏈確認之後，才能收工進下一幕。 */
 export function canWrap(s: DeskScene, st: DeskState): boolean {
-  return st.confirmed.includes(s.goal);
+  return st.confirmed.includes(s.goal) && allAnswered(s, st);
 }
 
 export function wrap(st: DeskState): DeskState {
