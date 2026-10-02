@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useEpisode } from '../engine/game';
+import { useT } from '../i18n';
 import { SLOTS, type Slot } from '../engine/save';
 import { SettingsPanel } from './Settings';
 import { SlotList } from './Title';
@@ -9,7 +10,8 @@ export function GameMenu() {
   const { save, load, toTitle } = useEpisode();
   const [open, setOpen] = useState<null | 'save' | 'load' | 'options'>(null);
   const [note, setNote] = useState('');
-  const onSave = (slot: Slot) => setNote(save(slot) ? '已存檔。' : '這個瀏覽器不允許存檔。');
+  const t = useT();
+  const onSave = (slot: Slot) => setNote(save(slot) ? t('已存檔。') : t('這個瀏覽器不允許存檔。'));
   const onLoad = (slot: Slot) => {
     if (load(slot)) setOpen(null);
   };
@@ -23,25 +25,25 @@ export function GameMenu() {
           setOpen(open ? null : 'save');
         }}
       >
-        選單
+        {t('選單')}
       </button>
       {open && (
-        <div className="menu-panel panel" role="dialog" aria-label="選單">
+        <div className="menu-panel panel" role="dialog" aria-label={t('選單')}>
           <div className="row" role="tablist">
             <button role="tab" aria-selected={open === 'save'} onClick={() => setOpen('save')}>
-              存檔
+              {t('存檔')}
             </button>
             <button role="tab" aria-selected={open === 'load'} onClick={() => setOpen('load')}>
-              讀檔
+              {t('讀檔')}
             </button>
             <button
               role="tab"
               aria-selected={open === 'options'}
               onClick={() => setOpen('options')}
             >
-              選項
+              {t('選項')}
             </button>
-            <button onClick={toTitle}>回標題</button>
+            <button onClick={toTitle}>{t('回標題')}</button>
           </div>
           {open === 'save' && <SlotList slots={SLOTS} verb="存到" onPick={onSave} />}
           {open === 'load' && <SlotList slots={['auto', ...SLOTS]} verb="讀取" onPick={onLoad} />}
