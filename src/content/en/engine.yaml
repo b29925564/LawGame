@@ -46,11 +46,11 @@
 皺眉: Frowns
 看向被告: Looks at the defendant
 '{juror}被多數說服，改變了立場。': '{juror} is swayed by the majority and changes sides.'
-'陪審長（{juror}）主張{verdict}。': 'The foreperson ({juror}) argues for {verdict}.'
-'表決：{yes} 票{a}，{no} 票{b}。': 'Vote: {yes} {a}, {no} {b}.'
+'陪審長（{juror}）主張{verdict}。': 'The foreperson ({juror}) argues for {verdict:lower}.'
+'表決：{yes} 票{a}，{no} 票{b}。': 'Vote: {yes} {a:lower}, {no} {b:lower}.'
 
 # 庭審
-'異議，{reason}。': 'Objection, {reason}.'
+'異議，{reason}。': 'Objection, {reason:lower}.'
 異議成立。陪審團請不要理會這個問題。: Sustained. The jury will disregard the question.
 異議駁回。律師，這個問題沒有問題。: Overruled. There's nothing wrong with that question, counsel.
 '辯方可以詰問{name}。': 'The defense may examine {name}.'
@@ -73,7 +73,7 @@
 
 # 錄取證詞
 我指示證人不要回答。: I'm instructing the witness not to answer.
-'異議，{reason}。（庭外取證沒有法官裁決，異議只記錄在案，證人仍須回答）': 'Objection, {reason}. (No judge at a deposition: the objection is noted for the record and the witness must still answer.)'
+'異議，{reason}。（庭外取證沒有法官裁決，異議只記錄在案，證人仍須回答）': 'Objection, {reason:lower}. (No judge at a deposition: the objection is noted for the record and the witness must still answer.)'
 
 # 桌面
 這條已經連過了。: You've already linked these.

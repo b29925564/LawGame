@@ -780,6 +780,7 @@ export const useEpisode = create<GameState>()((set, get) => {
             out.jury,
             promisesOf(p).theory?.fault ?? 0,
             punitiveBonus(p, s),
+            promisesOf(p).theory?.faultWhy,
           ),
         };
       }),

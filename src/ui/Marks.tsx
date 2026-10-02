@@ -474,11 +474,14 @@ export function Tally({
   }, []);
   const g = guilty.filter(Boolean).length;
   const ng = guilty.length - g;
+  // 刑事要全體一致；民事只要達到法定票數，僵局是兩邊都不夠票。
+  const short = burden === 'civil' ? '兩邊都未達法定票數' : '未達一致';
   useEffect(
     () =>
       announce.mark({
         from: 'tally',
-        text: tr('陪審團僵局，第{round}輪，{no} {ng}，{yes} {g}，未達一致', {
+        text: tr('陪審團僵局，第{round}輪，{no} {ng}，{yes} {g}，{why}', {
+          why: tr(short),
           round,
           no: tr(w.no),
           ng,
@@ -486,7 +489,7 @@ export function Tally({
           g,
         }),
       }),
-    [round, ng, g, w],
+    [round, ng, g, w, short],
   );
   let k = 0;
   return (
@@ -502,7 +505,7 @@ export function Tally({
             g,
           })}
         </span>
-        <span className="muted small">{t('未達一致')}</span>
+        <span className="muted small">{t(short)}</span>
       </div>
       <ol className="tally">
         {guilty.map((v, i) => (

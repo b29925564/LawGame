@@ -32,6 +32,8 @@ export interface Award {
   total: number;
   /** 死者自己的過失比例（百分比）。 */
   fault: number;
+  /** 比例的理由（理論的 faultWhy）。 */
+  why?: string;
   /** 扣掉過失比例後的判賠金額。 */
   amount: number;
   /** 懲罰性賠償：null＝沒有進入這一輪；found＝成立與否，votes＝過門檻的人數。 */
@@ -55,6 +57,7 @@ export function award(
   jury: Jury,
   fault: number,
   punitiveBonus: number | null,
+  why?: string,
 ): Award | null {
   const d = s.damages;
   if (!d) return null;
@@ -71,7 +74,7 @@ export function award(
     const found = votes >= need;
     punitive = { found, amount: found ? round(amount * d.punitive.ratio) : 0, votes, need };
   }
-  return { total: d.total, fault: f, amount, punitive };
+  return { total: d.total, fault: f, ...(why ? { why } : {}), amount, punitive };
 }
 
 /** 調解時估的開庭風險：最好情況（死者過失最高）到最壞情況（全額）。 */

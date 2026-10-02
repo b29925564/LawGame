@@ -218,6 +218,7 @@ export function Closing({ scene }: { scene: ClosingScene }) {
 /** 民事特別判決表：損害總額、死者過失比例、判賠金額、懲罰性賠償，成立時加總。 */
 function VerdictForm({ award }: { award: closing.Award }) {
   const t = useT();
+  const scope = useScope();
   const money = useMoney();
   const p = award.punitive;
   return (
@@ -227,7 +228,9 @@ function VerdictForm({ award }: { award: closing.Award }) {
         <dt>{t('損害總額')}</dt>
         <dd>{money(award.total)}</dd>
         <dt>{t('死者過失比例')}</dt>
-        <dd>{award.fault}%</dd>
+        <dd>
+          {award.fault}%{award.why && <small>{t(award.why, scope)}</small>}
+        </dd>
         <dt>{t('判賠金額')}</dt>
         <dd>
           {money(award.amount)}

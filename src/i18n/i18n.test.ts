@@ -15,6 +15,14 @@ describe('雙語查表', () => {
     expect(translate('還沒翻的句子')).toBe('還沒翻的句子');
   });
 
+  it('英文句中的代入值可以要求小寫：{name:lower}', () => {
+    install({ '異議，{reason}。': 'Objection, {reason:lower}.', 傳聞: 'Hearsay' });
+    expect(translate('異議，傳聞。')).toBe('Objection, hearsay.');
+    useLang.setState({ lang: 'en' });
+    install({ '主張{v}': 'argues for {v:lower}' });
+    expect(t('主張{v}', { v: 'Not guilty' })).toBe('argues for not guilty');
+  });
+
   it('樣板代入的值也會再查表', () => {
     install({ '辯方可以詰問{name}。': 'The defense may examine {name}.', 崔佛: 'Trevor' });
     expect(translate('辯方可以詰問崔佛。')).toBe('The defense may examine Trevor.');
@@ -61,7 +69,7 @@ describe('雙語查表', () => {
     expect(t('誘導')).toBe('誘導');
     await setLang('en');
     expect(t('誘導')).toBe('Leading');
-    expect(t('異議，傳聞。')).toBe('Objection, Hearsay.');
+    expect(t('異議，傳聞。')).toBe('Objection, hearsay.');
     await setLang('zh');
     expect(t('誘導')).toBe('誘導');
   });

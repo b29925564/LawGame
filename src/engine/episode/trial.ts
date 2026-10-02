@@ -271,6 +271,7 @@ export function confront(
   const rebuttal: LogLine[] = counter
     ? [
         { who: s.examiner ?? DA, text: counter.text },
+        ...(counter.answer ? [{ who: s.witness.name, text: counter.answer }] : []),
         { who: YOU, text: broke ? counter.broken : counter.failed },
       ]
     : [];
