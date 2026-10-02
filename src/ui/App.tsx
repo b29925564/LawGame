@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
-import { sceneOf, useEpisode } from '../engine/game';
+import { episodes } from '../content';
+import { followingEpisode, sceneOf, useEpisode } from '../engine/game';
 import { useSettings } from '../engine/settings';
 import { useGame } from '../engine/store';
 import { Board } from './Board';
@@ -21,7 +22,7 @@ import { Opening, Theory } from './Theory';
 import { VoirDire } from './VoirDire';
 
 export function App() {
-  const { mode, progress, advance, toTitle } = useEpisode();
+  const { mode, progress, advance, toTitle, nextEpisode } = useEpisode();
   const textScale = useSettings((s) => s.textScale);
   useEffect(() => {
     document.documentElement.style.setProperty('--text-scale', String(textScale));
@@ -39,6 +40,7 @@ export function App() {
     );
 
   const scene = sceneOf(progress);
+  const next = scene ? null : followingEpisode(progress);
   return (
     <>
       <Announcer />
@@ -65,9 +67,16 @@ export function App() {
               繼續
             </button>
           ) : (
-            <button className="primary" onClick={toTitle}>
-              回標題
-            </button>
+            <div className="stack">
+              {next && (
+                <button className="primary" onClick={nextEpisode}>
+                  繼續第 {episodes[next as keyof typeof episodes].number} 集
+                </button>
+              )}
+              <button className={next ? '' : 'primary'} onClick={toTitle}>
+                回標題
+              </button>
+            </div>
           )}
         </main>
       )}

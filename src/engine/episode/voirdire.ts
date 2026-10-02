@@ -79,7 +79,7 @@ export function canSeat(s: VoirDireScene, st: VoirDireState): boolean {
   return st.seated === null && pool(s, st).length >= s.seats;
 }
 
-/** 入席：候選名單由上往下補滿 12 個位子。 */
+/** 入席：候選名單由上往下補滿 seats 個位子。 */
 export function seat(s: VoirDireScene, st: VoirDireState): VoirDireState {
   if (!canSeat(s, st)) return st;
   return {
@@ -94,7 +94,7 @@ export function done(st: VoirDireState): boolean {
   return st.seated !== null;
 }
 
-/** 選定的 12 人，陪審長是領導特質最高的那位（企劃書 6.10）。 */
+/** 選定的陪審員，陪審長是領導特質最高的那位（企劃書 6.10）。 */
 export function panel(s: VoirDireScene, st: VoirDireState) {
   const seated = (st.seated ?? []).map((id) => s.candidates.find((c) => c.id === id)!);
   const chief = [...seated].sort((a, b) => b.lead - a.lead || a.id.localeCompare(b.id))[0];

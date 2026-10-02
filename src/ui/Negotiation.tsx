@@ -8,7 +8,7 @@ import { Shell, Tabs, Transcript } from './Shell';
 
 /** 認罪協商（企劃書 6.8）：攤牌會洩底，虛張聲勢看證據清單，決定權在委託人手上。 */
 export function Negotiation({ scene }: { scene: NegotiationScene }) {
-  const { progress, revealArg, bluff, advise, walkOut, advance } = useEpisode();
+  const { progress, revealArg, bluff, advise, walkOut, advance, callClient } = useEpisode();
   const st = negoState(progress, scene);
   const [intro, setIntro] = useState(st.log.length <= scene.intro.length);
   const [tab, setTab] = useState<'offer' | 'reveal' | 'bluff'>('offer');
@@ -17,6 +17,7 @@ export function Negotiation({ scene }: { scene: NegotiationScene }) {
     .filter((q) => progress.cards.includes(q.argument.id))
     .map((q) => q.argument);
   const offer = nego.offerOf(scene, st);
+  const ok = nego.authorized(scene, st, offer);
 
   if (intro)
     return (
@@ -45,11 +46,11 @@ export function Negotiation({ scene }: { scene: NegotiationScene }) {
           ))}
         </div>
         <dl className="stats">
-          <dt>莫羅的信心</dt>
+          <dt>{scene.opponent.name}的信心</dt>
           <dd>{st.confidence}</dd>
           <dt>最後的條件</dt>
           <dd>{st.deal ?? offer.label}</dd>
-          <dt>伊森的信任</dt>
+          <dt>{scene.client.name}的信任</dt>
           <dd>{st.trust} / 5</dd>
         </dl>
         <button className="primary next" onClick={advance}>
@@ -103,15 +104,41 @@ export function Negotiation({ scene }: { scene: NegotiationScene }) {
         <section className="panel">
           <h2>她現在開的條件</h2>
           <p className="claim-text">{offer.label}</p>
+          {scene.authority && (
+            <dl className="stats authority">
+              {offer.amount !== undefined && (
+                <>
+                  <dt>條件</dt>
+                  <dd>{money(offer.amount)}</dd>
+                </>
+              )}
+              <dt>授權上限</dt>
+              <dd className={ok ? undefined : 'over'}>{money(st.cap ?? scene.authority.cap)}</dd>
+              {offer.terms && (
+                <>
+                  <dt>附帶條款</dt>
+                  <dd className={st.termsOk ? undefined : 'over'}>
+                    {st.termsOk ? '已同意' : '未同意'}
+                  </dd>
+                </>
+              )}
+            </dl>
+          )}
           {offer.lines.map((l, i) => (
             <Speech key={i} line={l} />
           ))}
           <div className="stack">
             <button className="wide" onClick={() => advise(true)}>
-              建議伊森接受
+              建議{scene.client.name}接受{ok ? '' : '（超過授權）'}
             </button>
+            {!ok && (
+              <button className="wide primary" disabled={!nego.canAct(st)} onClick={callClient}>
+                打電話請示 {scene.client.name}
+                <span className="cost">−1 回合</span>
+              </button>
+            )}
             <button className="wide" onClick={() => advise(false)}>
-              建議他撐下去
+              建議撐下去
             </button>
           </div>
         </section>
@@ -156,3 +183,5 @@ export function Negotiation({ scene }: { scene: NegotiationScene }) {
     </Shell>
   );
 }
+
+const money = (n: number) => `$${n.toLocaleString('en-US')}`;

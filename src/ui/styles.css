@@ -4693,3 +4693,57 @@ button.iou[aria-pressed='true'] {
 .q-item.locked .q-text {
   color: var(--faint);
 }
+
+/* 證據開示 */
+.discovery {
+  list-style: none;
+  padding: 0;
+}
+.discovery .req.answered {
+  opacity: 0.75;
+}
+.req-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  list-style: none;
+  padding: 0;
+  margin: 6px 0;
+}
+.req-cards li {
+  font-size: 0.85em;
+  padding: 2px 8px;
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+}
+.req-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+.req-actions button[aria-pressed='true'] {
+  outline: 2px solid currentColor;
+  outline-offset: 1px;
+}
+.req-actions .primary {
+  margin-left: auto;
+}
+.req-result {
+  font-weight: 600;
+  margin-top: 8px;
+}
+.req-result.strained,
+.req-result.compelled {
+  color: var(--bad);
+}
+/* 對方主導的錄取：只能異議 */
+.depo-defend .objections {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.stats.authority dd.over {
+  color: var(--bad);
+  font-weight: 600;
+}
