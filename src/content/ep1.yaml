@@ -1188,11 +1188,11 @@ scenes:
         text: 好。就這樣吧。
         mood: 緊
       - who: 艾莉絲
-        text: 當公設辯護人的時候，我也對另一個委託人說過「這是最好的選擇」。他死在裡面。
+        text: 這是最好的選擇。｜上一次我這樣說，｜他死在裡面。
         voice: 'off'
         beats:
-          - text: 當公設辯護人的時候，｜我也對另一個委託人說過｜「這是最好的選擇」。
-          - text: 他死在裡面。
+          - text: 這是最好的選擇。
+          - text: 上一次我這樣說，｜他死在裡面。
             hush: true
 
   # 第三幕收尾：選案件理論（企劃書 6.9.2）。選了就不能換。
@@ -1260,8 +1260,7 @@ scenes:
         mood: 緊
       - do: say
         who: 艾莉絲
-        text: 他一站上去，莫羅就能問四年前的事。
-        thought: true
+        text: 你一站上去，莫羅就能問四年前的事。
       - do: choose
         prompt: 伊森在等妳的意見。
         options:
@@ -2046,9 +2045,8 @@ scenes:
         - who: 法官
           text: 陪審團請注意：本席裁定，證人艾德勒女士的證詞全部刪除。各位評議時不得列入考慮。
           mood: 硬
-        - who: 艾莉絲
-          text: 刪掉的是她說過的話。陪審團剛才看到的那段沉默，刪不掉。
-          thought: true
+        - who: 旁白
+          text: 陪審席上，有兩個人還看著空下來的證人席。
     outro:
       - who: 旁白
         text: 法官宣布休庭到明天上午。旁聽席的人還沒有散。
@@ -2414,9 +2412,6 @@ scenes:
           text: 陪審長站起來。「就第一項罪名，我們認定被告無罪。」
         - who: 旁白
           text: 伊森的姊姊在旁聽席上哭出聲。伊森沒有回頭看她，他看著艾莉絲。
-        - who: 艾莉絲
-          text: 我沒有贏。｜我只是把那天晚上真正發生的事｜放進了紀錄裡。
-          voice: 'off'
         - who: 旁白
           text: 卡爾德大樓三十一樓。瑞秋・艾德勒把電腦裡的資料夾一個一個拖進垃圾桶，然後清空。
       有罪:
@@ -2425,9 +2420,8 @@ scenes:
         - who: 伊森・蕭
           text: （他沒有看她）沒關係。妳已經比上一個律師努力了。
           mood: 緊
-        - who: 艾莉絲
-          text: 上一個對我說「沒關係」的委託人，｜死在裡面。
-          voice: 'off'
+        - who: 旁白
+          text: 法警走過來。伊森自己把雙手背到身後。
       陪審團僵局:
         - who: 旁白
           text: 陪審長站起來。「庭上，我們無法達成一致的評決。」
@@ -2469,10 +2463,6 @@ scenes:
         who: 凱瑟琳・莫羅
         text: 下次，早點打給我。
         mood: 硬
-      - do: say
-        who: 艾莉絲
-        text: 她沒有說謝謝，我也沒有。我們都知道，這個案子差一點就判下去了。
-        thought: true
 
   - type: dialogue
     id: epilogue-deal-murder2
@@ -2568,10 +2558,6 @@ scenes:
         text: （信）我姊說妳還在找上訴的理由。如果找不到，也不是妳的錯。
         mood: 緊
       - do: say
-        who: 艾莉絲
-        text: 當公設辯護人那四年，我也收過這種信。我一封都沒有丟。
-        thought: true
-      - do: say
         who: 旁白
         text: 艾莉絲把信夾進伊森的卷宗，在卷宗的標籤上用鉛筆加了兩個字：上訴。
 
@@ -2590,16 +2576,12 @@ scenes:
         text: 卡爾德物流的法務今天早上打來了。他們問，妳下一次會不會也這樣查到底。
         mood: 硬
       - do: say
-        who: 艾莉絲
-        text: 那不是稱讚。我聽得出來。
-        thought: true
-      - do: say
         who: 維多莉亞・惠特洛克
         text: 事務所不是公設辯護室。記住這一點。
         mood: 硬
       - do: say
         who: 旁白
-        text: 她走出會議室，沒有等我回答。
+        text: 她走出會議室，沒有等艾莉絲回答。
 
   # 蘇菲理論：信封由潔德轉交。信封本身每條路線都會出現（父親的電話要接得上碼頭九號）。
   - type: dialogue
@@ -2623,43 +2605,46 @@ scenes:
     steps:
       - do: say
         who: 旁白
-        text: 回到辦公室，桌上有一個沒有寄件人的牛皮紙信封。裡面是一份文件的影本，標題被裁掉了。是沃斯寫給「V.」、沒有寄出的郵件草稿。最後一行寫著：「星期一我會把碼頭九號的事全部說出來。」
+        text: 桌上有一個沒有寄件人的牛皮紙信封。裡面是一封郵件草稿的影本：寄件人葛蘭特・沃斯，收件人只寫了「V.」，狀態：未寄出。最後一行：「星期一我會把碼頭九號的事全部說出來。」
       - do: say
         who: 蘇菲
         text: （便條）那天晚上，沃斯先生在寫的不是辭退信。是這個。
         mood: 緊
       - do: say
         who: 艾莉絲
-        text: 碼頭九號。十二年前那場大火，我父親的那一場。沃斯死前打算說出來的，是這件事。
+        text: 碼頭九號。｜十二年前，我父親的那場火。
         voice: 'off'
         beats:
           - text: 碼頭九號。
-          - text: 十二年前那場大火，我父親的那一場。
-          - text: 沃斯死前打算說出來的，是這件事。
+          - text: 十二年前，我父親的那場火。
+            hush: true
       - do: choose
         mode: chat
         options:
           - text: 交給海爾。事務所的事，先問事務所。
             flags: [draft-to-hale]
             then:
-              - who: 艾莉絲
-                text: 海爾看完草稿，沉默了很久。「這份文件，妳還給過誰？」他問的第一句不是它是真是假。
-                thought: true
+              - who: 旁白
+                text: 海爾看完草稿，很久沒有說話。
+              - who: 馬庫斯・海爾
+                text: 這份文件，妳還給過誰？
+                mood: 硬
           - text: 自己保留。在知道它是什麼之前，誰都不給。
             flags: [draft-kept]
             then:
-              - who: 艾莉絲
-                text: 我把信封放進抽屜最底層，鎖上。鑰匙只有一把。
-                thought: true
+              - who: 旁白
+                text: 艾莉絲把信封放進抽屜最底層，鎖上。鑰匙只有一把。
           - text: 交給潔德。她會知道怎麼讓它見光。
             when:
               cards: [parking-log]
             flags: [draft-to-jade]
             ethics: [leaked-client-doc]
             then:
+              - who: 潔德
+                text: （翻了兩頁就抬頭）這是客戶的機密文件。妳知道這代表什麼吧？
+                mood: 緊
               - who: 艾莉絲
-                text: 潔德翻了兩頁就抬頭看我。「這是客戶的機密文件，妳知道這是什麼意思嗎？」我知道。
-                thought: true
+                text: 我知道。
 
   - type: dialogue
     id: epilogue-smear
@@ -2697,7 +2682,7 @@ scenes:
         mood: 緊
       - do: say
         who: 艾莉絲
-        text: 我知道她說謊的理由，還是選了這條路。｜陪審團不會記得這件事，我會。
+        text: 我知道她為什麼說謊。
         voice: 'off'
 
   - type: dialogue
@@ -2709,10 +2694,6 @@ scenes:
       - do: say
         who: 旁白
         text: 手機響起。來電顯示：州立監獄，受刑人付費電話。
-      - do: say
-        who: 艾莉絲
-        text: 十二年了。他從來沒有主動打給我。
-        thought: true
       - do: say
         who: 父親
         text: 艾莉絲。我聽說葛蘭特・沃斯死了。妳現在在惠特洛克做事？
