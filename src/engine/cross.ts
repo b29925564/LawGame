@@ -75,7 +75,7 @@ function losePatience(c: CaseData, s: CrossState, why: string): CrossState {
       { ...next, jury: r.jury, deltas: r.deltas, rebuked: true, stage: 'closing' },
       {
         who: JUDGE,
-        text: '律師，我已經警告過妳了。本庭不容許這樣浪費陪審團的時間。詰問到此為止。',
+        text: '律師，我已經警告過你了。本庭不容許這樣浪費陪審團的時間。詰問到此為止。',
       },
     );
   }

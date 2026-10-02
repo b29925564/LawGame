@@ -127,7 +127,7 @@ function losePatience(s: TrialScene, st: TrialState, why: string): TrialState {
     const r = shiftAll(s, next.jury, 5);
     next = say(
       { ...next, jury: r.jury, deltas: r.deltas, rebuked: true, stage: 'done' },
-      { who: JUDGE, text: '律師，我警告過妳了。詰問到此為止，本庭不容許這樣浪費陪審團的時間。' },
+      { who: JUDGE, text: '律師，我警告過你了。詰問到此為止，本庭不容許這樣浪費陪審團的時間。' },
     );
   }
   return next;

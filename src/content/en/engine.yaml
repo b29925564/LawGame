@@ -1,0 +1,88 @@
+# 引擎自己產生的句子（遊戲系統負責）。key 是中文原句，{name} 是樣板變數，代進去的值也會再查表。
+# 引擎裡的列舉值（異議種類、關係、標籤、判決）也在這裡，只在顯示時翻譯。
+
+# 人物與稱謂
+法官: Judge
+伊恩: Ian
+旁白: Narrator
+對造律師: Opposing counsel
+莫羅檢察官: DA Moreau
+
+# 異議種類
+誘導: Leading
+傳聞: Hearsay
+推測: Speculation
+無關: Relevance
+已問已答: Asked and answered
+缺乏基礎: Lack of foundation
+特權: Privilege
+
+# 推理關係與論點標籤
+矛盾: Contradicts
+支持: Supports
+縮小範圍: Narrows down
+說明動機: Shows motive
+說明機會: Shows opportunity
+邏輯: Logic
+情感: Emotion
+權威: Authority
+程序: Procedure
+論點: Argument
+
+# 陪審團
+有罪傾向: Leaning guilty
+超越合理懷疑: Beyond a reasonable doubt
+有罪: Guilty
+無罪: Not guilty
+有責傾向: Leaning liable
+優勢證據: Preponderance of the evidence
+有責: Liable
+無責: Not liable
+陪審團僵局: Hung jury
+點頭: Nods
+抄筆記: Takes notes
+皺眉: Frowns
+看向被告: Looks at the defendant
+'{juror}被多數說服，改變了立場。': '{juror} is swayed by the majority and changes sides.'
+'陪審長（{juror}）主張{verdict}。': 'The foreperson ({juror}) argues for {verdict}.'
+
+# 庭審
+'異議，{reason}。': 'Objection, {reason}.'
+異議成立。陪審團請不要理會這個問題。: Sustained. The jury will disregard the question.
+異議駁回。律師，這個問題沒有問題。: Overruled. There's nothing wrong with that question, counsel.
+'辯方可以詰問{name}。': 'The defense may examine {name}.'
+'辯方可以開始詰問{name}。': 'The defense may begin its examination of {name}.'
+'檢方傳喚{name}。辯方可以開始詰問。': 'The prosecution calls {name}. The defense may begin.'
+異議，缺乏證據基礎。這份資料還沒有被本庭採納。: Objection, lack of foundation. That material hasn't been admitted.
+異議成立。律師，先建立基礎。: Sustained. Lay a foundation first, counsel.
+律師，證人還沒有就這一點作證。: Counsel, the witness hasn't testified to that yet.
+開場時你許下的承諾，兌現了。陪審團記得。: You kept the promise you made in your opening. The jury remembers.
+陪審團請注意：本席裁定，證人的證詞全部刪除。各位評議時不得列入考慮。: "Members of the jury: the witness's testimony is stricken in its entirety. You may not consider it in your deliberations."
+異議成立。律師，這個問題證人已經回答過了。: Sustained. The witness has already answered that, counsel.
+律師，我警告過你了。詰問到此為止，本庭不容許這樣浪費陪審團的時間。: "I warned you, counsel. This examination is over. I won't have the jury's time wasted."
+律師，我已經警告過你了。本庭不容許這樣浪費陪審團的時間。詰問到此為止。: "I've already warned you, counsel. I won't have the jury's time wasted. This examination is over."
+律師，請問這和本案有什麼關係？請換下一個問題。: Counsel, how is this relevant? Move on.
+檢方異議：與本案無關。異議成立。: 'Prosecution objects: relevance. Sustained.'
+'（出示「{name}」）{text}': '(Presents "{name}") {text}'
+律師，這份論點和證人剛才的說法有什麼關係？: Counsel, what does that have to do with what the witness just said?
+檢方異議：缺乏證據基礎。異議成立，這份資料不得出示。: 'Prosecution objects: lack of foundation. Sustained. That material may not be shown.'
+
+# 錄取證詞
+我指示證人不要回答。: I'm instructing the witness not to answer.
+'異議，{reason}。（庭外取證沒有法官裁決，異議只記錄在案，證人仍須回答）': 'Objection, {reason}. (No judge at a deposition: the objection is noted for the record and the witness must still answer.)'
+
+# 桌面
+這條已經連過了。: You've already linked these.
+'連起來了：{text}': 'Linked: {text}'
+這兩張卡連不起來，至少不是這種關係。白花了 1 工時。: These two don't connect, at least not like that. One hour wasted.
+案情會議通過：這條推理成立，產生論點卡。: 'Case meeting: the reasoning holds. Argument card created.'
+案情會議結論：這樣回答站不住。沒有人說得出是哪裡不對。: "Case meeting: that answer doesn't hold up. Nobody can say exactly why."
+案情會議結論：這條推理站不住。沒有人說得出是哪裡不對。: "Case meeting: the reasoning doesn't hold up. Nobody can say exactly why."
+'強度 {n}・{tags}': 'Strength {n} · {tags}'
+
+# 談判
+'我手上有這個：{name}。': 'I have this: {name}.'
+
+# 存檔標籤
+'第 {n} 集・{act}': 'Episode {n} · {act}'
+本集完: End of episode

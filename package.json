@@ -12,7 +12,9 @@
     "format": "prettier --write .",
     "test": "vitest run",
     "validate:content": "vitest run src/content",
-    "e2e": "playwright test"
+    "e2e": "playwright test",
+    "i18n": "node scripts/i18n.mjs",
+    "i18n:rekey": "node scripts/i18n.mjs --rekey"
   },
   "dependencies": {
     "react": "^19.3.0",
