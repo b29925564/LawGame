@@ -84,6 +84,11 @@
 # Closing argument and verdict
 判決: Verdict
 '第 {n} 輪評議': 'Deliberation round {n}'
+損害總額: Total damages
+死者過失比例: Decedent's share of fault
+判賠金額: Award
+懲罰性賠償: Punitive damages
+'不成立（{votes} 票，需要 {need} 票）': 'Not found ({votes} votes, {need} needed)'
 '・ 基調 {state}': '· Tone {state}'
 已選: set
 未選: not set
