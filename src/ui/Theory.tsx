@@ -117,7 +117,7 @@ export function Opening({ scene }: { scene: OpeningScene }) {
       ) : (
         <>
           <p className="muted small">
-            承諾 {st.promises.length} / {scene.picks}
+            承諾 {st.promises.length} / {Math.min(scene.picks, t.promises.length)}
           </p>
           <ul className="stack ious">
             {t.promises.map((p, i) => (

@@ -1,3 +1,4 @@
+import { useCaseTerms } from './terms';
 import * as closing from '../engine/episode/closing';
 import type { ClosingScene } from '../engine/episode/schema';
 import {
@@ -19,6 +20,7 @@ import { useState } from 'react';
 export function Closing({ scene }: { scene: ClosingScene }) {
   const { progress, pickArg, setTone, deliver, advance } = useEpisode();
   const st = closingState(progress, scene);
+  const terms = useCaseTerms();
   const exposed = exposedArgs(progress);
   const args = closingArgs(progress);
   const [tab, setTab] = useState<'args' | 'tone'>('args');
@@ -81,7 +83,7 @@ export function Closing({ scene }: { scene: ClosingScene }) {
           </p>
           {need < scene.picks && (
             <p className="bad-text small">
-              手上的論點不夠，結辯會空 {scene.picks - need} 格，檢方的說法沒人反駁。
+              手上的論點不夠，結辯會空 {scene.picks - need} 格，{terms.other}的說法沒人反駁。
             </p>
           )}
           {!promisesOf(progress).theory && (
