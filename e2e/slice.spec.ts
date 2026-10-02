@@ -28,17 +28,20 @@ async function solve(
   const q = page.locator('section.workbench');
   await expect(q).toContainText(title);
   const links = q.locator('section.links');
-  // 電腦版的卡片在右邊證據欄，點了直接放上連線台；手機版在連線台底下的「挑卡片」。
+  // 電腦版的卡片在右邊證據欄，點了直接放上連線台；手機版點連線台的空格打開挑卡片抽屜。
   const side = page.locator('.sheet.side');
   const wide = await side.isVisible();
-  if (!wide) await links.locator('summary').click();
   for (const name of names) {
     if (wide)
       await side
         .locator('.card.pickable', { has: page.locator('strong', { hasText: name }) })
         .first()
         .click();
-    else await card(links, name).click();
+    else {
+      // 手機：點連線台的空格打開挑卡片抽屜，點一張就放上去。
+      await links.getByRole('button', { name: '放一張卡' }).first().click();
+      await card(page.locator('.card-sheet'), name).click();
+    }
   }
   await links.getByRole('radio', { name: relation }).click();
   await links.getByRole('button', { name: '連起來' }).click();

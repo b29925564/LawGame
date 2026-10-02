@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import * as desk from '../engine/episode/desk';
 import * as discovery from '../engine/episode/discovery';
 import type { DeskScene } from '../engine/episode/schema';
@@ -446,6 +447,7 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
     return () => useCardPick.setState({ pool: [], on: [], pick: undefined });
   }, [linking, poolIds, picked, toggleLinkCard]);
   const [kind, setKind, showKind] = useKindFilter();
+  const [picking, setPicking] = useState(false);
   // 連錯、交錯的那一下才抖；之後重開畫面不再抖。
   const badShake = useBump(st.badLinks);
   // 剛連出來的那條發現亮一下；畫面一打開就有的不亮。
@@ -547,7 +549,18 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
           >
             {t(c.name, scope)}
           </button>
-        ) : null}
+        ) : wide ? (
+          <span className="slot-hint">{t('點右邊的卡片放上來')}</span>
+        ) : (
+          // 手機：空格就是挑卡片的入口，挑完回到這裡看得到 A、B（UX 規格 P1-11）。
+          <button
+            className="slot-open"
+            disabled={i > st.link.cards.length}
+            onClick={() => setPicking(true)}
+          >
+            {t('放一張卡')}
+          </button>
+        )}
       </li>
     );
   };
@@ -608,28 +621,35 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
           </p>
         )}
       </div>
-      {!wide && (
-        <details className="bench-cards">
-          <summary>{t('挑卡片（{n}）', { n: pool.length })}</summary>
+      {!wide && picking && (
+        <CardSheet
+          title={t('放到 {slot}', { slot: st.link.cards.length === 0 ? 'A' : 'B' })}
+          onClose={() => setPicking(false)}
+        >
           <KindFilter items={pool} value={kind} onPick={setKind} />
-          <ul className="stack">
+          <ul className="stack sheet-list">
             {timeGroups(
               pool.filter((c) => showKind(c) || st.link.cards.includes(c.id)),
-              (c) => (
-                <li key={c.id}>
-                  <CardPick
-                    item={c}
-                    on={st.link.cards.includes(c.id)}
-                    verb={
-                      st.link.cards[0] === c.id ? 'A' : st.link.cards[1] === c.id ? 'B' : undefined
-                    }
-                    onPick={() => toggleLinkCard(c.id)}
-                  />
-                </li>
-              ),
+              (c) => {
+                const at = st.link.cards[0] === c.id ? 'A' : st.link.cards[1] === c.id ? 'B' : '';
+                return (
+                  <li key={c.id}>
+                    <CardPick
+                      item={c}
+                      on={!!at}
+                      disabled={!!at}
+                      tag={at ? t('已在 {slot}', { slot: at }) : undefined}
+                      onPick={() => {
+                        toggleLinkCard(c.id);
+                        setPicking(false);
+                      }}
+                    />
+                  </li>
+                );
+              },
             )}
           </ul>
-        </details>
+        </CardSheet>
       )}
     </section>
   );
@@ -1004,6 +1024,39 @@ function Jobs({ scene, held }: { scene: DeskScene; held: string[] }) {
  * 結束調查要按兩次：第一次只把按鈕換成確認，標出還剩幾小時（試玩回報：解完一題就以為查完了）。
  * 四秒沒按就恢復原狀。
  */
+/** 手機的挑卡片底部抽屜：從連線台的空格打開，點一張就放上去並關掉。 */
+function CardSheet({
+  title,
+  onClose,
+  children,
+}: {
+  title: string;
+  onClose: () => void;
+  children: ReactNode;
+}) {
+  const t = useT();
+  useEffect(() => {
+    const esc = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
+    window.addEventListener('keydown', esc);
+    return () => window.removeEventListener('keydown', esc);
+  }, [onClose]);
+  return createPortal(
+    <div className="sheet-wrap">
+      <button className="sheet-back" aria-label={t('關閉')} onClick={onClose} />
+      <section className="sheet card-sheet" role="dialog" aria-modal="true" aria-label={title}>
+        <div className="panel-head">
+          <h2>{title}</h2>
+          <button className="link" onClick={onClose}>
+            {t('關閉')}
+          </button>
+        </div>
+        {children}
+      </section>
+    </div>,
+    document.body,
+  );
+}
+
 /**
  * 一條發現一張便條：編號與關係、連起來的兩張卡、內容。點了放進答案。
  * 內容預設兩行，超過才出現「展開」（UX 規格：便條一長，發現區就要捲好幾屏）。
