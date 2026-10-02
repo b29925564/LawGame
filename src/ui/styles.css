@@ -4834,6 +4834,15 @@ button.iou[aria-pressed='true'] {
   object-fit: cover;
   will-change: opacity;
 }
+/* 標頭（證人、法官耐心、借據）壓在畫面最上緣，那裡在高心證時是最亮的牆，先壓暗。 */
+.court-light::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: 1;
+  height: 170px;
+  background: linear-gradient(rgb(11 14 19 / 82%), rgb(11 14 19 / 50%) 60%, transparent);
+}
 /* 手機圖是 4:5（法官席與證人席都要入鏡）：貼在畫面上方，下緣淡進底色。 */
 @media (max-width: 700px) {
   .court-light img {
@@ -4854,4 +4863,12 @@ body:has(.court-light) {
 /* 光層是暗的房間：法庭裡一律用深色介面，字才壓得住底圖。 */
 :root:has(.court-light) {
   color-scheme: dark;
+}
+
+/* 英文分頁字比較長：窄螢幕收緊間距，五個分頁塞得進一列。 */
+@media (max-width: 520px) {
+  :root:lang(en) .apps button {
+    padding-inline: 7px;
+    font-size: 0.9em;
+  }
 }
