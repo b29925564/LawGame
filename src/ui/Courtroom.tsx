@@ -7,7 +7,7 @@ import {
   keptPromises,
   promisesOf,
   courtScene,
-  closingArgs,
+  courtArgs,
   deskSceneOf,
   deskState,
   exposedArgs,
@@ -184,7 +184,7 @@ export function Courtroom({ scene: raw }: { scene: TrialScene }) {
 
   // 手上確認過的論點，用來對質。論點的強度與標籤定義在調查那一幕的疑問裡。
   const deskScene = deskSceneOf(progress);
-  const args = closingArgs(progress);
+  const args = courtArgs(progress);
   const deskDone = deskScene ? deskState(progress, deskScene) : null;
   // 談判攤牌過、或錄取時問到底牌話題的論點，對方已經備好反擊，衝擊減半（企劃書 6.8）。
   const exposed = exposedArgs(progress);

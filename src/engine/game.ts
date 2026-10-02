@@ -214,6 +214,19 @@ export function heldArgs(p: Progress) {
     .map((q) => q.argument);
 }
 
+/**
+ * 庭上能出示的論點：結辯能用的，加上只用於聲請、但正好是某位證人主張的反駁依據的
+ * （例如「樣本不適用」拆費雪的倍數）。我方自己的風險評估不是任何主張的反駁，所以不會出現。
+ */
+export function courtArgs(p: Progress) {
+  const rebuts = new Set(
+    episodeOf(p)
+      .scenes.filter((s): s is TrialScene => s.type === 'trial')
+      .flatMap((t) => t.witness.claims.map((c) => c.argument)),
+  );
+  return heldArgs(p).filter((a) => !a.motionOnly || rebuts.has(a.id));
+}
+
 export function closingArgs(p: Progress) {
   return (deskSceneOf(p)?.questions ?? [])
     .filter((q) => p.cards.includes(q.argument.id) && !q.argument.motionOnly)
