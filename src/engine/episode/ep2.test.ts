@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { episodes } from '../../content';
 import { matches } from './branch';
-import { branchContext } from '../game';
+import { branchContext, heldArgs } from '../game';
 
 const ep = episodes.ep2;
 const scene = (id: string) => ep.scenes.find((s) => s.id === id)!;
@@ -25,5 +25,12 @@ describe('第 2 集庭審', () => {
     for (const s of ep.scenes)
       if (s.type === 'trial' || s.type === 'defense') expect(s.examiner).toBe(ep.counsel);
     expect(ep.counsel).not.toBe(episodes.ep1.counsel);
+  });
+});
+
+describe('第 2 集審前聲請', () => {
+  it('調查階段推出的論點 C，審前聲請的支撐清單也看得到', () => {
+    const ids = heldArgs({ ...base, cards: ['arg-c', 'fisher-sample'] }).map((a) => a.id);
+    expect(ids).toContain('arg-c');
   });
 });

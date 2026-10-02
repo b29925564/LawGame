@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import * as desk from '../engine/episode/desk';
 import * as discovery from '../engine/episode/discovery';
 import type { DeskScene } from '../engine/episode/schema';
-import { deskState, useEpisode } from '../engine/game';
+import { deskState, heldArgs, useEpisode } from '../engine/game';
 import { play } from '../engine/sound';
 import {
   CardPick,
@@ -719,7 +719,7 @@ function Motions({ scene, held }: { scene: DeskScene; held: string[] }) {
   const { progress, pickBasis, pickRequest, toggleSupport, fileMotion } = useEpisode();
   const st = deskState(progress, scene);
   const pool = scene.cards.filter((c) => held.includes(c.id));
-  const args = scene.questions.filter((q) => held.includes(q.argument.id)).map((q) => q.argument);
+  const args = heldArgs(progress);
   // 一打開就停在還沒裁定的那一份上。
   const open = scene.motions.find((m) => desk.motionAttempt(st, m.id).ruling !== 'granted');
   const [pick, setPick] = useState<string>(open?.id ?? scene.motions[0]?.id ?? '');
