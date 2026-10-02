@@ -611,7 +611,7 @@ scenes:
           - 補充鑑識報告：被告外套袖口血跡與死者 DNA 相符。
           - 附帶一提，我的條件還在桌上。
       - id: mail-devon
-        from: 戴文・瑞斯　助理
+        from: 戴文・艾許　助理
         subject: 我把你可能還沒看的東西列一下
         afterHours: 6
         body:

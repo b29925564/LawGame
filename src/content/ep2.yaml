@@ -382,7 +382,7 @@ scenes:
           - 我不會假裝這些對我有利。你也別假裝你那邊沒東西。
         gives: [med-record, voice-memo]
       - id: mail-devon
-        from: 戴文・瑞斯　助理
+        from: 戴文・艾許　助理
         subject: App 日誌我整理好了（有點多）
         afterHours: 3
         gives: [app-log]
