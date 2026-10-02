@@ -19,7 +19,7 @@ export interface DefenseState {
   log: DefenseLine[];
 }
 
-export const YOU = '以安';
+export const YOU = '伊恩';
 /** 辯方自己傳的證人，陪審團本來就打折聽：直接詰問的衝擊只算這麼多，彈劾檢方證人才是主力。 */
 export const OWN_WITNESS = 0.4;
 export const DA = '莫羅檢察官';

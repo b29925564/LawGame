@@ -175,7 +175,7 @@ scenes:
     lines:
       - 第二集　和解的價格
 
-  # 第一幕：指派。惠特洛克把案子交給以安，亞瑟・卡爾德第一次在場。
+  # 第一幕：指派。惠特洛克把案子交給伊恩，亞瑟・卡爾德第一次在場。
   - type: dialogue
     id: assign
     act: 第一幕
@@ -193,7 +193,7 @@ scenes:
         text: 上一個案子，你讓卡爾德的名字上了三週新聞。這一個，你替他們把名字拿下來。
         mood: 硬
       - do: say
-        who: 以安
+        who: 伊恩
         text: 妳要我替卡爾德辯護。
       - do: say
         who: 維多莉亞・惠特洛克
@@ -227,7 +227,7 @@ scenes:
         text: 羅根當你的二席。對方律師是丹尼爾・奧卡福，我想你認識。
         mood: 硬
       - do: say
-        who: 以安
+        who: 伊恩
         text: 我們以前一起輸過很多案子。
 
   - type: dialogue
@@ -240,7 +240,7 @@ scenes:
         text: 民事案。你沒打過幾場吧。
         mood: 暖
       - do: say
-        who: 以安
+        who: 伊恩
         text: 公設辯護人不接民事。
       - do: say
         who: 馬庫斯・海爾
@@ -293,7 +293,7 @@ scenes:
           - who: 崔佛・林
             text: 系統每一季都在改版。你要問哪一版？
             mood: 硬
-          - who: 以安
+          - who: 伊恩
             text: 他死的時候那一版。
           - who: 崔佛・林
             text: 那一版就是提醒。
@@ -314,7 +314,7 @@ scenes:
             text: 我說過了，提醒一直都在。
             mood: 硬
     calm:
-      - who: 以安
+      - who: 伊恩
         text: 林先生，我是你們的律師。你在這裡說的話，我要先聽到，才不會在法庭上第一次聽到。
       - who: 崔佛・林
         text: ……好。
@@ -378,7 +378,7 @@ scenes:
         from: 丹尼爾・奧卡福　原告律師
         subject: 維加案　第一批開示
         body:
-          - 以安，附上我們這邊的開示：病歷、語音、死亡證明。
+          - 伊恩，附上我們這邊的開示：病歷、語音、死亡證明。
           - 我不會假裝這些對我有利。你也別假裝你那邊沒東西。
         gives: [med-record, voice-memo]
       - id: mail-devon
@@ -400,7 +400,7 @@ scenes:
         report:
           - who: 旁白
             text: 傳票核發。藥局的回函只有一頁：降壓藥處方三個月，領藥紀錄一次。
-          - who: 以安
+          - who: 伊恩
             text: 他知道。他沒吃。
             mark: { kind: highlight, word: 一次, on: pharmacy }
       - id: job-it
@@ -415,7 +415,7 @@ scenes:
             text: 資訊部給了。三月十四日，崔佛・林簽的。理由欄只寫四個字：依法務意見。
           - who: 戴文
             text: 還有……他們連營運群組的截圖一起寄來了。我想他們沒看就寄了。
-          - who: 以安
+          - who: 伊恩
             text: 依法務意見
             mark: { kind: highlight, word: 依法務意見, on: change-ticket }
       - id: job-memo
@@ -465,7 +465,7 @@ scenes:
           strained:
             - who: 旁白
               text: 法官看了一眼特權清單：「設定變更單是營運文件，不是律師意見。本庭命令交出。」
-            - who: 以安
+            - who: 伊恩
               text: 駁回
               mark: { kind: stamp, text: 駁回 }
       - id: rq-chat
@@ -589,7 +589,7 @@ scenes:
       - who: 羅根・普萊斯
         text: 你要把變更單交出去？
         mood: 硬
-      - who: 以安
+      - who: 伊恩
         text: 我還沒決定。但我現在知道，這案子值多少了。
       - who: 戴文
         text: 林律師……法務意見的保存紀錄我也調出來了。附件裡有一張很舊的東西，上面寫著碼頭九號。
@@ -670,8 +670,8 @@ scenes:
       role: 卡爾德快遞　資深系統工程師
     intro:
       - who: 丹尼爾・奧卡福
-        text: 以安，好久不見。你坐在那一邊，看起來很不習慣。
-      - who: 以安
+        text: 伊恩，好久不見。你坐在那一邊，看起來很不習慣。
+      - who: 伊恩
         text: 問你的問題吧，丹尼爾。
     script:
       - id: e-role
@@ -696,7 +696,7 @@ scenes:
       - who: 丹尼爾・奧卡福
         text: 一個下午。謝謝妳，吳小姐。
       - who: 旁白
-        text: 錄取結束。葛瑞絲收拾筆電的時候，一直沒有抬頭看以安。
+        text: 錄取結束。葛瑞絲收拾筆電的時候，一直沒有抬頭看伊恩。
 
   - type: desk
     id: pretrial
@@ -717,7 +717,7 @@ scenes:
         from: 丹尼爾・奧卡福　原告律師
         subject: 調解會議
         body:
-          - 以安，調解會議排在下週二。瑪莉索會親自來。
+          - 伊恩，調解會議排在下週二。瑪莉索會親自來。
           - 她要的東西，不全是錢。你到時候就知道了。
     jobs: []
     motions:
@@ -738,13 +738,13 @@ scenes:
         granted:
           - who: 旁白
             text: 雷耶斯法官翻到附註 7，看了很久：「長途貨車和市區外送不是同一件事。本庭排除費雪醫師關於風險倍數的證詞。」
-          - who: 以安
+          - who: 伊恩
             text: 已排除
             mark: { kind: stamp, text: 已排除, on: fisher-report }
         denied:
           - who: 旁白
             text: 「樣本差異屬於證明力問題，交給陪審團判斷。聲請駁回。」
-          - who: 以安
+          - who: 伊恩
             text: 駁回
             mark: { kind: stamp, text: 駁回 }
         gives: [daubert-ruling]
@@ -772,7 +772,7 @@ scenes:
       - who: 羅根・普萊斯
         text: 開庭的時候，奧卡福一拿出變更單，崔佛就完了。
         mood: 硬
-      - who: 以安
+      - who: 伊恩
         text: 所以我們不能讓這案子開庭。
       - who: 羅根・普萊斯
         text: 還是不能讓它變貴。亞瑟給的數字是一百五十萬。
@@ -802,7 +802,7 @@ scenes:
       - who: 旁白
         text: 調解室很小。瑪莉索・維加坐在奧卡福旁邊，手裡握著一支舊手機，螢幕裂了一角。
       - who: 丹尼爾・奧卡福
-        text: 我們有派單日誌、死後的扣分，還有一個說「一個下午就能改回去」的工程師。你有什麼，以安？
+        text: 我們有派單日誌、死後的扣分，還有一個說「一個下午就能改回去」的工程師。你有什麼，伊恩？
       - who: 瑪莉索・維加
         text: 我不要聽數字。我要知道那個按鈕，以後能不能按。
     offers:
@@ -862,7 +862,7 @@ scenes:
             text: 我知道雷耶斯怎麼裁的。我還有一般醫學證人。
         caught:
           - who: 丹尼爾・奧卡福
-            text: 費雪醫師還站在我的證人名單上，以安。法官沒有排除她。
+            text: 費雪醫師還站在我的證人名單上，伊恩。法官沒有排除她。
     authority:
       cap: 1500000
       raise: 500000
@@ -877,7 +877,7 @@ scenes:
           - who: 亞瑟・卡爾德
             text: 最後五十萬。之後不要再打來。
       over:
-        - who: 以安
+        - who: 伊恩
           text: 超過授權了。｜要嘛打給亞瑟，｜要嘛放手。
           voice: 'off'
     reveals:
@@ -885,15 +885,15 @@ scenes:
         text: ……讓我跟我的委託人談一下。
     walkOut:
       - who: 丹尼爾・奧卡福
-        text: 那就法庭見。陪審團會看到那三筆派單，以安。
+        text: 那就法庭見。陪審團會看到那三筆派單，伊恩。
       - who: 瑪莉索・維加
         text: 他死了之後，你們的 App 還在叫他接單。
     accepted:
       - who: 瑪莉索・維加
         text: 好。
       - who: 丹尼爾・奧卡福
-        text: 你打得很公平，以安。不管你信不信。
-      - who: 以安
+        text: 你打得很公平，伊恩。不管你信不信。
+      - who: 伊恩
         text: 和解書上，｜沒有任何一個字寫著「我們錯了」。
         voice: 'off'
 
@@ -1113,7 +1113,7 @@ scenes:
     intro:
       - who: 法官
         text: 被告，開場陳述。
-      - who: 以安
+      - who: 伊恩
         text: 每張承諾一張借據
         mark: { kind: iou }
 
@@ -1221,7 +1221,7 @@ scenes:
     outro:
       - who: 旁白
         text: 法官宣布休庭十分鐘。瑪莉索走下證人席，經過被告席時停了一下，沒有說話。
-      - who: 以安
+      - who: 伊恩
         text: 我贏了這一題。｜我寧可輸。
         voice: 'off'
 
@@ -1440,7 +1440,7 @@ scenes:
       role: 卡爾德快遞　營運副總
     intro:
       - who: 旁白
-        text: 以安站起來：「被告傳喚崔佛・林。」崔佛扣上西裝的第一顆釦子，走向證人席。
+        text: 伊恩站起來：「被告傳喚崔佛・林。」崔佛扣上西裝的第一顆釦子，走向證人席。
     prep:
       hours: 2
       options:
@@ -1500,7 +1500,7 @@ scenes:
       - who: 馬庫斯・海爾
         text: 兩個論點。民事陪審團不需要被說服，只需要被說動一點點。
         mood: 暖
-      - who: 以安
+      - who: 伊恩
         text: 我知道他們會往哪邊動。我只是不確定，我希望他們往哪邊動。
     tones:
       - id: t-logic
@@ -1538,7 +1538,7 @@ scenes:
           - who: 亞瑟・卡爾德
             text: （訊息）漂亮。下一件也交給你。
           - who: 旁白
-            text: 法院台階上，瑪莉索・維加站在最下面一階，看著以安走出來。她什麼都沒有說。
+            text: 法院台階上，瑪莉索・維加站在最下面一階，看著伊恩走出來。她什麼都沒有說。
       - id: shared-liable
         when:
           verdict: [有責]
@@ -1547,7 +1547,7 @@ scenes:
           - who: 旁白
             text: 陪審長站起來。「我們認定被告有責。死者本人就其損害，與有過失百分之四十。」
           - who: 丹尼爾・奧卡福
-            text: 你打得很公平，以安。我是說真的。
+            text: 你打得很公平，伊恩。我是說真的。
           - who: 瑪莉索・維加
             text: 他們承認了。判決書上寫的，他們承認了。
     verdicts:
@@ -1570,8 +1570,8 @@ scenes:
         - who: 旁白
           text: 陪審長站起來。「庭上，我們沒有辦法達到所需的票數。」
         - who: 旁白
-          text: 法官宣布審判無效。走廊上，奧卡福遞給以安一張名片，背面寫著一個數字。
-        - who: 以安
+          text: 法官宣布審判無效。走廊上，奧卡福遞給伊恩一張名片，背面寫著一個數字。
+        - who: 伊恩
           text: 評議票數
           mark: { kind: tally }
 
@@ -1613,7 +1613,7 @@ scenes:
         mood: 暖
       - do: say
         who: 旁白
-        text: 瑪莉索從調解室出來，經過以安身邊，沒有停下來。
+        text: 瑪莉索從調解室出來，經過伊恩身邊，沒有停下來。
 
   # 所有路線都接：戴文與那張銷毀令，然後是父親的電話。
   - type: dialogue
@@ -1638,7 +1638,7 @@ scenes:
         who: 戴文
         text: 羅根叫我別多事。我……我想先讓你知道。
       - do: say
-        who: 以安
+        who: 伊恩
         text: V.
         mark: { kind: highlight, word: V. }
 
@@ -1646,11 +1646,11 @@ scenes:
     id: epilogue-father
     act: 尾聲
     epilogue: true
-    owner: 以安
+    owner: 伊恩
     steps:
       - do: caption
         time: '23:40'
-        text: 港灣大道一號，頂樓只剩一盞燈。以安的手機響了。
+        text: 港灣大道一號，頂樓只剩一盞燈。伊恩的手機響了。
       - do: notify
         time: '23:40'
         message:
@@ -1674,4 +1674,4 @@ scenes:
       - do: talk
         time: '23:43'
         who: 理查・索恩
-        text: 小安，小心那棟樓裡簽名的人。
+        text: 伊恩，小心那棟樓裡簽名的人。

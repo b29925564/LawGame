@@ -18,7 +18,7 @@ export const WINDOW_MS = 300;
 
 export function merge(items: Announcement[]): string {
   if (items.length === 1) return items[0].text;
-  return `以安標記了 ${items.length} 處：${items.map((i) => i.word ?? i.text).join('、')}`;
+  return `伊恩標記了 ${items.length} 處：${items.map((i) => i.word ?? i.text).join('、')}`;
 }
 
 export class AnnounceQueue {
@@ -44,7 +44,7 @@ export class AnnounceQueue {
   /** 畫外字幕出完字時呼叫，立刻播；之後到 voiceEnd 之前，其他記號都先等著。 */
   voice(text: string) {
     this.vo = true;
-    this.out(`以安沒有說出口：${text}`);
+    this.out(`伊恩沒有說出口：${text}`);
   }
 
   /** 畫外字幕退場時呼叫，補播等著的記號。 */

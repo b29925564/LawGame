@@ -47,7 +47,7 @@ export interface TrialState {
 }
 
 export const JUDGE = '法官';
-export const YOU = '以安';
+export const YOU = '伊恩';
 export const DA = '莫羅檢察官';
 
 /** 隔天開庭，前一場辯方拆掉的懷疑回彈這麼多（記憶淡化）；其餘延續下去。 */

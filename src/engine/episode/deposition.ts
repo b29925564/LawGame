@@ -64,10 +64,10 @@ export function defend(s: DepositionScene, st: DepoState, reason: DepoObjection 
   const log: Line[] = [
     { who: s.examiner, text: q.q, mood: '平', thought: false },
     ...(reason
-      ? [{ who: '以安', text: `異議，${reason}。`, mood: '硬' as const, thought: false }]
+      ? [{ who: '伊恩', text: `異議，${reason}。`, mood: '硬' as const, thought: false }]
       : []),
     ...(silenced
-      ? [{ who: '以安', text: '我指示證人不要回答。', mood: '硬' as const, thought: false }]
+      ? [{ who: '伊恩', text: '我指示證人不要回答。', mood: '硬' as const, thought: false }]
       : [{ who: s.witness.name, text: q.a, mood: '平' as const, thought: false }]),
   ];
   const i = (st.i ?? 0) + 1;
@@ -96,7 +96,7 @@ export function ask(s: DepositionScene, st: DepoState, id: string): DepoState {
   const q = s.topics.flatMap((t) => t.questions).find((x) => x.id === id);
   if (s.side === 'theirs' || !q || !canAsk(st, id)) return st;
   const log: Line[] = [
-    { who: '以安', text: q.q, mood: '平', thought: false },
+    { who: '伊恩', text: q.q, mood: '平', thought: false },
     ...(q.objection
       ? [
           {
