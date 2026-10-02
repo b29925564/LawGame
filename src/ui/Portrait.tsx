@@ -1,13 +1,13 @@
-import type { ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import type { Line } from '../engine/episode/schema';
 import { useT } from '../i18n';
+import { LUCAS, lucas } from './cast';
 import { useScope } from './lang';
 import { MarkLine } from './Marks';
 import { VoLine } from './VoiceOver';
 
 /**
- * 角色半身照的暫代版：用固定的五官元件畫出來，情緒換表情。
- * 正式立繪進來時只要換掉這個元件（製作流程第 4 節的素材管線）。
+ * 角色頭像，4:5。盧卡斯用正式立繪（cast.ts）；其他人還是暫代版，用固定的五官元件畫出來，情緒換表情。
  */
 const palette: Record<string, string> = {
   盧卡斯: '#1f4e8c',
@@ -47,17 +47,33 @@ export function Portrait({ who, mood = '平' }: { who: string; mood?: Line['mood
   const t = useT();
   const color = palette[who] ?? '#4a5866';
   if (who === '旁白') return null;
+  const src = who === LUCAS ? lucas(mood, 144) : undefined;
+  if (src)
+    return (
+      <span className="portrait art" role="img" aria-label={t(who)}>
+        <img
+          src={src}
+          srcSet={`${src} 144w, ${lucas(mood, 512)} 512w`}
+          sizes="(min-width: 768px) 108px, 84px"
+          alt=""
+          decoding="async"
+        />
+      </span>
+    );
+  const brow = Number(brows[mood] ?? 0);
   return (
-    <svg className="portrait" viewBox="0 0 64 64" role="img" aria-label={t(who)} focusable="false">
-      <circle cx="32" cy="32" r="30" fill={color} opacity="0.16" />
-      <circle cx="32" cy="27" r="17" fill={color} opacity="0.32" />
-      <path d="M 8 62 q 24 -18 48 0 z" fill={color} opacity="0.32" />
-      <g stroke={color} strokeWidth="2.5" strokeLinecap="round" fill="none">
-        <line x1="21" y1={26 + Number(brows[mood]) / 5} x2="29" y2={24 + Number(brows[mood]) / 4} />
-        <line x1="35" y1={24 + Number(brows[mood]) / 4} x2="43" y2={26 + Number(brows[mood]) / 5} />
-        <circle cx="25" cy="33" r="1.6" fill={color} stroke="none" />
-        <circle cx="39" cy="33" r="1.6" fill={color} stroke="none" />
-        <path d={mouths[mood]} />
+    <svg className="portrait" viewBox="0 0 64 80" role="img" aria-label={t(who)} focusable="false">
+      <g transform="translate(0 14)">
+        <circle cx="32" cy="32" r="30" fill={color} opacity="0.16" />
+        <circle cx="32" cy="27" r="17" fill={color} opacity="0.32" />
+        <path d="M 8 62 q 24 -18 48 0 z" fill={color} opacity="0.32" />
+        <g stroke={color} strokeWidth="2.5" strokeLinecap="round" fill="none">
+          <line x1="21" y1={26 + brow / 5} x2="29" y2={24 + brow / 4} />
+          <line x1="35" y1={24 + brow / 4} x2="43" y2={26 + brow / 5} />
+          <circle cx="25" cy="33" r="1.6" fill={color} stroke="none" />
+          <circle cx="39" cy="33" r="1.6" fill={color} stroke="none" />
+          <path d={mouths[mood] ?? mouths['平']} />
+        </g>
       </g>
     </svg>
   );
@@ -89,5 +105,49 @@ export function Speech({ line: raw, body }: { line: Line; body?: ReactNode }) {
         {body ?? line.text}
       </span>
     </p>
+  );
+}
+
+const wide = '(min-width: 1360px)';
+
+function useWide() {
+  const [on, setOn] = useState(() => globalThis.matchMedia?.(wide).matches ?? false);
+  useEffect(() => {
+    const mq = globalThis.matchMedia?.(wide);
+    if (!mq) return;
+    const on = () => setOn(mq.matches);
+    mq.addEventListener('change', on);
+    return () => mq.removeEventListener('change', on);
+  }, []);
+  return on;
+}
+
+/**
+ * 對話場景旁的盧卡斯大圖（1024，寬螢幕才有；手機不載）。他還沒開口就不出現。
+ * 立繪包全組對齊過，換表情時疊起來交叉淡化，不會跳位。
+ */
+export function LucasStage({ lines }: { lines: Line[] }) {
+  const show = useWide();
+  const said = lines.filter((l) => l.who === LUCAS && !l.mark);
+  if (!show || !said.length) return null;
+  const now = lucas(said[said.length - 1].mood, 1024);
+  const seen = [...new Set(said.map((l) => l.mood))];
+  return (
+    <figure className="lucas-stage" aria-hidden>
+      {seen.map((mood) => {
+        const big = lucas(mood, 1024);
+        return (
+          <img
+            key={mood}
+            src={big}
+            srcSet={`${lucas(mood, 512)} 512w, ${big} 1024w`}
+            sizes="300px"
+            alt=""
+            decoding="async"
+            className={big === now ? 'on' : undefined}
+          />
+        );
+      })}
+    </figure>
   );
 }

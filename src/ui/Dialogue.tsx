@@ -2,7 +2,7 @@ import { optionOpen, useEpisode, sceneChoices } from '../engine/game';
 import type { DialogueScene, Line } from '../engine/episode/schema';
 import { useT } from '../i18n';
 import { useScope } from './lang';
-import { Speech } from './Portrait';
+import { LucasStage, Speech } from './Portrait';
 import { Transcript } from './Shell';
 
 /** 對話場景：一路往下讀，遇到選擇就停。之前的台詞留在畫面上，方便回頭看。 */
@@ -27,6 +27,7 @@ export function Dialogue({ scene }: { scene: DialogueScene }) {
   return (
     <main className="scene dialogue">
       <p className="eyebrow">{t(scene.place, scope)}</p>
+      <LucasStage lines={lines} />
       <Transcript count={lines.length}>
         {lines.map((l, i) => (
           <Speech key={i} line={l} />

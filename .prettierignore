@@ -3,3 +3,5 @@ node_modules
 package-lock.json
 test-results
 playwright-report
+# 立繪包的 yaml 照視覺設計師交的原檔放，不重排。
+src/ui/cast/**/*.yaml
