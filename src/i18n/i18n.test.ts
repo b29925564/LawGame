@@ -21,6 +21,11 @@ describe('雙語查表', () => {
     expect(translate('辯方可以詰問路人。')).toBe('The defense may examine 路人.');
   });
 
+  it('兩個變數緊貼的 key 不當樣板，不會把沒翻的句子切碎', () => {
+    install({ '{verb}{name}': '{verb} {name}' });
+    expect(translate('還沒翻的句子')).toBe('還沒翻的句子');
+  });
+
   it('頓號清單每一項都查得到才翻', () => {
     install({ 邏輯: 'Logic', 情感: 'Emotion' });
     expect(translate('邏輯、情感')).toBe('Logic, Emotion');

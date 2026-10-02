@@ -34,11 +34,14 @@ export const useLang = create<{ lang: Lang }>(() => ({ lang: 'zh' }));
 
 const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
+/** 兩個變數緊貼（「{verb}{name}」）沒辦法切開，編成正規表示式會吃下任何句子，所以不當樣板。 */
+const ambiguous = (key: string) => /\}\{/.test(key);
+
 /** 把對照表裝進來；樣板（含 {name}）另外編成正規表示式。測試也用這個。 */
 export function install(entries: Catalog) {
   catalog = { ...catalog, ...entries };
   templates = Object.entries(catalog)
-    .filter(([k]) => /\{\w+\}/.test(k) && !k.includes('::'))
+    .filter(([k]) => /\{\w+\}/.test(k) && !k.includes('::') && !ambiguous(k))
     .map(([k, out]) => {
       const names: string[] = [];
       const body = k
