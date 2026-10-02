@@ -44,6 +44,36 @@ const start = (episode: string): Progress => ({
   scenes: {},
 });
 
+/** 集數順序（content/index.ts 的登錄順序）。 */
+const ORDER = Object.keys(episodes);
+
+/** 這一集之後的下一集；最後一集回傳 null。 */
+export function followingEpisode(p: Progress): string | null {
+  return ORDER[ORDER.indexOf(p.episode) + 1] ?? null;
+}
+
+/**
+ * 接續下一集：對話旗標與倫理紀錄跨集帶著走，這一集的結果寫成
+ * <集>:verdict:<判決>、<集>:outcome:<結果>、<集>:deal:<條件>、<集>:theory:<理論> 旗標。
+ * 場景內的旗標（動議、開示、請示電話）只屬於那一集，不帶。
+ */
+export function carryOver(p: Progress, next: string): Progress {
+  const c = branchContext(p);
+  const summary = [
+    c.verdict && `verdict:${c.verdict}`,
+    c.outcome && `outcome:${c.outcome}`,
+    c.deal && `deal:${c.deal}`,
+    c.theory && `theory:${c.theory}`,
+  ]
+    .filter((x): x is string => !!x)
+    .map((x) => `${p.episode}:${x}`);
+  return {
+    ...start(next),
+    flags: [...new Set([...(p.flags ?? []), ...summary])],
+    ethics: [...(p.ethics ?? [])],
+  };
+}
+
 export function episodeOf(p: Progress): Episode {
   return episodes[p.episode as keyof typeof episodes] ?? episodes.ep1;
 }
@@ -354,7 +384,10 @@ export function anchoredClaims(p: Progress): string[] {
 interface GameState {
   mode: Mode;
   progress: Progress;
-  newGame: () => void;
+  /** 從指定集數開新遊戲（預設第 1 集）。 */
+  newGame: (episode?: string) => void;
+  /** 這一集演完之後接下一集，帶著跨集旗標與倫理紀錄。 */
+  nextEpisode: () => void;
   load: (slot: Slot) => boolean;
   save: (slot: Slot) => boolean;
   advance: () => void;
@@ -503,7 +536,16 @@ export const useEpisode = create<GameState>()((set, get) => {
   return {
     mode: 'title',
     progress: start('ep1'),
-    newGame: () => set({ mode: 'play', progress: start('ep1') }),
+    newGame: (episode = 'ep1') =>
+      set({ mode: 'play', progress: start(episode in episodes ? episode : 'ep1') }),
+    nextEpisode: () => {
+      const p = get().progress;
+      const next = followingEpisode(p);
+      if (!next || sceneOf(p)) return;
+      const progress = carryOver(p, next);
+      writeSave('auto', saveLabel(progress), progress);
+      set({ mode: 'play', progress });
+    },
     load: (slot) => {
       const f = readSave(slot);
       if (!f) return false;

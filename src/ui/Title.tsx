@@ -74,7 +74,7 @@ export function Title() {
               繼續（{auto.label}）
             </button>
           )}
-          <button className={auto ? '' : 'primary'} onClick={newGame}>
+          <button className={auto ? '' : 'primary'} onClick={() => newGame()}>
             新遊戲
           </button>
           <button onClick={() => setLoading(!loading)} aria-expanded={loading}>
