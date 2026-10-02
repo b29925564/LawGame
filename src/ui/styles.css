@@ -4775,3 +4775,45 @@ button.iou[aria-pressed='true'] {
     animation: none;
   }
 }
+
+/* 語言切換：標題畫面與選項共用 */
+.lang-switch {
+  display: inline-flex;
+  align-self: flex-start;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.lang-switch button {
+  border: 0;
+  border-radius: 0;
+  padding: 6px 14px;
+  min-height: 36px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 13px;
+}
+.lang-switch button[aria-pressed='true'] {
+  background: var(--surface-3);
+  color: var(--text);
+  font-weight: 700;
+}
+
+/* 英文模式：視覺設計師定的字體配對；行距收到 1.5，數字等寬 */
+:root:lang(en) {
+  --font: 'IBM Plex Sans', 'Noto Sans TC', system-ui, sans-serif;
+  --font-doc: 'Source Serif 4', 'Noto Serif TC', serif;
+  --font-hand: 'Source Serif 4', serif;
+  font-variant-numeric: tabular-nums;
+}
+:root:lang(en) body,
+:root:lang(en) .lines,
+:root:lang(en) .speech,
+:root:lang(en) .doc {
+  line-height: 1.5;
+}
+
+:root:lang(en) .sticky,
+:root:lang(en) .iou .sig {
+  font-style: italic;
+}
