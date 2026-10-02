@@ -657,9 +657,9 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
                   {t('在上面把兩張卡連起來，發現會出現在這裡。')}
                 </p>
               ) : (
-                // 一條發現就是一張便條：編號與關係、連起來的兩張卡、連線的內容；點了放進答案。
-                <ol className="found-list">
-                  {found.map((f) => (
+                (() => {
+                  // 一條發現就是一張便條：編號與關係、連起來的兩張卡、連線的內容；點了放進答案。
+                  const note = (f: (typeof found)[number]) => (
                     <FoundNote
                       key={f.id}
                       fresh={f.id === fresh}
@@ -677,8 +677,27 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
                       text={t(f.text, scope)}
                       note={f.conclusion && t(f.conclusion.text, scope)}
                     />
-                  ))}
-                </ol>
+                  );
+                  // 別題已確認的答案用掉的發現收進「已用過」（UX 規格 P1-10）；新的排最上面。
+                  const spent = new Set(
+                    st.confirmed
+                      .filter((id) => id !== q.id)
+                      .flatMap((id) => st.attempts[id]?.cards ?? []),
+                  );
+                  const live = found.filter((f) => !spent.has(f.id) || a.cards.includes(f.id));
+                  const old = found.filter((f) => !live.includes(f));
+                  return (
+                    <>
+                      <ol className="found-list">{[...live].reverse().map(note)}</ol>
+                      {old.length > 0 && (
+                        <details className="found-used">
+                          <summary>{t('已用過 {n}', { n: old.length })}</summary>
+                          <ol className="found-list">{[...old].reverse().map(note)}</ol>
+                        </details>
+                      )}
+                    </>
+                  );
+                })()
               )}
             </section>
             {/* 工作台順序＝動作順序：連線 → 發現 → 答案；答案列釘在底部（UX 規格）。 */}
