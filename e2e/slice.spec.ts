@@ -257,14 +257,9 @@ async function playToRachelLast(page: Page) {
 
   // 第三幕收尾：選案件理論。四條論點都確認了，選難的那條。
   await page.getByRole('button', { name: '選擇案件理論' }).click();
-  await page
-    .locator('li.panel')
-    .filter({ hasText: '另有其人：瑞秋' })
-    .getByRole('button', { name: '就用這個理論' })
-    .click();
-  // 劇本標了確認提示時，要再按一次確定。
-  const sure = page.getByRole('button', { name: /^確定，就用/ });
-  if (await sure.isVisible()) await sure.click();
+  // 點卡片只是選中，底部定案列的按鈕才真的選定。
+  await page.locator('button.theory-card', { hasText: '另有其人：瑞秋' }).click();
+  await page.getByRole('button', { name: '以這個理論開庭' }).click();
   await next(page);
 
   // 伊森想作證。答應他，第三天辯方舉證時他會上證人席。

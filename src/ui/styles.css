@@ -2271,11 +2271,12 @@ fieldset.relations.compact {
 /* 結辯已挑的順序。 */
 .picked {
   margin: 0;
-  padding-left: 20px;
+  padding-left: 0;
+  list-style: none;
   color: var(--muted);
   font-size: 0.9em;
 }
-.picked li::marker {
+.picked .num {
   font-family: var(--font-mono);
   color: var(--accent);
 }
@@ -5346,4 +5347,189 @@ body:has(.court-light) {
 }
 .verdict-form dd.sum strong {
   font-size: 1.25em;
+}
+
+/* 判決：這一案的帳（票數、走勢）。站你這邊的陪審員是實心點 */
+.jury-ledger h2 {
+  margin: 0;
+  font-size: 15px;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+.ledger-row {
+  display: grid;
+  grid-template-columns: 4em 1fr;
+  gap: 12px;
+  align-items: start;
+}
+.ledger-row p {
+  margin: 4px 0 0;
+}
+.ledger-key {
+  color: var(--muted);
+  font-size: 14px;
+  padding-top: 2px;
+}
+.ledger-dots {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.ledger-dots li {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid var(--muted);
+}
+.ledger-dots li.on {
+  background: var(--text);
+  border-color: var(--text);
+}
+.ledger-trend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 0;
+  font-variant-numeric: tabular-nums;
+}
+.ledger-trend li + li::before {
+  content: '→';
+  margin: 0 8px;
+  color: var(--muted);
+}
+
+/* 陪審團起點：三格條（理論卡、結辯頭部共用） */
+.jury-start {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  font-size: 14px;
+}
+.jury-start-key,
+.carry-key {
+  color: var(--muted);
+  font-size: 13px;
+}
+.jury-start .bars {
+  display: inline-flex;
+  gap: 3px;
+}
+.jury-start .bar {
+  width: 14px;
+  height: 10px;
+  border: 1.5px solid var(--muted);
+  border-radius: 2px;
+}
+.jury-start .bar.on {
+  background: var(--text);
+  border-color: var(--text);
+}
+.jury-start-note {
+  flex-basis: 100%;
+  color: var(--muted);
+  font-size: 13px;
+}
+/* 結辯頭部：你帶進評議室的東西 */
+.carry {
+  display: grid;
+  gap: 4px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+}
+.carry p {
+  margin: 0;
+}
+
+/* 案件理論：並排比較卡（UX 規格 decision-cost §二）。桌機三欄等高，手機直排。 */
+.theory-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+@media (min-width: 1100px) {
+  .theory-pick {
+    max-width: 1080px;
+  }
+  .theory-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+.theory-grid > li {
+  display: grid;
+}
+.theory-card {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  width: 100%;
+  padding: 14px 16px;
+  text-align: left;
+  font-weight: 400;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.theory-card.on {
+  border-color: var(--hl);
+  box-shadow: 0 0 0 2px var(--hl);
+}
+.theory-card.locked {
+  opacity: 0.6;
+}
+.theory-name {
+  font-family: var(--font-doc);
+  font-size: 1.1em;
+}
+.theory-rows {
+  display: grid;
+  gap: 8px;
+  padding: 10px 0;
+  border-block: 1px solid var(--border);
+}
+.theory-row {
+  display: grid;
+  grid-template-columns: 4.5em 1fr;
+  gap: 10px;
+  font-size: 14px;
+}
+.theory-card .jury-start {
+  display: grid;
+  grid-template-columns: 4.5em auto;
+  justify-content: start;
+}
+.theory-card .jury-start-note {
+  grid-column: 2;
+}
+.theory-needs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  font-size: 14px;
+}
+.theory-needs .diamond {
+  color: var(--gold);
+  margin-right: 2px;
+}
+.theory-needs .need.miss {
+  color: var(--bad);
+}
+.theory-pick .commit-bar {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.panel-head .carry {
+  flex-basis: 100%;
 }
