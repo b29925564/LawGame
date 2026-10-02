@@ -10,6 +10,8 @@ export interface VoirDireState {
   theirs: string[];
   /** 有因迴避剔除的人。 */
   excused: string[];
+  /** 入席前對方以有因迴避剔除的人（明確偏向我方的候選人）。舊存檔沒有這個欄位。 */
+  theirCause?: string[];
   /** 沒有根據就聲請剔除的次數：開庭第一天法官耐心照這個數字扣。 */
   wrong: number;
   seated: string[] | null;
@@ -27,7 +29,22 @@ export function startVoirDire(s: VoirDireScene): VoirDireState {
   };
 }
 
-const gone = (st: VoirDireState) => [...st.struck, ...st.theirs, ...st.excused];
+const gone = (st: VoirDireState) => [
+  ...st.struck,
+  ...st.theirs,
+  ...st.excused,
+  ...(st.theirCause ?? []),
+];
+
+/**
+ * 對方的有因迴避：明確表示偏見、而且偏向我方（起始心證低於 50）的候選人，
+ * 對方入席前一定會聲請剔除，不管玩家有沒有問過他。
+ */
+export function theirCauses(s: VoirDireScene, st: VoirDireState): string[] {
+  return pool(s, st)
+    .filter((c) => c.cause && c.start < 50)
+    .map((c) => c.id);
+}
 
 /** 還在候選席上的人。 */
 export function pool(s: VoirDireScene, st: VoirDireState): Candidate[] {
@@ -79,12 +96,14 @@ export function canSeat(s: VoirDireScene, st: VoirDireState): boolean {
   return st.seated === null && pool(s, st).length >= s.seats;
 }
 
-/** 入席：候選名單由上往下補滿 seats 個位子。 */
+/** 入席：對方先提有因迴避（剔到坐不滿為止），候選名單再由上往下補滿 seats 個位子。 */
 export function seat(s: VoirDireScene, st: VoirDireState): VoirDireState {
   if (!canSeat(s, st)) return st;
+  const room = pool(s, st).length - s.seats;
+  const next = { ...st, theirCause: theirCauses(s, st).slice(0, room) };
   return {
-    ...st,
-    seated: pool(s, st)
+    ...next,
+    seated: pool(s, next)
       .slice(0, s.seats)
       .map((c) => c.id),
   };

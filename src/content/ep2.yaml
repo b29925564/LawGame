@@ -1175,7 +1175,7 @@ scenes:
     day: 第一天
     threshold: 50
     burden: civil
-    quorum: 4
+    quorum: 5
     patience: 5
     jurors:
       - id: j1
@@ -1319,7 +1319,7 @@ scenes:
       notFlags: [daubert-fisher]
     threshold: 50
     burden: civil
-    quorum: 4
+    quorum: 5
     patience: 5
     jurors:
       - id: j1
@@ -1426,7 +1426,7 @@ scenes:
       flags: [daubert-fisher]
     threshold: 50
     burden: civil
-    quorum: 4
+    quorum: 5
     patience: 5
     jurors:
       - id: j1

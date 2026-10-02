@@ -107,12 +107,17 @@ export function reveal(
 
 /**
  * 虛張聲勢：聲稱你有某個還沒確認的論點。
- * 對方核對開示過的證據清單——全都在就相信，缺一張就識破，談判信用 −1。
+ * 對方核對你的開示清單（你手上真的拿到的證據）——全都在就相信，缺一張就識破，談判信用 −1。
  */
-export function bluff(s: NegotiationScene, st: NegoState, id: string): NegoState {
+export function bluff(
+  s: NegotiationScene,
+  st: NegoState,
+  id: string,
+  held: readonly string[],
+): NegoState {
   const b = s.bluffs.find((x) => x.id === id);
   if (!b || !canAct(st) || st.bluffed.includes(id)) return st;
-  const believed = b.needs.every((n) => s.disclosed.includes(n));
+  const believed = b.needs.every((n) => held.includes(n));
   const next = spend(st);
   if (!believed)
     return {

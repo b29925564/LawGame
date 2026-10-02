@@ -416,7 +416,7 @@ const trialScene = z.object({
           a: z.string(),
           /** 這個問題可以異議的正確理由；null 代表問題沒有毛病。 */
           objection: z
-            .enum(['誘導', '傳聞', '推測', '無關', '已問已答', '缺乏基礎', '違反裁定'])
+            .enum(['誘導', '傳聞', '推測', '無關', '品格證據', '已問已答', '缺乏基礎', '違反裁定'])
             .nullable()
             .default(null),
           /** 條件不符就不問（例如沒有排除裁定時才問）。條件要在開庭前就確定，庭審中途不能變。 */
@@ -608,7 +608,7 @@ const negotiationScene = z.object({
       over: z.array(line).min(1),
     })
     .optional(),
-  /** 已開示給對方的證據清單（審前交換過的）。 */
+  /** 舊欄位，已不使用：虛張聲勢改看玩家手上真的拿到的證據。 */
   disclosed: z.array(id).default([]),
   reveals: z.array(line).default([]),
   walkOut: z.array(line).min(1),
