@@ -99,7 +99,12 @@ export function Title() {
             系統原型（證據板、彈劾、陪審團）
           </button>
         </div>
-        <p className="title-build">垂直切片</p>
+        <p className="title-build">
+          垂直切片
+          <span className="build-id">
+            {__BUILD__.sha}・{__BUILD__.at}
+          </span>
+        </p>
       </div>
     </main>
   );

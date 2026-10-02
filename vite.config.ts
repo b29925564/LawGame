@@ -1,3 +1,4 @@
+import { execSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { defineConfig, type Plugin } from 'vitest/config';
 import react from '@vitejs/plugin-react';
@@ -25,8 +26,21 @@ function content(): Plugin {
   };
 }
 
+/** 標題畫面角落的建置標記：commit 短碼與建置時間（台北時間），分辨快取到的舊頁面。 */
+function build() {
+  let sha = 'dev';
+  try {
+    sha = execSync('git rev-parse --short HEAD').toString().trim();
+  } catch {
+    // 沒有 git 的環境（例如解壓的原始碼）就標 dev。
+  }
+  const at = new Date().toLocaleString('sv-SE', { timeZone: 'Asia/Taipei' }).slice(0, 16);
+  return { sha, at };
+}
+
 export default defineConfig({
   plugins: [content(), react()],
+  define: { __BUILD__: JSON.stringify(build()) },
   test: {
     include: ['src/**/*.test.ts'],
   },
