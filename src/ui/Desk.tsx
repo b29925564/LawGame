@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import * as desk from '../engine/episode/desk';
+import * as discovery from '../engine/episode/discovery';
 import type { DeskScene } from '../engine/episode/schema';
 import { deskState, useEpisode } from '../engine/game';
 import { play } from '../engine/sound';
@@ -19,13 +20,14 @@ import { Shell, Tabs } from './Shell';
 import { Timeline } from './Timeline';
 
 // 證據庫和左下的證據抽屜內容一模一樣，所以只留抽屜：它在每個畫面都叫得出來。
-type App = 'mail' | 'docs' | 'board' | 'jobs' | 'court';
+type App = 'mail' | 'docs' | 'board' | 'jobs' | 'court' | 'discovery';
 const labels: Record<App, string> = {
   mail: '郵件',
   docs: '卷宗',
   board: '證據板',
   jobs: '委託',
   court: '法院系統',
+  discovery: '開示',
 };
 
 /** 第二幕的桌面：艾莉絲的工作電腦，每個 App 是一個系統入口（企劃書 6.1）。 */
@@ -111,11 +113,19 @@ export function Desk({ scene }: { scene: DeskScene }) {
       </main>
     );
 
-  const apps = (Object.keys(labels) as App[]).map((id) => ({
-    id,
-    label: labels[id],
-    badge: id === 'mail' && unread.length > 0 ? unread.length : undefined,
-  }));
+  const pending = scene.discovery.filter((r) => !discovery.answered(st)[r.id]).length;
+  const apps = (Object.keys(labels) as App[])
+    .filter((id) => id !== 'discovery' || scene.discovery.length > 0)
+    .map((id) => ({
+      id,
+      label: labels[id],
+      badge:
+        id === 'mail' && unread.length > 0
+          ? unread.length
+          : id === 'discovery' && pending > 0
+            ? pending
+            : undefined,
+    }));
 
   return (
     <Shell
@@ -136,7 +146,16 @@ export function Desk({ scene }: { scene: DeskScene }) {
       foot={
         <>
           <EvidenceDrawer />
-          {desk.canWrap(scene, st) && <WrapButton hours={st.hours} onWrap={wrapDesk} />}
+          {desk.canWrap(scene, st) ? (
+            <WrapButton hours={st.hours} onWrap={wrapDesk} />
+          ) : (
+            st.confirmed.includes(scene.goal) &&
+            pending > 0 && (
+              <button className="wide" onClick={() => setApp('discovery')}>
+                結束調查 <span className="cost">開示未回應 {pending}</span>
+              </button>
+            )
+          )}
         </>
       }
     >
@@ -145,7 +164,74 @@ export function Desk({ scene }: { scene: DeskScene }) {
       {app === 'board' && <Board scene={scene} held={held} />}
       {app === 'jobs' && <Jobs scene={scene} held={held} />}
       {app === 'court' && <Motions scene={scene} held={held} />}
+      {app === 'discovery' && <Discovery scene={scene} />}
     </Shell>
+  );
+}
+
+const RESPONSES: { id: discovery.Response; label: string }[] = [
+  { id: 'produce', label: '交出' },
+  { id: 'privilege', label: '主張特權' },
+  { id: 'overbroad', label: '範圍過廣' },
+];
+
+/** 玩家看到的結果。硬藏（concealed）當下看起來跟特權成立一樣，之後才會被揭穿。 */
+const RESULT: Record<discovery.Result, string> = {
+  produced: '已交出',
+  withheld: '特權成立',
+  concealed: '特權成立',
+  strained: '特權勉強成立',
+  narrowed: '範圍過廣成立',
+  compelled: '裁定照交',
+};
+
+/** 證據開示：對方的每項請求選一種回應，送出就定案。 */
+function Discovery({ scene }: { scene: DeskScene }) {
+  const { progress, respondDiscovery } = useEpisode();
+  const st = deskState(progress, scene);
+  const done = discovery.answered(st);
+  const [pick, setPick] = useState<Record<string, discovery.Response>>({});
+  const name = (id: string) => scene.cards.find((c) => c.id === id)?.name ?? id;
+  return (
+    <ol className="stack discovery">
+      {scene.discovery.map((r, i) => {
+        const res = done[r.id];
+        const sel = pick[r.id];
+        return (
+          <li key={r.id} className={res ? 'panel req answered' : 'panel req'}>
+            <p className="eyebrow">請求 {i + 1}</p>
+            <p className="claim-text">{r.text}</p>
+            <ul className="req-cards">
+              {r.cards.map((c) => (
+                <li key={c}>{name(c)}</li>
+              ))}
+            </ul>
+            {res ? (
+              <p className={`req-result ${res}`}>{RESULT[res]}</p>
+            ) : (
+              <div className="req-actions" role="group" aria-label={`請求 ${i + 1} 的回應`}>
+                {RESPONSES.map((o) => (
+                  <button
+                    key={o.id}
+                    aria-pressed={sel === o.id}
+                    onClick={() => setPick({ ...pick, [r.id]: o.id })}
+                  >
+                    {o.label}
+                  </button>
+                ))}
+                <button
+                  className="primary"
+                  disabled={!sel}
+                  onClick={() => sel && respondDiscovery(r.id, sel)}
+                >
+                  送出
+                </button>
+              </div>
+            )}
+          </li>
+        );
+      })}
+    </ol>
   );
 }
 
