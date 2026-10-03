@@ -63,6 +63,13 @@
 # Deposition
 開始錄取: Begin deposition
 錄取結束: Deposition over
+每一題的結果: Result of each question
+照答: Answered
+擋住了: Blocked
+放過了: Let through
+擋錯了: Wrong objection
+'對方拿到：{names}': 'The other side got: {names}'
+這句話留在筆錄裡了。: That answer is in the transcript now.
 問過的題目: Questions asked
 站不住的異議: Objections that failed
 該擋沒擋住的題目: Questions you should have stopped

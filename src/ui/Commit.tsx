@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { useT } from '../i18n';
 
 /**
@@ -9,11 +10,14 @@ export function CommitBar({
   cost,
   action,
   onCommit,
+  detail,
 }: {
   what: string;
   cost: string;
   action: string;
   onCommit: () => void;
+  /** 代價的逐條清單（EffectLines），放在一句話代價底下。 */
+  detail?: ReactNode;
 }) {
   const t = useT();
   return (
@@ -23,6 +27,7 @@ export function CommitBar({
         <span className="muted small">🔒 {t('選了就不能改')}</span>
       </p>
       <p className="commit-cost small">{cost}</p>
+      {detail && <div className="commit-detail">{detail}</div>}
       <button className="commit" onClick={onCommit}>
         <span aria-hidden>🔒 </span>
         {action}
