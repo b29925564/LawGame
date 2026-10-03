@@ -182,7 +182,7 @@ export function EvidenceDrawer({ note, noTimeline }: { note?: string; noTimeline
 export function EvidenceCard({ item, pickable }: { item: Item; pickable?: boolean }) {
   const t = useT();
   const scope = useScope();
-  const { pool, on, pick } = useCardPick();
+  const { pool, on, pick, tags } = useCardPick();
   const { progress } = useEpisode();
   const hl = cardHighlights(episodeOf(progress))[item.id];
   const sealed = cardStamps(progress)[item.id];
@@ -198,7 +198,7 @@ export function EvidenceCard({ item, pickable }: { item: Item; pickable?: boolea
     // 證據欄的小卡（UX 規格 P1-12）：一行一張，名稱靠左、時間或種類靠右；內容與出處在浮出卡。
     // 每個桌面分頁長得一樣，不會只有證據板是乾淨的（試玩回報）。
     // 外層 li 保留清單語意，裡面是真的按鈕（無障礙審查第 8 條）。
-    const slot = can ? ['A', 'B'][on.indexOf(item.id)] : undefined;
+    const slot = can ? (tags ?? ['A', 'B'])[on.indexOf(item.id)] : undefined;
     const show = () => {
       if (open) return;
       const r = ref.current?.getBoundingClientRect();
@@ -244,7 +244,7 @@ export function EvidenceCard({ item, pickable }: { item: Item; pickable?: boolea
           <strong>{t(item.name, scope)}</strong>
           <span className="mini-meta">{stamp(item, scope) || t(item.kind)}</span>
           {slot && (
-            <span className="slot-tag" aria-label={t('連線台 {slot}', { slot })}>
+            <span className="slot-tag" aria-label={tags ? slot : t('連線台 {slot}', { slot })}>
               {slot}
             </span>
           )}

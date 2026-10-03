@@ -5931,3 +5931,519 @@ body:has(.court-light) {
     padding-block: 6px max(6px, env(safe-area-inset-bottom));
   }
 }
+
+/* ══ 法院系統：聲請狀（UX board-spec §10、視覺規格 §17，法庭介面） ══ */
+:root {
+  /* 紙上的墨水與章：紙永遠是淺色，兩個主題同值。 */
+  --ink-fill: #1f3a68;
+  --stamp-ok: #1f7a4d;
+  --stamp-no: #b3322b;
+}
+.court-desk {
+  display: grid;
+  gap: 12px;
+  justify-items: center;
+}
+/* 縮圖列和便條跟狀紙左緣對齊。 */
+.court-desk > .filings,
+.court-desk > .prereq-note {
+  width: min(720px, 100%);
+}
+.filings {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  padding: 0 0 22px;
+}
+.fthumb {
+  position: relative;
+  width: 72px;
+  height: 96px;
+  min-height: 0;
+  border: 0;
+  border-radius: 2px;
+  background: var(--paper);
+  box-shadow:
+    0 1px 0 rgb(0 0 0 / 15%),
+    var(--shadow-1);
+  padding: 14px 8px 0 14px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 7px;
+  align-content: start;
+}
+.fthumb:hover,
+.fthumb[aria-pressed='true'] {
+  background: var(--paper);
+}
+.fthumb::before {
+  content: '';
+  position: absolute;
+  left: 9px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  border-left: 1px solid var(--paper-rule);
+  border-right: 1px solid var(--paper-rule);
+}
+.fthumb i {
+  display: block;
+  width: 50px;
+  height: 3px;
+  border-radius: 1px;
+  background: var(--paper-rule);
+}
+.fthumb i:nth-child(2) {
+  width: 35px;
+}
+.fthumb i:nth-child(4) {
+  width: 28px;
+}
+.fthumb i.open {
+  background: transparent;
+  border-bottom: 1px dashed var(--paper-muted);
+  height: 4px;
+  border-radius: 0;
+}
+.fthumb .k {
+  position: absolute;
+  left: -8px;
+  right: -8px;
+  bottom: -20px;
+  text-align: center;
+  font: 500 11px/1 var(--font-mono);
+  color: var(--muted);
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+.fthumb.on {
+  outline: 2px solid var(--hl);
+  outline-offset: 2px;
+}
+.fthumb .rcv {
+  position: absolute;
+  right: 6px;
+  top: 8px;
+  width: 26px;
+  height: 14px;
+  border: 1.5px solid var(--paper-ink);
+  border-radius: 2px;
+  opacity: 0.6;
+  transform: rotate(6deg);
+}
+.fthumb .mini {
+  position: absolute;
+  right: -6px;
+  bottom: 10px;
+  width: 34px;
+  height: 34px;
+  mix-blend-mode: multiply;
+}
+.fthumb .mini svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  font-family: var(--font-doc);
+}
+.fthumb .mini.ok,
+.stamp-big.ok {
+  color: var(--stamp-ok);
+}
+.fthumb .mini.no,
+.stamp-big.no {
+  color: var(--stamp-no);
+}
+
+/* 聲請狀：訴狀紙，32px 橫格線，左邊雙直線與行號。 */
+.plead {
+  position: relative;
+  width: min(720px, 100%);
+  min-height: 512px;
+  background-color: var(--paper);
+  background-image:
+    var(--grain),
+    repeating-linear-gradient(to bottom, transparent 0 31px, rgb(60 50 20 / 9%) 31px 32px);
+  background-position:
+    0 0,
+    0 20px;
+  color: var(--paper-ink);
+  border-radius: 2px;
+  padding: 36px 48px 76px 76px;
+  box-shadow:
+    0 1px 0 rgb(0 0 0 / 18%),
+    0 28px 60px -24px var(--shadow-deep);
+}
+.plead::before {
+  content: '';
+  position: absolute;
+  left: 56px;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  border-left: 1px solid var(--paper-rule);
+  border-right: 1px solid var(--paper-rule);
+}
+.plead .ln {
+  position: absolute;
+  left: 22px;
+  top: 20px;
+  bottom: 24px;
+  overflow: hidden;
+  display: grid;
+  align-content: start;
+  font: 400 10px/32px var(--font-court);
+  color: var(--paper-muted);
+  opacity: 0.8;
+}
+.plead .cap {
+  text-align: center;
+  display: grid;
+  gap: 4px;
+  margin-bottom: 22px;
+}
+.plead .cap .ct {
+  font: 500 13px/1.6 var(--font-doc);
+  letter-spacing: 0.22em;
+  color: var(--paper-muted);
+}
+.plead .cap .vs {
+  font: 500 15px/1.6 var(--font-doc);
+  letter-spacing: 0.1em;
+}
+.plead .cap .no {
+  font: 400 12px/1.6 var(--font-court);
+  color: var(--paper-muted);
+  letter-spacing: 0.06em;
+}
+.plead .cap h2 {
+  margin: 10px 0 0;
+  font: 700 24px/1.3 var(--font-doc);
+  letter-spacing: 0.36em;
+  text-indent: 0.36em;
+  color: var(--paper-ink);
+}
+.plead .cap .topic {
+  font: 400 14px/1.6 var(--font-doc);
+  color: var(--paper-muted);
+}
+.plead .body {
+  /* 行高等於格距，每行字坐在格線上。 */
+  font: 400 17px/32px var(--font-doc);
+  letter-spacing: 0.02em;
+}
+.plead .body p {
+  margin: 0;
+}
+.plead .nw {
+  white-space: nowrap;
+}
+.blank-wrap {
+  position: relative;
+  display: inline-block;
+}
+.blank {
+  position: relative;
+  display: inline-block;
+  min-width: 150px;
+  min-height: 0;
+  margin: 0 4px;
+  padding: 0 10px;
+  border: 0;
+  border-bottom: 1px dashed var(--paper-muted);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  font: 400 19px/1.6 var(--font-hand);
+  color: var(--ink-fill);
+  vertical-align: baseline;
+  text-align: center;
+  letter-spacing: 0.02em;
+}
+button.blank:hover,
+.blank.open {
+  background: var(--hl-wash);
+  border-bottom-color: var(--hl-edge);
+}
+.blank .hint {
+  font: 400 13px/1 var(--font);
+  color: var(--paper-muted);
+}
+.blank.filled {
+  border-bottom: 1px solid var(--paper-ink);
+}
+/* 等證物的空格：從右邊證據欄點一張就放進來。 */
+.blank.hot {
+  border-bottom: 1px dashed var(--hl-edge);
+  background: var(--hl-wash);
+  box-shadow: 0 0 0 1px var(--hl);
+  border-radius: 3px;
+}
+.blank.exhibit {
+  font: 400 13px/1.6 var(--font);
+  color: var(--paper-ink);
+  padding-block: 4px 2px;
+}
+.blank .ex {
+  position: absolute;
+  right: -14px;
+  top: -12px;
+  padding: 2px 5px;
+  border: 1.5px solid var(--gold-paper);
+  border-radius: 3px;
+  color: var(--gold-paper);
+  background: var(--paper);
+  font: 600 10px/1 var(--font-mono);
+  letter-spacing: 0.08em;
+  transform: rotate(-6deg);
+  white-space: nowrap;
+}
+/* 列內證物標籤（視覺規格 §16 .etag.row）：紙色、左邊一個孔。 */
+.etag.row {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  padding: 0 10px 0 6px;
+  background: var(--paper);
+  border: 1px solid var(--paper-rule);
+  border-radius: 3px;
+  color: var(--paper-ink);
+  font: 500 13px/1 var(--font);
+  white-space: nowrap;
+  vertical-align: middle;
+}
+.etag.row .etag-hole {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  border: 1px solid var(--paper-rule);
+  background: var(--paper);
+}
+.etag.row.arg > span[aria-hidden]:not(.etag-hole) {
+  color: var(--gold-paper);
+}
+/* 請求、依據的小選單：貼在空格正下方。 */
+.pop {
+  position: absolute;
+  left: 50%;
+  top: calc(100% + 8px);
+  transform: translateX(-50%);
+  min-width: 220px;
+  z-index: 5;
+  background: var(--paper);
+  border: 1px solid var(--paper-rule);
+  border-radius: 6px;
+  box-shadow: var(--shadow-2);
+  padding: 6px;
+  display: grid;
+  text-align: left;
+}
+.pop::before {
+  content: '';
+  position: absolute;
+  left: calc(50% - 6px);
+  top: -6px;
+  width: 10px;
+  height: 10px;
+  background: var(--paper);
+  border-left: 1px solid var(--paper-rule);
+  border-top: 1px solid var(--paper-rule);
+  transform: rotate(45deg);
+}
+.pop .k {
+  padding: 0 12px;
+  font: 500 11px/24px var(--font-mono);
+  letter-spacing: 0.08em;
+  color: var(--paper-muted);
+}
+.pop-list {
+  display: grid;
+}
+.pop-list button {
+  min-height: 36px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  box-shadow: none;
+  text-align: left;
+  font: 500 15px/36px var(--font);
+  color: var(--paper-ink);
+  white-space: nowrap;
+}
+.pop-list button:hover,
+.pop-list button.on {
+  background: light-dark(#eceff3, #c9ccd1);
+}
+.sheet-options .pop-list button {
+  min-height: 52px;
+  font-size: 17px;
+  color: var(--text);
+}
+.sheet-options .pop-list button.on {
+  background: var(--hl-wash);
+}
+.plead .sig {
+  margin-top: 28px;
+  font: 400 13px/1.6 var(--font-court);
+  color: var(--paper-muted);
+}
+.plead .sig b {
+  font: 400 15px/1.6 var(--font-doc);
+  color: var(--paper-ink);
+  border-bottom: 1px solid var(--paper-ink);
+  padding: 0 16px;
+}
+.plead .commit-row {
+  position: absolute;
+  right: 48px;
+  bottom: 28px;
+  left: 76px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+.plead .commit-row .zh {
+  font: 400 13px/1.4 var(--font);
+  color: var(--paper-muted);
+}
+.plead .commit-row .cost {
+  margin-left: 8px;
+  font: 500 12px/1 var(--font-mono);
+  opacity: 0.8;
+}
+.plead .bates2 {
+  position: absolute;
+  left: 76px;
+  bottom: 12px;
+  font: 400 11px/1 var(--font-court);
+  color: var(--paper-muted);
+}
+/* 法官的一句話：左邊色線，章蓋在右邊，壓到簽名欄也沒關係。 */
+.plead .judge {
+  position: relative;
+  margin-top: 18px;
+  padding: 10px 150px 10px 14px;
+  border-left: 3px solid var(--stamp-no);
+  font: 400 15px/1.7 var(--font-court);
+  color: var(--paper-ink);
+}
+.plead .judge.ok {
+  border-left-color: var(--stamp-ok);
+}
+.plead .judge small {
+  display: block;
+  font: 400 12px/1.4 var(--font-court);
+  color: var(--paper-muted);
+}
+.plead .judge .stamp-big {
+  position: absolute;
+  right: 0;
+  top: -18px;
+}
+.stamp-big {
+  display: block;
+  width: 132px;
+  height: 132px;
+  opacity: 0.86;
+  mix-blend-mode: multiply;
+  transform: rotate(-8deg);
+}
+.stamp-big svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.stamp-big .ring {
+  font: 500 8px/1 var(--font-mono);
+  letter-spacing: 2.2px;
+}
+.stamp-big .word {
+  font-family: var(--font-doc);
+  font-weight: 900;
+}
+.stamp-big .word.latin {
+  font-family: var(--font-mono);
+  font-weight: 700;
+}
+.stamp-rcv {
+  position: absolute;
+  right: 44px;
+  top: 30px;
+  padding: 6px 10px;
+  border: 2px solid var(--paper-ink);
+  border-radius: 3px;
+  font: 400 11px/1.4 var(--font-court);
+  color: var(--paper-ink);
+  letter-spacing: 0.08em;
+  text-align: center;
+  transform: rotate(6deg);
+  opacity: 0.72;
+  mix-blend-mode: multiply;
+}
+.stamp-rcv b {
+  display: block;
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0.2em;
+}
+/* 前提沒到：一張便條，不給狀紙。 */
+.prereq-note {
+  max-width: 720px;
+  display: grid;
+  gap: 6px;
+  padding: 14px 18px;
+  background: var(--note);
+  color: var(--paper-ink);
+  border-radius: 2px;
+  box-shadow: var(--shadow-1);
+}
+.prereq-note small {
+  font: 500 12px/1.4 var(--font-mono);
+  color: var(--gold-paper);
+  letter-spacing: 0.06em;
+}
+.prereq-note strong {
+  font-size: 16px;
+}
+@media (max-width: 760px) {
+  .plead {
+    padding: 28px 18px 92px 44px;
+  }
+  .plead::before {
+    left: 32px;
+  }
+  .plead .ln {
+    left: 8px;
+  }
+  .plead .cap h2 {
+    letter-spacing: 0.2em;
+  }
+  .plead .commit-row {
+    left: 44px;
+    right: 18px;
+    bottom: 30px;
+  }
+  .plead .judge {
+    padding-right: 84px;
+  }
+  .plead .judge .stamp-big {
+    top: -6px;
+    right: -8px;
+    width: 88px;
+    height: 88px;
+  }
+  /* 手機上收文章放在抬頭上方，不壓到法院名稱。 */
+  .plead.received .cap {
+    margin-top: 44px;
+  }
+  .stamp-rcv {
+    right: 12px;
+    top: 10px;
+  }
+  .blank {
+    min-width: 110px;
+  }
+}

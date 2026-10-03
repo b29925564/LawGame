@@ -14,6 +14,23 @@ const next = (page: Page, name: string | RegExp = '繼續') =>
 const card = (root: Page | ReturnType<Page['locator']>, name: string | RegExp) =>
   root.locator('.pick-name', { hasText: name });
 
+/** 聲請狀：請求、依據點開小選單選一個；證物在電腦版從證據欄點，手機從挑卡片抽屜點；然後遞狀。 */
+async function fileMotion(page: Page, request: string, basis: string, exhibit: RegExp) {
+  const paper = page.locator('article.plead');
+  await paper.getByRole('button', { name: '點這裡選請求' }).click();
+  await page.getByRole('option', { name: request, exact: true }).click();
+  await paper.getByRole('button', { name: '點這裡選依據' }).click();
+  await page.getByRole('option', { name: basis, exact: true }).click();
+  const fromSheet = paper.getByRole('button', { name: '點這裡出示證物' });
+  if (await fromSheet.isVisible()) {
+    await fromSheet.click();
+    await card(page.locator('.card-sheet'), exhibit).click();
+  } else {
+    await page.locator('li.card.mini.pickable', { hasText: exhibit }).getByRole('button').click();
+  }
+  await paper.getByRole('button', { name: /遞狀/ }).click();
+}
+
 /** 推理兩步：在疑問的工作台上，先用連線台把兩張卡連成發現，再拿第 n 條發現回答。 */
 async function solve(
   page: Page,
@@ -163,24 +180,16 @@ async function playToRachelLast(page: Page) {
 
   // 法院系統：依據、支撐、請求三樣都要對。
   await page.getByRole('button', { name: '法院系統' }).click();
-  const watchMotion = page.locator('section.job');
-  await expect(watchMotion).toContainText('死者手錶的健康資料');
-  await watchMotion.getByRole('radio', { name: '相關性' }).click();
-  await card(watchMotion, /手錶資料與本案相關/).click();
-  await watchMotion.getByRole('radio', { name: '核發傳票給手錶廠商' }).click();
-  await watchMotion.getByRole('button', { name: /送出/ }).click();
+  await expect(page.locator('article.plead')).toContainText('死者手錶的健康資料');
+  await fileMotion(page, '核發傳票給手錶廠商', '相關性', /手錶資料與本案相關/);
   await expect(page.getByText(/22:24，心率歸零。|23 分鐘/).first()).toBeVisible();
   await page.getByRole('button', { name: '回到桌面' }).click();
 
   // 聊天稽核紀錄的傳票：核准之後對方聲請撤銷，惠特洛克要她收手。
   await page.getByRole('button', { name: '法院系統' }).click();
-  await page.getByRole('button', { name: '聲請 2' }).click();
-  const chatMotion = page.locator('section.job');
-  await expect(chatMotion).toContainText('稽核紀錄');
-  await chatMotion.getByRole('radio', { name: '相關性' }).click();
-  await card(chatMotion, /論點 A/).click();
-  await chatMotion.getByRole('radio', { name: '核發傳票給卡爾德物流' }).click();
-  await chatMotion.getByRole('button', { name: /送出/ }).click();
+  await page.getByRole('button', { name: /^聲請 2/ }).click();
+  await expect(page.locator('article.plead')).toContainText('稽核紀錄');
+  await fileMotion(page, '核發傳票給卡爾德物流', '相關性', /論點 A/);
   await page.getByRole('button', { name: '回到桌面' }).click();
   await expect(page.getByText('我也知道誰付我們薪水。')).toBeVisible();
   await page.getByRole('button', { name: '我出庭答辯。' }).click();
@@ -222,12 +231,8 @@ async function playToRachelLast(page: Page) {
     1,
   );
   await page.getByRole('button', { name: '法院系統' }).click();
-  const mm = page.locator('section.job');
-  await expect(mm).toContainText('巡邏車上的供述');
-  await mm.getByRole('radio', { name: '米蘭達警告' }).click();
-  await card(mm, /供述取得程序違法/).click();
-  await mm.getByRole('radio', { name: '排除該項供述' }).click();
-  await mm.getByRole('button', { name: /送出/ }).click();
+  await expect(page.locator('article.plead')).toContainText('巡邏車上的供述');
+  await fileMotion(page, '排除該項供述', '米蘭達警告', /供述取得程序違法/);
   await expect(page.getByText('本庭排除該項供述')).toBeVisible();
   await page.getByRole('button', { name: '回到桌面' }).click();
   await page.getByRole('button', { name: '結束調查' }).click();

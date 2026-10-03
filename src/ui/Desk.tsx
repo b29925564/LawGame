@@ -17,7 +17,8 @@ import {
 } from './Evidence';
 import { CommitBar } from './Commit';
 import { EffectLines, effectsIf } from './Effects';
-import { MarkLines, Ruling } from './Marks';
+import { MarkLines } from './Marks';
+import { ExhibitTag, exhibitNo, FilingThumb, Pleading, Written } from './Pleading';
 import { useScope } from './lang';
 import { useCardPick } from './pick';
 import { Speech } from './Portrait';
@@ -72,13 +73,34 @@ export function Desk({ scene }: { scene: DeskScene }) {
         <p className="eyebrow">{m ? t('回報・法院系統') : t('回報')}</p>
         {m && a && (
           <div className="ruling-wrap">
-            <Ruling
-              label={t(m.label, scope)}
-              basis={a.basis ? t(a.basis, scope) : undefined}
-              wrongBasis={!ok && !!a.basis && a.basis !== m.basis}
-              request={a.request ? t(a.request, scope) : undefined}
-              quote={quote ? t(quote.text, scope).replace(/^「|」$/g, '') : undefined}
-              verdict={ok ? '准予' : '駁回'}
+            <Pleading
+              m={m}
+              n={scene.motions.indexOf(m) + 1}
+              request={<Written text={a.request && t(a.request, scope)} />}
+              basis={<Written text={a.basis && t(a.basis, scope)} />}
+              support={a.support.map((id, i) => {
+                const c = [...heldArgs(progress), ...scene.cards].find((x) => x.id === id);
+                return (
+                  <span key={id} className="blank filled exhibit">
+                    {c ? (
+                      <ExhibitTag
+                        name={t(c.name, scope)}
+                        arg={!('kind' in c) || c.kind === '論點'}
+                      />
+                    ) : (
+                      id
+                    )}
+                    <span className="ex" aria-hidden>
+                      {t('證物')} {exhibitNo(i)}
+                    </span>
+                  </span>
+                );
+              })}
+              received
+              ruling={{
+                ok,
+                quote: quote ? t(quote.text, scope).replace(/^「|」$/g, '') : undefined,
+              }}
             />
           </div>
         )}
@@ -881,130 +903,243 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
 
 /**
  * 法院系統：提出動議與聲請傳票。三樣都要選對（企劃書 6.6）。
- * 一份聲請就有三組選項，所以一次只處理一份。
+ * 每份聲請是一張聲請狀（UX board-spec §10）：請求、依據兩格點開小選單，證物格從證據欄出示，
+ * 三格填好才出現遞狀；裁定回到同一張紙上蓋章。上面一排是桌上的狀紙縮圖。
  */
 function Motions({ scene, held }: { scene: DeskScene; held: string[] }) {
   const { progress, pickBasis, pickRequest, toggleSupport, fileMotion } = useEpisode();
   const t = useT();
   const scope = useScope();
+  const wide = useWide();
   const st = deskState(progress, scene);
-  const pool = scene.cards.filter((c) => held.includes(c.id));
-  const args = heldArgs(progress);
   // 一打開就停在還沒裁定的那一份上。
   const open = scene.motions.find((m) => desk.motionAttempt(st, m.id).ruling !== 'granted');
   const [pick, setPick] = useState<string>(open?.id ?? scene.motions[0]?.id ?? '');
-  if (scene.motions.length === 0) return <p className="muted">{t('目前沒有可以提出的聲請。')}</p>;
+  // 哪一個空格開著：請求、依據的小選單，或手機上挑證物的底部抽屜。
+  const [menu, setMenu] = useState<'request' | 'basis' | 'support' | null>(null);
   const m = scene.motions.find((x) => x.id === pick) ?? scene.motions[0];
-  const a = desk.motionAttempt(st, m.id);
-  const missing = m.needs.filter((n) => !held.includes(n));
+  const a = m ? desk.motionAttempt(st, m.id) : null;
+  const cards = [...heldArgs(progress), ...scene.cards.filter((c) => held.includes(c.id))];
+  const missing = m ? m.needs.filter((n) => !held.includes(n)) : [];
+  const editable = !!a && a.ruling !== 'granted' && missing.length === 0;
+  // 電腦版：右邊證據欄點一張＝出示，放進證物格；滿了就換掉最早那張（引擎的規則）。
+  const poolIds = cards.map((c) => c.id).join();
+  const on = a?.support.join() ?? '';
+  const slots = m?.support.length ?? 0;
+  const mid = m?.id;
+  const exhibit = t('證物');
+  useEffect(() => {
+    if (!wide || !editable || !mid) return;
+    useCardPick.setState({
+      pool: poolIds.split(','),
+      on: on ? on.split(',') : [],
+      pick: (id) => toggleSupport(mid, id),
+      tags: Array.from({ length: slots }, (_, i) => `${exhibit} ${exhibitNo(i)}`),
+    });
+    return () => useCardPick.setState({ pool: [], on: [], pick: undefined, tags: undefined });
+  }, [wide, editable, mid, poolIds, on, slots, exhibit, toggleSupport]);
+  // 小選單：按 Esc 或點別的地方就收起來。
+  useEffect(() => {
+    if (!menu || !wide) return;
+    const esc = (e: KeyboardEvent) => e.key === 'Escape' && setMenu(null);
+    const away = (e: PointerEvent) =>
+      !(e.target as Element).closest?.('.blank-wrap') && setMenu(null);
+    window.addEventListener('keydown', esc);
+    window.addEventListener('pointerdown', away);
+    return () => {
+      window.removeEventListener('keydown', esc);
+      window.removeEventListener('pointerdown', away);
+    };
+  }, [menu, wide]);
+  if (!m || !a) return <p className="muted">{t('目前沒有可以提出的聲請。')}</p>;
+  const n = scene.motions.indexOf(m) + 1;
+  const nameOf = (id: string) => cards.find((c) => c.id === id);
+  const quoteOf = (lines: { who: string; text: string }[]) => {
+    const q = lines.find((l) => l.who === '旁白');
+    return q ? t(q.text, scope).replace(/^「|」$/g, '') : undefined;
+  };
+  const ruling = a.ruling
+    ? { ok: a.ruling === 'granted', quote: quoteOf(a.ruling === 'granted' ? m.granted : m.denied) }
+    : null;
+
+  const words = (key: 'request' | 'basis', options: string[], value: string | null) => {
+    const hint = key === 'request' ? t('點這裡選請求') : t('點這裡選依據');
+    const title = key === 'request' ? t('請求') : t('法律依據');
+    if (!editable) return <Written text={value && t(value, scope)} />;
+    const choose = (o: string) => {
+      if (key === 'request') pickRequest(m.id, o);
+      else pickBasis(m.id, o);
+      setMenu(null);
+    };
+    const list = (
+      <span className="pop-list" role="listbox" aria-label={title}>
+        {options.map((o) => (
+          <button
+            key={o}
+            role="option"
+            aria-selected={value === o}
+            className={value === o ? 'on' : undefined}
+            onClick={() => choose(o)}
+          >
+            {t(o, scope)}
+          </button>
+        ))}
+      </span>
+    );
+    return (
+      <span className="blank-wrap">
+        <button
+          className={'blank' + (value ? ' filled' : '') + (menu === key ? ' open' : '')}
+          aria-haspopup="listbox"
+          aria-expanded={menu === key}
+          aria-label={value ? `${title}：${t(value, scope)}` : hint}
+          onClick={() => setMenu(menu === key ? null : key)}
+        >
+          {value ? t(value, scope) : <span className="hint">{hint}</span>}
+        </button>
+        {menu === key &&
+          (wide ? (
+            <span className="pop">
+              <span className="k">
+                {title}
+                {t('・')}
+                {t('選一個')}
+              </span>
+              {list}
+            </span>
+          ) : (
+            <CardSheet title={title} onClose={() => setMenu(null)}>
+              <div className="sheet-options">{list}</div>
+            </CardSheet>
+          ))}
+      </span>
+    );
+  };
+
+  const pickHint = wide ? t('從右邊拿一張證物') : t('點這裡出示證物');
+  const support = Array.from({ length: m.support.length }, (_, i) => {
+    const id = a.support[i];
+    const c = id ? nameOf(id) : undefined;
+    const tag = c && (
+      <ExhibitTag name={t(c.name, scope)} arg={!('kind' in c) || c.kind === '論點'} />
+    );
+    const ex = (
+      <span className="ex" aria-hidden>
+        {exhibit} {exhibitNo(i)}
+      </span>
+    );
+    if (!editable)
+      return (
+        <span className="blank filled exhibit">
+          {tag ?? '—'}
+          {c && ex}
+        </span>
+      );
+    return (
+      <span className="blank-wrap" key={i}>
+        <button
+          className={c ? 'blank exhibit filled' : 'blank exhibit'}
+          aria-label={c ? `${exhibit} ${exhibitNo(i)}：${t(c.name, scope)}` : pickHint}
+          // 電腦版點空格不必做什麼：卡從右邊證據欄來。手機打開挑卡片抽屜。
+          onClick={() => !wide && setMenu('support')}
+        >
+          {tag ?? <span className="hint">{pickHint}</span>}
+          {c && ex}
+        </button>
+      </span>
+    );
+  });
+
+  const ready = desk.canFile(scene, st, m.id, progress.cards);
+  const filled = !!a.basis && !!a.request && a.support.length === m.support.length;
+  const foot =
+    a.ruling === 'granted' ? null : !filled ? (
+      <span className="zh">{t('三格都填好，這裡才出現遞狀')}</span>
+    ) : st.hours < m.cost ? (
+      <span className="zh">{t('工時不足')}</span>
+    ) : (
+      <>
+        {a.ruling === 'denied' && <span className="zh">{t('修正後可重送，工時照扣')}</span>}
+        <button className="commit" disabled={!ready} onClick={() => fileMotion(m.id)}>
+          <span aria-hidden>🔒 </span>
+          {a.ruling === 'denied' ? t('重新遞狀') : t('遞狀')}
+          <span className="cost">{t('−{n} 工時', { n: m.cost })}</span>
+        </button>
+      </>
+    );
+
   return (
-    <div className="stack">
+    <div className="court-desk">
       {scene.motions.length > 1 && (
-        <Tabs
-          label={t('聲請')}
-          value={pick}
-          onPick={setPick}
-          items={scene.motions.map((x, i) => ({
-            id: x.id,
-            label: t('聲請 {n}', { n: i + 1 }),
-            done: desk.motionAttempt(st, x.id).ruling === 'granted',
-          }))}
+        <nav className="filings" aria-label={t('聲請')}>
+          {scene.motions.map((x, i) => (
+            <FilingThumb
+              key={x.id}
+              a={desk.motionAttempt(st, x.id)}
+              n={i + 1}
+              on={x.id === m.id}
+              onPick={() => {
+                setPick(x.id);
+                setMenu(null);
+              }}
+            />
+          ))}
+        </nav>
+      )}
+      {missing.length > 0 && a.ruling !== 'granted' ? (
+        // 前提沒到：不給狀紙，給一張便條（UX 10.3）。
+        <aside className="prereq-note">
+          <small>
+            {t('聲請 {n}', { n })}
+            {t('・')}
+            {t('還不能寫')}
+          </small>
+          <strong>
+            {t('還缺前提：先把 {names} 確認起來', {
+              names: missing
+                .map((id) => `◆ ${t(nameOf(id)?.name ?? argName(scene, id), scope)}`)
+                .join('、'),
+            })}
+          </strong>
+          <span>{t(m.detail, scope)}</span>
+        </aside>
+      ) : (
+        <Pleading
+          m={m}
+          n={n}
+          request={words('request', m.requests, a.request)}
+          basis={words('basis', m.bases, a.basis)}
+          support={support}
+          received={!!a.ruling}
+          ruling={ruling}
+          foot={foot}
         />
       )}
-      <section className="panel job">
-        <strong>{t(m.label, scope)}</strong>
-        <p className="muted">{t('{n} 工時', { n: m.cost })}</p>
-        <p>{t(m.detail, scope)}</p>
-        {a.ruling === 'granted' && <p className="good">{t('法官准了。')}</p>}
-        {a.ruling === 'denied' && (
-          <p className="bad-text">
-            {t('駁回。法官記得你浪費了他的時間。修正後可以重送，工時照扣。')}
-          </p>
-        )}
-        {a.ruling !== 'granted' &&
-          (missing.length ? (
-            <p className="muted">{t('還缺前提：先把相關的論點確認起來。')}</p>
-          ) : (
-            <>
-              <fieldset className="relations">
-                <legend>{t('法律依據')}</legend>
-                <div className="stack">
-                  {m.bases.map((b) => (
-                    <button
-                      key={b}
-                      role="radio"
-                      aria-checked={a.basis === b}
-                      className={a.basis === b ? 'wide on' : 'wide'}
-                      onClick={() => pickBasis(m.id, b)}
-                    >
-                      {t(b, scope)}
-                    </button>
-                  ))}
-                </div>
-              </fieldset>
-              <fieldset className="relations">
-                <legend>{t('請求')}</legend>
-                <div className="stack">
-                  {m.requests.map((r) => (
-                    <button
-                      key={r}
-                      role="radio"
-                      aria-checked={a.request === r}
-                      className={a.request === r ? 'wide on' : 'wide'}
-                      onClick={() => pickRequest(m.id, r)}
-                    >
-                      {t(r, scope)}
-                    </button>
-                  ))}
-                </div>
-              </fieldset>
-              <fieldset className="relations support">
-                <legend>{t('支撐（{n} 張）', { n: m.support.length })}</legend>
-                <div className="stack">
-                  {[...args, ...pool].map((c) => (
-                    <CardPick
-                      key={c.id}
-                      item={c}
-                      compact
-                      on={a.support.includes(c.id)}
-                      onPick={() => {
-                        // 名額滿了再點別張：直接換掉最早選的那張，不必先取消（試玩回報）。
-                        if (!a.support.includes(c.id) && a.support.length >= m.support.length)
-                          toggleSupport(m.id, a.support[0]);
-                        toggleSupport(m.id, c.id);
-                      }}
-                    />
-                  ))}
-                </div>
-              </fieldset>
-              {/* 送出列：不透明、自成一條，鈕靠右不滿版。點到被它蓋住的卡片邊緣只會點到底色，不會誤送。 */}
-              <div className="file-bar">
-                <ul className="file-check" aria-label={t('送出前檢查')}>
-                  <li className={a.basis ? 'ok' : undefined}>
-                    {t('依據')} {a.basis ? '✓' : '—'}
-                  </li>
-                  <li className={a.request ? 'ok' : undefined}>
-                    {t('請求')} {a.request ? '✓' : '—'}
-                  </li>
-                  <li className={a.support.length === m.support.length ? 'ok' : undefined}>
-                    {t('支撐 {a}/{b}', { a: a.support.length, b: m.support.length })}
-                  </li>
-                  {st.hours < m.cost && <li className="short">{t('工時不足')}</li>}
-                </ul>
-                <button
-                  className="primary"
-                  disabled={!desk.canFile(scene, st, m.id, progress.cards)}
-                  onClick={() => fileMotion(m.id)}
-                >
-                  {t('送出（{n} 工時）', { n: m.cost })}
-                </button>
-              </div>
-            </>
-          ))}
-      </section>
+      {menu === 'support' && !wide && (
+        <CardSheet title={t('出示證物')} onClose={() => setMenu(null)}>
+          <div className="stack">
+            {cards.map((c) => (
+              <CardPick
+                key={c.id}
+                item={c}
+                compact
+                on={a.support.includes(c.id)}
+                onPick={() => {
+                  toggleSupport(m.id, c.id);
+                  setMenu(null);
+                }}
+              />
+            ))}
+          </div>
+        </CardSheet>
+      )}
     </div>
   );
 }
+
+/** 前提是還沒確認的論點時，名稱從證據板的疑問裡找。 */
+const argName = (scene: DeskScene, id: string) =>
+  scene.questions.find((q) => q.argument.id === id)?.argument.name ?? id;
 
 function Jobs({ scene, held }: { scene: DeskScene; held: string[] }) {
   const { progress, commission } = useEpisode();
