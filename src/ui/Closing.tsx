@@ -8,8 +8,10 @@ import {
   promisesOf,
   exposedArgs,
   juryAfterTrial,
+  theorySceneOf,
   useEpisode,
 } from '../engine/game';
+import { ledger, type LedgerItem } from '../engine/ledger';
 import { useMoney, useT } from '../i18n';
 import { CardPick, EvidenceDrawer } from './Evidence';
 import { useScope } from './lang';
@@ -33,6 +35,54 @@ export function Closing({ scene }: { scene: ClosingScene }) {
   const th = promisesOf(progress).theory;
   const cost = th?.jury?.note;
   const rules = juryAfterTrial(progress)?.rules;
+  const money = useMoney();
+
+  // 帳上每一筆用玩家做過的事命名（UX 規格 decision-cost §四），不用系統名。
+  const short = (id: string) =>
+    t(args.find((a) => a.id === id)?.name ?? id, scope).split(/：|: /)[0];
+  const reason = (it: LedgerItem): string => {
+    switch (it.kind) {
+      case 'theory': {
+        const name = theorySceneOf(progress)?.theories.find((x) => x.id === it.refs[0])?.name;
+        return t('案件理論「{name}」讓陪審團一開始就偏向對方', {
+          name: name ? t(name, scope) : '',
+        });
+      }
+      case 'broken':
+        return t('開場許下的 {n} 個承諾沒兌現', { n: it.refs.length });
+      case 'empty':
+        return t('結辯有空格，對方的說法沒人反駁');
+      case 'noTheory':
+        return t('沒有案件理論，論點說服力打了折');
+      case 'tone': {
+        const tone = scene.tones.find((x) => x.id === it.refs[0]);
+        return t('結辯基調「{tone}」不合這群陪審員', {
+          tone: tone ? t(tone.label, scope) : '',
+        });
+      }
+      case 'exposed':
+        return t('結辯用了對方早有準備的論點：{list}', {
+          list: it.refs.map((id) => `◆${short(id)}`).join(t('、')),
+        });
+      case 'unimpeached':
+        return t('{who}的證詞沒有被彈劾', { who: t(it.who ?? '', scope) });
+      case 'concealed':
+        return t('開示時硬藏的 {n} 份資料被揭穿', { n: it.refs.length });
+      case 'punitive':
+        return t('懲罰性賠償成立，另加 {money}', { money: money(it.money ?? 0) });
+    }
+  };
+  const tips: Record<LedgerItem['kind'], string> = {
+    theory: t('起點偏的理論，要靠更多彈劾把陪審員拉回來。'),
+    broken: t('先把論點確認起來，再在開場許承諾。'),
+    empty: t('調查時多確認幾個論點，結辯才填得滿。'),
+    noTheory: t('開庭前選一個案件理論，論點才有方向。'),
+    tone: t('結辯基調要對著陪審員的取向挑。'),
+    exposed: t('談判時攤過的牌對方會備好說法，結辯換別的論點。'),
+    unimpeached: t('先鎖定證詞，再出示論點，彈劾才會成立。'),
+    concealed: t('開示時硬藏的東西被揭穿，比交出去更傷。'),
+    punitive: t('懲罰性賠償看的是被告隱瞞了什麼，開示和證據要先處理。'),
+  };
 
   if (st.verdict)
     return (
@@ -45,6 +95,9 @@ export function Closing({ scene }: { scene: ClosingScene }) {
             trial={juryAfterTrial(progress)?.jury}
             spoken={st.spoken}
             final={st.jury}
+            items={ledger(progress)}
+            says={reason}
+            tips={tips}
           />
         )}
         {st.award && <VerdictForm award={st.award} />}
@@ -278,11 +331,17 @@ function JuryLedger({
   trial,
   spoken,
   final,
+  items,
+  says,
+  tips,
 }: {
   rules: { jurors: { id: string; label: string }[]; threshold: number; quorum?: number };
   trial?: Record<string, number>;
   spoken: Record<string, number> | null;
   final: Record<string, number>;
+  items: LedgerItem[];
+  says: (it: LedgerItem) => string;
+  tips: Record<LedgerItem['kind'], string>;
 }) {
   const t = useT();
   const scope = useScope();
@@ -291,6 +350,12 @@ function JuryLedger({
   const ours = (j: Record<string, number>) =>
     rules.jurors.filter((x) => (j[x.id] ?? 0) < rules.threshold).length;
   const now = ours(final);
+  const won = now >= need;
+  // 懲罰性賠償是金額，不跟分數排序；最重的三筆只從有分量的項目挑。
+  const ranked = items.filter((x) => x.kind !== 'punitive');
+  const extra = items.filter((x) => x.kind === 'punitive');
+  const top = ranked.slice(0, 3);
+  const where = (it: LedgerItem) => t('（{where}）', { where: t(it.where) });
   const steps = [
     trial && { label: t('庭審結束'), n: ours(trial) },
     spoken && { label: t('結辯後'), n: ours(spoken) },
@@ -298,7 +363,7 @@ function JuryLedger({
   ].filter((x): x is { label: string; n: number } => !!x);
   return (
     <section className="jury-ledger panel" aria-labelledby="jury-ledger-title">
-      <h2 id="jury-ledger-title">{t('這一案的帳')}</h2>
+      <h2 id="jury-ledger-title">{won ? t('為什麼贏') : t('這一案的帳')}</h2>
       <div className="ledger-row">
         <span className="ledger-key">{t('票數')}</span>
         <div>
@@ -326,6 +391,43 @@ function JuryLedger({
             ))}
           </ol>
         </div>
+      )}
+      {!won && top.length > 0 && (
+        <div className="ledger-row">
+          <span className="ledger-key">{t('主因')}</span>
+          <div>
+            <ol className="ledger-reasons">
+              {top.map((it, i) => (
+                <li key={i}>
+                  {says(it)}
+                  <span className="muted">{where(it)}</span>
+                </li>
+              ))}
+              {extra.map((it, i) => (
+                <li key={`p${i}`} className="money">
+                  {says(it)}
+                  <span className="muted">{where(it)}</span>
+                </li>
+              ))}
+            </ol>
+            <p className="ledger-tip">
+              <span className="ledger-key">{t('下次可以試')}</span> {tips[top[0].kind]}
+            </p>
+          </div>
+        </div>
+      )}
+      {ranked.length > (won ? 0 : 3) && (
+        <details className="ledger-all">
+          <summary>{t('完整帳目')}</summary>
+          <ol>
+            {items.map((it, i) => (
+              <li key={i}>
+                {says(it)}
+                <span className="muted">{where(it)}</span>
+              </li>
+            ))}
+          </ol>
+        </details>
       )}
     </section>
   );
