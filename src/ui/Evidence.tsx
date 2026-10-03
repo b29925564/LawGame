@@ -220,7 +220,11 @@ export function EvidenceCard({ item, pickable }: { item: Item; pickable?: boolea
       <li
         ref={ref}
         className={
-          cls + ' mini' + (can ? ' pickable' : '') + (slot ? ' on' : '') + (open ? ' open' : '')
+          cls +
+          ' mini' +
+          (can ? ' pickable' : pickable && pick ? ' out' : '') +
+          (slot ? ' on' : '') +
+          (open ? ' open' : '')
         }
         onMouseEnter={show}
         onMouseLeave={hide}

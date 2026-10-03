@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { episodes } from '../content';
-import { followingEpisode, sceneOf, useEpisode } from '../engine/game';
+import { episodeOf, followingEpisode, sceneOf, useEpisode } from '../engine/game';
 import { useSettings } from '../engine/settings';
 import { useGame } from '../engine/store';
 import { Board } from './Board';
@@ -63,7 +63,12 @@ export function App() {
       {scene?.type === 'closing' && <Closing key={scene.id} scene={scene} />}
       {(!scene || scene.type === 'card') && (
         <main className="scene title-card">
-          <p className="eyebrow">{t(scene?.act ?? '本集完')}</p>
+          {/* 本集完：眉標寫是哪一集，不跟大標重複（體驗評測 v88）。 */}
+          <p className="eyebrow">
+            {scene
+              ? t(scene.act)
+              : `${t('第 {n} 集', { n: episodeOf(progress).number })}・${t(episodeOf(progress).title)}`}
+          </p>
           <h1>{t(scene?.type === 'card' ? scene.title : '本集完', scene?.id)}</h1>
           {scene?.type === 'card' && scene.lines.map((l) => <p key={l}>{t(l, scene.id)}</p>)}
           {scene ? (

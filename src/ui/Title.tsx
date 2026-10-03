@@ -7,8 +7,8 @@ import { readSave, SLOTS, type Slot } from '../engine/save';
 import { unlockAudio } from '../engine/sound';
 import { Credits } from './Credits';
 
-const when = (t: number) =>
-  new Date(t).toLocaleString('zh-TW', {
+const when = (t: number, lang: string) =>
+  new Date(t).toLocaleString(lang === 'en' ? 'en-US' : 'zh-TW', {
     month: 'numeric',
     day: 'numeric',
     hour: '2-digit',
@@ -41,7 +41,9 @@ export function SlotList({
               aria-label={lang === 'en' ? `${t(verb)} ${name}` : `${verb}${name}`}
             >
               <strong>{name}</strong>
-              <span className="muted">{f ? `${t(f.label)}・${when(f.savedAt)}` : t('空')}</span>
+              <span className="muted">
+                {f ? `${t(f.label)}・${when(f.savedAt, lang)}` : t('空')}
+              </span>
             </button>
           </li>
         );
