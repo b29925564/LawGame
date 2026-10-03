@@ -151,8 +151,9 @@ export function useT() {
 /** 金額：中文用「萬」，英文用 $ 與 million。 */
 export function money(n: number, lang: Lang): string {
   if (lang === 'en')
+    // 精度跟中文一致：422.5 萬＝$4.225 million，不另外四捨五入。
     return n >= 1_000_000
-      ? `$${+(n / 1_000_000).toFixed(2)} million`
+      ? `$${+(n / 1_000_000).toFixed(3)} million`
       : `$${n.toLocaleString('en-US')}`;
   return `${+(n / 10_000).toFixed(1)} 萬`;
 }

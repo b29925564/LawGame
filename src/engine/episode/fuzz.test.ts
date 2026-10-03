@@ -27,6 +27,7 @@ import {
   useEpisode,
   voirDireState,
 } from '../game';
+import { closingReplay, ledger } from '../ledger';
 import type { Progress } from '../save';
 import type { Relation, Tag } from '../schema';
 import * as closing from './closing';
@@ -230,6 +231,23 @@ function checkInvariants(p: Progress) {
     for (const [j, v] of Object.entries(x.jury ?? {}))
       if (!(v >= 0 && v <= 100)) throw new Error(`${id} 陪審員 ${j} 心證越界：${v}`);
   }
+  checkLedger(p);
+}
+
+/** 判決頁的帳：重播出來的結辯要跟真的那一次一模一樣，每一筆都是有限的正數、由重到輕。 */
+function checkLedger(p: Progress) {
+  const r = closingReplay(p);
+  if (!r) return;
+  const again = closing.speak(r.cs, r.begin, r.rules, r.held, r.exposed, r.hasTheory);
+  for (const [id, v] of Object.entries(r.st.spoken ?? {}))
+    if (Math.abs((again[id] ?? NaN) - v) > 1e-9)
+      throw new Error(`帳目重播的結辯跟實際不同：${id} ${again[id]} ≠ ${v}`);
+  const items = ledger(p).filter((x) => x.kind !== 'punitive');
+  for (const [i, x] of items.entries()) {
+    if (!(x.amount > 0 && Number.isFinite(x.amount)))
+      throw new Error(`帳目 ${x.kind} 數值不對：${x.amount}`);
+    if (i && items[i - 1].amount < x.amount) throw new Error('帳目沒有由重到輕排序');
+  }
 }
 
 interface Run {
@@ -240,9 +258,9 @@ interface Run {
   trace: string[];
 }
 
-function play(seed: number): Run {
+function play(seed: number, episode = 'ep1'): Run {
   const r = rng(seed);
-  useEpisode.getState().newGame();
+  useEpisode.getState().newGame(episode);
   const run: Run = { seed, steps: 0, scenes: [], trace: [] };
   let stall = 0;
   let where = '';
@@ -301,5 +319,18 @@ describe('隨機玩家', () => {
       );
     }
     expect(report).toEqual([]);
+  }, 600_000);
+});
+
+describe('隨機玩家（第 2 集）', () => {
+  it(`${Math.ceil(SEEDS / 2)} 局隨機選擇都能走到本集完，判決頁的帳算得出來`, () => {
+    const runs = Array.from({ length: Math.ceil(SEEDS / 2) }, (_v, i) => play(2000 + i, 'ep2'));
+    const bad = runs.filter((x) => x.error || x.scenes.at(-1) !== 'epilogue-father');
+    expect(
+      bad.map(
+        (x) =>
+          `種子 ${x.seed}：${x.error ?? `停在 ${x.scenes.at(-1)}`}\n    ${x.trace.slice(-8).join('\n    ')}`,
+      ),
+    ).toEqual([]);
   }, 600_000);
 });
