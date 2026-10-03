@@ -5937,8 +5937,12 @@ body:has(.court-light) {
   .bench {
     padding-right: 2px;
   }
+  /* 標頭那一行至少跟選單鈕一樣高（上 8＋高 40），第二行的借據、Candidates 才不會被蓋住（體驗評測 v88）。 */
   .bench > .eyebrow {
     flex-basis: 100%;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
     padding-right: 84px;
   }
 }

@@ -365,6 +365,22 @@ function Verdict({
       : null;
   const after = readOut ? rest : ending;
 
+  // 贏的時候帳是空的（帳只記傷害），主要原因改看風向：是在哪一段過門檻的（§18 結論帶一定寫原因）。
+  // 「站你這邊 N 位，需要 N 位」只留在風向卡，不在結論帶重複（體驗評測 v88）。
+  const atTrial = trial ? count(trial) : 0;
+  const atClose = st.spoken ? count(st.spoken) : atTrial;
+  const wonWhy = !won
+    ? ''
+    : trial && atTrial >= need
+      ? t('庭審結束時，已經有 {a} 位陪審員站你這邊。', { a: atTrial })
+      : st.spoken && atClose >= need
+        ? t('結辯把站你這邊的陪審員從 {a} 位拉到 {b} 位。', { a: atTrial, b: atClose })
+        : t('評議時又說服了 {k} 位陪審員。', { k: now - atClose });
+
+  const civil = !!award || rules?.burden === 'civil';
+  const formTitle = civil ? '特別判決表' : '判決書';
+  const formEn = civil ? 'SPECIAL VERDICT FORM' : 'VERDICT FORM';
+
   const steps = [
     trial && { label: t('庭審結束'), j: trial },
     st.spoken && { label: t('結辯後'), j: st.spoken },
@@ -383,13 +399,11 @@ function Verdict({
             {t('陪審團評議後')}
           </p>
           <h1>{headline}</h1>
-          {!won && top[0] ? (
+          {(won ? wonWhy : top[0] && says(top[0])) && (
             <p className="why">
               <b>{t('主要原因：')}</b>
-              {says(top[0])}
+              {won ? wonWhy : says(top[0])}
             </p>
-          ) : (
-            n > 0 && <p className="why">{t('站你這邊 {a} 位，需要 {b} 位', { a: now, b: need })}</p>
           )}
         </div>
         {owed !== null ? (
@@ -410,12 +424,9 @@ function Verdict({
           <section className={award ? 'vform' : 'vform short'} aria-labelledby="verdict-form-title">
             <div className="fh">
               <p className="c">{t('卡爾德郡高等法院')}</p>
-              <h2 id="verdict-form-title">
-                {t(award || rules?.burden === 'civil' ? '特別判決表' : '判決書')}
-              </h2>
-              <p className="en">
-                {award || rules?.burden === 'civil' ? 'SPECIAL VERDICT FORM' : 'VERDICT FORM'}
-              </p>
+              <h2 id="verdict-form-title">{t(formTitle)}</h2>
+              {/* 英文介面的抬頭本身就是英文，不再重印一行。 */}
+              {formEn !== t(formTitle).toUpperCase() && <p className="en">{formEn}</p>}
             </div>
             {rules?.burden === 'civil' ? (
               <>
