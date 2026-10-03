@@ -105,7 +105,7 @@ export function Pleading({
         <span className="vs">{t(parties)}</span>
         <span className="no">{caseNo}</span>
         <h2>{t('聲請狀')}</h2>
-        <span className="topic">（{topic}）</span>
+        <span className="topic">{t('（{topic}）', { topic })}</span>
       </header>
       <div className="body">
         <p>

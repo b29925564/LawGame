@@ -110,6 +110,9 @@
 '全部 {n}': 'All {n}'
 有時間的事件: Timed events
 其他資料: Other records
+可出示: Usable here
+這裡用不上: Not usable here
+這張卡現在用不上，只能看內容。: This card can't be used here. You can still read it.
 
 # Timeline
 還沒放上時間軸的卡片: Cards not on the timeline yet
@@ -188,6 +191,7 @@
 卡爾德州　訴　伊森・蕭: State of Calder v. Ethan Shaw
 維加　訴　卡爾德物流: Vega v. Calder Logistics
 聲請狀: MOTION
+'（{topic}）': '({topic})'
 聲請人請求本院: 'The movant asks the Court to:'
 '，': ','
 理由：依: 'on the ground of'

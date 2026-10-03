@@ -979,8 +979,12 @@ details summary {
   display: none;
 }
 .apps button {
-  /* 擠不下時先縮、再在字間換行，不讓最後一個分頁被分頁列切掉（版面檢查：英文 Legal terms、Court system）。 */
+  /*
+   * 擠不下時先縮、再在字間換行，不讓最後一個分頁被分頁列切掉（版面檢查：英文 Legal terms、Court system）。
+   * 中文詞不拆開：「證據/板」「法院系/統」一字一行（體驗評測 v88 重驗，第 2 集手機六個分頁）。
+   */
   flex: 0 1 auto;
+  word-break: keep-all;
   line-height: var(--lh-tight);
   position: relative;
   min-height: 42px;
@@ -1007,6 +1011,19 @@ details summary {
   background: var(--hl);
   scale: 0 1;
   transition: scale 0.25s var(--ease);
+}
+@media (max-width: 599px) {
+  /* 手機：第 2 集有六個分頁，左右各 6 才放得下一行。 */
+  .apps button {
+    padding-inline: 6px;
+  }
+  .apps button::after {
+    left: 4px;
+    right: 4px;
+  }
+  .apps .dot {
+    margin-left: 3px;
+  }
 }
 .apps [aria-current='true'] {
   color: var(--text);
@@ -1528,7 +1545,8 @@ button.relation.on,
 }
 .link-bench {
   position: sticky;
-  top: var(--tabs-h, 44px);
+  /* 手機的分頁列不釘住，匣子直接釘在頂端；舊的 44 會在上面露出一條卡片（體驗評測 v88 重驗）。 */
+  top: var(--tabs-h, var(--stick-top));
   z-index: 2;
   margin: 2px -16px;
   padding: 10px 16px;
@@ -1798,7 +1816,8 @@ fieldset.relations.compact {
 /* 時間軸：未放的卡片匣釘在上緣，跟連線台一樣。 */
 .timeline-tray {
   position: sticky;
-  top: var(--tabs-h, 44px);
+  /* 手機的分頁列不釘住，匣子直接釘在頂端；舊的 44 會在上面露出一條卡片（體驗評測 v88 重驗）。 */
+  top: var(--tabs-h, var(--stick-top));
   z-index: 2;
   margin: -14px -16px 0;
   padding: 12px 16px 10px;
@@ -3221,6 +3240,11 @@ fieldset.relations.compact {
 .card.mini.out {
   opacity: 0.45;
   transition: opacity 0.15s;
+}
+.card.mini .mini-out {
+  margin: 0;
+  font-size: var(--fs-ui-meta);
+  color: var(--accent);
 }
 .card.mini.out:hover,
 .card.mini.out:focus-within,

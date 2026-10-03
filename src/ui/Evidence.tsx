@@ -55,6 +55,9 @@ export function EvidenceDrawer({ note, noTimeline }: { note?: string; noTimeline
     return () => window.removeEventListener('keydown', esc);
   }, [open]);
   const [kind, setKind, showKind] = useKindFilter();
+  // 聲請時（有證物標籤）能出示的卡排最前面，第一屏就看得到（體驗評測 v88 重驗：候選卡夾在清單中段、尾端）。
+  const { pool, pick, tags } = useCardPick();
+  const motion = wide && !!pick && !!tags;
   // 抽屜分三頁：手上的證據、排好的時間軸、法典百科。庭上、談判時都翻得到。
   const [want, setWant] = useState<'cards' | 'timeline' | 'terms'>('cards');
   const setPage = (next: typeof want) => {
@@ -131,9 +134,11 @@ export function EvidenceDrawer({ note, noTimeline }: { note?: string; noTimeline
                 <KindFilter items={items} value={kind} onPick={setKind} />
                 {/* 清單自己捲：能被鍵盤聚焦，卡片不能選的畫面也捲得到下面（無障礙審查第 3 條）。 */}
                 <ul className="stack cards sheet-list" tabIndex={0} aria-label={t('證據清單')}>
-                  {timeGroups(hit, (i) => (
-                    <EvidenceCard key={i.id} item={i} pickable={wide} />
-                  ))}
+                  {motion
+                    ? usableFirst(hit, pool, (i) => (
+                        <EvidenceCard key={i.id} item={i} pickable={wide} />
+                      ))
+                    : timeGroups(hit, (i) => <EvidenceCard key={i.id} item={i} pickable={wide} />)}
                   {hit.length === 0 && (
                     <li className="muted">
                       {items.length ? t('沒有符合的卡片。') : t('還沒有任何卡片。')}
@@ -187,6 +192,7 @@ export function EvidenceCard({ item, pickable }: { item: Item; pickable?: boolea
   const hl = cardHighlights(episodeOf(progress))[item.id];
   const sealed = cardStamps(progress)[item.id];
   const can = !!(pickable && pick && pool.includes(item.id));
+  const out = !!(pickable && pick) && !can;
   const cls = item.kind === '論點' ? 'card arg' : 'card';
   // 全文浮出卡畫在 body 上：證據欄會捲動，放在卡片裡會被裁掉。
   const ref = useRef<HTMLLIElement>(null);
@@ -222,7 +228,7 @@ export function EvidenceCard({ item, pickable }: { item: Item; pickable?: boolea
         className={
           cls +
           ' mini' +
-          (can ? ' pickable' : pickable && pick ? ' out' : '') +
+          (can ? ' pickable' : out ? ' out' : '') +
           (slot ? ' on' : '') +
           (open ? ' open' : '')
         }
@@ -256,6 +262,7 @@ export function EvidenceCard({ item, pickable }: { item: Item; pickable?: boolea
         {open && (
           <div className="mini-body">
             {sealed && <Stamp text={sealed} sm />}
+            {out && <p className="mini-out">{t('這張卡現在用不上，只能看內容。')}</p>}
             <p>{hl ? <Hl text={item.text} words={hl} live={false} /> : t(item.text, scope)}</p>
             <p className="mini-src">
               {t(item.kind)}
@@ -384,6 +391,30 @@ export function KindFilter({
       ))}
     </div>
   );
+}
+
+/** 聲請時的證據欄：能出示的一組在上，其餘一組在下。 */
+function usableFirst<T extends { id: string }>(
+  items: T[],
+  pool: string[],
+  render: (item: T) => ReactNode,
+) {
+  const usable = items.filter((i) => pool.includes(i.id));
+  const rest = items.filter((i) => !pool.includes(i.id));
+  return [
+    <li key="@usable" className="group-head">
+      {tr('可出示')} <span>{usable.length}</span>
+    </li>,
+    ...usable.map(render),
+    ...(rest.length
+      ? [
+          <li key="@unusable" className="group-head">
+            {tr('這裡用不上')} <span>{rest.length}</span>
+          </li>,
+          ...rest.map(render),
+        ]
+      : []),
+  ];
 }
 
 /**
