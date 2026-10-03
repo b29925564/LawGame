@@ -55,6 +55,11 @@ function Jurors({
   const { showNumbers, set } = useSettings();
   const t = useT();
   const scope = useScope();
+  // 「華特・班奈特・退休警察」：名字和職業分兩行，換行才不會切在詞中間。
+  const person = (label: string) => {
+    const i = label.lastIndexOf('・');
+    return i > 0 ? [t(label.slice(0, i), scope), t(label.slice(i + 1), scope)] : [t(label, scope)];
+  };
   // 法庭裡預設收起來：12 張臉展開會把詰問的按鈕擠出畫面。
   const [open, setOpen] = useState(!strip);
   const over = scene.jurors.filter((j) => (jury[j.id] ?? 0) >= scene.threshold).length;
@@ -99,7 +104,9 @@ function Jurors({
                     {glyph[r]}
                   </span>
                   <span className="label" title={t(j.label, scope)}>
-                    {t(j.label, scope)}
+                    {person(j.label).map((x, k) => (
+                      <span key={k}>{x}</span>
+                    ))}
                   </span>
                   <span className="state">{r ? t(r) : '　'}</span>
                   {showNumbers && (
@@ -268,7 +275,7 @@ export function Courtroom({ scene: raw }: { scene: TrialScene }) {
           </dl>
           <Jurors scene={scene} jury={st.jury} deltas={{}} />
           {/* 詰問的最後幾句話——高潮就在這裡，休庭畫面不該把它吃掉。 */}
-          <div className="lines transcript">
+          <div className="lines transcript full">
             {st.log.slice(-Math.max(4, st.turn ?? 0)).map((l, i) => (
               <Speech key={i} line={{ ...l, mood: '平', thought: false }} />
             ))}
@@ -299,7 +306,7 @@ export function Courtroom({ scene: raw }: { scene: TrialScene }) {
         head={
           <header className="panel-head bench">
             <p className="eyebrow">
-              {t(scene.witness.name, scope)}
+              <strong>{t(scene.witness.name, scope)}</strong>
               {t('・')}
               {t(scene.witness.role, scope)}
             </p>
@@ -390,6 +397,9 @@ export function Courtroom({ scene: raw }: { scene: TrialScene }) {
           </>
         }
       >
+        {st.stage === 'done' && (
+          <p className="muted">{t('這一段詰問到此為止。按「休庭」看這一場的結果。')}</p>
+        )}
         {st.stage === 'direct' && st.window && (
           <ObjectionWindow rulings={rulingsIn(progress)} onPass={letPass} onObject={object} />
         )}

@@ -53,7 +53,7 @@ export function Theory({ scene }: { scene: TheoryScene }) {
       <span className="theory-row">
         <span className="jury-start-key">{t('若判有責')}</span>
         <span>
-          {t('約 {low} 到 {high}', { low: money(o.low), high: money(o.high) })}
+          {t('約 {low}到 {high}', { low: money(o.low), high: money(o.high) })}
           {o.punitive && (
             <small className="muted">
               {o.ratio === 1
