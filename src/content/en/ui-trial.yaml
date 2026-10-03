@@ -167,3 +167,13 @@
 懲罰性賠償可能另加 {r} 倍: 'Punitive damages could add {r}× on top'
 這一段詰問到此為止。按「休庭」看這一場的結果。: This examination is over. Press “Recess” to see how the day went.
 '理論 {base}%，票數浮動 {d}': 'Theory {base}%, vote swing {d}'
+'開庭：約 {low}到 {high}': 'Trial: about {low} to {high}'
+，懲罰性賠償另計: ', punitive damages extra'
+開庭：結果由陪審團決定: 'Trial: the jury decides'
+接受：確定賠 {amount}: 'Accept: pay {amount}, settled'
+'接受：{name}認罪，{label}': 'Accept: {name} pleads guilty, {label}'
+不談了，這個條件作廢。: 'No deal; this offer is gone. '
+離席，上法庭: Walk out and go to trial
+無因迴避：{name}: 'Peremptory strike: {name}'
+用掉 1 次，剩 {n} 次；對方也會刪掉你想留的人。: 'Uses 1, {n} left. The other side will strike people you want too.'
+刪掉{name}: 'Strike {name}'

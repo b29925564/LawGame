@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { VoirDireScene } from '../engine/episode/schema';
 import * as vd from '../engine/episode/voirdire';
 import { useEpisode, voirDireState } from '../engine/game';
 import { useT } from '../i18n';
+import { CommitBar } from './Commit';
 import { useScope } from './lang';
 import { Speech } from './Portrait';
 import { Shell, Tabs } from './Shell';
@@ -24,6 +25,12 @@ export function VoirDire({ scene }: { scene: VoirDireScene }) {
   const [intro, setIntro] = useState(st.asked.length === 0 && st.struck.length === 0);
   const [filter, setFilter] = useState<Filter>('all');
   const [open, setOpen] = useState<string | null>(null);
+  // 無因迴避用定案樣式：點了先看帳，按定案鈕才刪人。
+  const [striking, setStriking] = useState<string | null>(null);
+  // 定案列一出現就捲進畫面，手機上才不會被底部列擋住。
+  useEffect(() => {
+    if (striking) document.querySelector('.commit-bar')?.scrollIntoView({ block: 'nearest' });
+  }, [striking]);
 
   if (intro)
     return (
@@ -156,11 +163,25 @@ export function VoirDire({ scene }: { scene: VoirDireScene }) {
                     <button onClick={() => challengeJuror(c.id)}>{t('聲請有因迴避')}</button>
                     <button
                       disabled={!vd.canStrike(scene, st, c.id)}
-                      onClick={() => strikeJuror(c.id)}
+                      aria-pressed={striking === c.id}
+                      onClick={() => setStriking(striking === c.id ? null : c.id)}
                     >
                       {t('無因迴避')}
                     </button>
                   </div>
+                  {striking === c.id && vd.canStrike(scene, st, c.id) && (
+                    <CommitBar
+                      what={t('無因迴避：{name}', { name: t(c.name, scope) })}
+                      cost={t('用掉 1 次，剩 {n} 次；對方也會刪掉你想留的人。', {
+                        n: scene.peremptories - st.struck.length - 1,
+                      })}
+                      action={t('刪掉{name}', { name: t(c.name, scope) })}
+                      onCommit={() => {
+                        setStriking(null);
+                        strikeJuror(c.id);
+                      }}
+                    />
+                  )}
                 </div>
               )}
             </li>

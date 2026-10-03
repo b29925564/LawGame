@@ -1,9 +1,10 @@
 import { useCaseTerms } from './terms';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import * as nego from '../engine/episode/negotiation';
 import type { NegotiationScene } from '../engine/episode/schema';
 import { closingArgs, negoState, trialRisk, useEpisode } from '../engine/game';
 import { useMoney, useT } from '../i18n';
+import { CommitBar } from './Commit';
 import { CardPick, EvidenceDrawer } from './Evidence';
 import { useScope } from './lang';
 import { Speech } from './Portrait';
@@ -23,6 +24,21 @@ export function Negotiation({ scene }: { scene: NegotiationScene }) {
   const ok = nego.authorized(scene, st, offer);
   const money = useMoney();
   const risk = trialRisk(progress);
+  // 定案樣式（UX 規格 decision-cost 三）：接受與離席都是選了就不能改，先選再看帳。
+  const [choice, setChoice] = useState<'take' | 'walk' | null>(null);
+  const client = t(scene.client.name, scope);
+  // 定案列一出現就捲進畫面，手機上才不會被底部列擋住。
+  useEffect(() => {
+    if (choice) document.querySelector('.commit-bar')?.scrollIntoView({ block: 'nearest' });
+  }, [choice]);
+  const trial = risk
+    ? t('開庭：約 {low}到 {high}', { low: money(risk.low), high: money(risk.high) }) +
+      (risk.punitive ? t('，懲罰性賠償另計') : '')
+    : t('開庭：結果由陪審團決定');
+  const takeCost =
+    offer.amount !== undefined
+      ? t('接受：確定賠 {amount}', { amount: money(offer.amount) })
+      : t('接受：{name}認罪，{label}', { name: client, label: t(offer.label, scope) });
 
   if (intro)
     return (
@@ -99,7 +115,14 @@ export function Negotiation({ scene }: { scene: NegotiationScene }) {
       foot={
         <>
           <EvidenceDrawer />
-          <button className="wide" onClick={walkOut}>
+          <button
+            className="wide"
+            aria-pressed={choice === 'walk'}
+            onClick={() => {
+              setTab('offer');
+              setChoice('walk');
+            }}
+          >
             {t('離席')}
           </button>
         </>
@@ -143,10 +166,12 @@ export function Negotiation({ scene }: { scene: NegotiationScene }) {
             <Speech key={i} line={l} />
           ))}
           <div className="stack">
-            <button className="wide" onClick={() => advise(true)}>
-              {t(ok ? '建議{name}接受' : '建議{name}接受（超過授權）', {
-                name: t(scene.client.name, scope),
-              })}
+            <button
+              className="wide"
+              aria-pressed={ok ? choice === 'take' : undefined}
+              onClick={() => (ok ? setChoice('take') : advise(true))}
+            >
+              {t(ok ? '建議{name}接受' : '建議{name}接受（超過授權）', { name: client })}
             </button>
             {!ok && (
               <button className="wide primary" disabled={!nego.canAct(st)} onClick={callClient}>
@@ -154,10 +179,32 @@ export function Negotiation({ scene }: { scene: NegotiationScene }) {
                 <span className="cost">{t('−1 回合')}</span>
               </button>
             )}
-            <button className="wide" onClick={() => advise(false)}>
+            <button
+              className="wide"
+              onClick={() => {
+                setChoice(null);
+                advise(false);
+              }}
+            >
               {t('建議撐下去')}
             </button>
           </div>
+          {choice === 'take' && ok && (
+            <CommitBar
+              what={t('建議{name}接受', { name: client })}
+              cost={`${takeCost}。${trial}`}
+              action={t('建議{name}接受', { name: client })}
+              onCommit={() => advise(true)}
+            />
+          )}
+          {choice === 'walk' && (
+            <CommitBar
+              what={t('離席')}
+              cost={`${t('不談了，這個條件作廢。')}${trial}`}
+              action={t('離席，上法庭')}
+              onCommit={walkOut}
+            />
+          )}
         </section>
       )}
 

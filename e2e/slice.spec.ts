@@ -255,6 +255,8 @@ async function playToRachelLast(page: Page) {
   await page.getByRole('button', { name: '她開的條件' }).click();
   await page.getByRole('button', { name: '建議撐下去' }).click();
   await page.getByRole('button', { name: '離席' }).click();
+  // 不可逆的動作走定案列：選了先看帳，按定案鈕才送出。
+  await page.getByRole('button', { name: /離席，上法庭/ }).click();
   await expect(page.getByText('那就法庭見')).toBeVisible();
   await next(page);
 
@@ -285,6 +287,7 @@ async function playToRachelLast(page: Page) {
   const walter = page.locator('li.candidate').filter({ hasText: '華特・班奈特' });
   await walter.getByRole('button', { name: /華特・班奈特/ }).click();
   await walter.getByRole('button', { name: '無因迴避' }).click();
+  await walter.getByRole('button', { name: /刪掉華特・班奈特/ }).click();
   await page.getByRole('button', { name: /就用這 12 位/ }).click();
   await expect(page.getByText('陪審長')).toBeVisible();
   await next(page);
