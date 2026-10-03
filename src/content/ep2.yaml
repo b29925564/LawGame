@@ -123,7 +123,12 @@ effects:
   - when: { flags: ['discovery:rq-chat:produced'] }
     confidence: 10
   # 群組截圖只打臉「他自己的選擇」「我們提醒過」；「分攤」本來就承認公司有錯，它等於替我們作證。
-  - when: { flags: ['discovery:rq-chat:produced'], theory: [own-choice, warned] }
+  # 硬藏也一樣：開庭前被前員工交給原告，對方照樣拿到（另外再加不利推定）。藏不能比交便宜。
+  - when:
+      {
+        anyFlags: ['discovery:rq-chat:produced', 'discovery:rq-chat:concealed'],
+        theory: [own-choice, warned],
+      }
     jury: 6
   # 交出事務所自己的意見書：亞瑟的信任掉一格；旗標帶到第 3 集（惠特洛克線從這裡起頭）。
   - when: { flags: ['discovery:rq-memo:produced'] }
@@ -1673,7 +1678,8 @@ scenes:
         door:
           q: 米爾斯先生，這是三月十四日的設定變更單。簽名的是您嗎？
           a: ……是我。
-          penalty: 12
+          # 自己的證人在陪審團面前被自己簽名的文件打臉：比第 1 集的「開門」重得多。
+          penalty: 20
       - id: tq-corrected
         seq: 2
         q: 米爾斯先生，您在錄取之後更正過一句證詞。為什麼？
@@ -1684,7 +1690,11 @@ scenes:
     # 營運群組進了開示，而我們的理論和它矛盾：奧卡福反詰問多問一題。
     cross:
       - id: tx-peak
-        when: { flags: ['discovery:rq-chat:produced'], theory: [own-choice, warned] }
+        when:
+          {
+            anyFlags: ['discovery:rq-chat:produced', 'discovery:rq-chat:concealed'],
+            theory: [own-choice, warned],
+          }
         q: 米爾斯先生，「旺季不准任何人被踢下線。我不管系統怎麼寫。」這句話，是您在營運群組說的？
         a: ……是。那是旺季。
         penalty: 8

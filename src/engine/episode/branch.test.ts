@@ -35,6 +35,8 @@ describe('分支條件', () => {
     expect(matches({ theory: ['sophie'] }, ctx())).toBe(false);
     expect(matches({ flags: ['a', 'b'] }, ctx({ flags: ['a'] }))).toBe(false);
     expect(matches({ notFlags: ['a'] }, ctx({ flags: ['a'] }))).toBe(false);
+    expect(matches({ anyFlags: ['a', 'b'] }, ctx({ flags: ['b'] }))).toBe(true);
+    expect(matches({ anyFlags: ['a', 'b'] }, ctx({ flags: ['c'] }))).toBe(false);
     expect(matches({ ethics: ['coach', 'lie'] }, ctx({ ethics: ['lie'] }))).toBe(true);
     expect(matches({ verdict: ['有罪'] }, ctx({ verdict: null }))).toBe(false);
   });
