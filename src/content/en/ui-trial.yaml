@@ -177,3 +177,5 @@
 無因迴避：{name}: 'Peremptory strike: {name}'
 用掉 1 次，剩 {n} 次；對方也會刪掉你想留的人。: 'Uses 1, {n} left. The other side will strike people you want too.'
 刪掉{name}: 'Strike {name}'
+'交互詰問結束・{name}': 'Examination over · {name}'
+你手上的證據說這個回答不是真的。照問，是讓證人在庭上說假話。: Your own evidence says this answer isn't true. Asking anyway puts a false answer on the record.

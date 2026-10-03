@@ -17,6 +17,13 @@ export function Deposition({ scene }: { scene: DepositionScene }) {
   const [intro, setIntro] = useState(st.log.length === 0);
   const [topic, setTopic] = useState(scene.topics[0]?.id ?? '');
   const theirs = scene.side === 'theirs';
+  // 有毛病的題目裡，擋對幾題、漏掉幾題（異議理由選錯也算漏）。
+  const depoFlags = (st.flags ?? []).filter((f) => f.startsWith(`depo:${scene.id}:`));
+  const preserved = depoFlags.filter((f) => f.endsWith(':preserved')).length;
+  const shouldObject = theirs
+    ? scene.script.filter((q) => q.objection && st.asked.includes(q.id)).length
+    : 0;
+  const waived = shouldObject - preserved;
   const q = theirs ? depo.current(scene, st) : undefined;
 
   if (intro)
@@ -44,6 +51,16 @@ export function Deposition({ scene }: { scene: DepositionScene }) {
           <dl className="stats">
             <dt>{t('問過的題目')}</dt>
             <dd>{st.asked.length}</dd>
+            {/* 擋對和漏擋要分開寫，不然玩家看不出這場錄取守得好不好。 */}
+            <dt>{t('擋對的異議')}</dt>
+            <dd>
+              {preserved} / {shouldObject}
+            </dd>
+            <dt>{t('該擋沒擋')}</dt>
+            <dd className={waived > 0 ? 'over' : undefined}>
+              {waived}
+              {waived > 0 && <small>{t('對方拿到了本來可以擋下的回答')}</small>}
+            </dd>
             <dt>{t('站不住的異議')}</dt>
             <dd>{st.wrong ?? 0}</dd>
             <dt>{t('該擋沒擋住的題目')}</dt>

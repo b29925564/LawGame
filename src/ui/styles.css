@@ -2224,6 +2224,8 @@ fieldset.relations.compact {
   border-radius: var(--radius);
   background: var(--surface);
   overflow: hidden;
+  /* 放在直排的 panel 裡時不要被壓扁，否則列會被切掉一半。 */
+  flex-shrink: 0;
 }
 .stats dt,
 .stats dd {
