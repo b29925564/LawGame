@@ -7692,6 +7692,9 @@ html[lang='en'] .vform .fh .c {
 .nego-ladder {
   /* 價和標記不要隔半個畫面（體驗評測 v89）。 */
   max-width: 560px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  column-gap: var(--s3);
   list-style: none;
   margin: var(--s2) 0 var(--s3);
   padding: 0;
@@ -7699,7 +7702,10 @@ html[lang='en'] .vform .fh .c {
 }
 .nego-ladder li {
   display: grid;
-  grid-template-columns: minmax(0, 9em) minmax(0, 1fr) auto;
+  /* subgrid 讓每一列的價和標記對齊同一欄；價和標記不換行，窄螢幕由門檻那欄讓位
+     （體驗評測 v89：英文「$2.5 million」被拆成兩行）。 */
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
   gap: var(--s3);
   align-items: baseline;
   padding: 6px 8px;
@@ -7711,9 +7717,11 @@ html[lang='en'] .vform .fh .c {
 }
 .nego-ladder .v {
   font-weight: 600;
+  white-space: nowrap;
 }
 .nego-ladder .tg {
   display: flex;
+  white-space: nowrap;
   gap: 8px;
   font-size: 13px;
 }
@@ -7731,4 +7739,18 @@ html[lang='en'] .vform .fh .c {
 }
 .nego-ladder li.on .th {
   color: var(--text);
+}
+/* 深色模式的 wash 上 --bad 只有 4.39：目前這一檔的「超過授權」改用正文色，前面加一顆紅點。 */
+.nego-ladder li.on .tg em {
+  color: var(--text);
+}
+.nego-ladder li.on .tg em::before {
+  content: '';
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-right: 6px;
+  border-radius: 50%;
+  background: var(--bad);
+  vertical-align: 1px;
 }
