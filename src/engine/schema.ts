@@ -47,6 +47,8 @@ export const caseSchema = z.object({
       z.object({
         id,
         label: z.string(),
+        /** 只有姓名（評議句子的主詞用）；label 可能帶職業。 */
+        name: z.string().optional(),
         leans: z.array(z.enum(tags)).min(1).max(2),
         start: z.number().int().min(0).max(100),
         foreperson: z.boolean().default(false),

@@ -76,6 +76,21 @@ describe('民事門檻（優勢證據）', () => {
     expect(rounds[0].moves.join('')).not.toContain('陪審員5被多數說服');
   });
 
+  it('換邊的句子只用姓名，不帶職業（遴選來的陪審員 label 是「姓名・職業」）', () => {
+    const rules: JuryRules = {
+      ...civil(5),
+      jurors: six([0, 0, 0, 0, 0, 0]).map((j, i) => ({
+        ...j,
+        label: `朵琳・貝克${i}・超市夜班主管`,
+        name: `朵琳・貝克${i}`,
+      })),
+    };
+    const moves = deliberate(rules, jury([62, 55, 52, 46, 44, 30])).flatMap((r) => r.moves);
+    const flips = moves.filter((m) => m.includes('改變了立場'));
+    expect(flips.length).toBeGreaterThan(0);
+    for (const m of flips) expect(m).not.toContain('超市夜班主管');
+  });
+
   it('驗證器：民事的結辯要寫有責／無責，判決人數要過半而且不多於陪審員', () => {
     const e = structuredClone(episodes.ep1) as Episode;
     for (const s of e.scenes) if (s.type === 'trial') (s as TrialScene).burden = 'civil';

@@ -131,8 +131,8 @@ export function deliberate(c: JuryRules, jury: Jury): Round[] {
       if (cur[j.id] >= t !== next[j.id] >= t)
         moves.push(
           swayed.has(j.id) && Math.sign(next[j.id] - cur[j.id]) === dir
-            ? `${j.label}被多數說服，改變了立場。`
-            : `${j.label}被陪審長說服，改變了立場。`,
+            ? `${j.name ?? j.label}被多數說服，改變了立場。`
+            : `${j.name ?? j.label}被陪審長說服，改變了立場。`,
         );
     const w = termsOf(c);
     const yes = c.jurors.filter((j) => next[j.id] >= t).length;
