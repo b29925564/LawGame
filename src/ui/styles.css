@@ -7631,3 +7631,40 @@ html[lang='en'] .vform .fh .c {
     --drawer-gutter: 340px;
   }
 }
+
+/* 調解：對方信心與每一檔條件的門檻（體驗評測 v88：看不到信心，攤牌後開價沒動也沒有回饋）。 */
+.patience.conf {
+  gap: 4px 10px;
+}
+.confbar {
+  position: relative;
+  width: 120px;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--border);
+}
+.confbar i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: 3px;
+  background: var(--hl);
+  transition: width 0.4s var(--ease);
+}
+.confbar b {
+  position: absolute;
+  top: -3px;
+  width: 2px;
+  height: 12px;
+  margin-left: -1px;
+  background: var(--text);
+}
+.nego-move {
+  margin: 0 0 var(--s3);
+  line-height: 1.6;
+}
+.nego-move b {
+  margin-right: 8px;
+}
+.nego-next {
+  margin: 4px 0 0;
+}
