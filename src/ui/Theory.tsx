@@ -54,7 +54,15 @@ export function Theory({ scene }: { scene: TheoryScene }) {
         <span className="jury-start-key">{t('若判有責')}</span>
         <span>
           {t('約 {low} 到 {high}', { low: money(o.low), high: money(o.high) })}
-          {o.punitive && <small className="muted"> {t('懲罰性賠償另計')}</small>}
+          {o.punitive && (
+            <small className="muted">
+              {o.ratio === 1
+                ? t('懲罰性賠償可能再加同額')
+                : o.ratio
+                  ? t('懲罰性賠償可能另加 {r} 倍', { r: o.ratio })
+                  : t('懲罰性賠償另計')}
+            </small>
+          )}
         </span>
       </span>
     );
