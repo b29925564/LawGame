@@ -258,6 +258,9 @@ function checkLedger(p: Progress) {
       )
         throw new Error(`沒彈劾的 ${s.id}/${c.id} 沒有上帳`);
   }
+  // 同一位證人只列一筆。
+  const witnesses = items.filter((x) => x.kind === 'unimpeached').map((x) => x.refs[0]);
+  if (new Set(witnesses).size !== witnesses.length) throw new Error('同一位證人的沒彈劾列了兩筆');
   for (const [i, x] of items.entries()) {
     if (!(x.amount > 0 && Number.isFinite(x.amount)))
       throw new Error(`帳目 ${x.kind} 數值不對：${x.amount}`);

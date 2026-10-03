@@ -131,6 +131,7 @@ export function ledger(p: Progress): LedgerItem[] {
       add({ kind: 'effect', amount: x.jury, where: '審前', refs: x.when.flags ?? [] });
 
   // 庭審：有反駁論點卻沒被彈劾的關鍵證詞。值多少＝當時用強鎖定彈劾成功會拉回來的量。
+  // 同一位證人的幾條合成一筆（refs：[場景, 主張…]），不然畫面上同一句話會列兩次。
   const args = new Map(
     ep.scenes
       .filter((x): x is DeskScene => x.type === 'desk')
@@ -142,19 +143,23 @@ export function ledger(p: Progress): LedgerItem[] {
     if (!ts || ts.pleaded || ts.stricken) continue;
     // 陪審員要用選任後實際坐進席位的那幾位，場景原本的 jurors 對不上心證的 id。
     const t = courtScene(p, s);
+    let hit = ts.jury;
+    const missed: string[] = [];
     for (const c of t.witness.claims) {
       if (ts.claims[c.id]?.result !== 'none') continue;
       const a = args.get(c.argument);
       if (!a) continue;
-      const hit = applyImpact(t, ts.jury, a.strength, a.tags, 1.5).jury;
+      hit = applyImpact(t, hit, a.strength, a.tags, 1.5).jury;
+      missed.push(c.id);
+    }
+    if (missed.length)
       add({
         kind: 'unimpeached',
         amount: avg(t, ts.jury) - avg(t, hit),
         where: '庭審',
-        refs: [t.id, c.id],
+        refs: [t.id, ...missed],
         who: t.witness.name,
       });
-    }
   }
 
   // 開場：沒兌現的承諾，以及理論本身的代價（結辯起點就是這樣算出來的）。
