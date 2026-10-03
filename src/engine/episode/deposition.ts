@@ -17,6 +17,8 @@ export interface DepoState {
   i?: number;
   wrong?: number;
   flags?: string[];
+  /** 該擋沒擋住（沒異議或理由錯）的題目：對方因此多拿到的東西寫在題目的 missed。 */
+  slipped?: string[];
 }
 
 /** 對方主導的錄取，玩家能用的異議：庭上那幾種，加上指示證人不回答的「特權」。 */
@@ -43,6 +45,7 @@ export function startDeposition(s: DepositionScene): DepoState {
     i: 0,
     wrong: 0,
     flags: [],
+    slipped: [],
   };
 }
 
@@ -83,6 +86,7 @@ export function defend(s: DepositionScene, st: DepoState, reason: DepoObjection 
     i,
     wrong: (st.wrong ?? 0) + (reason !== null && !right ? 1 : 0),
     asked: [...st.asked, q.id],
+    slipped: q.objection && !right ? [...(st.slipped ?? []), q.id] : st.slipped,
     anchored: q.anchors && !silenced ? [...new Set([...st.anchored, q.anchors])] : st.anchored,
     gained: [...new Set([...st.gained, ...(silenced ? [] : q.gives), ...missed.gives])],
     flags: [...new Set(flags)],

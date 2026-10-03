@@ -60,6 +60,8 @@ export function Deposition({ scene }: { scene: DepositionScene }) {
               <dd>{st.asked.length}</dd>
               <dt>{t('站不住的異議')}</dt>
               <dd>{st.wrong ?? 0}</dd>
+              <dt>{t('該擋沒擋住的題目')}</dt>
+              <dd>{st.slipped?.length ?? 0}</dd>
             </dl>
             {/* 每一題的結果（體驗評測）：擋住、放過、擋錯、照答要分得出來，對方多拿到什麼也要看得到。 */}
             <ol className="depo-review" aria-label={t('每一題的結果')}>
@@ -105,6 +107,13 @@ export function Deposition({ scene }: { scene: DepositionScene }) {
             <dt>{t('洩漏給對方的方向')}</dt>
             <dd>{t('{n} 個', { n: st.exposed.length })}</dd>
           </dl>
+        )}
+        {theirs && (st.slipped?.length ?? 0) > 0 && (
+          <p className="muted">
+            {t('沒擋住的回答都進了筆錄，{examiner}會拿逐字稿去用。', {
+              examiner: t(scene.examiner, scope),
+            })}
+          </p>
         )}
         {st.exposed.length > 0 && (
           <p className="muted">
