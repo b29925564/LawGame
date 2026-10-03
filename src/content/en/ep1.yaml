@@ -111,12 +111,13 @@
 檢方證據開示: Prosecution discovery
 逮捕紀錄: Arrest record
 週日: Sunday
-週日 14:05 於友人住處逮捕伊森・蕭。: Ethan Shaw arrested Sunday at 14:05 at a friend's apartment.
+於友人住處逮捕伊森・蕭。: Ethan Shaw arrested at a friend's apartment.
 逮捕報告: Arrest report
 警車上的供述: Statement in the patrol car
+押解途中，被告未經詢問自行陳述：「我只是想讓他住手。」: 'In transit, the defendant stated, unprompted: "I just wanted him to stop."'
 14:20 押解途中，被告未經詢問自行陳述：「我只是想讓他住手。」: '14:20, in transit: the defendant stated, unprompted, "I just wanted him to stop."'
 權利告知書: Rights advisory
-14:32 於分局由柯瓦斯基警探告知並簽署米蘭達權利。: '14:32, at the precinct: Detective Kowalski read him his Miranda rights and he signed the form.'
+於分局由柯瓦斯基警探告知並簽署米蘭達權利。: 'At the precinct, Detective Kowalski read him his Miranda rights and he signed the form.'
 財物清單：智慧手錶: 'Property inventory: smartwatch'
 物品: Item
 被告入所時扣押物品：手機 1 支、皮夾 1 個、智慧手錶 1 支。: 'Seized at booking: one phone, one wallet, one smartwatch.'
@@ -134,7 +135,7 @@
 死者左腕配戴智慧手錶，錶帶完好，仍扣在腕上；背面有心率感測器，貼著皮膚。: A smartwatch on the victim's left wrist, strap intact and still fastened. A heart-rate sensor on the back, flush against the skin.
 蘇菲對警方的說法：我直接回家了: 'Sophie to police: I went straight home'
 蘇菲 19:02 刷卡離開 31 樓，向警方表示她下班後直接回家，沒有再回大樓。: Sophie badged off the 31st floor at 19:02 and told police she went straight home and never came back.
-停車場紀錄：蘇菲的車停到 22:40: "Garage log: Sophie's car stayed until 22:40"
+停車場進出紀錄: Garage entry log
 地下停車場的進出紀錄顯示，蘇菲的車週五 22:40 才駛離。: The underground garage log shows Sophie's car did not leave until 22:40 Friday.
 蘿莎調查: Rosa's legwork
 潔德證實：蘇菲當晚和她在車上: 'Jade confirms: Sophie was in her car that night'
@@ -144,7 +145,7 @@
 被告外套袖口血跡與死者 DNA 相符。: Blood on the defendant's jacket cuff matches the victim's DNA.
 檢方補充開示: Supplemental discovery
 叫車收據: Ride receipt
-22:34 於東河街 118 號上車，22:44 抵達卡爾德大樓。司機奧瑪・哈桑。: 'Picked up 22:34 at 118 East River Street, dropped off 22:44 at the Calder Building. Driver: Omar Hassan.'
+於東河街 118 號上車，22:44 抵達卡爾德大樓。司機奧瑪・哈桑。: 'Picked up at 118 East River Street, dropped off 22:44 at the Calder Building. Driver: Omar Hassan.'
 叫車公司: Ride-hail company
 蘇菲陳述：他每天盯著健康 App: "Sophie's statement: he checked the health app every day"
 沃斯每天早上、散會之後都低頭看手錶上的健康 App，數字不好看就發脾氣。: Every morning and after every meeting, Voss checked the health app on his watch. Bad numbers put him in a temper.
@@ -153,10 +154,10 @@
 心率在 22:24 急遽升高後歸零，之後再無讀數。: Heart rate spikes at 22:24, then drops to zero. No readings after that.
 手錶廠商（傳票）: Watch manufacturer (subpoena)
 聊天系統稽核紀錄: Chat system audit log
-21:55 沃斯傳訊給瑞秋；22:31 由沃斯桌機發出一則訊息給伊森（伊森的手錶 22:33 才收到推播）；23:14 由同一台桌機收回。: 21:55, Voss messages Rachel. 22:31, a message to Ethan is sent from Voss's desktop (Ethan's watch gets the push at 22:33). 23:14, the same desktop unsends it.
+沃斯於 21:55 傳訊給瑞秋；22:31 由沃斯桌機發出一則訊息給伊森（伊森的手錶 22:33 才收到推播）；23:14 由同一台桌機收回。: Voss messages Rachel at 21:55. 22:31, a message to Ethan is sent from Voss's desktop (Ethan's watch gets the push at 22:33). 23:14, the same desktop unsends it.
 卡爾德物流（傳票）: Calder Logistics (subpoena)
 手錶通知紀錄: Watch notification log
-22:33 通知：「葛蘭特・沃斯：十點四十五分上來，把筆電帶來。我們私下解決。」: '22:33 notification: "Grant Voss: Come up at 10:45. Bring the laptop. We''ll settle this privately."'
+推播通知：「葛蘭特・沃斯：十點四十五分上來，把筆電帶來。我們私下解決。」: 'Push notification: "Grant Voss: Come up at 10:45. Bring the laptop. We''ll settle this privately."'
 被告扣押手錶: The defendant's seized watch
 逮捕報告：「自願陳述」: 'Arrest report: "voluntary statement"'
 逮捕時間 14:05。備註欄：「嫌犯於巡邏車後座自願陳述。」: 'Arrest at 14:05. Remarks: "Suspect made a voluntary statement in the rear of the patrol car."'
@@ -166,7 +167,7 @@
 裁定：車上供述已排除: 'Ruling: the car statement is suppressed'
 法院裁定排除巡邏車上的供述，檢方不得在陪審團面前提起。: The court suppressed the patrol-car statement. The prosecution may not raise it before the jury.
 法院裁定: Court ruling
-瑞秋的宣誓陳述：22:50 的聲音: 'Rachel under oath: the sound at 22:50'
+瑞秋的宣誓陳述：隔壁的聲音: 'Rachel under oath: the sound next door'
 宣誓陳述: Sworn statement
 她在錄取時宣誓說，22:50 聽見隔壁房間有人倒地的聲音。: At her deposition she swore she heard someone fall in the next room at 22:50.
 證詞錄取: Deposition
@@ -350,14 +351,14 @@
 論點：手錶資料與本案相關: 'Argument: the watch data is relevant'
 死者戴著手錶，錶帶完好；法醫的死亡時間窗有一個半小時。手錶的資料能把它縮小。: The victim wore the watch, strap intact. The examiner's window is ninety minutes wide. The watch data can narrow it.
 驗屍只給了一個範圍。有什麼能把死亡時間釘得更準？: The autopsy only gives a range. What can pin the time of death tighter?
-論點 B：沃斯 22:24 死亡: 'Argument B: Voss died at 22:24'
+論點 B：沃斯死在伊森進門之前: 'Argument B: Voss died before Ethan walked in'
 心率在 22:24 歸零，落在法醫的死亡時間窗內。伊森 22:47 才進門。: Heart rate hits zero at 22:24, inside the examiner's window. Ethan didn't walk in until 22:47.
 權威: Authority
 22:31 的訊息從哪台電腦發出？那個時間，沃斯還能打字嗎？: Which computer sent the 22:31 message? Could Voss still type at that hour?
 論點 C：有人用死者的電腦傳訊: "Argument C: someone used the victim's computer to send it"
 沃斯 22:24 已死，但 22:31 有人用他的桌機傳訊叫伊森上樓，23:14 又收回。: Voss was dead at 22:24. At 22:31 someone used his desktop to summon Ethan, and at 23:14 unsent it.
 23:14 訊息被收回時，誰還刷卡留在 31 樓？: When the message was unsent at 23:14, who was still badged in on 31?
-論點 D：23:14 時 31 樓只剩一個人: 'Argument D: at 23:14 one person was left on 31'
+論點 D：收回訊息時 31 樓只剩一個人: 'Argument D: one person was left on 31 when the message was unsent'
 伊森 23:01 離開大廳；23:14 有人在 31 樓操作那台桌機；那個人 23:26 才刷卡離開。: Ethan left the lobby at 23:01. At 23:14 someone was working that desktop on 31. That person didn't badge out until 23:26.
 程序: Procedure
 蘇菲說她直接回家了。有什麼紀錄跟這句話對不上？: Sophie says she went straight home. Which record disagrees?
