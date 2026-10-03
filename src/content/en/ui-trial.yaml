@@ -208,6 +208,9 @@
 '{a} 票 : {b} 票': '{a} : {b}'
 陪審團評議後: After deliberation
 主要原因：: 'Main reason: '
+庭審結束時，已經有 {a} 位陪審員站你這邊。: By the end of testimony, {a} jurors were already on your side.
+結辯把站你這邊的陪審員從 {a} 位拉到 {b} 位。: Your closing brought the jurors on your side from {a} to {b}.
+評議時又說服了 {k} 位陪審員。: Deliberation won over {k} more jurors.
 判決書: Verdict form
 被告是否有過失？: Was the defendant negligent?
 是: 'Yes'

@@ -253,6 +253,12 @@ export function Courtroom({ scene: raw }: { scene: TrialScene }) {
       </>
     );
 
+  const lastWitness = st.log.map((l) => l.who).lastIndexOf(scene.witness.name);
+  const tail = Math.min(
+    st.log.length,
+    lastWitness < 0 ? 4 : Math.max(4, Math.min(6, st.log.length - lastWitness)),
+  );
+
   if (st.stage === 'done' && recess)
     return (
       <>
@@ -260,19 +266,20 @@ export function Courtroom({ scene: raw }: { scene: TrialScene }) {
         <main className="scene">
           <p className="eyebrow">{t('休庭')}</p>
           {/* 詰問的最後幾句話——高潮就在這裡，放在第一屏，數字排在後面（體驗評測）。 */}
-          {/* 只放最後四句：整場都放上去，高潮會掉到第一屏外（體驗評測 v88）。前面的收進折疊。 */}
-          {st.log.length > 4 && (
+          {/* 從證人的最後一句開始放（至少四句、最多六句）：整場都放上去，高潮會掉到第一屏外；
+              只切最後四句，證人拒答那一句又會被折進去（體驗評測 v88）。前面的收進折疊。 */}
+          {tail < st.log.length && (
             <details className="earlier">
-              <summary>{t('前面的筆錄（{n} 句）', { n: st.log.length - 4 })}</summary>
+              <summary>{t('前面的筆錄（{n} 句）', { n: st.log.length - tail })}</summary>
               <div className="lines transcript full">
-                {st.log.slice(0, -4).map((l, i) => (
+                {st.log.slice(0, -tail).map((l, i) => (
                   <Speech key={i} line={{ ...l, mood: '平', thought: false }} />
                 ))}
               </div>
             </details>
           )}
           <div className="lines transcript full">
-            {st.log.slice(-4).map((l, i) => (
+            {st.log.slice(-tail).map((l, i) => (
               <Speech key={i} line={{ ...l, mood: '平', thought: false }} />
             ))}
           </div>
