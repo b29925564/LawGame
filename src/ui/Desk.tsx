@@ -238,12 +238,12 @@ function Discovery({ scene }: { scene: DeskScene }) {
   const name = (id: string) => t(scene.cards.find((c) => c.id === id)?.name ?? id, scope);
   return (
     <ol className="stack discovery">
-      {discovery.openRequests(scene, st, progress.cards).map((r, i) => {
+      {discovery.openRequests(scene, st, progress.cards).map((r) => {
         const res = done[r.id];
         const sel = pick[r.id];
         return (
           <li key={r.id} className={res ? 'panel req answered' : 'panel req'}>
-            <p className="eyebrow">{t('請求 {n}', { n: i + 1 })}</p>
+            {/* 編號寫在請求本文（「請求五：…」）；這裡不再自己數，第二批只剩一項時會和本文對不上（體驗評測）。 */}
             <p className="claim-text">{t(r.text, scope)}</p>
             <ul className="req-cards">
               {r.cards.map((c) => (
@@ -256,7 +256,7 @@ function Discovery({ scene }: { scene: DeskScene }) {
               <div
                 className="req-actions"
                 role="group"
-                aria-label={t('請求 {n} 的回應', { n: i + 1 })}
+                aria-label={t('{req} 的回應', { req: t(r.text, scope).split(/[：:]/)[0] })}
               >
                 {RESPONSES.map((o) => (
                   <button

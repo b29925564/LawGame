@@ -79,6 +79,40 @@
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
   --text-scale: 1;
 
+  /* ── 視覺規格 v1（ux/ui-visual-spec）：間距、字級、尺寸。新寫的規則一律用這些，不再寫死數字。 ── */
+  /* 間距階（4px 網格） */
+  --s1: 4px;
+  --s2: 8px;
+  --s3: 12px;
+  --s4: 16px;
+  --s5: 24px;
+  --s6: 32px;
+  --s7: 48px;
+  /* 介面字級階：中文最小 14（手機 13），12 只給英數等寬。 */
+  --fs-ui-label: calc(12px * var(--text-scale));
+  --fs-ui-meta: calc(13px * var(--text-scale));
+  --fs-ui-cap: calc(14px * var(--text-scale));
+  --fs-ui-row: calc(15px * var(--text-scale));
+  --fs-ui-body: calc(15px * var(--text-scale));
+  --fs-ui-head: calc(17px * var(--text-scale));
+  --fs-ui-q: calc(24px * var(--text-scale));
+  --fs-ui-num: calc(22px * var(--text-scale));
+  --lh-tight: 1.3;
+  --lh-ui: 1.5;
+  --lh-body: 1.65;
+  --track-label: 0.08em;
+  /* 尺寸 */
+  --taskbar-h: 48px;
+  --row-h: 40px;
+  --row-h-2: 56px;
+  --chip-h: 28px;
+  --panel-head-h: 40px;
+  --hit: 28px;
+  --drawer-w: 352px;
+  --list-w: 260px;
+  /* 捲動框（.shell-body）頂端留 2px 給焦點框；釘頂的東西往上補回這 2px，上緣才不會露出捲過去的內容。 */
+  --stick-top: -2px;
+
   /* 紙張雜訊，疊在底色上讓大片的墨色不那麼平。 */
   --grain: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .5 0 0 0 0 .5 0 0 0 0 .5 0 0 0 .07 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
 }
@@ -100,7 +134,7 @@ body {
   margin: 0;
   min-height: 100dvh;
   color: var(--text);
-  font: calc(16px * var(--text-scale)) / 1.65 var(--font);
+  font: var(--fs-ui-body) / var(--lh-body) var(--font);
   -webkit-font-smoothing: antialiased;
   background:
     var(--grain),
@@ -342,12 +376,29 @@ details summary {
   flex-shrink: 0;
 }
 .scene.interview > .lines {
-  /* 手機上標頭和選項會把筆錄擠到剩兩行，一次三句的回答就看不全。 */
-  min-height: 34dvh;
+  /* 手機上標頭和選項會把筆錄擠到剩兩行，一次三句的回答就看不全；但不能大到把「結束會見」推出畫面。 */
+  min-height: 120px;
 }
 .scene.interview > .panel.actions {
-  max-height: 32dvh;
+  /* 選項區可以縮、自己捲：標頭＋筆錄＋選項＋按鈕加起來一定塞得進一個視窗高（體驗評測：Pixel 7 按不到「結束會見」）。 */
+  flex-shrink: 1;
+  min-height: 96px;
+  max-height: 40dvh;
   overflow-y: auto;
+}
+/* 很矮的視窗（橫放手機、200% 縮放）：不再鎖一個視窗高，整頁捲，台詞與選項都不另外捲。 */
+@media (max-height: 560px) {
+  .scene.dialogue,
+  .scene.interview {
+    height: auto;
+    min-height: 100dvh;
+  }
+  .scene.dialogue > .lines,
+  .scene.interview > .lines,
+  .scene.interview > .panel.actions {
+    max-height: none;
+    overflow: visible;
+  }
 }
 /* 捲動區裡的東西不准被壓扁：清單外框有 overflow: hidden，彈性版面會把它擠成一條。 */
 .stack > *,
@@ -920,7 +971,9 @@ details summary {
   display: none;
 }
 .apps button {
-  flex: 0 0 auto;
+  /* 擠不下時先縮、再在字間換行，不讓最後一個分頁被分頁列切掉（版面檢查：英文 Legal terms、Court system）。 */
+  flex: 0 1 auto;
+  line-height: var(--lh-tight);
   position: relative;
   min-height: 42px;
   padding: 8px 12px 10px;
@@ -1310,40 +1363,33 @@ details summary {
 .relations.support .stack {
   gap: 4px;
 }
-/* 清單很長時每張卡只露兩行，選中的那張才展開全文。 */
-.pick:not(.on) .pick-text {
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  overflow: hidden;
-}
 .chips.kinds {
   flex-shrink: 0;
-  /* 篩選一排，放不下就橫向捲，不換行（UX 規格）。 */
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  scrollbar-width: none;
-  /* 右緣淡出，看得出後面還有。 */
-  mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent);
+  /* 塞不下就換行，不裁切、不橫捲（視覺規格 §6；試玩回報：「物品」被切掉）。 */
+  flex-wrap: wrap;
+  row-gap: var(--s2);
 }
 .chips.kinds button {
   flex-shrink: 0;
   min-height: 34px;
   white-space: nowrap;
 }
-/* 桌機證據欄夠寬：篩選列換行排完，不裁切、不橫捲（試玩回報：「物品」被切掉）。 */
-.sheet.side .chips.kinds {
-  flex-wrap: wrap;
-  overflow: visible;
-  mask-image: none;
-}
 /* 抽屜是直排：篩選列不准被清單擠扁，清單自己捲。 */
 .sheet > * {
   flex-shrink: 0;
 }
-.sheet > .sheet-tabs {
+.sheet-tabs {
+  flex: 1 1 auto;
+  min-width: 0;
   border-bottom: none;
-  margin-left: -12px;
+}
+/* 證據欄 352 寬放三個分頁（英文 Evidence 28 / Timeline / Legal terms）要一行放得下。 */
+.sheet-tabs button {
+  padding-inline: 8px;
+}
+.sheet-tabs button::after {
+  left: 6px;
+  right: 6px;
 }
 .terms {
   margin: 0;
@@ -1548,14 +1594,6 @@ fieldset.relations.compact {
   gap: 4px;
   /* fieldset 預設最小寬度是內容寬：一排不換行的關係鈕會把它撐出畫面，整頁橫移（英文最明顯）。 */
   min-inline-size: 0;
-}
-/* 電腦上連線台夠寬，關係鈕放不下就換行，不要藏在右緣（體驗評測：英文 Shows opportunity 被切）。 */
-@media (min-width: 1024px) {
-  .relations.compact .chips.kinds {
-    flex-wrap: wrap;
-    overflow: visible;
-    mask-image: none;
-  }
 }
 .relations.compact [aria-checked='true'] {
   background: var(--hl) !important;
@@ -1775,9 +1813,14 @@ fieldset.relations.compact {
   overflow-y: auto;
 }
 .timeline-tray .chips button {
-  flex: 0 0 auto;
+  flex: 0 1 auto;
+  max-width: 100%;
   min-height: 34px;
-  font-size: 13px;
+  /* 英文卡名長：一顆比匣子寬時在顆內換行，不被匣子切掉。 */
+  white-space: normal;
+  text-align: left;
+  line-height: var(--lh-tight);
+  font-size: var(--fs-ui-meta);
 }
 .timeline li {
   transition: transform 0.18s var(--ease);
@@ -1853,11 +1896,8 @@ fieldset.relations.compact {
 }
 .timeline p {
   margin: 0;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  overflow: hidden;
-  font-size: 14px;
+  font-size: var(--fs-ui-cap);
+  line-height: var(--lh-ui);
   color: var(--muted);
 }
 .timeline .grip,
@@ -1893,6 +1933,19 @@ fieldset.relations.compact {
   border-color: transparent;
   background: none;
   color: var(--faint);
+}
+/* ✕ 用兩條斜線畫，正中（字元「✕」的墨跡偏上 1px，體驗評測量到）。 */
+.timeline .drop-off {
+  display: grid;
+  place-items: center;
+}
+.timeline .drop-off .cross {
+  --x:
+    transparent calc(50% - 0.8px), currentColor calc(50% - 0.8px) calc(50% + 0.8px),
+    transparent calc(50% + 0.8px);
+  width: 11px;
+  height: 11px;
+  background: linear-gradient(45deg, var(--x)), linear-gradient(-45deg, var(--x));
 }
 .chips,
 .slots,
@@ -2142,8 +2195,8 @@ fieldset.relations.compact {
   scroll-behavior: smooth;
   font-size: 0.95em;
   gap: 10px;
-  /* 舊的證詞往上淡出，新的在底下。 */
-  mask-image: linear-gradient(to bottom, transparent 0, #000 28px);
+  /* 舊的證詞往上淡出，新的在底下。淡出只佔上內距那 16px：捲到頂時第一行不能被壓到（體驗評測：尾聲對話框）。 */
+  mask-image: linear-gradient(to bottom, transparent 0, #000 16px);
   box-shadow: var(--inset-hi), var(--shadow-1);
 }
 .transcript p {
@@ -4691,8 +4744,8 @@ button.iou[aria-pressed='true'] {
 
 /* ══ 證據板三欄（設計稿 ui/design-review/board-redesign）══ */
 .board3 {
-  /* 三欄版上面沒有釘住的分頁列：連線台、時間軸匣直接釘在頂端，卡片不會從它們上面露出來。 */
-  --tabs-h: 0px;
+  /* 三欄版上面沒有釘住的分頁列：連線台、時間軸匣直接釘在捲動框頂端，卡片不會從它們上面露出來。 */
+  --tabs-h: var(--stick-top);
   display: grid;
   grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
   gap: 20px;
@@ -4700,7 +4753,7 @@ button.iou[aria-pressed='true'] {
 }
 .board3 > .q-list {
   position: sticky;
-  top: 0;
+  top: var(--stick-top);
   max-height: calc(100dvh - 120px);
   overflow-y: auto;
 }
@@ -5318,9 +5371,8 @@ button.iou[aria-pressed='true'] {
 .q-item.done .q-gist {
   flex: 1;
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  /* 不截字：窄欄裡換成兩行（視覺規格 §2「不用刪節號」）。 */
+  line-height: var(--lh-tight);
   color: var(--muted);
 }
 .arg-mark {

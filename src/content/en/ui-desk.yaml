@@ -25,8 +25,6 @@
 特權勉強成立: Privilege barely upheld
 範圍過廣成立: Overbreadth sustained
 裁定照交: Ordered to produce
-'請求 {n}': 'Request {n}'
-'請求 {n} 的回應': 'Response to request {n}'
 請求: Request
 送出: Send
 '← 收件匣': '← Inbox'
@@ -182,6 +180,7 @@
 '剩 {n} 時・{m} 題沒確認': '{n} h left · {m} questions unconfirmed'
 遊戲裡: In the game
 證據清單: Evidence list
+'{req} 的回應': 'Response to {req}'
 准: GRANTED
 已收文: Received
 收　文: RECEIVED
