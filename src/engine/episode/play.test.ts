@@ -399,6 +399,26 @@ describe('瑞秋的詰問', () => {
     expect(st.log[i + 2].text).toBe(c.counter!.failed);
   });
 
+  it('出示論點 D 逼出緘默權時，休庭畫面要放完這一整段（再主詰問、回答、緘默權）', () => {
+    let st = ready('rc-2250', ['rachel-2250', 'rachel-meeting']);
+    st = trial.confront(rachel, st, 'rc-2250', 25, ['邏輯'], { id: 'arg-b' });
+    st = trial.setup(rachel, st, 'rc-meeting');
+    st = trial.confront(rachel, st, 'rc-meeting', 15, ['邏輯'], { id: 'arg-c' });
+    st = trial.lock(rachel, st, 'rc-31f', 'strong');
+    st = trial.setup(rachel, st, 'rc-31f');
+    const c = claim('rc-31f');
+    st = trial.confront(rachel, st, 'rc-31f', 25, ['邏輯'], {
+      id: 'arg-d',
+      exposed: true,
+      cards: [c.counter!.needs],
+    });
+    expect(st.stage).toBe('done');
+    const shown = st.log.slice(-Math.max(4, st.turn ?? 0)).map((l) => l.text);
+    expect(shown).toContain(c.counter!.text);
+    expect(shown).toContain(c.counter!.answer);
+    expect(shown).toContain(rachel.fifth!.lines[0].text);
+  });
+
   it('沒洩漏過就沒有反擊這一關', () => {
     const st = trial.confront(rachel, ready('rc-2250'), 'rc-2250', 25, ['邏輯'], { id: 'arg-b' });
     expect(st.impeachments).toBe(1);

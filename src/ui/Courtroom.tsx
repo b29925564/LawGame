@@ -263,7 +263,7 @@ export function Courtroom({ scene: raw }: { scene: TrialScene }) {
           <Jurors scene={scene} jury={st.jury} deltas={{}} />
           {/* 詰問的最後幾句話——高潮就在這裡，休庭畫面不該把它吃掉。 */}
           <div className="lines transcript">
-            {st.log.slice(-4).map((l, i) => (
+            {st.log.slice(-Math.max(4, st.turn ?? 0)).map((l, i) => (
               <Speech key={i} line={{ ...l, mood: '平', thought: false }} />
             ))}
           </div>
