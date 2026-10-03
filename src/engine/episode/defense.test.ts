@@ -18,6 +18,7 @@ const brooks: DefenseScene = {
   day: '第二天',
   witness: { name: '布魯克斯', role: '法醫' },
   intro: [],
+  cross: [],
   prep: {
     hours: 2,
     options: [

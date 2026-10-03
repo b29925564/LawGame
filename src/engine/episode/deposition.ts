@@ -71,13 +71,21 @@ export function defend(s: DepositionScene, st: DepoState, reason: DepoObjection 
       : [{ who: s.witness.name, text: q.a, mood: '平' as const, thought: false }]),
   ];
   const i = (st.i ?? 0) + 1;
+  // 這題有毛病卻沒擋對：對方多拿到的東西。
+  const missed = q.objection && !right ? q.missed : { gives: [], flags: [] };
+  const flags = [
+    ...(st.flags ?? []),
+    ...(flag ? [`depo:${s.id}:${q.id}:${flag}`] : []),
+    ...missed.flags,
+  ];
   return {
     ...st,
     i,
     wrong: (st.wrong ?? 0) + (reason !== null && !right ? 1 : 0),
     asked: [...st.asked, q.id],
-    gained: silenced ? st.gained : [...new Set([...st.gained, ...q.gives])],
-    flags: flag ? [...(st.flags ?? []), `depo:${s.id}:${q.id}:${flag}`] : (st.flags ?? []),
+    anchored: q.anchors && !silenced ? [...new Set([...st.anchored, q.anchors])] : st.anchored,
+    gained: [...new Set([...st.gained, ...(silenced ? [] : q.gives), ...missed.gives])],
+    flags: [...new Set(flags)],
     log: [...st.log, ...log],
     over: i >= s.script.length,
   };

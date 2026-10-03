@@ -141,6 +141,7 @@
 '（{where}）': ' ({where})'
 開場: Opening
 庭審: Trial
+審前: Pretrial
 若判有責: If found liable
 案件理論「{name}」讓陪審團一開始就偏向對方: 'The theory “{name}” started the jury leaning against you'
 開場許下的 {n} 個承諾沒兌現: 'Promises from your opening went unkept ({n})'
@@ -159,6 +160,8 @@
 談判時攤過的牌對方會備好說法，結辯換別的論點。: Cards you showed in negotiation get an answer ready; close on other points.
 先鎖定證詞，再出示論點，彈劾才會成立。: Lock the testimony first, then show your point, and the impeachment holds.
 開示時硬藏的東西被揭穿，比交出去更傷。: Withholding in discovery hurts more than handing it over once it comes out.
+審前的選擇讓陪審團一開始就偏向對方: A pretrial choice tilted the jury against you before the trial began
+交出去的東西對方會用，開場前先想好怎麼解釋。: Whatever you hand over, the other side will use. Have your explanation ready before openings.
 懲罰性賠償看的是被告隱瞞了什麼，開示和證據要先處理。: Punitive damages turn on what the defendant hid; deal with discovery and the evidence first.
 懲罰性賠償可能再加同額: Punitive damages could add the same amount again
 懲罰性賠償可能另加 {r} 倍: 'Punitive damages could add {r}× on top'

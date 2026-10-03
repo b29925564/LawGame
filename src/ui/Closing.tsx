@@ -69,6 +69,8 @@ export function Closing({ scene }: { scene: ClosingScene }) {
         return t('{who}的證詞沒有被彈劾', { who: t(it.who ?? '', scope) });
       case 'concealed':
         return t('開示時硬藏的 {n} 份資料被揭穿', { n: it.refs.length });
+      case 'effect':
+        return t('審前的選擇讓陪審團一開始就偏向對方');
       case 'punitive':
         return t('懲罰性賠償成立，另加 {money}', { money: money(it.money ?? 0) });
     }
@@ -82,6 +84,7 @@ export function Closing({ scene }: { scene: ClosingScene }) {
     exposed: t('談判時攤過的牌對方會備好說法，結辯換別的論點。'),
     unimpeached: t('先鎖定證詞，再出示論點，彈劾才會成立。'),
     concealed: t('開示時硬藏的東西被揭穿，比交出去更傷。'),
+    effect: t('交出去的東西對方會用，開場前先想好怎麼解釋。'),
     punitive: t('懲罰性賠償看的是被告隱瞞了什麼，開示和證據要先處理。'),
   };
 

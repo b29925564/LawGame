@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import * as defense from '../engine/episode/defense';
 import type { DefenseScene } from '../engine/episode/schema';
-import { defenseState, juryAfterTrial, useEpisode } from '../engine/game';
+import { defenseState, juryAfterTrial, useEpisode, witnessScene } from '../engine/game';
 import { useT } from '../i18n';
 import { JuryLegend } from './JuryLegend';
 import { useScope } from './lang';
@@ -13,8 +13,10 @@ import { Transcript } from './Shell';
  * 辯方證人（企劃書 6.9.6）：先準備，再直接詰問。
  * 外觀是最小版，版面交給介面串。
  */
-export function Defense({ scene }: { scene: DefenseScene }) {
+export function Defense({ scene: raw }: { scene: DefenseScene }) {
   const { progress, prepareWitness, askWitness, finishWitness, advance } = useEpisode();
+  // 條件不符的題目（例如證人更正過筆錄）不出現。
+  const scene = witnessScene(progress, raw);
   const st = defenseState(progress, scene);
   const t = useT();
   const scope = useScope();

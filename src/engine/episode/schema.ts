@@ -73,6 +73,8 @@ const when = z.object({
   notCards: z.array(id).optional(),
   /** 倫理帳本裡至少有其中一筆。 */
   ethics: z.array(z.string()).optional(),
+  /** 倫理帳本裡這些一筆都不能有。 */
+  notEthics: z.array(z.string()).optional(),
   /** 這些論點全部都在庭上出示過（對質或逼出緘默權）或結辯用過。 */
   presented: z.array(id).optional(),
   /** 懲罰性賠償成立（true）或沒有成立（false，包括根本沒進入那一輪）。 */
@@ -278,6 +280,8 @@ const deskScene = z.object({
         needs: z.array(id).default([]),
         report: z.array(line).min(1),
         gives: z.array(id).default([]),
+        /** 委託完成就記下的旗標（例如請證人更正筆錄）。 */
+        flags: z.array(z.string()).default([]),
       }),
     )
     .default([]),
@@ -341,7 +345,11 @@ const deskScene = z.object({
         /** 這些卡片或發現全部到手，請求才出現（免得文件名稱先爆了推理鏈的轉折）。 */
         unlock: z.array(id).default([]),
         privilege: z.enum(['valid', 'weak', 'none']).default('none'),
+        /** 條件成立時特權已被放棄（例如證人在錄取時說出了意見內容）：valid 降成 weak。 */
+        waived: when.optional(),
         overbroad: z.boolean().default(false),
+        /** 交出（或被裁定照交）時，這些論點對方也知道了：標成已揭露，庭上衝擊減半。 */
+        exposes: z.array(id).default([]),
         /** 回應之後的旁白或對白（依結果），沒寫就不播。 */
         lines: z
           .object({
@@ -519,6 +527,12 @@ const depositionScene = z.object({
           .default(null),
         /** 這個回答讓雙方都看到的新卡片。 */
         gives: z.array(id).default([]),
+        /** 答了就把這個說法鎖成宣誓陳述（假話是對方問出來的，但是我們的證人說的）。 */
+        anchors: id.optional(),
+        /** 這題有毛病、玩家卻沒用對異議時才生效：對方多拿到的卡片與留下的旗標。 */
+        missed: z
+          .object({ gives: z.array(id).default([]), flags: z.array(z.string()).default([]) })
+          .default({ gives: [], flags: [] }),
       }),
     )
     .default([]),
@@ -650,6 +664,8 @@ const defenseScene = z.object({
           coached: z.boolean().default(false),
           ethics: z.array(z.string()).default([]),
           flags: z.array(z.string()).default([]),
+          /** 條件不符就不出現（例如筆錄更正過，就沒有「再說一遍」可教）。 */
+          when: when.optional(),
         }),
       )
       .min(1),
@@ -673,9 +689,27 @@ const defenseScene = z.object({
         door: z
           .object({ q: z.string(), a: z.string(), penalty: z.number().int().min(1) })
           .optional(),
+        /** 條件不符就不出現（條件要在開庭前就確定）。 */
+        when: when.optional(),
+        /** 問了這題時手上有這些論點＝明知證詞是假的還讓他說，記進倫理帳本。 */
+        ethicsIf: z
+          .object({ has: z.array(id).min(1), ethics: z.array(z.string()).min(1) })
+          .optional(),
       }),
     )
     .min(1),
+  /** 反詰問時對方另外問的題（條件成立才問），全體往對方移 penalty。 */
+  cross: z
+    .array(
+      z.object({
+        id: id.optional(),
+        when: when.optional(),
+        q: z.string(),
+        a: z.string(),
+        penalty: z.number().int().min(0),
+      }),
+    )
+    .default([]),
   /** 被教過的證人露餡時，檢方問的那一句與證人的回答，以及全體往有罪移多少。 */
   leak: z.object({
     q: z.string().default('證人，有人教過你這些話該怎麼說嗎？'),
@@ -886,6 +920,21 @@ export const episodeSchema = z
     title: z.string(),
     /** 對造律師（第 1 集是檢察官）：庭上發問、反詰問的人。 */
     counsel: z.string().default('莫羅檢察官'),
+    /**
+     * 前面的選擇留下的代價：條件在開庭或調解開始那一刻判斷。jury：開庭時全體陪審員起始往對方移幾點；
+     * confidence、trust：調解時對方的起始信心與客戶信任加減；flags：條件成立就算有這些旗標，而且帶到下一集。
+     */
+    effects: z
+      .array(
+        z.object({
+          when,
+          jury: z.number().int().default(0),
+          confidence: z.number().int().default(0),
+          trust: z.number().int().default(0),
+          flags: z.array(z.string()).default([]),
+        }),
+      )
+      .default([]),
     scenes: z.array(scene).min(1),
   })
   // 庭審與辯方證人場景沒寫 examiner 的，補上這一集的對造律師。
