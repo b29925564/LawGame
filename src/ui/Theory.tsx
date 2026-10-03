@@ -3,7 +3,8 @@ import { Iou, useHand } from './Marks';
 import type { OpeningScene, TheoryScene } from '../engine/episode/schema';
 import * as theory from '../engine/episode/theory';
 import { episodeOf, openingState, promisesOf, theoryState, useEpisode } from '../engine/game';
-import { useT } from '../i18n';
+import { theoryOutlook } from '../engine/ledger';
+import { useMoney, useT } from '../i18n';
 import { CommitBar } from './Commit';
 import { JuryStart } from './JuryStart';
 import { useScope } from './lang';
@@ -18,6 +19,7 @@ export function Theory({ scene }: { scene: TheoryScene }) {
   const st = theoryState(progress, scene);
   const t = useT();
   const scope = useScope();
+  const money = useMoney();
   const held = progress.cards;
   const [intro, setIntro] = useState(!theory.done(st));
   const [pending, setPending] = useState<string | null>(null);
@@ -43,6 +45,28 @@ export function Theory({ scene }: { scene: TheoryScene }) {
 
   const noneOpen = !scene.theories.some((th) => theory.unlocked(th, held));
   const civil = episodeOf(progress).scenes.some((x) => x.type === 'trial' && x.burden === 'civil');
+  // 民事才有金額：用律師想事情的單位說代價（UX 規格 decision-cost §二）。
+  const outlook = (id: string) => {
+    const o = theoryOutlook(progress, id);
+    if (!o) return null;
+    return (
+      <span className="theory-row">
+        <span className="jury-start-key">{t('若判有責')}</span>
+        <span>
+          {t('約 {low} 到 {high}', { low: money(o.low), high: money(o.high) })}
+          {o.punitive && (
+            <small className="muted">
+              {o.ratio === 1
+                ? t('懲罰性賠償可能再加同額')
+                : o.ratio
+                  ? t('懲罰性賠償可能另加 {r} 倍', { r: o.ratio })
+                  : t('懲罰性賠償另計')}
+            </small>
+          )}
+        </span>
+      </span>
+    );
+  };
   const argName = (id: string) =>
     episodeOf(progress)
       .scenes.flatMap((x) => (x.type === 'desk' ? x.questions : []))
@@ -77,6 +101,7 @@ export function Theory({ scene }: { scene: TheoryScene }) {
                       {t('可許 {n} 個承諾，沒兌現會反噬', { n: th.promises.length })}
                     </span>
                   )}
+                  {outlook(th.id)}
                   <span className="theory-row">
                     <span className="jury-start-key">{t('代價')}</span>
                     {t(th.cost, scope)}

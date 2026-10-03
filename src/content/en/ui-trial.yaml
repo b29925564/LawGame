@@ -134,3 +134,31 @@
 理論靠的論點: The theory rests on
 點一張卡比較，再按下面的「以這個理論開庭」定案。: Pick a card to compare, then press “Go to trial on this theory” below to commit.
 '生效中：{rulings}': 'In effect: {rulings}'
+為什麼贏: Why you won
+主因: Main reasons
+下次可以試: Next time
+完整帳目: Full ledger
+'（{where}）': ' ({where})'
+開場: Opening
+庭審: Trial
+若判有責: If found liable
+案件理論「{name}」讓陪審團一開始就偏向對方: 'The theory “{name}” started the jury leaning against you'
+開場許下的 {n} 個承諾沒兌現: 'Promises from your opening went unkept ({n})'
+結辯有空格，對方的說法沒人反駁: Your closing had an empty slot, so the other side went unanswered
+沒有案件理論，論點說服力打了折: With no case theory, your arguments landed weaker
+結辯基調「{tone}」不合這群陪審員: "The closing tone “{tone}” didn't suit this jury"
+結辯用了對方早有準備的論點：{list}: 'Your closing used points the other side was ready for: {list}'
+'{who}的證詞沒有被彈劾': "{who}'s testimony was never impeached"
+開示時硬藏的 {n} 份資料被揭穿: 'Documents you withheld in discovery came out ({n})'
+懲罰性賠償成立，另加 {money}: 'Punitive damages found: another {money}'
+起點偏的理論，要靠更多彈劾把陪審員拉回來。: A theory that starts behind needs more impeachments to win jurors back.
+先把論點確認起來，再在開場許承諾。: Confirm your points before you make promises in the opening.
+調查時多確認幾個論點，結辯才填得滿。: Confirm more points during the investigation so your closing is full.
+開庭前選一個案件理論，論點才有方向。: Pick a case theory before trial so your points have a direction.
+結辯基調要對著陪審員的取向挑。: Choose the closing tone for the jurors you actually have.
+談判時攤過的牌對方會備好說法，結辯換別的論點。: Cards you showed in negotiation get an answer ready; close on other points.
+先鎖定證詞，再出示論點，彈劾才會成立。: Lock the testimony first, then show your point, and the impeachment holds.
+開示時硬藏的東西被揭穿，比交出去更傷。: Withholding in discovery hurts more than handing it over once it comes out.
+懲罰性賠償看的是被告隱瞞了什麼，開示和證據要先處理。: Punitive damages turn on what the defendant hid; deal with discovery and the evidence first.
+懲罰性賠償可能再加同額: Punitive damages could add the same amount again
+懲罰性賠償可能另加 {r} 倍: 'Punitive damages could add {r}× on top'

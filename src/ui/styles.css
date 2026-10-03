@@ -5520,6 +5520,34 @@ body:has(.court-light) {
   color: var(--muted);
 }
 
+/* 最重的三筆：編號清單；懲罰性賠償是金額，不編號 */
+.ledger-reasons {
+  margin: 2px 0 0;
+  padding-left: 1.4em;
+  display: grid;
+  gap: 4px;
+}
+.ledger-reasons li.money {
+  list-style: none;
+  margin-left: -1.4em;
+}
+.ledger-tip {
+  margin: 8px 0 0;
+}
+.ledger-all summary {
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 14px;
+  min-height: 32px;
+}
+.ledger-all ol {
+  margin: 4px 0 0;
+  padding-left: 1.4em;
+  display: grid;
+  gap: 4px;
+  font-size: 14px;
+}
+
 /* 陪審團起點：三格條（理論卡、結辯頭部共用） */
 .jury-start {
   display: flex;
@@ -5615,13 +5643,16 @@ body:has(.court-light) {
 }
 .theory-row {
   display: grid;
-  grid-template-columns: 4.5em 1fr;
+  grid-template-columns: 5.5em 1fr;
   gap: 10px;
   font-size: 14px;
 }
+.theory-row small {
+  display: block;
+}
 .theory-card .jury-start {
   display: grid;
-  grid-template-columns: 4.5em auto;
+  grid-template-columns: 5.5em auto;
   justify-content: start;
 }
 .theory-card .jury-start-note {
@@ -5649,4 +5680,24 @@ body:has(.court-light) {
 
 .panel-head .carry {
   flex-basis: 100%;
+}
+
+/*
+ * 矮視窗（200% 縮放約 720×450）：有筆錄的場景不再把頂列和底列釘死，
+ * 整頁一起捲，底部只留一條細的行動列（無障礙審查第 10 條）。
+ */
+@media (max-height: 520px) {
+  .shell:has(> .shell-tabs > .transcript) {
+    height: auto;
+    min-height: 100dvh;
+    overflow: visible;
+  }
+  .shell:has(> .shell-tabs > .transcript) > .shell-body {
+    overflow: visible;
+  }
+  .shell:has(> .shell-tabs > .transcript) > .shell-foot {
+    position: sticky;
+    bottom: 0;
+    padding-block: 6px max(6px, env(safe-area-inset-bottom));
+  }
 }
