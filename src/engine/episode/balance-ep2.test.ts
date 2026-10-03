@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { episodes } from '../../content';
+import { activeEffects, witnessScene } from '../game';
+import type { Progress } from '../save';
 import * as closing from './closing';
 import * as defense from './defense';
 import { ADVERSE } from './discovery';
@@ -11,7 +13,7 @@ const scene = <T>(id: string) => ep.scenes.find((s) => s.id === id) as T;
 const args = ep.scenes
   .filter((s): s is DeskScene => s.type === 'desk')
   .flatMap((d) => d.questions.map((q) => q.argument));
-const witness = scene<DefenseScene>('defense-trevor');
+const raw = scene<DefenseScene>('defense-trevor');
 const close = scene<ClosingScene>('closing');
 
 interface Route {
@@ -25,14 +27,29 @@ interface Route {
   concealed?: number;
   /** 案件理論：結辯講它要的論點，並承擔它在陪審團心裡的代價。沒給就講論點 A、B、不算代價。 */
   theory?: string;
+  /** 審前留下的旗標（開示交出了什麼、有沒有更正筆錄）：決定 effects 的代價與崔佛那一場的題目。 */
+  flags?: string[];
 }
+
+const before = (flags: string[] = [], chosen?: string): Progress => ({
+  episode: 'ep2',
+  scene: 0,
+  step: 0,
+  choices: {},
+  cards: [],
+  flags,
+  ethics: [],
+  scenes: chosen ? { theory: { chosen, skipped: false } } : {},
+});
 
 /** 第五幕整段：瑪莉索 → 費雪或唐醫師 → 崔佛 → 結辯（論點 A、B）。 */
 function verdict(r: Route) {
-  const shift = (r.concealed ?? 0) * ADVERSE;
+  const p = before(r.flags, r.theory);
+  const shift = (r.concealed ?? 0) * ADVERSE + activeEffects(p).reduce((n, e) => n + e.jury, 0);
+  const witness = witnessScene(p, raw);
   const court = (id: string): TrialScene => {
     const t = scene<TrialScene>(id);
-    return { ...t, jurors: t.jurors.map((j) => ({ ...j, start: j.start + shift })) };
+    return { ...t, jurors: t.jurors.map((j) => ({ ...j, start: Math.min(100, j.start + shift) })) };
   };
   const days = ['court-marisol', r.daubert ? 'court-doctor' : 'court-fisher'].map(court);
   let st: trial.TrialState | undefined;
@@ -68,7 +85,8 @@ function verdict(r: Route) {
     r.coach ? 'trevor-coach' : 'trevor-honest',
   );
   for (const q of witness.questions)
-    if (q.id !== 'tq-always' || r.always) d = defense.ask(witness, d, rules, q.id, ['app-log']);
+    if (q.id !== 'tq-always' || r.always)
+      d = defense.ask(witness, d, rules, q.id, ['app-log', 'errata']);
   d = defense.finish(witness, d, rules);
   const th = scene<TheoryScene>('theory').theories.find((x) => x.id === r.theory);
   const picks = th?.needs ?? ['arg-a', 'arg-b'];
