@@ -63,6 +63,8 @@ const when = z.object({
   flags: z.array(z.string()).optional(),
   /** 這些旗標一個都不能有。 */
   notFlags: z.array(z.string()).optional(),
+  /** 這些旗標至少要有一個（例如群組截圖照實交出，或硬藏後被揭穿：對方手上都有）。 */
+  anyFlags: z.array(z.string()).optional(),
   /** 這一集怎麼收場：deal＝接受認罪協商（E4），dismissed＝證人援引緘默權後撤回起訴（E1）。 */
   outcome: z.array(z.enum(['deal', 'dismissed'])).optional(),
   /** 協商成交的是哪個條件（offer id）。 */

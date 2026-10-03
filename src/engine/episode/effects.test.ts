@@ -124,14 +124,17 @@ describe('對方主導的錄取：missed 與 anchors', () => {
     const wrong = depo.defend(s, st, '推測');
     expect(wrong.flags).toContain('memo-leaked');
     expect(wrong.gained).toContain('memo');
+    expect(wrong.slipped).toEqual(['p-legal2']);
     st = depo.defend(s, st, null);
     expect(st.flags).toContain('memo-leaked');
+    expect(st.slipped).toEqual(['p-legal2']);
   });
 
   it('異議對了，missed 不生效', () => {
     const s = base();
     let st = depo.defend(s, depo.startDeposition(s), null);
     st = depo.defend(s, st, '特權');
+    expect(st.slipped).toEqual([]);
     expect(st.flags).not.toContain('memo-leaked');
     expect(st.gained).not.toContain('memo');
   });

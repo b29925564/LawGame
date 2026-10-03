@@ -43,7 +43,14 @@ const before = (flags: string[] = [], chosen?: string): Progress => ({
 });
 
 /** 第五幕整段：瑪莉索 → 費雪或唐醫師 → 崔佛 → 結辯（論點 A、B）。 */
-function verdict(r: Route) {
+const verdict = (r: Route) => run(r).verdict;
+/** 評議後仍判有責的陪審員人數。 */
+const against = (r: Route) => {
+  const v = run(r);
+  return Object.values(v.jury).filter((x) => x >= close.threshold).length;
+};
+
+function run(r: Route) {
   const p = before(r.flags, r.theory);
   const shift = (r.concealed ?? 0) * ADVERSE + activeEffects(p).reduce((n, e) => n + e.jury, 0);
   const witness = witnessScene(p, raw);
@@ -98,7 +105,7 @@ function verdict(r: Route) {
     cs,
     rules,
     args.filter((a) => picks.includes(a.id)),
-  ).verdict;
+  );
 }
 
 const best = { object: true, confront: true };
@@ -168,5 +175,46 @@ describe('第 2 集審前選擇的代價', () => {
     for (const theory of theories)
       for (const r of [best, { confront: true }, { object: true }])
         expect(verdict({ ...r, theory, flags: [fixed] })).toBe(verdict({ ...r, theory }));
+  });
+});
+
+/** 體驗評測 2026-10-03：藏截圖、不更正、庭上讓崔佛再說一次假話又被變更單打臉，不能和誠實的路線一樣 6:0。 */
+describe('不誠實又被抓到的路線', () => {
+  const produced = 'discovery:rq-chat:produced';
+  const concealed = 'discovery:rq-chat:concealed';
+  const theories = ['own-choice', 'warned', 'shared'];
+  const honest = (theory: string) => ({ ...best, theory, flags: [produced, 'trevor-corrected'] });
+  const caught = (theory: string) => ({
+    ...best,
+    theory,
+    concealed: 1,
+    always: true,
+    flags: [concealed],
+  });
+
+  it('其他都打到最好：誠實的路線三種理論都無責，藏了又讓他再說一次假話的三種都有責', () => {
+    for (const theory of theories) {
+      expect(verdict(honest(theory))).toBe('無責');
+      expect(verdict(caught(theory))).toBe('有責');
+    }
+  });
+
+  it('藏不能比交便宜：被揭穿時對方照樣拿到截圖，再加不利推定', () => {
+    for (const theory of theories) {
+      const hide = { ...best, theory, concealed: 1, flags: [concealed] };
+      const give = { ...best, theory, flags: [produced] };
+      expect(run(hide).jury).not.toEqual(run(give).jury);
+      expect(against(hide)).toBeGreaterThanOrEqual(against(give));
+    }
+    expect(verdict({ ...best, theory: 'warned', flags: [produced] })).toBe('無責');
+    expect(verdict({ ...best, theory: 'warned', concealed: 1, flags: [concealed] })).not.toBe(
+      '無責',
+    );
+  });
+
+  it('沒藏，只是讓他再說一次被打臉：「我們提醒過」開始有人倒向對方', () => {
+    expect(against({ ...best, theory: 'warned', always: true })).toBeGreaterThan(
+      against({ ...best, theory: 'warned' }),
+    );
   });
 });

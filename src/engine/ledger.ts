@@ -7,6 +7,7 @@ import {
   brokenPromises,
   closingArgs,
   activeEffects,
+  allFlags,
   closingState,
   courtScene,
   episodeOf,
@@ -126,9 +127,18 @@ export function ledger(p: Progress): LedgerItem[] {
   }
 
   // 審前：前面的選擇留下的代價（例如交出群組截圖），開庭時陪審團就往對方移。refs 是觸發它的旗標。
+  const flags = allFlags(p);
   for (const x of activeEffects(p))
     if (x.jury > 0)
-      add({ kind: 'effect', amount: x.jury, where: '審前', refs: x.when.flags ?? [] });
+      add({
+        kind: 'effect',
+        amount: x.jury,
+        where: '審前',
+        refs: [
+          ...(x.when.flags ?? []),
+          ...(x.when.anyFlags ?? []).filter((f) => flags.includes(f)),
+        ],
+      });
 
   // 庭審：有反駁論點卻沒被彈劾的關鍵證詞。值多少＝當時用強鎖定彈劾成功會拉回來的量。
   // 同一位證人的幾條合成一筆（refs：[場景, 主張…]），不然畫面上同一句話會列兩次。
