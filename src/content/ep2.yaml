@@ -1713,7 +1713,7 @@ scenes:
         when: { notFlags: [trevor-corrected, 'discovery:rq-change:concealed'] }
         unlessAsked: [tq-always]
         q: 米爾斯先生，您在錄取時宣誓說「從來沒有強制下線過」。這張三月的設定變更單，取消強制下線，簽名的是誰？
-        a: ……我的。
+        a: ……是我簽的。
         penalty: 8
     leak:
       q: 米爾斯先生，「從來沒有」這四個字，是誰教您說的？
