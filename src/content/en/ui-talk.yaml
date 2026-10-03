@@ -104,3 +104,10 @@
 點擊繼續: Click to continue
 問法: Approach
 擋對的異議: Objections that held
+信心再降 {k}，條件就會鬆動。: Drop their confidence {k} more and the terms will move.
+這已經是對方開得出來最好的條件。: This is the best they can offer.
+被識破了。: They saw through it.
+'{name}的信心沒動；之後攤牌的效果少兩成。': "{name}'s confidence didn't move, and your showdowns now land 20% softer."
+'{name}的信心 {a} → {b}': "{name}'s confidence {a} → {b}"
+條件鬆動了：{label}: 'The terms moved: {label}'
+條件沒變。: 'The terms held. '

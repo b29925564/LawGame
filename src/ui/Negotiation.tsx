@@ -27,6 +27,16 @@ export function Negotiation({ scene }: { scene: NegotiationScene }) {
   // 定案樣式（UX 規格 decision-cost 三）：接受與離席都是選了就不能改，先選再看帳。
   const [choice, setChoice] = useState<'take' | 'walk' | null>(null);
   const client = t(scene.client.name, scope);
+  const opp = t(scene.opponent.name, scope);
+  // 攤牌、虛張聲勢之前記下信心和條件，出手後才講得出「有沒有用」（體驗評測 v88：攤牌後開價沒動時毫無回饋）。
+  const [last, setLast] = useState<{ conf: number; offer: string; credit: number } | null>(null);
+  const snap = () => setLast({ conf: st.confidence, offer: offer.id, credit: st.credit });
+  // 條件依信心分檔：信心低於目前這一檔的門檻，就換下一檔（engine offerOf）。
+  const better = [...scene.offers].sort((a, b) => b.min - a.min).find((o) => o.min < offer.min);
+  const toNext = better ? st.confidence - offer.min + 1 : 0;
+  const nextHint = better
+    ? t('信心再降 {k}，條件就會鬆動。', { k: toNext })
+    : t('這已經是對方開得出來最好的條件。');
   // 定案列一出現就捲進畫面，手機上才不會被底部列擋住。
   useEffect(() => {
     if (choice) document.querySelector('.commit-bar')?.scrollIntoView({ block: 'nearest' });
@@ -88,8 +98,22 @@ export function Negotiation({ scene }: { scene: NegotiationScene }) {
           <p className="eyebrow">
             {t('{a}・{b}', { a: t(scene.opponent.name, scope), b: t(scene.opponent.role, scope) })}
           </p>
-          <p className="patience" aria-label={`${t('剩餘回合')} ${st.rounds}`}>
-            {t('剩餘回合')} <strong>{st.rounds}</strong>
+          <p className="patience conf">
+            <span className="nowrap">
+              {t('{name}的信心', { name: opp })} <strong>{st.confidence}</strong>
+            </span>
+            {/* 刻度是每一檔條件的門檻：填色退到刻度左邊，條件就換一檔。 */}
+            <span className="confbar" aria-hidden>
+              <i style={{ width: `${st.confidence}%` }} />
+              {scene.offers
+                .filter((o) => o.min > 0)
+                .map((o) => (
+                  <b key={o.id} style={{ left: `${o.min}%` }} />
+                ))}
+            </span>
+            <span className="nowrap" aria-label={`${t('剩餘回合')} ${st.rounds}`}>
+              {t('剩餘回合')} <strong>{st.rounds}</strong>
+            </span>
           </p>
         </header>
       }
@@ -128,10 +152,28 @@ export function Negotiation({ scene }: { scene: NegotiationScene }) {
         </>
       }
     >
+      {last && (
+        <p className="panel nego-move" role="status">
+          {st.credit > last.credit ? (
+            <>
+              <b>{t('被識破了。')}</b>
+              {t('{name}的信心沒動；之後攤牌的效果少兩成。', { name: opp })}
+            </>
+          ) : (
+            <>
+              <b>{t('{name}的信心 {a} → {b}', { name: opp, a: last.conf, b: st.confidence })}</b>
+              {offer.id !== last.offer
+                ? t('條件鬆動了：{label}', { label: t(offer.label, scope) })
+                : `${t('條件沒變。')}${nextHint}`}
+            </>
+          )}
+        </p>
+      )}
       {tab === 'offer' && (
         <section className="panel">
           <h2>{t('她現在開的條件')}</h2>
           <p className="claim-text">{t(offer.label, scope)}</p>
+          {nego.canAct(st) && <p className="muted small nego-next">{nextHint}</p>}
           {scene.authority && (
             <dl className="stats authority">
               {offer.amount !== undefined && (
@@ -174,7 +216,13 @@ export function Negotiation({ scene }: { scene: NegotiationScene }) {
               {t(ok ? '建議{name}接受' : '建議{name}接受（超過授權）', { name: client })}
             </button>
             {!ok && nego.canCall(scene, st) && (
-              <button className="wide primary" onClick={callClient}>
+              <button
+                className="wide primary"
+                onClick={() => {
+                  setLast(null);
+                  callClient();
+                }}
+              >
                 {t('打電話請示 {name}', { name: t(scene.client.name, scope) })}
                 <span className="cost">{t('−1 回合')}</span>
               </button>
@@ -183,6 +231,7 @@ export function Negotiation({ scene }: { scene: NegotiationScene }) {
               className="wide"
               onClick={() => {
                 setChoice(null);
+                setLast(null);
                 advise(false);
               }}
             >
@@ -219,7 +268,10 @@ export function Negotiation({ scene }: { scene: NegotiationScene }) {
                 verb={t('亮出')}
                 disabled={st.played.includes(a.id) || !nego.canAct(st)}
                 tag={st.played.includes(a.id) ? t('（已亮出）') : undefined}
-                onPick={() => revealArg(a.id, a.strength, a.name)}
+                onPick={() => {
+                  snap();
+                  revealArg(a.id, a.strength, a.name);
+                }}
               />
             ))}
             {args.length === 0 && <span className="muted">{t('手上沒有確認過的論點。')}</span>}
@@ -236,7 +288,10 @@ export function Negotiation({ scene }: { scene: NegotiationScene }) {
                 key={b.id}
                 className="wide"
                 disabled={st.bluffed.includes(b.id) || !nego.canAct(st)}
-                onClick={() => bluff(b.id)}
+                onClick={() => {
+                  snap();
+                  bluff(b.id);
+                }}
               >
                 {t(b.label, scope)}
               </button>
