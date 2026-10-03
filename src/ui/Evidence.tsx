@@ -9,6 +9,7 @@ import {
   useEpisode,
   type Evidence as Item,
 } from '../engine/game';
+import { play } from '../engine/sound';
 import { t as tr, useT } from '../i18n';
 import { useScope } from './lang';
 import { cardHighlights, cardStamps, Hl, Stamp } from './Marks';
@@ -45,13 +46,26 @@ export function EvidenceDrawer({ note, noTimeline }: { note?: string; noTimeline
   const [q, setQ] = useState('');
   useEffect(() => {
     if (!open) return;
-    const esc = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false);
+    const esc = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      play('folder');
+      setOpen(false);
+    };
     window.addEventListener('keydown', esc);
     return () => window.removeEventListener('keydown', esc);
   }, [open]);
   const [kind, setKind, showKind] = useKindFilter();
   // 抽屜分三頁：手上的證據、排好的時間軸、法典百科。庭上、談判時都翻得到。
-  const [want, setPage] = useState<'cards' | 'timeline' | 'terms'>('cards');
+  const [want, setWant] = useState<'cards' | 'timeline' | 'terms'>('cards');
+  const setPage = (next: typeof want) => {
+    if (next !== page) play('page');
+    setWant(next);
+  };
+  // 手機上抽屜是蓋上來的一層，開關有資料夾聲；桌機一直開著，不出聲。
+  const toggle = (on: boolean) => {
+    if (on !== open) play('folder');
+    setOpen(on);
+  };
   // 證據板上時間軸的家是疑問清單第一列，抽屜不再放一份（UX 規格：一樣東西只有一個家）。
   const page = noTimeline && want === 'timeline' ? 'cards' : want;
   const scene = deskSceneOf(progress);
@@ -67,7 +81,7 @@ export function EvidenceDrawer({ note, noTimeline }: { note?: string; noTimeline
   return (
     <>
       {!wide && (
-        <button className="evidence-tab" aria-expanded={open} onClick={() => setOpen(true)}>
+        <button className="evidence-tab" aria-expanded={open} onClick={() => toggle(true)}>
           {t('證據')} <strong>{items.length}</strong>
         </button>
       )}
@@ -77,7 +91,7 @@ export function EvidenceDrawer({ note, noTimeline }: { note?: string; noTimeline
             <button
               className="sheet-back"
               aria-label={t('關閉證據抽屜')}
-              onClick={() => setOpen(false)}
+              onClick={() => toggle(false)}
             />
           )}
           <section className={wide ? 'sheet side' : 'sheet'} aria-label={t('證據抽屜')}>
@@ -96,7 +110,7 @@ export function EvidenceDrawer({ note, noTimeline }: { note?: string; noTimeline
                 </button>
               </nav>
               {!wide && (
-                <button className="link" onClick={() => setOpen(false)}>
+                <button className="link" onClick={() => toggle(false)}>
                   {t('關閉')}
                 </button>
               )}

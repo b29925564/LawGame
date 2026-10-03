@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { episodes } from '../content';
 import { useEpisode } from '../engine/game';
 import { useLang, useT } from '../i18n';
 import { LangSwitch } from './lang';
 import { readSave, SLOTS, type Slot } from '../engine/save';
+import { unlockAudio } from '../engine/sound';
+import { Credits } from './Credits';
 
 const when = (t: number) =>
   new Date(t).toLocaleString('zh-TW', {
@@ -52,8 +54,18 @@ export function Title() {
   const { newGame, load, openProto } = useEpisode();
   const [loading, setLoading] = useState(false);
   const [picking, setPicking] = useState(false);
+  const [credits, setCredits] = useState(false);
   const auto = readSave('auto');
   const t = useT();
+  // 瀏覽器要等玩家碰過畫面才肯出聲：標題畫面上的點擊或按鍵都順手解鎖。
+  // 各瀏覽器認的手勢不同（iOS 要 touchend／click），所以全部聽，重複呼叫無害。
+  useEffect(() => {
+    const kinds = ['pointerup', 'click', 'keydown', 'touchend'] as const;
+    for (const k of kinds) document.addEventListener(k, unlockAudio, true);
+    return () => {
+      for (const k of kinds) document.removeEventListener(k, unlockAudio, true);
+    };
+  }, []);
   return (
     <main className="scene title-screen">
       <span className="title-mark" aria-hidden>
@@ -101,6 +113,10 @@ export function Title() {
             {t('讀取存檔')}
           </button>
           {loading && <SlotList slots={['auto', ...SLOTS]} verb="讀取" onPick={load} />}
+          <button onClick={() => setCredits(!credits)} aria-expanded={credits}>
+            {t('製作群')}
+          </button>
+          {credits && <Credits />}
           <button className="link" onClick={openProto}>
             {t('系統原型（證據板、彈劾、陪審團）')}
           </button>

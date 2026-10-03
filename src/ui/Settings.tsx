@@ -3,10 +3,18 @@ import { useT } from '../i18n';
 import { useCourtLight } from './courtLight';
 import { LangSwitch } from './lang';
 
-/** 輔助選項（企劃書 6.14）：字級、異議窗、數值顯示、畫外字幕、音效。 */
+const VOLUMES = [
+  ['master', '總音量'],
+  ['music', '音樂'],
+  ['sfx', '音效'],
+  ['ambience', '環境音'],
+] as const;
+
+/** 輔助選項（企劃書 6.14）：字級、異議窗、數值顯示、畫外字幕、聲音與音量。 */
 export function SettingsPanel() {
   const { objectionSeconds, showNumbers, textScale, sound, voAuto, voScale, voBox, set } =
     useSettings();
+  const levels = useSettings();
   const t = useT();
   const { on: light, setOn: setLight } = useCourtLight();
   return (
@@ -65,8 +73,27 @@ export function SettingsPanel() {
       </label>
       <label className="toggle">
         <input type="checkbox" checked={sound} onChange={(e) => set({ sound: e.target.checked })} />
-        {t('音效')}
+        {t('聲音')}
       </label>
+      {/* 聲音關掉時滑桿還在，只是灰掉：先調好音量再打開也行。 */}
+      <fieldset className="volumes" disabled={!sound}>
+        <legend className="sr-only">{t('音量')}</legend>
+        {VOLUMES.map(([key, name]) => (
+          <label key={key}>
+            {t(name)}
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.05"
+              value={levels[key]}
+              aria-valuetext={`${Math.round(levels[key] * 100)}%`}
+              onChange={(e) => set({ [key]: Number(e.target.value) })}
+            />
+            <output>{Math.round(levels[key] * 100)}</output>
+          </label>
+        ))}
+      </fieldset>
       <label className="toggle">
         <input type="checkbox" checked={light} onChange={(e) => setLight(e.target.checked)} />
         {t('法庭光影（試做）')}

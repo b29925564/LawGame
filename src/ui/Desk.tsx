@@ -41,6 +41,11 @@ export function Desk({ scene }: { scene: DeskScene }) {
   const scope = useScope();
   const st = deskState(progress, scene);
   const [app, setApp] = useState<App>('mail');
+  // 翻開卷宗是資料夾聲，其他程式是翻頁聲；點同一個不出聲。
+  const pickApp = (next: App) => {
+    if (next !== app) play(next === 'docs' ? 'folder' : 'page');
+    setApp(next);
+  };
   const held = desk.heldCards(scene, st, progress.cards);
   const unread = scene.mail.filter((m) => st.mail.includes(m.id) && !st.openMail.includes(m.id));
   // 卷宗也掛未讀數：新進來的文件（例如法官的裁定）不會被跳過（體驗評測、劇本與內容）。
@@ -151,7 +156,7 @@ export function Desk({ scene }: { scene: DeskScene }) {
           <span className="muted small">{t(scene.deadline, scope)}</span>
         </header>
       }
-      tabs={<Tabs label={t('應用程式')} value={app} onPick={setApp} items={apps} />}
+      tabs={<Tabs label={t('應用程式')} value={app} onPick={pickApp} items={apps} />}
       foot={
         <>
           <EvidenceDrawer noTimeline={app === 'board'} />
@@ -164,7 +169,7 @@ export function Desk({ scene }: { scene: DeskScene }) {
           ) : (
             st.confirmed.includes(scene.goal) &&
             pending > 0 && (
-              <button className="wide" onClick={() => setApp('discovery')}>
+              <button className="wide" onClick={() => pickApp('discovery')}>
                 {t('結束調查')} <span className="cost">{t('開示未回應 {n}', { n: pending })}</span>
               </button>
             )

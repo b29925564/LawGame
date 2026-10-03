@@ -761,6 +761,49 @@ details summary {
 .settings input[type='range'] {
   min-height: 44px;
 }
+/* 四個音量：名稱、滑桿、數字排一列，數字對齊。 */
+.settings .volumes {
+  border: 0;
+  margin: 0;
+  padding: 0 0 0 26px;
+  min-inline-size: 0;
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr) 2.5em;
+  column-gap: 10px;
+  row-gap: 0;
+}
+.settings .volumes label {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: subgrid;
+  align-items: center;
+}
+.settings .volumes output {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+.settings .volumes:disabled {
+  opacity: 0.45;
+}
+/* 製作群：每條署名兩行，用途小字在上、作品與作者在下。 */
+.credits h2 {
+  margin: 8px 0 0;
+  font-size: 1.05em;
+}
+.credits ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  gap: 8px;
+}
+.credits li {
+  display: grid;
+  gap: 2px;
+}
+.credits li > .muted {
+  font-size: 0.86em;
+}
 .back {
   margin: 12px 16px 0;
 }
