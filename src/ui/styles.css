@@ -6549,3 +6549,88 @@ button.blank:hover,
 .panel.adjourn .lines {
   font-size: 1.05em;
 }
+
+/*
+ * 書桌頂列一列 48 高（視覺規格 §4）：工時、分頁同一條基線，預審與選單靠右；
+ * 底線從內容左緣拉到證據欄右緣（外框格線內，不滿版）。證據欄頂端對齊頂列下方。
+ */
+@media (min-width: 1024px) {
+  .shell:has(> .shell-head > .taskbar) {
+    --drawer-gutter: 372px;
+    grid-template-rows: var(--taskbar-h) minmax(0, 1fr) auto;
+  }
+  .shell:has(> .shell-head > .taskbar) > .shell-head {
+    grid-row: 1;
+    margin-right: calc(-1 * var(--drawer-gutter));
+  }
+  .shell:has(> .shell-head > .taskbar) > .shell-tabs {
+    grid-row: 1;
+    align-self: stretch;
+    justify-self: start;
+    /* 工時欄固定 96 寬＋間距 32，分頁從同一個位置開始，工時位數變了也不跳。 */
+    margin-left: calc(96px + var(--s6));
+    z-index: 1;
+  }
+  .shell:has(> .shell-head > .taskbar) > .shell-body {
+    grid-row: 2;
+  }
+  .shell:has(> .shell-head > .taskbar) > .shell-foot {
+    grid-row: 3;
+  }
+  .taskbar {
+    height: var(--taskbar-h);
+    padding: 0 calc(80px + var(--s4)) 0 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .taskbar .hours {
+    min-width: 96px;
+  }
+  .shell:has(> .shell-head > .taskbar) > .shell-tabs > .apps {
+    height: 100%;
+    border-bottom: none;
+    overflow: visible;
+  }
+  .shell:has(> .shell-head > .taskbar) > .shell-tabs > .apps button {
+    height: 100%;
+    min-height: 0;
+    padding: 0 var(--s3);
+    font-size: var(--fs-ui-row);
+  }
+  .shell:has(> .shell-head > .taskbar) > .shell-tabs > .apps [aria-current='true'] {
+    background: none;
+    box-shadow: none;
+  }
+  .shell:has(> .shell-head > .taskbar) > .shell-tabs > .apps button::after {
+    display: block;
+    left: var(--s3);
+    right: var(--s3);
+    height: 2px;
+    border-radius: 0;
+  }
+  :root:has(.taskbar) .side-wrap {
+    top: calc(16px + var(--taskbar-h) + 10px);
+  }
+  /* 選單鈕跟著頂列：垂直置中，右緣對齊證據欄右緣。 */
+  :root:has(.taskbar) .game-menu {
+    top: calc(16px + (var(--taskbar-h) - 40px) / 2);
+    right: max(24px, calc((100vw - 1480px) / 2 + 24px));
+  }
+  /* 答案面板照順序排在發現下面，不疊在上面（視覺設計師、體驗評測）；中欄自己捲。 */
+  .board3 .answer-bar {
+    position: static;
+    box-shadow:
+      var(--inset-hi),
+      var(--shadow-1),
+      0 24px 48px -24px var(--shadow-deep);
+  }
+  /* 證據欄清單捲到底留 24，底緣淡出，看得出是刻意捲動，不是截在半列。 */
+  .sheet.side .sheet-list {
+    padding-bottom: var(--s5);
+    mask-image: linear-gradient(to bottom, #000 calc(100% - 24px), transparent);
+  }
+}
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .shell:has(> .shell-head > .taskbar) {
+    --drawer-gutter: 340px;
+  }
+}
