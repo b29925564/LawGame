@@ -43,14 +43,26 @@ const mouths: Record<Line['mood'], string> = {
   默: 'M 25 43 h 14',
 };
 
-export function Portrait({ who, mood = '平' }: { who: string; mood?: Line['mood'] }) {
+export function Portrait({
+  who,
+  mood = '平',
+  decorative,
+}: {
+  who: string;
+  mood?: Line['mood'];
+  /** 旁邊已經寫了名字（台詞）：頭像不再念一次（無障礙審查第 6 條）。 */
+  decorative?: boolean;
+}) {
   const t = useT();
+  const a11y = decorative
+    ? ({ 'aria-hidden': true } as const)
+    : ({ role: 'img', 'aria-label': t(who) } as const);
   const color = palette[who] ?? '#4a5866';
   if (who === '旁白') return null;
   const src = who === LUCAS ? lucas(mood, 144) : undefined;
   if (src)
     return (
-      <span className="portrait art" role="img" aria-label={t(who)}>
+      <span className="portrait art" {...a11y}>
         <img
           src={src}
           srcSet={`${src} 144w, ${lucas(mood, 512)} 512w`}
@@ -62,7 +74,7 @@ export function Portrait({ who, mood = '平' }: { who: string; mood?: Line['mood
     );
   const brow = Number(brows[mood] ?? 0);
   return (
-    <svg className="portrait" viewBox="0 0 64 80" role="img" aria-label={t(who)} focusable="false">
+    <svg className="portrait" viewBox="0 0 64 80" {...a11y} focusable="false">
       <g transform="translate(0 14)">
         <circle cx="32" cy="32" r="30" fill={color} opacity="0.16" />
         <circle cx="32" cy="27" r="17" fill={color} opacity="0.32" />
@@ -99,7 +111,7 @@ export function Speech({ line: raw, body }: { line: Line; body?: ReactNode }) {
   if (line.who === '旁白') return <p className="narration">{body ?? line.text}</p>;
   return (
     <p className="speech">
-      <Portrait who={line.who} mood={line.mood} />
+      <Portrait who={line.who} mood={line.mood} decorative />
       <span>
         <span className="who">{t(line.who)}</span>
         {body ?? line.text}

@@ -2022,6 +2022,10 @@ fieldset.relations.compact {
   grid-template-columns: repeat(3, 1fr);
   gap: 6px;
 }
+/* 會見：提問／施壓的分頁列只是語意上的一組，版面上跟「安撫」排在同一格線。 */
+.actions > .row > [role='tablist'] {
+  display: contents;
+}
 .actions [aria-selected='true'] {
   color: var(--text);
 }

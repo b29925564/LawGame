@@ -94,7 +94,10 @@ export function VoiceOver({ line, onDone }: { line: Line; onDone: () => void }) 
   // 出字途中點擊＝立刻出完。防的是連點：上一下點擊 400ms 內的第二下不算。
   // 以前是「出完後 600ms 內一律不算」，字自己出完時玩家點下去也會被吃掉，看起來像按了沒反應。
   const lastClick = useRef(-Infinity);
+  // 玩家自己點過或按過鍵，這段獨白就不再自動前進：讀得慢的人不會漏句（無障礙審查第 5 條）。
+  const manual = useRef(false);
   const click = (e?: { clientX: number; clientY: number }) => {
+    manual.current = true;
     const now = performance.now();
     const double = now - lastClick.current < 400;
     lastClick.current = now;
@@ -130,7 +133,7 @@ export function VoiceOver({ line, onDone }: { line: Line; onDone: () => void }) 
       if (k < 1) raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
-    const auto = voAuto ? setTimeout(() => next(), tm.hold + 400) : undefined;
+    const auto = voAuto && !manual.current ? setTimeout(() => next(), tm.hold + 400) : undefined;
     return () => {
       cancelAnimationFrame(raf);
       clearTimeout(auto);
