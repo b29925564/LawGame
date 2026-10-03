@@ -9,7 +9,7 @@
 依法務意見: per legal advice
 駁回: DENIED
 我還沒決定。但我現在知道，這案子值多少了。: I haven't decided. But now I know what this case is worth.
-椅子是你們的好坐。問吧。她每一題都可以想完再答。: Better chairs over here. Go ahead. She gets to finish thinking before she answers.
+椅子是你們的好坐。問吧。: Better chairs over here. Go ahead.
 已排除: EXCLUDED
 所以我們不能讓這案子開庭。: So we don't let this go to trial.
 超過授權了。｜要嘛打給亞瑟，｜要嘛放手。: That's over my authority.｜Call Arthur,｜or let it go.
@@ -288,7 +288,7 @@ App 日誌我整理好了（有點多）: App log sorted (it's a lot)
 營運部。我是營運部的主管。: Operations. I run Operations.
 奧卡福勞工法律事務所　會議室: Okafor Labor Law, conference room
 卡爾德快遞　資深系統工程師: Senior Systems Engineer, Calder Express
-盧卡斯，好久不見。你坐在那一邊，看起來很不習慣。: Lucas. It's been a while. You look uncomfortable on that side of the table.
+這次換你坐我們這邊了。看起來很不習慣。: Your turn on our side of the table this time. You look uncomfortable.
 徐小姐，妳負責卡爾德快遞派單系統的哪一部分？: Ms. Hsu, which part of the Calder Express dispatch system are you responsible for?
 派單演算法和司機端的提醒功能。: The dispatch algorithm and the driver-side reminders.
 赫克托・維加的車停下之後，系統做了什麼？: After Hector Vega's van stopped, what did the system do?
@@ -613,7 +613,7 @@ App 日誌我整理好了（有點多）: App log sorted (it's a lot)
 瑪莉索從調解室出來，經過盧卡斯身邊，沒有停下來。: Marisol comes out of the mediation room and passes Lucas without stopping.
 惠特洛克・海爾　影印室　晚上 22:10: Whitlock & Hale, copy room. 10:10 p.m.
 影印機還在出紙。戴文把一張舊文件放上掃描台，放大到百分之四百。: The copier is still feeding out pages. Devon lays an old document on the scanner and zooms to four hundred percent.
-葛雷律師，你還在嗎？那份文件保存政策的附件，二〇一六年那張。: Mr. Grey, are you still here? The attachment to the records retention policy. The one from 2016.
+葛雷律師，等一下。那份文件保存政策的附件，二〇一六年那張。: Mr. Grey, wait. The attachment to the records retention policy. The one from 2016.
 「碼頭九號倉庫維修紀錄備份：依政策銷毀。」核准人簽名……我放大了。: '"Pier Nine warehouse maintenance record backups: destroyed per policy." The approver''s signature... I zoomed in.'
 是 V. 惠特洛克。: It's V. Whitlock.
 羅根叫我別多事。我……我想先讓你知道。: Logan told me not to go poking around. I... I wanted you to know first.
@@ -652,8 +652,6 @@ App 日誌我整理好了（有點多）: App log sorted (it's a lot)
 '亞瑟・卡爾德的訊息進來：「那份意見是我付錢買的。你用我的錢，替原告買了一份證據。」': 'A message from Arthur Calder: "I paid for that opinion. You just used my money to buy the plaintiff a piece of evidence."'
 '合法地藏，也是一種選擇。記住這個感覺。': 'Hiding it legally is a choice too. Remember how this feels.'
 '法官翻到崔佛的錄取筆錄：「證人已在宣誓下陳述該意見之內容，特權視同放棄。本庭命令交出。」': 'The judge turns to Trevor''s deposition transcript: "The witness has already described the substance of that opinion under oath. Privilege is deemed waived. The court orders production."'
-'這次換你坐那一邊了，盧卡斯。會議室是你們的，咖啡也是。': 'Your turn on that side of the table, Lucas. Your conference room, your coffee.'
-'咖啡是事務所的，別客氣。我的證人每一題都可以想完再答。': "The coffee's on the firm, help yourself. My witness gets to finish thinking before every answer."
 '米爾斯先生，疲勞管理的設定，最後由誰核准？': 'Mr. Mills, who gives final approval on the fatigue-management settings?'
 '赫克托・維加死亡當天，疲勞提醒是怎麼運作的？': 'On the day Hector Vega died, how did the fatigue reminder work?'
 '您做這個決定之前，有沒有問過律師？': 'Before you made that decision, did you consult a lawyer?'
@@ -666,9 +664,7 @@ App 日誌我整理好了（有點多）: App log sorted (it's a lot)
 '請崔佛更正筆錄（規則 30(e) 勘誤）': 'Have Trevor correct his transcript (Rule 30(e) errata)'
 '他宣誓說的那一句是假的，而我們知道。更正等於承認我們的副總在宣誓下說錯話；不更正，那一句就留在筆錄裡。': 'What he said under oath is false, and we know it. Correcting it means admitting our VP got it wrong under oath. Not correcting it means the line stays in the transcript.'
 '崔佛簽了。第 42 頁第 7 行，「從來沒有」改成「三月以前有」。他簽的時候沒有說話。': 'Trevor signed. Page 42, line 7: "never" becomes "not since March." He didn''t say a word while he signed.'
-'奧卡福會把勘誤表放在開場的第一張投影片。亞瑟剛打過來，問你為什麼要他自己的副總承認說謊。': 'Okafor will put the errata sheet on the first slide of his opening. Arthur just called, asking why you made his own VP admit he lied.'
 '因為另一個選項是讓他在陪審團面前再說一次。那個比較貴。': 'Because the other option was letting him say it again in front of a jury. That one costs more.'
-'電話那頭，亞瑟・卡爾德沉默了很久，然後掛了。': 'On the other end of the line, Arthur Calder is silent for a long time. Then he hangs up.'
 '米爾斯先生，您在錄取之後更正過一句證詞。為什麼？': 'Mr. Mills, after your deposition you corrected one line of your testimony. Why?'
 '因為那句是錯的。三月以前，系統會強制下線。改掉它的那張單，是我簽的。': 'Because it was wrong. Before March, the system forced drivers off. The ticket that changed it has my signature on it.'
 '米爾斯先生，「旺季不准任何人被踢下線。我不管系統怎麼寫。」這句話，是您在營運群組說的？': 'Mr. Mills, "Nobody gets kicked offline during peak season. I don''t care what the system says." You wrote that in the operations group chat?'
@@ -699,3 +695,8 @@ App 日誌我整理好了（有點多）: App log sorted (it's a lot)
 '我沒有說犯法。': "I didn't say it was."
 '羅根說，你本來可以讓他在證人席上再說一次那句話。陪審團會信的。': 'Logan says you could have had him say that line again on the stand. The jury would have believed it.'
 '會信。所以才不能說。': "They would have. That's exactly why it couldn't be said."
+'盧卡斯，好久不見。會議室是你們的，咖啡也是。': "Lucas. It's been a while. Your conference room, your coffee."
+'咖啡是事務所的，別客氣。': "The coffee's on the firm. Help yourself."
+'他每一題都可以想完再答。': 'He gets to finish thinking before every answer.'
+'奧卡福會把勘誤表放在開場的第一張投影片。亞瑟在二線，問你為什麼要他自己的副總承認說謊。': 'Okafor will put the errata sheet on the first slide of his opening. Arthur is on line two, asking why you made his own VP admit he lied.'
+'電話那頭沉默了很久，然後斷了。': 'A long silence on the other end of the line. Then it goes dead.'
