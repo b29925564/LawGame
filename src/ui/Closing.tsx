@@ -115,6 +115,18 @@ export function Closing({ scene }: { scene: ClosingScene }) {
               <strong>{t(th.name, scope)}</strong>
               <JuryStart jury={th.jury} civil={rules?.burden === 'civil'} />
               {cost && <p className="small">{t(cost, scope)}</p>}
+              {/* 理論撐在哪幾個論點上：結辯挑別的論點，等於自己打自己的理論。 */}
+              <p className="small theory-needs">
+                <span className="carry-key">{t('理論靠的論點')}</span>
+                {th.needs.map((n) => (
+                  <span key={n} className="need ok">
+                    <span className="diamond" aria-hidden>
+                      ◆
+                    </span>
+                    {t(args.find((a) => a.id === n)?.name ?? n, scope).split(/：|: /)[0]}
+                  </span>
+                ))}
+              </p>
             </div>
           )}
           {(st.broken ?? []).length > 0 && (
