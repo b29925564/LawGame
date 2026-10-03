@@ -112,7 +112,7 @@ describe('和解授權', () => {
       cap: 1_500_000,
       raise: 1_000_000,
       terms: true,
-      calls: [say('一'), say('二')],
+      calls: [say('一'), say('二'), say('三')],
       over: say('超過了'),
     },
   });
@@ -132,8 +132,11 @@ describe('和解授權', () => {
     expect(st.flags).toEqual([`call:${s.id}:1`]);
     st = nego.call(s, st);
     st = nego.call(s, st);
-    expect(st.log.at(-1)?.text).toBe('二');
+    expect(st.log.at(-1)?.text).toBe('三');
     expect(st.flags).toContain(`call:${s.id}:3`);
+    // 寫好的回應用完（委託人說別再打來），就不能再打。
+    expect(nego.canCall(s, st)).toBe(false);
+    expect(nego.call(s, st)).toBe(st);
     expect(nego.advise(s, st, true).outcome).toBe('deal');
   });
 

@@ -173,8 +173,8 @@ export function Negotiation({ scene }: { scene: NegotiationScene }) {
             >
               {t(ok ? '建議{name}接受' : '建議{name}接受（超過授權）', { name: client })}
             </button>
-            {!ok && (
-              <button className="wide primary" disabled={!nego.canAct(st)} onClick={callClient}>
+            {!ok && nego.canCall(scene, st) && (
+              <button className="wide primary" onClick={callClient}>
                 {t('打電話請示 {name}', { name: t(scene.client.name, scope) })}
                 <span className="cost">{t('−1 回合')}</span>
               </button>
