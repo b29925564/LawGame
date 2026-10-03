@@ -142,3 +142,31 @@ describe('第 2 集的庭審平衡', () => {
     expect(verdict({ confront: true, theory: 'shared' })).toBe('有責');
   });
 });
+
+/** 崔佛提案的審前代價：交出群組截圖、更正筆錄。 */
+describe('第 2 集審前選擇的代價', () => {
+  const chat = 'discovery:rq-chat:produced';
+  const fixed = 'trevor-corrected';
+  const theories = ['own-choice', 'warned', 'shared'];
+
+  it('交出群組截圖、更正筆錄，或兩個都做：每一場都打到最好，三種理論仍然都能贏', () => {
+    for (const flags of [[chat], [fixed], [chat, fixed]])
+      for (const theory of theories) {
+        expect(verdict({ ...best, theory, flags })).toBe('無責');
+        expect(verdict({ ...best, daubert: true, theory, flags })).toBe('無責');
+      }
+  });
+
+  it('交出群組截圖的代價：「他自己的選擇」只對質不異議原本撐得住，交出之後就判有責', () => {
+    expect(verdict({ confront: true, theory: 'own-choice' })).toBe('無責');
+    expect(verdict({ confront: true, theory: 'own-choice', flags: [chat] })).toBe('有責');
+    for (const theory of theories)
+      expect(verdict({ confront: true, theory, flags: [chat, fixed] })).toBe('有責');
+  });
+
+  it('更正筆錄不在陪審團那邊扣分（代價在調解與客戶信任）', () => {
+    for (const theory of theories)
+      for (const r of [best, { confront: true }, { object: true }])
+        expect(verdict({ ...r, theory, flags: [fixed] })).toBe(verdict({ ...r, theory }));
+  });
+});
