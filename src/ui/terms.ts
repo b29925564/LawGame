@@ -3,8 +3,18 @@ import { termsOf, type Burden } from '../engine/jury';
 
 /** 介面上依案件類型換的字：民事沒有檢方、認罪協商，案號也不同。 */
 const UI = {
-  criminal: { other: '檢方', deal: '認罪協商成立', caseNo: 'No. 26-CR-0417' },
-  civil: { other: '原告律師', deal: '和解成立', caseNo: 'No. 26-CV-1182' },
+  criminal: {
+    other: '檢方',
+    deal: '認罪協商成立',
+    caseNo: 'No. 26-CR-0417',
+    parties: '卡爾德州　訴　伊森・蕭',
+  },
+  civil: {
+    other: '原告律師',
+    deal: '和解成立',
+    caseNo: 'No. 26-CV-1182',
+    parties: '維加　訴　卡爾德物流',
+  },
 } as const;
 
 /** 這一集是刑事還是民事：看劇本裡有標 burden 的場景。 */
