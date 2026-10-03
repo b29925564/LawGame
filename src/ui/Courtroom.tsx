@@ -98,7 +98,9 @@ function Jurors({
                   <span className="face" aria-hidden>
                     {glyph[r]}
                   </span>
-                  <span className="label">{t(j.label, scope)}</span>
+                  <span className="label" title={t(j.label, scope)}>
+                    {t(j.label, scope)}
+                  </span>
                   <span className="state">{r ? t(r) : '　'}</span>
                   {showNumbers && (
                     <span className={jury[j.id] >= scene.threshold ? 'num guilty' : 'num'}>
@@ -162,7 +164,7 @@ function ObjectionWindow({
       </div>
       {rulings.length > 0 && (
         <p className="muted small">
-          {t('生效中的裁定：{rulings}', {
+          {t('生效中：{rulings}', {
             rulings: rulings.map((r) => t(r, scope)).join(t('、')),
           })}
         </p>
@@ -195,6 +197,8 @@ export function Courtroom({ scene: raw }: { scene: TrialScene }) {
   const t = useT();
   const scope = useScope();
   const [intro, setIntro] = useState(st.log.length === 0);
+  // 最後一句話（再主詰問的反擊、或玩家的收尾）落地後，先停在筆錄上讓人看完，點了才進休庭。
+  const [recess, setRecess] = useState(st.stage === 'done');
   // 一次只處理一項證詞，預設停在還沒打完的那一項。
   const pending = scene.witness.claims.find((c) => st.claims[c.id]?.result === 'none');
   const [pick, setPick] = useState<string>(pending?.id ?? scene.witness.claims[0].id);
@@ -220,7 +224,9 @@ export function Courtroom({ scene: raw }: { scene: TrialScene }) {
         {light}
         <main className="scene">
           <p className="eyebrow">
-            {t(scene.act, scope)}・{t(scene.day, scope)}
+            {t(scene.act, scope)}
+            {t('・')}
+            {t(scene.day, scope)}
           </p>
           <div className="lines">
             {scene.intro.map((l, i) => (
@@ -240,7 +246,7 @@ export function Courtroom({ scene: raw }: { scene: TrialScene }) {
       </>
     );
 
-  if (st.stage === 'done')
+  if (st.stage === 'done' && recess)
     return (
       <>
         {light}
@@ -289,11 +295,13 @@ export function Courtroom({ scene: raw }: { scene: TrialScene }) {
     <>
       {light}
       <Shell
-        resetKey={st.stage === 'cross' ? pick : st.stage}
+        resetKey={st.stage === 'direct' ? st.stage : pick}
         head={
           <header className="panel-head bench">
             <p className="eyebrow">
-              {t(scene.witness.name, scope)}・{t(scene.witness.role, scope)}
+              {t(scene.witness.name, scope)}
+              {t('・')}
+              {t(scene.witness.role, scope)}
             </p>
             <p
               className="patience"
@@ -349,9 +357,21 @@ export function Courtroom({ scene: raw }: { scene: TrialScene }) {
         }
         foot={
           <>
+            {st.stage === 'done' && (
+              <button className="primary wide next" onClick={() => setRecess(true)}>
+                {t('休庭')}
+              </button>
+            )}
             <EvidenceDrawer note={t('庭上隨時可以翻。出示哪一個論點，看的就是這裡的強度。')} />
             {st.stage === 'cross' && (
-              <button className="primary wide" onClick={finishTrial}>
+              <button
+                className="primary wide"
+                onClick={() => {
+                  // 自己喊停的不必再等一拍，直接進休庭。
+                  setRecess(true);
+                  finishTrial();
+                }}
+              >
                 {t('詰問完畢')}
               </button>
             )}

@@ -88,7 +88,9 @@ export function Closing({ scene }: { scene: ClosingScene }) {
       head={
         <header className="panel-head bench">
           <p className="eyebrow">
-            {t(scene.act, scope)}・{t(scene.place, scope)}
+            {t(scene.act, scope)}
+            {t('・')}
+            {t(scene.place, scope)}
           </p>
           <p className="patience">
             {t('論點')}{' '}

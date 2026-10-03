@@ -29,7 +29,9 @@ export function VoirDire({ scene }: { scene: VoirDireScene }) {
     return (
       <main className="scene">
         <p className="eyebrow">
-          {t(scene.act, scope)}・{t(scene.place, scope)}
+          {t(scene.act, scope)}
+          {t('・')}
+          {t(scene.place, scope)}
         </p>
         <div className="lines">
           {scene.intro.map((l, i) => (
@@ -91,8 +93,8 @@ export function VoirDire({ scene }: { scene: VoirDireScene }) {
         <header className="panel-head bench">
           <p className="eyebrow">{t('陪審團遴選')}</p>
           <p className="patience">
-            {t('提問', 'voirdire')} <strong>{st.left}</strong> ・ {t('無因迴避', 'voirdire')}{' '}
-            <strong>{scene.peremptories - st.struck.length}</strong> ・{' '}
+            {t('提問', 'voirdire')} <strong>{st.left}</strong> {t('・')} {t('無因迴避', 'voirdire')}{' '}
+            <strong>{scene.peremptories - st.struck.length}</strong> {t('・')}{' '}
             {t('候選 {n}', { n: pool.length })}
           </p>
         </header>
@@ -129,7 +131,9 @@ export function VoirDire({ scene }: { scene: VoirDireScene }) {
               >
                 <strong>
                   <span className="seat">{seat < scene.seats ? seat + 1 : '—'}</span>
-                  {t(c.name, scope)}・{t(c.job, scope)}
+                  {t(c.name, scope)}
+                  {t('・')}
+                  {t(c.job, scope)}
                   {asked && <span className="good"> {t('・問過')}</span>}
                 </strong>
                 <span className="muted small">{t(c.sheet, scope)}</span>
