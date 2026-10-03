@@ -38,13 +38,16 @@ describe('判決表', () => {
     expect(closing.award(close, rules, all(90), 10, null)!.punitive).toBeNull();
   });
 
-  it('懲罰性賠償要過 65 的人數達到法定人數才成立，金額是判賠的兩倍', () => {
+  it('懲罰性賠償要過 65 的人數達到法定人數才成立，金額與判賠一比一', () => {
     const jury = { ...all(60), [court.jurors[0].id]: 70, [court.jurors[1].id]: 70 };
     const no = closing.award(close, rules, jury, 10, 0)!;
     expect(no.punitive).toEqual({ found: false, amount: 0, votes: 2, need: court.quorum });
     const yes = closing.award(close, rules, jury, 10, 8)!;
     expect(yes.punitive?.found).toBe(true);
-    expect(yes.punitive?.amount).toBe(yes.amount * 2);
+    expect(yes.punitive?.amount).toBe(yes.amount);
+    // 補償性賠償已經是數百萬，懲罰性賠償最多一比一；分攤理論被打爛時也不會比起訴請求的 1,200 萬多。
+    const shared = closing.award(close, rules, all(100), 40, 8)!;
+    expect(shared.amount + shared.punitive!.amount).toBeLessThanOrEqual(12_000_000);
   });
 
   it('沒設定 damages 的結辯沒有判決表', () => {

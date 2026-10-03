@@ -64,6 +64,10 @@ export interface TrialState {
   /** 檢方主詰問結束時的心證；交互詰問拆掉多少，就從這裡比。 */
   directEnd?: Jury;
   log: LogLine[];
+  /** 開庭以來說過的總句數（log 只留最後幾句）。 */
+  said?: number;
+  /** 最近一次出示論點帶出的句數：休庭畫面要把這一整段放完，不能只剩最後幾句。 */
+  turn?: number;
 }
 
 export const JUDGE = '法官';
@@ -135,9 +139,12 @@ export function startTrial(
   };
 }
 
+export const LOG_KEEP = 16;
+
 const say = (st: TrialState, ...lines: LogLine[]): TrialState => ({
   ...st,
-  log: [...st.log, ...lines].slice(-10),
+  log: [...st.log, ...lines].slice(-LOG_KEEP),
+  said: (st.said ?? st.log.length) + lines.length,
 });
 
 /** 扣法官耐心；歸零＝公開訓斥，全體有罪傾向 +5，剩下的詰問取消（企劃書 6.11）。 */
@@ -309,7 +316,7 @@ export function confront(
       next = say({ ...next, stage: 'done', pleaded: true }, ...lines);
     else next = strike(s, next, lines);
   }
-  return next;
+  return { ...next, turn: Math.min(LOG_KEEP, (next.said ?? 0) - (st.said ?? st.log.length)) };
 }
 
 export const STRUCK_DEFAULT =

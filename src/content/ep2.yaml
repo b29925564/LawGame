@@ -1626,7 +1626,8 @@ scenes:
       swing: 5
       punitive:
         threshold: 65
-        ratio: 2
+        # 補償性賠償已經很高（數百萬），懲罰性賠償以一比一為上限（State Farm v. Campbell）。
+        ratio: 1
         when:
           - when: { flags: [discovery:rq-chat:produced] }
           - when: { flags: [discovery:rq-chat:concealed] }
