@@ -120,6 +120,7 @@ export function panel(s: VoirDireScene, st: VoirDireState) {
   return seated.map((c) => ({
     id: c.id,
     label: `${c.name}・${c.job}`,
+    name: c.name,
     leans: c.leans,
     start: c.start,
     foreperson: c.id === chief?.id,

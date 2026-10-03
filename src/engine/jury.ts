@@ -118,19 +118,26 @@ export function deliberate(c: JuryRules, jury: Jury): Round[] {
     const dir = guilty * 2 > c.jurors.length ? 1 : guilty * 2 < c.jurors.length ? -1 : 0;
     const next = { ...cur };
     const moves: string[] = [];
-    for (const j of c.jurors) {
+    const swayed = new Set<string>();
+    for (const j of c.jurors)
       if (dir !== 0 && Math.abs(cur[j.id] - t) < 10) {
-        const before = cur[j.id] >= t;
         next[j.id] = clamp(cur[j.id] + 5 * dir);
-        if (before !== next[j.id] >= t) moves.push(`${j.label}被多數說服，改變了立場。`);
+        swayed.add(j.id);
       }
-    }
     const foreDir = cur[fore.id] >= t ? 1 : -1;
     for (const j of c.jurors) if (j.id !== fore.id) next[j.id] = clamp(next[j.id] + 2 * foreDir);
+    // 換邊要看這一輪結束時的立場：多數推過線、陪審長又拉回來的人沒有換邊（體驗評測 v88 重驗）。
+    for (const j of c.jurors)
+      if (cur[j.id] >= t !== next[j.id] >= t)
+        moves.push(
+          swayed.has(j.id) && Math.sign(next[j.id] - cur[j.id]) === dir
+            ? `${j.name ?? j.label}被多數說服，改變了立場。`
+            : `${j.name ?? j.label}被陪審長說服，改變了立場。`,
+        );
     const w = termsOf(c);
     const yes = c.jurors.filter((j) => next[j.id] >= t).length;
     // 第一輪由陪審長開場；之後票數沒動，就照實說沒動，不再重複同一句。
-    if (r === 0 || yes !== guilty)
+    if (r === 0 || moves.length)
       moves.push(`陪審長（${fore.label}）主張${foreDir > 0 ? w.yes : w.no}。`);
     else moves.push(STILL[r - 1] ?? STILL[STILL.length - 1]);
     moves.push(`表決：${yes} 票${w.yes}，${c.jurors.length - yes} 票${w.no}。`);

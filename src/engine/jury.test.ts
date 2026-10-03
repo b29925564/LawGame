@@ -60,6 +60,37 @@ describe('民事門檻（優勢證據）', () => {
     ]);
   });
 
+  it('被多數推過線、又被陪審長拉回來的人沒有換邊，不寫「被說服」（體驗評測 v88）', () => {
+    // 陪審長 j0 偏無責；多數有責，j5 從 46 被推到 51，陪審長再拉回 49。
+    const rules = civil(5);
+    const start = jury([30, 60, 60, 60, 60, 46]);
+    const rounds = deliberate(rules, start);
+    let prev = start;
+    for (const r of rounds) {
+      const flipped = rules.jurors.filter((j) => prev[j.id] >= 50 !== r.jury[j.id] >= 50);
+      const said = r.moves.filter((m) => m.includes('改變了立場'));
+      expect(said).toHaveLength(flipped.length);
+      if (!flipped.length && r !== rounds[0]) expect(r.moves[0]).toMatch(/沒有|沒有再動/);
+      prev = r.jury;
+    }
+    expect(rounds[0].moves.join('')).not.toContain('陪審員5被多數說服');
+  });
+
+  it('換邊的句子只用姓名，不帶職業（遴選來的陪審員 label 是「姓名・職業」）', () => {
+    const rules: JuryRules = {
+      ...civil(5),
+      jurors: six([0, 0, 0, 0, 0, 0]).map((j, i) => ({
+        ...j,
+        label: `朵琳・貝克${i}・超市夜班主管`,
+        name: `朵琳・貝克${i}`,
+      })),
+    };
+    const moves = deliberate(rules, jury([62, 55, 52, 46, 44, 30])).flatMap((r) => r.moves);
+    const flips = moves.filter((m) => m.includes('改變了立場'));
+    expect(flips.length).toBeGreaterThan(0);
+    for (const m of flips) expect(m).not.toContain('超市夜班主管');
+  });
+
   it('驗證器：民事的結辯要寫有責／無責，判決人數要過半而且不多於陪審員', () => {
     const e = structuredClone(episodes.ep1) as Episode;
     for (const s of e.scenes) if (s.type === 'trial') (s as TrialScene).burden = 'civil';

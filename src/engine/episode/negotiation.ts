@@ -50,10 +50,16 @@ export function authorized(s: NegotiationScene, st: NegoState, o: Offer = offerO
   return (o.amount ?? 0) <= cap && (!o.terms || !!st.termsOk);
 }
 
+/** 還能打電話嗎：每一通都有寫好的回應，打完最後一通（亞瑟說別再打來）就不能再打。 */
+export function canCall(s: NegotiationScene, st: NegoState): boolean {
+  const a = s.authority;
+  return !!a && canAct(st) && (st.calls ?? 0) < a.calls.length;
+}
+
 /** 打電話請示委託人：用掉一回合，上限提高，評價下降。 */
 export function call(s: NegotiationScene, st: NegoState): NegoState {
   const a = s.authority;
-  if (!a || !canAct(st)) return st;
+  if (!a || !canCall(s, st)) return st;
   const n = (st.calls ?? 0) + 1;
   const next = spend(st);
   return {

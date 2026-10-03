@@ -332,5 +332,10 @@ describe('交出群組截圖後的調解', () => {
     expect(play([...chat, memo], ['arg-a', 'arg-b', 'b-meds', 'call', 'call']).outcome).toBe(
       'deal',
     );
+    // 更正筆錄又交出意見書（信心 100）：攤 A、B 停在 400 萬；再攤一個論點或虛張一次就談得成。
+    const fixedMemo = ['trevor-corrected', memo];
+    expect(play(fixedMemo, ['arg-a', 'arg-b', 'call', 'call']).outcome).toBeNull();
+    expect(play(fixedMemo, ['arg-a', 'arg-b', 'arg-c', 'call', 'call']).outcome).toBe('deal');
+    expect(play(fixedMemo, ['arg-a', 'arg-b', 'b-meds', 'call', 'call']).outcome).toBe('deal');
   });
 });
