@@ -73,11 +73,18 @@ export interface TrialState {
 }
 
 /** 交互詰問中途碰到已洩漏的論點，檢方先記下，這一句代替當場插話。 */
-export const NOTED = '莫羅檢察官在筆記本上寫了一行字，沒有起身。';
+export const noted = (examiner: string) => `${examiner}在筆記本上寫了一行字，沒有起身。`;
+/** 再主詰問開頭，由檢方說，只在有記下的反擊時出現一次。 */
+export const REDIRECT = '庭上，檢方再主詰問。';
 
 /** 交互詰問結束：檢方把記下的再主詰問一次問完。 */
 function closeCross(st: TrialState, extra: LogLine[] = []): TrialState {
-  const lines = [...(st.redirect ?? []), ...extra];
+  const asked = st.redirect ?? [];
+  const lines = [
+    ...(asked.length ? [{ who: asked[0].who, text: REDIRECT }] : []),
+    ...asked,
+    ...extra,
+  ];
   if (!lines.length) return st;
   const from = st.said ?? st.log.length;
   const next = say({ ...st, redirect: [] }, ...lines);
@@ -311,7 +318,7 @@ export function confront(
       claims: { ...st.claims, [claimId]: { ...cur, result: impeached ? 'impeached' : 'softened' } },
     },
     { who: s.witness.name, text: impeached ? c.confront.strong : c.confront.weak },
-    ...(rebuttal.length ? [{ who: '旁白', text: NOTED }] : []),
+    ...(rebuttal.length ? [{ who: '旁白', text: noted(s.examiner ?? DA) }] : []),
   );
   if (rebuttal.length) next = { ...next, redirect: [...(next.redirect ?? []), ...rebuttal] };
   if (impeached) next = say(next, { who: '旁白', text: s.witness.breakdown });

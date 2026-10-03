@@ -368,14 +368,18 @@ describe('瑞秋的詰問', () => {
     });
     expect(failed.impeachments).toBe(0);
     // 交互詰問中途檢方只記下，不插話；再主詰問留到結束才問。
-    expect(failed.log.at(-1)).toMatchObject({ who: '旁白', text: trial.NOTED });
+    expect(failed.log.at(-1)).toMatchObject({
+      who: '旁白',
+      text: trial.noted(rachel.examiner ?? trial.DA),
+    });
     expect(failed.log.some((l) => l.text.includes('手錶在搏鬥中有沒有可能脫落'))).toBe(false);
     expect(failed.redirect?.some((l) => l.text.includes('手錶在搏鬥中有沒有可能脫落'))).toBe(true);
     const ended = trial.finish(failed);
     expect(ended.redirect).toEqual([]);
-    expect(ended.log.slice(-(ended.turn ?? 0)).map((l) => l.text)).toEqual(
-      failed.redirect!.map((l) => l.text),
-    );
+    expect(ended.log.slice(-(ended.turn ?? 0)).map((l) => l.text)).toEqual([
+      trial.REDIRECT,
+      ...failed.redirect!.map((l) => l.text),
+    ]);
 
     const broken = trial.confront(rachel, st, c.id, 25, ['邏輯'], {
       id: 'arg-b',

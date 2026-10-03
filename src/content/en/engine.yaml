@@ -92,4 +92,5 @@
 # 存檔標籤
 '第 {n} 集・{act}': 'Episode {n} · {act}'
 本集完: End of episode
-莫羅檢察官在筆記本上寫了一行字，沒有起身。: Moreau writes a line in her notepad and stays seated.
+'{who}在筆記本上寫了一行字，沒有起身。': '{who} writes a line in a notepad and stays seated.'
+庭上，檢方再主詰問。: Redirect, Your Honor.
