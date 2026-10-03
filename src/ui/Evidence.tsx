@@ -145,7 +145,12 @@ export function EvidenceDrawer({ note, noTimeline }: { note?: string; noTimeline
                         )}
                       </dt>
                       <dd>{t(g.text, scope)}</dd>
-                      {g.inGame && <dd className="in-game">{t(g.inGame, scope)}</dd>}
+                      {g.inGame && (
+                        <dd className="in-game">
+                          <span className="in-game-label">{t('遊戲裡')}</span>
+                          {t(g.inGame, scope)}
+                        </dd>
+                      )}
                     </div>
                   );
                 })}

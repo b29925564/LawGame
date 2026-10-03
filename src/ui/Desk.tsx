@@ -43,6 +43,8 @@ export function Desk({ scene }: { scene: DeskScene }) {
   const [app, setApp] = useState<App>('mail');
   const held = desk.heldCards(scene, st, progress.cards);
   const unread = scene.mail.filter((m) => st.mail.includes(m.id) && !st.openMail.includes(m.id));
+  // 卷宗也掛未讀數：新進來的文件（例如法官的裁定）不會被跳過（體驗評測、劇本與內容）。
+  const unreadDocs = scene.docs.filter((d) => !st.readDocs.includes(d.id)).length;
   const finished = desk.done(scene, st);
   const hoursDrop = useBump(-st.hours);
 
@@ -128,9 +130,11 @@ export function Desk({ scene }: { scene: DeskScene }) {
       badge:
         id === 'mail' && unread.length > 0
           ? unread.length
-          : id === 'discovery' && pending > 0
-            ? pending
-            : undefined,
+          : id === 'docs' && unreadDocs > 0
+            ? unreadDocs
+            : id === 'discovery' && pending > 0
+              ? pending
+              : undefined,
     }));
 
   return (
@@ -308,6 +312,21 @@ function Mail({ scene }: { scene: DeskScene }) {
   );
 }
 
+/**
+ * 文件裡別人加上去的便利貼（「（羅根的便利貼）……」）跟文件本文分開畫：
+ * 黃紙、手寫署名，才不會被讀成法官或作者寫的話（體驗評測）。
+ */
+function DocLine({ text }: { text: string }) {
+  const m = /^[（(]([^）)]*(?:便利貼|sticky note))[）)]\s*/i.exec(text);
+  if (!m) return <span>{text}</span>;
+  return (
+    <span className="sticky-note">
+      <span className="sticky-from">{m[1]}</span>
+      {text.slice(m[0].length)}
+    </span>
+  );
+}
+
 /** 文件以句子為單位。點一句話可以標記，命中關鍵事實才生成卡片，點錯沒有懲罰。 */
 function Docs({ scene }: { scene: DeskScene }) {
   const { progress, openDoc, mark } = useEpisode();
@@ -344,7 +363,7 @@ function Docs({ scene }: { scene: DeskScene }) {
                       setNotes((n) => (n.includes(key) ? n.filter((x) => x !== key) : [...n, key]));
                   }}
                 >
-                  <span>{t(l.text, scope)}</span>
+                  <DocLine text={t(l.text, scope)} />
                 </button>
               </li>
             );
