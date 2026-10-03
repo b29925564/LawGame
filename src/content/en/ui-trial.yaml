@@ -171,6 +171,7 @@
 ，懲罰性賠償另計: ', punitive damages extra'
 開庭：結果由陪審團決定: 'Trial: the jury decides'
 接受：確定賠 {amount}: 'Accept: pay {amount}, settled'
+'。': '. '
 '接受：{name}認罪，{label}': 'Accept: {name} pleads guilty, {label}'
 不談了，這個條件作廢。: 'No deal; this offer is gone. '
 離席，上法庭: Walk out and go to trial

@@ -100,9 +100,16 @@ export function VoirDire({ scene }: { scene: VoirDireScene }) {
         <header className="panel-head bench">
           <p className="eyebrow">{t('陪審團遴選')}</p>
           <p className="patience">
-            {t('提問', 'voirdire')} <strong>{st.left}</strong> {t('・')} {t('無因迴避', 'voirdire')}{' '}
-            <strong>{scene.peremptories - st.struck.length}</strong> {t('・')}{' '}
-            {t('候選 {n}', { n: pool.length })}
+            {/* 手機上整列放不下時，標籤和數字一起換行，不要拆開。 */}
+            <span className="nowrap">
+              {t('提問', 'voirdire')} <strong>{st.left}</strong>
+            </span>
+            <span aria-hidden>{t('・')}</span>
+            <span className="nowrap">
+              {t('無因迴避', 'voirdire')} <strong>{scene.peremptories - st.struck.length}</strong>
+            </span>
+            <span aria-hidden>{t('・')}</span>
+            <span className="nowrap">{t('候選 {n}', { n: pool.length })}</span>
           </p>
         </header>
       }
@@ -134,7 +141,10 @@ export function VoirDire({ scene }: { scene: VoirDireScene }) {
               <button
                 className="row-item"
                 aria-expanded={isOpen}
-                onClick={() => setOpen(isOpen ? null : c.id)}
+                onClick={() => {
+                  setOpen(isOpen ? null : c.id);
+                  setStriking(null);
+                }}
               >
                 <strong>
                   <span className="seat">{seat < scene.seats ? seat + 1 : '—'}</span>
