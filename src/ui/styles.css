@@ -1234,6 +1234,35 @@ details summary {
 .pick.on .pick-text {
   color: var(--text);
 }
+/* 一行一張（法院系統的支撐）：名稱、種類；選中的那張才展開內容。 */
+.pick.compact {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  padding: 8px 12px;
+}
+.pick.compact .pick-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+.pick.compact .pick-kind {
+  flex: none;
+  font-family: var(--font-mono, monospace);
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  color: var(--muted);
+}
+.pick.compact .pick-text {
+  flex: 1 1 100%;
+  padding-top: 4px;
+  border-top: 1px dashed var(--border);
+}
+.relations.support .stack {
+  gap: 4px;
+}
 /* 清單很長時每張卡只露兩行，選中的那張才展開全文。 */
 .pick:not(.on) .pick-text {
   display: -webkit-box;
@@ -1254,6 +1283,12 @@ details summary {
   flex-shrink: 0;
   min-height: 34px;
   white-space: nowrap;
+}
+/* 桌機證據欄夠寬：篩選列換行排完，不裁切、不橫捲（試玩回報：「物品」被切掉）。 */
+.sheet.side .chips.kinds {
+  flex-wrap: wrap;
+  overflow: visible;
+  mask-image: none;
 }
 /* 抽屜是直排：篩選列不准被清單擠扁，清單自己捲。 */
 .sheet > * {
@@ -1789,11 +1824,17 @@ fieldset.relations.compact {
 }
 .timeline .grip {
   grid-column: 2;
+  display: grid;
+  place-items: center;
   touch-action: none;
   cursor: grab;
   color: var(--muted);
-  letter-spacing: -0.2em;
-  font-weight: 700;
+}
+/* 六個點用背景畫，正中（字元「⋮⋮」加字距會偏左）。 */
+.timeline .grip .dots {
+  width: 10px;
+  height: 16px;
+  background: radial-gradient(circle, currentColor 1.4px, transparent 1.9px) 0 0 / 5px 5.5px;
 }
 .timeline .dragging .grip {
   cursor: grabbing;
@@ -4595,6 +4636,8 @@ button.iou[aria-pressed='true'] {
 
 /* ══ 證據板三欄（設計稿 ui/design-review/board-redesign）══ */
 .board3 {
+  /* 三欄版上面沒有釘住的分頁列：連線台、時間軸匣直接釘在頂端，卡片不會從它們上面露出來。 */
+  --tabs-h: 0px;
   display: grid;
   grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
   gap: 20px;
@@ -5073,13 +5116,39 @@ button.iou[aria-pressed='true'] {
 .card.mini > .mini-btn:focus-visible {
   outline-offset: -2px;
 }
+.card.mini > .mini-btn {
+  padding-block: 8px;
+}
+/* 名稱放得下就一行，放不下換行；字縮到 14px，不用刪節號（試玩回報：有浮出卡還省略很醜）。 */
 .card.mini .mini-btn > strong {
   flex: 1 1 auto;
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  font-size: 14px;
+  line-height: 1.35;
   font-weight: 600;
+  overflow-wrap: anywhere;
+}
+/* 不能放上連線台的畫面：點開才看內容。 */
+.card.mini .mini-body {
+  padding: 0 12px 10px;
+  font-family: var(--font-doc);
+  line-height: 1.6;
+  font-size: 14px;
+}
+.card.mini .mini-body p {
+  margin: 0;
+}
+.card.mini .mini-body .mini-src {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px dashed var(--border);
+  font-family: var(--font);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+.card.mini.open {
+  border-color: var(--border-strong);
 }
 .card.mini .mini-meta {
   flex: none;

@@ -216,7 +216,7 @@ export function Timeline({
                   e.preventDefault();
                 }}
               >
-                <span aria-hidden>⋮⋮</span>
+                <span className="dots" aria-hidden />
               </button>
               <time>{stamp(c, scope)}</time>
               <div>
