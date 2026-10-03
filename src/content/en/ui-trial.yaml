@@ -50,12 +50,9 @@
 'voirdire::提問': Questions
 無因迴避: Peremptory strike
 'voirdire::無因迴避': Peremptory strikes
-'候選 {n}': 'Pool {n}'
 候選人: Candidates
 '會入座的 {n}': 'Seated {n}'
 還沒問過: Not yet asked
-'就用這 {n} 位（由上往下）': 'Seat these {n} (top to bottom)'
-'・問過': '· Asked'
 聲請有因迴避: Challenge for cause
 這個篩選沒有人。: No one matches this filter.
 
@@ -82,7 +79,6 @@
 
 # Closing argument and verdict
 判決: Verdict
-'第 {n} 輪評議': 'Deliberation round {n}'
 損害總額: Total damages
 死者過失比例: Decedent's share of fault
 判賠金額: Award
@@ -111,15 +107,12 @@
 開庭若判有責: If the jury finds liability at trial
 '約 {low}到 {high}': 'About {low} to {high}'
 懲罰性賠償另計: Punitive damages on top
-這一案的帳: How this case added up
-票數: Votes
 '站你這邊 {a} 位，需要 {b} 位': '{a} with you, {b} needed'
 '差 {k} 位': '{k} short'
 庭審結束: After testimony
 結辯後: After closing
 評議後: After deliberation
 '{label} {n} 位': '{label}: {n}'
-走勢: Trend
 陪審團起點: Jury starts
 判你方有責: finding your side liable
 判你方有罪: finding your side guilty
@@ -134,8 +127,6 @@
 理論靠的論點: The theory rests on
 點一張卡比較，再按下面的「以這個理論開庭」定案。: Pick a card to compare, then press “Go to trial on this theory” below to commit.
 '生效中：{rulings}': 'In effect: {rulings}'
-為什麼贏: Why you won
-主因: Main reasons
 下次可以試: Next time
 完整帳目: Full ledger
 '（{where}）': ' ({where})'
@@ -186,3 +177,45 @@
 詰問結束: Examination over
 法官把這位證人在這一場說過的話全部從紀錄上拿掉，陪審團不能採用。: The judge strikes everything this witness said in this session. The jury may not consider it.
 按「休庭」看這一場的結果。: Press “Recess” to see how the day went.
+'前面的筆錄（{n} 句）': 'Earlier testimony ({n} lines)'
+剔除: Struck
+對方剔除: Struck by them
+有因剔除: Excused for cause
+'席 {n}': 'Seat {n}'
+'以上 {n} 位入座・以下候補': 'Above: the {n} who sit · Below: alternates'
+'你還可以問 {a} 題；無因迴避還剩 {b} 次。': '{a} questions and {b} peremptory strikes left.'
+'你問・{q}': 'You asked · {q}'
+還沒問過。問一題，才看得出他偏向哪邊。: Not asked yet. One question shows which way they lean.
+'剩 {n}': '{n} left'
+陪審席: Jury box
+'陪審席・{n} 席': 'Jury box · {n} seats'
+由名單上往下入座: Seated from the top of the list
+候選: Pool
+'還沒問過 {n}': 'Not yet asked {n}'
+'就用這 {n} 位': 'Seat these {n}'
+點名單上的人看他的資料。: Pick someone on the list to see their file.
+入座：: 'Seated: '
+'　剔除的人不會回來。': ". Struck jurors don't come back."
+已問: Asked
+陪審團無法達成判決。: The jury could not reach a verdict.
+陪審團認定被告有責，懲罰性賠償成立。: The jury finds the defendant liable, and awards punitive damages.
+'陪審團認定被告{v}。': 'The jury finds the defendant {v}.'
+當庭釋放: Released from the courtroom
+還押，擇期量刑: Remanded until sentencing
+被告不必賠償: The defendant owes nothing
+被告應負賠償責任: The defendant must pay damages
+審判無效，另定期日: Mistrial; set for retrial
+'{a} 票 : {b} 票': '{a} : {b}'
+陪審團評議後: After deliberation
+主要原因：: 'Main reason: '
+判決書: Verdict form
+被告是否有過失？: Was the defendant negligent?
+是: 'Yes'
+否: 'No'
+就第一項罪名，被告: On count one, the defendant is
+陪審長: Foreperson
+每一筆怎麼算出來的: how every line was reached
+風向: Momentum
+'第 {n} 輪': 'Round {n}'
+'站你這邊 {a} 位': '{a} on your side'
+'候選人 {n}／{total}': 'Candidate {n} / {total}'

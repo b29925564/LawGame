@@ -4,11 +4,26 @@ import * as vd from '../engine/episode/voirdire';
 import { useEpisode, voirDireState } from '../engine/game';
 import { useT } from '../i18n';
 import { CommitBar } from './Commit';
+import { CardSheet } from './Desk';
+import { IdPhoto } from './IdPhoto';
 import { useScope } from './lang';
 import { Speech } from './Portrait';
 import { Shell, Tabs } from './Shell';
 
 type Filter = 'all' | 'seated' | 'unasked';
+
+/** 1100 寬以上名單與陪審席並排（視覺規格 §18）；以下疊成一欄、人物卡開底部抽屜。 */
+const WIDE_VD = '(min-width: 1100px)';
+function useMedia(q: string) {
+  const [on, setOn] = useState(() => window.matchMedia(q).matches);
+  useEffect(() => {
+    const m = window.matchMedia(q);
+    const f = () => setOn(m.matches);
+    m.addEventListener('change', f);
+    return () => m.removeEventListener('change', f);
+  }, [q]);
+  return on;
+}
 
 /**
  * 陪審團遴選（企劃書 6.9.1）：18 取 12，六次提問、三次無因迴避。
@@ -27,9 +42,10 @@ export function VoirDire({ scene }: { scene: VoirDireScene }) {
   const [open, setOpen] = useState<string | null>(null);
   // 無因迴避用定案樣式：點了先看帳，按定案鈕才刪人。
   const [striking, setStriking] = useState<string | null>(null);
+  const wide = useMedia(WIDE_VD);
   // 定案列一出現就捲進畫面，手機上才不會被底部列擋住。
   useEffect(() => {
-    if (striking) document.querySelector('.commit-bar')?.scrollIntoView({ block: 'nearest' });
+    if (striking) document.querySelector('.prof .commit-bar')?.scrollIntoView({ block: 'nearest' });
   }, [striking]);
 
   if (intro)
@@ -90,115 +106,286 @@ export function VoirDire({ scene }: { scene: VoirDireScene }) {
     );
 
   const pool = vd.pool(scene, st);
-  const shown = pool.filter((c, i) =>
-    filter === 'seated' ? i < scene.seats : filter === 'unasked' ? !st.asked.includes(c.id) : true,
+  const seated = pool.slice(0, scene.seats);
+  // 剔除的人留在名單原位，劃掉並寫是誰剔的，入座線自動往下補（視覺規格 §18）。
+  const goneBy = (id: string) =>
+    st.struck.includes(id)
+      ? t('剔除')
+      : st.theirs.includes(id)
+        ? t('對方剔除')
+        : st.excused.includes(id)
+          ? t('有因剔除')
+          : null;
+  // 剔除的人沉到最底，排在候補下面，入座線才會在第一屏（視覺設計師）。
+  const everyone = [...pool, ...scene.candidates.filter((c) => !pool.includes(c))];
+  const rows =
+    filter === 'seated'
+      ? seated
+      : filter === 'unasked'
+        ? pool.filter((c) => !st.asked.includes(c.id))
+        : everyone;
+  const sel = open ?? (wide ? (pool[0]?.id ?? null) : null);
+  const picked = scene.candidates.find((c) => c.id === sel);
+  const pick = (id: string) => {
+    setOpen(wide || open !== id ? id : null);
+    setStriking(null);
+  };
+  const leftStrikes = scene.peremptories - st.struck.length;
+
+  const list = (
+    <ul className="cands" aria-label={t('候選人')}>
+      {rows.map((c) => {
+        const i = pool.indexOf(c);
+        const by = goneBy(c.id);
+        const asked = st.asked.includes(c.id);
+        const cls = ['cand', by ? 'struck' : i >= scene.seats ? 'bench' : 'seat'];
+        if (sel === c.id) cls.push('on');
+        return (
+          <li key={c.id} className="cand-li">
+            <button
+              className={cls.join(' ')}
+              aria-pressed={sel === c.id}
+              onClick={() => pick(c.id)}
+            >
+              <span className="no">{by ? '–' : i + 1}</span>
+              <IdPhoto who={c.name} size={40} />
+              <span className="txt">
+                <strong>
+                  {t(c.name, scope)}
+                  <span>{t(c.job, scope)}</span>
+                </strong>
+                <span className="line">{t(c.sheet, scope)}</span>
+              </span>
+              <span className="st">
+                {by ? (
+                  <span className="gone">{by}</span>
+                ) : (
+                  i < scene.seats && <span className="seatno">{t('席 {n}', { n: i + 1 })}</span>
+                )}
+                {asked && <span>{t('已問')}</span>}
+              </span>
+            </button>
+            {filter === 'all' && i === scene.seats - 1 && pool.length > scene.seats && (
+              <p className="cutline">{t('以上 {n} 位入座・以下候補', { n: scene.seats })}</p>
+            )}
+          </li>
+        );
+      })}
+      {rows.length === 0 && <li className="muted">{t('這個篩選沒有人。')}</li>}
+    </ul>
   );
+
+  const profile = picked && (
+    <section className="panel prof" aria-label={t(picked.name, scope)}>
+      <IdPhoto who={picked.name} size={96} />
+      <div>
+        <h3>{t(picked.name, scope)}</h3>
+        <p className="sub">
+          {t(picked.job, scope)}
+          {t('・')}
+          {t(picked.sheet, scope)}
+        </p>
+        <p className="sub">
+          {goneBy(picked.id) ??
+            t('你還可以問 {a} 題；無因迴避還剩 {b} 次。', { a: st.left, b: leftStrikes })}
+        </p>
+      </div>
+      <div className="qa">
+        {st.asked.includes(picked.id) ? (
+          <>
+            <span className="jq">{t('你問・{q}', { q: t(picked.question.q, scope) })}</span>
+            <p className="ja">{t(picked.question.a, scope)}</p>
+            {picked.hidden && <p className="jh">{t(picked.hidden, scope)}</p>}
+          </>
+        ) : (
+          <p className="jh">{t('還沒問過。問一題，才看得出他偏向哪邊。')}</p>
+        )}
+      </div>
+      {!goneBy(picked.id) &&
+        (striking === picked.id && vd.canStrike(scene, st, picked.id) ? (
+          <CommitBar
+            what={t('無因迴避：{name}', { name: t(picked.name, scope) })}
+            cost={t('用掉 1 次，剩 {n} 次；對方也會刪掉你想留的人。', { n: leftStrikes - 1 })}
+            action={t('刪掉{name}', { name: t(picked.name, scope) })}
+            onCommit={() => {
+              setStriking(null);
+              strikeJuror(picked.id);
+            }}
+          />
+        ) : (
+          <div className="acts">
+            <button
+              className="secondary"
+              disabled={!vd.canAsk(st, picked.id)}
+              onClick={() => askJuror(picked.id)}
+            >
+              {t('提問')} <span className="cost">{t('剩 {n}', { n: st.left })}</span>
+            </button>
+            <button
+              className="secondary"
+              disabled={!vd.canStrike(scene, st, picked.id)}
+              onClick={() => setStriking(picked.id)}
+            >
+              {t('無因迴避', 'voirdire')}{' '}
+              <span className="cost">{t('剩 {n}', { n: leftStrikes })}</span>
+            </button>
+            <button className="secondary" onClick={() => challengeJuror(picked.id)}>
+              {t('聲請有因迴避')}
+            </button>
+          </div>
+        ))}
+    </section>
+  );
+
+  // 陪審席：12 席分兩排，後排（7–12）在上、右移半格。
+  const seatCell = (k: number) => {
+    const c = seated[k];
+    if (!c)
+      return (
+        <span key={k} className="seatc empty">
+          <span className="slot0">{k + 1}</span>
+          <span className="n">{wide ? t('席 {n}', { n: k + 1 }) : k + 1}</span>
+        </span>
+      );
+    const name = t(c.name, scope);
+    return (
+      <button
+        key={k}
+        className={sel === c.id ? 'seatc on' : 'seatc'}
+        aria-label={t('席 {n}', { n: k + 1 }) + t('・') + name}
+        onClick={() => pick(c.id)}
+      >
+        <IdPhoto who={c.name} size={wide ? 72 : 28} />
+        <span className="n">{wide ? t('席 {n}', { n: k + 1 }) : k + 1}</span>
+        <span className="nm2">{surname(name)}</span>
+      </button>
+    );
+  };
+  const seatsIdx = Array.from({ length: scene.seats }, (_, k) => k);
+  const box = (
+    <section className={wide ? 'box' : 'box mini'} aria-label={t('陪審席')}>
+      <div className="k">
+        <span>{t('陪審席・{n} 席', { n: scene.seats })}</span>
+        <span>{t('由名單上往下入座')}</span>
+      </div>
+      {wide && scene.seats > 6 ? (
+        <>
+          <div className="seats back">{seatsIdx.slice(6).map(seatCell)}</div>
+          <div className="seats">{seatsIdx.slice(0, 6).map(seatCell)}</div>
+        </>
+      ) : (
+        <div className="seats">{seatsIdx.map(seatCell)}</div>
+      )}
+    </section>
+  );
+
+  const tally = (
+    <div className="tb-tally">
+      <span>
+        {t('提問', 'voirdire')}
+        <b className={st.left <= 1 ? 'low' : undefined}>{st.left}</b>
+        <small>/{scene.questions}</small>
+      </span>
+      <span>
+        {t('無因迴避', 'voirdire')}
+        <b className={leftStrikes <= 1 ? 'low' : undefined}>{leftStrikes}</b>
+        <small>/{scene.peremptories}</small>
+      </span>
+      <span>
+        {t('候選')}
+        <b>{pool.length}</b>
+      </span>
+    </div>
+  );
+  const tabs = (
+    <Tabs
+      label={t('候選人')}
+      value={filter}
+      onPick={setFilter}
+      items={[
+        { id: 'all', label: t('全部 {n}', { n: scene.candidates.length }) },
+        { id: 'seated', label: t('會入座的 {n}', { n: seated.length }) },
+        {
+          id: 'unasked',
+          label: t('還沒問過 {n}', { n: pool.filter((c) => !st.asked.includes(c.id)).length }),
+        },
+      ]}
+    />
+  );
+  const seatButton = (
+    <button className="commit" disabled={!vd.canSeat(scene, st)} onClick={seatJury}>
+      <span aria-hidden>🔒 </span>
+      {t('就用這 {n} 位', { n: scene.seats })}
+    </button>
+  );
+
+  if (wide)
+    return (
+      <main className="vd-screen">
+        <header className="trialbar">
+          <span className="eb">
+            {t(scene.act, scope)}
+            {t('・')}
+            {t(scene.place, scope)}
+            <b>{t('陪審團遴選')}</b>
+          </span>
+          {tally}
+        </header>
+        <div className="vd">
+          <div className="panel cand-list">
+            <div className="panel-head">{tabs}</div>
+            <div className="cand-scroll">{list}</div>
+          </div>
+          <div className="vd-right">
+            {box}
+            {profile ?? (
+              <section className="panel prof empty">{t('點名單上的人看他的資料。')}</section>
+            )}
+            <div className="commitbar">
+              <p className="who">
+                {t('入座：')}
+                <b>{seated.map((c) => surname(t(c.name, scope))).join(t('、'))}</b>
+                {t('　剔除的人不會回來。')}
+              </p>
+              {seatButton}
+            </div>
+          </div>
+        </div>
+      </main>
+    );
+
   return (
     <Shell
       resetKey={filter}
       head={
         <header className="panel-head bench">
           <p className="eyebrow">{t('陪審團遴選')}</p>
-          <p className="patience">
-            {/* 手機上整列放不下時，標籤和數字一起換行，不要拆開。 */}
-            <span className="nowrap">
-              {t('提問', 'voirdire')} <strong>{st.left}</strong>
-            </span>
-            <span aria-hidden>{t('・')}</span>
-            <span className="nowrap">
-              {t('無因迴避', 'voirdire')} <strong>{scene.peremptories - st.struck.length}</strong>
-            </span>
-            <span aria-hidden>{t('・')}</span>
-            <span className="nowrap">{t('候選 {n}', { n: pool.length })}</span>
-          </p>
+          <div className="patience">{tally}</div>
         </header>
       }
-      tabs={
-        <Tabs
-          label={t('候選人')}
-          value={filter}
-          onPick={setFilter}
-          items={[
-            { id: 'all', label: t('全部 {n}', { n: pool.length }) },
-            { id: 'seated', label: t('會入座的 {n}', { n: scene.seats }) },
-            { id: 'unasked', label: t('還沒問過') },
-          ]}
-        />
-      }
-      foot={
-        <button className="primary wide" disabled={!vd.canSeat(scene, st)} onClick={seatJury}>
-          {t('就用這 {n} 位（由上往下）', { n: scene.seats })}
-        </button>
-      }
+      tabs={tabs}
+      foot={seatButton}
     >
-      <ul className="stack list">
-        {shown.map((c) => {
-          const seat = pool.indexOf(c);
-          const asked = st.asked.includes(c.id);
-          const isOpen = open === c.id;
-          return (
-            <li key={c.id} className={seat < scene.seats ? 'candidate in' : 'candidate'}>
-              <button
-                className="row-item"
-                aria-expanded={isOpen}
-                onClick={() => {
-                  setOpen(isOpen ? null : c.id);
-                  setStriking(null);
-                }}
-              >
-                <strong>
-                  <span className="seat">{seat < scene.seats ? seat + 1 : '—'}</span>
-                  {t(c.name, scope)}
-                  {t('・')}
-                  {t(c.job, scope)}
-                  {asked && <span className="good"> {t('・問過')}</span>}
-                </strong>
-                <span className="muted small">{t(c.sheet, scope)}</span>
-              </button>
-              {isOpen && (
-                <div className="candidate-body">
-                  {asked && (
-                    <>
-                      <p className="claim-text">
-                        {t('「{text}」', { text: t(c.question.q, scope) })}
-                      </p>
-                      <p>{t(c.question.a, scope)}</p>
-                      {c.hidden && <p className="muted small">{t(c.hidden, scope)}</p>}
-                    </>
-                  )}
-                  <div className="row">
-                    <button disabled={!vd.canAsk(st, c.id)} onClick={() => askJuror(c.id)}>
-                      {t('提問')}
-                    </button>
-                    <button onClick={() => challengeJuror(c.id)}>{t('聲請有因迴避')}</button>
-                    <button
-                      disabled={!vd.canStrike(scene, st, c.id)}
-                      aria-pressed={striking === c.id}
-                      onClick={() => setStriking(striking === c.id ? null : c.id)}
-                    >
-                      {t('無因迴避')}
-                    </button>
-                  </div>
-                  {striking === c.id && vd.canStrike(scene, st, c.id) && (
-                    <CommitBar
-                      what={t('無因迴避：{name}', { name: t(c.name, scope) })}
-                      cost={t('用掉 1 次，剩 {n} 次；對方也會刪掉你想留的人。', {
-                        n: scene.peremptories - st.struck.length - 1,
-                      })}
-                      action={t('刪掉{name}', { name: t(c.name, scope) })}
-                      onCommit={() => {
-                        setStriking(null);
-                        strikeJuror(c.id);
-                      }}
-                    />
-                  )}
-                </div>
-              )}
-            </li>
-          );
-        })}
-        {shown.length === 0 && <li className="muted">{t('這個篩選沒有人。')}</li>}
-      </ul>
+      {box}
+      {list}
+      {picked && (
+        <CardSheet
+          title={t('候選人 {n}／{total}', {
+            n: everyone.indexOf(picked) + 1,
+            total: scene.candidates.length,
+          })}
+          onClose={() => setOpen(null)}
+        >
+          {profile}
+        </CardSheet>
+      )}
     </Shell>
   );
 }
+
+/** 「茱蒂絲・柯恩」→「柯恩」；英文取最後一個字。 */
+const surname = (name: string) =>
+  name
+    .split(/[・·\s]+/)
+    .filter(Boolean)
+    .pop() ?? name;

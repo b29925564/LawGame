@@ -260,8 +260,19 @@ export function Courtroom({ scene: raw }: { scene: TrialScene }) {
         <main className="scene">
           <p className="eyebrow">{t('休庭')}</p>
           {/* 詰問的最後幾句話——高潮就在這裡，放在第一屏，數字排在後面（體驗評測）。 */}
+          {/* 只放最後四句：整場都放上去，高潮會掉到第一屏外（體驗評測 v88）。前面的收進折疊。 */}
+          {st.log.length > 4 && (
+            <details className="earlier">
+              <summary>{t('前面的筆錄（{n} 句）', { n: st.log.length - 4 })}</summary>
+              <div className="lines transcript full">
+                {st.log.slice(0, -4).map((l, i) => (
+                  <Speech key={i} line={{ ...l, mood: '平', thought: false }} />
+                ))}
+              </div>
+            </details>
+          )}
           <div className="lines transcript full">
-            {st.log.slice(-Math.max(4, st.turn ?? 0)).map((l, i) => (
+            {st.log.slice(-4).map((l, i) => (
               <Speech key={i} line={{ ...l, mood: '平', thought: false }} />
             ))}
           </div>

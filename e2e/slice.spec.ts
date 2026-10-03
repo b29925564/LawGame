@@ -282,17 +282,20 @@ async function playToRachelLast(page: Page) {
 
   // 陪審團遴選：問出偏見、有因迴避、無因迴避，再入席
   await page.getByRole('button', { name: '開始遴選' }).click();
-  // 候選人收成一行一位，點開才有那三顆按鈕。
-  const fired = page.locator('li.candidate').filter({ hasText: '唐娜・麥克雷' });
-  await fired.getByRole('button', { name: /唐娜・麥克雷/ }).click();
-  await fired.getByRole('button', { name: '提問' }).click();
+  // 點名單上的人，人物卡（寬螢幕在右邊、手機是底部抽屜）才有那三顆按鈕。
+  const prof = page.locator('.prof');
+  await page.locator('button.cand').filter({ hasText: '唐娜・麥克雷' }).click();
+  await prof.getByRole('button', { name: /^提問/ }).click();
   await expect(page.getByText('他們裁了我')).toBeVisible();
-  await fired.getByRole('button', { name: '聲請有因迴避' }).click();
-  await expect(page.locator('li.candidate').filter({ hasText: '唐娜・麥克雷' })).toHaveCount(0);
-  const walter = page.locator('li.candidate').filter({ hasText: '華特・班奈特' });
-  await walter.getByRole('button', { name: /華特・班奈特/ }).click();
-  await walter.getByRole('button', { name: '無因迴避' }).click();
-  await walter.getByRole('button', { name: /刪掉華特・班奈特/ }).click();
+  await prof.getByRole('button', { name: '聲請有因迴避' }).click();
+  await expect(page.locator('button.cand.struck').filter({ hasText: '唐娜・麥克雷' })).toHaveCount(
+    1,
+  );
+  await page.keyboard.press('Escape');
+  await page.locator('button.cand').filter({ hasText: '華特・班奈特' }).click();
+  await prof.getByRole('button', { name: /^無因迴避/ }).click();
+  await prof.getByRole('button', { name: /刪掉華特・班奈特/ }).click();
+  await page.keyboard.press('Escape');
   await page.getByRole('button', { name: /就用這 12 位/ }).click();
   await expect(page.getByText('陪審長')).toBeVisible();
   await next(page);
@@ -422,8 +425,8 @@ test('第 1 集可以一路從冷開場玩到判決', async ({ page }) => {
   await page.getByRole('button', { name: '訴求基調' }).click();
   await card(page, /程序正義/).click();
   await page.getByRole('button', { name: '開始結辯' }).click();
-  await expect(page.getByText('第 1 輪評議')).toBeVisible();
-  await expect(page.getByRole('heading', { name: /無罪|有罪|陪審團僵局/ })).toBeVisible();
+  await expect(page.getByText('第 1 輪', { exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /無罪|有罪|無法達成判決/ })).toBeVisible();
 });
 
 test('瑞秋援引緘默權後，檢方撤回起訴，直接進尾聲（E1）', async ({ page }) => {

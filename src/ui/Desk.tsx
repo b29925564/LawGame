@@ -1215,7 +1215,7 @@ function Jobs({ scene, held }: { scene: DeskScene; held: string[] }) {
  * 四秒沒按就恢復原狀。
  */
 /** 手機的挑卡片底部抽屜：從連線台的空格打開，點一張就放上去並關掉。 */
-function CardSheet({
+export function CardSheet({
   title,
   onClose,
   children,

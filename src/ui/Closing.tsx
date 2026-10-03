@@ -1,6 +1,6 @@
 import { useCaseTerms } from './terms';
 import * as closing from '../engine/episode/closing';
-import type { ClosingScene } from '../engine/episode/schema';
+import type { ClosingScene, Line } from '../engine/episode/schema';
 import {
   closingArgs,
   closingState,
@@ -16,6 +16,7 @@ import { ledger, type LedgerItem } from '../engine/ledger';
 import { useMoney, useT } from '../i18n';
 import { CardPick, EvidenceDrawer } from './Evidence';
 import { useScope } from './lang';
+import { IdPhoto } from './IdPhoto';
 import { JuryStart } from './JuryStart';
 import { Tally } from './Marks';
 import { Speech } from './Portrait';
@@ -90,53 +91,17 @@ export function Closing({ scene }: { scene: ClosingScene }) {
 
   if (st.verdict)
     return (
-      <main className="scene">
-        <p className="eyebrow">{t('判決')}</p>
-        <h1>{t(st.verdict)}</h1>
-        {rules && (
-          <JuryLedger
-            rules={rules}
-            trial={juryAfterTrial(progress)?.jury}
-            spoken={st.spoken}
-            final={st.jury}
-            items={ledger(progress)}
-            says={reason}
-            tips={tips}
-          />
-        )}
-        {st.award && <VerdictForm award={st.award} />}
-        <ol className="stack">
-          {st.rounds.map((r, i) => (
-            <li key={i} className="panel">
-              <strong>{t('第 {n} 輪評議', { n: i + 1 })}</strong>
-              {r.moves.map((m, j) => (
-                <p key={j} className="muted">
-                  {t(m, scope)}
-                </p>
-              ))}
-            </li>
-          ))}
-        </ol>
-        <div className="lines">
-          {endingOf(progress, scene).map((l, i) =>
-            l.mark?.kind === 'tally' ? (
-              rules && (
-                <Tally
-                  key={i}
-                  round={st.rounds.length}
-                  burden={rules.burden}
-                  guilty={rules.jurors.map((j) => st.jury[j.id] >= rules.threshold)}
-                />
-              )
-            ) : (
-              <Speech key={i} line={l} />
-            ),
-          )}
-        </div>
-        <button className="primary next" onClick={advance}>
-          {t('繼續')}
-        </button>
-      </main>
+      <Verdict
+        scene={scene}
+        st={st}
+        rules={rules}
+        trial={juryAfterTrial(progress)?.jury}
+        items={ledger(progress)}
+        ending={endingOf(progress, scene)}
+        says={reason}
+        tips={tips}
+        onNext={advance}
+      />
     );
 
   return (
@@ -298,162 +263,391 @@ export function Closing({ scene }: { scene: ClosingScene }) {
   );
 }
 
-/** 民事特別判決表：損害總額、死者過失比例、判賠金額、懲罰性賠償，成立時加總。 */
-function VerdictForm({ award }: { award: closing.Award }) {
-  const t = useT();
-  const scope = useScope();
-  const money = useMoney();
-  const p = award.punitive;
+type Rules = NonNullable<ReturnType<typeof juryAfterTrial>>['rules'];
+
+/** 「845 萬」→ 845 和 萬；「$8.45 million」→ $8.45 和 million。 */
+const splitMoney = (m: string) => {
+  const [n, ...unit] = m.split(' ');
+  return { n, unit: unit.join(' ') };
+};
+/** 「茱蒂絲・柯恩」→「柯恩」；英文取最後一個字。 */
+const surname = (name: string) =>
+  name
+    .split(/[・·\s]+/)
+    .filter(Boolean)
+    .pop() ?? name;
+
+/** 票格：站在你這邊的票實心（--good），另一邊空心。看的是對你有沒有利，不看有責或無罪。 */
+function Pips({ ours }: { ours: boolean[] }) {
   return (
-    <section className="verdict-form" aria-labelledby="verdict-form-title">
-      <h2 id="verdict-form-title">{t('特別判決表')}</h2>
-      <dl className="stats">
-        <dt>{t('損害總額')}</dt>
-        <dd>{money(award.total)}</dd>
-        <dt>{t('死者過失比例')}</dt>
-        <dd>
-          {award.fault}%
-          {award.base !== undefined && award.base !== award.fault && (
-            <small>
-              {t('理論 {base}%，票數浮動 {d}', {
-                base: award.base,
-                d: `${award.fault > award.base ? '+' : '−'}${Math.abs(award.fault - award.base)}`,
-              })}
-            </small>
-          )}
-          {award.why && <small>{t(award.why, scope)}</small>}
-        </dd>
-        <dt>{t('判賠金額')}</dt>
-        <dd>
-          {money(award.amount)}
-          <small>{t('損害總額扣掉死者過失的部分')}</small>
-        </dd>
-        {p && (
-          <>
-            <dt>{t('懲罰性賠償')}</dt>
-            <dd className={p.found ? undefined : 'muted'}>
-              {p.found
-                ? money(p.amount)
-                : t('不成立（{votes} 票，需要 {need} 票）', { votes: p.votes, need: p.need })}
-            </dd>
-          </>
-        )}
-        <dt className="sum">{t('被告應付')}</dt>
-        <dd className="sum">
-          <strong>{money(award.amount + (p?.found ? p.amount : 0))}</strong>
-        </dd>
-      </dl>
-    </section>
+    <span className="vpips" aria-hidden>
+      {ours.map((y, i) => (
+        <i key={i} className={y ? 'y' : undefined} />
+      ))}
+    </span>
   );
 }
 
 /**
- * 判決的帳（UX 規格 decision-cost §四 P0）：票數與走勢。
- * 玩家永遠是辯方：心證沒過門檻的陪審員才是「站你這邊」。
+ * 判決（視覺規格 §18 圖版 11）：上面一句結論與金額，左邊陪審長簽名的特別判決表，
+ * 右邊風向、三輪評議、陪審長宣讀與後續。帳的主因放在結論底下（UX 規格 decision-cost §四）。
+ * 玩家兩集都是辯方：心證沒過門檻的陪審員才是「站你這邊」。
  */
-function JuryLedger({
+function Verdict({
+  scene,
+  st,
   rules,
   trial,
-  spoken,
-  final,
   items,
+  ending,
   says,
   tips,
+  onNext,
 }: {
-  rules: { jurors: { id: string; label: string }[]; threshold: number; quorum?: number };
+  scene: ClosingScene;
+  st: closing.ClosingState;
+  rules?: Rules;
   trial?: Record<string, number>;
-  spoken: Record<string, number> | null;
-  final: Record<string, number>;
   items: LedgerItem[];
+  ending: Line[];
   says: (it: LedgerItem) => string;
   tips: Record<LedgerItem['kind'], string>;
+  onNext: () => void;
 }) {
   const t = useT();
   const scope = useScope();
-  const n = rules.jurors.length;
-  const need = Math.min(n, Math.max(1, rules.quorum ?? n));
+  const money = useMoney();
+  const v = st.verdict!;
+  const award = st.award;
+  const p = award?.punitive;
+  const jurors = rules?.jurors ?? [];
+  const n = jurors.length;
+  const need = Math.min(n, Math.max(1, rules?.quorum ?? n));
   const ours = (j: Record<string, number>) =>
-    rules.jurors.filter((x) => (j[x.id] ?? 0) < rules.threshold).length;
-  const now = ours(final);
+    jurors.map((x) => (j[x.id] ?? 0) < (rules?.threshold ?? 50));
+  const count = (j: Record<string, number>) => ours(j).filter(Boolean).length;
+  const now = count(st.jury);
   const won = now >= need;
-  // 懲罰性賠償是金額，不跟分數排序；最重的三筆只從有分量的項目挑。
   const ranked = items.filter((x) => x.kind !== 'punitive');
-  const extra = items.filter((x) => x.kind === 'punitive');
   const top = ranked.slice(0, 3);
   const where = (it: LedgerItem) => t('（{where}）', { where: t(it.where) });
+
+  const fore = jurors.find((j) => j.foreperson);
+  const foreParts = fore ? t(fore.label, scope).split(/\s*[・·]\s*/) : [];
+  const foreName = surname(
+    foreParts.length > 1 ? foreParts[foreParts.length - 2] : (foreParts[0] ?? ''),
+  );
+
+  const headline =
+    v === '陪審團僵局'
+      ? t('陪審團無法達成判決。')
+      : p?.found
+        ? t('陪審團認定被告有責，懲罰性賠償成立。')
+        : t('陪審團認定被告{v}。', { v: t(v).toLowerCase() });
+  const owed = award ? award.amount + (p?.found ? p.amount : 0) : null;
+  const disposition: Record<string, string> = {
+    無罪: t('當庭釋放'),
+    有罪: t('還押，擇期量刑'),
+    無責: t('被告不必賠償'),
+    有責: t('被告應負賠償責任'),
+    陪審團僵局: t('審判無效，另定期日'),
+  };
+  const over = n - now;
+  const votes = t('{a} 票 : {b} 票', { a: Math.max(now, over), b: Math.min(now, over) });
+
+  // 第一句「陪審長站起來。「……」」拆成宣讀卡；其餘照順序當後續（訊息、旁白）。
+  const [first, ...rest] = ending;
+  const firstText = first && !first.mark && first.who === '旁白' ? t(first.text, scope) : '';
+  const q = firstText.search(/[「"“]/);
+  const readOut =
+    first?.text.startsWith('陪審長站起來') && q > 0
+      ? { who: firstText.slice(0, q).replace(/[。.\s]+$/, ''), quote: firstText.slice(q) }
+      : null;
+  const after = readOut ? rest : ending;
+
   const steps = [
-    trial && { label: t('庭審結束'), n: ours(trial) },
-    spoken && { label: t('結辯後'), n: ours(spoken) },
-    { label: t('評議後'), n: now },
-  ].filter((x): x is { label: string; n: number } => !!x);
+    trial && { label: t('庭審結束'), j: trial },
+    st.spoken && { label: t('結辯後'), j: st.spoken },
+    { label: t('評議後'), j: st.jury },
+  ].filter((x): x is { label: string; j: Record<string, number> } => !!x);
+
   return (
-    <section className="jury-ledger panel" aria-labelledby="jury-ledger-title">
-      <h2 id="jury-ledger-title">{won ? t('為什麼贏') : t('這一案的帳')}</h2>
-      <div className="ledger-row">
-        <span className="ledger-key">{t('票數')}</span>
+    <main className="vdict">
+      <header className="hero">
         <div>
-          <ul className="ledger-dots" aria-hidden>
-            {rules.jurors.map((x) => (
-              <li
-                key={x.id}
-                className={(final[x.id] ?? 0) < rules.threshold ? 'on' : undefined}
-                title={t(x.label, scope)}
-              />
-            ))}
-          </ul>
-          <p>
-            {t('站你這邊 {a} 位，需要 {b} 位', { a: now, b: need })}
-            {now < need && <strong> {t('差 {k} 位', { k: need - now })}</strong>}
+          <p className="ey">
+            {t('判決')}
+            {t('・')}
+            {t(scene.act, scope)}
+            {t('・')}
+            {t('陪審團評議後')}
           </p>
+          <h1>{headline}</h1>
+          {!won && top[0] ? (
+            <p className="why">
+              <b>{t('主要原因：')}</b>
+              {says(top[0])}
+            </p>
+          ) : (
+            n > 0 && <p className="why">{t('站你這邊 {a} 位，需要 {b} 位', { a: now, b: need })}</p>
+          )}
         </div>
-      </div>
-      {steps.length > 1 && (
-        <div className="ledger-row">
-          <span className="ledger-key">{t('走勢')}</span>
-          <ol className="ledger-trend">
-            {steps.map((x, i) => (
-              <li key={i}>{t('{label} {n} 位', { label: x.label, n: x.n })}</li>
-            ))}
-          </ol>
-        </div>
-      )}
-      {!won && top.length > 0 && (
-        <div className="ledger-row">
-          <span className="ledger-key">{t('主因')}</span>
-          <div>
-            <ol className="ledger-reasons">
-              {top.map((it, i) => (
-                <li key={i}>
-                  {says(it)}
-                  <span className="muted">{where(it)}</span>
-                </li>
-              ))}
-              {extra.map((it, i) => (
-                <li key={`p${i}`} className="money">
-                  {says(it)}
-                  <span className="muted">{where(it)}</span>
-                </li>
-              ))}
-            </ol>
+        {owed !== null ? (
+          <div className="amt">
+            <small>{t('被告應付')}</small>
+            <b>
+              {splitMoney(money(owed)).n}
+              <i>{splitMoney(money(owed)).unit}</i>
+            </b>
+          </div>
+        ) : (
+          <p className="amt disp">{disposition[v]}</p>
+        )}
+      </header>
+
+      <div className="vcols">
+        <div className="lcol">
+          <section className={award ? 'vform' : 'vform short'} aria-labelledby="verdict-form-title">
+            <div className="fh">
+              <p className="c">{t('卡爾德郡高等法院')}</p>
+              <h2 id="verdict-form-title">
+                {t(award || rules?.burden === 'civil' ? '特別判決表' : '判決書')}
+              </h2>
+              <p className="en">
+                {award || rules?.burden === 'civil' ? 'SPECIAL VERDICT FORM' : 'VERDICT FORM'}
+              </p>
+            </div>
+            {rules?.burden === 'civil' ? (
+              <>
+                <div className="fq">
+                  <span className="qn">1.</span>
+                  <span className="ql">{t('被告是否有過失？')}</span>
+                  <span className="qv">
+                    {v === '有責' ? t('是') : v === '無責' ? t('否') : '—'}
+                  </span>
+                </div>
+                {award && (
+                  <>
+                    <div className="fq">
+                      <span className="qn">2.</span>
+                      <span className="ql">{t('損害總額')}</span>
+                      <Money v={money(award.total)} />
+                    </div>
+                    <div className="fq">
+                      <span className="qn">3.</span>
+                      <span className="ql">
+                        {t('死者過失比例')}
+                        {award.base !== undefined && award.base !== award.fault && (
+                          <small>
+                            {t('理論 {base}%，票數浮動 {d}', {
+                              base: award.base,
+                              d: `${award.fault > award.base ? '+' : '−'}${Math.abs(award.fault - award.base)}`,
+                            })}
+                          </small>
+                        )}
+                        {award.why && <small>{t(award.why, scope)}</small>}
+                      </span>
+                      <span className="qv">
+                        {award.fault}
+                        <i>%</i>
+                      </span>
+                    </div>
+                    <div className="fq">
+                      <span className="qn">4.</span>
+                      <span className="ql">
+                        {t('判賠金額')}
+                        <small>{t('損害總額扣掉死者過失的部分')}</small>
+                      </span>
+                      <Money v={money(award.amount)} />
+                    </div>
+                    {p && (
+                      <div className="fq">
+                        <span className="qn">5.</span>
+                        <span className="ql">
+                          {t('懲罰性賠償')}
+                          {!p.found && (
+                            <small>
+                              {t('不成立（{votes} 票，需要 {need} 票）', {
+                                votes: p.votes,
+                                need: p.need,
+                              })}
+                            </small>
+                          )}
+                        </span>
+                        {p.found ? (
+                          <Money v={money(p.amount)} />
+                        ) : (
+                          <span className="qv">{t('否')}</span>
+                        )}
+                      </div>
+                    )}
+                    <div className="fq total">
+                      <span className="qn" />
+                      <span className="ql">{t('被告應付')}</span>
+                      <Money v={money(owed ?? 0)} />
+                    </div>
+                  </>
+                )}
+              </>
+            ) : (
+              <div className="fq total">
+                <span className="qn">1.</span>
+                <span className="ql">{t('就第一項罪名，被告')}</span>
+                <span className="qv">{v === '陪審團僵局' ? t('未達一致') : t(v)}</span>
+              </div>
+            )}
+            <div className="signs">
+              <span>
+                {t('陪審長')}
+                <b>{foreName}</b>
+              </span>
+              {n > 0 && <span>{votes}</span>}
+            </div>
+          </section>
+          {!won && top[0] && (
             <p className="ledger-tip">
               <span className="ledger-key">{t('下次可以試')}</span> {tips[top[0].kind]}
             </p>
-          </div>
+          )}
+          {items.length > 0 && (
+            <details className="fold ledger">
+              <summary>
+                {t('完整帳目')} <span className="faint">{t('每一筆怎麼算出來的')}</span>
+              </summary>
+              <ol className="ledger-reasons">
+                {items.map((it, i) => (
+                  <li key={i} className={it.kind === 'punitive' ? 'money' : undefined}>
+                    {says(it)}
+                    <span className="muted">{where(it)}</span>
+                  </li>
+                ))}
+              </ol>
+            </details>
+          )}
         </div>
-      )}
-      {ranked.length > (won ? 0 : 3) && (
-        <details className="ledger-all">
-          <summary>{t('完整帳目')}</summary>
-          <ol>
-            {items.map((it, i) => (
-              <li key={i}>
-                {says(it)}
-                <span className="muted">{where(it)}</span>
-              </li>
-            ))}
-          </ol>
-        </details>
-      )}
-    </section>
+
+        <div className="delib">
+          {n > 0 && (
+            <section className="panel trend" aria-label={t('風向')}>
+              <span className="k">{t('風向')}</span>
+              <ol className="trend-steps">
+                {steps.map((x, i) => (
+                  <li key={i}>
+                    {i > 0 && (
+                      <span className="arrow" aria-hidden>
+                        →
+                      </span>
+                    )}
+                    <span className="sr-only">
+                      {t('{label} {n} 位', { label: x.label, n: count(x.j) })}
+                    </span>
+                    <span aria-hidden>{x.label}</span>
+                    <Pips ours={ours(x.j)} />
+                  </li>
+                ))}
+              </ol>
+              <p className="trend-need">
+                {t('站你這邊 {a} 位，需要 {b} 位', { a: now, b: need })}
+                {now < need && <strong> {t('差 {k} 位', { k: need - now })}</strong>}
+              </p>
+            </section>
+          )}
+          {st.rounds.length > 0 && (
+            <ol className="panel rounds" aria-label={t('評議')}>
+              {st.rounds.map((r, i) => {
+                const y = count(r.jury);
+                return (
+                  <li key={i} className="rnd">
+                    <span className="rk">{t('第 {n} 輪', { n: i + 1 })}</span>
+                    <span>
+                      <Pips ours={ours(r.jury)} />
+                      <span className="vt" aria-label={t('站你這邊 {a} 位', { a: y })}>
+                        {y} : {n - y}
+                      </span>
+                    </span>
+                    <p>
+                      {r.moves
+                        .filter((m) => !m.startsWith('表決'))
+                        .map((m) => t(m, scope))
+                        .join(' ')}
+                      {/* 比數已經寫在票格旁，「表決：…」只留給螢幕報讀（視覺設計師）。 */}
+                      {r.moves
+                        .filter((m) => m.startsWith('表決'))
+                        .map((m, k) => (
+                          <span key={k} className="sr-only">
+                            {' '}
+                            {t(m, scope)}
+                          </span>
+                        ))}
+                    </p>
+                  </li>
+                );
+              })}
+            </ol>
+          )}
+          {readOut && (
+            <section className="panel fore">
+              {fore ? (
+                <IdPhoto
+                  who={fore.label.split('・').slice(0, -1).join('・') || fore.label}
+                  size={40}
+                />
+              ) : (
+                <span />
+              )}
+              <div>
+                <p className="who">{readOut.who}</p>
+                <blockquote>{readOut.quote}</blockquote>
+              </div>
+            </section>
+          )}
+          <div className="epi">
+            {after.map((l, i) => {
+              if (l.mark?.kind === 'tally')
+                return (
+                  rules && (
+                    <Tally
+                      key={i}
+                      round={st.rounds.length}
+                      burden={rules.burden}
+                      guilty={rules.jurors.map((j) => st.jury[j.id] >= rules.threshold)}
+                    />
+                  )
+                );
+              if (l.mark || l.voice === 'off' || l.thought) return <Speech key={i} line={l} />;
+              const text = t(l.text, scope);
+              if (l.who === '旁白') return <p key={i}>{text}</p>;
+              // 「（訊息）漂亮。」→ 寄件人一行寫「亞瑟・卡爾德・訊息」，內文只留話。
+              const via = text.match(/^[（(]([^）)]{1,12})[）)]\s*/);
+              return (
+                <div key={i} className="msg">
+                  <IdPhoto who={l.who} size={28} />
+                  <div>
+                    <small>
+                      {t(l.who)}
+                      {via && t('・') + via[1]}
+                    </small>
+                    {via ? text.slice(via[0].length) : text}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <button className="primary go" onClick={onNext}>
+            {t('繼續')}
+          </button>
+        </div>
+      </div>
+    </main>
+  );
+}
+
+function Money({ v }: { v: string }) {
+  const { n, unit } = splitMoney(v);
+  return (
+    <span className="qv">
+      {n}
+      {unit && <i>{unit}</i>}
+    </span>
   );
 }
