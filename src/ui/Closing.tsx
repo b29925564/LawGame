@@ -4,6 +4,7 @@ import type { ClosingScene } from '../engine/episode/schema';
 import {
   closingArgs,
   closingState,
+  deskSceneOf,
   endingOf,
   promisesOf,
   exposedArgs,
@@ -173,14 +174,19 @@ export function Closing({ scene }: { scene: ClosingScene }) {
               {/* 理論撐在哪幾個論點上：結辯挑別的論點，等於自己打自己的理論。 */}
               <p className="small theory-needs">
                 <span className="carry-key">{t('理論靠的論點')}</span>
-                {th.needs.map((n) => (
-                  <span key={n} className="need ok">
-                    <span className="diamond" aria-hidden>
-                      ◆
+                {th.needs.map((n) => {
+                  const have = args.some((a) => a.id === n);
+                  const name = deskSceneOf(progress)?.questions.find((q) => q.argument.id === n)
+                    ?.argument.name;
+                  return (
+                    <span key={n} className={have ? 'need ok' : 'need miss'}>
+                      <span className="diamond" aria-hidden>
+                        ◆
+                      </span>
+                      {t(name ?? n, scope).split(/：|: /)[0]} {have ? '✓' : '✗'}
                     </span>
-                    {t(args.find((a) => a.id === n)?.name ?? n, scope).split(/：|: /)[0]}
-                  </span>
-                ))}
+                  );
+                })}
               </p>
             </div>
           )}

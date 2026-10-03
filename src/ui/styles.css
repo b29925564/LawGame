@@ -2249,6 +2249,25 @@ fieldset.relations.compact {
   white-space: normal;
   overflow: visible;
   overflow-wrap: anywhere;
+  word-break: keep-all;
+}
+.jury.compact .label > span {
+  display: block;
+}
+.jury.compact .label > span + span {
+  color: var(--muted);
+}
+/* 法庭裡那一條只放得下名字。 */
+.jury.compact.strip .label > span + span {
+  display: none;
+}
+/* 休庭頁的筆錄：最後幾句是高潮，整段攤開，不收在小框裡。 */
+.lines.transcript.full {
+  max-height: none;
+}
+/* 判決表：鍵欄至少放得下 Decedent's share of fault 兩行。 */
+.verdict-form .stats {
+  grid-template-columns: minmax(10em, max-content) 1fr;
 }
 /* 法庭裡的陪審團是一條，收起來才放得下詰問的按鈕。 */
 .jury.compact.strip {
