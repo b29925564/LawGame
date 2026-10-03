@@ -107,6 +107,15 @@ export function finish(s: DefenseScene, st: DefenseState, rules: JuryRules): Def
       { who: s.witness.name, text: d.a },
     );
   }
+  // 前面的選擇讓對方多了能問的題（條件已在 witnessScene 篩過）。
+  for (const x of s.cross) {
+    const r = shiftAll(rules, next.jury, x.penalty);
+    next = say(
+      { ...next, jury: r.jury },
+      { who: s.examiner ?? DA, text: x.q },
+      { who: s.witness.name, text: x.a },
+    );
+  }
   const exposed =
     !!o?.coached && st.asked.some((id) => s.questions.find((x) => x.id === id)?.rehearsed);
   if (exposed) {

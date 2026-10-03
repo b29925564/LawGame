@@ -48,6 +48,7 @@ describe('劇本驗證器（集數）', () => {
     number: 9,
     title: '壞劇本',
     counsel: '莫羅檢察官',
+    effects: [],
     scenes: [
       {
         type: 'phone',

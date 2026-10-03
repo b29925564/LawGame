@@ -6,6 +6,7 @@ import type * as trial from './episode/trial';
 import {
   brokenPromises,
   closingArgs,
+  activeEffects,
   closingState,
   courtScene,
   episodeOf,
@@ -32,9 +33,10 @@ export interface LedgerItem {
     | 'exposed'
     | 'unimpeached'
     | 'concealed'
+    | 'effect'
     | 'punitive';
   amount: number;
-  where: '開示' | '開場' | '庭審' | '結辯' | '評議';
+  where: '開示' | '審前' | '開場' | '庭審' | '結辯' | '評議';
   /** 相關的 id：承諾、論點、基調、主張、開示請求、理論。 */
   refs: string[];
   /** 不能只靠 id 說清楚時的名字（例如證人）。 */
@@ -122,6 +124,11 @@ export function ledger(p: Progress): LedgerItem[] {
         refs: hidden,
       });
   }
+
+  // 審前：前面的選擇留下的代價（例如交出群組截圖），開庭時陪審團就往對方移。refs 是觸發它的旗標。
+  for (const x of activeEffects(p))
+    if (x.jury > 0)
+      add({ kind: 'effect', amount: x.jury, where: '審前', refs: x.when.flags ?? [] });
 
   // 庭審：有反駁論點卻沒被彈劾的關鍵證詞。值多少＝當時用強鎖定彈劾成功會拉回來的量。
   const args = new Map(

@@ -32,6 +32,7 @@ export function matches(w: When | undefined, c: BranchContext): boolean {
   if (w.notCards && w.notCards.some((x) => c.cards.includes(x))) return false;
   if (w.presented && !w.presented.every((x) => c.presented.includes(x))) return false;
   if (w.ethics && !w.ethics.some((e) => c.ethics.includes(e))) return false;
+  if (w.notEthics && w.notEthics.some((e) => c.ethics.includes(e))) return false;
   if (w.punitive !== undefined && (c.punitive ?? false) !== w.punitive) return false;
   return true;
 }

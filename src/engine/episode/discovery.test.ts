@@ -19,6 +19,7 @@ const withRequests = (s: DeskScene): DeskScene => {
         unlock: [],
         privilege: 'none',
         overbroad: false,
+        exposes: [],
         lines: {},
       },
       {
@@ -28,6 +29,7 @@ const withRequests = (s: DeskScene): DeskScene => {
         unlock: [],
         privilege: 'valid',
         overbroad: false,
+        exposes: [],
         lines: {},
       },
       {
@@ -37,6 +39,7 @@ const withRequests = (s: DeskScene): DeskScene => {
         unlock: [],
         privilege: 'weak',
         overbroad: true,
+        exposes: [],
         lines: {},
       },
       {
@@ -46,6 +49,7 @@ const withRequests = (s: DeskScene): DeskScene => {
         unlock: [],
         privilege: 'none',
         overbroad: false,
+        exposes: [],
         lines: { concealed: say('……好。') },
       },
     ],

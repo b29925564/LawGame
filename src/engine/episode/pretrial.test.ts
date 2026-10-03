@@ -151,10 +151,38 @@ describe('對方主導的證詞錄取', () => {
     examiner: '奧卡福',
     topics: [],
     script: [
-      { id: 't-name', q: '請說名字。', a: '普莉亞。', objection: null, gives: [] },
-      { id: 't-lead', q: '妳同意吧？', a: '同意。', objection: '誘導', gives: [] },
-      { id: 't-memo', q: '法務說了什麼？', a: '說風險可控。', objection: '特權', gives: ['memo'] },
-      { id: 't-log', q: '他死後還被扣分？', a: '對。', objection: null, gives: ['d11'] },
+      {
+        id: 't-name',
+        q: '請說名字。',
+        a: '普莉亞。',
+        objection: null,
+        gives: [],
+        missed: { gives: [], flags: [] },
+      },
+      {
+        id: 't-lead',
+        q: '妳同意吧？',
+        a: '同意。',
+        objection: '誘導',
+        gives: [],
+        missed: { gives: [], flags: [] },
+      },
+      {
+        id: 't-memo',
+        q: '法務說了什麼？',
+        a: '說風險可控。',
+        objection: '特權',
+        gives: ['memo'],
+        missed: { gives: [], flags: [] },
+      },
+      {
+        id: 't-log',
+        q: '他死後還被扣分？',
+        a: '對。',
+        objection: null,
+        gives: ['d11'],
+        missed: { gives: [], flags: [] },
+      },
     ],
   });
 

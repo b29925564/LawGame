@@ -71,6 +71,7 @@ export function validateEpisode(e: Episode): string[] {
     if (s.type === 'defense') defenseErrors(s, e, errors);
     branchErrors(s, e, errors);
   }
+  effectErrors(e, errors);
   openingErrors(e, errors);
   burdenErrors(e, errors);
   lineErrors(e, errors);
@@ -339,6 +340,10 @@ function depoErrors(
       if (sids.has(q.id)) errors.push(`錄取 ${s.id} 的問題 id 重複：${q.id}`);
       sids.add(q.id);
       q.gives.forEach((g) => available.add(g));
+      q.missed.gives.forEach((g) => available.add(g));
+      if (q.anchors) available.add(q.anchors);
+      if (!q.objection && (q.missed.gives.length || q.missed.flags.length))
+        errors.push(`錄取 ${s.id} 的問題 ${q.id} 沒有該異議的毛病，missed 永遠不會生效`);
     }
     if (s.script.length && !s.script.some((q) => q.objection))
       errors.push(`錄取 ${s.id} 沒有任何該異議的問題`);
@@ -482,6 +487,18 @@ function defenseErrors(s: DefenseScene, e: Episode, errors: string[]) {
   if (closeAt >= 0 && at > closeAt) errors.push(`辯方證人 ${s.id} 必須在結辯之前`);
 }
 
+/** 判決、收場、懲罰性賠償要等結辯之後才知道。 */
+const before = (w: When) => !!(w.verdict || w.outcome || w.deal || w.punitive !== undefined);
+
+/** 集層級 effects：條件在開庭或調解開始時判斷，不能依判決分支。 */
+function effectErrors(e: Episode, errors: string[]) {
+  e.effects.forEach((x, i) => {
+    if (before(x.when)) errors.push(`effects 第 ${i + 1} 項依判決或結果分支，開庭前還不知道`);
+    if (!x.jury && !x.confidence && !x.trust && !x.flags.length)
+      errors.push(`effects 第 ${i + 1} 項沒有任何效果`);
+  });
+}
+
 /** 分支條件：引用的理論要存在；結局 id 不重複；判決類的條件只能用在結辯之後。 */
 function branchErrors(s: Episode['scenes'][number], e: Episode, errors: string[]) {
   const theories = new Set(
@@ -513,6 +530,22 @@ function branchErrors(s: Episode['scenes'][number], e: Episode, errors: string[]
     for (const t of s.theories)
       for (const c of t.ethicsIf?.has ?? [])
         if (!known.has(c)) errors.push(`理論 ${t.id} 的 ethicsIf 引用了不存在的卡片：${c}`);
+  if (s.type === 'defense') {
+    for (const q of s.questions) {
+      check(q.when, `辯方證人 ${s.id} 的問題 ${q.id}`);
+      if (q.when && before(q.when)) errors.push(`辯方證人 ${s.id} 的問題 ${q.id} 依判決或結果分支`);
+      for (const c of q.ethicsIf?.has ?? [])
+        if (!known.has(c))
+          errors.push(`辯方證人 ${s.id} 的問題 ${q.id} 的 ethicsIf 引用了不存在的卡片：${c}`);
+    }
+    s.cross.forEach((x, i) => check(x.when, `辯方證人 ${s.id} 的反詰問追加第 ${i + 1} 題`));
+  }
+  if (s.type === 'desk')
+    for (const r of s.discovery) {
+      check(r.waived, `開示請求 ${r.id} 的 waived`);
+      for (const a of r.exposes)
+        if (!known.has(a)) errors.push(`開示請求 ${r.id} 的 exposes 引用了不存在的論點：${a}`);
+    }
   if ('when' in s && s.when) {
     check(s.when, `場景 ${s.id}`);
     const closeAt = e.scenes.findIndex((x) => x.type === 'closing');

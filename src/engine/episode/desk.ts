@@ -156,7 +156,12 @@ export function commission(
 ): DeskState {
   if (!canCommission(s, st, jobId, carried)) return st;
   const j = s.jobs.find((x) => x.id === jobId)!;
-  return { ...spend(s, st, j.cost), jobs: [...st.jobs, j.id], report: j.report };
+  return {
+    ...spend(s, st, j.cost),
+    jobs: [...st.jobs, j.id],
+    flags: j.flags.length ? [...new Set([...st.flags, ...j.flags])] : st.flags,
+    report: j.report,
+  };
 }
 
 export function clearReport(st: DeskState): DeskState {

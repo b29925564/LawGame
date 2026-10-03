@@ -55,7 +55,7 @@ export function followingEpisode(p: Progress): string | null {
 /**
  * 接續下一集：對話旗標與倫理紀錄跨集帶著走，這一集的結果寫成
  * <集>:verdict:<判決>、<集>:outcome:<結果>、<集>:deal:<條件>、<集>:theory:<理論> 旗標。
- * 場景內的旗標（動議、開示、請示電話）只屬於那一集，不帶。
+ * 場景內的旗標（動議、開示、請示電話）只屬於那一集，不帶；集層級 effects 算出來的旗標會帶。
  */
 export function carryOver(p: Progress, next: string): Progress {
   const c = branchContext(p);
@@ -67,9 +67,10 @@ export function carryOver(p: Progress, next: string): Progress {
   ]
     .filter((x): x is string => !!x)
     .map((x) => `${p.episode}:${x}`);
+  const effects = effectFlags(p, allFlags(p));
   return {
     ...start(next),
-    flags: [...new Set([...(p.flags ?? []), ...summary])],
+    flags: [...new Set([...(p.flags ?? []), ...effects, ...summary])],
     ethics: [...(p.ethics ?? [])],
   };
 }
@@ -260,6 +261,10 @@ export function caseClosed(p: Progress): { outcome: branch.Outcome; deal: string
 }
 
 export function branchContext(p: Progress): branch.BranchContext {
+  return contextWith(p, allFlags(p));
+}
+
+function contextWith(p: Progress, flags: string[]): branch.BranchContext {
   const cs = episodeOf(p).scenes.find((x) => x.type === 'closing');
   const st = cs ? (p.scenes[cs.id] as closing.ClosingState | undefined) : undefined;
   const closed = caseClosed(p);
@@ -268,7 +273,7 @@ export function branchContext(p: Progress): branch.BranchContext {
     outcome: closed?.outcome ?? null,
     deal: closed?.deal ?? null,
     theory: promisesOf(p).theory?.id ?? null,
-    flags: allFlags(p),
+    flags,
     ethics: p.ethics ?? [],
     cards: p.cards,
     presented: presentedArgs(p),
@@ -337,7 +342,8 @@ export function courtScene(p: Progress, s: TrialScene): TrialScene {
   const cost = discoveryCost(p);
   // 審前動議核准（例如排除對方專家），陪審團一開始就沒那麼偏向對方。
   // 硬藏的文件被揭穿，法官指示陪審團可以做不利推定：一開始就更偏向對方。
-  const shift = motionShift(p) - adverseShift(p);
+  // 前面的選擇留下的代價（例如交出群組截圖）：陪審團一開始就往對方移。
+  const shift = motionShift(p) - adverseShift(p) - effectSum(p, 'jury');
   const jurors = vd && st?.seated ? voirdire.panel(vd, st) : s.jurors;
   return {
     ...s,
@@ -420,8 +426,28 @@ export function allFlags(p: Progress): string[] {
       ? ((p.scenes[x.id] as { flags?: string[] } | undefined)?.flags ?? [])
       : [],
   );
-  return [...new Set([...(p.flags ?? []), ...fromScenes])];
+  const base = [...new Set([...(p.flags ?? []), ...fromScenes])];
+  return [...new Set([...base, ...effectFlags(p, base)])];
 }
+
+/** 集層級 effects 的條件成立時算進來的旗標（這些會帶到下一集）。 */
+function effectFlags(p: Progress, base: string[]): string[] {
+  const effects = episodeOf(p).effects;
+  if (!effects.some((e) => e.flags.length)) return [];
+  const c = contextWith(p, base);
+  return effects.filter((e) => branch.matches(e.when, c)).flatMap((e) => e.flags);
+}
+
+/** 現在成立的 effects（前面的選擇留下的代價）。 */
+export function activeEffects(p: Progress) {
+  const effects = episodeOf(p).effects;
+  if (!effects.length) return [];
+  const c = branchContext(p);
+  return effects.filter((e) => branch.matches(e.when, c));
+}
+
+const effectSum = (p: Progress, key: 'jury' | 'confidence' | 'trust') =>
+  activeEffects(p).reduce((n, e) => n + e[key], 0);
 
 /** 前一場庭審的狀態（同一個陪審團，隔天繼續聽）。 */
 export function previousJury(p: Progress, s: TrialScene): trial.TrialState | undefined {
@@ -445,7 +471,44 @@ export function depoState(p: Progress, s: DepositionScene) {
 }
 
 export function negoState(p: Progress, s: NegotiationScene) {
-  return stateOf(p, s, () => nego.startNegotiation(s));
+  return stateOf(p, s, () => nego.startNegotiation(negoScene(p, s)));
+}
+
+/** 調解開始時對方的信心與客戶的信任，加上前面的選擇留下的代價。 */
+export function negoScene(p: Progress, s: NegotiationScene): NegotiationScene {
+  const confidence = effectSum(p, 'confidence');
+  const trust = effectSum(p, 'trust');
+  if (!confidence && !trust) return s;
+  return {
+    ...s,
+    confidence: Math.max(0, Math.min(100, s.confidence + confidence)),
+    client: { ...s.client, trust: Math.max(0, Math.min(5, s.client.trust + trust)) },
+  };
+}
+
+/** 書桌上的開示請求：特權已經被放棄的（waived 成立），valid 降成 weak。 */
+export function deskScene(p: Progress, s: DeskScene): DeskScene {
+  if (!s.discovery.some((r) => r.waived)) return s;
+  const c = branchContext(p);
+  return {
+    ...s,
+    discovery: s.discovery.map((r) =>
+      r.waived && r.privilege === 'valid' && branch.matches(r.waived, c)
+        ? { ...r, privilege: 'weak' as const }
+        : r,
+    ),
+  };
+}
+
+/** 辯方證人這一場真正能問的題目與對方會多問的題：條件不符的拿掉。 */
+export function witnessScene(p: Progress, s: DefenseScene): DefenseScene {
+  if (!s.questions.some((q) => q.when) && !s.cross.some((x) => x.when)) return s;
+  const c = branchContext(p);
+  return {
+    ...s,
+    questions: s.questions.filter((q) => branch.matches(q.when, c)),
+    cross: s.cross.filter((x) => branch.matches(x.when, c)),
+  };
 }
 
 /** 洩漏出去的論點：談判攤牌過或錄取時問到底牌話題的，庭上衝擊減半（企劃書 6.8）。 */
@@ -457,6 +520,12 @@ export function exposedArgs(p: Progress): string[] {
     if (!st) continue;
     if (s.type === 'deposition') out.push(...(st as depo.DepoState).exposed);
     if (s.type === 'negotiation') out.push(...(st as nego.NegoState).exposed);
+    // 交出去的文件，對方看得懂它指向哪個論點。
+    if (s.type === 'desk') {
+      const a = discovery.answered(st as desk.DeskState);
+      for (const r of s.discovery)
+        if (a[r.id] === 'produced' || a[r.id] === 'compelled') out.push(...r.exposes);
+    }
   }
   return [...new Set(out)];
 }
@@ -603,7 +672,9 @@ export const useEpisode = create<GameState>()((set, get) => {
     'interview',
     interview.startInterview,
   );
-  const onDesk = on<DeskScene, desk.DeskState>('desk', desk.startDesk);
+  const onDesk = on<DeskScene, desk.DeskState>('desk', desk.startDesk, (s) =>
+    deskScene(get().progress, s),
+  );
   const onTrial = on<TrialScene, trial.TrialState>(
     'trial',
     (s) => trial.startTrial(s, anchoredClaims(get().progress), previousJury(get().progress, s)),
@@ -613,13 +684,17 @@ export const useEpisode = create<GameState>()((set, get) => {
   const onClosing = on<ClosingScene, closing.ClosingState>('closing', () =>
     closingStart(get().progress),
   );
-  const onDefense = on<DefenseScene, defense.DefenseState>('defense', () =>
-    defense.startDefense(juryAfterTrial(get().progress)?.jury ?? {}),
+  const onDefense = on<DefenseScene, defense.DefenseState>(
+    'defense',
+    () => defense.startDefense(juryAfterTrial(get().progress)?.jury ?? {}),
+    (s) => witnessScene(get().progress, s),
   );
   const onTheory = on<TheoryScene, theory.TheoryState>('theory', theory.startTheory);
   const onOpening = on<OpeningScene, theory.OpeningState>('opening', theory.startOpening);
   const onDepo = on<DepositionScene, depo.DepoState>('deposition', depo.startDeposition);
-  const onNego = on<NegotiationScene, nego.NegoState>('negotiation', nego.startNegotiation);
+  const onNego = on<NegotiationScene, nego.NegoState>('negotiation', nego.startNegotiation, (s) =>
+    negoScene(get().progress, s),
+  );
 
   return {
     mode: 'title',
@@ -803,11 +878,25 @@ export const useEpisode = create<GameState>()((set, get) => {
         },
       });
     },
-    askWitness: (qid) =>
+    askWitness: (qid) => {
+      const asked = (p: Progress) => {
+        const s = sceneOf(p);
+        return s?.type === 'defense' && defenseState(p, s).asked.includes(qid);
+      };
+      const already = asked(get().progress);
       onDefense((sc, st) => {
         const after = juryAfterTrial(get().progress);
         return after ? defense.ask(sc, st, after.rules, qid, get().progress.cards) : st;
-      }),
+      });
+      // 明知證詞是假的還讓他在陪審團面前說：問出口的當下記進倫理帳本。
+      const p = get().progress;
+      const s = sceneOf(p);
+      if (s?.type !== 'defense' || already || !asked(p)) return;
+      const q = s.questions.find((x) => x.id === qid);
+      const fresh = (q?.ethicsIf?.ethics ?? []).filter((e) => !(p.ethics ?? []).includes(e));
+      if (fresh.length && q!.ethicsIf!.has.every((x) => p.cards.includes(x)))
+        set({ progress: { ...p, ethics: [...(p.ethics ?? []), ...fresh] } });
+    },
     finishWitness: () =>
       onDefense((sc, st) => {
         const after = juryAfterTrial(get().progress);
