@@ -6029,6 +6029,8 @@ body:has(.court-light) {
   display: grid;
   gap: 12px;
   justify-items: center;
+  /* 捲到底時狀紙的下緣和投影要完整露出來（體驗評測 v88）。 */
+  padding-bottom: 32px;
 }
 /* 縮圖列和便條跟狀紙左緣對齊。 */
 .court-desk > .filings,
@@ -6187,6 +6189,10 @@ body:has(.court-light) {
   gap: 4px;
   margin-bottom: 22px;
 }
+/* 收文章放在抬頭上方，不壓到法院名稱；英文的章比較寬（體驗評測 v88）。 */
+.plead.received .cap {
+  margin-top: 32px;
+}
 .plead .cap .ct {
   font: 500 13px/1.6 var(--font-doc);
   letter-spacing: 0.22em;
@@ -6270,9 +6276,10 @@ button.blank:hover,
   padding-block: 4px 2px;
 }
 .blank .ex {
-  position: absolute;
-  right: -14px;
-  top: -12px;
+  /* 小籤跟在證物標籤後面，不往上浮：浮起來會壓到上一行的字（體驗評測 v88）。 */
+  display: inline-block;
+  margin-left: 6px;
+  vertical-align: middle;
   padding: 2px 5px;
   border: 1.5px solid var(--gold-paper);
   border-radius: 3px;
@@ -6426,7 +6433,8 @@ button.blank:hover,
 }
 .plead .judge .stamp-big {
   position: absolute;
-  right: 0;
+  /* 章轉 8 度會多出約 10px；往內收，不把整張紙撐寬。 */
+  right: 12px;
   top: -18px;
 }
 .stamp-big {
@@ -6457,7 +6465,7 @@ button.blank:hover,
 .stamp-rcv {
   position: absolute;
   right: 44px;
-  top: 30px;
+  top: 10px;
   padding: 6px 10px;
   border: 2px solid var(--paper-ink);
   border-radius: 3px;
@@ -6521,16 +6529,17 @@ button.blank:hover,
     width: 88px;
     height: 88px;
   }
-  /* 手機上收文章放在抬頭上方，不壓到法院名稱。 */
-  .plead.received .cap {
-    margin-top: 44px;
-  }
+
   .stamp-rcv {
     right: 12px;
     top: 10px;
   }
   .blank {
     min-width: 110px;
+  }
+  /* 手機上收文章比例大，抬頭往下讓兩行。 */
+  .plead.received .cap {
+    margin-top: 64px;
   }
 }
 
@@ -6540,4 +6549,30 @@ button.blank:hover,
 }
 .panel.adjourn .lines {
   font-size: 1.05em;
+}
+/* 休庭頁：前面的筆錄收起來，最後四句放第一屏。 */
+details.earlier > summary {
+  font-size: var(--fs-ui-meta);
+  color: var(--muted);
+}
+details.earlier[open] > .lines {
+  margin-top: 10px;
+}
+/* 狀紙空格和後面的逗號一起換行。 */
+.plead .glue {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  align-items: baseline;
+  max-width: 100%;
+}
+.plead .glue > .blank {
+  min-width: 0;
+  flex: 0 1 auto;
+}
+.plead .glue > .blank-wrap {
+  min-width: 0;
+  flex: 0 1 auto;
+}
+.plead .glue > .blank-wrap > .blank {
+  max-width: 100%;
 }

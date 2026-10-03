@@ -134,7 +134,6 @@
 理論靠的論點: The theory rests on
 點一張卡比較，再按下面的「以這個理論開庭」定案。: Pick a card to compare, then press “Go to trial on this theory” below to commit.
 '生效中：{rulings}': 'In effect: {rulings}'
-為什麼贏: Why you won
 主因: Main reasons
 下次可以試: Next time
 完整帳目: Full ledger
@@ -186,3 +185,4 @@
 詰問結束: Examination over
 法官把這位證人在這一場說過的話全部從紀錄上拿掉，陪審團不能採用。: The judge strikes everything this witness said in this session. The jury may not consider it.
 按「休庭」看這一場的結果。: Press “Recess” to see how the day went.
+'前面的筆錄（{n} 句）': 'Earlier testimony ({n} lines)'

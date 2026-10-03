@@ -388,7 +388,8 @@ function JuryLedger({
   ].filter((x): x is { label: string; n: number } => !!x);
   return (
     <section className="jury-ledger panel" aria-labelledby="jury-ledger-title">
-      <h2 id="jury-ledger-title">{won ? t('為什麼贏') : t('這一案的帳')}</h2>
+      {/* 贏的時候沒有逐條理由可列（帳只記扣分），標題不寫「為什麼贏」（體驗評測 v88）。 */}
+      <h2 id="jury-ledger-title">{t('這一案的帳')}</h2>
       <div className="ledger-row">
         <span className="ledger-key">{t('票數')}</span>
         <div>

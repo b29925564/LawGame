@@ -110,13 +110,18 @@ export function Pleading({
       <div className="body">
         <p>
           {t('聲請人請求本院')}
-          {request}
-          {t('，')}
+          {/* 空格和逗號綁在一起：逗號不要單獨掉到下一行。 */}
+          <span className="glue">
+            {request}
+            {t('，')}
+          </span>
         </p>
         <p>
           {t('理由：依')}
-          {basis}
-          {t('，')}
+          <span className="glue">
+            {basis}
+            {t('，')}
+          </span>
         </p>
         <p>
           {t('並提出')}
