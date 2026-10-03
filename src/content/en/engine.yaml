@@ -6,7 +6,7 @@
 伊恩: Ian
 旁白: Narrator
 對造律師: Opposing counsel
-莫羅檢察官: DA Moreau
+莫羅檢察官: Prosecutor Morrow
 
 # 異議種類
 誘導: Leading
@@ -92,3 +92,5 @@
 # 存檔標籤
 '第 {n} 集・{act}': 'Episode {n} · {act}'
 本集完: End of episode
+'{who}在筆記本上寫了一行字，沒有起身。': '{who} writes a line in a notepad and stays seated.'
+庭上，檢方再主詰問。: Redirect, Your Honor.

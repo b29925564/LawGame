@@ -72,6 +72,10 @@ describe('雙語查表', () => {
     await setLang('en');
     expect(t('誘導')).toBe('Leading');
     expect(t('異議，傳聞。')).toBe('Objection, hearsay.');
+    expect(t('丹尼爾・奧卡福在筆記本上寫了一行字，沒有起身。')).toBe(
+      'Daniel Okafor writes a line in a notepad and stays seated.',
+    );
+    expect(t('庭上，檢方再主詰問。')).toBe('Redirect, Your Honor.');
     await setLang('zh');
     expect(t('誘導')).toBe('誘導');
   });
