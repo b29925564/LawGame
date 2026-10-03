@@ -7684,3 +7684,36 @@ html[lang='en'] .vform .fh .c {
 .nego-next {
   margin: 4px 0 0;
 }
+/* 調解的條件階梯：每一檔信心門檻對應的條件，目前這一檔用螢光標示。 */
+.nego-ladder {
+  list-style: none;
+  margin: var(--s2) 0 var(--s3);
+  padding: 0;
+  border-top: 1px solid var(--border);
+}
+.nego-ladder li {
+  display: grid;
+  grid-template-columns: minmax(0, 9em) minmax(0, 1fr) auto;
+  gap: var(--s3);
+  align-items: baseline;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
+}
+.nego-ladder .th {
+  color: var(--muted);
+  font-size: 13px;
+}
+.nego-ladder .v {
+  font-weight: 600;
+}
+.nego-ladder .tg {
+  font-size: 13px;
+  color: var(--bad);
+}
+.nego-ladder li.on {
+  background: color-mix(in srgb, var(--hl) 22%, transparent);
+}
+.nego-ladder li.on .tg {
+  color: var(--text);
+  font-weight: 700;
+}

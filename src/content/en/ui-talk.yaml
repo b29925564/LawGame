@@ -111,3 +111,16 @@
 '{name}的信心 {a} → {b}': "{name}'s confidence {a} → {b}"
 條件鬆動了：{label}: 'The terms moved: {label}'
 條件沒變。: 'The terms held. '
+但仍超過授權，要先打電話請示{name}。: "It's still over your authority, so you have to call {name} first."
+但仍超過授權上限。: "It's still over your authority."
+'{name}同意了：授權上限 {a} → {b}': '{name} agreed: authority {a} → {b}'
+附帶條款也同意了。: 'The extra terms are approved too. '
+這個條件現在在授權內，可以建議接受。: These terms are now within your authority. You can advise taking them.
+還是不夠，條件仍超過授權。: Still not enough. The terms are over your authority.
+條件階梯: Terms ladder
+信心 {n} 以上: Confidence {n}+
+信心低於 {n}: Confidence below {n}
+現在: Now
+超過授權: Over authority
+被識破過 {n} 次：攤牌的效果只剩 {p}%。: 'Caught bluffing {n} times: your showdowns now land at {p}%.'
+建議撐下去（回合用完，等於離席上法庭）: Advise holding out (no rounds left, so this means walking out to trial)

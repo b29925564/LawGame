@@ -29,10 +29,35 @@ export function Negotiation({ scene }: { scene: NegotiationScene }) {
   const client = t(scene.client.name, scope);
   const opp = t(scene.opponent.name, scope);
   // 攤牌、虛張聲勢之前記下信心和條件，出手後才講得出「有沒有用」（體驗評測 v88：攤牌後開價沒動時毫無回饋）。
-  const [last, setLast] = useState<{ conf: number; offer: string; credit: number } | null>(null);
-  const snap = () => setLast({ conf: st.confidence, offer: offer.id, credit: st.credit });
+  // 打電話也記：電話換到了什麼（上限、附帶條款）要留在畫面上，手機上授權那列常在畫面外（體驗評測 v89）。
+  const [last, setLast] = useState<{
+    conf: number;
+    offer: string;
+    credit: number;
+    cap: number;
+    terms: boolean;
+    call?: boolean;
+  } | null>(null);
+  const cap = st.cap ?? scene.authority?.cap ?? 0;
+  const snap = (call?: boolean) =>
+    setLast({
+      conf: st.confidence,
+      offer: offer.id,
+      credit: st.credit,
+      cap,
+      terms: !!st.termsOk,
+      call,
+    });
+  const ladder = [...scene.offers].sort((a, b) => b.min - a.min);
+  const over = (o: (typeof ladder)[number]) => !!scene.authority && !nego.authorized(scene, st, o);
+  // 條件鬆動了但仍超過授權：不能讀起來像談成了（體驗評測 v89）。
+  const stillOver = ok
+    ? ''
+    : nego.canCall(scene, st)
+      ? t('但仍超過授權，要先打電話請示{name}。', { name: client })
+      : t('但仍超過授權上限。');
   // 條件依信心分檔：信心低於目前這一檔的門檻，就換下一檔（engine offerOf）。
-  const better = [...scene.offers].sort((a, b) => b.min - a.min).find((o) => o.min < offer.min);
+  const better = ladder.find((o) => o.min < offer.min);
   const toNext = better ? st.confidence - offer.min + 1 : 0;
   const nextHint = better
     ? t('信心再降 {k}，條件就會鬆動。', { k: toNext })
@@ -49,6 +74,37 @@ export function Negotiation({ scene }: { scene: NegotiationScene }) {
     offer.amount !== undefined
       ? t('接受：確定賠 {amount}', { amount: money(offer.amount) })
       : t('接受：{name}認罪，{label}', { name: client, label: t(offer.label, scope) });
+
+  // 出手後的回饋。打電話的回饋放在按鈕正上方：手機上頂端那張卡會在畫面外（體驗評測 v89）。
+  const moveNote = last && (
+    <p className="panel nego-move" role="status">
+      {last.call ? (
+        <>
+          <b>
+            {t('{name}同意了：授權上限 {a} → {b}', {
+              name: client,
+              a: money(last.cap),
+              b: money(cap),
+            })}
+          </b>
+          {!last.terms && st.termsOk && t('附帶條款也同意了。')}
+          {ok ? t('這個條件現在在授權內，可以建議接受。') : t('還是不夠，條件仍超過授權。')}
+        </>
+      ) : st.credit > last.credit ? (
+        <>
+          <b>{t('被識破了。')}</b>
+          {t('{name}的信心沒動；之後攤牌的效果少兩成。', { name: opp })}
+        </>
+      ) : (
+        <>
+          <b>{t('{name}的信心 {a} → {b}', { name: opp, a: last.conf, b: st.confidence })}</b>
+          {offer.id !== last.offer
+            ? `${t('條件鬆動了：{label}', { label: t(offer.label, scope) })}${stillOver && t('。')}${stillOver}`
+            : `${t('條件沒變。')}${nextHint}`}
+        </>
+      )}
+    </p>
+  );
 
   if (intro)
     return (
@@ -152,36 +208,32 @@ export function Negotiation({ scene }: { scene: NegotiationScene }) {
         </>
       }
     >
-      {last && (
-        <p className="panel nego-move" role="status">
-          {st.credit > last.credit ? (
-            <>
-              <b>{t('被識破了。')}</b>
-              {t('{name}的信心沒動；之後攤牌的效果少兩成。', { name: opp })}
-            </>
-          ) : (
-            <>
-              <b>{t('{name}的信心 {a} → {b}', { name: opp, a: last.conf, b: st.confidence })}</b>
-              {offer.id !== last.offer
-                ? t('條件鬆動了：{label}', { label: t(offer.label, scope) })
-                : `${t('條件沒變。')}${nextHint}`}
-            </>
-          )}
-        </p>
-      )}
+      {last && !last.call && moveNote}
       {tab === 'offer' && (
         <section className="panel">
           <h2>{t('她現在開的條件')}</h2>
           <p className="claim-text">{t(offer.label, scope)}</p>
           {nego.canAct(st) && <p className="muted small nego-next">{nextHint}</p>}
+          {/* 條件階梯：每一檔的門檻和價放在一起，信心 100 時也看得出還差多少（體驗評測 v89）。 */}
+          <ol className="nego-ladder" aria-label={t('條件階梯')}>
+            {ladder.map((o, i) => (
+              <li key={o.id} className={o.id === offer.id ? 'on' : undefined}>
+                <span className="th">
+                  {o.min > 0
+                    ? t('信心 {n} 以上', { n: o.min })
+                    : t('信心低於 {n}', { n: ladder[i - 1]?.min ?? 0 })}
+                </span>
+                <span className="v">
+                  {o.amount !== undefined ? money(o.amount) : t(o.label, scope)}
+                </span>
+                <span className="tg">
+                  {o.id === offer.id ? t('現在') : over(o) ? t('超過授權') : ''}
+                </span>
+              </li>
+            ))}
+          </ol>
           {scene.authority && (
             <dl className="stats authority">
-              {offer.amount !== undefined && (
-                <>
-                  <dt>{t('條件')}</dt>
-                  <dd>{money(offer.amount)}</dd>
-                </>
-              )}
               <dt>{t('授權上限')}</dt>
               <dd className={ok ? undefined : 'over'}>{money(st.cap ?? scene.authority.cap)}</dd>
               {offer.terms && (
@@ -207,6 +259,7 @@ export function Negotiation({ scene }: { scene: NegotiationScene }) {
           {offer.lines.map((l, i) => (
             <Speech key={i} line={l} />
           ))}
+          {last?.call && moveNote}
           <div className="stack">
             <button
               className="wide"
@@ -219,7 +272,7 @@ export function Negotiation({ scene }: { scene: NegotiationScene }) {
               <button
                 className="wide primary"
                 onClick={() => {
-                  setLast(null);
+                  snap(true);
                   callClient();
                 }}
               >
@@ -230,12 +283,14 @@ export function Negotiation({ scene }: { scene: NegotiationScene }) {
             <button
               className="wide"
               onClick={() => {
+                // 回合用完還撐，引擎會直接離席上法庭：先走離席的定案列，讓玩家看到後果（體驗評測 v89）。
+                if (st.rounds <= 0) return setChoice('walk');
                 setChoice(null);
                 setLast(null);
                 advise(false);
               }}
             >
-              {t('建議撐下去')}
+              {st.rounds <= 0 ? t('建議撐下去（回合用完，等於離席上法庭）') : t('建議撐下去')}
             </button>
           </div>
           {choice === 'take' && ok && (
@@ -260,6 +315,14 @@ export function Negotiation({ scene }: { scene: NegotiationScene }) {
       {tab === 'reveal' && (
         <section className="panel">
           <h2>{t('攤牌')}</h2>
+          {st.credit > 0 && (
+            <p className="muted small">
+              {t('被識破過 {n} 次：攤牌的效果只剩 {p}%。', {
+                n: st.credit,
+                p: Math.round(Math.max(0.2, 1 - 0.2 * st.credit) * 100),
+              })}
+            </p>
+          )}
           <div className="stack">
             {args.map((a) => (
               <CardPick
