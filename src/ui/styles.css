@@ -2347,7 +2347,11 @@ fieldset.relations.compact {
   display: none;
 }
 /* 休庭頁的陪審團不是一條，有空間就讓名字和職業完整換行，別截成「咖啡店…」。 */
+.jury.compact:not(.strip) .juror {
+  font-size: 12px;
+}
 .jury.compact:not(.strip) .label {
+  padding: 0 4px;
   white-space: normal;
   overflow: visible;
   overflow-wrap: anywhere;
@@ -2366,6 +2370,7 @@ fieldset.relations.compact {
 /* 休庭頁的筆錄：最後幾句是高潮，整段攤開，不收在小框裡。 */
 .lines.transcript.full {
   max-height: none;
+  mask-image: none;
 }
 /* 判決表：鍵欄至少放得下 Decedent's share of fault 兩行。 */
 .verdict-form .stats {
@@ -4524,13 +4529,14 @@ button.iou[aria-pressed='true'] {
 }
 
 /* ── 意見 4：耐心燈管（core 9.6 燈管色），熄滅那格留 1 秒餘燼 ── */
+/* 淺色介面上燈管色幾乎看不見（體驗評測），淺色改用深一點的綠。 */
 .patience .pip.on {
-  background: var(--tube-on);
-  border-color: var(--tube-on);
+  background: light-dark(#5f8f68, var(--tube-on));
+  border-color: light-dark(#5f8f68, var(--tube-on));
 }
 .patience .pip.ember {
-  background: var(--tube-ember);
-  border-color: var(--tube-ember);
+  background: light-dark(rgb(95 143 104 / 35%), var(--tube-ember));
+  border-color: light-dark(rgb(95 143 104 / 35%), var(--tube-ember));
 }
 .patience .delta {
   font: 500 14px/1 var(--font);
@@ -5822,6 +5828,34 @@ body:has(.court-light) {
 .carry p {
   margin: 0;
 }
+.carry-why {
+  display: none;
+  color: var(--muted);
+}
+.carry-why summary {
+  cursor: pointer;
+}
+@media (max-width: 520px) {
+  .carry-cost {
+    display: none;
+  }
+  .carry-why {
+    display: block;
+  }
+  /* 選單鈕只蓋住頂列第一行：讓位給標頭那一行就好，下面的卡片用滿寬。 */
+  .bench {
+    padding-right: 2px;
+  }
+  .bench > .eyebrow {
+    flex-basis: 100%;
+    padding-right: 84px;
+  }
+}
+/* 結辯的論點要整段看得到，不截成「……」（體驗評測）。 */
+.closing-args .pick .pick-text {
+  display: block;
+  overflow: visible;
+}
 
 /* 案件理論：並排比較卡（UX 規格 decision-cost §二）。桌機三欄等高，手機直排。 */
 .theory-grid {
@@ -6446,4 +6480,12 @@ button.blank:hover,
   .blank {
     min-width: 110px;
   }
+}
+
+/* 詰問自動結束：中間欄一張卡，標題說為什麼停，下面是最後幾句。 */
+.panel.adjourn h2 {
+  font-size: 20px;
+}
+.panel.adjourn .lines {
+  font-size: 1.05em;
 }

@@ -429,7 +429,7 @@ test('第 1 集可以一路從冷開場玩到判決', async ({ page }) => {
 test('瑞秋援引緘默權後，檢方撤回起訴，直接進尾聲（E1）', async ({ page }) => {
   const claim = await playToRachelLast(page);
   await card(claim, /出示 論點 D/).click();
-  await expect(page.getByText('自證己罪')).toBeVisible();
+  await expect(page.getByText('自證己罪').first()).toBeVisible();
   // 最後一句落地後先停在筆錄上，按「休庭」才進休庭頁。
   await page.getByRole('button', { name: '休庭', exact: true }).click();
   await next(page);

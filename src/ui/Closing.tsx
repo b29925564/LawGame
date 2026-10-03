@@ -173,7 +173,14 @@ export function Closing({ scene }: { scene: ClosingScene }) {
               <span className="carry-key">{t('你帶進評議室的')}</span>
               <strong>{t(th.name, scope)}</strong>
               <JuryStart jury={th.jury} civil={rules?.burden === 'civil'} />
-              {cost && <p className="small">{t(cost, scope)}</p>}
+              {/* 手機上這句收進「這代表什麼」，不然這張卡會佔掉半個螢幕（體驗評測）。 */}
+              {cost && <p className="small carry-cost">{t(cost, scope)}</p>}
+              {cost && (
+                <details className="carry-why small">
+                  <summary>{t('這代表什麼')}</summary>
+                  {t(cost, scope)}
+                </details>
+              )}
               {/* 理論撐在哪幾個論點上：結辯挑別的論點，等於自己打自己的理論。 */}
               <p className="small theory-needs">
                 <span className="carry-key">{t('理論靠的論點')}</span>
@@ -235,7 +242,7 @@ export function Closing({ scene }: { scene: ClosingScene }) {
               })}
             </p>
           )}
-          <div className="stack">
+          <div className="stack closing-args">
             {args.map((a) => {
               const i = st.picked.indexOf(a.id);
               return (
