@@ -222,6 +222,7 @@ describe('辯方證人：when、ethicsIf、cross', () => {
     cross: [
       {
         when: { flags: ['discovery:rq-chat:produced'] },
+        unlessAsked: [],
         q: '這句是您說的？',
         a: '是。',
         penalty: 8,
