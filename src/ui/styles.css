@@ -910,6 +910,22 @@ details summary {
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
 }
+/* 證據清單捲到底留 24，底緣淡出，看得出是刻意捲動，不是截在半列（桌機證據欄與手機抽屜一樣）。 */
+.sheet .sheet-list {
+  padding-bottom: var(--s5);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 24px), transparent);
+}
+/*
+ * 還沒有按鈕的底列（第二幕剛開始，桌機只裝著浮在右邊的證據欄）不留一條懸空的分隔線。
+ * 不能 display: none，證據欄就在裡面。
+ */
+.shell-foot:not(:has(> button)) {
+  padding: 0;
+  border-top: none;
+  background: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
 .shell-foot .wide {
   flex: 1;
 }
@@ -4811,8 +4827,11 @@ button.iou[aria-pressed='true'] {
   .board3 {
     grid-template-columns: 260px minmax(0, 1fr);
   }
-  /* 書桌五個分頁同一個寬度（體驗評測：證據板 260、其他分頁滿版，兄弟分頁不一致）。 */
-  .shell:has(> .shell-head > .taskbar) > .shell-foot {
+  /*
+   * 底列跟上面的清單同寬：證據板的清單是左欄 260，其他分頁的清單是整個中欄
+   * （體驗評測 v89：郵件、卷宗、委託、法院系統的清單 1060，底列卻只有 260）。
+   */
+  .shell:has(> .shell-head > .taskbar):has(.board3) > .shell-foot {
     width: var(--list-w);
   }
 }
@@ -5380,7 +5399,7 @@ button.iou[aria-pressed='true'] {
     grid-template-columns: 220px minmax(0, 1fr);
     gap: 16px;
   }
-  .shell:has(> .shell-head > .taskbar) > .shell-foot {
+  .shell:has(> .shell-head > .taskbar):has(.board3) > .shell-foot {
     width: 220px;
   }
 }
@@ -5750,6 +5769,8 @@ body:has(.court-light) {
     position: sticky;
     bottom: 0;
     z-index: calc(var(--z-base) + 2);
+    /* 釘在底部時壓在清單上，半透明會讓清單的字透出來（體驗評測 v89，720×450）。 */
+    background: var(--surface);
   }
   /* 工作台裡答案列取代底列：這裡不需要「結束調查」，挑卡片在連線台底下。 */
   .shell:has(.board-one) > .shell-foot {
@@ -7619,11 +7640,6 @@ html[lang='en'] .vform .fh .c {
       var(--inset-hi),
       var(--shadow-1),
       0 24px 48px -24px var(--shadow-deep);
-  }
-  /* 證據欄清單捲到底留 24，底緣淡出，看得出是刻意捲動，不是截在半列。 */
-  .sheet.side .sheet-list {
-    padding-bottom: var(--s5);
-    mask-image: linear-gradient(to bottom, #000 calc(100% - 24px), transparent);
   }
 }
 @media (min-width: 1024px) and (max-width: 1279px) {
