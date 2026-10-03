@@ -1,11 +1,19 @@
 import { describe, expect, it } from 'vitest';
 import { episodes } from '../../content';
-import { activeEffects, witnessScene } from '../game';
+import { activeEffects, negoScene, witnessScene } from '../game';
 import type { Progress } from '../save';
 import * as closing from './closing';
+import * as nego from './negotiation';
 import * as defense from './defense';
 import { ADVERSE } from './discovery';
-import type { ClosingScene, DefenseScene, DeskScene, TheoryScene, TrialScene } from './schema';
+import type {
+  ClosingScene,
+  DefenseScene,
+  DeskScene,
+  NegotiationScene,
+  TheoryScene,
+  TrialScene,
+} from './schema';
 import * as trial from './trial';
 
 const ep = episodes.ep2;
@@ -216,5 +224,39 @@ describe('不誠實又被抓到的路線', () => {
     expect(against({ ...best, theory: 'warned', always: true })).toBeGreaterThan(
       against({ ...best, theory: 'warned' }),
     );
+  });
+});
+
+/** 遊戲測試員 2026-10-03：交出群組截圖後奧卡福信心 +10，調解變難，但要談得成。 */
+describe('交出群組截圖後的調解', () => {
+  const n = scene<NegotiationScene>('mediation');
+  const strength = (id: string) => args.find((a) => a.id === id)!.strength;
+  const held = ['med-record', 'pharmacy', 'daubert-ruling'];
+  const play = (flags: string[], moves: string[]) => {
+    const s = negoScene(before(flags), n);
+    let st = nego.startNegotiation(s);
+    for (const m of moves)
+      st =
+        m === 'call'
+          ? nego.call(s, st)
+          : m.startsWith('b-')
+            ? nego.bluff(s, st, m, held)
+            : nego.reveal(s, st, m, strength(m), m);
+    return nego.advise(s, st, true);
+  };
+  const chat = ['discovery:rq-chat:produced'];
+
+  it('只攤論點 A 再打兩通電話：沒交出時能和解，交出後奧卡福不降到授權內（這是交出的代價）', () => {
+    expect(play([], ['arg-a', 'call', 'call']).outcome).toBe('deal');
+    expect(play(chat, ['arg-a', 'call', 'call']).outcome).toBeNull();
+  });
+
+  it('交出後仍談得成：攤 A、兩個有憑據的虛張，再請示兩次（250 萬）或一次（多攤 B，180 萬）', () => {
+    const a = play(chat, ['arg-a', 'b-meds', 'b-expert', 'call', 'call']);
+    expect(a.outcome).toBe('deal');
+    expect(a.deal).toContain('250');
+    const b = play(chat, ['arg-a', 'arg-b', 'b-meds', 'b-expert', 'call']);
+    expect(b.outcome).toBe('deal');
+    expect(b.deal).toContain('180');
   });
 });
