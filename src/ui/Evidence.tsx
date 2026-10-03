@@ -132,7 +132,7 @@ export function EvidenceDrawer({ note, noTimeline }: { note?: string; noTimeline
                 {/* 清單自己捲：能被鍵盤聚焦，卡片不能選的畫面也捲得到下面（無障礙審查第 3 條）。 */}
                 <ul className="stack cards sheet-list" tabIndex={0} aria-label={t('證據清單')}>
                   {timeGroups(hit, (i) => (
-                    <EvidenceCard key={i.id} item={i} pickable={wide} />
+                    <EvidenceCard key={i.id} item={i} pickable={wide} mini />
                   ))}
                   {hit.length === 0 && (
                     <li className="muted">
@@ -179,7 +179,16 @@ export function EvidenceDrawer({ note, noTimeline }: { note?: string; noTimeline
   );
 }
 
-export function EvidenceCard({ item, pickable }: { item: Item; pickable?: boolean }) {
+export function EvidenceCard({
+  item,
+  pickable,
+  mini,
+}: {
+  item: Item;
+  pickable?: boolean;
+  /** 一行一張的小卡。手機抽屜也用：點一下展開全文，跟桌機一致（體驗評測：手機抽屜一張大卡 520px 高）。 */
+  mini?: boolean;
+}) {
   const t = useT();
   const scope = useScope();
   const { pool, on, pick, tags } = useCardPick();
@@ -194,7 +203,7 @@ export function EvidenceCard({ item, pickable }: { item: Item; pickable?: boolea
   const [tip, setTip] = useState<{ top: number; right: number } | null>(null);
   // 不能放上連線台的畫面（卷宗、法院系統、庭上）點一下展開全文，再點收起。
   const [open, setOpen] = useState(false);
-  if (pickable) {
+  if (pickable || mini) {
     // 證據欄的小卡（UX 規格 P1-12）：一行一張，名稱靠左、時間或種類靠右；內容與出處在浮出卡。
     // 每個桌面分頁長得一樣，不會只有證據板是乾淨的（試玩回報）。
     // 外層 li 保留清單語意，裡面是真的按鈕（無障礙審查第 8 條）。
