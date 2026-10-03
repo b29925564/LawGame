@@ -370,7 +370,10 @@ function strike(s: TrialScene, st: TrialState, lines: LogLine[]): TrialState {
   const judge = s.fifth?.struck?.length
     ? s.fifth.struck.map((l) => ({ who: l.who, text: l.text }))
     : [{ who: JUDGE, text: STRUCK_DEFAULT }];
-  return say({ ...st, stage: 'done', stricken: true, jury, deltas }, ...lines, ...judge);
+  const done = say({ ...st, stage: 'done', stricken: true, jury, deltas }, ...lines, ...judge);
+  // 休庭畫面的「刪除的證詞」：整份證詞都刪了，就是她在這一場說過的每一句。
+  const struck = done.log.filter((l) => l.who === s.witness.name).length;
+  return { ...done, struck: Math.max(st.struck, struck) };
 }
 
 /** 糾纏：重複問同一件事，法官耐心 −1，重視情感的陪審員反感。 */
