@@ -565,7 +565,21 @@ function Verdict({
                         {y} : {n - y}
                       </span>
                     </span>
-                    <p>{r.moves.map((m) => t(m, scope)).join(' ')}</p>
+                    <p>
+                      {r.moves
+                        .filter((m) => !m.startsWith('表決'))
+                        .map((m) => t(m, scope))
+                        .join(' ')}
+                      {/* 比數已經寫在票格旁，「表決：…」只留給螢幕報讀（視覺設計師）。 */}
+                      {r.moves
+                        .filter((m) => m.startsWith('表決'))
+                        .map((m, k) => (
+                          <span key={k} className="sr-only">
+                            {' '}
+                            {t(m, scope)}
+                          </span>
+                        ))}
+                    </p>
                   </li>
                 );
               })}

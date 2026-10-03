@@ -116,12 +116,14 @@ export function VoirDire({ scene }: { scene: VoirDireScene }) {
         : st.excused.includes(id)
           ? t('有因剔除')
           : null;
+  // 剔除的人沉到最底，排在候補下面，入座線才會在第一屏（視覺設計師）。
+  const everyone = [...pool, ...scene.candidates.filter((c) => !pool.includes(c))];
   const rows =
     filter === 'seated'
       ? seated
       : filter === 'unasked'
         ? pool.filter((c) => !st.asked.includes(c.id))
-        : scene.candidates;
+        : everyone;
   const sel = open ?? (wide ? (pool[0]?.id ?? null) : null);
   const picked = scene.candidates.find((c) => c.id === sel);
   const pick = (id: string) => {
@@ -367,7 +369,13 @@ export function VoirDire({ scene }: { scene: VoirDireScene }) {
       {box}
       {list}
       {picked && (
-        <CardSheet title={t(picked.name, scope)} onClose={() => setOpen(null)}>
+        <CardSheet
+          title={t('候選人 {n}／{total}', {
+            n: everyone.indexOf(picked) + 1,
+            total: scene.candidates.length,
+          })}
+          onClose={() => setOpen(null)}
+        >
           {profile}
         </CardSheet>
       )}

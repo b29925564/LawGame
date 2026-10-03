@@ -218,3 +218,4 @@
 風向: Momentum
 '第 {n} 輪': 'Round {n}'
 '站你這邊 {a} 位': '{a} on your side'
+'候選人 {n}／{total}': 'Candidate {n} / {total}'

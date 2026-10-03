@@ -6730,6 +6730,9 @@ details.earlier[open] > .lines {
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
+  padding-bottom: 16px;
+  /* 底部淡出：最後一列不會看起來像被切掉。 */
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 24px), transparent);
 }
 .cands {
   list-style: none;
@@ -6767,6 +6770,7 @@ button.cand:hover:not(.on) {
 .cand strong {
   display: block;
   font: 600 var(--fs-ui-row) / 1.3 var(--font);
+  color: var(--text);
 }
 .cand strong span {
   font-weight: 400;
@@ -7072,12 +7076,12 @@ button.cand.on {
 
 /* 判決頁：上面結論帶，下面判決表｜評議兩欄等高。 */
 .vdict {
+  /* 和遴選頁同一個左右框；不鎖視窗高，「繼續」接在內容後面（視覺設計師）。 */
   max-width: 1680px;
   margin: 0 auto;
-  min-height: 100dvh;
-  padding: var(--s5) 128px var(--s5) var(--s5);
+  padding: var(--s5);
   display: grid;
-  grid-template-rows: auto 1fr;
+  align-content: start;
   gap: var(--s5);
 }
 .hero {
@@ -7112,6 +7116,8 @@ button.cand.on {
 .hero .amt {
   margin: 0;
   text-align: right;
+  /* 右上角是選單鈕：金額排在它下面。 */
+  padding-top: 52px;
 }
 .hero .amt small {
   display: block;
@@ -7421,6 +7427,9 @@ button.cand.on {
   }
   .vcols {
     grid-template-columns: minmax(0, 1fr);
+  }
+  .hero .amt {
+    padding-top: 0;
   }
 }
 @media (max-width: 520px) {
