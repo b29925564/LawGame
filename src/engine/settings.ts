@@ -8,7 +8,13 @@ export interface Settings {
   showNumbers: boolean;
   /** 字級倍率。 */
   textScale: number;
+  /** 聲音總開關。 */
   sound: boolean;
+  /** 音量（0–1）：總音量、音樂、音效、環境音。 */
+  master: number;
+  music: number;
+  sfx: number;
+  ambience: number;
   /** 畫外字幕：出完字停留後自動前進。 */
   voAuto: boolean;
   /** 畫外字幕字級：1／1.25／1.5。 */
@@ -25,6 +31,10 @@ export const useSettings = create<Settings>()(
       showNumbers: false,
       textScale: 1,
       sound: true,
+      master: 0.8,
+      music: 0.6,
+      sfx: 0.8,
+      ambience: 0.5,
       voAuto: true,
       voScale: 1,
       voBox: false,
