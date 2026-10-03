@@ -765,9 +765,17 @@ details summary {
   padding: 6px 14px;
   font-size: 14px;
   letter-spacing: 0.1em;
-  background: color-mix(in srgb, var(--surface) 72%, transparent);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  /* 實心：半透明時底下的分頁字會透出來（體驗評測 v88）。 */
+  background: var(--surface);
+}
+@media (max-width: 1023px) {
+  /*
+   * 手機整頁捲動：選單鈕跟著頁首捲走，不釘在畫面上。
+   * 釘住時會蓋住黏在頂端的分頁列（「法院系統」點不到）和右上角的數字（錄取摘要 3/3）。
+   */
+  .game-menu {
+    position: absolute;
+  }
 }
 .menu-panel {
   width: min(360px, calc(100vw - 16px));
@@ -3209,6 +3217,16 @@ fieldset.relations.compact {
   border-color: var(--border-strong);
   background: var(--surface-2);
 }
+/* 連線或聲請時，不能放上去的卡退到後面，一眼分得出哪些能用（使用者第 8 點）。 */
+.card.mini.out {
+  opacity: 0.45;
+  transition: opacity 0.15s;
+}
+.card.mini.out:hover,
+.card.mini.out:focus-within,
+.card.mini.out.open {
+  opacity: 0.85;
+}
 .card.pickable.on {
   border-color: var(--hl);
   background: linear-gradient(var(--hl-wash), var(--hl-wash)), var(--surface);
@@ -4903,9 +4921,6 @@ button.iou[aria-pressed='true'] {
 .result-card .good {
   margin: 0;
   flex: 1 1 260px;
-}
-.result-note {
-  margin: 0;
 }
 .step.answer.done {
   border-color: color-mix(in srgb, var(--good) 60%, var(--border));

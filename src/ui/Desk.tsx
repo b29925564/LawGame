@@ -861,7 +861,8 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
                 </>
               )}
               {done && st.feedback[q.id] && (
-                <p role="status" className="muted small result-note">
+                // 結果卡已經寫了「✓ 已確認 → 論點」，這句只給讀屏（體驗評測：手機上講兩次）。
+                <p role="status" className="sr-only">
                   {t(st.feedback[q.id], scope)}
                 </p>
               )}

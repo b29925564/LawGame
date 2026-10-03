@@ -41,7 +41,8 @@ export function Credits() {
               <a href={a.url} target="_blank" rel="noreferrer">
                 {a.title}
               </a>{' '}
-              {t('作者')} {a.author}・
+              {t('作者')} {a.author}
+              {t('・')}
               <a href={CC_BY} target="_blank" rel="noreferrer">
                 CC BY 4.0
               </a>
