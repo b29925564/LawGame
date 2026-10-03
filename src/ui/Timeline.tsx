@@ -228,7 +228,7 @@ export function Timeline({
                 aria-label={t('把「{name}」拿下來', { name: t(c.name, scope) })}
                 onClick={() => onToggle(c.id)}
               >
-                ✕
+                <span className="cross" aria-hidden />
               </button>
             </li>
           ))}
