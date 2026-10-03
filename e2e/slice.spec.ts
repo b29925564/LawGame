@@ -23,31 +23,38 @@ async function solve(
   relation: RegExp,
   n: number,
 ) {
-  // 手機版一次一欄：工作台開著就先回到疑問清單。
-  const back = page.getByRole('button', { name: '← 全部疑問' });
-  if (await back.isVisible()) await back.click();
+  await toList(page);
   await page.locator('.q-item', { hasText: title }).click();
   const q = page.locator('section.workbench');
   await expect(q).toContainText(title);
   const links = q.locator('section.links');
-  // 電腦版的卡片在右邊證據欄，點了直接放上連線台；手機版在連線台底下的「挑卡片」。
+  // 電腦版的卡片在右邊證據欄，點了直接放上連線台；手機版點連線台的空格打開挑卡片抽屜。
   const side = page.locator('.sheet.side');
   const wide = await side.isVisible();
-  if (!wide) await links.locator('summary').click();
   for (const name of names) {
     if (wide)
       await side
         .locator('.card.pickable', { has: page.locator('strong', { hasText: name }) })
         .first()
         .click();
-    else await card(links, name).click();
+    else {
+      // 手機：點連線台的空格打開挑卡片抽屜，點一張就放上去。
+      await links.getByRole('button', { name: '放一張卡' }).first().click();
+      await card(page.locator('.card-sheet'), name).click();
+    }
   }
   await links.getByRole('radio', { name: relation }).click();
   await links.getByRole('button', { name: '連起來' }).click();
   await expect(links.getByRole('status')).toContainText('連起來了');
-  await q.locator('.found', { hasText: `發現 ${n}：` }).click();
+  await q.getByRole('button', { name: new RegExp(`^發現 ${n}：`) }).click();
   await q.getByRole('button', { name: /^提交/ }).click();
   await expect(q).toContainText('已確認');
+}
+
+/** 手機版一次一欄：工作台開著就先回到疑問清單（工作台裡答案列取代底列，「結束調查」在清單頁）。 */
+async function toList(page: Page) {
+  const back = page.getByRole('button', { name: '← 全部疑問' });
+  if (await back.isVisible()) await back.click();
 }
 
 /** 一直按「繼續」直到某個東西出現；對話長度改了測試也不會壞。 */
@@ -100,11 +107,11 @@ async function playToRachelLast(page: Page) {
   // 接案
   await until(page, page.getByRole('button', { name: '四十小時。那我把午餐省下來。' }));
   await page.getByRole('button', { name: '四十小時。那我把午餐省下來。' }).click();
-  await until(page, page.getByRole('button', { name: '卷宗', exact: true }));
+  await until(page, page.getByRole('button', { name: /^卷宗( \d+)?$/ }));
 
   // 第二幕：讀卷宗、標記事實、委託、推理鏈
   await expect(page.getByLabel(/剩餘工時 24/)).toBeVisible();
-  await page.getByRole('button', { name: '卷宗', exact: true }).click();
+  await page.getByRole('button', { name: /^卷宗( \d+)?$/ }).click();
   await page.getByRole('button', { name: /看守所財物清單/ }).click();
   await page.getByRole('button', { name: /智慧手錶 1 支/ }).click();
   await page.getByRole('button', { name: '← 卷宗' }).click();
@@ -129,10 +136,11 @@ async function playToRachelLast(page: Page) {
   await page.getByRole('button', { name: '證據板' }).click();
   await solve(page, '疑問 1', '沃斯叫他上去的', ['手錶通知紀錄', '叫車收據'], /支持/, 1);
   // 過關的推理鏈確認了，但要玩家自己收工，剩下的工時還能查。
+  await toList(page);
   await expect(page.getByRole('button', { name: '結束調查' })).toBeVisible();
 
   // 第二幕後半：先把手錶相關性鏈確認起來，才提得出傳票聲請。
-  await page.getByRole('button', { name: '卷宗', exact: true }).click();
+  await page.getByRole('button', { name: /^卷宗( \d+)?$/ }).click();
   await page.getByRole('button', { name: /驗屍報告/ }).click();
   await page.getByRole('button', { name: /死亡時間推估/ }).click();
   await page.getByRole('button', { name: /錶帶完好/ }).click();
@@ -191,6 +199,7 @@ async function playToRachelLast(page: Page) {
     await solve(page, tab, title, names, relation, n++);
 
   // 收工，海爾在開庭前說出彈劾三步驟的那句話。
+  await toList(page);
   await page.getByRole('button', { name: '結束調查' }).click();
   await page.getByRole('button', { name: /^確定結束/ }).click();
   await expect(page.getByText('先讓他把話說死，再拿出證據。')).toBeVisible();
@@ -198,7 +207,7 @@ async function playToRachelLast(page: Page) {
   await next(page); // 第三幕字卡
 
   // 第三幕之一：米蘭達動議
-  await page.getByRole('button', { name: '卷宗', exact: true }).click();
+  await page.getByRole('button', { name: /^卷宗( \d+)?$/ }).click();
   await page.getByRole('button', { name: /逮捕報告與巡邏車錄影/ }).click();
   await page.getByRole('button', { name: /逮捕時間 14:05，地點/ }).click();
   await page.getByRole('button', { name: /沒有唸出任何權利告知/ }).click();
@@ -251,14 +260,9 @@ async function playToRachelLast(page: Page) {
 
   // 第三幕收尾：選案件理論。四條論點都確認了，選難的那條。
   await page.getByRole('button', { name: '選擇案件理論' }).click();
-  await page
-    .locator('li.panel')
-    .filter({ hasText: '另有其人：瑞秋' })
-    .getByRole('button', { name: '就用這個理論' })
-    .click();
-  // 劇本標了確認提示時，要再按一次確定。
-  const sure = page.getByRole('button', { name: /^確定，就用/ });
-  if (await sure.isVisible()) await sure.click();
+  // 點卡片只是選中，底部定案列的按鈕才真的選定。
+  await page.locator('button.theory-card', { hasText: '另有其人：瑞秋' }).click();
+  await page.getByRole('button', { name: '以這個理論開庭' }).click();
   await next(page);
 
   // 伊森想作證。答應他，第三天辯方舉證時他會上證人席。
@@ -418,6 +422,8 @@ test('瑞秋援引緘默權後，檢方撤回起訴，直接進尾聲（E1）', 
   const claim = await playToRachelLast(page);
   await card(claim, /出示 論點 D/).click();
   await expect(page.getByText('自證己罪')).toBeVisible();
+  // 最後一句落地後先停在筆錄上，按「休庭」才進休庭頁。
+  await page.getByRole('button', { name: '休庭', exact: true }).click();
   await next(page);
   await until(page, page.getByText('下次，早點打給我。'));
   // 沒走蘿莎的停車場線，不知道潔德是誰：信封不能交給她。

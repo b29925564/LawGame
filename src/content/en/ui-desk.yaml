@@ -36,18 +36,24 @@
 '疑問 {n}': 'Question {n}'
 '已確認 {n}': '{n} confirmed'
 已確認: Confirmed
-'已確認：{name}': 'Confirmed: {name}'
 進行中: In progress
 尚未開始: Not started
-尚未出現的疑問: Question not yet available
+'還有 {n} 題，查到線索後出現': '{n} more questions appear as you find leads'
 時間線: Timeline
 把事件排在時間軸上: Put the events in order on the timeline
-'{n} 張卡可排': '{n} cards to place'
+'已排 {n} / {m}': 'Placed {n} / {m}'
 '拿下 {name}': 'Remove {name}'
 連線: Link
 連起來: Link
+繼續連線: Keep linking
+'下一題 →': 'Next question →'
+'去排時間線 →': 'Go to the timeline →'
+'回疑問清單 →': 'Back to questions →'
 '？': '?'
-'挑卡片（{n}）': 'Pick cards ({n})'
+點右邊的卡片放上來: Click a card on the right to place it
+放一張卡: Add a card
+'放到 {slot}': 'Place in {slot}'
+'已在 {slot}': 'In {slot}'
 答案: Answer
 '從答案拿下 {name}': 'Remove {name} from the answer'
 '交錯 {n} 次': '{n} wrong answers'
@@ -56,8 +62,14 @@
 發現: Findings
 '發現 {n}': 'Finding {n}'
 還沒有發現: No findings yet
+在上面把兩張卡連起來，發現會出現在這裡。: Link two cards above and your findings appear here.
 '：': ': '
-'・已放進答案': ' · In answer'
+已放進答案: In answer
+'已用過 {n}': 'Used ({n})'
+點一條發現放到這裡: Tap a finding to put it here
+先連線，得到發現: Link cards to get a finding first
+展開: More
+收起: Less
 '← 全部疑問': '← All questions'
 目前沒有可以提出的聲請。: No motions to file right now.
 聲請: Motion
@@ -69,6 +81,9 @@
 法律依據: Legal basis
 '支撐（{n} 張）': 'Support ({n} cards)'
 '送出（{n} 工時）': 'File ({n} hours)'
+送出前檢查: Before filing
+'支撐 {a}/{b}': 'Support {a}/{b}'
+工時不足: Not enough hours
 目前沒有可以委託的事。多讀卷宗、多問委託人。: Nothing to assign right now. Read more of the case file and ask the client more questions.
 需要: Needs
 已回報。: Reported.
@@ -140,7 +155,19 @@
 逾期未兌現: Broken
 "第 {round} 輪\u3000{no} {ng}\u3000{yes} {g}": 'Round {round} · {no} {ng} · {yes} {g}'
 未達一致: No unanimity
-'陪審團僵局，第{round}輪，{no} {ng}，{yes} {g}，未達一致': 'Jury deadlocked, round {round}: {no} {ng}, {yes} {g}, no unanimity'
+'陪審團僵局，第{round}輪，{no} {ng}，{yes} {g}，{why}': 'Jury deadlocked, round {round}: {no} {ng}, {yes} {g}, {why:lower}'
+兩邊都未達法定票數: Neither side has the votes it needs
 '盧卡斯標記了 {n} 處：{items}': 'Lucas marked {n} places: {items}'
 '盧卡斯沒有說出口：{text}': "Lucas didn't say it aloud: {text}"
 '、': ', '
+定案: Final decision
+選了就不能改: You can’t undo this
+'對方拿到這 {n} 份文件': 'The other side gets these {n} documents'
+法官可能不認；沒有正當理由硬藏，之後被揭穿會很重: The judge may reject it. Hiding something without good grounds hurts badly if it comes out later.
+由法官決定範圍: The judge decides the scope
+交出這份文件: Hand over this document
+交出這些文件: Hand over these documents
+以範圍過廣回應: Object as overbroad
+'剩 {n} 時・{m} 題沒確認': '{n} h left · {m} questions unconfirmed'
+遊戲裡: In the game
+證據清單: Evidence list

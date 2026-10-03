@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
+import { Fragment, useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
 import type { Line } from '../engine/episode/schema';
 import { useSettings } from '../engine/settings';
@@ -12,7 +12,13 @@ const played = new Set<string>();
 
 const beatsOf = (line: Line) =>
   line.beats?.length ? line.beats : [{ text: line.text, hush: false }];
-const plain = (t: string) => t.replace(/｜/g, '');
+/** 兩邊都是英數標點時，｜拿掉要補一個空格，不然英文句子黏在一起（"him.I only"）。 */
+const latin = (c?: string) => !!c && /[\x21-\x7e]/.test(c);
+const plain = (t: string) =>
+  t.replace(
+    /(\S?)\s*｜\s*(\S?)/g,
+    (_, a: string, b: string) => a + (latin(a) && latin(b) ? ' ' : '') + b,
+  );
 
 /**
  * 畫外字幕（設計稿 inner-voice 3）：盧卡斯沒說出口的話，不掛名字框。
@@ -28,6 +34,10 @@ export function VoLine({ line }: { line: Line }) {
   const close = useCallback(() => {
     played.add(key);
     setOpen(false);
+    // 字幕收掉後，焦點和視線交給這個畫面的主要動作（休庭的「繼續」、回報的「回到桌面」）。
+    requestAnimationFrame(() =>
+      document.querySelector<HTMLElement>('main .primary.next')?.focus({ preventScroll: true }),
+    );
   }, [key]);
   return (
     <>
@@ -40,6 +50,16 @@ export function VoLine({ line }: { line: Line }) {
       {open && createPortal(<VoiceOver line={line} onDone={close} />, document.body)}
     </>
   );
+}
+
+/** 獨白蓋住的那顆主要按鈕（繼續、回到桌面）；點在別的地方就不算。 */
+function buttonUnder(x: number, y: number): HTMLButtonElement | null {
+  for (const el of document.elementsFromPoint(x, y)) {
+    if (el.closest('.vo')) continue;
+    const b = el.closest('button');
+    return b && b.matches('button.primary, button.next') && !b.disabled ? b : null;
+  }
+  return null;
 }
 
 export function VoiceOver({ line, onDone }: { line: Line; onDone: () => void }) {
@@ -57,20 +77,35 @@ export function VoiceOver({ line, onDone }: { line: Line; onDone: () => void }) 
   const reduced =
     typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  const next = () => {
+  const next = (at?: { x: number; y: number }) => {
     if (i + 1 < beats.length) {
       setI(i + 1);
       setP(0);
       setPhase('waiting');
     } else {
+      // 收掉最後一拍的那一下如果正好點在底下的「繼續」「回到桌面」上，就順便按下去
+      // （體驗評測：第一下只收掉獨白，畫面看起來沒變，玩家以為按鈕壞了）。選項不轉，免得誤選。
+      const under = at && buttonUnder(at.x, at.y);
       announce.voiceEnd();
       onDone();
+      if (under) setTimeout(() => under.click(), 0);
     }
   };
-  // 出字途中點擊＝立刻出完；出完後 600ms 內點擊無效。
-  const click = () => {
-    if (phase === 'typing') setPhase('shown');
-    else if (phase === 'shown' && performance.now() - shownAt.current >= 600) next();
+  // 出字途中點擊＝立刻出完。防的是連點：上一下點擊 400ms 內的第二下不算。
+  // 以前是「出完後 600ms 內一律不算」，字自己出完時玩家點下去也會被吃掉，看起來像按了沒反應。
+  const lastClick = useRef(-Infinity);
+  // 玩家自己往下一拍點過，這段獨白就不再自動前進：讀得慢的人不會漏句（無障礙審查第 5 條）。
+  // 出字途中點一下只是想讓字快點出完，不算接手（體驗評測）。
+  const manual = useRef(false);
+  const click = (e?: { clientX: number; clientY: number }) => {
+    if (phase === 'shown') manual.current = true;
+    const now = performance.now();
+    const double = now - lastClick.current < 400;
+    lastClick.current = now;
+    // 拍與拍之間的靜默裡點一下＝這一拍立刻開始出字（以前會被吃掉，看起來像沒反應）。
+    if (phase === 'waiting' && !double) setPhase('typing');
+    else if (phase === 'typing') setPhase('shown');
+    else if (phase === 'shown' && !double) next(e && { x: e.clientX, y: e.clientY });
   };
   // 拍前的靜默：第一拍 0，之後 700ms，重句前 1200ms。
   useEffect(() => {
@@ -99,7 +134,7 @@ export function VoiceOver({ line, onDone }: { line: Line; onDone: () => void }) 
       if (k < 1) raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
-    const auto = voAuto ? setTimeout(() => next(), tm.hold + 400) : undefined;
+    const auto = voAuto && !manual.current ? setTimeout(() => next(), tm.hold + 400) : undefined;
     return () => {
       cancelAnimationFrame(raf);
       clearTimeout(auto);
@@ -109,6 +144,8 @@ export function VoiceOver({ line, onDone }: { line: Line; onDone: () => void }) 
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
       if (e.key !== 'Enter' && e.key !== ' ') return;
+      // 獨白中打開的選單自己吃鍵盤，不要同時把字幕往前推。
+      if ((e.target as Element | null)?.closest?.('.game-menu')) return;
       e.preventDefault();
       click();
     };
@@ -127,23 +164,27 @@ export function VoiceOver({ line, onDone }: { line: Line; onDone: () => void }) 
       style={{ '--sub-scale': voScale } as CSSProperties}
     >
       <div className="vo-veil" />
-      <button className="vo-hit" aria-label={t('繼續')} onClick={click} autoFocus />
+      <button className="vo-hit" aria-label={t('繼續')} onClick={(e) => click(e)} autoFocus />
       <div className="vo-frame" aria-hidden>
         <span className="vo-mark" />
         <p className={phase === 'shown' ? 'vo-text now' : 'vo-text'}>
           {phase !== 'waiting' &&
-            beat.text.split('｜').map((seg, s) => (
-              <span key={`${i}-${s}`} className="seg">
-                {[...seg].map((c, j) => (
-                  <span
-                    key={j}
-                    className="ch"
-                    style={{ '--i': 0, '--p': `${tm.starts[n++]}ms` } as CSSProperties}
-                  >
-                    {c}
-                  </span>
-                ))}
-              </span>
+            beat.text.split('｜').map((seg, s, all) => (
+              <Fragment key={`${i}-${s}`}>
+                {/* 英文的詞組之間要有空白，才不會黏在一起，也才能在這裡換行。 */}
+                {s > 0 && latin(all[s - 1].trimEnd().slice(-1)) && latin(seg.trimStart()[0]) && ' '}
+                <span className="seg">
+                  {[...seg].map((c, j) => (
+                    <span
+                      key={j}
+                      className="ch"
+                      style={{ '--i': 0, '--p': `${tm.starts[n++]}ms` } as CSSProperties}
+                    >
+                      {c}
+                    </span>
+                  ))}
+                </span>
+              </Fragment>
             ))}
         </p>
         <span className="vo-progress" style={{ '--p': p } as CSSProperties} />

@@ -12,14 +12,14 @@ align: { head_top: 58, head_cx: 933, head_w: 1099 }
 tool: 線上對話式生圖工具（使用者操作），以 lucas_final.png 當參考、逐句修改指令產生
 date: 2026-10-02
 process: [裁 4:5, Lanczos 放大至 2048×2560, rembg isnet-general-use 去背, 依頭頂與頭寬對齊, WebP q70 輸出 1024/512/144]
-default: { plain: v01, tense: v02, warm: v01, panic: v01, silent: v02 }
-missing: [hard]                 # 硬（露額頭）尚未產生
+default: { plain: v01, tense: tense-light v01, hard: v01, warm: v01, panic: v01, silent: v02 }
+# 使用者 17:36Z 更正：原記為緊的 v02/v03 其實是硬；硬目前瀏海仍放下，露額頭版尚未產生
 picks:
   - { file: lucas__F__plain__v01.webp,        expr: plain,  role: default,  framing: standard }
-  - { file: lucas__F__tense__v02.webp,        expr: tense,  role: default,  framing: standard, note: 眉壓最實 }
-  - { file: lucas__F__tense__v03.webp,        expr: tense,  role: alt,      framing: standard }
+  - { file: lucas__F__hard__v01.webp,         expr: hard,   role: default,  framing: standard, note: 眉壓最實；瀏海放下版 }
+  - { file: lucas__F__hard__v02.webp,         expr: hard,   role: alt,      framing: standard }
   - { file: lucas__F__tense__v01.webp,        expr: tense,  role: alt,      framing: tight,    note: 緊（重）；只適合頭像尺寸 }
-  - { file: lucas__F__tense-light__v01.webp,  expr: tense,  role: light,    framing: standard, note: 緊（輕） }
+  - { file: lucas__F__tense-light__v01.webp,  expr: tense,  role: default,  framing: standard, note: 緊（輕）；標準構圖裡唯一的緊，先當預設 }
   - { file: lucas__F__tense-camera__v01.webp, expr: tense,  role: camera,   framing: standard, note: 直視鏡頭；玩家做出令人疑惑的選擇時出現 }
   - { file: lucas__F__warm__v01.webp,         expr: warm,   role: default,  framing: standard, note: 含蓄微笑 }
   - { file: lucas__F__warm__v02.webp,         expr: warm,   role: big,      framing: standard, note: 真心笑（露齒） }

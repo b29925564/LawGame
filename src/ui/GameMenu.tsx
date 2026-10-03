@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useEpisode } from '../engine/game';
 import { useT } from '../i18n';
 import { SLOTS, type Slot } from '../engine/save';
@@ -11,12 +11,27 @@ export function GameMenu() {
   const [open, setOpen] = useState<null | 'save' | 'load' | 'options'>(null);
   const [note, setNote] = useState('');
   const t = useT();
+  const box = useRef<HTMLDivElement>(null);
+  // 點選單外面或按 Esc 就收起來，不必再按一次「選單」（試玩回報：開著會擋住畫面）。
+  useEffect(() => {
+    if (!open) return;
+    const away = (e: PointerEvent) => {
+      if (!box.current?.contains(e.target as Node)) setOpen(null);
+    };
+    const esc = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(null);
+    document.addEventListener('pointerdown', away);
+    window.addEventListener('keydown', esc);
+    return () => {
+      document.removeEventListener('pointerdown', away);
+      window.removeEventListener('keydown', esc);
+    };
+  }, [open]);
   const onSave = (slot: Slot) => setNote(save(slot) ? t('已存檔。') : t('這個瀏覽器不允許存檔。'));
   const onLoad = (slot: Slot) => {
     if (load(slot)) setOpen(null);
   };
   return (
-    <div className="game-menu">
+    <div className="game-menu" ref={box}>
       <button
         className="menu-toggle"
         aria-expanded={open !== null}

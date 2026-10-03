@@ -1,4 +1,5 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { glossary } from '../content/glossary';
 import {
   deskSceneOf,
@@ -8,7 +9,7 @@ import {
   useEpisode,
   type Evidence as Item,
 } from '../engine/game';
-import { translate, useT } from '../i18n';
+import { t as tr, useT } from '../i18n';
 import { useScope } from './lang';
 import { cardHighlights, cardStamps, Hl, Stamp } from './Marks';
 import { useCardPick } from './pick';
@@ -34,7 +35,7 @@ export function useWide() {
   return wide;
 }
 
-export function EvidenceDrawer({ note }: { note?: string }) {
+export function EvidenceDrawer({ note, noTimeline }: { note?: string; noTimeline?: boolean }) {
   const progress = useEpisode((s) => s.progress);
   const t = useT();
   const scope = useScope();
@@ -50,7 +51,9 @@ export function EvidenceDrawer({ note }: { note?: string }) {
   }, [open]);
   const [kind, setKind, showKind] = useKindFilter();
   // 抽屜分三頁：手上的證據、排好的時間軸、法典百科。庭上、談判時都翻得到。
-  const [page, setPage] = useState<'cards' | 'timeline' | 'terms'>('cards');
+  const [want, setPage] = useState<'cards' | 'timeline' | 'terms'>('cards');
+  // 證據板上時間軸的家是疑問清單第一列，抽屜不再放一份（UX 規格：一樣東西只有一個家）。
+  const page = noTimeline && want === 'timeline' ? 'cards' : want;
   const scene = deskSceneOf(progress);
   const placed = scene ? deskState(progress, scene).timeline : [];
   const rows = placed.map((id) => items.find((i) => i.id === id)).filter((i) => !!i);
@@ -83,9 +86,11 @@ export function EvidenceDrawer({ note }: { note?: string }) {
                 <button aria-current={page === 'cards'} onClick={() => setPage('cards')}>
                   {t('證據 {n}', { n: items.length })}
                 </button>
-                <button aria-current={page === 'timeline'} onClick={() => setPage('timeline')}>
-                  {t('時間軸')}
-                </button>
+                {!noTimeline && (
+                  <button aria-current={page === 'timeline'} onClick={() => setPage('timeline')}>
+                    {t('時間軸')}
+                  </button>
+                )}
                 <button aria-current={page === 'terms'} onClick={() => setPage('terms')}>
                   {t('法典')}
                 </button>
@@ -110,7 +115,8 @@ export function EvidenceDrawer({ note }: { note?: string }) {
             {page === 'cards' && (
               <>
                 <KindFilter items={items} value={kind} onPick={setKind} />
-                <ul className="stack cards sheet-list">
+                {/* 清單自己捲：能被鍵盤聚焦，卡片不能選的畫面也捲得到下面（無障礙審查第 3 條）。 */}
+                <ul className="stack cards sheet-list" tabIndex={0} aria-label={t('證據清單')}>
                   {timeGroups(hit, (i) => (
                     <EvidenceCard key={i.id} item={i} pickable={wide} />
                   ))}
@@ -128,7 +134,7 @@ export function EvidenceDrawer({ note }: { note?: string }) {
               </div>
             )}
             {page === 'terms' && (
-              <dl className="terms sheet-list">
+              <dl className="terms sheet-list" tabIndex={0} aria-label={t('法典')}>
                 {terms.map((g) => {
                   const term = t(g.term, scope);
                   return (
@@ -140,7 +146,12 @@ export function EvidenceDrawer({ note }: { note?: string }) {
                         )}
                       </dt>
                       <dd>{t(g.text, scope)}</dd>
-                      {g.inGame && <dd className="in-game">{t(g.inGame, scope)}</dd>}
+                      {g.inGame && (
+                        <dd className="in-game">
+                          <span className="in-game-label">{t('遊戲裡')}</span>
+                          {t(g.inGame, scope)}
+                        </dd>
+                      )}
                     </div>
                   );
                 })}
@@ -162,36 +173,76 @@ export function EvidenceCard({ item, pickable }: { item: Item; pickable?: boolea
   const hl = cardHighlights(episodeOf(progress))[item.id];
   const sealed = cardStamps(progress)[item.id];
   const can = pickable && pick && pool.includes(item.id);
-  const cls = (item.kind === '論點' ? 'card arg' : 'card') + (can ? ' pickable mini' : '');
-  // 證據板上的小卡（設計稿 board-redesign）：只留名稱、時間、出處，放上連線台的標 A／B。
-  const slot = can ? ['A', 'B'][on.indexOf(item.id)] : undefined;
-  const body = can ? (
-    <>
-      {item.kind === '物品' && (
-        <span className="thumb" aria-hidden>
-          {typeof item.image === 'string' && <img src={item.image} alt="" />}
-        </span>
-      )}
-      <span className="mini-head">
-        <strong>{t(item.name, scope)}</strong>
-        {stamp(item, scope) && <span className="time">{stamp(item, scope)}</span>}
-      </span>
-      {slot && (
-        <span className="slot-tag" aria-label={t('連線台 {slot}', { slot })}>
-          {slot}
-        </span>
-      )}
-      <span className="muted small">
-        {t(item.kind)}
-        {t('・')}
-        {t(item.source, scope)}
-      </span>
-      <p className="mini-full" role="tooltip">
-        {t(item.text, scope)}
-      </p>
-    </>
-  ) : (
-    <>
+  const cls = item.kind === '論點' ? 'card arg' : 'card';
+  // 全文浮出卡畫在 body 上：證據欄會捲動，放在卡片裡會被裁掉。
+  const ref = useRef<HTMLLIElement>(null);
+  const tipId = useId();
+  const [tip, setTip] = useState<{ top: number; right: number } | null>(null);
+  if (can) {
+    // 證據板右欄的小卡（UX 規格 P1-12）：一行一張，名稱靠左、時間或種類靠右；內容與出處在浮出卡。
+    // 外層 li 保留清單語意，裡面是真的按鈕（無障礙審查第 8 條）。
+    const slot = ['A', 'B'][on.indexOf(item.id)];
+    const show = () => {
+      const r = ref.current?.getBoundingClientRect();
+      if (r)
+        setTip({
+          top: Math.min(r.top, window.innerHeight - 240),
+          right: window.innerWidth - r.left + 10,
+        });
+    };
+    const hide = () => setTip(null);
+    return (
+      <li
+        ref={ref}
+        className={cls + ' pickable mini' + (slot ? ' on' : '')}
+        onMouseEnter={show}
+        onMouseLeave={hide}
+      >
+        <button
+          type="button"
+          className="mini-btn"
+          aria-pressed={!!slot}
+          aria-describedby={tip ? tipId : undefined}
+          onClick={() => pick(item.id)}
+          onFocus={show}
+          onBlur={hide}
+          onKeyDown={(e) => e.key === 'Escape' && tip && (e.stopPropagation(), hide())}
+        >
+          {item.kind === '物品' && (
+            <span className="thumb" aria-hidden>
+              {typeof item.image === 'string' && <img src={item.image} alt="" />}
+            </span>
+          )}
+          <strong>{t(item.name, scope)}</strong>
+          <span className="mini-meta">{stamp(item, scope) || t(item.kind)}</span>
+          {slot && (
+            <span className="slot-tag" aria-label={t('連線台 {slot}', { slot })}>
+              {slot}
+            </span>
+          )}
+        </button>
+        {tip &&
+          createPortal(
+            <div
+              className="mini-full"
+              id={tipId}
+              role="tooltip"
+              style={{ top: tip.top, right: tip.right }}
+            >
+              <p>{t(item.text, scope)}</p>
+              <p className="mini-src">
+                {t(item.kind)}
+                {t('・')}
+                {t(item.source, scope)}
+              </p>
+            </div>,
+            document.body,
+          )}
+      </li>
+    );
+  }
+  return (
+    <li className={cls}>
       <strong>
         {stamp(item, scope) && <span className="time">{stamp(item, scope)}</span>}
         {t(item.name, scope)}
@@ -203,21 +254,6 @@ export function EvidenceCard({ item, pickable }: { item: Item; pickable?: boolea
         {t('・')}
         {t(item.source, scope)}
       </span>
-    </>
-  );
-  return (
-    <li
-      className={on.includes(item.id) && can ? cls + ' on' : cls}
-      {...(can && {
-        role: 'button',
-        tabIndex: 0,
-        'aria-pressed': on.includes(item.id),
-        onClick: () => pick(item.id),
-        onKeyDown: (e: React.KeyboardEvent) =>
-          (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), pick(item.id)),
-      })}
-    >
-      {body}
     </li>
   );
 }
@@ -266,7 +302,7 @@ export function CardPick({
 
 /** 卡片上的日期與時間，例如「週五 22:34」。 */
 export function stamp(c: { date?: string; time?: string }, scope?: string): string {
-  return [c.date && translate(c.date, scope), c.time].filter(Boolean).join(' ');
+  return [c.date && tr(c.date, scope), c.time].filter(Boolean).join(' ');
 }
 
 /** 依卡片種類篩選；清單一長，玩家通常只想看某一類（例如只看論點）。 */
@@ -316,11 +352,11 @@ export function timeGroups<T extends { id: string; time?: string }>(
   if (!timed.length || !rest.length) return items.map(render);
   return [
     <li key="@timed" className="group-head">
-      {translate('有時間的事件')} <span>{timed.length}</span>
+      {tr('有時間的事件')} <span>{timed.length}</span>
     </li>,
     ...timed.map(render),
     <li key="@rest" className="group-head">
-      {translate('其他資料')} <span>{rest.length}</span>
+      {tr('其他資料')} <span>{rest.length}</span>
     </li>,
     ...rest.map(render),
   ];

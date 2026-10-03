@@ -1,9 +1,12 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Iou, useHand } from './Marks';
 import type { OpeningScene, TheoryScene } from '../engine/episode/schema';
 import * as theory from '../engine/episode/theory';
 import { episodeOf, openingState, promisesOf, theoryState, useEpisode } from '../engine/game';
-import { useT } from '../i18n';
+import { theoryOutlook } from '../engine/ledger';
+import { useMoney, useT } from '../i18n';
+import { CommitBar } from './Commit';
+import { JuryStart } from './JuryStart';
 import { useScope } from './lang';
 import { Speech } from './Portrait';
 
@@ -16,6 +19,7 @@ export function Theory({ scene }: { scene: TheoryScene }) {
   const st = theoryState(progress, scene);
   const t = useT();
   const scope = useScope();
+  const money = useMoney();
   const held = progress.cards;
   const [intro, setIntro] = useState(!theory.done(st));
   const [pending, setPending] = useState<string | null>(null);
@@ -24,7 +28,9 @@ export function Theory({ scene }: { scene: TheoryScene }) {
     return (
       <main className="scene">
         <p className="eyebrow">
-          {t(scene.act, scope)}・{t(scene.place, scope)}
+          {t(scene.act, scope)}
+          {t('・')}
+          {t(scene.place, scope)}
         </p>
         <div className="lines">
           {scene.intro.map((l, i) => (
@@ -38,50 +44,129 @@ export function Theory({ scene }: { scene: TheoryScene }) {
     );
 
   const noneOpen = !scene.theories.some((th) => theory.unlocked(th, held));
-  const warn = scene.intro.find((l) => l.mark?.kind === 'confirm')?.text;
+  const civil = episodeOf(progress).scenes.some((x) => x.type === 'trial' && x.burden === 'civil');
+  // 民事才有金額：用律師想事情的單位說代價（UX 規格 decision-cost §二）。
+  const outlook = (id: string) => {
+    const o = theoryOutlook(progress, id);
+    if (!o) return null;
+    return (
+      <span className="theory-row">
+        <span className="jury-start-key">{t('若判有責')}</span>
+        <span>
+          {t('約 {low} 到 {high}', { low: money(o.low), high: money(o.high) })}
+          {o.punitive && (
+            <small className="muted">
+              {o.ratio === 1
+                ? t('懲罰性賠償可能再加同額')
+                : o.ratio
+                  ? t('懲罰性賠償可能另加 {r} 倍', { r: o.ratio })
+                  : t('懲罰性賠償另計')}
+            </small>
+          )}
+        </span>
+      </span>
+    );
+  };
+  const argName = (id: string) =>
+    episodeOf(progress)
+      .scenes.flatMap((x) => (x.type === 'desk' ? x.questions : []))
+      .find((q) => q.argument.id === id)?.argument.name ?? id;
+  const sel = scene.theories.find((th) => th.id === pending);
+  const done = theory.done(st);
+  // 三張並排的比較卡（UX 規格 decision-cost §二）：點卡片＝選中，底部定案列才真的選定。
   return (
-    <main className="scene">
+    <main className="scene theory-pick">
       <p className="eyebrow">{t('案件理論')}</p>
-      <ul className="stack">
+      {!done && <p className="muted">{t('點一張卡比較，再按下面的「以這個理論開庭」定案。')}</p>}
+      <ul className="theory-grid">
         {scene.theories.map((th) => {
           const ok = theory.unlocked(th, held);
-          const on = st.chosen === th.id;
+          const on = done ? st.chosen === th.id : pending === th.id;
+          const missing = th.needs.filter((n) => !held.includes(n));
           return (
-            <li key={th.id} className={on ? 'panel chain done' : 'panel'}>
-              <strong>{t(th.name, scope)}</strong>
-              <p>{t(th.summary, scope)}</p>
-              <p className="muted small">{t(th.cost, scope)}</p>
-              {!theory.done(st) &&
-                (pending === th.id && warn ? (
-                  <Confirm
-                    text={t(warn, scope)}
-                    yes={t('確定，就用「{name}」', { name: t(th.name, scope) })}
-                    onYes={() => chooseTheory(th.id)}
-                    onNo={() => setPending(null)}
-                  />
-                ) : (
-                  <button
-                    className="primary"
-                    disabled={!ok}
-                    onClick={() => (warn ? setPending(th.id) : chooseTheory(th.id))}
-                  >
-                    {t('就用這個理論')}
-                  </button>
-                ))}
-              {on && <p className="good">{t('已選定。')}</p>}
+            <li key={th.id}>
+              <button
+                className={['theory-card', on && 'on', !ok && 'locked'].filter(Boolean).join(' ')}
+                aria-pressed={on}
+                disabled={done || !ok}
+                onClick={() => setPending(th.id)}
+              >
+                <strong className="theory-name">{t(th.name, scope)}</strong>
+                <span className="theory-summary">{t(th.summary, scope)}</span>
+                <span className="theory-rows">
+                  <JuryStart jury={th.jury} civil={civil} />
+                  {th.promises.length > 0 && !th.jury && (
+                    <span className="theory-row">
+                      <span className="jury-start-key">{t('承諾')}</span>
+                      {t('可許 {n} 個承諾，沒兌現會反噬', { n: th.promises.length })}
+                    </span>
+                  )}
+                  {outlook(th.id)}
+                  <span className="theory-row">
+                    <span className="jury-start-key">{t('代價')}</span>
+                    {t(th.cost, scope)}
+                  </span>
+                </span>
+                <span className="theory-needs">
+                  <span className="jury-start-key">{t('需要')}</span>
+                  {th.needs.map((n) => {
+                    const [head] = t(argName(n), scope).split(/：|: /);
+                    const have = held.includes(n);
+                    return (
+                      <span key={n} className={have ? 'need ok' : 'need miss'}>
+                        <span className="diamond" aria-hidden>
+                          ◆
+                        </span>
+                        {head} {have ? '✓' : '✗'}
+                      </span>
+                    );
+                  })}
+                </span>
+                {!ok && (
+                  <span className="bad-text small">
+                    {t('還缺 {list}', {
+                      list: missing.map((n) => t(argName(n), scope).split(/：|: /)[0]).join('、'),
+                    })}
+                  </span>
+                )}
+                {done && on && <span className="good">{t('已選定。')}</span>}
+              </button>
             </li>
           );
         })}
       </ul>
-      {noneOpen && !theory.done(st) && (
+      {!done && sel && (
+        <TheoryCommit
+          what={t(sel.name, scope)}
+          cost={t(sel.jury?.note ?? sel.cost, scope)}
+          onCommit={() => chooseTheory(sel.id)}
+        />
+      )}
+      {noneOpen && !done && (
         <button onClick={skipTheory}>{t('手上的論點撐不起任何理論，直接開庭')}</button>
       )}
-      {theory.done(st) && (
+      {done && (
         <button className="primary next" onClick={advance}>
           {t('繼續')}
         </button>
       )}
     </main>
+  );
+}
+
+/** 定案列外面包一層：盧卡斯的手在這一步出現（confirm 記號），和以前的確認對話框同一個時機。 */
+function TheoryCommit(p: { what: string; cost: string; onCommit: () => void }) {
+  useHand('confirm');
+  const t = useT();
+  const ref = useRef<HTMLDivElement>(null);
+  // 定案列不黏底（黏底會蓋住卡片）；選了哪張，就把列捲進畫面。
+  useEffect(() => {
+    ref.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }, [p.what]);
+  return (
+    <div ref={ref}>
+      <CommitBar {...p} action={t('以這個理論開庭')} />
+    </div>
   );
 }
 
@@ -102,7 +187,9 @@ export function Opening({ scene }: { scene: OpeningScene }) {
     return (
       <main className="scene">
         <p className="eyebrow">
-          {t(scene.act, scope)}・{t(scene.place, scope)}
+          {t(scene.act, scope)}
+          {t('・')}
+          {t(scene.place, scope)}
         </p>
         <div className="lines">
           {scene.intro.map((l, i) => (
@@ -119,7 +206,7 @@ export function Opening({ scene }: { scene: OpeningScene }) {
     <main className="scene">
       <p className="eyebrow">
         {t('開場陳述')}
-        {th ? `・${t(th.name, scope)}` : ''}
+        {th ? `${t('・')}${t(th.name, scope)}` : ''}
       </p>
       {!th ? (
         <p className="muted">{t('沒有選定的案件理論，沒有任何承諾可以許。')}</p>
@@ -164,32 +251,5 @@ export function Opening({ scene }: { scene: OpeningScene }) {
         </button>
       )}
     </main>
-  );
-}
-
-/** 選擇確認提示：此畫面唯一一處手的黃（設計稿 inner-voice 2g）。 */
-function Confirm({
-  text,
-  yes,
-  onYes,
-  onNo,
-}: {
-  text: string;
-  yes: string;
-  onYes: () => void;
-  onNo: () => void;
-}) {
-  useHand('confirm');
-  const t = useT();
-  return (
-    <div className="confirm" role="alert">
-      <p>{text}</p>
-      <div className="row">
-        <button className="primary" onClick={onYes}>
-          {yes}
-        </button>
-        <button onClick={onNo}>{t('再想想')}</button>
-      </div>
-    </div>
   );
 }

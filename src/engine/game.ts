@@ -272,7 +272,24 @@ export function branchContext(p: Progress): branch.BranchContext {
     ethics: p.ethics ?? [],
     cards: p.cards,
     presented: presentedArgs(p),
+    punitive: st?.award?.punitive?.found ?? (st?.verdict ? false : null),
   };
+}
+
+/** 懲罰性賠償要不要評議：符合 damages.punitive.when 其中一項才進入，回傳那一項的加成；都不符合是 null。 */
+export function punitiveBonus(p: Progress, s: ClosingScene): number | null {
+  const c = branchContext(p);
+  const hit = s.damages?.punitive?.when.find((x) => branch.matches(x.when, c));
+  return hit ? hit.bonus : null;
+}
+
+/** 調解室看到的開庭風險：判有責的金額區間，以及懲罰性賠償會不會進入評議。 */
+export function trialRisk(p: Progress) {
+  const cs = episodeOf(p).scenes.find((x): x is ClosingScene => x.type === 'closing');
+  const ts = theorySceneOf(p);
+  const range = cs && closing.exposure(cs, ts?.theories.map((x) => x.fault ?? 0) ?? []);
+  if (!cs || !range) return null;
+  return { ...range, punitive: punitiveBonus(p, cs) !== null };
 }
 
 /** 庭上出示過（對質過、逼出緘默權）或結辯講過的論點。 */
@@ -283,7 +300,7 @@ export function presentedArgs(p: Progress): string[] {
     if (!st) continue;
     if (s.type === 'trial') {
       const t = st as trial.TrialState;
-      for (const c of courtScene(p, s).witness.claims)
+      for (const c of s.witness.claims)
         if ((t.claims?.[c.id]?.result ?? 'none') !== 'none') out.add(c.argument);
       if (s.fifth && (t.pleaded || t.stricken)) out.add(s.fifth.argument);
     }
@@ -324,11 +341,46 @@ export function courtScene(p: Progress, s: TrialScene): TrialScene {
   const jurors = vd && st?.seated ? voirdire.panel(vd, st) : s.jurors;
   return {
     ...s,
+    witness: { ...s.witness, direct: directFor(p, s) },
     jurors: shift
       ? jurors.map((j) => ({ ...j, start: Math.max(0, Math.min(100, j.start - shift)) }))
       : jurors,
     patience: Math.max(1, s.patience - (vd && st?.seated ? st.wrong : 0) - cost),
   };
+}
+
+/**
+ * 這一場檢方真正會問的題目：條件不符的不問；審前裁定排除的證據照樣被問出來時，
+ * 正確的異議變成「違反裁定」。
+ */
+function directFor(p: Progress, s: TrialScene): TrialScene['witness']['direct'] {
+  const direct = s.witness.direct;
+  if (!direct.some((q) => q.when || q.barred)) return direct;
+  const c = branchContext(p);
+  return direct
+    .filter((q) => branch.matches(q.when, c))
+    .map((q) =>
+      q.barred && branch.matches(q.barred.when, c)
+        ? { ...q, objection: '違反裁定' as const, sustained: q.barred.sustained ?? trial.BARRED }
+        : q,
+    );
+}
+
+/**
+ * 生效中的排除裁定：本集任何一題的 barred 條件成立時，條件裡點名的卡就是那張裁定。
+ * 回傳卡名，異議窗用來說明「違反裁定」的依據。
+ */
+export function rulingsIn(p: Progress): string[] {
+  const ep = episodeOf(p);
+  const c = branchContext(p);
+  const ids = new Set<string>();
+  for (const s of ep.scenes)
+    if (s.type === 'trial')
+      for (const q of s.witness.direct)
+        if (q.barred && branch.matches(q.barred.when, c))
+          for (const id of q.barred.when.cards ?? ['審前裁定']) ids.add(id);
+  const cards = ep.scenes.flatMap((s) => (s.type === 'desk' ? s.cards : []));
+  return [...ids].map((id) => cards.find((x) => x.id === id)?.name ?? id);
 }
 
 function motionShift(p: Progress): number {
@@ -711,7 +763,7 @@ export const useEpisode = create<GameState>()((set, get) => {
         const p = get().progress;
         const after = juryAfterTrial(p);
         if (!after) return st;
-        return closing.deliver(
+        const out = closing.deliver(
           s,
           st,
           after.rules,
@@ -719,6 +771,18 @@ export const useEpisode = create<GameState>()((set, get) => {
           exposedArgs(p),
           !!promisesOf(p).theory,
         );
+        if (out.verdict !== '有責') return out;
+        return {
+          ...out,
+          award: closing.award(
+            s,
+            after.rules,
+            out.jury,
+            promisesOf(p).theory?.fault ?? 0,
+            punitiveBonus(p, s),
+            promisesOf(p).theory?.faultWhy,
+          ),
+        };
       }),
 
     prepareWitness: (id) => {
@@ -785,7 +849,7 @@ export const useEpisode = create<GameState>()((set, get) => {
       if (!closingArgs(get().progress).some((a) => a.id === id)) return;
       onNego((s, st) => nego.reveal(s, st, id, strength, name));
     },
-    bluff: (id) => onNego((s, st) => nego.bluff(s, st, id)),
+    bluff: (id) => onNego((s, st) => nego.bluff(s, st, id, get().progress.cards)),
     advise: (take) => onNego((s, st) => nego.advise(s, st, take)),
     walkOut: () => onNego((s, st) => nego.walk(s, st)),
     callClient: () => onNego((s, st) => nego.call(s, st)),

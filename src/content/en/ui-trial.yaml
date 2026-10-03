@@ -13,7 +13,7 @@
 休庭: Recess
 成功彈劾: Successful impeachments
 刪除的證詞: Testimony stricken
-'{n} 句': '{n} lines'
+'{n} 句': '{n} line(s)'
 剩餘法官耐心: Judge’s patience left
 調查花掉的工時: Hours spent investigating
 '法官耐心 {a} / {b}': 'Judge’s patience {a} / {b}'
@@ -43,6 +43,8 @@
 開始遴選: Begin jury selection
 陪審團已選定: Jury seated
 '・陪審長': '· Foreperson'
+'對方以有因迴避剔除：{names}': 'Struck for cause by the other side: {names}'
+'{name}（{why}）': '{name} ({why})'
 '沒有根據的聲請有 {n} 次。開庭第一天的法官耐心會少 {n} 點。': 'You made {n} baseless motions. The judge will start trial {n} points less patient.'
 陪審團遴選: Jury selection
 'voirdire::提問': Questions
@@ -60,8 +62,6 @@
 # Case theory and opening statement
 選擇案件理論: Choose case theory
 案件理論: Case theory
-'確定，就用「{name}」': 'Yes, go with “{name}”'
-就用這個理論: Use this theory
 已選定。: Selected.
 手上的論點撐不起任何理論，直接開庭: Your arguments can’t support any theory. Go to court anyway
 開始陳述: Begin opening
@@ -70,7 +70,6 @@
 '承諾 {a} / {b}': 'Promises {a} / {b}'
 '許下 {n} 個承諾': 'Make {n} promises'
 不許任何承諾: Make no promises
-再想想: Think again
 
 # Defense witness
 '準備{name}出庭': 'Prepare {name} to testify'
@@ -84,10 +83,15 @@
 # Closing argument and verdict
 判決: Verdict
 '第 {n} 輪評議': 'Deliberation round {n}'
+損害總額: Total damages
+死者過失比例: Decedent's share of fault
+判賠金額: Award
+懲罰性賠償: Punitive damages
+'不成立（{votes} 票，需要 {need} 票）': 'Not found ({votes} votes, {need} needed)'
 '・ 基調 {state}': '· Tone {state}'
 已選: set
 未選: not set
-'手上的論點不夠，結辯會空 {n} 格，{other}的說法沒人反駁。': 'You’re short on arguments: {n} closing slots will stay empty and nobody rebuts {other}’s account.'
+'手上的論點不夠，結辯會空 {n} 格，{other}的說法沒人反駁。': 'You’re short on arguments: {n} closing slots will stay empty, and the other side’s account goes unanswered.'
 沒有案件理論，論點說服力打七折。: No case theory, so your arguments are 30% less persuasive.
 '開場許下的 {n} 個承諾沒有兌現，陪審員記得你說過的話。': '{n} promises from your opening went unkept. The jurors remember what you said.'
 結辯: Closing argument
@@ -100,3 +104,61 @@
 （已洩漏）: (Exposed)
 手上沒有確認過的論點。: You have no confirmed arguments.
 '・最後講，×1.3': '· Delivered last, ×1.3'
+'「{text}」': '“{text}”'
+特別判決表: Special verdict form
+損害總額扣掉死者過失的部分: Total damages less the decedent's share
+被告應付: Defendant owes
+開庭若判有責: If the jury finds liability at trial
+'約 {low}到 {high}': 'About {low} to {high}'
+懲罰性賠償另計: Punitive damages on top
+這一案的帳: How this case added up
+票數: Votes
+'站你這邊 {a} 位，需要 {b} 位': '{a} with you, {b} needed'
+'差 {k} 位': '{k} short'
+庭審結束: After testimony
+結辯後: After closing
+評議後: After deliberation
+'{label} {n} 位': '{label}: {n}'
+走勢: Trend
+陪審團起點: Jury starts
+判你方有責: finding your side liable
+判你方有罪: finding your side guilty
+'一開始就偏向{toward}：{n} / 3': 'Leaning toward {toward} from the start: {n} / 3'
+'{tags}取向的陪審員反彈': 'Jurors who lead with {tags} push back'
+你帶進評議室的: What you carry into deliberation
+承諾: Promises
+'可許 {n} 個承諾，沒兌現會反噬': 'Up to {n} promises; broken ones come back at you'
+代價: Cost
+'還缺 {list}': 'Still missing {list}'
+以這個理論開庭: Go to trial on this theory
+理論靠的論點: The theory rests on
+點一張卡比較，再按下面的「以這個理論開庭」定案。: Pick a card to compare, then press “Go to trial on this theory” below to commit.
+'生效中：{rulings}': 'In effect: {rulings}'
+為什麼贏: Why you won
+主因: Main reasons
+下次可以試: Next time
+完整帳目: Full ledger
+'（{where}）': ' ({where})'
+開場: Opening
+庭審: Trial
+若判有責: If found liable
+案件理論「{name}」讓陪審團一開始就偏向對方: 'The theory “{name}” started the jury leaning against you'
+開場許下的 {n} 個承諾沒兌現: 'Promises from your opening went unkept ({n})'
+結辯有空格，對方的說法沒人反駁: Your closing had an empty slot, so the other side went unanswered
+沒有案件理論，論點說服力打了折: With no case theory, your arguments landed weaker
+結辯基調「{tone}」不合這群陪審員: "The closing tone “{tone}” didn't suit this jury"
+結辯用了對方早有準備的論點：{list}: 'Your closing used points the other side was ready for: {list}'
+'{who}的證詞沒有被彈劾': "{who}'s testimony was never impeached"
+開示時硬藏的 {n} 份資料被揭穿: 'Documents you withheld in discovery came out ({n})'
+懲罰性賠償成立，另加 {money}: 'Punitive damages found: another {money}'
+起點偏的理論，要靠更多彈劾把陪審員拉回來。: A theory that starts behind needs more impeachments to win jurors back.
+先把論點確認起來，再在開場許承諾。: Confirm your points before you make promises in the opening.
+調查時多確認幾個論點，結辯才填得滿。: Confirm more points during the investigation so your closing is full.
+開庭前選一個案件理論，論點才有方向。: Pick a case theory before trial so your points have a direction.
+結辯基調要對著陪審員的取向挑。: Choose the closing tone for the jurors you actually have.
+談判時攤過的牌對方會備好說法，結辯換別的論點。: Cards you showed in negotiation get an answer ready; close on other points.
+先鎖定證詞，再出示論點，彈劾才會成立。: Lock the testimony first, then show your point, and the impeachment holds.
+開示時硬藏的東西被揭穿，比交出去更傷。: Withholding in discovery hurts more than handing it over once it comes out.
+懲罰性賠償看的是被告隱瞞了什麼，開示和證據要先處理。: Punitive damages turn on what the defendant hid; deal with discovery and the evidence first.
+懲罰性賠償可能再加同額: Punitive damages could add the same amount again
+懲罰性賠償可能另加 {r} 倍: 'Punitive damages could add {r}× on top'

@@ -3,8 +3,28 @@ import type { Tag } from '../schema';
 import type { TrialScene } from './schema';
 
 export type Lock = 'none' | 'weak' | 'strong';
-export type Objection = '誘導' | '傳聞' | '推測' | '無關' | '已問已答' | '缺乏基礎';
-export const OBJECTIONS: Objection[] = ['誘導', '傳聞', '推測', '無關', '已問已答', '缺乏基礎'];
+export type Objection =
+  '誘導' | '傳聞' | '推測' | '無關' | '品格證據' | '已問已答' | '缺乏基礎' | '違反裁定';
+export const OBJECTIONS: Objection[] = [
+  '誘導',
+  '傳聞',
+  '推測',
+  '無關',
+  '品格證據',
+  '已問已答',
+  '缺乏基礎',
+];
+/** 審前裁定排除的證據被檢方照樣帶出來，法官的預設台詞。 */
+export const BARRED =
+  '異議成立。本庭已經裁定排除這項證據，不得在陪審團面前提出。陪審團請不要理會。';
+
+/**
+ * 可以用的異議：手上有生效的排除裁定時，每一場都多一個「違反裁定」，
+ * 不會只在有題目要擋的那一場才出現（不然按鈕本身就洩題）。
+ */
+export function objectionsFor(rulings: readonly string[]): Objection[] {
+  return rulings.length ? [...OBJECTIONS, '違反裁定'] : OBJECTIONS;
+}
 
 export interface LogLine {
   who: string;
@@ -44,6 +64,31 @@ export interface TrialState {
   /** 檢方主詰問結束時的心證；交互詰問拆掉多少，就從這裡比。 */
   directEnd?: Jury;
   log: LogLine[];
+  /** 開庭以來說過的總句數（log 只留最後幾句）。 */
+  said?: number;
+  /** 最近一次出示論點帶出的句數：休庭畫面要把這一整段放完，不能只剩最後幾句。 */
+  turn?: number;
+  /** 檢方記下、要等交互詰問結束才問的再主詰問（連同證人回答與盧卡斯的回應）。 */
+  redirect?: LogLine[];
+}
+
+/** 交互詰問中途碰到已洩漏的論點，檢方先記下，這一句代替當場插話。 */
+export const noted = (examiner: string) => `${examiner}在筆記本上寫了一行字，沒有起身。`;
+/** 再主詰問開頭，由檢方說，只在有記下的反擊時出現一次。 */
+export const REDIRECT = '庭上，檢方再主詰問。';
+
+/** 交互詰問結束：檢方把記下的再主詰問一次問完。 */
+function closeCross(st: TrialState, extra: LogLine[] = []): TrialState {
+  const asked = st.redirect ?? [];
+  const lines = [
+    ...(asked.length ? [{ who: asked[0].who, text: REDIRECT }] : []),
+    ...asked,
+    ...extra,
+  ];
+  if (!lines.length) return st;
+  const from = st.said ?? st.log.length;
+  const next = say({ ...st, redirect: [] }, ...lines);
+  return { ...next, turn: Math.min(LOG_KEEP, (next.said ?? 0) - from) };
 }
 
 export const JUDGE = '法官';
@@ -115,9 +160,12 @@ export function startTrial(
   };
 }
 
+export const LOG_KEEP = 16;
+
 const say = (st: TrialState, ...lines: LogLine[]): TrialState => ({
   ...st,
-  log: [...st.log, ...lines].slice(-10),
+  log: [...st.log, ...lines].slice(-LOG_KEEP),
+  said: (st.said ?? st.log.length) + lines.length,
 });
 
 /** 扣法官耐心；歸零＝公開訓斥，全體有罪傾向 +5，剩下的詰問取消（企劃書 6.11）。 */
@@ -129,6 +177,9 @@ function losePatience(s: TrialScene, st: TrialState, why: string): TrialState {
       { ...next, jury: r.jury, deltas: r.deltas, rebuked: true, stage: 'done' },
       { who: JUDGE, text: '律師，我警告過你了。詰問到此為止，本庭不容許這樣浪費陪審團的時間。' },
     );
+    // 辯方被叫停，檢方的再主詰問照樣要問。
+    next = closeCross(next);
+    next = { ...next, turn: Math.min(LOG_KEEP, (next.said ?? 0) - (st.said ?? st.log.length)) };
   }
   return next;
 }
@@ -248,9 +299,11 @@ export function confront(
   // 底牌反擊（企劃書 6.8）：論點洩漏過，檢方早就備好說法，破解不了就衝擊減半。
   const counter = c.counter && arg.exposed && c.counter.argument === arg.id ? c.counter : null;
   const broke = !arg.exposed ? true : counter ? (arg.cards ?? []).includes(counter.needs) : false;
+  // 真實程序裡再主詰問在交互詰問全部結束後才輪到檢方：這裡先記下，收尾時一次播。
   const rebuttal: LogLine[] = counter
     ? [
         { who: s.examiner ?? DA, text: counter.text },
+        ...(counter.answer ? [{ who: s.witness.name, text: counter.answer }] : []),
         { who: YOU, text: broke ? counter.broken : counter.failed },
       ]
     : [];
@@ -264,9 +317,10 @@ export function confront(
       impeachments: st.impeachments + (impeached ? 1 : 0),
       claims: { ...st.claims, [claimId]: { ...cur, result: impeached ? 'impeached' : 'softened' } },
     },
-    ...rebuttal,
     { who: s.witness.name, text: impeached ? c.confront.strong : c.confront.weak },
+    ...(rebuttal.length ? [{ who: '旁白', text: noted(s.examiner ?? DA) }] : []),
   );
+  if (rebuttal.length) next = { ...next, redirect: [...(next.redirect ?? []), ...rebuttal] };
   if (impeached) next = say(next, { who: '旁白', text: s.witness.breakdown });
   // 開場承諾兌現（企劃書 6.9.3）：陪審員記得你說過的話，全體往辯方移。
   const p = arg.promise;
@@ -284,11 +338,13 @@ export function confront(
   const f = s.fifth;
   if (f && arg.id === f.argument && next.impeachments >= f.needs) {
     const lines = f.lines.map((l) => ({ who: l.who, text: l.text }));
+    // 她援引緘默權，交互詰問就此結束：檢方記下的再主詰問先問完，緘默權那幾句接在後面。
+    const asked = closeCross(next);
     if (!f.theory || arg.theory === f.theory)
-      next = say({ ...next, stage: 'done', pleaded: true }, ...lines);
-    else next = strike(s, next, lines);
+      next = say({ ...asked, stage: 'done', pleaded: true }, ...lines);
+    else next = strike(s, asked, lines);
   }
-  return next;
+  return { ...next, turn: Math.min(LOG_KEEP, (next.said ?? 0) - (st.said ?? st.log.length)) };
 }
 
 export const STRUCK_DEFAULT =
@@ -337,5 +393,5 @@ export function badger(s: TrialScene, st: TrialState, i: number): TrialState {
 }
 
 export function finish(st: TrialState): TrialState {
-  return { ...st, stage: 'done', deltas: {} };
+  return { ...closeCross(st), stage: 'done', deltas: {} };
 }

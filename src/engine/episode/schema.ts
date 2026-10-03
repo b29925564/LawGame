@@ -69,10 +69,14 @@ const when = z.object({
   deal: z.array(id).optional(),
   /** 這些卡片或論點全部都要在手上。 */
   cards: z.array(id).optional(),
+  /** 這些卡片或論點一張都不能在手上。 */
+  notCards: z.array(id).optional(),
   /** 倫理帳本裡至少有其中一筆。 */
   ethics: z.array(z.string()).optional(),
   /** 這些論點全部都在庭上出示過（對質或逼出緘默權）或結辯用過。 */
   presented: z.array(id).optional(),
+  /** 懲罰性賠償成立（true）或沒有成立（false，包括根本沒進入那一輪）。 */
+  punitive: z.boolean().optional(),
 });
 
 /**
@@ -412,9 +416,16 @@ const trialScene = z.object({
           a: z.string(),
           /** 這個問題可以異議的正確理由；null 代表問題沒有毛病。 */
           objection: z
-            .enum(['誘導', '傳聞', '推測', '無關', '已問已答', '缺乏基礎'])
+            .enum(['誘導', '傳聞', '推測', '無關', '品格證據', '已問已答', '缺乏基礎', '違反裁定'])
             .nullable()
             .default(null),
+          /** 條件不符就不問（例如沒有排除裁定時才問）。條件要在開庭前就確定，庭審中途不能變。 */
+          when: when.optional(),
+          /**
+           * 審前裁定排除了這題要帶出的證據：條件成立時檢方照問，正確的異議變成「違反裁定」，
+           * sustained 不填就用法官的預設台詞。
+           */
+          barred: z.object({ when, sustained: z.string().optional() }).optional(),
           /** 沒異議的話，這句證詞往有罪方向推的力道。 */
           impact: z.number().int().min(0).default(0),
           tags: z.array(z.enum(tags)).default([]),
@@ -443,6 +454,8 @@ const trialScene = z.object({
             .object({
               argument: id,
               text: z.string(),
+              /** 證人回答再主詰問的那一句；有寫才插在盧卡斯回應之前。 */
+              answer: z.string().optional(),
               /** 破解要出示的卡片。 */
               needs: id,
               broken: z.string(),
@@ -597,7 +610,7 @@ const negotiationScene = z.object({
       over: z.array(line).min(1),
     })
     .optional(),
-  /** 已開示給對方的證據清單（審前交換過的）。 */
+  /** 舊欄位，已不使用：虛張聲勢改看玩家手上真的拿到的證據。 */
   disclosed: z.array(id).default([]),
   reveals: z.array(line).default([]),
   walkOut: z.array(line).min(1),
@@ -707,6 +720,10 @@ const theoryScene = z.object({
             note: z.string(),
           })
           .optional(),
+        /** 判有責時，陪審團認定死者自己的過失比例（百分比），判賠金額照比例扣。 */
+        fault: z.number().int().min(0).max(100).optional(),
+        /** 判決表上過失比例旁的一句理由：陪審團為什麼認為死者有這麼多錯。 */
+        faultWhy: z.string().optional(),
         promises: z
           .array(
             z.object({
@@ -798,6 +815,23 @@ const closingScene = z.object({
   }),
   /** 依條件改寫的結局，第一個符合的取代 verdicts 裡的那一段。 */
   endings: z.array(z.object({ id, when, lines: z.array(line).min(1) })).default([]),
+  /**
+   * 民事判決的金額：判有責時，損害總額扣掉死者過失比例（理論的 fault，依票數離門檻多近浮動 swing 個百分點）。
+   * punitive：懲罰性賠償另外評議一輪，門檻較高（明確且令人信服）；符合 when 其中一項才進入，bonus 是不利推定之類的加成。
+   */
+  damages: z
+    .object({
+      total: z.number().int().min(0),
+      swing: z.number().int().min(0).default(5),
+      punitive: z
+        .object({
+          threshold: z.number().int().min(1).max(100).default(65),
+          ratio: z.number().min(0).default(2),
+          when: z.array(z.object({ when, bonus: z.number().int().default(0) })).min(1),
+        })
+        .optional(),
+    })
+    .optional(),
 });
 
 const scene = z.discriminatedUnion('type', [

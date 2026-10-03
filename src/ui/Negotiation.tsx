@@ -2,8 +2,8 @@ import { useCaseTerms } from './terms';
 import { useState } from 'react';
 import * as nego from '../engine/episode/negotiation';
 import type { NegotiationScene } from '../engine/episode/schema';
-import { closingArgs, negoState, useEpisode } from '../engine/game';
-import { useT } from '../i18n';
+import { closingArgs, negoState, trialRisk, useEpisode } from '../engine/game';
+import { useMoney, useT } from '../i18n';
 import { CardPick, EvidenceDrawer } from './Evidence';
 import { useScope } from './lang';
 import { Speech } from './Portrait';
@@ -21,6 +21,8 @@ export function Negotiation({ scene }: { scene: NegotiationScene }) {
   const args = closingArgs(progress);
   const offer = nego.offerOf(scene, st);
   const ok = nego.authorized(scene, st, offer);
+  const money = useMoney();
+  const risk = trialRisk(progress);
 
   if (intro)
     return (
@@ -125,6 +127,16 @@ export function Negotiation({ scene }: { scene: NegotiationScene }) {
                   </dd>
                 </>
               )}
+              {/* 和解金額旁邊直接放開庭的風險，兩個數字放在一起比。 */}
+              {risk && (
+                <>
+                  <dt className="risk">{t('開庭若判有責')}</dt>
+                  <dd className="risk">
+                    {t('約 {low}到 {high}', { low: money(risk.low), high: money(risk.high) })}
+                    {risk.punitive && <small>{t('懲罰性賠償另計')}</small>}
+                  </dd>
+                </>
+              )}
             </dl>
           )}
           {offer.lines.map((l, i) => (
@@ -188,5 +200,3 @@ export function Negotiation({ scene }: { scene: NegotiationScene }) {
     </Shell>
   );
 }
-
-const money = (n: number) => `$${n.toLocaleString('en-US')}`;

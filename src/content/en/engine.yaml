@@ -6,16 +6,18 @@
 伊恩: Ian
 旁白: Narrator
 對造律師: Opposing counsel
-莫羅檢察官: DA Moreau
+莫羅檢察官: Prosecutor Morrow
 
 # 異議種類
 誘導: Leading
 傳聞: Hearsay
 推測: Speculation
 無關: Relevance
+品格證據: Improper character evidence
 已問已答: Asked and answered
 缺乏基礎: Lack of foundation
 特權: Privilege
+違反裁定: Violates the court's ruling
 
 # 推理關係與論點標籤
 矛盾: Contradicts
@@ -44,10 +46,13 @@
 皺眉: Frowns
 看向被告: Looks at the defendant
 '{juror}被多數說服，改變了立場。': '{juror} is swayed by the majority and changes sides.'
-'陪審長（{juror}）主張{verdict}。': 'The foreperson ({juror}) argues for {verdict}.'
+'陪審長（{juror}）主張{verdict}。': 'The foreperson ({juror}) argues for {verdict:lower}.'
+討論繼續。有人說話，有人沉默，沒有人換邊。: Discussion goes on. Some talk, some stay silent. Nobody switches sides.
+最後一輪。大家都說完了，立場沒有再動。: Final round. Everyone has had their say; nobody moves.
+'表決：{yes} 票{a}，{no} 票{b}。': 'Vote: {yes} {a:lower}, {no} {b:lower}.'
 
 # 庭審
-'異議，{reason}。': 'Objection, {reason}.'
+'異議，{reason}。': 'Objection, {reason:lower}.'
 異議成立。陪審團請不要理會這個問題。: Sustained. The jury will disregard the question.
 異議駁回。律師，這個問題沒有問題。: Overruled. There's nothing wrong with that question, counsel.
 '辯方可以詰問{name}。': 'The defense may examine {name}.'
@@ -55,6 +60,7 @@
 '檢方傳喚{name}。辯方可以開始詰問。': 'The prosecution calls {name}. The defense may begin.'
 異議，缺乏證據基礎。這份資料還沒有被本庭採納。: Objection, lack of foundation. That material hasn't been admitted.
 異議成立。律師，先建立基礎。: Sustained. Lay a foundation first, counsel.
+異議成立。本庭已經裁定排除這項證據，不得在陪審團面前提出。陪審團請不要理會。: 'Sustained. This court has already excluded that evidence, and it may not be put before the jury. The jury will disregard it.'
 律師，證人還沒有就這一點作證。: Counsel, the witness hasn't testified to that yet.
 開場時你許下的承諾，兌現了。陪審團記得。: You kept the promise you made in your opening. The jury remembers.
 陪審團請注意：本席裁定，證人的證詞全部刪除。各位評議時不得列入考慮。: "Members of the jury: the witness's testimony is stricken in its entirety. You may not consider it in your deliberations."
@@ -69,7 +75,7 @@
 
 # 錄取證詞
 我指示證人不要回答。: I'm instructing the witness not to answer.
-'異議，{reason}。（庭外取證沒有法官裁決，異議只記錄在案，證人仍須回答）': 'Objection, {reason}. (No judge at a deposition: the objection is noted for the record and the witness must still answer.)'
+'異議，{reason}。（庭外取證沒有法官裁決，異議只記錄在案，證人仍須回答）': 'Objection, {reason:lower}. (No judge at a deposition: the objection is noted for the record and the witness must still answer.)'
 
 # 桌面
 這條已經連過了。: You've already linked these.
@@ -86,3 +92,5 @@
 # 存檔標籤
 '第 {n} 集・{act}': 'Episode {n} · {act}'
 本集完: End of episode
+'{who}在筆記本上寫了一行字，沒有起身。': '{who} writes a line in a notepad and stays seated.'
+庭上，檢方再主詰問。: Redirect, Your Honor.

@@ -63,19 +63,34 @@ export function Interview({ scene }: { scene: InterviewScene }) {
 
       {ending ? null : (
         <section className="panel actions">
-          <div className="row" role="tablist">
-            <button role="tab" aria-selected={tab === 'ask'} onClick={() => setTab('ask')}>
-              {t('提問')}
-            </button>
-            <button role="tab" aria-selected={tab === 'press'} onClick={() => setTab('press')}>
-              {t('施壓')}
-            </button>
+          {/* 提問／施壓是分頁；安撫是動作，放在分頁列外面（無障礙審查第 7 條）。 */}
+          <div className="row">
+            <div className="row" role="tablist" aria-label={t('問法')}>
+              <button
+                role="tab"
+                id="iv-tab-ask"
+                aria-controls="iv-panel"
+                aria-selected={tab === 'ask'}
+                onClick={() => setTab('ask')}
+              >
+                {t('提問')}
+              </button>
+              <button
+                role="tab"
+                id="iv-tab-press"
+                aria-controls="iv-panel"
+                aria-selected={tab === 'press'}
+                onClick={() => setTab('press')}
+              >
+                {t('施壓')}
+              </button>
+            </div>
             <button disabled={(st.calms ?? scene.calms) <= 0} onClick={calm}>
               {t('安撫（剩 {n} 次）', { n: st.calms ?? scene.calms })}
             </button>
           </div>
           {tab === 'ask' ? (
-            <ul className="stack">
+            <ul className="stack" id="iv-panel" role="tabpanel" aria-labelledby="iv-tab-ask">
               {topics.map((tp) => (
                 <li key={tp.id}>
                   <button className="wide" onClick={() => ask(tp.id)}>
@@ -86,7 +101,7 @@ export function Interview({ scene }: { scene: InterviewScene }) {
               {topics.length === 0 && <li className="muted">{t('沒有別的想問了。')}</li>}
             </ul>
           ) : (
-            <ul className="stack">
+            <ul className="stack" id="iv-panel" role="tabpanel" aria-labelledby="iv-tab-press">
               {scene.press
                 .filter((p) => !st.pressed.includes(p.id))
                 .map((p) => (
