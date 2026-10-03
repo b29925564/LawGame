@@ -112,6 +112,10 @@
   --list-w: 260px;
   /* 捲動框（.shell-body）頂端留 2px 給焦點框；釘頂的東西往上補回這 2px，上緣才不會露出捲過去的內容。 */
   --stick-top: -2px;
+  /* 桌面的光（視覺規格 §4；之後 3D 桌面進來就拿掉）：檯燈在左上，天光在上，四角壓暗。 */
+  --lamp: light-dark(rgb(255 236 200 / 55%), rgb(255 190 110 / 10%));
+  --sky: light-dark(rgb(255 255 255 / 70%), rgb(62 80 104 / 22%));
+  --vignette: light-dark(rgb(24 36 52 / 10%), rgb(0 0 0 / 45%));
 
   /* 紙張雜訊，疊在底色上讓大片的墨色不那麼平。 */
   --grain: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .5 0 0 0 0 .5 0 0 0 0 .5 0 0 0 .07 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
@@ -136,14 +140,11 @@ body {
   color: var(--text);
   font: var(--fs-ui-body) / var(--lh-body) var(--font);
   -webkit-font-smoothing: antialiased;
+  /* 面板永遠是桌上最亮的東西：桌面有燈、有暗角，介面住在光裡（視覺規格 §4）。 */
   background:
-    var(--grain),
-    radial-gradient(
-      120% 70% at 50% -10%,
-      light-dark(rgb(255 255 255 / 70%), rgb(62 80 104 / 22%)),
-      transparent 60%
-    ),
-    var(--bg);
+    var(--grain), radial-gradient(140% 110% at 50% 40%, transparent 55%, var(--vignette) 100%),
+    radial-gradient(900px 520px at 18% -8%, var(--lamp), transparent 70%),
+    radial-gradient(120% 70% at 50% -10%, var(--sky), transparent 60%), var(--bg);
   background-attachment: fixed;
 }
 ::selection {
@@ -424,7 +425,10 @@ details summary {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  box-shadow: var(--inset-hi), var(--shadow-1);
+  box-shadow:
+    var(--inset-hi),
+    var(--shadow-1),
+    0 24px 48px -24px var(--shadow-deep);
 }
 .panel > p {
   margin: 0;
@@ -916,7 +920,7 @@ details summary {
 /* 桌面的狀態列：工時是整幕最重要的數字。 */
 .taskbar,
 .bench {
-  min-height: 40px;
+  min-height: var(--taskbar-h);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -931,15 +935,15 @@ details summary {
 .hours {
   display: flex;
   align-items: baseline;
-  gap: 6px;
+  gap: var(--s2);
   color: var(--muted);
-  font-size: 13px;
-  letter-spacing: 0.1em;
+  font-size: var(--fs-ui-meta);
+  letter-spacing: var(--track-label);
 }
 .hours strong {
   font-family: var(--font-mono);
-  font-size: 30px;
-  font-weight: 700;
+  font-size: var(--fs-ui-num);
+  font-weight: 600;
   line-height: 1;
   letter-spacing: -0.02em;
   color: var(--accent);
@@ -947,6 +951,8 @@ details summary {
 .taskbar > .muted {
   text-align: right;
   line-height: 1.35;
+  font-size: var(--fs-ui-meta);
+  letter-spacing: var(--track-label);
 }
 .bench .eyebrow,
 .bench .patience {
@@ -1044,11 +1050,12 @@ details summary {
   margin-left: 6px;
   padding: 0 5px;
   border-radius: 9px;
-  background: var(--bad);
-  color: #fff;
+  /* 未讀數是「該看了」，不是錯誤：螢光筆黃，不用紅（視覺規格 §4）。 */
+  background: var(--hl);
+  color: var(--hl-ink);
   font-family: var(--font-mono);
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 600;
   vertical-align: 2px;
 }
 
@@ -4804,8 +4811,9 @@ button.iou[aria-pressed='true'] {
   .board3 {
     grid-template-columns: 260px minmax(0, 1fr);
   }
-  .shell:has(.board3) > .shell-foot {
-    width: 260px;
+  /* 書桌五個分頁同一個寬度（體驗評測：證據板 260、其他分頁滿版，兄弟分頁不一致）。 */
+  .shell:has(> .shell-head > .taskbar) > .shell-foot {
+    width: var(--list-w);
   }
 }
 .q-list ul {
@@ -5372,7 +5380,7 @@ button.iou[aria-pressed='true'] {
     grid-template-columns: 220px minmax(0, 1fr);
     gap: 16px;
   }
-  .shell:has(.board3) > .shell-foot {
+  .shell:has(> .shell-head > .taskbar) > .shell-foot {
     width: 220px;
   }
 }
@@ -7534,4 +7542,92 @@ html[lang='en'] .vform .fh h2 {
 }
 html[lang='en'] .vform .fh .c {
   letter-spacing: 0.08em;
+}
+
+/*
+ * 書桌頂列一列 48 高（視覺規格 §4）：工時、分頁同一條基線，預審與選單靠右；
+ * 底線從內容左緣拉到證據欄右緣（外框格線內，不滿版）。證據欄頂端對齊頂列下方。
+ */
+@media (min-width: 1024px) {
+  .shell:has(> .shell-head > .taskbar) {
+    --drawer-gutter: 372px;
+    grid-template-rows: var(--taskbar-h) minmax(0, 1fr) auto;
+  }
+  .shell:has(> .shell-head > .taskbar) > .shell-head {
+    grid-row: 1;
+    margin-right: calc(-1 * var(--drawer-gutter));
+  }
+  .shell:has(> .shell-head > .taskbar) > .shell-tabs {
+    grid-row: 1;
+    align-self: stretch;
+    justify-self: start;
+    /* 工時欄固定 96 寬＋間距 32，分頁從同一個位置開始，工時位數變了也不跳。 */
+    margin-left: calc(96px + var(--s6));
+    z-index: 1;
+  }
+  .shell:has(> .shell-head > .taskbar) > .shell-body {
+    grid-row: 2;
+    /* 捲到底時最後一塊面板的底框要捲得進視野；底緣淡出，跟證據欄一樣看得出是刻意捲動。 */
+    padding-bottom: var(--s5);
+    mask-image: linear-gradient(to bottom, #000 calc(100% - 24px), transparent);
+  }
+  .shell:has(> .shell-head > .taskbar) > .shell-foot {
+    grid-row: 3;
+  }
+  .taskbar {
+    height: var(--taskbar-h);
+    padding: 0 calc(80px + var(--s4)) 0 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .taskbar .hours {
+    min-width: 96px;
+  }
+  .shell:has(> .shell-head > .taskbar) > .shell-tabs > .apps {
+    height: 100%;
+    border-bottom: none;
+    overflow: visible;
+  }
+  .shell:has(> .shell-head > .taskbar) > .shell-tabs > .apps button {
+    height: 100%;
+    min-height: 0;
+    padding: 0 var(--s3);
+    font-size: var(--fs-ui-row);
+  }
+  .shell:has(> .shell-head > .taskbar) > .shell-tabs > .apps [aria-current='true'] {
+    background: none;
+    box-shadow: none;
+  }
+  .shell:has(> .shell-head > .taskbar) > .shell-tabs > .apps button::after {
+    display: block;
+    left: var(--s3);
+    right: var(--s3);
+    height: 2px;
+    border-radius: 0;
+  }
+  :root:has(.taskbar) .side-wrap {
+    top: calc(16px + var(--taskbar-h) + 10px);
+  }
+  /* 選單鈕跟著頂列：垂直置中，右緣對齊證據欄右緣。 */
+  :root:has(.taskbar) .game-menu {
+    top: calc(16px + (var(--taskbar-h) - 40px) / 2);
+    right: max(24px, calc((100vw - 1480px) / 2 + 24px));
+  }
+  /* 答案面板照順序排在發現下面，不疊在上面（視覺設計師、體驗評測）；中欄自己捲。 */
+  .board3 .answer-bar {
+    position: static;
+    box-shadow:
+      var(--inset-hi),
+      var(--shadow-1),
+      0 24px 48px -24px var(--shadow-deep);
+  }
+  /* 證據欄清單捲到底留 24，底緣淡出，看得出是刻意捲動，不是截在半列。 */
+  .sheet.side .sheet-list {
+    padding-bottom: var(--s5);
+    mask-image: linear-gradient(to bottom, #000 calc(100% - 24px), transparent);
+  }
+}
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .shell:has(> .shell-head > .taskbar) {
+    --drawer-gutter: 340px;
+  }
 }
