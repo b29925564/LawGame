@@ -244,6 +244,10 @@ describe('瑞秋援引緘默權：理論決定撤訴還是刪除證詞（企劃�
     for (const [id, v] of Object.entries(st.jury))
       expect(v).toBeLessThanOrEqual(st.opening![id] - trial.FIFTH_LEAN);
     expect(st.log.some((l) => l.who === trial.JUDGE)).toBe(true);
+    // 休庭畫面不能一邊說「全部刪除」一邊寫「刪除的證詞 0 句」。
+    const said = st.log.filter((l) => l.who === court.witness.name).length;
+    expect(said).toBeGreaterThan(0);
+    expect(st.struck).toBe(said);
   });
 
   it('只在瑞秋那場逼出緘默權、三個承諾全跳票：仍然無罪（緘默權的分量夠重）', () => {
