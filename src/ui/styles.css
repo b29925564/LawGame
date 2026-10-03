@@ -7690,6 +7690,8 @@ html[lang='en'] .vform .fh .c {
 }
 /* 調解的條件階梯：每一檔信心門檻對應的條件，目前這一檔用螢光標示。 */
 .nego-ladder {
+  /* 價和標記不要隔半個畫面（體驗評測 v89）。 */
+  max-width: 560px;
   list-style: none;
   margin: var(--s2) 0 var(--s3);
   padding: 0;
@@ -7711,13 +7713,17 @@ html[lang='en'] .vform .fh .c {
   font-weight: 600;
 }
 .nego-ladder .tg {
+  display: flex;
+  gap: 8px;
   font-size: 13px;
+}
+.nego-ladder .tg b {
+  color: var(--text);
+}
+.nego-ladder .tg em {
+  font-style: normal;
   color: var(--bad);
 }
 .nego-ladder li.on {
   background: color-mix(in srgb, var(--hl) 22%, transparent);
-}
-.nego-ladder li.on .tg {
-  color: var(--text);
-  font-weight: 700;
 }
