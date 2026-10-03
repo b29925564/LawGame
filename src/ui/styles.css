@@ -7542,6 +7542,7 @@ html[lang='en'] .vform .fh h2 {
 }
 html[lang='en'] .vform .fh .c {
   letter-spacing: 0.08em;
+}
 
 /*
  * 書桌頂列一列 48 高（視覺規格 §4）：工時、分頁同一條基線，預審與選單靠右；
@@ -7566,6 +7567,9 @@ html[lang='en'] .vform .fh .c {
   }
   .shell:has(> .shell-head > .taskbar) > .shell-body {
     grid-row: 2;
+    /* 捲到底時最後一塊面板的底框要捲得進視野；底緣淡出，跟證據欄一樣看得出是刻意捲動。 */
+    padding-bottom: var(--s5);
+    mask-image: linear-gradient(to bottom, #000 calc(100% - 24px), transparent);
   }
   .shell:has(> .shell-head > .taskbar) > .shell-foot {
     grid-row: 3;
