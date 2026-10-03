@@ -110,6 +110,8 @@ export function finish(s: DefenseScene, st: DefenseState, rules: JuryRules): Def
   // 前面的選擇讓對方多了能問的題（條件已在 witnessScene 篩過）。
   for (const x of s.cross) {
     if ((x.unlessAsked ?? []).some((id) => st.asked.includes(id))) continue;
+    const need = x.ifAsked ?? [];
+    if (need.length && !need.some((id) => st.asked.includes(id))) continue;
     const r = shiftAll(rules, next.jury, x.penalty);
     next = say(
       { ...next, jury: r.jury },

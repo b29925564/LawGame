@@ -547,11 +547,15 @@ function branchErrors(s: Episode['scenes'][number], e: Episode, errors: string[]
     }
     s.cross.forEach((x, i) => {
       check(x.when, `辯方證人 ${s.id} 的反詰問追加第 ${i + 1} 題`);
-      for (const q of x.unlessAsked ?? [])
-        if (!s.questions.some((y) => y.id === q))
-          errors.push(
-            `辯方證人 ${s.id} 的反詰問追加第 ${i + 1} 題 unlessAsked 引用了不存在的題目：${q}`,
-          );
+      for (const [k, ids] of [
+        ['unlessAsked', x.unlessAsked ?? []],
+        ['ifAsked', x.ifAsked ?? []],
+      ] as const)
+        for (const q of ids)
+          if (!s.questions.some((y) => y.id === q))
+            errors.push(
+              `辯方證人 ${s.id} 的反詰問追加第 ${i + 1} 題 ${k} 引用了不存在的題目：${q}`,
+            );
     });
     for (const o of s.prep.options) check(o.when, `辯方證人 ${s.id} 的準備選項 ${o.id}`);
     // 條件全不符時沒有準備方式可選，玩家會卡住。
