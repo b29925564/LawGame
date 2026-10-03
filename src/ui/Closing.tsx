@@ -302,7 +302,16 @@ function VerdictForm({ award }: { award: closing.Award }) {
         <dd>{money(award.total)}</dd>
         <dt>{t('死者過失比例')}</dt>
         <dd>
-          {award.fault}%{award.why && <small>{t(award.why, scope)}</small>}
+          {award.fault}%
+          {award.base !== undefined && award.base !== award.fault && (
+            <small>
+              {t('理論 {base}%，票數浮動 {d}', {
+                base: award.base,
+                d: `${award.fault > award.base ? '+' : '−'}${Math.abs(award.fault - award.base)}`,
+              })}
+            </small>
+          )}
+          {award.why && <small>{t(award.why, scope)}</small>}
         </dd>
         <dt>{t('判賠金額')}</dt>
         <dd>
