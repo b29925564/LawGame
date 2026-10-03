@@ -7725,5 +7725,10 @@ html[lang='en'] .vform .fh .c {
   color: var(--bad);
 }
 .nego-ladder li.on {
-  background: color-mix(in srgb, var(--hl) 22%, transparent);
+  /* 目前這一檔：螢光筆底＋左緣一條黃。深色模式的 wash 只有 8%，門檻字才不會被底色吃掉（體驗評測 v89：3.23）。 */
+  background: var(--hl-wash);
+  box-shadow: inset 3px 0 0 var(--hl);
+}
+.nego-ladder li.on .th {
+  color: var(--text);
 }
