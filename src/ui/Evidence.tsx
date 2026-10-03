@@ -263,7 +263,10 @@ export function EvidenceCard({
             </span>
           )}
           <strong>{t(item.name, scope)}</strong>
-          <span className="mini-meta">{stamp(item, scope) || t(item.kind)}</span>
+          {/* 論點卡名已經寫「論點 A」、前面又有 ◆，右邊不再寫一次「論點」（體驗評測 v89）。 */}
+          {(stamp(item, scope) || item.kind !== '論點') && (
+            <span className="mini-meta">{stamp(item, scope) || t(item.kind)}</span>
+          )}
           {slot && (
             <span className="slot-tag" aria-label={tags ? slot : t('連線台 {slot}', { slot })}>
               {slot}
