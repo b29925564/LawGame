@@ -164,12 +164,18 @@ describe('第 2 集審前選擇的代價', () => {
   const fixed = 'trevor-corrected';
   const theories = ['own-choice', 'warned', 'shared'];
 
-  it('交出群組截圖、更正筆錄，或兩個都做：每一場都打到最好，三種理論仍然都能贏', () => {
+  it('交出群組截圖、更正筆錄，或兩個都做：每一場都打到最好（含 Daubert），三種理論仍然都能贏', () => {
     for (const flags of [[chat], [fixed], [chat, fixed]])
       for (const theory of theories) {
-        expect(verdict({ ...best, theory, flags })).toBe('無責');
         expect(verdict({ ...best, daubert: true, theory, flags })).toBe('無責');
+        if (theory !== 'warned' || flags.length < 2)
+          expect(verdict({ ...best, theory, flags })).toBe('無責');
       }
+  });
+
+  it('「我們提醒過」交出截圖又更正筆錄：沒拿到 Daubert 就撐不住（提案第五節：更正對它傷最大）', () => {
+    expect(verdict({ ...best, theory: 'warned', flags: [chat, fixed] })).not.toBe('無責');
+    expect(verdict({ ...best, theory: 'warned', flags: [chat] })).toBe('無責');
   });
 
   it('交出群組截圖的代價：「他自己的選擇」只對質不異議原本撐得住，交出之後就判有責', () => {
@@ -179,10 +185,13 @@ describe('第 2 集審前選擇的代價', () => {
       expect(verdict({ confront: true, theory, flags: [chat, fixed] })).toBe('有責');
   });
 
-  it('更正筆錄不在陪審團那邊扣分（代價在調解與客戶信任）', () => {
-    for (const theory of theories)
+  it('更正筆錄：「他自己的選擇」「分攤」在陪審團那邊不扣分（代價在調解與客戶信任），「我們提醒過」要付', () => {
+    for (const theory of ['own-choice', 'shared'])
       for (const r of [best, { confront: true }, { object: true }])
         expect(verdict({ ...r, theory, flags: [fixed] })).toBe(verdict({ ...r, theory }));
+    expect(run({ ...best, theory: 'warned', flags: [fixed] }).jury).not.toEqual(
+      run({ ...best, theory: 'warned' }).jury,
+    );
   });
 });
 
@@ -191,19 +200,27 @@ describe('不誠實又被抓到的路線', () => {
   const produced = 'discovery:rq-chat:produced';
   const concealed = 'discovery:rq-chat:concealed';
   const theories = ['own-choice', 'warned', 'shared'];
-  const honest = (theory: string) => ({ ...best, theory, flags: [produced, 'trevor-corrected'] });
-  const caught = (theory: string) => ({
+  // 誠實路線算上 Daubert：「我們提醒過」交出又更正，沒有 Daubert 就撐不住（見上一組）。
+  const honest = (theory: string) => ({
     ...best,
+    daubert: true,
+    theory,
+    flags: [produced, 'trevor-corrected'],
+  });
+  const caught = (theory: string, daubert = false) => ({
+    ...best,
+    daubert,
     theory,
     concealed: 1,
     always: true,
     flags: [concealed],
   });
 
-  it('其他都打到最好：誠實的路線三種理論都無責，藏了又讓他再說一次假話的三種都有責', () => {
+  it('其他都打到最好：誠實的路線（含 Daubert）三種理論都無責；藏了又讓他再說一次假話的，沒 Daubert 三種都有責，有 Daubert 也贏不了', () => {
     for (const theory of theories) {
       expect(verdict(honest(theory))).toBe('無責');
       expect(verdict(caught(theory))).toBe('有責');
+      expect(verdict(caught(theory, true))).not.toBe('無責');
     }
   });
 
