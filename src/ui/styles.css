@@ -5942,7 +5942,12 @@ body:has(.court-light) {
 .court-desk {
   display: grid;
   gap: 12px;
-  justify-items: start;
+  justify-items: center;
+}
+/* 縮圖列和便條跟狀紙左緣對齊。 */
+.court-desk > .filings,
+.court-desk > .prereq-note {
+  width: min(720px, 100%);
 }
 .filings {
   display: flex;
@@ -6122,7 +6127,8 @@ body:has(.court-light) {
   color: var(--paper-muted);
 }
 .plead .body {
-  font: 400 17px/2.25 var(--font-doc);
+  /* 行高等於格距，每行字坐在格線上。 */
+  font: 400 17px/32px var(--font-doc);
   letter-spacing: 0.02em;
 }
 .plead .body p {
@@ -6207,10 +6213,11 @@ button.blank:hover,
   vertical-align: middle;
 }
 .etag.row .etag-hole {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
   border-radius: 50%;
-  background: var(--paper-ink);
+  border: 1px solid var(--paper-rule);
+  background: var(--paper);
 }
 .etag.row.arg > span[aria-hidden]:not(.etag-hole) {
   color: var(--gold-paper);
