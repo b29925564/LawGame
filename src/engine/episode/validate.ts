@@ -221,6 +221,13 @@ function deskErrors(s: DeskScene, available: Set<string>, args: Set<string>, err
   for (const m of s.motions) {
     for (const n of [...m.needs, ...m.support])
       if (!reachable.has(n)) errors.push(`動議 ${m.id} 需要玩家拿不到的 ${n}`);
+    const answers = [...m.support, ...Object.values(m.accept).flat()];
+    for (const l of m.lures) {
+      if (!cards.has(l) && !args.has(l) && !s.questions.some((q) => q.argument.id === l))
+        errors.push(`動議 ${m.id} 的誘答 ${l} 不存在`);
+      if (answers.includes(l)) errors.push(`動議 ${m.id} 的誘答 ${l} 其實是正解`);
+    }
+    if (m.lures.length < 2) errors.push(`動議 ${m.id} 至少要有兩個誘答，否則證物格等於攤答案`);
     if (!m.bases.includes(m.basis)) errors.push(`動議 ${m.id} 的正解理由 ${m.basis} 不在選項裡`);
     if (!m.requests.includes(m.request))
       errors.push(`動議 ${m.id} 的正解請求 ${m.request} 不在選項裡`);
