@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { episodes } from '../content';
 import type { ClosingScene, Episode, TrialScene } from './episode/schema';
 import { validateEpisode } from './episode/validate';
-import { deliberate, termsOf, verdict, type JuryRules } from './jury';
+import { deliberate, STILL, termsOf, verdict, type JuryRules } from './jury';
 
 const six = (start: number[]): JuryRules['jurors'] =>
   start.map((v, i) => ({
@@ -40,6 +40,14 @@ describe('民事門檻（優勢證據）', () => {
     expect(termsOf({})).toMatchObject({ yes: '有罪', no: '無罪' });
     const moves = deliberate(civil(5), jury([60, 60, 60, 60, 60, 60])).flatMap((r) => r.moves);
     expect(moves.some((m) => m.includes('主張有責'))).toBe(true);
+  });
+
+  it('票數沒動的那一輪不重複陪審長那句，三輪的描述都不一樣', () => {
+    const rounds = deliberate(civil(5), jury([90, 90, 90, 10, 10, 10]));
+    const text = rounds.map((r) => r.moves.join(''));
+    expect(new Set(text).size).toBe(3);
+    expect(rounds[1].moves[0]).toBe(STILL[0]);
+    expect(rounds[2].moves[0]).toBe(STILL[1]);
   });
 
   it('每一輪評議都寫出票數，看得到票怎麼移動', () => {

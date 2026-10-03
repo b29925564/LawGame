@@ -28,6 +28,15 @@
   --commit-bg-hover: light-dark(#262e38, #1f2731);
   --commit-ink: #f1ece0;
   --commit-edge: light-dark(#c9a24a, #b8893a);
+  /*
+   * 圖層五層（UX 規格五）：版面上的固定列 < 證據欄與抽屜 < 提示框 < 選單 < 就地回饋與畫外字幕。
+   * 元件裡只用這五個變數；−1～2 的小數字只是元件內部的前後，不跨元件比。
+   */
+  --z-base: 3;
+  --z-drawer: 10;
+  --z-popover: 20;
+  --z-menu: 30;
+  --z-toast: 40;
   /* 鍵盤焦點框：淺色底上螢光黃只有 1.4:1，改深色；深色模式維持黃。 */
   --focus: light-dark(#16130a, #f4c53d);
   --hl-wash: light-dark(rgb(255 208 46 / 22%), rgb(244 197 61 / 8%));
@@ -693,7 +702,7 @@ details summary {
   position: fixed;
   top: max(8px, env(safe-area-inset-top));
   right: 8px;
-  z-index: 30;
+  z-index: var(--z-menu);
   display: flex;
   flex-direction: column;
   align-items: flex-end;
@@ -1345,7 +1354,7 @@ button.relation.on,
 .board-tabs {
   position: sticky;
   top: 0;
-  z-index: 3;
+  z-index: var(--z-base);
   margin-inline: -2px;
   padding-inline: 2px;
   background: var(--bg);
@@ -1842,7 +1851,7 @@ fieldset.relations.compact {
 .sheet-wrap {
   position: fixed;
   inset: 0;
-  z-index: 40;
+  z-index: var(--z-drawer);
   display: flex;
   align-items: flex-end;
 }
@@ -2905,7 +2914,7 @@ fieldset.relations.compact {
     bottom: 16px;
     right: max(24px, calc((100vw - 1480px) / 2 + 24px));
     width: 352px;
-    z-index: 5;
+    z-index: var(--z-drawer);
   }
   .sheet.side {
     position: static;
@@ -3199,7 +3208,7 @@ fieldset.relations.compact {
 /* 貼在目標旁邊：電腦版浮在目標的右上，不蓋到字；手機版回到文件流裡（見下方 @media）。 */
 .sticky.pinned {
   position: absolute;
-  z-index: 3;
+  z-index: var(--z-base);
 }
 /* 推理結論卡：3×5 索引卡（1:1.667），上面一行印刷字＋盧卡斯的手寫結論 */
 .sticky.index {
@@ -3900,7 +3909,7 @@ button.iou[aria-pressed='true'] {
 .vo {
   position: fixed;
   inset: 0;
-  z-index: 60;
+  z-index: var(--z-toast);
   display: grid;
   place-items: center;
   cursor: default;
@@ -4592,7 +4601,7 @@ button.iou[aria-pressed='true'] {
   /* 手機上往下捲去連線時，題目釘在上緣（試玩回報）。 */
   position: sticky;
   top: 0;
-  z-index: 4;
+  z-index: calc(var(--z-base) + 1);
   margin-inline: -16px;
   padding: 8px 16px;
   background: var(--bg);
@@ -4647,7 +4656,7 @@ button.iou[aria-pressed='true'] {
 .answer-bar {
   position: sticky;
   bottom: 0;
-  z-index: 3;
+  z-index: var(--z-base);
   box-shadow:
     0 -12px 24px -8px rgb(0 0 0 / 35%),
     var(--shadow-1);
@@ -5037,7 +5046,7 @@ button.iou[aria-pressed='true'] {
 /* 浮出卡：內容加一行出處。證據欄在右邊，所以往左浮；畫在 body 上，不會被證據欄裁掉。 */
 .mini-full {
   position: fixed;
-  z-index: 60;
+  z-index: var(--z-popover);
   width: 300px;
   padding: 12px 14px;
   border-radius: var(--radius);
@@ -5366,7 +5375,7 @@ body:has(.court-light) {
   .shell:has(.board-one, .shell-body > .q-list) > .shell-foot {
     position: sticky;
     bottom: 0;
-    z-index: 5;
+    z-index: calc(var(--z-base) + 2);
   }
   /* 工作台裡答案列取代底列：這裡不需要「結束調查」，挑卡片在連線台底下。 */
   .shell:has(.board-one) > .shell-foot {
