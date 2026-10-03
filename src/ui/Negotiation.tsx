@@ -232,7 +232,8 @@ export function Negotiation({ scene }: { scene: NegotiationScene }) {
                 </span>
                 <span className="tg">
                   {/* 目前這一檔本身也可能超過授權：兩個標記要能同時出現（體驗評測 v89）。 */}
-                  {o.id === offer.id && <b>{t('現在')}</b>}
+                  {/* 目前這一檔看底色和左緣就知道；字只給讀屏，窄螢幕英文才不會把價擠成兩行（體驗評測 v89）。 */}
+                  {o.id === offer.id && <b className="sr-only">{t('現在')}</b>}
                   {over(o) && <em>{t('超過授權')}</em>}
                 </span>
               </li>
