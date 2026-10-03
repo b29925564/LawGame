@@ -919,7 +919,17 @@ function Motions({ scene, held }: { scene: DeskScene; held: string[] }) {
   const [menu, setMenu] = useState<'request' | 'basis' | 'support' | null>(null);
   const m = scene.motions.find((x) => x.id === pick) ?? scene.motions[0];
   const a = m ? desk.motionAttempt(st, m.id) : null;
-  const cards = [...heldArgs(progress), ...scene.cards.filter((c) => held.includes(c.id))];
+  const all = [...heldArgs(progress), ...scene.cards.filter((c) => held.includes(c.id))];
+  // 證物格只列這份聲請的候選（正解、替代卡、誘答），不是整個證據庫。
+  const pool = m
+    ? desk.supportPool(
+        scene,
+        st,
+        m.id,
+        all.map((c) => c.id),
+      )
+    : [];
+  const cards = all.filter((c) => pool.includes(c.id));
   const missing = m ? m.needs.filter((n) => !held.includes(n)) : [];
   const editable = !!a && a.ruling !== 'granted' && missing.length === 0;
   // 電腦版：右邊證據欄點一張＝出示，放進證物格；滿了就換掉最早那張（引擎的規則）。
