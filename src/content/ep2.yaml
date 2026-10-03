@@ -139,6 +139,9 @@ effects:
   - when: { flags: [trevor-corrected] }
     trust: -1
     confidence: 10
+  # 勘誤表承認三月以前有疲勞鎖：「我們提醒過」靠的是「提醒一直都在」，它傷得最重（提案第五節）。
+  - when: { flags: [trevor-corrected], theory: [warned] }
+    jury: 6
 scenes:
   # 冷開場：玩家拿著赫克托的手機。休息不是不能按，只是每次都有代價。
   - type: phone
