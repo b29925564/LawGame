@@ -119,10 +119,12 @@ _cards: &cards
 
 # 審前選擇的代價：條件在開庭／調解開始時判斷（提案 2026-10-03）。
 effects:
-  # 照實交出營運群組：陪審團一開始就往有責偏，奧卡福的開價變硬。
+  # 照實交出營運群組：奧卡福的開價變硬（調解在選理論之前，不能依理論分）。
   - when: { flags: ['discovery:rq-chat:produced'] }
-    jury: 6
     confidence: 10
+  # 群組截圖只打臉「他自己的選擇」「我們提醒過」；「分攤」本來就承認公司有錯，它等於替我們作證。
+  - when: { flags: ['discovery:rq-chat:produced'], theory: [own-choice, warned] }
+    jury: 6
   # 交出事務所自己的意見書：亞瑟的信任掉一格；旗標帶到第 3 集（惠特洛克線從這裡起頭）。
   - when: { flags: ['discovery:rq-memo:produced'] }
     trust: -1
@@ -1679,10 +1681,10 @@ scenes:
         impact: 4
         tags: [權威]
         when: { flags: [trevor-corrected] }
-    # 營運群組進了開示，奧卡福反詰問多問一題。
+    # 營運群組進了開示，而我們的理論和它矛盾：奧卡福反詰問多問一題。
     cross:
       - id: tx-peak
-        when: { flags: ['discovery:rq-chat:produced'] }
+        when: { flags: ['discovery:rq-chat:produced'], theory: [own-choice, warned] }
         q: 米爾斯先生，「旺季不准任何人被踢下線。我不管系統怎麼寫。」這句話，是您在營運群組說的？
         a: ……是。那是旺季。
         penalty: 8
