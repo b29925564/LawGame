@@ -172,17 +172,21 @@ export function EvidenceCard({ item, pickable }: { item: Item; pickable?: boolea
   const { progress } = useEpisode();
   const hl = cardHighlights(episodeOf(progress))[item.id];
   const sealed = cardStamps(progress)[item.id];
-  const can = pickable && pick && pool.includes(item.id);
+  const can = !!(pickable && pick && pool.includes(item.id));
   const cls = item.kind === '論點' ? 'card arg' : 'card';
   // 全文浮出卡畫在 body 上：證據欄會捲動，放在卡片裡會被裁掉。
   const ref = useRef<HTMLLIElement>(null);
   const tipId = useId();
   const [tip, setTip] = useState<{ top: number; right: number } | null>(null);
-  if (can) {
-    // 證據板右欄的小卡（UX 規格 P1-12）：一行一張，名稱靠左、時間或種類靠右；內容與出處在浮出卡。
+  // 不能放上連線台的畫面（卷宗、法院系統、庭上）點一下展開全文，再點收起。
+  const [open, setOpen] = useState(false);
+  if (pickable) {
+    // 證據欄的小卡（UX 規格 P1-12）：一行一張，名稱靠左、時間或種類靠右；內容與出處在浮出卡。
+    // 每個桌面分頁長得一樣，不會只有證據板是乾淨的（試玩回報）。
     // 外層 li 保留清單語意，裡面是真的按鈕（無障礙審查第 8 條）。
-    const slot = ['A', 'B'][on.indexOf(item.id)];
+    const slot = can ? ['A', 'B'][on.indexOf(item.id)] : undefined;
     const show = () => {
+      if (open) return;
       const r = ref.current?.getBoundingClientRect();
       if (r)
         setTip({
@@ -191,19 +195,29 @@ export function EvidenceCard({ item, pickable }: { item: Item; pickable?: boolea
         });
     };
     const hide = () => setTip(null);
+    const press = () => {
+      if (can) pick!(item.id);
+      else {
+        setOpen(!open);
+        hide();
+      }
+    };
     return (
       <li
         ref={ref}
-        className={cls + ' pickable mini' + (slot ? ' on' : '')}
+        className={
+          cls + ' mini' + (can ? ' pickable' : '') + (slot ? ' on' : '') + (open ? ' open' : '')
+        }
         onMouseEnter={show}
         onMouseLeave={hide}
       >
         <button
           type="button"
           className="mini-btn"
-          aria-pressed={!!slot}
+          aria-pressed={can ? !!slot : undefined}
+          aria-expanded={can ? undefined : open}
           aria-describedby={tip ? tipId : undefined}
-          onClick={() => pick(item.id)}
+          onClick={press}
           onFocus={show}
           onBlur={hide}
           onKeyDown={(e) => e.key === 'Escape' && tip && (e.stopPropagation(), hide())}
@@ -221,6 +235,17 @@ export function EvidenceCard({ item, pickable }: { item: Item; pickable?: boolea
             </span>
           )}
         </button>
+        {open && (
+          <div className="mini-body">
+            {sealed && <Stamp text={sealed} sm />}
+            <p>{hl ? <Hl text={item.text} words={hl} live={false} /> : t(item.text, scope)}</p>
+            <p className="mini-src">
+              {t(item.kind)}
+              {t('・')}
+              {t(item.source, scope)}
+            </p>
+          </div>
+        )}
         {tip &&
           createPortal(
             <div
@@ -269,6 +294,7 @@ export function CardPick({
   onPick,
   verb,
   tag,
+  compact,
 }: {
   item: { id: string; name: string; text: string; date?: string; time?: string; kind?: string };
   on?: boolean;
@@ -278,12 +304,14 @@ export function CardPick({
   verb?: string;
   /** 名字後面的補充，例如「已洩漏」。 */
   tag?: string;
+  /** 一行一張：名稱與種類，選中的那張才展開內容（法院系統的支撐清單）。 */
+  compact?: boolean;
 }) {
   const t = useT();
   const scope = useScope();
   return (
     <button
-      className={on ? 'pick on' : 'pick'}
+      className={['pick', on && 'on', compact && 'compact'].filter(Boolean).join(' ')}
       aria-pressed={on}
       data-kind={item.kind}
       disabled={disabled}
@@ -295,7 +323,8 @@ export function CardPick({
         {t(item.name, scope)}
         {tag && <span className="muted"> {t(tag, scope)}</span>}
       </span>
-      <span className="pick-text">{t(item.text, scope)}</span>
+      {compact && item.kind && <span className="pick-kind">{t(item.kind)}</span>}
+      {(!compact || on) && <span className="pick-text">{t(item.text, scope)}</span>}
     </button>
   );
 }

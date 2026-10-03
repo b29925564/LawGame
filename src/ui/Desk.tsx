@@ -940,15 +940,21 @@ function Motions({ scene, held }: { scene: DeskScene; held: string[] }) {
                   ))}
                 </div>
               </fieldset>
-              <fieldset className="relations">
+              <fieldset className="relations support">
                 <legend>{t('支撐（{n} 張）', { n: m.support.length })}</legend>
                 <div className="stack">
                   {[...args, ...pool].map((c) => (
                     <CardPick
                       key={c.id}
                       item={c}
+                      compact
                       on={a.support.includes(c.id)}
-                      onPick={() => toggleSupport(m.id, c.id)}
+                      onPick={() => {
+                        // 名額滿了再點別張：直接換掉最早選的那張，不必先取消（試玩回報）。
+                        if (!a.support.includes(c.id) && a.support.length >= m.support.length)
+                          toggleSupport(m.id, a.support[0]);
+                        toggleSupport(m.id, c.id);
+                      }}
                     />
                   ))}
                 </div>
