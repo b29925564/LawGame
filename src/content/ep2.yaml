@@ -139,6 +139,9 @@ effects:
   - when: { flags: [trevor-corrected] }
     trust: -1
     confidence: 10
+  # 勘誤表承認三月以前有疲勞鎖：「我們提醒過」靠的是「提醒一直都在」，它傷得最重（提案第五節）。
+  - when: { flags: [trevor-corrected], theory: [warned] }
+    jury: 6
 scenes:
   # 冷開場：玩家拿著赫克托的手機。休息不是不能按，只是每次都有代價。
   - type: phone
@@ -819,6 +822,7 @@ scenes:
         support: [arg-c]
         accept:
           arg-c: [fisher-sample]
+        lures: [fisher-report, med-record, arg-a, arg-b]
         requests: [排除該專家證詞, 限制證人作證範圍, 核發傳票給研究機構]
         request: 排除該專家證詞
         flags: [daubert-fisher]
@@ -1056,7 +1060,7 @@ scenes:
         name: 公司已盡告知義務
         summary: 不談他的病，只談公司做了什麼：提醒、合約、隨時可以下線。
         needs: [arg-b, arg-d]
-        cost: 不碰病史，對瑪莉索比較公平。但對方拿出死後扣分，「由他自己決定」就很難撐。
+        cost: 不碰病史，對瑪莉索比較公平。但對方拿出死後扣分，「由他自己決定」就很難撐。崔佛若更正過筆錄，關掉強制下線的就是公司自己，「盡了告知」會更難說。
         jury:
           all: 15
           note: 你談的是公司做了什麼，沒有回答他為什麼停不下來。進了評議室，這個問題會回來。
@@ -1697,6 +1701,20 @@ scenes:
           }
         q: 米爾斯先生，「旺季不准任何人被踢下線。我不管系統怎麼寫。」這句話，是您在營運群組說的？
         a: ……是。那是旺季。
+        penalty: 8
+      # 更正筆錄讓「我們提醒過」付的陪審團代價已在 effects 開庭時扣過（+6），這一題只讓玩家看見為什麼。
+      - id: tx-corrected
+        when: { flags: [trevor-corrected], theory: [warned] }
+        q: 米爾斯先生，被告說公司盡了告知義務。三月您簽掉強制下線的那天，告知過哪一位司機？
+        a: ……那是系統更新。我們沒有發公告。
+        penalty: 0
+      # 不更正也不問：筆錄是奧卡福錄的，崔佛一上證人席，對方照樣拿筆錄和變更單彈劾他。
+      # 問了 tq-always 的話 door 已經是同一個彈劾，不重複；變更單硬藏了對方手上沒有它（走不利推定）。
+      - id: tx-sworn
+        when: { notFlags: [trevor-corrected, 'discovery:rq-change:concealed'] }
+        unlessAsked: [tq-always]
+        q: 米爾斯先生，您在錄取時宣誓說「從來沒有強制下線過」。這張三月的設定變更單，取消強制下線，簽名的是誰？
+        a: ……是我簽的。
         penalty: 8
     leak:
       q: 米爾斯先生，「從來沒有」這四個字，是誰教您說的？

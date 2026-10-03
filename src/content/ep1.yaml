@@ -847,6 +847,7 @@ scenes:
         support: [arg-watch]
         accept:
           arg-watch: [watch-photo]
+        lures: [watch-listed, autopsy, arg-a, arg-h]
         requests: [核發傳票給手錶廠商, 排除該項證據, 限制證人作證範圍]
         request: 核發傳票給手錶廠商
         gives: [heart-rate]
@@ -872,6 +873,7 @@ scenes:
         support: [arg-a]
         accept:
           arg-a: [watch-notice, ethan-message]
+        lures: [ride-receipt, access-partial, arg-watch, arg-b]
         requests: [核發傳票給卡爾德物流, 排除該項證據, 撤銷對方的傳票]
         request: 核發傳票給卡爾德物流
         granted:
@@ -962,6 +964,7 @@ scenes:
         support: [arg-miranda]
         accept:
           arg-miranda: [no-warning]
+        lures: [arrest-report, car-statement, arg-a, arg-d]
         requests: [排除該項供述, 核發傳票給警局, 限制證人作證範圍]
         request: 排除該項供述
         granted:

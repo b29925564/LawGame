@@ -8,4 +8,6 @@ export const useCardPick = create<{
   pool: string[];
   on: string[];
   pick?: (id: string) => void;
+  /** 選中的卡在證據欄上顯示的標記；沒給就是連線台的 A、B。 */
+  tags?: string[];
 }>(() => ({ pool: [], on: [] }));

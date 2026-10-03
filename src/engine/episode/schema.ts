@@ -303,6 +303,11 @@ const deskScene = z.object({
         support: z.array(id).min(1).max(2),
         /** 說得通的替代卡：support 裡某張卡 → 同樣能撐起聲請的其他卡。 */
         accept: z.record(id, z.array(id)).default({}),
+        /**
+         * 誘答：同一件事附近、看起來撐得起但其實不行的卡或論點。
+         * 證物格只列正解、替代卡和這些，不列整個證據庫（見 desk.supportPool）。
+         */
+        lures: z.array(id).default([]),
         requests: z.array(z.string()).min(2),
         request: z.string(),
         granted: z.array(line).min(1),
@@ -706,6 +711,8 @@ const defenseScene = z.object({
       z.object({
         id: id.optional(),
         when: when.optional(),
+        /** 直接詰問問過其中任何一題就不問（那一題的 door 已經是同一個彈劾，不重複）。 */
+        unlessAsked: z.array(id).default([]),
         q: z.string(),
         a: z.string(),
         penalty: z.number().int().min(0),

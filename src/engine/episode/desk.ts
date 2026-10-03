@@ -368,6 +368,30 @@ export function pickRequest(st: DeskState, id: string, request: string): DeskSta
   return setAttempt(st, id, { ...attempt(st, id), request });
 }
 
+/**
+ * 證物格能出示哪些卡：正解、說得通的替代卡、作者寫的誘答，再加上手上已經放進格子的。
+ * 只列玩家手上有的，順序照 offered（證據欄原本的順序：論點在前，證據照牌庫），
+ * 所以正解的位置不固定。論點是金色的，只有正解一張論點會太顯眼：
+ * 誘答裡手上沒有別的論點時，從 offered 前面補到兩張。
+ * offered 是證據欄原本會列的全部 id；不在這一幕牌庫裡的就是論點。
+ */
+export function supportPool(s: DeskScene, st: DeskState, id: string, offered: string[]): string[] {
+  const m = s.motions.find((x) => x.id === id);
+  if (!m) return [];
+  const isArg = (x: string) => !s.cards.some((c) => c.id === x);
+  const answers = [...m.support, ...Object.values(m.accept).flat()];
+  const want = new Set([...answers, ...m.lures, ...attempt(st, id).support]);
+  const lureArgs = offered.filter((x) => isArg(x) && m.lures.includes(x));
+  for (const x of offered) {
+    if (lureArgs.length >= 2) break;
+    if (isArg(x) && !want.has(x)) {
+      want.add(x);
+      lureArgs.push(x);
+    }
+  }
+  return offered.filter((x) => want.has(x));
+}
+
 export function toggleSupport(s: DeskScene, st: DeskState, id: string, card: string): DeskState {
   const m = s.motions.find((x) => x.id === id);
   const a = attempt(st, id);

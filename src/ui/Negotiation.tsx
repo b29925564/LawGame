@@ -192,7 +192,7 @@ export function Negotiation({ scene }: { scene: NegotiationScene }) {
           {choice === 'take' && ok && (
             <CommitBar
               what={t('建議{name}接受', { name: client })}
-              cost={`${takeCost}。${trial}`}
+              cost={`${takeCost}${t('。')}${trial}`}
               action={t('建議{name}接受', { name: client })}
               onCommit={() => advise(true)}
             />
