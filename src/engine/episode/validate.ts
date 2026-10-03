@@ -539,6 +539,10 @@ function branchErrors(s: Episode['scenes'][number], e: Episode, errors: string[]
           errors.push(`辯方證人 ${s.id} 的問題 ${q.id} 的 ethicsIf 引用了不存在的卡片：${c}`);
     }
     s.cross.forEach((x, i) => check(x.when, `辯方證人 ${s.id} 的反詰問追加第 ${i + 1} 題`));
+    for (const o of s.prep.options) check(o.when, `辯方證人 ${s.id} 的準備選項 ${o.id}`);
+    // 條件全不符時沒有準備方式可選，玩家會卡住。
+    if (s.prep.options.every((o) => o.when))
+      errors.push(`辯方證人 ${s.id} 的準備選項全部有條件，可能一個都不出現`);
   }
   if (s.type === 'desk')
     for (const r of s.discovery) {

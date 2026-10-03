@@ -502,10 +502,12 @@ export function deskScene(p: Progress, s: DeskScene): DeskScene {
 
 /** 辯方證人這一場真正能問的題目與對方會多問的題：條件不符的拿掉。 */
 export function witnessScene(p: Progress, s: DefenseScene): DefenseScene {
-  if (!s.questions.some((q) => q.when) && !s.cross.some((x) => x.when)) return s;
+  const conditional = [...s.questions, ...s.cross, ...s.prep.options].some((x) => x.when);
+  if (!conditional) return s;
   const c = branchContext(p);
   return {
     ...s,
+    prep: { ...s.prep, options: s.prep.options.filter((o) => branch.matches(o.when, c)) },
     questions: s.questions.filter((q) => branch.matches(q.when, c)),
     cross: s.cross.filter((x) => branch.matches(x.when, c)),
   };
@@ -863,7 +865,8 @@ export const useEpisode = create<GameState>()((set, get) => {
     prepareWitness: (id) => {
       const p = get().progress;
       const s = sceneOf(p);
-      const o = s?.type === 'defense' ? s.prep.options.find((x) => x.id === id) : null;
+      const o =
+        s?.type === 'defense' ? witnessScene(p, s).prep.options.find((x) => x.id === id) : null;
       const before =
         s?.type === 'defense' ? (p.scenes[s.id] as defense.DefenseState | undefined) : undefined;
       if (!o || before?.stage === 'direct' || before?.stage === 'done') return;

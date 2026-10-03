@@ -664,6 +664,8 @@ const defenseScene = z.object({
           coached: z.boolean().default(false),
           ethics: z.array(z.string()).default([]),
           flags: z.array(z.string()).default([]),
+          /** 條件不符就不出現（例如筆錄更正過，就沒有「再說一遍」可教）。 */
+          when: when.optional(),
         }),
       )
       .min(1),
@@ -700,6 +702,7 @@ const defenseScene = z.object({
   cross: z
     .array(
       z.object({
+        id: id.optional(),
         when: when.optional(),
         q: z.string(),
         a: z.string(),

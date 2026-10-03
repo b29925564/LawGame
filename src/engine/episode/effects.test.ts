@@ -200,6 +200,12 @@ describe('辯方證人：when、ethicsIf、cross', () => {
   const id = 'defense-trevor';
   const tune = (s: DefenseScene): DefenseScene => ({
     ...s,
+    prep: {
+      ...s.prep,
+      options: s.prep.options.map((o) =>
+        o.coached ? { ...o, when: { notFlags: ['trevor-corrected'] } } : o,
+      ),
+    },
     questions: s.questions.map((q) =>
       q.id === 'tq-always'
         ? {
@@ -230,6 +236,8 @@ describe('辯方證人：when、ethicsIf、cross', () => {
       s,
     );
     expect(fixed.questions.some((q) => q.id === 'tq-always')).toBe(false);
+    expect(fixed.prep.options.some((o) => o.coached)).toBe(false);
+    expect(witnessScene(progress(), s).prep.options.some((o) => o.coached)).toBe(true);
     expect(fixed.cross).toHaveLength(1);
   });
 
