@@ -48,21 +48,21 @@ _cards: &cards
     source: 檢方證據開示
     held: true
   - id: arrest-time
-    name: 逮捕時間 14:05
+    name: 逮捕紀錄
     kind: 文件
     date: 週日
     time: '14:05'
     text: 週日 14:05 於友人住處逮捕伊森・蕭。
     source: 逮捕報告
   - id: car-statement
-    name: 警車上的供述 14:20
+    name: 警車上的供述
     kind: 陳述
     date: 週日
     time: '14:20'
     text: 14:20 押解途中，被告未經詢問自行陳述：「我只是想讓他住手。」
     source: 逮捕報告
   - id: miranda-form
-    name: 權利告知書 14:32
+    name: 權利告知書
     kind: 文件
     date: 週日
     time: '14:32'
