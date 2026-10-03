@@ -367,7 +367,15 @@ describe('瑞秋的詰問', () => {
       cards: [],
     });
     expect(failed.impeachments).toBe(0);
-    expect(failed.log.some((l) => l.text.includes('手錶在搏鬥中有沒有可能脫落'))).toBe(true);
+    // 交互詰問中途檢方只記下，不插話；再主詰問留到結束才問。
+    expect(failed.log.at(-1)).toMatchObject({ who: '旁白', text: trial.NOTED });
+    expect(failed.log.some((l) => l.text.includes('手錶在搏鬥中有沒有可能脫落'))).toBe(false);
+    expect(failed.redirect?.some((l) => l.text.includes('手錶在搏鬥中有沒有可能脫落'))).toBe(true);
+    const ended = trial.finish(failed);
+    expect(ended.redirect).toEqual([]);
+    expect(ended.log.slice(-(ended.turn ?? 0)).map((l) => l.text)).toEqual(
+      failed.redirect!.map((l) => l.text),
+    );
 
     const broken = trial.confront(rachel, st, c.id, 25, ['邏輯'], {
       id: 'arg-b',
@@ -394,9 +402,10 @@ describe('瑞秋的詰問', () => {
       exposed: true,
       cards: [],
     });
-    const i = st.log.findIndex((l) => l.text === c.counter!.text);
-    expect(st.log[i + 1]).toMatchObject({ who: rachel.witness.name, text: '有可能。' });
-    expect(st.log[i + 2].text).toBe(c.counter!.failed);
+    const log = trial.finish(st).log;
+    const i = log.findIndex((l) => l.text === c.counter!.text);
+    expect(log[i + 1]).toMatchObject({ who: rachel.witness.name, text: '有可能。' });
+    expect(log[i + 2].text).toBe(c.counter!.failed);
   });
 
   it('出示論點 D 逼出緘默權時，休庭畫面要放完這一整段（再主詰問、回答、緘默權）', () => {
@@ -417,6 +426,22 @@ describe('瑞秋的詰問', () => {
     expect(shown).toContain(c.counter!.text);
     expect(shown).toContain(c.counter!.answer);
     expect(shown).toContain(rachel.fifth!.lines[0].text);
+  });
+
+  it('辯方被法官叫停，檢方記下的再主詰問照樣問完', () => {
+    const c = claim('rc-2250');
+    let st = trial.confront(rachel, ready('rc-2250'), c.id, 25, ['邏輯'], {
+      id: 'arg-b',
+      exposed: true,
+      cards: [],
+    });
+    expect(st.redirect?.length).toBeGreaterThan(0);
+    for (let i = 0; i < 20 && st.stage !== 'done'; i++) st = trial.badger(rachel, st, 0);
+    expect(st.rebuked).toBe(true);
+    expect(st.redirect).toEqual([]);
+    const shown = st.log.slice(-Math.max(4, st.turn ?? 0)).map((l) => l.text);
+    expect(shown).toContain(c.counter!.text);
+    expect(shown.at(-1)).toBe(c.counter!.failed);
   });
 
   it('沒洩漏過就沒有反擊這一關', () => {
