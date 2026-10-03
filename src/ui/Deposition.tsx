@@ -1,12 +1,20 @@
 import { useState } from 'react';
 import * as depo from '../engine/episode/deposition';
 import type { DepositionScene } from '../engine/episode/schema';
-import { depoState, useEpisode } from '../engine/game';
+import { depoState, episodeOf, useEpisode } from '../engine/game';
 import { useT } from '../i18n';
 import { EvidenceDrawer } from './Evidence';
 import { useScope } from './lang';
 import { Speech } from './Portrait';
 import { Shell, Tabs, Transcript } from './Shell';
+
+/** 對方主導時每一題的結果標籤。 */
+const REVIEW = {
+  plain: '照答',
+  blocked: '擋住了',
+  waived: '放過了',
+  wrong: '擋錯了',
+} as const;
 
 /** 證詞錄取（企劃書 6.7）：12 個提問額度，定錨與探路互相衝突。 */
 export function Deposition({ scene }: { scene: DepositionScene }) {
@@ -18,6 +26,11 @@ export function Deposition({ scene }: { scene: DepositionScene }) {
   const [topic, setTopic] = useState(scene.topics[0]?.id ?? '');
   const theirs = scene.side === 'theirs';
   const q = theirs ? depo.current(scene, st) : undefined;
+  // 對方多拿到的卡片可能還沒進玩家手上，所以從整集的桌面場景找名字。
+  const cardName = (id: string) =>
+    episodeOf(progress)
+      .scenes.flatMap((s) => (s.type === 'desk' ? s.cards : []))
+      .find((c) => c.id === id)?.name ?? id;
 
   if (intro)
     return (
@@ -41,12 +54,46 @@ export function Deposition({ scene }: { scene: DepositionScene }) {
       <main className="scene">
         <p className="eyebrow">{t('錄取結束')}</p>
         {theirs ? (
-          <dl className="stats">
-            <dt>{t('問過的題目')}</dt>
-            <dd>{st.asked.length}</dd>
-            <dt>{t('站不住的異議')}</dt>
-            <dd>{st.wrong ?? 0}</dd>
-          </dl>
+          <>
+            <dl className="stats">
+              <dt>{t('問過的題目')}</dt>
+              <dd>{st.asked.length}</dd>
+              <dt>{t('站不住的異議')}</dt>
+              <dd>{st.wrong ?? 0}</dd>
+            </dl>
+            {/* 每一題的結果（體驗評測）：擋住、放過、擋錯、照答要分得出來，對方多拿到什麼也要看得到。 */}
+            <ol className="depo-review" aria-label={t('每一題的結果')}>
+              {scene.script
+                .filter((q) => st.asked.includes(q.id))
+                .map((q) => {
+                  const flags = st.flags ?? [];
+                  const kind = !q.objection
+                    ? 'plain'
+                    : flags.includes(`depo:${scene.id}:${q.id}:preserved`)
+                      ? 'blocked'
+                      : flags.includes(`depo:${scene.id}:${q.id}:waived`)
+                        ? 'waived'
+                        : 'wrong';
+                  const gave = kind === 'waived' || kind === 'wrong' ? q.missed.gives : [];
+                  return (
+                    <li key={q.id} className={kind}>
+                      <span className={`depo-tag ${kind}`}>{t(REVIEW[kind])}</span>
+                      <span className="depo-q">{t(q.q, scope)}</span>
+                      {gave.length > 0 && (
+                        <span className="muted small">
+                          {t('對方拿到：{names}', {
+                            names: gave.map((id) => t(cardName(id), scope)).join('、'),
+                          })}
+                        </span>
+                      )}
+                      {kind !== 'plain' && kind !== 'blocked' && q.missed.flags.length > 0 && (
+                        <span className="muted small">{t('這句話留在筆錄裡了。')}</span>
+                      )}
+                    </li>
+                  );
+                })}
+            </ol>
+          </>
         ) : (
           <dl className="stats">
             <dt>{t('用掉的提問')}</dt>

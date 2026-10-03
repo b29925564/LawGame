@@ -164,6 +164,17 @@
 選了就不能改: You can’t undo this
 '對方拿到這 {n} 份文件': 'The other side gets these {n} documents'
 法官可能不認；沒有正當理由硬藏，之後被揭穿會很重: The judge may reject it. Hiding something without good grounds hurts badly if it comes out later.
+證人在錄取時已經說出這份意見的內容，特權視同放棄；法官多半會命令交出: The witness already disclosed the substance of this opinion at deposition, so the privilege is treated as waived; the judge will most likely order it produced.
+代價: Cost
+'若以「{names}」開庭：': 'If you go to trial on "{names}": '
+'」或「': '" or "'
+'陪審團起點往對方偏 {bars}': 'Jury starts tilted toward them {bars}'
+'陪審團起點往我方偏 {bars}': 'Jury starts tilted toward you {bars}'
+調解時對方開價更硬: A harder offer at mediation
+調解時對方開價更軟: A softer offer at mediation
+'客戶信任掉 {n} 格': 'Client trust drops {n} notch(es)'
+'客戶信任多 {n} 格': 'Client trust rises {n} notch(es)'
+這件事會記到下一集: This carries into the next episode
 由法官決定範圍: The judge decides the scope
 交出這份文件: Hand over this document
 交出這些文件: Hand over these documents
