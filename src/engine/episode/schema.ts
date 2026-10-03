@@ -713,6 +713,8 @@ const defenseScene = z.object({
         when: when.optional(),
         /** 直接詰問問過其中任何一題就不問（那一題的 door 已經是同一個彈劾，不重複）。 */
         unlessAsked: z.array(id).default([]),
+        /** 直接詰問問過其中任何一題才問（例如讓證人再說一次假話之後，對方才拿出那份文件）。 */
+        ifAsked: z.array(id).default([]),
         q: z.string(),
         a: z.string(),
         penalty: z.number().int().min(0),

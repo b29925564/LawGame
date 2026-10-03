@@ -1,20 +1,11 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import { episodes } from '../../content';
-import { activeEffects, negoScene, witnessScene } from '../game';
+import { negoScene, useEpisode, witnessScene } from '../game';
 import type { Progress } from '../save';
-import * as closing from './closing';
 import * as nego from './negotiation';
 import * as defense from './defense';
-import { ADVERSE } from './discovery';
-import type {
-  ClosingScene,
-  DefenseScene,
-  DeskScene,
-  NegotiationScene,
-  TheoryScene,
-  TrialScene,
-} from './schema';
-import * as trial from './trial';
+import { playEp2, type Ep2Route } from './ep2-route';
+import type { DefenseScene, DeskScene, NegotiationScene, VoirDireScene } from './schema';
 
 const ep = episodes.ep2;
 const scene = <T>(id: string) => ep.scenes.find((s) => s.id === id) as T;
@@ -22,7 +13,8 @@ const args = ep.scenes
   .filter((s): s is DeskScene => s.type === 'desk')
   .flatMap((d) => d.questions.map((q) => q.argument));
 const raw = scene<DefenseScene>('defense-trevor');
-const close = scene<ClosingScene>('closing');
+
+afterEach(() => useEpisode.getState().toTitle());
 
 interface Route {
   daubert?: boolean;
@@ -31,9 +23,9 @@ interface Route {
   coach?: boolean;
   /** 問了被教過的那一題（「一直都是這樣嗎」），反詰問就會翻出變更單、問出是誰教的。 */
   always?: boolean;
-  /** 開示時硬藏了幾項（不利推定）。 */
+  /** 開示時硬藏了群組截圖（不利推定）。 */
   concealed?: number;
-  /** 案件理論：結辯講它要的論點，並承擔它在陪審團心裡的代價。沒給就講論點 A、B、不算代價。 */
+  /** 案件理論：結辯講它要的論點，並承擔它在陪審團心裡的代價。沒給就是「他自己的選擇」。 */
   theory?: string;
   /** 審前留下的旗標（開示交出了什麼、有沒有更正筆錄）：決定 effects 的代價與崔佛那一場的題目。 */
   flags?: string[];
@@ -50,70 +42,36 @@ const before = (flags: string[] = [], chosen?: string): Progress => ({
   scenes: chosen ? { theory: { chosen, skipped: false } } : {},
 });
 
-/** 第五幕整段：瑪莉索 → 費雪或唐醫師 → 崔佛 → 結辯（論點 A、B）。 */
+/** 判決。 */
 const verdict = (r: Route) => run(r).verdict;
 /** 評議後仍判有責的陪審員人數。 */
-const against = (r: Route) => {
-  const v = run(r);
-  return Object.values(v.jury).filter((x) => x >= close.threshold).length;
-};
+const against = (r: Route) => run(r).afterDeliberation;
+/** 結辯講完、評議之前倒向對方的人數（代價看得到，但評議可能又拉回來）。 */
+const spoken = (r: Route) => run(r).afterClosing;
 
+/**
+ * 走遊戲本身的流程（選理論 → 遴選 → 開場 → 三場庭審 → 崔佛 → 結辯與評議），
+ * 審前動議、硬藏、開場承諾都照實玩算。沒給理論就當作「他自己的選擇」（結辯講論點 A、B）。
+ */
 function run(r: Route) {
-  const p = before(r.flags, r.theory);
-  const shift = (r.concealed ?? 0) * ADVERSE + activeEffects(p).reduce((n, e) => n + e.jury, 0);
-  const witness = witnessScene(p, raw);
-  const court = (id: string): TrialScene => {
-    const t = scene<TrialScene>(id);
-    return { ...t, jurors: t.jurors.map((j) => ({ ...j, start: Math.min(100, j.start + shift) })) };
-  };
-  const days = ['court-marisol', r.daubert ? 'court-doctor' : 'court-fisher'].map(court);
-  let st: trial.TrialState | undefined;
-  for (const t of days) {
-    st = trial.startTrial(t, [], st);
-    for (let i = 0; i < t.witness.direct.length; i++) {
-      st = trial.nextQuestion(t, st);
-      const q = t.witness.direct[st.i];
-      st =
-        r.object && q.objection
-          ? trial.object(t, st, q.objection as trial.Objection)
-          : trial.letPass(t, st);
-    }
-    st = trial.toCross(t, st);
-    if (r.confront)
-      for (const c of t.witness.claims) {
-        const a = args.find((x) => x.id === c.argument)!;
-        st = trial.lock(t, st, c.id, 'strong');
-        st = trial.setup(t, st, c.id);
-        st = trial.confront(t, st, c.id, a.strength, a.tags, { id: a.id });
-      }
-  }
-  const last = days[1];
-  const rules = {
-    jurors: last.jurors,
-    threshold: last.threshold,
-    burden: last.burden,
-    quorum: last.quorum,
-  };
-  let d = defense.prepare(
-    witness,
-    defense.startDefense(st!.jury),
-    r.coach ? 'trevor-coach' : 'trevor-honest',
-  );
-  for (const q of witness.questions)
-    if (q.id !== 'tq-always' || r.always)
-      d = defense.ask(witness, d, rules, q.id, ['app-log', 'errata']);
-  d = defense.finish(witness, d, rules);
-  const th = scene<TheoryScene>('theory').theories.find((x) => x.id === r.theory);
-  const picks = th?.needs ?? ['arg-a', 'arg-b'];
-  let cs = closing.startClosing(closing.theoryCost(rules, d.jury, th?.jury));
-  for (const p of picks) cs = closing.togglePick(close, cs, p);
-  cs = closing.setTone(close, cs, 't-logic');
-  return closing.deliver(
-    close,
-    cs,
-    rules,
-    args.filter((a) => picks.includes(a.id)),
-  );
+  const flags = r.flags ?? [];
+  const x = playEp2({
+    theory: (r.theory ?? 'own-choice') as Ep2Route['theory'],
+    chat:
+      r.concealed || flags.includes('discovery:rq-chat:concealed')
+        ? 'conceal'
+        : flags.includes('discovery:rq-chat:produced')
+          ? 'produce'
+          : undefined,
+    corrected: flags.includes('trevor-corrected'),
+    daubert: r.daubert,
+    always: r.always,
+    coach: r.coach,
+    object: r.object,
+    confront: r.confront,
+  });
+  const jury = (x.progress.scenes.closing as { jury: Record<string, number> }).jury;
+  return { ...x, jury };
 }
 
 const best = { object: true, confront: true };
@@ -174,14 +132,20 @@ describe('第 2 集審前選擇的代價', () => {
     }
   });
 
-  it('「我們提醒過」交出截圖又更正筆錄：沒拿到 Daubert 就撐不住（提案第五節：更正對它傷最大）', () => {
-    expect(verdict({ ...best, theory: 'warned', flags: [chat, fixed] })).not.toBe('無責');
+  it('「我們提醒過」交出截圖又更正筆錄：結辯時掉的人比「他自己的選擇」多（提案第五節：更正對它傷最大）', () => {
+    const flags = [chat, fixed];
+    expect(spoken({ ...best, theory: 'warned', flags })).toBeGreaterThan(
+      spoken({ ...best, theory: 'own-choice', flags }),
+    );
     expect(verdict({ ...best, theory: 'warned', flags: [fixed] })).toBe('無責');
   });
 
-  it('交出群組截圖的代價：只對質不異議時，交出之後三種理論都判有責', () => {
-    for (const theory of theories)
+  it('交出群組截圖的代價：只對質不異議時，「我們提醒過」和「分攤」判有責，「他自己的選擇」也多人倒向對方', () => {
+    for (const theory of ['warned', 'shared'])
       expect(verdict({ confront: true, theory, flags: [chat, fixed] })).toBe('有責');
+    expect(spoken({ confront: true, theory: 'own-choice', flags: [chat, fixed] })).toBeGreaterThan(
+      spoken({ confront: true, theory: 'own-choice', flags: [fixed] }),
+    );
   });
 
   it('更正筆錄：「我們提醒過」在陪審團那邊要付，另外兩個理論不付（代價在調解與客戶信任）', () => {
@@ -209,9 +173,11 @@ describe('崔佛那一句：更正、沉默、還是讓他再說一次', () => {
         }
   });
 
-  it('「分攤」靠說實話：沉默就輸（有 Daubert 也只到僵局），更正就贏', () => {
-    expect(verdict({ ...best, theory: 'shared' })).toBe('有責');
-    expect(verdict({ ...best, daubert: true, theory: 'shared' })).not.toBe('無責');
+  it('「分攤」靠說實話：沉默沒有 Daubert 就贏不了，有 Daubert 也比更正多掉人；更正就贏', () => {
+    expect(verdict({ ...best, theory: 'shared' })).not.toBe('無責');
+    expect(spoken({ ...best, daubert: true, theory: 'shared' })).toBeGreaterThan(
+      spoken({ ...best, daubert: true, theory: 'shared', flags: [fixed] }),
+    );
     expect(verdict({ ...best, theory: 'shared', flags: [fixed] })).toBe('無責');
   });
 
@@ -244,7 +210,6 @@ describe('不誠實又被抓到的路線', () => {
   const produced = 'discovery:rq-chat:produced';
   const concealed = 'discovery:rq-chat:concealed';
   const theories = ['own-choice', 'warned', 'shared'];
-  // 誠實路線算上 Daubert：「我們提醒過」交出又更正，沒有 Daubert 就撐不住（見上一組）。
   const honest = (theory: string) => ({
     ...best,
     daubert: true,
@@ -260,12 +225,48 @@ describe('不誠實又被抓到的路線', () => {
     flags: [concealed],
   });
 
-  it('其他都打到最好：誠實的路線（含 Daubert）三種理論都無責；藏了又讓他再說一次假話的，沒 Daubert 三種都有責，有 Daubert 也贏不了', () => {
+  it('其他都打到最好：誠實的路線（含 Daubert）三種理論都無責；藏了又讓他再說一次假話的，有沒有 Daubert 三種都有責', () => {
     for (const theory of theories) {
       expect(verdict(honest(theory))).toBe('無責');
       expect(verdict(caught(theory))).toBe('有責');
-      expect(verdict(caught(theory, true))).not.toBe('無責');
+      expect(verdict(caught(theory, true))).toBe('有責');
     }
+  });
+
+  it('體驗評測 v88 實玩的那一條：他自己的選擇、藏截圖、不更正、錄取全不擋、讓崔佛再說一次、有 Daubert', () => {
+    // 修正前：庭審後 1 位、結辯後 2 位倒向對方，評議又拉回 0 位，判無責。
+    const x = playEp2({
+      theory: 'own-choice',
+      chat: 'conceal',
+      always: true,
+      daubert: true,
+      object: true,
+      confront: true,
+    });
+    expect(x.verdict).toBe('有責');
+    expect(x.progress.scenes['defense-trevor']).toMatchObject({
+      log: expect.arrayContaining([
+        expect.objectContaining({ text: expect.stringContaining('陪審團該相信哪一個您') }),
+      ]),
+    });
+  });
+
+  it('遴選怎麼砍都救不回來：藏了又讓他再說一次，有 Daubert，任兩位無因迴避都判有責', () => {
+    const vd = ep.scenes.find((x) => x.type === 'voirdire') as VoirDireScene;
+    const ids = vd.candidates.map((c) => c.id);
+    for (let i = 0; i < ids.length; i++)
+      for (let j = i + 1; j < ids.length; j++)
+        expect(
+          playEp2({
+            theory: 'own-choice',
+            chat: 'conceal',
+            always: true,
+            daubert: true,
+            object: true,
+            confront: true,
+            strikes: [ids[i], ids[j]],
+          }).verdict,
+        ).toBe('有責');
   });
 
   it('藏不能比交便宜：被揭穿時對方照樣拿到截圖，再加不利推定', () => {
@@ -275,18 +276,16 @@ describe('不誠實又被抓到的路線', () => {
       expect(run(hide).jury).not.toEqual(run(give).jury);
       expect(against(hide)).toBeGreaterThanOrEqual(against(give));
     }
-    // 「我們提醒過」更正又拿到 Daubert：交出撐得住，藏了就撐不住。
-    const warned = { ...best, daubert: true, theory: 'warned' };
-    expect(verdict({ ...warned, flags: [produced, 'trevor-corrected'] })).toBe('無責');
-    expect(verdict({ ...warned, concealed: 1, flags: [concealed, 'trevor-corrected'] })).not.toBe(
-      '無責',
-    );
+    // 「我們提醒過」更正：藏了，結辯時倒向對方的人比交出多。
+    const warned = { ...best, theory: 'warned' };
+    expect(
+      spoken({ ...warned, concealed: 1, flags: [concealed, 'trevor-corrected'] }),
+    ).toBeGreaterThan(spoken({ ...warned, flags: [produced, 'trevor-corrected'] }));
   });
 
-  it('沒藏，只是讓他再說一次被打臉：「我們提醒過」開始有人倒向對方', () => {
-    expect(against({ ...best, theory: 'warned', always: true })).toBeGreaterThan(
-      against({ ...best, theory: 'warned' }),
-    );
+  it('沒藏，只是讓他再說一次被打臉：交出截圖的「我們提醒過」從無責變成有責', () => {
+    expect(verdict({ ...best, theory: 'warned', flags: [produced] })).toBe('無責');
+    expect(verdict({ ...best, theory: 'warned', always: true, flags: [produced] })).toBe('有責');
   });
 });
 
@@ -321,5 +320,17 @@ describe('交出群組截圖後的調解', () => {
     const b = play(chat, ['arg-a', 'arg-b', 'b-meds', 'b-expert', 'call']);
     expect(b.outcome).toBe('deal');
     expect(b.deal).toContain('180');
+  });
+
+  it('藏截圖不影響調解（奧卡福還不知道）；再交出意見書時信心剛好卡在 400 萬，多攤一個論點就降到 250 萬', () => {
+    const hid = ['discovery:rq-chat:concealed'];
+    const memo = 'discovery:rq-memo:produced';
+    expect(play(hid, ['arg-a', 'call', 'call']).outcome).toBe('deal');
+    expect(play([...hid, memo], ['arg-a', 'call', 'call']).outcome).toBeNull();
+    expect(play([...hid, memo], ['arg-a', 'arg-b', 'call', 'call']).outcome).toBe('deal');
+    // 兩樣都交出：攤兩個論點還不夠，要再加一個有憑據的虛張。
+    expect(play([...chat, memo], ['arg-a', 'arg-b', 'b-meds', 'call', 'call']).outcome).toBe(
+      'deal',
+    );
   });
 });
