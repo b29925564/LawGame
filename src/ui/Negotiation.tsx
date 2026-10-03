@@ -66,6 +66,10 @@ export function Negotiation({ scene }: { scene: NegotiationScene }) {
   useEffect(() => {
     if (choice) document.querySelector('.commit-bar')?.scrollIntoView({ block: 'nearest' });
   }, [choice]);
+  // 出手後把回饋捲進畫面：手機上剛按的卡片常在可捲區邊緣。
+  useEffect(() => {
+    if (last) document.querySelector('.nego-move')?.scrollIntoView({ block: 'nearest' });
+  }, [last, st.log.length]);
   const trial = risk
     ? t('開庭：約 {low}到 {high}', { low: money(risk.low), high: money(risk.high) }) +
       (risk.punitive ? t('，懲罰性賠償另計') : '')
@@ -75,7 +79,8 @@ export function Negotiation({ scene }: { scene: NegotiationScene }) {
       ? t('接受：確定賠 {amount}', { amount: money(offer.amount) })
       : t('接受：{name}認罪，{label}', { name: client, label: t(offer.label, scope) });
 
-  // 出手後的回饋。打電話的回饋放在按鈕正上方：手機上頂端那張卡會在畫面外（體驗評測 v89）。
+  // 出手後的回饋放在剛按的按鈕旁邊（條件分頁在按鈕上方，攤牌、虛張在卡片下方）：
+  // 放在頂端時，手機上會被捲到畫面外（體驗評測 v89）。
   const moveNote = last && (
     <p className="panel nego-move" role="status">
       {last.call ? (
@@ -208,7 +213,6 @@ export function Negotiation({ scene }: { scene: NegotiationScene }) {
         </>
       }
     >
-      {last && !last.call && moveNote}
       {tab === 'offer' && (
         <section className="panel">
           <h2>{t('她現在開的條件')}</h2>
@@ -227,7 +231,9 @@ export function Negotiation({ scene }: { scene: NegotiationScene }) {
                   {o.amount !== undefined ? money(o.amount) : t(o.label, scope)}
                 </span>
                 <span className="tg">
-                  {o.id === offer.id ? t('現在') : over(o) ? t('超過授權') : ''}
+                  {/* 目前這一檔本身也可能超過授權：兩個標記要能同時出現（體驗評測 v89）。 */}
+                  {o.id === offer.id && <b>{t('現在')}</b>}
+                  {over(o) && <em>{t('超過授權')}</em>}
                 </span>
               </li>
             ))}
@@ -259,7 +265,7 @@ export function Negotiation({ scene }: { scene: NegotiationScene }) {
           {offer.lines.map((l, i) => (
             <Speech key={i} line={l} />
           ))}
-          {last?.call && moveNote}
+          {moveNote}
           <div className="stack">
             <button
               className="wide"
@@ -339,6 +345,7 @@ export function Negotiation({ scene }: { scene: NegotiationScene }) {
             ))}
             {args.length === 0 && <span className="muted">{t('手上沒有確認過的論點。')}</span>}
           </div>
+          {moveNote}
         </section>
       )}
 
@@ -360,6 +367,7 @@ export function Negotiation({ scene }: { scene: NegotiationScene }) {
               </button>
             ))}
           </div>
+          {moveNote}
         </section>
       )}
     </Shell>
