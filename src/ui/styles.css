@@ -6573,6 +6573,9 @@ button.blank:hover,
   }
   .shell:has(> .shell-head > .taskbar) > .shell-body {
     grid-row: 2;
+    /* 捲到底時最後一塊面板的底框要捲得進視野；底緣淡出，跟證據欄一樣看得出是刻意捲動。 */
+    padding-bottom: var(--s5);
+    mask-image: linear-gradient(to bottom, #000 calc(100% - 24px), transparent);
   }
   .shell:has(> .shell-head > .taskbar) > .shell-foot {
     grid-row: 3;
