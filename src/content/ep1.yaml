@@ -52,21 +52,21 @@ _cards: &cards
     kind: 文件
     date: 週日
     time: '14:05'
-    text: 週日 14:05 於友人住處逮捕伊森・蕭。
+    text: 於友人住處逮捕伊森・蕭。
     source: 逮捕報告
   - id: car-statement
     name: 警車上的供述
     kind: 陳述
     date: 週日
     time: '14:20'
-    text: 14:20 押解途中，被告未經詢問自行陳述：「我只是想讓他住手。」
+    text: 押解途中，被告未經詢問自行陳述：「我只是想讓他住手。」
     source: 逮捕報告
   - id: miranda-form
     name: 權利告知書
     kind: 文件
     date: 週日
     time: '14:32'
-    text: 14:32 於分局由柯瓦斯基警探告知並簽署米蘭達權利。
+    text: 於分局由柯瓦斯基警探告知並簽署米蘭達權利。
     source: 逮捕報告
   - id: watch-listed
     name: 財物清單：智慧手錶
@@ -107,7 +107,7 @@ _cards: &cards
     text: 蘇菲 19:02 刷卡離開 31 樓，向警方表示她下班後直接回家，沒有再回大樓。
     source: 警方報告
   - id: parking-log
-    name: 停車場紀錄：蘇菲的車停到 22:40
+    name: 停車場進出紀錄
     kind: 文件
     date: 週五
     time: '22:40'
@@ -130,7 +130,7 @@ _cards: &cards
     kind: 文件
     date: 週五
     time: '22:34'
-    text: 22:34 於東河街 118 號上車，22:44 抵達卡爾德大樓。司機奧瑪・哈桑。
+    text: 於東河街 118 號上車，22:44 抵達卡爾德大樓。司機奧瑪・哈桑。
     arrivesAt: '22:44'
     source: 叫車公司
   - id: sophie-health-app
@@ -150,14 +150,14 @@ _cards: &cards
     kind: 文件
     date: 週五
     time: '23:14'
-    text: 21:55 沃斯傳訊給瑞秋；22:31 由沃斯桌機發出一則訊息給伊森（伊森的手錶 22:33 才收到推播）；23:14 由同一台桌機收回。
+    text: 沃斯於 21:55 傳訊給瑞秋；22:31 由沃斯桌機發出一則訊息給伊森（伊森的手錶 22:33 才收到推播）；23:14 由同一台桌機收回。
     source: 卡爾德物流（傳票）
   - id: watch-notice
     name: 手錶通知紀錄
     kind: 文件
     date: 週五
     time: '22:33'
-    text: 22:33 通知：「葛蘭特・沃斯：十點四十五分上來，把筆電帶來。我們私下解決。」
+    text: 推播通知：「葛蘭特・沃斯：十點四十五分上來，把筆電帶來。我們私下解決。」
     source: 被告扣押手錶
 
   # 第三幕新增的卡片，和第二幕共用同一份牌庫（見 _cards 錨點）。
@@ -181,7 +181,7 @@ _cards: &cards
     text: 法院裁定排除巡邏車上的供述，檢方不得在陪審團面前提起。
     source: 法院裁定
   - id: rachel-2250
-    name: 瑞秋的宣誓陳述：22:50 的聲音
+    name: 瑞秋的宣誓陳述：隔壁的聲音
     kind: 宣誓陳述
     date: 週五
     time: '22:50'
@@ -789,7 +789,7 @@ scenes:
         answer: [l-time]
         argument:
           id: arg-b
-          name: 論點 B：沃斯 22:24 死亡
+          name: 論點 B：沃斯死在伊森進門之前
           text: 心率在 22:24 歸零，落在法醫的死亡時間窗內。伊森 22:47 才進門。
           strength: 12
           tags: [邏輯, 權威]
@@ -811,7 +811,7 @@ scenes:
         answer: [l-alone]
         argument:
           id: arg-d
-          name: 論點 D：23:14 時 31 樓只剩一個人
+          name: 論點 D：收回訊息時 31 樓只剩一個人
           text: 伊森 23:01 離開大廳；23:14 有人在 31 樓操作那台桌機；那個人 23:26 才刷卡離開。
           strength: 10
           tags: [邏輯, 程序]

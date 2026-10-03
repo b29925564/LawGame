@@ -90,6 +90,14 @@ describe('桌面調查', () => {
     expect(desk.heldCards(investigate, st)).toContain('watch-notice');
   });
 
+  it('連線台滿了再點第三張：換掉最早那張（和答案格、動議支撐同一條規則）', () => {
+    let st = play();
+    for (const c of ['a', 'b', 'c']) st = desk.toggleLinkCard(st, c);
+    expect(st.link.cards).toEqual(['b', 'c']);
+    st = desk.toggleLinkCard(st, 'b');
+    expect(st.link.cards).toEqual(['c']);
+  });
+
   it('連線對了不花工時，連錯扣 1 工時', () => {
     let st = desk.commission(investigate, play(), 'job-watch', ['ethan-message']);
     st = desk.commission(investigate, st, 'job-ride', ['ethan-ride']);

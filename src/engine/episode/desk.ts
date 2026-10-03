@@ -168,12 +168,17 @@ export function clearReport(st: DeskState): DeskState {
   return { ...st, report: [] };
 }
 
+/** 挑卡的共同規則（連線台、答案格、動議支撐都一樣）：再點一次取消；滿了又挑新的，換掉最早挑的那張。 */
+function pick(cur: string[], card: string, max: number): string[] {
+  if (cur.includes(card)) return cur.filter((x) => x !== card);
+  if (max <= 0) return cur;
+  return [...(cur.length >= max ? cur.slice(cur.length - max + 1) : cur), card];
+}
+
 /** 連線區：挑兩張卡。 */
 export function toggleLinkCard(st: DeskState, card: string): DeskState {
   const cur = st.link;
-  const has = cur.cards.includes(card);
-  if (!has && cur.cards.length >= 2) return st;
-  const cards = has ? cur.cards.filter((x) => x !== card) : [...cur.cards, card];
+  const cards = pick(cur.cards, card, 2);
   return { ...st, link: { ...cur, cards }, linkNote: null };
 }
 
@@ -254,10 +259,8 @@ export function toggleCard(
   const q = s.questions.find((x) => x.id === qid);
   if (!q || st.confirmed.includes(qid) || !questionOpen(s, st, q, carried)) return st;
   const cur = st.attempts[qid] ?? { cards: [] };
-  const has = cur.cards.includes(card);
   // 格子滿了又挑新的一張：換掉最早挑的那張，不必先取消（還沒提交前隨時可以換）。
-  const kept = !has && cur.cards.length >= q.answer.length ? cur.cards.slice(1) : cur.cards;
-  const cards = has ? cur.cards.filter((x) => x !== card) : [...kept, card];
+  const cards = pick(cur.cards, card, q.answer.length);
   return { ...st, attempts: { ...st.attempts, [qid]: { cards } } };
 }
 
@@ -369,9 +372,7 @@ export function toggleSupport(s: DeskScene, st: DeskState, id: string, card: str
   const m = s.motions.find((x) => x.id === id);
   const a = attempt(st, id);
   if (!m || a.ruling === 'granted') return st;
-  const has = a.support.includes(card);
-  if (!has && a.support.length >= m.support.length) return st;
-  const support = has ? a.support.filter((x) => x !== card) : [...a.support, card];
+  const support = pick(a.support, card, m.support.length);
   return setAttempt(st, id, { ...a, support });
 }
 

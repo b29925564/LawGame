@@ -3,7 +3,8 @@ import { createPortal } from 'react-dom';
 import * as desk from '../engine/episode/desk';
 import * as discovery from '../engine/episode/discovery';
 import type { DeskScene } from '../engine/episode/schema';
-import { deskState, heldArgs, useEpisode } from '../engine/game';
+import * as branch from '../engine/episode/branch';
+import { branchContext, deskState, heldArgs, useEpisode } from '../engine/game';
 import { play } from '../engine/sound';
 import { useT } from '../i18n';
 import {
@@ -15,6 +16,7 @@ import {
   useWide,
 } from './Evidence';
 import { CommitBar } from './Commit';
+import { EffectLines, effectsIf } from './Effects';
 import { MarkLines, Ruling } from './Marks';
 import { useScope } from './lang';
 import { useCardPick } from './pick';
@@ -252,8 +254,19 @@ function Discovery({ scene }: { scene: DeskScene }) {
                         ? t('對方拿到這 {n} 份文件', { n: r.cards.length })
                         : sel === 'privilege'
                           ? // 固定文案：不可以依 privilege 值改寫，不然等於告訴玩家答案。
-                            t('法官可能不認；沒有正當理由硬藏，之後被揭穿會很重')
+                            // 只有特權已經被自己放棄的（錄取時沒擋住），才把原因說出來。
+                            r.waived && branch.matches(r.waived, branchContext(progress))
+                            ? t(
+                                '證人在錄取時已經說出這份意見的內容，特權視同放棄；法官多半會命令交出',
+                              )
+                            : t('法官可能不認；沒有正當理由硬藏，之後被揭穿會很重')
                           : t('由法官決定範圍')
+                    }
+                    detail={
+                      // 交出去才確定會發生的事（集層級 effects）；特權與範圍的結果要法官裁，不先講。
+                      sel === 'produce' ? (
+                        <EffectLines items={effectsIf(progress, [`discovery:${r.id}:produced`])} />
+                      ) : undefined
                     }
                     action={t(
                       sel === 'produce'
@@ -1021,6 +1034,8 @@ function Jobs({ scene, held }: { scene: DeskScene; held: string[] }) {
               {t('{n} 工時', { n: j.cost })}
             </p>
             <p>{t(j.detail, scope)}</p>
+            {/* 委託會留下旗標的，先把會發生的事列出來（決策代價規格一）；已委託的不必再看。 */}
+            {!done && <EffectLines items={effectsIf(progress, j.flags)} />}
             {/* 前提寫在卡上：沒寫的話，玩家會以為不必任何證據就能委託。 */}
             {j.needs.length > 0 && !done && (
               <ul className="needs" aria-label={t('需要')}>
