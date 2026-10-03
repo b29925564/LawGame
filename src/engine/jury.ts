@@ -101,6 +101,12 @@ export interface Round {
   jury: Jury;
 }
 
+/** 沒有人換邊的那一輪，用這幾句代替重複的陪審長發言。 */
+export const STILL = [
+  '討論繼續。有人說話，有人沉默，沒有人換邊。',
+  '最後一輪。大家都說完了，立場沒有再動。',
+];
+
 /** 三輪評議：門檻附近 10 以內的人往多數方向移 5；陪審長再讓所有人往他那邊移 2。 */
 export function deliberate(c: JuryRules, jury: Jury): Round[] {
   const rounds: Round[] = [];
@@ -122,8 +128,11 @@ export function deliberate(c: JuryRules, jury: Jury): Round[] {
     const foreDir = cur[fore.id] >= t ? 1 : -1;
     for (const j of c.jurors) if (j.id !== fore.id) next[j.id] = clamp(next[j.id] + 2 * foreDir);
     const w = termsOf(c);
-    moves.push(`陪審長（${fore.label}）主張${foreDir > 0 ? w.yes : w.no}。`);
     const yes = c.jurors.filter((j) => next[j.id] >= t).length;
+    // 第一輪由陪審長開場；之後票數沒動，就照實說沒動，不再重複同一句。
+    if (r === 0 || yes !== guilty)
+      moves.push(`陪審長（${fore.label}）主張${foreDir > 0 ? w.yes : w.no}。`);
+    else moves.push(STILL[r - 1] ?? STILL[STILL.length - 1]);
     moves.push(`表決：${yes} 票${w.yes}，${c.jurors.length - yes} 票${w.no}。`);
     cur = next;
     rounds.push({ moves, jury: cur });

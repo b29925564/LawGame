@@ -151,7 +151,26 @@ export function deliver(
   theory = true,
 ): ClosingState {
   if (!canDeliver(s, st, args.length)) return st;
-  const tone = s.tones.find((t) => t.id === st.tone)!;
+  const jury = speak(s, st, rules, args, exposed, theory);
+  const rounds = deliberate(rules, jury);
+  const final = rounds[rounds.length - 1].jury;
+  return { ...st, jury: final, spoken: jury, rounds, verdict: verdict(rules, final) };
+}
+
+/**
+ * 結辯這一段話講完、評議之前的心證。判決頁的帳要「換一個做法再算一次」，
+ * 所以 tone、exposed、theory 都可以換掉重播。
+ */
+export function speak(
+  s: ClosingScene,
+  st: ClosingState,
+  rules: JuryRules,
+  args: Question['argument'][],
+  exposed: string[] = [],
+  theory = true,
+  toneId: string | null = st.tone,
+): Jury {
+  const tone = s.tones.find((t) => t.id === toneId)!;
   const empty = s.picks - st.picked.length;
   let jury = empty > 0 ? shiftAll(rules, st.jury, EMPTY_SLOT * empty).jury : st.jury;
   st.picked.forEach((id, i) => {
@@ -164,9 +183,7 @@ export function deliver(
       RECAP * (last ? 1.3 : 1) * (exposed.includes(id) ? 0.5 : 1) * (theory ? 1 : NO_THEORY);
     jury = applyImpact(rules, jury, a.strength, [...a.tags, tone.tag] as Tag[], modifier).jury;
   });
-  const rounds = deliberate(rules, jury);
-  const final = rounds[rounds.length - 1].jury;
-  return { ...st, jury: final, spoken: jury, rounds, verdict: verdict(rules, final) };
+  return jury;
 }
 
 export function done(st: ClosingState): boolean {
