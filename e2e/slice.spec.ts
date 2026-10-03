@@ -191,7 +191,7 @@ async function playToRachelLast(page: Page) {
   await page.getByRole('button', { name: '證據板' }).click();
   const chains: [string, string, (string | RegExp)[], RegExp][] = [
     ['疑問 3', '把死亡時間釘得更準', [/驗屍報告$/, '沃斯手錶的心率紀錄'], /縮小範圍/],
-    ['疑問 4', '沃斯還能打字嗎', ['聊天系統稽核紀錄', '論點 B：沃斯 22:24 死亡'], /矛盾/],
+    ['疑問 4', '沃斯還能打字嗎', ['聊天系統稽核紀錄', '論點 B：沃斯死在伊森進門之前'], /矛盾/],
     ['疑問 5', '誰還刷卡留在 31 樓', ['聊天系統稽核紀錄', '完整門禁紀錄'], /說明機會/],
   ];
   let n = 3;
