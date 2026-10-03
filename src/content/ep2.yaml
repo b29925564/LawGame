@@ -117,6 +117,21 @@ _cards: &cards
     text: 本庭排除費雪醫師關於風險倍數之證詞。原告得另以一般醫學證人說明死因。
     source: 雷耶斯法官
 
+# 審前選擇的代價：條件在開庭／調解開始時判斷（提案 2026-10-03）。
+effects:
+  # 照實交出營運群組：陪審團一開始就往有責偏，奧卡福的開價變硬。
+  - when: { flags: ['discovery:rq-chat:produced'] }
+    jury: 6
+    confidence: 10
+  # 交出事務所自己的意見書：亞瑟的信任掉一格；旗標帶到第 3 集（惠特洛克線從這裡起頭）。
+  - when: { flags: ['discovery:rq-memo:produced'] }
+    trust: -1
+    confidence: 5
+    flags: [memo-produced]
+  # 請崔佛更正筆錄：亞瑟不高興，奧卡福知道我們的副總承認說錯話。
+  - when: { flags: [trevor-corrected] }
+    trust: -1
+    confidence: 10
 scenes:
   # 冷開場：玩家拿著赫克托的手機。休息不是不能按，只是每次都有代價。
   - type: phone
@@ -469,8 +484,7 @@ scenes:
         text: 請求三：與疲勞提醒或強制下線功能有關的一切設定變更紀錄。
         cards: [change-ticket]
         privilege: weak
-        effects:
-          produced: { tips: [arg-e] }
+        exposes: [arg-e]
         lines:
           produced:
             - who: 羅根・普萊斯
@@ -486,8 +500,6 @@ scenes:
         unlock: [lock-spec]
         text: 請求四：被告營運主管於事發前一年內，關於司機排班的內部通訊。
         cards: [chat-peak]
-        effects:
-          produced: { jury: 6, confidence: 10 }
         lines:
           produced:
             - who: 戴文
@@ -500,34 +512,6 @@ scenes:
               text: 葛雷律師，截圖沒有放進去。我照你的意思打包了。
             - who: 戴文
               text: ……我們這樣是對的嗎？
-      - id: rq-memo
-        unlock: [change-ticket]
-        text: 請求五：被告就取消強制下線一事所取得之任何意見或評估。
-        cards: [legal-memo]
-        privilege: valid
-        # 崔佛在錄取時把意見內容說出口（p-legal2 沒擋），特權視同放棄。
-        weakIf: { flags: ['depo:depo-trevor:p-legal2:waived'] }
-        effects:
-          produced: { trust: -1, confidence: 5 }
-        lines:
-          produced:
-            - who: 羅根・普萊斯
-              text: 你把我們自己事務所的意見書交給原告。惠特洛克明天早上就會知道。
-              mood: 硬
-            - who: 旁白
-              text: 亞瑟・卡爾德的訊息進來：「那份意見是我付錢買的。你用我的錢，替原告買了一份證據。」
-          withheld:
-            - who: 旁白
-              text: 特權清單列了一行：「法律意見書，三月，律師與委託人通訊。」奧卡福沒有爭執。
-            - who: 羅根・普萊斯
-              text: 合法地藏，也是一種選擇。記住這個感覺。
-              mood: 硬
-          strained:
-            - who: 旁白
-              text: 法官翻到崔佛的錄取筆錄：「證人已在宣誓下陳述該意見之內容，特權視同放棄。本庭命令交出。」
-            - who: 盧卡斯
-              text: 駁回
-              mark: { kind: stamp, text: 駁回 }
     links:
       - id: l-knew
         cards: [med-record, pharmacy]
@@ -700,7 +684,7 @@ scenes:
         q: 三月十四日有一張設定變更單。簽名的是您嗎？
         a: ……系統每一季都在改版。我不記得每一張變更單。
         objection: 缺乏基礎
-        gives: [change-ticket]
+        missed: { gives: [change-ticket] }
       - id: p-legal
         q: 您做這個決定之前，有沒有問過律師？
         a: 有。
@@ -708,6 +692,7 @@ scenes:
         q: 律師怎麼說？
         a: 法務說沒問題，可以改。
         objection: 特權
+        missed: { flags: [memo-leaked] }
       - id: p-feel
         q: 您覺得，公司是不是把評分看得比司機的命重？
         a: 我……
@@ -802,7 +787,6 @@ scenes:
         needs: [arg-g]
         gives: [errata]
         flags: [trevor-corrected]
-        effects: { trust: -1, confidence: 10 }
         report:
           - who: 羅根・普萊斯
             text: 崔佛簽了。第 42 頁第 7 行，「從來沒有」改成「三月以前有」。他簽的時候沒有說話。
@@ -842,6 +826,34 @@ scenes:
             text: 駁回
             mark: { kind: stamp, text: 駁回 }
         gives: [daubert-ruling]
+    # 第五項請求排在錄取之後才到：崔佛在錄取時說了什麼，決定特權還站不站得住。
+    discovery:
+      - id: rq-memo
+        unlock: [change-ticket]
+        text: 請求五：被告就取消強制下線一事所取得之任何意見或評估。
+        cards: [legal-memo]
+        privilege: valid
+        # 崔佛在錄取時把意見內容說出口（p-legal2 沒擋），特權視同放棄。
+        waived: { flags: [memo-leaked] }
+        lines:
+          produced:
+            - who: 羅根・普萊斯
+              text: 你把我們自己事務所的意見書交給原告。惠特洛克明天早上就會知道。
+              mood: 硬
+            - who: 旁白
+              text: 亞瑟・卡爾德的訊息進來：「那份意見是我付錢買的。你用我的錢，替原告買了一份證據。」
+          withheld:
+            - who: 旁白
+              text: 特權清單列了一行：「法律意見書，三月，律師與委託人通訊。」奧卡福沒有爭執。
+            - who: 羅根・普萊斯
+              text: 合法地藏，也是一種選擇。記住這個感覺。
+              mood: 硬
+          strained:
+            - who: 旁白
+              text: 法官翻到崔佛的錄取筆錄：「證人已在宣誓下陳述該意見之內容，特權視同放棄。本庭命令交出。」
+            - who: 盧卡斯
+              text: 駁回
+              mark: { kind: stamp, text: 駁回 }
     links:
       - id: l-perjury
         cards: [trevor-sworn, change-ticket]
@@ -1663,9 +1675,9 @@ scenes:
         a: 因為那句是錯的。三月以前，系統會強制下線。改掉它的那張單，是我簽的。
         impact: 4
         tags: [權威]
-        needs: [errata]
+        when: { flags: [trevor-corrected] }
     # 營運群組進了開示，奧卡福反詰問多問一題。
-    extra:
+    cross:
       - id: tx-peak
         when: { flags: ['discovery:rq-chat:produced'] }
         q: 米爾斯先生，「旺季不准任何人被踢下線。我不管系統怎麼寫。」這句話，是您在營運群組說的？
@@ -1895,7 +1907,7 @@ scenes:
     act: 尾聲
     epilogue: true
     when:
-      flags: ['discovery:rq-memo:produced']
+      flags: [memo-produced]
     place: 惠特洛克・海爾　四十二樓　晚上 21:30
     steps:
       - do: say
