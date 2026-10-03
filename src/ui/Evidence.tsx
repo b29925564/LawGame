@@ -115,7 +115,8 @@ export function EvidenceDrawer({ note, noTimeline }: { note?: string; noTimeline
             {page === 'cards' && (
               <>
                 <KindFilter items={items} value={kind} onPick={setKind} />
-                <ul className="stack cards sheet-list">
+                {/* 清單自己捲：能被鍵盤聚焦，卡片不能選的畫面也捲得到下面（無障礙審查第 3 條）。 */}
+                <ul className="stack cards sheet-list" tabIndex={0} aria-label={t('證據清單')}>
                   {timeGroups(hit, (i) => (
                     <EvidenceCard key={i.id} item={i} pickable={wide} />
                   ))}
@@ -133,7 +134,7 @@ export function EvidenceDrawer({ note, noTimeline }: { note?: string; noTimeline
               </div>
             )}
             {page === 'terms' && (
-              <dl className="terms sheet-list">
+              <dl className="terms sheet-list" tabIndex={0} aria-label={t('法典')}>
                 {terms.map((g) => {
                   const term = t(g.term, scope);
                   return (
@@ -145,7 +146,12 @@ export function EvidenceDrawer({ note, noTimeline }: { note?: string; noTimeline
                         )}
                       </dt>
                       <dd>{t(g.text, scope)}</dd>
-                      {g.inGame && <dd className="in-game">{t(g.inGame, scope)}</dd>}
+                      {g.inGame && (
+                        <dd className="in-game">
+                          <span className="in-game-label">{t('遊戲裡')}</span>
+                          {t(g.inGame, scope)}
+                        </dd>
+                      )}
                     </div>
                   );
                 })}

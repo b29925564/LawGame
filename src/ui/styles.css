@@ -29,7 +29,8 @@
   --commit-ink: #f1ece0;
   --commit-edge: light-dark(#c9a24a, #b8893a);
   /*
-   * 圖層五層（UX 規格五）：版面上的固定列 < 證據欄與抽屜 < 提示框 < 選單 < 就地回饋與畫外字幕。
+   * 圖層五層（UX 規格五）：版面上的固定列 < 證據欄與抽屜 < 提示框 < 選單 < 就地回饋。
+   * 畫外字幕在選單正下方（選單 − 1），獨白中也打得開選單。
    * 元件裡只用這五個變數；−1～2 的小數字只是元件內部的前後，不跨元件比。
    */
   --z-base: 3;
@@ -1034,6 +1035,24 @@ details summary {
   flex-direction: column;
   gap: 2px;
 }
+/* 文件上的便利貼：黃紙、署名在前，跟本文分得開。 */
+.sticky-note {
+  display: block;
+  padding: 8px 10px;
+  border-radius: 2px;
+  background: light-dark(#fbefa8, #3a3417);
+  color: light-dark(#3b3210, #f1e6b8);
+  box-shadow: 0 1px 0 rgb(0 0 0 / 12%);
+  transform: rotate(-0.4deg);
+}
+.sticky-from {
+  display: block;
+  margin-bottom: 2px;
+  font-family: var(--font);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
 .doc-lines li {
   counter-increment: line;
   position: relative;
@@ -1265,8 +1284,8 @@ details summary {
   color: var(--muted);
   font-size: 0.9em;
 }
-.term .in-game::before {
-  content: '遊戲裡　';
+.term .in-game-label {
+  margin-right: 1em;
   color: var(--accent);
   font-weight: 700;
 }
@@ -1433,6 +1452,16 @@ fieldset.relations.compact {
   border: none;
   padding: 0;
   gap: 4px;
+  /* fieldset 預設最小寬度是內容寬：一排不換行的關係鈕會把它撐出畫面，整頁橫移（英文最明顯）。 */
+  min-inline-size: 0;
+}
+/* 電腦上連線台夠寬，關係鈕放不下就換行，不要藏在右緣（體驗評測：英文 Shows opportunity 被切）。 */
+@media (min-width: 1024px) {
+  .relations.compact .chips.kinds {
+    flex-wrap: wrap;
+    overflow: visible;
+    mask-image: none;
+  }
 }
 .relations.compact [aria-checked='true'] {
   background: var(--hl) !important;
@@ -1992,6 +2021,10 @@ fieldset.relations.compact {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 6px;
+}
+/* 會見：提問／施壓的分頁列只是語意上的一組，版面上跟「安撫」排在同一格線。 */
+.actions > .row > [role='tablist'] {
+  display: contents;
 }
 .actions [aria-selected='true'] {
   color: var(--text);
@@ -3903,7 +3936,8 @@ button.iou[aria-pressed='true'] {
 .vo {
   position: fixed;
   inset: 0;
-  z-index: var(--z-toast);
+  /* 在選單底下：獨白播到一半也能開選單存檔、換語言（體驗評測）。 */
+  z-index: calc(var(--z-menu) - 1);
   display: grid;
   place-items: center;
   cursor: default;
@@ -3948,10 +3982,14 @@ button.iou[aria-pressed='true'] {
   line-break: strict;
   color: light-dark(var(--text), var(--cine-text));
 }
-/* 斷句只能落在作者標的詞組之間 */
+/* 斷句只能落在作者標的詞組之間（中文）；英文照字詞換行，詞組整段不換行在手機上會超出畫面。 */
 .vo-text .seg {
   display: inline-block;
   white-space: nowrap;
+}
+:lang(en) .vo-text .seg {
+  display: inline;
+  white-space: normal;
 }
 /* 深色主題：縫是一道光（百葉窗光條＝黑條的負片），不是黑條 */
 @media (prefers-color-scheme: dark) {
@@ -4596,8 +4634,9 @@ button.iou[aria-pressed='true'] {
   position: sticky;
   top: 0;
   z-index: calc(var(--z-base) + 1);
-  margin-inline: -16px;
-  padding: 8px 16px;
+  /* 跟外框的左右留白一樣寬（14px），多 2px 會讓整頁橫移。 */
+  margin-inline: -14px;
+  padding: 8px 14px;
   background: var(--bg);
   border-bottom: 1px solid var(--border);
 }

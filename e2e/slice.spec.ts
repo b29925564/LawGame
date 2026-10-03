@@ -107,11 +107,11 @@ async function playToRachelLast(page: Page) {
   // 接案
   await until(page, page.getByRole('button', { name: '四十小時。那我把午餐省下來。' }));
   await page.getByRole('button', { name: '四十小時。那我把午餐省下來。' }).click();
-  await until(page, page.getByRole('button', { name: '卷宗', exact: true }));
+  await until(page, page.getByRole('button', { name: /^卷宗( \d+)?$/ }));
 
   // 第二幕：讀卷宗、標記事實、委託、推理鏈
   await expect(page.getByLabel(/剩餘工時 24/)).toBeVisible();
-  await page.getByRole('button', { name: '卷宗', exact: true }).click();
+  await page.getByRole('button', { name: /^卷宗( \d+)?$/ }).click();
   await page.getByRole('button', { name: /看守所財物清單/ }).click();
   await page.getByRole('button', { name: /智慧手錶 1 支/ }).click();
   await page.getByRole('button', { name: '← 卷宗' }).click();
@@ -140,7 +140,7 @@ async function playToRachelLast(page: Page) {
   await expect(page.getByRole('button', { name: '結束調查' })).toBeVisible();
 
   // 第二幕後半：先把手錶相關性鏈確認起來，才提得出傳票聲請。
-  await page.getByRole('button', { name: '卷宗', exact: true }).click();
+  await page.getByRole('button', { name: /^卷宗( \d+)?$/ }).click();
   await page.getByRole('button', { name: /驗屍報告/ }).click();
   await page.getByRole('button', { name: /死亡時間推估/ }).click();
   await page.getByRole('button', { name: /錶帶完好/ }).click();
@@ -207,7 +207,7 @@ async function playToRachelLast(page: Page) {
   await next(page); // 第三幕字卡
 
   // 第三幕之一：米蘭達動議
-  await page.getByRole('button', { name: '卷宗', exact: true }).click();
+  await page.getByRole('button', { name: /^卷宗( \d+)?$/ }).click();
   await page.getByRole('button', { name: /逮捕報告與巡邏車錄影/ }).click();
   await page.getByRole('button', { name: /逮捕時間 14:05，地點/ }).click();
   await page.getByRole('button', { name: /沒有唸出任何權利告知/ }).click();
