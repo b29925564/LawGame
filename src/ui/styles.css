@@ -1035,24 +1035,6 @@ details summary {
   flex-direction: column;
   gap: 2px;
 }
-/* 文件上的便利貼：黃紙、署名在前，跟本文分得開。 */
-.sticky-note {
-  display: block;
-  padding: 8px 10px;
-  border-radius: 2px;
-  background: light-dark(#fbefa8, #3a3417);
-  color: light-dark(#3b3210, #f1e6b8);
-  box-shadow: 0 1px 0 rgb(0 0 0 / 12%);
-  transform: rotate(-0.4deg);
-}
-.sticky-from {
-  display: block;
-  margin-bottom: 2px;
-  font-family: var(--font);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-}
 .doc-lines li {
   counter-increment: line;
   position: relative;
@@ -1104,6 +1086,36 @@ details summary {
       transparent calc(100% - 0.3em)
     )
     0 60% / 100% 78% no-repeat;
+}
+/*
+ * 文件上的便利貼：黃紙、署名在前，跟本文分得開，也不編行號（不是文件的第幾句）。
+ * 選擇器要比 .sentence span 重，不然底色和留白會被螢光筆那條蓋掉（體驗評測）。
+ */
+.doc-lines li:has(.sticky-note) {
+  counter-increment: none;
+}
+.doc-lines li:has(.sticky-note)::before {
+  content: none;
+}
+.sentence .sticky-note {
+  display: block;
+  padding: 8px 10px;
+  border-radius: 2px;
+  /* 卷宗一律是紙（深色主題也一樣），便利貼跟著用固定的黃紙色。 */
+  background: #fbefa8;
+  color: #3b3210;
+  box-shadow: 0 1px 2px rgb(60 50 10 / 25%);
+  transform: rotate(-0.4deg);
+}
+.sentence .sticky-note .sticky-from {
+  display: block;
+  margin-bottom: 2px;
+  padding: 0;
+  background: none;
+  font-family: var(--font);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
 }
 .sentence.noted span {
   --mark: rgb(255 208 46 / 38%);

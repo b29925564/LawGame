@@ -46,7 +46,7 @@
 皺眉: Frowns
 看向被告: Looks at the defendant
 '{juror}被多數說服，改變了立場。': '{juror} is swayed by the majority and changes sides.'
-'陪審長（{juror}）主張{verdict}。': 'The foreperson ({juror}) argues for {verdict:lower}.'
+'陪審長（{juror}）主張{verdict}。': 'The foreperson ({juror}) argues for a verdict of {verdict:lower}.'
 討論繼續。有人說話，有人沉默，沒有人換邊。: Discussion goes on. Some talk, some stay silent. Nobody switches sides.
 最後一輪。大家都說完了，立場沒有再動。: Final round. Everyone has had their say; nobody moves.
 '表決：{yes} 票{a}，{no} 票{b}。': 'Vote: {yes} {a:lower}, {no} {b:lower}.'

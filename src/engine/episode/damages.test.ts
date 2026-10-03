@@ -17,6 +17,8 @@ describe('判決表', () => {
     const heavy = closing.award(close, rules, all(90), 40, null)!;
     expect(close50.fault).toBe(45);
     expect(heavy.fault).toBe(35);
+    // 畫面要能說「理論 40%，票數浮動 −5」。
+    expect(heavy.base).toBe(40);
     expect(close50.amount).toBe(3575000);
     expect(heavy.amount).toBe(4225000);
     expect(close50.total).toBe(6500000);
