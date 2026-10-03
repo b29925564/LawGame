@@ -897,11 +897,15 @@ details summary {
 }
 .bench .patience {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
+  gap: 2px 8px;
   font-size: 13px;
   color: var(--muted);
   letter-spacing: 0.06em;
+}
+.bench .patience .nowrap {
+  white-space: nowrap;
 }
 
 /* 分頁列：文字加底線，不再是一排方塊。 */
@@ -2224,6 +2228,8 @@ fieldset.relations.compact {
   border-radius: var(--radius);
   background: var(--surface);
   overflow: hidden;
+  /* 放在直排的 panel 裡時不要被壓扁，否則列會被切掉一半。 */
+  flex-shrink: 0;
 }
 .stats dt,
 .stats dd {
@@ -5373,6 +5379,10 @@ button.iou[aria-pressed='true'] {
   margin-top: 4px;
   padding: 10px 12px;
   border-top: 1px dashed var(--border);
+}
+/* 直排的 panel 裡 flex-basis:100% 會吃掉整個面板的高度，把上面的表壓扁。 */
+.panel > .commit-bar {
+  flex-basis: auto;
 }
 .commit-bar p {
   margin: 0;

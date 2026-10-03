@@ -25,6 +25,12 @@ export function Deposition({ scene }: { scene: DepositionScene }) {
   const [intro, setIntro] = useState(st.log.length === 0);
   const [topic, setTopic] = useState(scene.topics[0]?.id ?? '');
   const theirs = scene.side === 'theirs';
+  // 有毛病的題目裡，擋對幾題、漏掉幾題（異議理由選錯也算漏）。
+  const depoFlags = (st.flags ?? []).filter((f) => f.startsWith(`depo:${scene.id}:`));
+  const preserved = depoFlags.filter((f) => f.endsWith(':preserved')).length;
+  const shouldObject = theirs
+    ? scene.script.filter((q) => q.objection && st.asked.includes(q.id)).length
+    : 0;
   const q = theirs ? depo.current(scene, st) : undefined;
   // 對方多拿到的卡片可能還沒進玩家手上，所以從整集的桌面場景找名字。
   const cardName = (id: string) =>
@@ -58,6 +64,10 @@ export function Deposition({ scene }: { scene: DepositionScene }) {
             <dl className="stats">
               <dt>{t('問過的題目')}</dt>
               <dd>{st.asked.length}</dd>
+              <dt>{t('擋對的異議')}</dt>
+              <dd>
+                {preserved} / {shouldObject}
+              </dd>
               <dt>{t('站不住的異議')}</dt>
               <dd>{st.wrong ?? 0}</dd>
               <dt>{t('該擋沒擋住的題目')}</dt>

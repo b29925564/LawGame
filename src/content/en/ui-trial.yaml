@@ -171,9 +171,12 @@
 ，懲罰性賠償另計: ', punitive damages extra'
 開庭：結果由陪審團決定: 'Trial: the jury decides'
 接受：確定賠 {amount}: 'Accept: pay {amount}, settled'
+'。': '. '
 '接受：{name}認罪，{label}': 'Accept: {name} pleads guilty, {label}'
 不談了，這個條件作廢。: 'No deal; this offer is gone. '
 離席，上法庭: Walk out and go to trial
 無因迴避：{name}: 'Peremptory strike: {name}'
 用掉 1 次，剩 {n} 次；對方也會刪掉你想留的人。: 'Uses 1, {n} left. The other side will strike people you want too.'
 刪掉{name}: 'Strike {name}'
+'交互詰問結束・{name}': 'Examination over · {name}'
+你手上的證據說這個回答不是真的。照問，是讓證人在庭上說假話。: Your own evidence says this answer isn't true. Asking anyway puts a false answer on the record.

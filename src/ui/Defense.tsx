@@ -3,7 +3,7 @@ import * as defense from '../engine/episode/defense';
 import type { DefenseScene } from '../engine/episode/schema';
 import { defenseState, juryAfterTrial, useEpisode, witnessScene } from '../engine/game';
 import { useT } from '../i18n';
-import { JuryLegend } from './JuryLegend';
+import { termsOf } from '../engine/jury';
 import { useScope } from './lang';
 import { MarkLines } from './Marks';
 import { Speech } from './Portrait';
@@ -66,18 +66,35 @@ export function Defense({ scene: raw }: { scene: DefenseScene }) {
     );
 
   const left = scene.asks - st.asked.length;
+  const lines = st.log.map((l, i) => (
+    <Speech key={i} line={{ who: l.who, text: l.text, mood: '平', thought: false }} />
+  ));
   return (
     <main className="scene">
       <p className="eyebrow">
-        {t('直接詰問・{name}', { name: t(scene.witness.name, scope) })}
-        {st.stage === 'direct' ? t('・還能問 {n} 題', { n: left }) : ''}
+        {st.stage === 'direct'
+          ? t('直接詰問・{name}', { name: t(scene.witness.name, scope) }) +
+            t('・還能問 {n} 題', { n: left })
+          : t('交互詰問結束・{name}', { name: t(scene.witness.name, scope) })}
       </p>
-      {rules && <JuryLegend jury={st.jury} threshold={rules.threshold} burden={rules.burden} />}
-      <Transcript count={st.log.length}>
-        {st.log.map((l, i) => (
-          <Speech key={i} line={{ who: l.who, text: l.text, mood: '平', thought: false }} />
+      {/* 這裡沒有逐人的數字，只說幾位站在對方那邊；說明數字的圖例會讓人以為數字壞了。 */}
+      {rules && (
+        <p className="muted small">
+          {t('陪審團')}{' '}
+          {t('{over} / {total} 傾向{yes}', {
+            over: rules.jurors.filter((j) => (st.jury[j.id] ?? 0) >= rules.threshold).length,
+            total: rules.jurors.length,
+            yes: t(termsOf(rules).yes),
+          })}
+        </p>
+      )}
+      {st.log.length > 0 &&
+        (st.stage === 'direct' ? (
+          <Transcript count={st.log.length}>{lines}</Transcript>
+        ) : (
+          // 詰問結束後整份筆錄攤開，不再擠在小框裡只露半句。
+          <div className="lines transcript full">{lines}</div>
         ))}
-      </Transcript>
       {st.stage === 'direct' ? (
         <>
           <ul className="stack">
@@ -92,6 +109,13 @@ export function Defense({ scene: raw }: { scene: DefenseScene }) {
                   >
                     {t(q.q, scope)}
                   </button>
+                  {/* 明知答案是假的還問（ethicsIf 條件成立）：問之前就要看得到風險。 */}
+                  {q.ethicsIf && q.ethicsIf.has.every((c) => progress.cards.includes(c)) && (
+                    <p className="bad-text small ethics-risk">
+                      <span aria-hidden>⚠ </span>
+                      {t('你手上的證據說這個回答不是真的。照問，是讓證人在庭上說假話。')}
+                    </p>
+                  )}
                   {defense.missing(scene, q.id, progress.cards).length > 0 && (
                     <p className="muted small">{t('手上沒有能讓證人說這件事的證據。')}</p>
                   )}
