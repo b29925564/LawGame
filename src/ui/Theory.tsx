@@ -26,7 +26,9 @@ export function Theory({ scene }: { scene: TheoryScene }) {
     return (
       <main className="scene">
         <p className="eyebrow">
-          {t(scene.act, scope)}・{t(scene.place, scope)}
+          {t(scene.act, scope)}
+          {t('・')}
+          {t(scene.place, scope)}
         </p>
         <div className="lines">
           {scene.intro.map((l, i) => (
@@ -160,7 +162,9 @@ export function Opening({ scene }: { scene: OpeningScene }) {
     return (
       <main className="scene">
         <p className="eyebrow">
-          {t(scene.act, scope)}・{t(scene.place, scope)}
+          {t(scene.act, scope)}
+          {t('・')}
+          {t(scene.place, scope)}
         </p>
         <div className="lines">
           {scene.intro.map((l, i) => (
@@ -177,7 +181,7 @@ export function Opening({ scene }: { scene: OpeningScene }) {
     <main className="scene">
       <p className="eyebrow">
         {t('開場陳述')}
-        {th ? `・${t(th.name, scope)}` : ''}
+        {th ? `${t('・')}${t(th.name, scope)}` : ''}
       </p>
       {!th ? (
         <p className="muted">{t('沒有選定的案件理論，沒有任何承諾可以許。')}</p>

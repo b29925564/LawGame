@@ -2202,6 +2202,12 @@ fieldset.relations.compact {
 .jury.compact .state {
   display: none;
 }
+/* 休庭頁的陪審團不是一條，有空間就讓名字和職業完整換行，別截成「咖啡店…」。 */
+.jury.compact:not(.strip) .label {
+  white-space: normal;
+  overflow: visible;
+  overflow-wrap: anywhere;
+}
 /* 法庭裡的陪審團是一條，收起來才放得下詰問的按鈕。 */
 .jury.compact.strip {
   padding: 0;
