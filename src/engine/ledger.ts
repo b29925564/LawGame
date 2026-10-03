@@ -1,12 +1,13 @@
 import * as closing from './episode/closing';
 import * as discovery from './episode/discovery';
 import type * as desk from './episode/desk';
-import type { ClosingScene, DeskScene, TrialScene } from './episode/schema';
+import type { ClosingScene, DeskScene } from './episode/schema';
 import type * as trial from './episode/trial';
 import {
   brokenPromises,
   closingArgs,
   closingState,
+  courtScene,
   episodeOf,
   exposedArgs,
   juryAfterTrial,
@@ -128,15 +129,17 @@ export function ledger(p: Progress): LedgerItem[] {
       .filter((x): x is DeskScene => x.type === 'desk')
       .flatMap((d) => d.questions.map((q) => [q.argument.id, q.argument] as const)),
   );
-  for (const t of ep.scenes) {
-    if (t.type !== 'trial') continue;
-    const ts = p.scenes[t.id] as trial.TrialState | undefined;
+  for (const s of ep.scenes) {
+    if (s.type !== 'trial') continue;
+    const ts = p.scenes[s.id] as trial.TrialState | undefined;
     if (!ts || ts.pleaded || ts.stricken) continue;
+    // 陪審員要用選任後實際坐進席位的那幾位，場景原本的 jurors 對不上心證的 id。
+    const t = courtScene(p, s);
     for (const c of t.witness.claims) {
       if (ts.claims[c.id]?.result !== 'none') continue;
       const a = args.get(c.argument);
       if (!a) continue;
-      const hit = applyImpact(t as TrialScene, ts.jury, a.strength, a.tags, 1.5).jury;
+      const hit = applyImpact(t, ts.jury, a.strength, a.tags, 1.5).jury;
       add({
         kind: 'unimpeached',
         amount: avg(t, ts.jury) - avg(t, hit),

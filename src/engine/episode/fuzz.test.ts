@@ -243,6 +243,21 @@ function checkLedger(p: Progress) {
     if (Math.abs((again[id] ?? NaN) - v) > 1e-9)
       throw new Error(`帳目重播的結辯跟實際不同：${id} ${again[id]} ≠ ${v}`);
   const items = ledger(p).filter((x) => x.kind !== 'punitive');
+  // 沒彈劾的關鍵證詞一定要上帳（陪審團還沒完全站到我們這邊時）。
+  for (const s of r.ep.scenes) {
+    if (s.type !== 'trial') continue;
+    const ts = p.scenes[s.id] as ReturnType<typeof trialState> | undefined;
+    if (!ts || ts.pleaded || ts.stricken || ts.stage !== 'done') continue;
+    const seated = courtScene(p, s).jurors;
+    const lean = seated.reduce((n, j) => n + ts.jury[j.id], 0) / seated.length;
+    for (const c of s.witness.claims)
+      if (
+        ts.claims[c.id]?.result === 'none' &&
+        lean >= 20 &&
+        !items.some((x) => x.kind === 'unimpeached' && x.refs.includes(c.id))
+      )
+        throw new Error(`沒彈劾的 ${s.id}/${c.id} 沒有上帳`);
+  }
   for (const [i, x] of items.entries()) {
     if (!(x.amount > 0 && Number.isFinite(x.amount)))
       throw new Error(`帳目 ${x.kind} 數值不對：${x.amount}`);
