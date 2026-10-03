@@ -89,6 +89,9 @@ describe('民事門檻（優勢證據）', () => {
     const flips = moves.filter((m) => m.includes('改變了立場'));
     expect(flips.length).toBeGreaterThan(0);
     for (const m of flips) expect(m).not.toContain('超市夜班主管');
+    // 陪審長那句也只寫姓名，格式一致。
+    for (const m of moves.filter((x) => x.startsWith('陪審長')))
+      expect(m).not.toContain('超市夜班主管');
   });
 
   it('驗證器：民事的結辯要寫有責／無責，判決人數要過半而且不多於陪審員', () => {

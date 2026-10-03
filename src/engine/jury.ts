@@ -138,7 +138,7 @@ export function deliberate(c: JuryRules, jury: Jury): Round[] {
     const yes = c.jurors.filter((j) => next[j.id] >= t).length;
     // 第一輪由陪審長開場；之後票數沒動，就照實說沒動，不再重複同一句。
     if (r === 0 || moves.length)
-      moves.push(`陪審長（${fore.label}）主張${foreDir > 0 ? w.yes : w.no}。`);
+      moves.push(`陪審長（${fore.name ?? fore.label}）主張${foreDir > 0 ? w.yes : w.no}。`);
     else moves.push(STILL[r - 1] ?? STILL[STILL.length - 1]);
     moves.push(`表決：${yes} 票${w.yes}，${c.jurors.length - yes} 票${w.no}。`);
     cur = next;
