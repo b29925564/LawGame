@@ -165,7 +165,6 @@
 懲罰性賠償看的是被告隱瞞了什麼，開示和證據要先處理。: Punitive damages turn on what the defendant hid; deal with discovery and the evidence first.
 懲罰性賠償可能再加同額: Punitive damages could add the same amount again
 懲罰性賠償可能另加 {r} 倍: 'Punitive damages could add {r}× on top'
-這一段詰問到此為止。按「休庭」看這一場的結果。: This examination is over. Press “Recess” to see how the day went.
 '理論 {base}%，票數浮動 {d}': 'Theory {base}%, vote swing {d}'
 '開庭：約 {low}到 {high}': 'Trial: about {low} to {high}'
 ，懲罰性賠償另計: ', punitive damages extra'
@@ -180,3 +179,10 @@
 刪掉{name}: 'Strike {name}'
 '交互詰問結束・{name}': 'Examination over · {name}'
 你手上的證據說這個回答不是真的。照問，是讓證人在庭上說假話。: Your own evidence says this answer isn't true. Asking anyway puts a false answer on the record.
+這代表什麼: What this means
+證詞全部刪除: Testimony stricken
+證人援引緘默權: The witness takes the Fifth
+法官叫停了詰問: The judge has stopped the examination
+詰問結束: Examination over
+法官把這位證人在這一場說過的話全部從紀錄上拿掉，陪審團不能採用。: The judge strikes everything this witness said in this session. The jury may not consider it.
+按「休庭」看這一場的結果。: Press “Recess” to see how the day went.

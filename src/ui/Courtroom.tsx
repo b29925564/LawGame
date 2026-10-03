@@ -259,6 +259,12 @@ export function Courtroom({ scene: raw }: { scene: TrialScene }) {
         {light}
         <main className="scene">
           <p className="eyebrow">{t('休庭')}</p>
+          {/* 詰問的最後幾句話——高潮就在這裡，放在第一屏，數字排在後面（體驗評測）。 */}
+          <div className="lines transcript full">
+            {st.log.slice(-Math.max(4, st.turn ?? 0)).map((l, i) => (
+              <Speech key={i} line={{ ...l, mood: '平', thought: false }} />
+            ))}
+          </div>
           <dl className="stats">
             <dt>{t('成功彈劾')}</dt>
             <dd>
@@ -274,12 +280,6 @@ export function Courtroom({ scene: raw }: { scene: TrialScene }) {
             <dd>{deskDone && deskScene ? `${deskDone.spent} / ${deskScene.hours}` : '—'}</dd>
           </dl>
           <Jurors scene={scene} jury={st.jury} deltas={{}} />
-          {/* 詰問的最後幾句話——高潮就在這裡，休庭畫面不該把它吃掉。 */}
-          <div className="lines transcript full">
-            {st.log.slice(-Math.max(4, st.turn ?? 0)).map((l, i) => (
-              <Speech key={i} line={{ ...l, mood: '平', thought: false }} />
-            ))}
-          </div>
           <div className="lines">
             {scene.outro.map((l, i) => (
               <Speech key={i} line={l} />
@@ -306,9 +306,12 @@ export function Courtroom({ scene: raw }: { scene: TrialScene }) {
         head={
           <header className="panel-head bench">
             <p className="eyebrow">
-              <strong>{t(scene.witness.name, scope)}</strong>
-              {t('・')}
-              {t(scene.witness.role, scope)}
+              {/* 包成一段：eyebrow 是 flex，分開放會在「・」前後各多一格間距。 */}
+              <span>
+                <strong>{t(scene.witness.name, scope)}</strong>
+                {t('・')}
+                {t(scene.witness.role, scope)}
+              </span>
             </p>
             <p
               className="patience"
@@ -397,8 +400,32 @@ export function Courtroom({ scene: raw }: { scene: TrialScene }) {
           </>
         }
       >
+        {/* 自動結束的那一刻：說清楚為什麼停，最後幾句話放在中間欄，不擠在左邊筆錄裡（體驗評測）。 */}
         {st.stage === 'done' && (
-          <p className="muted">{t('這一段詰問到此為止。按「休庭」看這一場的結果。')}</p>
+          <section className="panel adjourn">
+            <h2>
+              {t(
+                st.stricken
+                  ? '證詞全部刪除'
+                  : st.pleaded
+                    ? '證人援引緘默權'
+                    : st.patience <= 0
+                      ? '法官叫停了詰問'
+                      : '詰問結束',
+              )}
+            </h2>
+            {st.stricken && (
+              <p className="muted">
+                {t('法官把這位證人在這一場說過的話全部從紀錄上拿掉，陪審團不能採用。')}
+              </p>
+            )}
+            <div className="lines">
+              {st.log.slice(-3).map((l, i) => (
+                <Speech key={i} line={{ ...l, mood: '平', thought: false }} />
+              ))}
+            </div>
+            <p className="muted small">{t('按「休庭」看這一場的結果。')}</p>
+          </section>
         )}
         {st.stage === 'direct' && st.window && (
           <ObjectionWindow rulings={rulingsIn(progress)} onPass={letPass} onObject={object} />
