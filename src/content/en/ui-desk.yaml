@@ -7,7 +7,7 @@
 回到桌面: Back to desk
 事務所: The firm
 開庭: Go to court
-'剩餘工時 {n} 小時': '{n} hours remaining'
+'剩餘工時 {n} 小時': 'Hours left: {n}'
 工時: hours
 應用程式: Apps
 結束調查: End investigation
@@ -72,20 +72,20 @@
 目前沒有可以提出的聲請。: No motions to file right now.
 聲請: Motion
 '聲請 {n}': 'Motion {n}'
-'{n} 工時': '{n} hours'
+'{n} 工時': '{n} h'
 法官准了。: The judge granted it.
 駁回。法官記得你浪費了他的時間。修正後可以重送，工時照扣。: Denied. The judge remembers you wasted his time. Fix it and refile; the hours are still spent.
 還缺前提：先把相關的論點確認起來。: 'A prerequisite is missing: confirm the related arguments first.'
 法律依據: Legal basis
-'支撐（{n} 張）': 'Support ({n} cards)'
-'送出（{n} 工時）': 'File ({n} hours)'
+'支撐（{n} 張）': 'Support ({n})'
+'送出（{n} 工時）': 'File ({n} h)'
 送出前檢查: Before filing
 '支撐 {a}/{b}': 'Support {a}/{b}'
 工時不足: Not enough hours
 目前沒有可以委託的事。多讀卷宗、多問委託人。: Nothing to assign right now. Read more of the case file and ask the client more questions.
 需要: Needs
 已回報。: Reported.
-'委託（{n} 工時）': 'Assign ({n} hours)'
+'委託（{n} 工時）': 'Assign ({n} h)'
 確定結束: Confirm end
 '剩 {n} 時': '{n} h left'
 
@@ -116,7 +116,7 @@
 有時間的卡片都放上去了。: All timed cards are on the timeline.
 目前沒有帶時間的卡片。: No cards have a time.
 點上面的卡片，把它放上時間軸。: Click a card above to put it on the timeline.
-'間距 {n} 分鐘：{detail}': 'Gap of {n} minutes: {detail}'
+'間距 {n} 分鐘：{detail}': '{n}-minute gap: {detail}'
 '{n} 分鐘': '{n} min'
 '移動「{name}」：拖曳，或用上下鍵': 'Move "{name}": drag, or use the up and down keys'
 '把「{name}」拿下來': 'Remove "{name}" from the timeline'
@@ -160,7 +160,7 @@
 '、': ', '
 定案: Final decision
 選了就不能改: You can’t undo this
-'對方拿到這 {n} 份文件': 'The other side gets these {n} documents'
+'對方拿到這 {n} 份文件': 'Documents the other side gets: {n}'
 法官可能不認；沒有正當理由硬藏，之後被揭穿會很重: The judge may reject it. Hiding something without good grounds hurts badly if it comes out later.
 證人在錄取時已經說出這份意見的內容，特權視同放棄；法官多半會命令交出: The witness already disclosed the substance of this opinion at deposition, so the privilege is treated as waived; the judge will most likely order it produced.
 代價: Cost
@@ -177,7 +177,7 @@
 交出這份文件: Hand over this document
 交出這些文件: Hand over these documents
 以範圍過廣回應: Object as overbroad
-'剩 {n} 時・{m} 題沒確認': '{n} h left · {m} questions unconfirmed'
+'剩 {n} 時・{m} 題沒確認': '{n} h left · Unconfirmed: {m}'
 遊戲裡: In the game
 證據清單: Evidence list
 '{req} 的回應': 'Response to {req}'

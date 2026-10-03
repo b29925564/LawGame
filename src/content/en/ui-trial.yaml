@@ -45,7 +45,7 @@
 '・陪審長': '· Foreperson'
 '對方以有因迴避剔除：{names}': 'Struck for cause by the other side: {names}'
 '{name}（{why}）': '{name} ({why})'
-'沒有根據的聲請有 {n} 次。開庭第一天的法官耐心會少 {n} 點。': 'You made {n} baseless motions. The judge will start trial {n} points less patient.'
+'沒有根據的聲請有 {n} 次。開庭第一天的法官耐心會少 {n} 點。': 'Baseless motions: {n}. The judge starts the first day of trial with {n} less patience.'
 陪審團遴選: Jury selection
 'voirdire::提問': Questions
 無因迴避: Peremptory strike
@@ -73,10 +73,10 @@
 
 # Defense witness
 '準備{name}出庭': 'Prepare {name} to testify'
-'證人準備・{name}（{role}）・{n} 工時': 'Witness prep · {name} ({role}) · {n} hours'
+'證人準備・{name}（{role}）・{n} 工時': 'Witness prep · {name} ({role}) · {n} h'
 就這樣準備: Prepare this way
 '直接詰問・{name}': 'Direct · {name}'
-'・還能問 {n} 題': ' · {n} questions left'
+'・還能問 {n} 題': ' · Questions left: {n}'
 手上沒有能讓證人說這件事的證據。: You have no evidence that would get the witness to say this.
 問完了: Done asking
 
@@ -87,7 +87,7 @@
 死者過失比例: Decedent's share of fault
 判賠金額: Award
 懲罰性賠償: Punitive damages
-'不成立（{votes} 票，需要 {need} 票）': 'Not found ({votes} votes, {need} needed)'
+'不成立（{votes} 票，需要 {need} 票）': 'Not found ({votes} of {need} votes needed)'
 '・ 基調 {state}': '· Tone {state}'
 已選: set
 未選: not set
