@@ -275,25 +275,17 @@ App 日誌我整理好了（有點多）: App log sorted (it's a lot)
 包括你自己的證人。: Your own witnesses included.
 惠特洛克・海爾　會議室 C: Whitlock & Hale, Conference Room C
 卡爾德快遞　營運副總: VP of Operations, Calder Express
-自己人的錄取，比對方的難。你讓他說的每一句，奧卡福都會拿到逐字稿。: Deposing your own man is harder than deposing theirs. Every word you let him say, Okafor gets in the transcript.
-你要先知道他會在哪裡說謊，才知道要不要讓他說。: You need to know where he's going to lie before you decide whether to let him talk.
+對方錄取自己人，你能做的只有異議和指示不答。他說出口的每一句，奧卡福都會拿到逐字稿。: When the other side deposes your own man, all you can do is object and instruct him not to answer. Every word he says, Okafor gets in the transcript.
+你要先知道他會在哪裡說謊，才知道哪一題要擋。: You need to know where he's going to lie before you know which question to block.
 這樣可以了吧。我還要回去排下週的班。: Are we done? I still have next week's schedule to do.
 那套系統: The system
-米爾斯先生，赫克托・維加死亡當天，疲勞提醒是怎麼運作的？: Mr. Mills, on the day Hector Vega died, how did the fatigue reminder work?
 連續上線十小時跳出提醒。司機可以休息，也可以略過。: After ten hours online, a reminder appears. The driver can rest or skip it.
 這個機制一直都是這樣嗎？: Has this mechanism always worked this way?
 從系統上線就是提醒，從來沒有強制下線過。: It's been a reminder since the system launched. There was never a forced offline.
-三月份，系統是不是有一次設定變更？: In March, was there a configuration change to the system?
+三月十四日有一張設定變更單。簽名的是您嗎？: There is a configuration change ticket dated March 14. Is that your signature on it?
 ……系統每一季都在改版。我不記得每一張變更單。: "...The system changes every quarter. I don't remember every change ticket."
-司機拒單，評分會怎麼樣？: When a driver declines an order, what happens to the rating?
-會下降。那是服務品質指標，所有平台都有。: It goes down. It's a service-quality metric. Every platform has one.
-你知道赫克托連續上線十四天嗎？: Did you know Hector had been online fourteen days straight?
-系統裡有四千多個司機。我不可能每一個都看。: There are over four thousand drivers in the system. I can't watch every one.
 誰決定的: Who decided
-疲勞管理的設定，最後是誰核准的？: The fatigue management setting. Who gave the final approval?
 營運部。我是營運部的主管。: Operations. I run Operations.
-你在做決定之前，有沒有詢問過法律意見？: Before you made that decision, did you seek legal advice?
-我們每一個決定都會問法務。你應該知道是哪一家。: We run every decision past legal. You know which firm.
 奧卡福勞工法律事務所　會議室: Okafor Labor Law, conference room
 卡爾德快遞　資深系統工程師: Senior Systems Engineer, Calder Express
 盧卡斯，好久不見。你坐在那一邊，看起來很不習慣。: Lucas. It's been a while. You look uncomfortable on that side of the table.
@@ -651,3 +643,59 @@ App 日誌我整理好了（有點多）: App log sorted (it's a lot)
 他知道自己有高血壓、沒有吃藥，還一直接單。: He knew he had high blood pressure, didn't take his medication, and kept accepting orders.
 公司提醒了他六十一次，每一次都是他自己選擇繼續。: The company warned him sixty-one times, and each time he chose to keep going.
 系統有錯，但他那天傍晚說過要回家吃藥，最後兩單是他自己接的。: The system was at fault, but that evening he said he'd go home and take his medication, and he took the last two orders himself.
+
+# ── 崔佛錄取反轉、勘誤表、開示代價（提案 2026-10-03）──
+'勘誤表：崔佛更正錄取證詞': 'Errata sheet: Trevor corrects his deposition'
+'「第 42 頁第 7 行，更正為：三月以前，系統設有強制下線功能。」簽名：崔佛・米爾斯。依規則 30(e) 提出。': '"Page 42, line 7, corrected to: before March, the system had a forced-logoff function." Signed: Trevor Mills. Submitted under Rule 30(e).'
+'證詞錄取勘誤': 'Deposition errata'
+'他們拿到那張截圖，調解室裡的開價就不一樣了。陪審團看到的時候，也不一樣。': 'Once they have that screenshot, the number in the mediation room changes. So does the jury, the day they see it.'
+'亞瑟・卡爾德的訊息進來：「那份意見是我付錢買的。你用我的錢，替原告買了一份證據。」': 'A message from Arthur Calder: "I paid for that opinion. You just used my money to buy the plaintiff a piece of evidence."'
+'合法地藏，也是一種選擇。記住這個感覺。': 'Hiding it legally is a choice too. Remember how this feels.'
+'法官翻到崔佛的錄取筆錄：「證人已在宣誓下陳述該意見之內容，特權視同放棄。本庭命令交出。」': 'The judge turns to Trevor''s deposition transcript: "The witness has already described the substance of that opinion under oath. Privilege is deemed waived. The court orders production."'
+'這次換你坐那一邊了，盧卡斯。會議室是你們的，咖啡也是。': 'Your turn on that side of the table, Lucas. Your conference room, your coffee.'
+'咖啡是事務所的，別客氣。我的證人每一題都可以想完再答。': "The coffee's on the firm, help yourself. My witness gets to finish thinking before every answer."
+'米爾斯先生，疲勞管理的設定，最後由誰核准？': 'Mr. Mills, who gives final approval on the fatigue-management settings?'
+'赫克托・維加死亡當天，疲勞提醒是怎麼運作的？': 'On the day Hector Vega died, how did the fatigue reminder work?'
+'您做這個決定之前，有沒有問過律師？': 'Before you made that decision, did you consult a lawyer?'
+'有。': 'Yes.'
+'律師怎麼說？': 'What did the lawyer say?'
+'法務說沒問題，可以改。': 'Legal said it was fine. We could make the change.'
+'您覺得，公司是不是把評分看得比司機的命重？': "In your view, does the company care more about ratings than about drivers' lives?"
+'我……': 'I...'
+'盧卡斯沒有看他。筆錄員的鍵盤聲停了。「從來沒有強制下線過」那一句，已經在裡面了。': 'Lucas doesn''t look at him. The court reporter''s keys go quiet. "Never a forced logoff" is already in there.'
+'請崔佛更正筆錄（規則 30(e) 勘誤）': 'Have Trevor correct his transcript (Rule 30(e) errata)'
+'他宣誓說的那一句是假的，而我們知道。更正等於承認我們的副總在宣誓下說錯話；不更正，那一句就留在筆錄裡。': 'What he said under oath is false, and we know it. Correcting it means admitting our VP got it wrong under oath. Not correcting it means the line stays in the transcript.'
+'崔佛簽了。第 42 頁第 7 行，「從來沒有」改成「三月以前有」。他簽的時候沒有說話。': 'Trevor signed. Page 42, line 7: "never" becomes "not since March." He didn''t say a word while he signed.'
+'奧卡福會把勘誤表放在開場的第一張投影片。亞瑟剛打過來，問你為什麼要他自己的副總承認說謊。': 'Okafor will put the errata sheet on the first slide of his opening. Arthur just called, asking why you made his own VP admit he lied.'
+'因為另一個選項是讓他在陪審團面前再說一次。那個比較貴。': 'Because the other option was letting him say it again in front of a jury. That one costs more.'
+'電話那頭，亞瑟・卡爾德沉默了很久，然後掛了。': 'On the other end of the line, Arthur Calder is silent for a long time. Then he hangs up.'
+'米爾斯先生，您在錄取之後更正過一句證詞。為什麼？': 'Mr. Mills, after your deposition you corrected one line of your testimony. Why?'
+'因為那句是錯的。三月以前，系統會強制下線。改掉它的那張單，是我簽的。': 'Because it was wrong. Before March, the system forced drivers off. The ticket that changed it has my signature on it.'
+'米爾斯先生，「旺季不准任何人被踢下線。我不管系統怎麼寫。」這句話，是您在營運群組說的？': 'Mr. Mills, "Nobody gets kicked offline during peak season. I don''t care what the system says." You wrote that in the operations group chat?'
+'……是。那是旺季。': '...Yes. It was peak season.'
+'（訊息）六十一次提醒。我早說過，我們做的比法律要求的多。': '(Message) Sixty-one reminders. I told you, we did more than the law asks.'
+'走廊上，奧卡福把那張截圖收回卷宗。他沒有看盧卡斯。': "In the hallway, Okafor slides the screenshot back into his file. He doesn't look at Lucas."
+'（訊息）你在法庭上說我們的系統有錯，然後贏了。我不確定該不該謝你。': "(Message) You told a courtroom our system was flawed, and then you won. I'm not sure whether to thank you."
+'你說了他們有錯。判決書上沒有，但你說了。': "You said they got it wrong. It isn't on the verdict form, but you said it."
+'卡爾德郡高等法院　五樓走廊': 'Calder County Superior Court, fifth-floor hallway'
+'崔佛・米爾斯在電梯前停下來。他沒有轉身。': "Trevor Mills stops in front of the elevator. He doesn't turn around."
+'我照你說的更正了。然後我們輸了。': 'I corrected it, like you said. And then we lost.'
+'我們輸的不是那一句。': "That line isn't what lost us the case."
+'陪審團不會這樣想。亞瑟也不會。': "The jury won't see it that way. Neither will Arthur."
+'電梯門開了。門關上之前，他看了盧卡斯一眼，像在看一個算錯數字的人。': 'The elevator opens. Before the doors close, he gives Lucas one look, the kind you give a man who got the math wrong.'
+'惠特洛克・海爾　四十二樓　晚上 21:30': 'Whitlock & Hale, 42nd floor. 9:30 p.m.'
+'惠特洛克的辦公室只開了一盞桌燈。桌上放著一份影本，右上角蓋著原告律師事務所的收件章。': "Only the desk lamp is on in Whitlock's office. On the desk lies a photocopy, the plaintiff firm's received stamp in the top right corner."
+'那份意見是我簽的。你把它交出去之前，有沒有想過要先問我？': 'I signed that opinion. Before you handed it over, did it occur to you to ask me first?'
+'……我想過。': '...It did.'
+'想過，然後呢？': 'It did. And then?'
+'然後我想到，問了你，答案就只有一個。': 'And then I realized that if I asked you, there was only one answer you could give.'
+'葛雷，這棟樓裡每一個人都知道自己姓什麼。你好像還不知道。': "Grey, everyone in this building knows whose name they carry. You don't seem to yet."
+'她把影本翻過去，蓋在桌上。燈沒有關。': 'She turns the photocopy face down on the desk. The lamp stays on.'
+'葛雷律師，你讓他在陪審團面前又說了一次。我在旁聽席，看著筆錄員打字。': 'Mr. Grey, you let him say it again in front of the jury. I was in the gallery, watching the court reporter type.'
+'我知道。': 'I know.'
+'我不是在問你知不知道。': "I wasn't asking whether you know."
+'那句「從來沒有」，他在證人席上說得比錄取時穩。是你跟他對過的，對吧？': 'That "never." He said it steadier on the stand than he did at the deposition. You went over it with him, didn''t you?'
+'對過答案不犯法。': "Going over answers isn't a crime."
+'我沒有說犯法。': "I didn't say it was."
+'羅根說，你本來可以讓他在證人席上再說一次那句話。陪審團會信的。': 'Logan says you could have had him say that line again on the stand. The jury would have believed it.'
+'會信。所以才不能說。': "They would have. That's exactly why it couldn't be said."

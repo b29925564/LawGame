@@ -99,6 +99,11 @@ _cards: &cards
     kind: 宣誓陳述
     text: 他在錄取時宣誓說，疲勞提醒「從系統上線就是提醒，從來沒有強制下線過」。
     source: 證詞錄取
+  - id: errata
+    name: 勘誤表：崔佛更正錄取證詞
+    kind: 文件
+    text: 「第 42 頁第 7 行，更正為：三月以前，系統設有強制下線功能。」簽名：崔佛・米爾斯。依規則 30(e) 提出。
+    source: 證詞錄取勘誤
   - id: rating-penalty
     name: 普莉亞的證詞：死後還在扣分
     kind: 宣誓陳述
@@ -464,6 +469,8 @@ scenes:
         text: 請求三：與疲勞提醒或強制下線功能有關的一切設定變更紀錄。
         cards: [change-ticket]
         privilege: weak
+        effects:
+          produced: { tips: [arg-e] }
         lines:
           produced:
             - who: 羅根・普萊斯
@@ -479,10 +486,15 @@ scenes:
         unlock: [lock-spec]
         text: 請求四：被告營運主管於事發前一年內，關於司機排班的內部通訊。
         cards: [chat-peak]
+        effects:
+          produced: { jury: 6, confidence: 10 }
         lines:
           produced:
             - who: 戴文
               text: 群組截圖交出去了。我把「旺季不准任何人被踢下線」那一張放在最上面……不是故意的，是照日期排的。
+            - who: 羅根・普萊斯
+              text: 他們拿到那張截圖，調解室裡的開價就不一樣了。陪審團看到的時候，也不一樣。
+              mood: 硬
           concealed:
             - who: 戴文
               text: 葛雷律師，截圖沒有放進去。我照你的意思打包了。
@@ -493,14 +505,29 @@ scenes:
         text: 請求五：被告就取消強制下線一事所取得之任何意見或評估。
         cards: [legal-memo]
         privilege: valid
+        # 崔佛在錄取時把意見內容說出口（p-legal2 沒擋），特權視同放棄。
+        weakIf: { flags: ['depo:depo-trevor:p-legal2:waived'] }
+        effects:
+          produced: { trust: -1, confidence: 5 }
         lines:
           produced:
             - who: 羅根・普萊斯
               text: 你把我們自己事務所的意見書交給原告。惠特洛克明天早上就會知道。
               mood: 硬
+            - who: 旁白
+              text: 亞瑟・卡爾德的訊息進來：「那份意見是我付錢買的。你用我的錢，替原告買了一份證據。」
           withheld:
             - who: 旁白
               text: 特權清單列了一行：「法律意見書，三月，律師與委託人通訊。」奧卡福沒有爭執。
+            - who: 羅根・普萊斯
+              text: 合法地藏，也是一種選擇。記住這個感覺。
+              mood: 硬
+          strained:
+            - who: 旁白
+              text: 法官翻到崔佛的錄取筆錄：「證人已在宣誓下陳述該意見之內容，特權視同放棄。本庭命令交出。」
+            - who: 盧卡斯
+              text: 駁回
+              mark: { kind: stamp, text: 駁回 }
     links:
       - id: l-knew
         cards: [med-record, pharmacy]
@@ -637,59 +664,60 @@ scenes:
       - 包括你自己的證人。
 
   # 我方錄取崔佛：問得太淺，他在庭上會被拆；問得太深，等於替原告鋪路。
+  # 對方主導：奧卡福錄取我方的營運副總。盧卡斯只能異議與指示不答；他說出口的每一句，對方都會拿到逐字稿。
   - type: deposition
     id: depo-trevor
     act: 第三幕
     place: 惠特洛克・海爾　會議室 C
-    budget: 6
+    side: theirs
+    examiner: 丹尼爾・奧卡福
     witness:
       name: 崔佛・米爾斯
       role: 卡爾德快遞　營運副總
     intro:
       - who: 馬庫斯・海爾
-        text: 自己人的錄取，比對方的難。你讓他說的每一句，奧卡福都會拿到逐字稿。
+        text: 對方錄取自己人，你能做的只有異議和指示不答。他說出口的每一句，奧卡福都會拿到逐字稿。
         mood: 暖
       - who: 馬庫斯・海爾
-        text: 你要先知道他會在哪裡說謊，才知道要不要讓他說。
+        text: 你要先知道他會在哪裡說謊，才知道哪一題要擋。
         mood: 暖
+      - who: 丹尼爾・奧卡福
+        text: 這次換你坐那一邊了，盧卡斯。會議室是你們的，咖啡也是。
+      - who: 盧卡斯
+        text: 咖啡是事務所的，別客氣。我的證人每一題都可以想完再答。
+    script:
+      - id: p-role
+        q: 米爾斯先生，疲勞管理的設定，最後由誰核准？
+        a: 營運部。我是營運部的主管。
+      - id: p-alert
+        q: 赫克托・維加死亡當天，疲勞提醒是怎麼運作的？
+        a: 連續上線十小時跳出提醒。司機可以休息，也可以略過。
+      - id: p-always
+        q: 這個機制一直都是這樣嗎？
+        a: 從系統上線就是提醒，從來沒有強制下線過。
+        anchors: trevor-sworn
+      - id: p-ticket
+        q: 三月十四日有一張設定變更單。簽名的是您嗎？
+        a: ……系統每一季都在改版。我不記得每一張變更單。
+        objection: 缺乏基礎
+        gives: [change-ticket]
+      - id: p-legal
+        q: 您做這個決定之前，有沒有問過律師？
+        a: 有。
+      - id: p-legal2
+        q: 律師怎麼說？
+        a: 法務說沒問題，可以改。
+        objection: 特權
+      - id: p-feel
+        q: 您覺得，公司是不是把評分看得比司機的命重？
+        a: 我……
+        objection: 推測
     outro:
       - who: 崔佛・米爾斯
         text: 這樣可以了吧。我還要回去排下週的班。
         mood: 硬
-    topics:
-      - id: d-system
-        label: 那套系統
-        questions:
-          - id: d-alert
-            q: 米爾斯先生，赫克托・維加死亡當天，疲勞提醒是怎麼運作的？
-            a: 連續上線十小時跳出提醒。司機可以休息，也可以略過。
-          - id: d-always
-            q: 這個機制一直都是這樣嗎？
-            a: 從系統上線就是提醒，從來沒有強制下線過。
-            anchors: trevor-sworn
-          - id: d-change
-            q: 三月份，系統是不是有一次設定變更？
-            a: ……系統每一季都在改版。我不記得每一張變更單。
-            objection: 缺乏基礎
-            tips: [arg-e]
-      - id: d-hector
-        label: 赫克托
-        questions:
-          - id: d-rating
-            q: 司機拒單，評分會怎麼樣？
-            a: 會下降。那是服務品質指標，所有平台都有。
-          - id: d-know
-            q: 你知道赫克托連續上線十四天嗎？
-            a: 系統裡有四千多個司機。我不可能每一個都看。
-      - id: d-people
-        label: 誰決定的
-        questions:
-          - id: d-who
-            q: 疲勞管理的設定，最後是誰核准的？
-            a: 營運部。我是營運部的主管。
-          - id: d-legal
-            q: 你在做決定之前，有沒有詢問過法律意見？
-            a: 我們每一個決定都會問法務。你應該知道是哪一家。
+      - who: 旁白
+        text: 盧卡斯沒有看他。筆錄員的鍵盤聲停了。「從來沒有強制下線過」那一句，已經在裡面了。
 
   # 對方主導：奧卡福錄取普莉亞前，先錄取卡爾德的系統工程師。玩家只能異議。
   - type: deposition
@@ -765,7 +793,27 @@ scenes:
         body:
           - 盧卡斯，調解會議排在下週二。瑪莉索會親自來。
           - 她要的東西，不全是錢。你到時候就知道了。
-    jobs: []
+    jobs:
+      - id: job-errata
+        who: 羅根
+        label: 請崔佛更正筆錄（規則 30(e) 勘誤）
+        detail: 他宣誓說的那一句是假的，而我們知道。更正等於承認我們的副總在宣誓下說錯話；不更正，那一句就留在筆錄裡。
+        cost: 1
+        needs: [arg-g]
+        gives: [errata]
+        flags: [trevor-corrected]
+        effects: { trust: -1, confidence: 10 }
+        report:
+          - who: 羅根・普萊斯
+            text: 崔佛簽了。第 42 頁第 7 行，「從來沒有」改成「三月以前有」。他簽的時候沒有說話。
+            mood: 硬
+          - who: 羅根・普萊斯
+            text: 奧卡福會把勘誤表放在開場的第一張投影片。亞瑟剛打過來，問你為什麼要他自己的副總承認說謊。
+            mood: 硬
+          - who: 盧卡斯
+            text: 因為另一個選項是讓他在陪審團面前再說一次。那個比較貴。
+          - who: 旁白
+            text: 電話那頭，亞瑟・卡爾德沉默了很久，然後掛了。
     motions:
       - id: m-daubert
         label: 聲請排除專家證詞：費雪醫師
@@ -1579,6 +1627,7 @@ scenes:
           coached: true
           ethics: [coached-witness]
           flags: [coached-trevor]
+          when: { notFlags: [trevor-corrected] }
     asks: 3
     questions:
       - id: tq-contract
@@ -1601,10 +1650,27 @@ scenes:
         impact: 6
         tags: [權威]
         rehearsed: true
+        # 筆錄更正過就沒有這一題；明知是假話（手上有 arg-g）還問，記進倫理帳本。
+        when: { notFlags: [trevor-corrected] }
+        ethicsIf: { has: [arg-g], ethics: [offered-perjury] }
         door:
           q: 米爾斯先生，這是三月十四日的設定變更單。簽名的是您嗎？
           a: ……是我。
           penalty: 12
+      - id: tq-corrected
+        seq: 2
+        q: 米爾斯先生，您在錄取之後更正過一句證詞。為什麼？
+        a: 因為那句是錯的。三月以前，系統會強制下線。改掉它的那張單，是我簽的。
+        impact: 4
+        tags: [權威]
+        needs: [errata]
+    # 營運群組進了開示，奧卡福反詰問多問一題。
+    extra:
+      - id: tx-peak
+        when: { flags: ['discovery:rq-chat:produced'] }
+        q: 米爾斯先生，「旺季不准任何人被踢下線。我不管系統怎麼寫。」這句話，是您在營運群組說的？
+        a: ……是。那是旺季。
+        penalty: 8
     leak:
       q: 米爾斯先生，「從來沒有」這四個字，是誰教您說的？
       a: 我……律師跟我對過答案。
@@ -1697,6 +1763,28 @@ scenes:
             text: （訊息）漂亮。下一件也交給你。
           - who: 旁白
             text: 法院台階上，瑪莉索・維加站在最下面一階，看著盧卡斯走出來。她什麼都沒有說。
+      - id: warned-win
+        when:
+          verdict: [無責]
+          theory: [warned]
+        lines:
+          - who: 旁白
+            text: 陪審長站起來。「我們認定被告無責。」
+          - who: 亞瑟・卡爾德
+            text: （訊息）六十一次提醒。我早說過，我們做的比法律要求的多。
+          - who: 旁白
+            text: 走廊上，奧卡福把那張截圖收回卷宗。他沒有看盧卡斯。
+      - id: shared-win
+        when:
+          verdict: [無責]
+          theory: [shared]
+        lines:
+          - who: 旁白
+            text: 陪審長站起來。「我們認定被告無責。」
+          - who: 亞瑟・卡爾德
+            text: （訊息）你在法庭上說我們的系統有錯，然後贏了。我不確定該不該謝你。
+          - who: 瑪莉索・維加
+            text: 你說了他們有錯。判決書上沒有，但你說了。
       - id: shared-liable
         when:
           verdict: [有責]
@@ -1772,6 +1860,121 @@ scenes:
       - do: say
         who: 旁白
         text: 瑪莉索從調解室出來，經過盧卡斯身邊，沒有停下來。
+
+  # 更正了筆錄，還是輸了：只在輸時出現，贏了沒人會提。
+  - type: dialogue
+    id: epilogue-trevor
+    act: 尾聲
+    epilogue: true
+    when:
+      flags: [trevor-corrected]
+      verdict: [有責]
+    place: 卡爾德郡高等法院　五樓走廊
+    steps:
+      - do: say
+        who: 旁白
+        text: 崔佛・米爾斯在電梯前停下來。他沒有轉身。
+      - do: say
+        who: 崔佛・米爾斯
+        text: 我照你說的更正了。然後我們輸了。
+        mood: 硬
+      - do: say
+        who: 盧卡斯
+        text: 我們輸的不是那一句。
+      - do: say
+        who: 崔佛・米爾斯
+        text: 陪審團不會這樣想。亞瑟也不會。
+        mood: 硬
+      - do: say
+        who: 旁白
+        text: 電梯門開了。門關上之前，他看了盧卡斯一眼，像在看一個算錯數字的人。
+
+  # 交出了事務所自己的意見書：惠特洛克親自找他。第 3 集從這裡起頭。
+  - type: dialogue
+    id: epilogue-whitlock
+    act: 尾聲
+    epilogue: true
+    when:
+      flags: ['discovery:rq-memo:produced']
+    place: 惠特洛克・海爾　四十二樓　晚上 21:30
+    steps:
+      - do: say
+        who: 旁白
+        text: 惠特洛克的辦公室只開了一盞桌燈。桌上放著一份影本，右上角蓋著原告律師事務所的收件章。
+      - do: say
+        who: 維多莉亞・惠特洛克
+        text: 那份意見是我簽的。你把它交出去之前，有沒有想過要先問我？
+        mood: 硬
+      - do: say
+        who: 盧卡斯
+        text: ……我想過。
+        mood: 默
+      - do: say
+        who: 維多莉亞・惠特洛克
+        text: 想過，然後呢？
+        mood: 硬
+      - do: say
+        who: 盧卡斯
+        text: 然後我想到，問了你，答案就只有一個。
+      - do: say
+        who: 維多莉亞・惠特洛克
+        text: 葛雷，這棟樓裡每一個人都知道自己姓什麼。你好像還不知道。
+        mood: 硬
+      - do: say
+        who: 旁白
+        text: 她把影本翻過去，蓋在桌上。燈沒有關。
+
+  # 影印室前半：戴文那句「我們這樣是對的嗎」，依倫理帳本分三版。
+  - type: dialogue
+    id: epilogue-ethics-perjury
+    act: 尾聲
+    epilogue: true
+    when:
+      ethics: [offered-perjury]
+    place: 惠特洛克・海爾　影印室　晚上 22:10
+    steps:
+      - do: say
+        who: 戴文
+        text: 葛雷律師，你讓他在陪審團面前又說了一次。我在旁聽席，看著筆錄員打字。
+      - do: say
+        who: 盧卡斯
+        text: 我知道。
+        mood: 默
+      - do: say
+        who: 戴文
+        text: 我不是在問你知不知道。
+  - type: dialogue
+    id: epilogue-ethics-coached
+    act: 尾聲
+    epilogue: true
+    when:
+      ethics: [coached-witness]
+      notEthics: [offered-perjury]
+    place: 惠特洛克・海爾　影印室　晚上 22:10
+    steps:
+      - do: say
+        who: 戴文
+        text: 那句「從來沒有」，他在證人席上說得比錄取時穩。是你跟他對過的，對吧？
+      - do: say
+        who: 盧卡斯
+        text: 對過答案不犯法。
+      - do: say
+        who: 戴文
+        text: 我沒有說犯法。
+  - type: dialogue
+    id: epilogue-ethics-clean
+    act: 尾聲
+    epilogue: true
+    when:
+      notEthics: [offered-perjury, coached-witness]
+    place: 惠特洛克・海爾　影印室　晚上 22:10
+    steps:
+      - do: say
+        who: 戴文
+        text: 羅根說，你本來可以讓他在證人席上再說一次那句話。陪審團會信的。
+      - do: say
+        who: 盧卡斯
+        text: 會信。所以才不能說。
 
   # 所有路線都接：戴文與那張銷毀令，然後是父親的電話。
   - type: dialogue
