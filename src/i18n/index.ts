@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import { create } from 'zustand';
 
 /**
@@ -145,7 +146,8 @@ function show(lang: Lang, zh: string, arg?: string | Vars): string {
 
 export function useT() {
   const lang = useLang((s) => s.lang);
-  return (zh: string, arg?: string | Vars) => show(lang, zh, arg);
+  // 語言沒變就是同一個函式，讓用到 t 的 useMemo 不必每次重算。
+  return useCallback((zh: string, arg?: string | Vars) => show(lang, zh, arg), [lang]);
 }
 
 /** 金額：中文用「萬」，英文用 $ 與 million。 */
