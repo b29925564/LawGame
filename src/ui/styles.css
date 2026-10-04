@@ -4167,9 +4167,15 @@ button.iou[aria-pressed='true'] {
 }
 .tally-head {
   display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
-  gap: 18px;
+  gap: 4px 18px;
   font-variant-numeric: tabular-nums;
+}
+/* 手機上一行放不下時整段換到下一行，不在「僵局」「一致」中間斷；真的比一行還寬才在段內換行。 */
+.tally-head > * {
+  flex: none;
+  max-width: 100%;
 }
 .tally-head .count {
   font: 700 15px/1 var(--font-mono);

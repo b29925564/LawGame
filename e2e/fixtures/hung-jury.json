@@ -1,0 +1,302 @@
+{
+  "ep1": {
+    "episode": "ep1",
+    "scene": 26,
+    "step": 0,
+    "choices": {},
+    "cards": ["arg-a", "arg-c", "arg-d"],
+    "flags": [],
+    "ethics": [],
+    "scenes": {
+      "voir-dire": {
+        "left": 6,
+        "asked": [],
+        "struck": [],
+        "theirs": [],
+        "excused": [],
+        "wrong": 0,
+        "seated": [
+          "c-cop",
+          "c-dev",
+          "c-mom",
+          "c-cpa",
+          "c-student",
+          "c-fired",
+          "c-nurse",
+          "c-driver",
+          "c-teacher",
+          "c-barista",
+          "c-broker",
+          "c-chef"
+        ]
+      },
+      "court-rachel": {
+        "stage": "direct",
+        "i": 0,
+        "window": false,
+        "patience": 5,
+        "jury": {
+          "c-cop": 95,
+          "c-dev": 95,
+          "c-mom": 95,
+          "c-cpa": 95,
+          "c-student": 95,
+          "c-fired": 95,
+          "c-nurse": 95,
+          "c-driver": 95,
+          "c-teacher": 15,
+          "c-barista": 15,
+          "c-broker": 15,
+          "c-chef": 15
+        },
+        "opening": {
+          "c-cop": 95,
+          "c-dev": 95,
+          "c-mom": 95,
+          "c-cpa": 95,
+          "c-student": 95,
+          "c-fired": 95,
+          "c-nurse": 95,
+          "c-driver": 95,
+          "c-teacher": 15,
+          "c-barista": 15,
+          "c-broker": 15,
+          "c-chef": 15
+        },
+        "credit": {},
+        "deltas": {},
+        "claims": {
+          "rc-2250": {
+            "lock": "none",
+            "setup": false,
+            "result": "none"
+          },
+          "rc-meeting": {
+            "lock": "none",
+            "setup": false,
+            "result": "none"
+          },
+          "rc-31f": {
+            "lock": "none",
+            "setup": false,
+            "result": "none"
+          }
+        },
+        "asked": [],
+        "impeachments": 0,
+        "kept": [],
+        "struck": 0,
+        "rebuked": false,
+        "log": []
+      },
+      "closing": {
+        "picked": ["arg-a", "arg-c", "arg-d"],
+        "tone": "t-logic",
+        "jury": {
+          "c-cop": 85,
+          "c-dev": 82,
+          "c-mom": 85,
+          "c-cpa": 82,
+          "c-student": 84,
+          "c-fired": 85,
+          "c-nurse": 86,
+          "c-driver": 85,
+          "c-teacher": 10,
+          "c-barista": 5,
+          "c-broker": 2,
+          "c-chef": 5
+        },
+        "spoken": {
+          "c-cop": 91,
+          "c-dev": 88,
+          "c-mom": 91,
+          "c-cpa": 88,
+          "c-student": 90,
+          "c-fired": 91,
+          "c-nurse": 92,
+          "c-driver": 91,
+          "c-teacher": 10,
+          "c-barista": 11,
+          "c-broker": 8,
+          "c-chef": 11
+        },
+        "deltas": {},
+        "rounds": [
+          {
+            "moves": ["陪審長（海倫・杜根）主張無罪。", "表決：8 票有罪，4 票無罪。"],
+            "jury": {
+              "c-cop": 89,
+              "c-dev": 86,
+              "c-mom": 89,
+              "c-cpa": 86,
+              "c-student": 88,
+              "c-fired": 89,
+              "c-nurse": 90,
+              "c-driver": 89,
+              "c-teacher": 10,
+              "c-barista": 9,
+              "c-broker": 6,
+              "c-chef": 9
+            }
+          },
+          {
+            "moves": ["討論繼續。有人說話，有人沉默，沒有人換邊。", "表決：8 票有罪，4 票無罪。"],
+            "jury": {
+              "c-cop": 87,
+              "c-dev": 84,
+              "c-mom": 87,
+              "c-cpa": 84,
+              "c-student": 86,
+              "c-fired": 87,
+              "c-nurse": 88,
+              "c-driver": 87,
+              "c-teacher": 10,
+              "c-barista": 7,
+              "c-broker": 4,
+              "c-chef": 7
+            }
+          },
+          {
+            "moves": ["最後一輪。大家都說完了，立場沒有再動。", "表決：8 票有罪，4 票無罪。"],
+            "jury": {
+              "c-cop": 85,
+              "c-dev": 82,
+              "c-mom": 85,
+              "c-cpa": 82,
+              "c-student": 84,
+              "c-fired": 85,
+              "c-nurse": 86,
+              "c-driver": 85,
+              "c-teacher": 10,
+              "c-barista": 5,
+              "c-broker": 2,
+              "c-chef": 5
+            }
+          }
+        ],
+        "verdict": "陪審團僵局",
+        "broken": []
+      }
+    }
+  },
+  "ep2": {
+    "episode": "ep2",
+    "scene": 21,
+    "step": 0,
+    "choices": {},
+    "cards": ["arg-a", "arg-b"],
+    "flags": [],
+    "ethics": [],
+    "scenes": {
+      "voir-dire": {
+        "left": 4,
+        "asked": [],
+        "struck": [],
+        "theirs": [],
+        "excused": [],
+        "wrong": 0,
+        "seated": ["c-bus", "c-actuary", "c-logistics", "c-nurse", "c-student", "c-night"]
+      },
+      "court-doctor": {
+        "stage": "direct",
+        "i": 0,
+        "window": false,
+        "patience": 5,
+        "jury": {
+          "c-bus": 95,
+          "c-actuary": 95,
+          "c-logistics": 95,
+          "c-nurse": 95,
+          "c-student": 10,
+          "c-night": 10
+        },
+        "opening": {
+          "c-bus": 95,
+          "c-actuary": 95,
+          "c-logistics": 95,
+          "c-nurse": 95,
+          "c-student": 10,
+          "c-night": 10
+        },
+        "credit": {},
+        "deltas": {},
+        "claims": {
+          "c-cause": {
+            "lock": "none",
+            "setup": false,
+            "result": "none"
+          },
+          "c-unaware": {
+            "lock": "none",
+            "setup": false,
+            "result": "none"
+          }
+        },
+        "asked": [],
+        "impeachments": 0,
+        "kept": [],
+        "struck": 0,
+        "rebuked": false,
+        "log": []
+      },
+      "closing": {
+        "picked": ["arg-a", "arg-b"],
+        "tone": "t-logic",
+        "jury": {
+          "c-bus": 97,
+          "c-actuary": 89,
+          "c-logistics": 96,
+          "c-nurse": 95,
+          "c-student": 12,
+          "c-night": 12
+        },
+        "spoken": {
+          "c-bus": 91,
+          "c-actuary": 89,
+          "c-logistics": 90,
+          "c-nurse": 89,
+          "c-student": 6,
+          "c-night": 6
+        },
+        "deltas": {},
+        "rounds": [
+          {
+            "moves": ["陪審長（茱蒂絲・柯恩）主張有責。", "表決：4 票有責，2 票無責。"],
+            "jury": {
+              "c-bus": 93,
+              "c-actuary": 89,
+              "c-logistics": 92,
+              "c-nurse": 91,
+              "c-student": 8,
+              "c-night": 8
+            }
+          },
+          {
+            "moves": ["討論繼續。有人說話，有人沉默，沒有人換邊。", "表決：4 票有責，2 票無責。"],
+            "jury": {
+              "c-bus": 95,
+              "c-actuary": 89,
+              "c-logistics": 94,
+              "c-nurse": 93,
+              "c-student": 10,
+              "c-night": 10
+            }
+          },
+          {
+            "moves": ["最後一輪。大家都說完了，立場沒有再動。", "表決：4 票有責，2 票無責。"],
+            "jury": {
+              "c-bus": 97,
+              "c-actuary": 89,
+              "c-logistics": 96,
+              "c-nurse": 95,
+              "c-student": 12,
+              "c-night": 12
+            }
+          }
+        ],
+        "verdict": "陪審團僵局",
+        "broken": []
+      }
+    }
+  }
+}
