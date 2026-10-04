@@ -19,7 +19,8 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, State> {
   componentDidCatch(error: unknown) {
     console.error(error);
     if (this.state.retries > 0) return;
-    useEpisode.getState().toTitle();
+    // 直接切回標題、不經 toTitle：出錯的進度不能蓋掉上一個好的自動存檔。
+    useEpisode.setState({ mode: 'title' });
     this.setState({ failed: false, retries: 1 });
   }
 
