@@ -6229,7 +6229,7 @@ body:has(.court-light) {
     0 20px;
   color: var(--paper-ink);
   border-radius: 2px;
-  padding: 36px 48px 76px 76px;
+  padding: 36px 48px 44px 76px;
   box-shadow:
     0 1px 0 rgb(0 0 0 / 18%),
     0 28px 60px -24px var(--shadow-deep);
@@ -6248,7 +6248,6 @@ body:has(.court-light) {
   position: absolute;
   left: 22px;
   top: 20px;
-  bottom: 24px;
   overflow: hidden;
   display: grid;
   align-content: start;
@@ -6460,11 +6459,9 @@ button.blank:hover,
   border-bottom: 1px solid var(--paper-ink);
   padding: 0 16px;
 }
+/* 遞狀列在文件流裡：手機上提示換行時不會壓到具狀人。 */
 .plead .commit-row {
-  position: absolute;
-  right: 48px;
-  bottom: 28px;
-  left: 76px;
+  margin-top: 12px;
   display: flex;
   gap: 12px;
   align-items: center;
@@ -6577,7 +6574,7 @@ button.blank:hover,
 }
 @media (max-width: 760px) {
   .plead {
-    padding: 28px 18px 92px 44px;
+    padding: 28px 18px 44px 44px;
   }
   .plead::before {
     left: 32px;
@@ -6588,10 +6585,8 @@ button.blank:hover,
   .plead .cap h2 {
     letter-spacing: 0.2em;
   }
-  .plead .commit-row {
+  .plead .bates2 {
     left: 44px;
-    right: 18px;
-    bottom: 30px;
   }
   .plead .judge {
     padding-right: 84px;

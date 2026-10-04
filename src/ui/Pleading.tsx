@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { MotionAttempt } from '../engine/episode/desk';
 import type { Motion } from '../engine/episode/schema';
 import { useT } from '../i18n';
@@ -82,15 +82,27 @@ export function Pleading({
   const { caseNo, parties } = useCaseTerms();
   // 題目是「聲請傳票：死者手錶的健康資料」，抬頭只放冒號後面那段。
   const label = t(m.label, scope);
+  // 行號只寫整行：紙多高就寫幾行，最後一個號碼不要被切一半。
+  const paper = useRef<HTMLElement>(null);
+  const [lines, setLines] = useState(16);
+  useEffect(() => {
+    const el = paper.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const fit = () => setLines(Math.max(1, Math.floor((el.clientHeight - 44) / 32)));
+    const ro = new ResizeObserver(fit);
+    ro.observe(el);
+    fit();
+    return () => ro.disconnect();
+  }, []);
   const topic =
     label
       .split(/[：:]\s*/)
       .slice(1)
       .join('：') || label;
   return (
-    <article className={received ? 'plead received' : 'plead'} aria-label={label}>
+    <article ref={paper} className={received ? 'plead received' : 'plead'} aria-label={label}>
       <div className="ln" aria-hidden>
-        {Array.from({ length: 30 }, (_, i) => (
+        {Array.from({ length: lines }, (_, i) => (
           <span key={i}>{i + 1}</span>
         ))}
       </div>
@@ -170,8 +182,12 @@ export function FilingThumb({
   onPick: () => void;
 }) {
   const t = useT();
+  const scope = useScope();
   const state = a.ruling === 'granted' ? t('已准') : a.ruling === 'denied' ? t('駁回') : t('未遞');
   const filled = !!a.request && !!a.basis;
+  // 小圓章上的字跟大章一樣換語言：英文介面是 GRANTED／DENIED。
+  const word = a.ruling === 'granted' ? t('准') : t('駁回', scope);
+  const latin = /^[A-Za-z]/.test(word);
   return (
     <button
       className={on ? 'fthumb on' : 'fthumb'}
@@ -192,13 +208,13 @@ export function FilingThumb({
             <circle cx="17" cy="17" r="11" fill="none" stroke="currentColor" strokeWidth="0.8" />
             <text
               x="17"
-              y={a.ruling === 'granted' ? 21 : 20}
+              y={latin ? 19 : a.ruling === 'granted' ? 21 : 20}
               textAnchor="middle"
               fill="currentColor"
-              fontSize={a.ruling === 'granted' ? 11 : 7}
+              fontSize={latin ? 5 : a.ruling === 'granted' ? 11 : 7}
               fontWeight="900"
             >
-              {a.ruling === 'granted' ? '准' : '駁回'}
+              {word}
             </text>
           </svg>
         </span>
