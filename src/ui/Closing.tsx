@@ -572,8 +572,9 @@ function Verdict({
                     <span className="rk">{t('第 {n} 輪', { n: i + 1 })}</span>
                     <span>
                       <Pips ours={ours(r.jury)} />
+                      {/* 簽名列照判決表寫「多數 : 少數」；這裡跟簽名列同一個順序（體驗評測 v88）。 */}
                       <span className="vt" aria-label={t('站你這邊 {a} 位', { a: y })}>
-                        {y} : {n - y}
+                        {Math.max(y, n - y)} : {Math.min(y, n - y)}
                       </span>
                     </span>
                     <p>
@@ -608,7 +609,11 @@ function Verdict({
               )}
               <div>
                 <p className="who">{readOut.who}</p>
-                <blockquote>{readOut.quote}</blockquote>
+                <blockquote>
+                  {/* 最後兩個字和標點綁在一起，「無罪。」」不會被拆成兩行（體驗評測 v88）。 */}
+                  {readOut.quote.slice(0, -4)}
+                  <span className="nw">{readOut.quote.slice(-4)}</span>
+                </blockquote>
               </div>
             </section>
           )}
