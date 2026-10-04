@@ -2960,8 +2960,8 @@ fieldset.relations.compact {
   .jurors {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
-  .jury.compact.strip .jurors,
-  .jury.compact .jurors {
+  /* 庭上收起的陪審團條維持一排六位；休庭頁要讀名字和職業，一排四位，名字才不會一字一行（體驗評測 v88）。 */
+  .jury.compact.strip .jurors {
     grid-template-columns: repeat(6, minmax(0, 1fr));
   }
 }
@@ -7552,6 +7552,18 @@ button.cand.on {
     align-self: stretch;
   }
 }
+/* 英文的風向標籤長，排成一列會把最後一段擠到下一行：改成和手機一樣一段一行（體驗評測 v88）。 */
+html[lang='en'] .trend-steps {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 8px var(--s3);
+}
+html[lang='en'] .trend-steps li {
+  display: contents;
+}
+html[lang='en'] .trend-steps .arrow {
+  display: none;
+}
 /* 英文抬頭不拉字距：拉開的拉丁字母讀起來像斷字。 */
 html[lang='en'] .vform .fh h2 {
   letter-spacing: 0.04em;
@@ -7748,4 +7760,7 @@ html[lang='en'] .vform .fh .c {
   border-radius: 50%;
   background: var(--bad);
   vertical-align: 1px;
+}
+.fore blockquote .nw {
+  white-space: nowrap;
 }

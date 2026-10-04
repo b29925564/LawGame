@@ -183,7 +183,9 @@ export function FilingThumb({
 }) {
   const t = useT();
   const scope = useScope();
-  const state = a.ruling === 'granted' ? t('已准') : a.ruling === 'denied' ? t('駁回') : t('未遞');
+  const raw = a.ruling === 'granted' ? t('已准') : a.ruling === 'denied' ? t('駁回') : t('未遞');
+  // 英文的「駁回」是章上的全大寫 DENIED；報讀時改成和 Granted 一樣只大寫字首。
+  const state = /^[A-Z]+$/.test(raw) ? raw[0] + raw.slice(1).toLowerCase() : raw;
   const filled = !!a.request && !!a.basis;
   // 小圓章：中文寫准／駁回；英文寫不下，畫勾／叉。
   const word = a.ruling === 'granted' ? t('准') : t('駁回', scope);
