@@ -2479,6 +2479,8 @@ fieldset.relations.compact {
   white-space: normal;
   overflow: visible;
   word-break: keep-all;
+  /* 一個字就比格子寬（英文「Raymond Green」已經剛好塞滿）時才在字中間斷，不被隔壁那格蓋掉。 */
+  overflow-wrap: anywhere;
 }
 .jury.compact.strip > .toggle {
   align-self: flex-start;
