@@ -5569,10 +5569,14 @@ button.iou[aria-pressed='true'] {
   border-radius: var(--radius);
   background: var(--surface);
   overflow: hidden;
-}
-.depo-review li {
+  /* 標籤欄取最寬那個（擋住了／照答）：每一題的題目從同一條線開始（體驗評測 v88）。 */
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
+}
+.depo-review li {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: subgrid;
   gap: 2px 10px;
   align-items: baseline;
   padding: 8px 14px;
@@ -5585,6 +5589,7 @@ button.iou[aria-pressed='true'] {
   grid-column: 2;
 }
 .depo-tag {
+  text-align: center;
   font-family: var(--font-mono);
   font-size: 12px;
   letter-spacing: 0.04em;

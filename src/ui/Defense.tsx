@@ -98,7 +98,9 @@ export function Defense({ scene: raw }: { scene: DefenseScene }) {
       {st.stage === 'direct' ? (
         <>
           <ul className="stack">
+            {/* 問過的題目已經在筆錄裡，不再列一次；額度用完就只剩「問完了」（體驗評測 v88）。 */}
             {[...scene.questions]
+              .filter((q) => left > 0 && !st.asked.includes(q.id))
               .sort((a, b) => a.seq - b.seq)
               .map((q) => (
                 <li key={q.id}>
