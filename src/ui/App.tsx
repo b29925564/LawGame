@@ -24,7 +24,7 @@ import { useT } from '../i18n';
 import { SceneScope, useDocumentLang } from './lang';
 
 export function App() {
-  const { mode, progress, advance, toTitle, nextEpisode } = useEpisode();
+  const { mode, progress, loadId, advance, toTitle, nextEpisode } = useEpisode();
   const textScale = useSettings((s) => s.textScale);
   const t = useT();
   useDocumentLang();
@@ -45,22 +45,24 @@ export function App() {
 
   const scene = sceneOf(progress);
   const next = scene ? null : followingEpisode(progress);
+  // 讀同一場的存檔也要重新掛載，元件裡的狀態（例如訪談的「結束會見」）才會重置。
+  const sceneKey = `${loadId}:${scene?.id}`;
   return (
     <SceneScope.Provider value={scene?.id}>
       <Announcer />
       <GameMenu />
-      {scene?.type === 'phone' && <Phone key={scene.id} scene={scene} />}
-      {scene?.type === 'dialogue' && <Dialogue key={scene.id} scene={scene} />}
-      {scene?.type === 'interview' && <Interview key={scene.id} scene={scene} />}
-      {scene?.type === 'desk' && <Desk key={scene.id} scene={scene} />}
-      {scene?.type === 'trial' && <Courtroom key={scene.id} scene={scene} />}
-      {scene?.type === 'deposition' && <Deposition key={scene.id} scene={scene} />}
-      {scene?.type === 'negotiation' && <Negotiation key={scene.id} scene={scene} />}
-      {scene?.type === 'voirdire' && <VoirDire key={scene.id} scene={scene} />}
-      {scene?.type === 'defense' && <Defense key={scene.id} scene={scene} />}
-      {scene?.type === 'theory' && <Theory key={scene.id} scene={scene} />}
-      {scene?.type === 'opening' && <Opening key={scene.id} scene={scene} />}
-      {scene?.type === 'closing' && <Closing key={scene.id} scene={scene} />}
+      {scene?.type === 'phone' && <Phone key={sceneKey} scene={scene} />}
+      {scene?.type === 'dialogue' && <Dialogue key={sceneKey} scene={scene} />}
+      {scene?.type === 'interview' && <Interview key={sceneKey} scene={scene} />}
+      {scene?.type === 'desk' && <Desk key={sceneKey} scene={scene} />}
+      {scene?.type === 'trial' && <Courtroom key={sceneKey} scene={scene} />}
+      {scene?.type === 'deposition' && <Deposition key={sceneKey} scene={scene} />}
+      {scene?.type === 'negotiation' && <Negotiation key={sceneKey} scene={scene} />}
+      {scene?.type === 'voirdire' && <VoirDire key={sceneKey} scene={scene} />}
+      {scene?.type === 'defense' && <Defense key={sceneKey} scene={scene} />}
+      {scene?.type === 'theory' && <Theory key={sceneKey} scene={scene} />}
+      {scene?.type === 'opening' && <Opening key={sceneKey} scene={scene} />}
+      {scene?.type === 'closing' && <Closing key={sceneKey} scene={scene} />}
       {(!scene || scene.type === 'card') && (
         <main className="scene title-card">
           {/* 本集完：眉標寫是哪一集，不跟大標重複（體驗評測 v88）。 */}
