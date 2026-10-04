@@ -79,6 +79,8 @@ const turn: Partial<Record<Cue, number>> = {};
 
 interface Playing {
   key: string;
+  /** 這一組用到的音檔。 */
+  names: string[];
   gain: GainNode;
   sources: AudioBufferSourceNode[];
 }
@@ -194,7 +196,20 @@ export function play(cue: Cue) {
   }
 }
 
-/** 淡掉並停掉一組正在播的聲音。 */
+/** 正在播（或剛要求要播）的音樂與環境音檔名。 */
+function playingNames(): string[] {
+  return [...(music?.names ?? []), ...(ambience?.names ?? [])];
+}
+
+/**
+ * 淡出結束後要不要把解碼好的音檔丟掉：音樂、環境音很大（全部約 59 MB），不在播就釋放，
+ * 下次用到再下載解碼；短音效一直留著（上線前審查 P2）。
+ */
+export function evictable(name: string, playing: string[]): boolean {
+  return (name.startsWith('mus_') || name.startsWith('amb_')) && !playing.includes(name);
+}
+
+/** 淡掉並停掉一組正在播的聲音；淡完拆掉它的 GainNode，用不到的音檔也釋放。 */
 function fadeOut(c: AudioContext, p: Playing | null, secs = FADE) {
   if (!p) return;
   const now = c.currentTime;
@@ -207,6 +222,18 @@ function fadeOut(c: AudioContext, p: Playing | null, secs = FADE) {
     } catch {
       /* 已經播完的單次曲子。 */
     }
+  // 用一段無聲的來源當計時器：跟著音訊時鐘走，分頁暫停時淡出也跟著暫停，不會提早拆掉。
+  const timer = c.createBufferSource();
+  timer.buffer = c.createBuffer(1, 1, c.sampleRate);
+  timer.loop = true;
+  timer.connect(p.gain);
+  timer.onended = () => {
+    p.gain.disconnect();
+    const keep = playingNames();
+    for (const n of p.names) if (evictable(n, keep)) buffers.delete(n);
+  };
+  timer.start(now);
+  timer.stop(now + secs + 0.1);
 }
 
 /** 換成另一組（同一組就不動）；names 依序全部一起開始。 */
@@ -225,7 +252,7 @@ function swap(
   const gain = c.createGain();
   gain.gain.value = 0;
   gain.connect(buses[bus]!);
-  const next: Playing = { key, gain, sources: [] };
+  const next: Playing = { key, names, gain, sources: [] };
   done(next);
   void Promise.all(names.map(load)).then((bufs) => {
     // 載好之前又換了場景，就不播了。
