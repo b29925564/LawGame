@@ -150,7 +150,7 @@
 '陪審員往辯方 {n}': 'Jurors toward defense {n}'
 逾期: If broken
 '全體往{yes} {n}': 'All jurors toward {yes} {n}'
-葛雷: Gray
+葛雷: Grey
 "債權人\u3000陪審團": 'Creditor: the jury'
 已兌現: Kept
 逾期未兌現: Broken
@@ -162,7 +162,7 @@
 '盧卡斯沒有說出口：{text}': "Lucas didn't say it aloud: {text}"
 '、': ', '
 定案: Final decision
-選了就不能改: You can’t undo this
+選了就不能改: You can't undo this
 '對方拿到這 {n} 份文件': 'Documents the other side gets: {n}'
 法官可能不認；沒有正當理由硬藏，之後被揭穿會很重: The judge may reject it. Hiding something without good grounds hurts badly if it comes out later.
 證人在錄取時已經說出這份意見的內容，特權視同放棄；法官多半會命令交出: The witness already disclosed the substance of this opinion at deposition, so the privilege is treated as waived; the judge will most likely order it produced.

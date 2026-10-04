@@ -4,7 +4,7 @@
 陪審團: Jury
 顯示數值: Show numbers
 '{over} / {total} 傾向{yes}': '{over} / {total} lean toward {yes}'
-'數字是每個人的「{lean}」，0 到 100。{n} 以上才會投{yes}，那條線就是「{standard}」。': 'Each number is that juror’s score for “{lean}”, from 0 to 100. At {n} or above they vote {yes}; that line is “{standard}.”'
+'數字是每個人的「{lean}」，0 到 100。{n} 以上才會投{yes}，那條線就是「{standard}」。': 'Each number is that juror''s score for "{lean}," from 0 to 100. At {n} or above they vote {yes}; that line is "{standard}."'
 '目前 {over} / {total} 在線上。': '{over} of {total} are over the line right now.'
 原型是從檢方舉證完畢開始，所以一開始所有人都在線上，你要把他們拉下來。: The prototype starts after the prosecution rests, so everyone begins over the line. Your job is to pull them back down.
 
@@ -14,13 +14,13 @@
 成功彈劾: Successful impeachments
 刪除的證詞: Testimony stricken
 '{n} 句': '{n} line(s)'
-剩餘法官耐心: Judge’s patience left
+剩餘法官耐心: Judge's patience left
 調查花掉的工時: Hours spent investigating
-'法官耐心 {a} / {b}': 'Judge’s patience {a} / {b}'
-法官耐心: Judge’s patience
+'法官耐心 {a} / {b}': "Judge's patience {a} / {b}"
+法官耐心: Judge's patience
 開場許下的承諾: Promises made in opening
 '・已兌現': ' · Kept'
-（這句話已從陪審團視角刪除）: (This line has been struck from the jury’s view)
+（這句話已從陪審團視角刪除）: (This line has been struck from the jury's view)
 證詞: Testimony
 '證詞 {n}': 'Claim {n}'
 庭上隨時可以翻。出示哪一個論點，看的就是這裡的強度。: You can open this at any time in court. Which argument to present depends on the strength shown here.
@@ -35,7 +35,7 @@
 '2 鋪陳': '2 Set up'
 '3 對質': '3 Confront'
 出示: Present
-（已洩漏，她備好了反擊）: '(Exposed: she’s prepared a rebuttal)'
+（已洩漏，她備好了反擊）: "(Exposed: she's prepared a rebuttal)"
 手上沒有論點可以出示。: You have no arguments to present.
 其他問題: Other questions
 
@@ -60,7 +60,7 @@
 選擇案件理論: Choose case theory
 案件理論: Case theory
 已選定。: Selected.
-手上的論點撐不起任何理論，直接開庭: Your arguments can’t support any theory. Go to court anyway
+手上的論點撐不起任何理論，直接開庭: Your arguments can't support any theory. Go to court anyway
 開始陳述: Begin opening
 開場陳述: Opening statement
 沒有選定的案件理論，沒有任何承諾可以許。: No case theory was chosen, so there are no promises to make.
@@ -87,7 +87,7 @@
 '・ 基調 {state}': '· Tone {state}'
 已選: set
 未選: not set
-'手上的論點不夠，結辯會空 {n} 格，{other}的說法沒人反駁。': 'You’re short on arguments: {n} closing slots will stay empty, and the other side’s account goes unanswered.'
+'手上的論點不夠，結辯會空 {n} 格，{other}的說法沒人反駁。': "You're short on arguments: {n} closing slots will stay empty, and the other side's account goes unanswered."
 沒有案件理論，論點說服力打七折。: No case theory, so your arguments are 30% less persuasive.
 '開場許下的 {n} 個承諾沒有兌現，陪審員記得你說過的話。': '{n} promises from your opening went unkept. The jurors remember what you said.'
 結辯: Closing argument
@@ -100,7 +100,7 @@
 （已洩漏）: (Exposed)
 手上沒有確認過的論點。: You have no confirmed arguments.
 '・最後講，×1.3': '· Delivered last, ×1.3'
-'「{text}」': '“{text}”'
+'「{text}」': '"{text}"'
 特別判決表: Special verdict form
 損害總額扣掉死者過失的部分: Total damages less the decedent's share
 被告應付: Defendant owes
@@ -125,7 +125,7 @@
 '還缺 {list}': 'Still missing {list}'
 以這個理論開庭: Go to trial on this theory
 理論靠的論點: The theory rests on
-點一張卡比較，再按下面的「以這個理論開庭」定案。: Pick a card to compare, then press “Go to trial on this theory” below to commit.
+點一張卡比較，再按下面的「以這個理論開庭」定案。: Pick a card to compare, then press "Go to trial on this theory" below to commit.
 '生效中：{rulings}': 'In effect: {rulings}'
 下次可以試: Next time
 完整帳目: Full ledger
@@ -134,11 +134,11 @@
 庭審: Trial
 審前: Pretrial
 若判有責: If found liable
-案件理論「{name}」讓陪審團一開始就偏向對方: 'The theory “{name}” started the jury leaning against you'
+案件理論「{name}」讓陪審團一開始就偏向對方: 'The theory "{name}" started the jury leaning against you'
 開場許下的 {n} 個承諾沒兌現: 'Promises from your opening went unkept ({n})'
 結辯有空格，對方的說法沒人反駁: Your closing had an empty slot, so the other side went unanswered
 沒有案件理論，論點說服力打了折: With no case theory, your arguments landed weaker
-結辯基調「{tone}」不合這群陪審員: "The closing tone “{tone}” didn't suit this jury"
+結辯基調「{tone}」不合這群陪審員: 'The closing tone "{tone}" didn''t suit this jury'
 結辯用了對方早有準備的論點：{list}: 'Your closing used points the other side was ready for: {list}'
 '{who}的證詞沒有被彈劾': "{who}'s testimony was never impeached"
 開示時硬藏的 {n} 份資料被揭穿: 'Documents you withheld in discovery came out ({n})'
@@ -176,7 +176,7 @@
 法官叫停了詰問: The judge has stopped the examination
 詰問結束: Examination over
 法官把這位證人在這一場說過的話全部從紀錄上拿掉，陪審團不能採用。: The judge strikes everything this witness said in this session. The jury may not consider it.
-按「休庭」看這一場的結果。: Press “Recess” to see how the day went.
+按「休庭」看這一場的結果。: Press "Recess" to see how the day went.
 '前面的筆錄（{n} 句）': 'Earlier testimony ({n} lines)'
 剔除: Struck
 對方剔除: Struck by them
@@ -198,7 +198,7 @@
 '　剔除的人不會回來。': ". Struck jurors don't come back."
 已問: Asked
 陪審團無法達成判決。: The jury could not reach a verdict.
-陪審團認定被告有責，懲罰性賠償成立。: The jury finds the defendant liable, and awards punitive damages.
+陪審團認定被告有責，懲罰性賠償成立。: The jury finds the defendant liable and awards punitive damages.
 '陪審團認定被告{v}。': 'The jury finds the defendant {v}.'
 當庭釋放: Released from the courtroom
 還押，擇期量刑: Remanded until sentencing
