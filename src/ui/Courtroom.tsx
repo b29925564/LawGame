@@ -81,14 +81,17 @@ function Jurors({
         ) : (
           <h2>{t('陪審團')}</h2>
         )}
-        <label className="toggle">
-          <input
-            type="checkbox"
-            checked={showNumbers}
-            onChange={(e) => set({ showNumbers: e.target.checked })}
-          />
-          {t('顯示數值')}
-        </label>
+        {/* 收起來時看不到數值，開關也不必在；英文左欄才不會擠成兩行（體驗評測 v88）。 */}
+        {(!strip || open) && (
+          <label className="toggle">
+            <input
+              type="checkbox"
+              checked={showNumbers}
+              onChange={(e) => set({ showNumbers: e.target.checked })}
+            />
+            {t('顯示數值')}
+          </label>
+        )}
       </div>
       {(!strip || open) && (
         <>
