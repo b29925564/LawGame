@@ -7800,3 +7800,18 @@ html[lang='en'] .vform .fh .c {
 .fore blockquote .nw {
   white-space: nowrap;
 }
+/* 手機：門檻自己一行，條件在下一行，可以換行；第 1 集的條件是一整句，擠在同一列會疊字（遊戲測試員 v90）。 */
+@media (max-width: 520px) {
+  .nego-ladder {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .nego-ladder li {
+    row-gap: 2px;
+  }
+  .nego-ladder li .th {
+    grid-column: 1 / -1;
+  }
+  .nego-ladder .v {
+    white-space: normal;
+  }
+}
