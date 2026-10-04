@@ -7655,9 +7655,17 @@ html[lang='en'] .vform .fh .c {
   :root:has(.vd-screen) .game-menu {
     top: calc((var(--taskbar-h) - 40px) / 2);
   }
-  /* 判決頁：鈕頂對齊頁眉第一行（框的上邊距），金額在它下面。 */
+  /*
+   * 判決頁：鈕頂對齊頁眉第一行（框的上邊距），金額在它下面。
+   * 這頁整頁捲動，鈕跟著頁眉捲走，不釘在畫面上蓋住下面的字（體驗評測 v90：1100 寬捲 45px 蓋住刑期那行）。
+   */
   :root:has(.vdict) .game-menu {
+    position: absolute;
     top: var(--s5);
+  }
+  /* 有金額時右欄比左欄高；左欄貼頂，眉標才和選單鈕同一條線（原本靠底對齊會被推下 20px）。 */
+  .vdict .hero > :first-child {
+    align-self: start;
   }
   /* 答案面板照順序排在發現下面，不疊在上面（視覺設計師、體驗評測）；中欄自己捲。 */
   .board3 .answer-bar {

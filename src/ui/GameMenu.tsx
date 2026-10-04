@@ -28,7 +28,10 @@ export function GameMenu() {
   }, [open]);
   const onSave = (slot: Slot) => setNote(save(slot) ? t('已存檔。') : t('這個瀏覽器不允許存檔。'));
   const onLoad = (slot: Slot) => {
-    if (load(slot)) setOpen(null);
+    if (!load(slot)) return;
+    setOpen(null);
+    // 手機整頁捲動：讀進來的場景從頂端開始，不沿用讀檔前的捲動位置（體驗評測 v90）。
+    window.scrollTo({ top: 0 });
   };
   return (
     <div className="game-menu" ref={box}>
