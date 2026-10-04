@@ -63,6 +63,16 @@ function Jurors({
   // 法庭裡預設收起來：12 張臉展開會把詰問的按鈕擠出畫面。
   const [open, setOpen] = useState(!strip);
   const over = scene.jurors.filter((j) => (jury[j.id] ?? 0) >= scene.threshold).length;
+  const toggle = (
+    <label className="toggle">
+      <input
+        type="checkbox"
+        checked={showNumbers}
+        onChange={(e) => set({ showNumbers: e.target.checked })}
+      />
+      {t('顯示數值')}
+    </label>
+  );
   return (
     <section className={strip ? 'jury compact strip' : 'jury compact'} aria-label={t('陪審團')}>
       <div className="panel-head">
@@ -81,17 +91,7 @@ function Jurors({
         ) : (
           <h2>{t('陪審團')}</h2>
         )}
-        {/* 收起來時看不到數值，開關也不必在；英文左欄才不會擠成兩行（體驗評測 v88）。 */}
-        {(!strip || open) && (
-          <label className="toggle">
-            <input
-              type="checkbox"
-              checked={showNumbers}
-              onChange={(e) => set({ showNumbers: e.target.checked })}
-            />
-            {t('顯示數值')}
-          </label>
-        )}
+        {!strip && toggle}
       </div>
       {(!strip || open) && (
         <>
@@ -121,6 +121,8 @@ function Jurors({
               );
             })}
           </ul>
+          {/* 法庭裡那一條的標題列只放「陪審團 ▾ 比數」；開關放在名單下面，英文才不會擠成兩三行（體驗評測 v90）。 */}
+          {strip && toggle}
         </>
       )}
     </section>
