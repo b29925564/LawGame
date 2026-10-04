@@ -53,7 +53,11 @@ export function SlotList({
 }
 
 export function Title() {
-  const { newGame, load, openProto } = useEpisode();
+  const { newGame, load: loadSlot, openProto } = useEpisode();
+  // 讀檔清單在手機上要往下捲才看得到；讀進來的場景從頂端開始，不沿用標題頁的捲動位置（體驗評測 v90）。
+  const load = (slot: Slot) => {
+    if (loadSlot(slot)) window.scrollTo({ top: 0 });
+  };
   const [loading, setLoading] = useState(false);
   const [picking, setPicking] = useState(false);
   const [credits, setCredits] = useState(false);
