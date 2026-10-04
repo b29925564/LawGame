@@ -185,7 +185,7 @@ export function FilingThumb({
   const scope = useScope();
   const state = a.ruling === 'granted' ? t('已准') : a.ruling === 'denied' ? t('駁回') : t('未遞');
   const filled = !!a.request && !!a.basis;
-  // 小圓章上的字跟大章一樣換語言：英文介面是 GRANTED／DENIED。
+  // 小圓章：中文寫准／駁回；英文寫不下，畫勾／叉。
   const word = a.ruling === 'granted' ? t('准') : t('駁回', scope);
   const latin = /^[A-Za-z]/.test(word);
   return (
@@ -206,16 +206,28 @@ export function FilingThumb({
           <svg viewBox="0 0 34 34">
             <circle cx="17" cy="17" r="15" fill="none" stroke="currentColor" strokeWidth="1.5" />
             <circle cx="17" cy="17" r="11" fill="none" stroke="currentColor" strokeWidth="0.8" />
-            <text
-              x="17"
-              y={latin ? 19 : a.ruling === 'granted' ? 21 : 20}
-              textAnchor="middle"
-              fill="currentColor"
-              fontSize={latin ? 5 : a.ruling === 'granted' ? 11 : 7}
-              fontWeight="900"
-            >
-              {word}
-            </text>
+            {latin ? (
+              // 英文字放不進 22px 的內圈：改用勾和叉，形狀就分得出准與駁回，不只靠顏色。
+              <path
+                d={a.ruling === 'granted' ? 'M11 17.5l4 4 8-9' : 'M12 12l10 10M22 12l-10 10'}
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.6"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            ) : (
+              <text
+                x="17"
+                y={a.ruling === 'granted' ? 21 : 20}
+                textAnchor="middle"
+                fill="currentColor"
+                fontSize={a.ruling === 'granted' ? 11 : 7}
+                fontWeight="900"
+              >
+                {word}
+              </text>
+            )}
           </svg>
         </span>
       )}
