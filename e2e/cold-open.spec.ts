@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 
 test('冷開場：看過的訊息被收回，換場自動存檔，可從標題繼續', async ({ page }) => {
   await page.goto('/');
@@ -38,6 +38,48 @@ test('冷開場：看過的訊息被收回，換場自動存檔，可從標題�
   await page.getByRole('button', { name: '讀取存檔' }).click();
   await page.getByRole('button', { name: '讀取存檔 1' }).click();
   await expect(page.getByRole('heading', { name: '合理懷疑' })).toBeVisible();
+});
+
+/** 只在第一次載入時寫入自動存檔，之後重新整理不再覆蓋。 */
+const seed = (page: Page, save: object) =>
+  page.addInitScript((s) => {
+    if (sessionStorage.getItem('seeded')) return;
+    sessionStorage.setItem('seeded', '1');
+    localStorage.setItem('lawgame-ep-auto', s);
+  }, JSON.stringify(save));
+
+test('壞掉的自動存檔不提供繼續，標題照常顯示', async ({ page }) => {
+  await seed(page, {
+    version: 5,
+    savedAt: 1,
+    label: '第 1 集・片頭',
+    progress: { episode: 'ep1', scene: 0, step: 0, choices: null, cards: null, scenes: {} },
+  });
+  await page.goto('/');
+  await expect(page.getByRole('heading', { name: '合理懷疑' })).toBeVisible();
+  await expect(page.getByRole('button', { name: /繼續（/ })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: '新遊戲' })).toBeVisible();
+});
+
+test('場景狀態壞掉時按繼續不會白屏', async ({ page }) => {
+  await seed(page, {
+    version: 5,
+    savedAt: 1,
+    label: '第 1 集・第三幕',
+    progress: {
+      episode: 'ep1',
+      scene: 11,
+      step: 0,
+      choices: {},
+      cards: [],
+      flags: [],
+      ethics: [],
+      scenes: { 'plea-morrow': {} },
+    },
+  });
+  await page.goto('/');
+  await page.getByRole('button', { name: /繼續（第 1 集・第三幕）/ }).click();
+  await expect(page.locator('#root main').first()).toBeVisible();
 });
 
 test('語言切換：標題畫面切成英文，重新整理後保留，切回中文', async ({ page }) => {
