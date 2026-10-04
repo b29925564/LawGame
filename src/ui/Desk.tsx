@@ -1317,14 +1317,26 @@ function FoundNote({
 function WrapButton({ hours, open, onWrap }: { hours: number; open: number; onWrap: () => void }) {
   const t = useT();
   const [armed, setArmed] = useState(false);
+  // 剛換成確認鈕的 400ms 內不接受點擊：雙擊的第二下會直接落在確認鈕上（結束調查不能復原）。
+  const [ready, setReady] = useState(false);
   useEffect(() => {
     if (!armed) return;
+    const settle = setTimeout(() => setReady(true), 400);
     const timer = setTimeout(() => setArmed(false), 4000);
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(settle);
+      clearTimeout(timer);
+    };
   }, [armed]);
   // 第二下是定案鈕：寫出還剩多少工時、多少疑問沒確認（UX 決策代價規格三）。
+  // 兩個狀態給不同的 key，React 才不會沿用同一個按鈕節點。
   return armed ? (
-    <button className="commit wide armed" onClick={onWrap}>
+    <button
+      key="armed"
+      className="commit wide armed"
+      aria-disabled={!ready}
+      onClick={() => ready && onWrap()}
+    >
       <span aria-hidden>🔒 </span>
       {t('確定結束')}{' '}
       <span className="cost">
@@ -1332,7 +1344,14 @@ function WrapButton({ hours, open, onWrap }: { hours: number; open: number; onWr
       </span>
     </button>
   ) : (
-    <button className="wide" onClick={() => setArmed(true)}>
+    <button
+      key="idle"
+      className="wide"
+      onClick={() => {
+        setReady(false);
+        setArmed(true);
+      }}
+    >
       {t('結束調查')}
     </button>
   );

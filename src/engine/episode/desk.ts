@@ -32,6 +32,8 @@ export interface DeskState {
   linkNote: string | null;
   /** 上一次連錯錯在哪：兩張卡根本沒關係（cards），或卡對了但關係選錯（relation）。 */
   linkMiss?: 'cards' | 'relation' | null;
+  /** 上一次連錯的組合（排序過的卡片 id 加關係）。選的沒換就不能再連一次，免得同一個錯重複扣工時。舊存檔沒有這欄。 */
+  missed?: string | null;
   /** 各疑問放了哪些發現或論點（推理第二步）。 */
   attempts: Record<string, { cards: string[] }>;
   confirmed: string[];
@@ -186,8 +188,16 @@ export function setLinkRelation(st: DeskState, relation: Relation): DeskState {
   return { ...st, link: { ...st.link, relation }, linkNote: null };
 }
 
+/** 連線區目前的組合，拿來比對上一次連錯的是不是同一組。 */
+const linkKey = (link: DeskState['link']) => `${key(link.cards)}#${link.relation}`;
+
 export function canConnect(st: DeskState): boolean {
-  return st.hours >= 1 && st.link.cards.length === 2 && !!st.link.relation;
+  return (
+    st.hours >= 1 &&
+    st.link.cards.length === 2 &&
+    !!st.link.relation &&
+    st.missed !== linkKey(st.link)
+  );
 }
 
 /**
@@ -219,6 +229,7 @@ export function connect(s: DeskScene, st: DeskState): DeskState {
     ...next,
     badLinks: next.badLinks + 1,
     linkMiss: pair ? 'relation' : 'cards',
+    missed: linkKey(st.link),
     linkNote: '這兩張卡連不起來，至少不是這種關係。白花了 1 工時。',
   };
 }

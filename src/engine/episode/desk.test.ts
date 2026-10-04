@@ -1,6 +1,18 @@
 import { describe, expect, it } from 'vitest';
 import { episodes } from '../../content';
-import { fits, openQuestions, questionOpen, startDesk, toggleCard } from './desk';
+import {
+  canConnect,
+  connect,
+  fits,
+  openQuestions,
+  questionOpen,
+  setLinkRelation,
+  startDesk,
+  toggleCard,
+  toggleLinkCard,
+  type DeskState,
+} from './desk';
+import type { Relation } from '../schema';
 import type { DeskScene, Episode } from './schema';
 import { validateEpisode } from './validate';
 
@@ -58,5 +70,65 @@ describe('疑問的顯示條件', () => {
     expect(errs).toContain(`疑問 ${q1.id} 的顯示條件用了不存在的 nope`);
     expect(errs).toContain(`疑問 ${q2.id} 的顯示條件需要玩家拿不到的 ${q2.argument.id}`);
     expect(errs).not.toContain(`疑問 ${q3.id} 的顯示條件`);
+  });
+});
+
+describe('連錯的組合不重複扣工時', () => {
+  const s = episodes.ep1.scenes.find((x) => x.type === 'desk') as DeskScene;
+  const pick = (st: DeskState, cards: string[], relation: Relation) =>
+    setLinkRelation(
+      cards.reduce<DeskState>((acc, c) => toggleLinkCard(acc, c), {
+        ...st,
+        link: { cards: [], relation: null },
+      }),
+      relation,
+    );
+  // 找兩組連不起來的卡片和關係。
+  const misses: [string[], Relation][] = [];
+  const ids = s.cards.map((c) => c.id);
+  for (let i = 0; i < ids.length && misses.length < 2; i++)
+    for (let j = i + 1; j < ids.length && misses.length < 2; j++)
+      if (!s.links.some((l) => fits(l.cards, l.accept, [ids[i], ids[j]])))
+        misses.push([[ids[i], ids[j]], '矛盾']);
+  const hit = s.links[0];
+
+  it('同一組錯的再按一次不扣工時、不算連錯；換了組合才又能連', () => {
+    let st = pick(startDesk(s), ...misses[0]);
+    const hours = st.hours;
+    st = connect(s, st);
+    expect(st.hours).toBe(hours - 1);
+    expect(st.badLinks).toBe(1);
+    expect(canConnect(st)).toBe(false);
+    const again = connect(s, st);
+    expect(again).toBe(st);
+    // 順序不同也是同一組。
+    st = pick(st, [...misses[0][0]].reverse(), misses[0][1]);
+    expect(canConnect(st)).toBe(false);
+    expect(connect(s, st).hours).toBe(hours - 1);
+    // 換一組錯的照樣扣。
+    st = pick(st, ...misses[1]);
+    expect(canConnect(st)).toBe(true);
+    st = connect(s, st);
+    expect(st.hours).toBe(hours - 2);
+    expect(st.badLinks).toBe(2);
+    // 換關係也算換組合。
+    st = setLinkRelation(st, '支持');
+    expect(canConnect(st)).toBe(true);
+  });
+
+  it('連對的不受影響', () => {
+    let st = connect(s, pick(startDesk(s), ...misses[0]));
+    st = connect(s, pick(st, hit.cards, hit.relation));
+    expect(st.found).toEqual([hit.id]);
+    expect(st.hours).toBe(s.hours - 1);
+  });
+
+  it('舊存檔沒有這欄也照常運作', () => {
+    const old = pick(startDesk(s), ...misses[0]);
+    delete (old as Partial<DeskState>).missed;
+    expect(canConnect(old)).toBe(true);
+    const st = connect(s, old);
+    expect(st.hours).toBe(s.hours - 1);
+    expect(canConnect(st)).toBe(false);
   });
 });
