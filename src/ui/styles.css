@@ -7646,6 +7646,19 @@ html[lang='en'] .vform .fh .c {
     top: calc(16px + (var(--taskbar-h) - 40px) / 2);
     right: max(24px, calc((100vw - 1480px) / 2 + 24px));
   }
+  /* 遴選頁和判決頁的框最寬 1680、左右留 24：選單鈕右緣對齊框，不再貼著視窗凸出去（法庭介面）。 */
+  :root:has(.vd-screen) .game-menu,
+  :root:has(.vdict) .game-menu {
+    right: max(24px, calc((100% - 1680px) / 2 + 24px));
+  }
+  /* 遴選頁頂列貼齊視窗頂端：鈕在列裡垂直置中。 */
+  :root:has(.vd-screen) .game-menu {
+    top: calc((var(--taskbar-h) - 40px) / 2);
+  }
+  /* 判決頁：鈕頂對齊頁眉第一行（框的上邊距），金額在它下面。 */
+  :root:has(.vdict) .game-menu {
+    top: var(--s5);
+  }
   /* 答案面板照順序排在發現下面，不疊在上面（視覺設計師、體驗評測）；中欄自己捲。 */
   .board3 .answer-bar {
     position: static;
