@@ -2467,9 +2467,21 @@ fieldset.relations.compact {
 .jury.compact .label > span + span {
   color: var(--muted);
 }
-/* 法庭裡那一條只放得下名字。 */
+/* 法庭裡那一條只放名字。一排四位，名字在「・」或空格換行，不切字（體驗評測 v90）。 */
 .jury.compact.strip .label > span + span {
   display: none;
+}
+.jury.compact.strip .jurors {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.jury.compact.strip .label {
+  padding: 0 2px;
+  white-space: normal;
+  overflow: visible;
+  word-break: keep-all;
+}
+.jury.compact.strip > .toggle {
+  align-self: flex-start;
 }
 /* 休庭頁的筆錄：最後幾句是高潮，整段攤開，不收在小框裡。 */
 .lines.transcript.full {
@@ -2960,10 +2972,6 @@ fieldset.relations.compact {
   .jurors {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
-  /* 庭上收起的陪審團條維持一排六位；休庭頁要讀名字和職業，一排四位，名字才不會一字一行（體驗評測 v88）。 */
-  .jury.compact.strip .jurors {
-    grid-template-columns: repeat(6, minmax(0, 1fr));
-  }
 }
 @media (min-width: 768px) {
   .title-screen {
@@ -3335,6 +3343,8 @@ fieldset.relations.compact {
   .shell:has(> .shell-tabs > .transcript) > .shell-foot {
     grid-column: 2;
     grid-row: 4;
+    /* 左欄打開的陪審團會把這一列撐高；按鈕列貼底，不跟著拉成一大塊（體驗評測 v90）。 */
+    align-self: end;
   }
   /* 沒有分頁列時，內容從第二列就開始。 */
   .shell:has(> .shell-tabs > .transcript):not(:has(> .shell-tabs > .apps)) > .shell-body {

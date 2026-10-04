@@ -66,6 +66,9 @@ export function Defense({ scene: raw }: { scene: DefenseScene }) {
     );
 
   const left = scene.asks - st.asked.length;
+  const open = [...scene.questions]
+    .filter((q) => left > 0 && !st.asked.includes(q.id))
+    .sort((a, b) => a.seq - b.seq);
   const lines = st.log.map((l, i) => (
     <Speech key={i} line={{ who: l.who, text: l.text, mood: '平', thought: false }} />
   ));
@@ -97,12 +100,10 @@ export function Defense({ scene: raw }: { scene: DefenseScene }) {
         ))}
       {st.stage === 'direct' ? (
         <>
-          <ul className="stack">
-            {/* 問過的題目已經在筆錄裡，不再列一次；額度用完就只剩「問完了」（體驗評測 v88）。 */}
-            {[...scene.questions]
-              .filter((q) => left > 0 && !st.asked.includes(q.id))
-              .sort((a, b) => a.seq - b.seq)
-              .map((q) => (
+          {/* 問過的題目已經在筆錄裡，不再列一次；額度用完就只剩「問完了」，空清單也不畫（體驗評測 v88、v90）。 */}
+          {open.length > 0 && (
+            <ul className="stack">
+              {open.map((q) => (
                 <li key={q.id}>
                   <button
                     className="wide"
@@ -123,7 +124,8 @@ export function Defense({ scene: raw }: { scene: DefenseScene }) {
                   )}
                 </li>
               ))}
-          </ul>
+            </ul>
+          )}
           <button className="primary" onClick={finishWitness}>
             {t('問完了')}
           </button>
