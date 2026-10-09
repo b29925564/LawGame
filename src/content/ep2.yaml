@@ -157,6 +157,34 @@ effects:
   # 勘誤表承認三月以前有疲勞鎖：「我們提醒過」靠的是「提醒一直都在」，它傷得最重（提案第五節）。
   - when: { flags: [trevor-corrected], theory: [warned] }
     jury: 6
+
+# 案卷登錄表最後一行（設計審查 r1）：各分支一句，列第一個符合的。和解金額不上登錄表。
+disposition:
+  - date: 05/28/2026
+    when: { outcome: [deal], deal: [o-full, o-high, o-mid] }
+    entry: 調解成立：雙方簽署和解書，含被告恢復派單系統強制下線功能之條款。原告撤回起訴，本案終結。
+  - date: 05/28/2026
+    when: { outcome: [deal], deal: [o-low] }
+    entry: 調解成立：雙方簽署和解書，被告不承認責任。原告撤回起訴，本案終結。
+  - date: 06/04/2026
+    when: { verdict: [有責], punitive: true, theory: [shared] }
+    entry: 陪審團評決：被告有責；死者與有過失，比例與賠償金額如判決表所載；懲罰性賠償成立。
+  - date: 06/04/2026
+    when: { verdict: [有責], punitive: true }
+    entry: 陪審團評決：被告有責，賠償金額如判決表所載；懲罰性賠償成立。
+  - date: 06/04/2026
+    when: { verdict: [有責], theory: [shared] }
+    entry: 陪審團評決：被告有責；死者與有過失，比例與賠償金額如判決表所載。
+  - date: 06/04/2026
+    when: { verdict: [有責] }
+    entry: 陪審團評決：被告有責，賠償金額如判決表所載。
+  - date: 06/04/2026
+    when: { verdict: [無責] }
+    entry: 陪審團評決：被告無責。
+  - date: 06/04/2026
+    when: { verdict: [陪審團僵局] }
+    entry: 陪審團未達法定票數，本院宣告審判無效。
+
 scenes:
   # 冷開場：玩家拿著赫克托的手機。休息不是不能按，只是每次都有代價。
   - type: phone
@@ -384,6 +412,10 @@ scenes:
     title: 第二幕　開示
     lines:
       - 這一次，是對方來跟你要東西。
+    filings:
+      - date: 05/04/2026
+        when: { cards: [pharmacy] }
+        entry: 被告陳報：對非當事人藥局發出文書傳票 D-1，並通知原告。
     docket:
       date: 05/05/2026
       entry: 原告向被告送達第一次文書提出要求。
@@ -687,6 +719,7 @@ scenes:
     id: depo-trevor
     act: 第三幕
     place: 惠特洛克・海爾　會議室 C　週二 10:00
+    video: { bates: OKF-V-000118, timecode: '01:38:21;16' }
     side: theirs
     examiner: 丹尼爾・奧卡福
     witness:
@@ -746,6 +779,7 @@ scenes:
     id: depo-engineer
     act: 第三幕
     place: 奧卡福勞工法律事務所　會議室　週三 14:00
+    video: { bates: OKF-V-000131, timecode: '00:41:07;22' }
     side: theirs
     examiner: 丹尼爾・奧卡福
     witness:
@@ -813,7 +847,7 @@ scenes:
         from: 丹尼爾・奧卡福　原告律師
         subject: 調解會議
         body:
-          - 盧卡斯，調解會議排在下週二。瑪莉索會親自來。
+          - 盧卡斯，調解會議排在下週四。瑪莉索會親自來。
           - 她要的東西，不全是錢。你到時候就知道了。
     jobs:
       - id: job-errata
