@@ -209,10 +209,13 @@
     animation: act-pull var(--dur-redact-out) steps(12, end) forwards;
     animation-delay: calc(var(--d, 0) * var(--dur-cut-black) + var(--dur-tube-ignite));
   }
-  .act-lines,
-  .act-actions {
+  .act-lines {
     animation: act-rise var(--dur-ui) var(--ease-light) both;
     animation-delay: calc(var(--dur-tube-ignite) + 6 * var(--dur-cut-black));
+  }
+  /* 集尾選項在停留結束後才掛上，掛上就淡入，不再等。 */
+  .act-actions {
+    animation: act-rise var(--dur-ui) var(--ease-light) both;
   }
   /* 光敏安全：燈管只做單次 700ms 漸亮，不脈衝。 */
   html[data-photosafe='1'] .act-tube,

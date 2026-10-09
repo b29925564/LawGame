@@ -45,8 +45,10 @@ export function App() {
     );
 
   const scene = sceneOf(progress);
-  const next = scene ? null : followingEpisode(progress);
   const ep = episodeOf(progress);
+  // 集尾卡（這一集最後一場是卡）：跑完進場、停 2.5 秒後不切場，選項出現在卡下。
+  const last = scene?.type === 'card' && progress.scene === ep.scenes.length - 1;
+  const next = scene && !last ? null : followingEpisode(progress);
   // 幕卡（設定集 11.3）：片頭卡的集名寫在第一行；同一幕的第二張卡是日卡；集尾也是同一個版型。
   const card = scene?.type === 'card' ? scene : null;
   const opening = card?.act === '片頭';
@@ -95,18 +97,43 @@ export function App() {
       {scene?.type === 'theory' && <Theory key={scene.id} scene={scene} />}
       {scene?.type === 'opening' && <Opening key={scene.id} scene={scene} />}
       {scene?.type === 'closing' && <Closing key={scene.id} scene={scene} />}
-      {scene?.type === 'card' && (
+      {scene?.type === 'card' && !last && (
         <ActCard key={scene.id} headline={headline} place={slate} bates={bates} onDone={advance} />
       )}
-      {!scene && (
-        <ActCard key="end" headline={headline} place={slate} bates={bates} lines={<Recap />}>
+      {(!scene || last) && (
+        <ActCard
+          key={scene?.id ?? 'end'}
+          headline={headline}
+          place={slate}
+          bates={bates}
+          lines={!last && <Recap />}
+        >
+          {/* 集尾卡的那一句（「第 1 集到此結束。」）沒有下一場可以放，和選項一起出現在卡下。 */}
+          {last &&
+            card?.lines.map((l) => (
+              <p key={l} className="narration">
+                {t(l, card?.id)}
+              </p>
+            ))}
           <div className="stack">
             {next && (
-              <button className="primary" onClick={nextEpisode}>
+              <button
+                className="primary"
+                onClick={() => {
+                  if (last) advance();
+                  nextEpisode();
+                }}
+              >
                 {t('繼續第 {n} 集', { n: episodes[next as keyof typeof episodes].number })}
               </button>
             )}
-            <button className={next ? '' : 'primary'} onClick={toTitle}>
+            <button
+              className={next ? '' : 'primary'}
+              onClick={() => {
+                if (last) advance();
+                toTitle();
+              }}
+            >
               {t('回標題')}
             </button>
           </div>

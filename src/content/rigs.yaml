@@ -1,0 +1,18 @@
+# 燈組（設定集第 4 章「四個時段燈組」）。幕卡與地點字卡的場記右欄直接讀 label、time、kelvin，不在介面裡手打（11.3）。
+# 第一日、第三日的時刻設定集沒寫，取開庭時間 09:00（視覺設計師 #2 2026-10-09 認可）。
+court-d1-am:
+  label: 第一日
+  time: '09:00'
+  kelvin: 4100
+court-d2-pm:
+  label: 第二日
+  time: '14:10'
+  kelvin: 4800
+court-d3-ov:
+  label: 第三日
+  time: '09:00'
+  kelvin: 6500
+court-verdict:
+  label: 判決
+  time: '16:40'
+  kelvin: 3600

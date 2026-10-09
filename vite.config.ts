@@ -19,6 +19,16 @@ function content(): Plugin {
         const map = z.record(z.string(), z.string()).parse(parse(readFileSync(id, 'utf8')) ?? {});
         return `export default JSON.parse(${JSON.stringify(JSON.stringify(map))});`;
       }
+      if (id.endsWith('rigs.yaml')) {
+        // 燈組：場記右欄讀的 label、time、kelvin。
+        const rig = z.object({
+          label: z.string(),
+          time: z.string().regex(/^\d{2}:\d{2}$/),
+          kelvin: z.number().int(),
+        });
+        const rigs = z.record(z.string(), rig).parse(parse(readFileSync(id, 'utf8')));
+        return `export default JSON.parse(${JSON.stringify(JSON.stringify(rigs))});`;
+      }
       const schema = id.endsWith('proto.yaml') ? caseSchema : episodeSchema;
       const data = schema.parse(parse(readFileSync(id, 'utf8')));
       return `export default JSON.parse(${JSON.stringify(JSON.stringify(data))});`;

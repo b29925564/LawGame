@@ -1,19 +1,16 @@
+import rigData from '../content/rigs.yaml';
+
 /**
  * 場記右欄讀燈組（設定集 11.3：「第二日 14:10 4800K」直接讀 rigs/court-d2-pm.yaml，不手打）。
- * 法庭四個時段燈組照第 4 章；第一日、第三日的時刻設定集沒寫，取開庭時間 09:00。
+ * 燈組資料在 src/content/rigs.yaml。
  */
 export type Rig = { label: string; time: string; kelvin: number };
 
-export const RIGS: Record<string, Rig> = {
-  'court-d1-am': { label: '第一日', time: '09:00', kelvin: 4100 },
-  'court-d2-pm': { label: '第二日', time: '14:10', kelvin: 4800 },
-  'court-d3-ov': { label: '第三日', time: '09:00', kelvin: 6500 },
-  'court-verdict': { label: '判決', time: '16:40', kelvin: 3600 },
-};
+export const RIGS = rigData as Record<string, Rig>;
 
-/** 法庭裡（第 N 法庭、量刑庭；不含走廊、調解室、台階）依開庭日選燈組。地點用中文原文判斷。 */
+/** 法庭裡（第 N 法庭；不含走廊、調解室、台階、量刑庭）依開庭日選燈組。量刑庭不是庭審日，讀地點自帶的日子時刻。地點用中文原文判斷。 */
 export function rigOf(place: string, day?: string): Rig | null {
-  if (!/第.法庭|量刑庭/.test(place) || /外|走廊/.test(place)) return null;
+  if (!/第.法庭/.test(place) || /外|走廊/.test(place)) return null;
   if (day && /第二|Two/.test(day)) return RIGS['court-d2-pm'];
   if (day && /第三|Three/.test(day)) return RIGS['court-d3-ov'];
   return RIGS['court-d1-am'];

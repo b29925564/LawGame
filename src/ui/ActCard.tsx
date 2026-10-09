@@ -39,7 +39,7 @@ export function spaced(kicker: string) {
 export function splitSlate(place: string): [string, string] {
   const zh = /^(.*)\u3000((?:週|第.天|隔天|一週後|兩週後|\d{1,2}:\d{2}).*)$/.exec(place);
   if (zh) return [zh[1], zh[2]];
-  const en = /^(.*?)[.,] ((?:Mon|Tue|Wed|Thu|Fri|Sat|Sun|Day|The next|One week|Two weeks).*)$/.exec(
+  const en = /^(.*?)[.,] ((?:Mon|Tue|Wed|Thu|Fri|Sat|Sun|Day|The next|One week|Two weeks|\d{1,2}:\d{2}).*)$/.exec(
     place,
   );
   if (en) return [en[1], en[2]];
@@ -74,6 +74,16 @@ const HOLD = 2500;
 const CUT = 83;
 const ENTER = 900 + 7 * 83 + 500;
 const ENTER_RM = 120;
+
+function useHeld(on: boolean) {
+  const [held, setHeld] = useState(false);
+  useEffect(() => {
+    if (!on) return;
+    const id = window.setTimeout(() => setHeld(true), (reduced() ? ENTER_RM : ENTER) + HOLD);
+    return () => clearTimeout(id);
+  }, [on]);
+  return held;
+}
 
 /** 選單開著時，幕卡不切走、按鍵也不跳過。 */
 const menuOpen = () => !!document.querySelector('dialog[open], [role="dialog"]');
@@ -140,6 +150,8 @@ export function ActCard({
   onDone?: () => void;
 }) {
   const cut = useCut(onDone);
+  // 集尾卡：進場跑完、停 2.5 秒後不切場，選項才出現在卡下的介面層（卡上不放按鈕）。
+  const held = useHeld(!onDone && !!children);
   const t = useT();
   const en = useLang((s) => s.lang) === 'en';
   const { plaintiff, defendant, caseNo } = useCaseTerms();
@@ -225,7 +237,7 @@ export function ActCard({
         </section>
       </div>
       {lines && <div className="act-lines">{lines}</div>}
-      {children && <div className="act-actions">{children}</div>}
+      {children && held && <div className="act-actions">{children}</div>}
     </main>
   );
 }
