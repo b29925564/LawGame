@@ -129,13 +129,51 @@
 }
 @media (max-width: 640px) {
   .docket {
-    padding: 18px 14px 14px;
+    padding: 14px 14px 12px;
   }
-  .docket td {
-    padding: 7px 5px;
+  .docket-cap {
+    margin-bottom: 8px;
   }
-  .docket .dk-date {
+  /*
+   * 窄版：序號和日期一行，事項在下面佔滿整行（英文的 Courier 擠在第三欄會一行四個字）；
+   * 欄名只留給螢幕閱讀器。螢光的 --hl-edge 左線改畫在整行上。
+   */
+  .docket thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  .docket tbody tr:not(.dk-future) {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    column-gap: 12px;
+    padding: 6px;
+    border-bottom: 1px solid var(--paper-rule);
+  }
+  .docket tbody tr:not(.dk-future) td {
     width: auto;
+    padding: 0;
+    border-bottom: 0;
+    text-align: left;
+  }
+  .docket .dk-entry {
+    grid-column: 1 / -1;
+    font-size: 13px;
+    line-height: 1.55;
+  }
+  .docket tr.dk-cur {
+    box-shadow: inset 2px 0 0 var(--hl-edge);
+  }
+  .docket .dk-cur td:first-child {
+    box-shadow: none;
+  }
+  .docket .dk-future {
+    display: block;
+  }
+  .docket .dk-future td {
+    display: block;
   }
   /* 只留最近三行（到目前那一行）和一條黑條，聲請卡留在第一屏（設計師 P2-6 r1）。 */
   .docket:not(.all) :is(.dk-old, .dk-future:not(.dk-next)) {
@@ -143,7 +181,8 @@
   }
   .docket .dk-all {
     display: block;
-    margin: 12px auto 0;
+    margin: 10px auto 0;
+    font-family: var(--font);
   }
 }
 
@@ -320,9 +359,9 @@
   /* 淺色主題也讀得出塑膠：白邊外面再一道深色細線（和登錄表的紙邊同一條）。 */
   border: 1px solid rgb(255 255 255 / 72%);
   box-shadow: 0 0 0 1px rgb(0 0 0 / 14%);
-  background: rgb(214 220 228 / 12%);
+  background: light-dark(rgb(190 200 212 / 30%), rgb(214 220 228 / 12%));
 }
-/* 塑膠在東西上面：高光蓋在袋裡的紙和印刷上，點擊穿過去。淺色主題的高光調亮。 */
+/* 塑膠在東西上面：高光蓋在袋裡的紙和印刷上，點擊穿過去。淺色主題的袋身和高光調亮一點，但不洗掉字。 */
 .bag::after {
   content: '';
   position: absolute;
@@ -333,13 +372,13 @@
     linear-gradient(
       112deg,
       transparent 16%,
-      light-dark(rgb(255 255 255 / 42%), rgb(255 255 255 / 16%)) 22%,
+      light-dark(rgb(255 255 255 / 30%), rgb(255 255 255 / 16%)) 22%,
       transparent 29%
     ),
     linear-gradient(
       112deg,
       transparent 60%,
-      light-dark(rgb(255 255 255 / 30%), rgb(255 255 255 / 10%)) 64%,
+      light-dark(rgb(255 255 255 / 22%), rgb(255 255 255 / 10%)) 64%,
       transparent 70%
     );
 }
@@ -469,6 +508,7 @@
 .bag-chain .why {
   grid-area: why;
   text-align: right;
+  word-break: keep-all;
 }
 .bag-chain .from {
   grid-area: from;
