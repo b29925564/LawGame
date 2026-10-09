@@ -15,13 +15,13 @@ import {
   trialState,
   useEpisode,
 } from '../engine/game';
-import { reaction, termsOf, type Jury } from '../engine/jury';
+import { termsOf, type Jury } from '../engine/jury';
 import type { Tag } from '../engine/schema';
 import { useSettings } from '../engine/settings';
 import { play } from '../engine/sound';
 import { useT } from '../i18n';
 import { CardPick, EvidenceDrawer } from './Evidence';
-import { JuryLegend } from './JuryLegend';
+import { JuryBox } from './jury/JuryBox';
 import { CourtLight } from './CourtLight';
 import { useScope } from './lang';
 import { Stamp } from './Marks';
@@ -29,105 +29,58 @@ import { Speech } from './Portrait';
 import { batesOf, CourtRecord, useCourtEntries } from './Record';
 import { Shell, Tabs } from './Shell';
 
-const glyph: Record<string, string> = {
-  點頭: '◡',
-  抄筆記: '✎',
-  皺眉: '︵',
-  看向被告: '→',
-  '': '·',
-};
-
 /**
- * 12 張臉。預設只看表情，輔助選項才顯示數值（企劃書 6.10）。
- * 在法庭裡它是釘在筆錄下面的一條，所以要能收起來——手機上
- * 展開的陪審團會把詰問的按鈕推出畫面。
+ * 法庭裡的陪審團（設定集第 8.4、10.1 章）：剪影替身與四階影子。桌機放在中間欄（HUD 的位置），
+ * 手機收成刻痕條釘在筆錄下面，點開才看臉——展開的面板會把詰問的按鈕推出畫面。
  */
-function Jurors({
+function CourtJury({
   scene,
   jury,
   deltas,
-  strip,
+  eventKey,
+  collapsible,
 }: {
   scene: TrialScene;
   jury: Jury;
   deltas: Jury;
-  strip?: boolean;
+  eventKey: number;
+  collapsible?: boolean;
 }) {
-  const { showNumbers, set } = useSettings();
   const t = useT();
-  const scope = useScope();
-  // 「華特・班奈特・退休警察」：名字和職業分兩行，換行才不會切在詞中間。
-  const person = (label: string) => {
-    const i = label.lastIndexOf('・');
-    return i > 0 ? [t(label.slice(0, i), scope), t(label.slice(i + 1), scope)] : [t(label, scope)];
-  };
-  // 法庭裡預設收起來：12 張臉展開會把詰問的按鈕擠出畫面。
-  const [open, setOpen] = useState(!strip);
+  const episode = useEpisode((s) => s.progress.episode);
   const over = scene.jurors.filter((j) => (jury[j.id] ?? 0) >= scene.threshold).length;
-  const toggle = (
-    <label className="toggle">
-      <input
-        type="checkbox"
-        checked={showNumbers}
-        onChange={(e) => set({ showNumbers: e.target.checked })}
-      />
-      {t('顯示數值')}
-    </label>
-  );
   return (
-    <section className={strip ? 'jury compact strip' : 'jury compact'} aria-label={t('陪審團')}>
-      <div className="panel-head">
-        {strip ? (
-          <button className="link" aria-expanded={open} onClick={() => setOpen(!open)}>
-            {t('陪審團')} {open ? '▾' : '▸'}
-            <span className="muted">
-              {' '}
-              {t('{over} / {total} 傾向{yes}', {
-                over,
-                total: scene.jurors.length,
-                yes: t(termsOf(scene).yes),
-              })}
-            </span>
-          </button>
-        ) : (
-          <h2>{t('陪審團')}</h2>
-        )}
-        {!strip && toggle}
-      </div>
-      {(!strip || open) && (
-        <>
-          {showNumbers && (
-            <JuryLegend jury={jury} threshold={scene.threshold} burden={scene.burden} />
-          )}
-          <ul className="jurors">
-            {scene.jurors.map((j) => {
-              const r = reaction(deltas[j.id] ?? 0);
-              return (
-                <li key={j.id} className={`juror ${r ? 'react' : ''}`} data-reaction={r}>
-                  <span className="face" aria-hidden>
-                    {glyph[r]}
-                  </span>
-                  <span className="label" title={t(j.label, scope)}>
-                    {person(j.label).map((x, k) => (
-                      <span key={k}>{x}</span>
-                    ))}
-                  </span>
-                  <span className="state">{r ? t(r) : '　'}</span>
-                  {showNumbers && (
-                    <span className={jury[j.id] >= scene.threshold ? 'num guilty' : 'num'}>
-                      {jury[j.id]}
-                    </span>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
-          {/* 法庭裡那一條的標題列只放「陪審團 ▾ 比數」；開關放在名單下面，英文才不會擠成兩三行（體驗評測 v90）。 */}
-          {strip && toggle}
-        </>
-      )}
-    </section>
+    <JuryBox
+      episode={episode}
+      jurors={scene.jurors}
+      jury={jury}
+      deltas={deltas}
+      eventKey={eventKey}
+      threshold={scene.threshold}
+      collapsible={collapsible}
+      summary={t('{over} / {total} 傾向{yes}', {
+        over,
+        total: scene.jurors.length,
+        yes: t(termsOf(scene).yes),
+      })}
+    />
   );
+}
+
+/** 手機與窄視窗（法庭版面變一欄的寬度）。 */
+function useNarrow() {
+  const q = '(max-width: 1023px)';
+  const [narrow, setNarrow] = useState(
+    () => typeof matchMedia !== 'undefined' && matchMedia(q).matches,
+  );
+  useEffect(() => {
+    if (typeof matchMedia === 'undefined') return;
+    const m = matchMedia(q);
+    const on = () => setNarrow(m.matches);
+    m.addEventListener('change', on);
+    return () => m.removeEventListener('change', on);
+  }, []);
+  return narrow;
 }
 
 /** 異議窗：預設回合制，設定裡可以改成限時（企劃書 6.9.5 與 6.14 的輔助選項）。 */
@@ -217,6 +170,7 @@ export function Courtroom({ scene: raw }: { scene: TrialScene }) {
   const [pick, setPick] = useState<string>(pending?.id ?? scene.witness.claims[0].id);
   const record = useCourtEntries(st.log, scene.witness.name, st.stricken);
   const bates = batesOf(progress, raw.id);
+  const narrow = useNarrow();
 
   // 手上確認過的論點，用來對質。論點的強度與標籤定義在調查那一幕的疑問裡。
   const deskScene = deskSceneOf(progress);
@@ -301,7 +255,7 @@ export function Courtroom({ scene: raw }: { scene: TrialScene }) {
             <dt>{t('調查花掉的工時')}</dt>
             <dd>{deskDone && deskScene ? `${deskDone.spent} / ${deskScene.hours}` : '—'}</dd>
           </dl>
-          <Jurors scene={scene} jury={st.jury} deltas={{}} />
+          <CourtJury scene={scene} jury={st.jury} deltas={{}} eventKey={0} />
           <div className="lines">
             {scene.outro.map((l, i) => (
               <Speech key={i} line={l} />
@@ -365,7 +319,13 @@ export function Courtroom({ scene: raw }: { scene: TrialScene }) {
         tabs={
           <>
             <CourtRecord entries={record} live fit bates={bates} />
-            <Jurors scene={scene} jury={st.jury} deltas={st.deltas} strip />
+            <CourtJury
+              scene={scene}
+              jury={st.jury}
+              deltas={st.deltas}
+              eventKey={st.said ?? st.log.length}
+              collapsible={narrow}
+            />
             {st.stage === 'cross' && (
               <Tabs
                 label={t('證詞')}

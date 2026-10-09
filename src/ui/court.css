@@ -1908,6 +1908,20 @@ html[lang='en'] .stamp.rec-stamp b {
 @media (min-width: 1024px) {
   .shell:has(> .shell-tabs > .record) {
     grid-template-columns: clamp(320px, 100vw - 804px, 480px) minmax(0, 1fr);
+    grid-template-rows: auto auto minmax(0, 1fr) auto auto;
+  }
+  .shell:has(> .shell-tabs > .record) > .shell-tabs > .record {
+    grid-row: 2 / 6;
+    margin-bottom: 12px;
+  }
+  /* 陪審團面板是 HUD：放在中間欄、按鈕列上方（左欄留給 25 行的筆錄紙）。 */
+  .shell:has(> .shell-tabs > .record) > .shell-tabs > .jurybox {
+    grid-column: 2;
+    grid-row: 4;
+    padding-top: 8px;
+  }
+  .shell:has(> .shell-tabs > .record) > .shell-foot {
+    grid-row: 5;
   }
 }
 /* 手機：筆錄往下撐到底部按鈕列上方（中間的提示與詰問區照內容長，最多半個螢幕）；紙幾乎貼齊螢幕寬，兩側各 8px。 */
@@ -1943,5 +1957,210 @@ html[lang='en'] .stamp.rec-stamp b {
   }
   .rec-bar-top {
     padding: 0 0 6px;
+  }
+}
+
+/* ══ 陪審團面板（設定集第 8.4、8.5、10.1 章）：剪影替身、四階影子、刻痕軌道 ══ */
+.jurybox {
+  /* 點頭：以底邊中心 ±3°、兩次共 400ms（第 8.2 章；全域權杖沒有這一項，先在這裡命名）。 */
+  --dur-nod: 400ms;
+  display: grid;
+  gap: 8px;
+  justify-content: start;
+}
+.jb-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+.jb-head h2 {
+  margin: 0;
+}
+.jb-head h2 .muted {
+  font-size: var(--fs-ui-meta);
+  font-weight: 400;
+}
+.jf-legend {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-ui-label);
+  color: var(--muted);
+  white-space: nowrap;
+}
+.jf-legend svg {
+  width: 14px;
+  height: 14px;
+}
+.jb-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 56px);
+  gap: 12px 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.jb-cell {
+  display: grid;
+  justify-items: center;
+  align-content: start;
+}
+/* 頭像屬於鏡頭層：永遠黑底，不跟主題變。 */
+.jf-face {
+  position: relative;
+  display: block;
+  width: 56px;
+  height: 70px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--cine-bg);
+}
+.jf-tilt,
+.jf-svg {
+  position: absolute;
+  inset: 0;
+}
+.jf-tilt {
+  transform-origin: 50% 100%;
+}
+.jf-label {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.jf-label rect {
+  fill: none;
+  stroke: var(--cine-line);
+  stroke-dasharray: 14 14;
+  stroke-width: 3;
+}
+.jf-label text {
+  font: 34px var(--font-mono);
+  fill: var(--cine-muted);
+}
+.jf-svg svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+/* 影子＝懷疑：從卡面右側吃進來，左緣羽化 12 單位（56 寬時約 1.7px），#06080b 92%。 */
+.jf-shadow {
+  position: absolute;
+  inset: 0 0 0 auto;
+  width: var(--sh);
+  background: linear-gradient(to right, transparent 0, rgb(6 8 11 / 92%) 1.7px);
+  pointer-events: none;
+}
+.jb-track {
+  position: relative;
+  width: 40px;
+  height: 4px;
+  margin-top: 7px;
+  border-radius: 999px;
+  background: var(--border);
+}
+/* 刻痕：五格之一（0／25／50／75／100）。 */
+.jb-track::after,
+.jb-seg::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: calc(var(--tick) * 1%);
+  width: 2px;
+  height: 8px;
+  translate: -1px 0;
+  background: var(--text);
+}
+/* 顯示數值：門檻刻度線、過門檻軌道填滿 --bad。 */
+.jb-track.th::before {
+  content: '';
+  position: absolute;
+  top: -3px;
+  left: calc(var(--th) * 1%);
+  height: 10px;
+  border-left: 1px dashed var(--muted);
+}
+.jb-track.over {
+  background: var(--bad);
+}
+.jb-num {
+  margin-top: 6px;
+  font: 500 13px/1 var(--font-mono);
+}
+.jb-num.over {
+  color: var(--bad);
+  font-weight: 700;
+}
+.jurybox.collapsed {
+  justify-content: stretch;
+  max-width: 358px;
+}
+.jurybox > .toggle {
+  justify-self: start;
+}
+/* 手機收合刻痕條：整條一個熱區（高 44），段數跟陪審團人數走。 */
+.jb-strip-head {
+  display: flex;
+  justify-content: space-between;
+  height: 20px;
+  margin: 0;
+  font-size: var(--fs-ui-meta);
+  color: var(--muted);
+}
+.jb-strip {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  column-gap: 4px;
+  align-items: center;
+  width: 100%;
+  max-width: 358px;
+  height: 44px;
+  padding: 0 13px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  cursor: pointer;
+}
+.jb-seg {
+  position: relative;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--border);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .jf-shadow {
+    transition: width var(--dur-shadow) var(--ease-light);
+  }
+  .jf-svg.in {
+    animation: iv-fade var(--dur-shadow) linear both;
+  }
+  .jf-tilt[data-nod] {
+    animation: jf-nod var(--dur-nod) var(--ease) both;
+  }
+  @keyframes jf-nod {
+    25%,
+    75% {
+      rotate: 3deg;
+    }
+    50% {
+      rotate: -3deg;
+    }
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .jf-svg.in {
+    animation: iv-fade var(--dur-rm) linear both;
+  }
+}
+@media (max-width: 480px) {
+  .jb-grid {
+    grid-template-columns: repeat(6, 48px);
+  }
+  .jf-face {
+    width: 48px;
+    height: 60px;
   }
 }

@@ -235,3 +235,13 @@
 'record::駁回': Overruled
 'record::法官': The Court
 'record::葛雷律師': Mr. Grey
+'待放 AI 立繪　{no}': 'AI art TBD  {no}'
+影子＝懷疑: Shadow = doubt
+陪審團（收合）: Jury (collapsed)
+點開看臉: Tap to see faces
+陪審團（收合）・點開看臉: 'Jury (collapsed): tap to see faces'
+'{seat} 號 {name}：{posture}': 'Juror {seat}, {name}: {posture}'
+端坐: sitting upright
+前傾: leaning forward
+後靠抱胸: leaning back, arms crossed
+低頭寫筆記: head down, taking notes
