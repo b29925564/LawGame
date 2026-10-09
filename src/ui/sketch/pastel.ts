@@ -308,6 +308,9 @@ export function buildSketch(inp: SketchInput): Sketch {
     d[o + 2] = b;
     d[o + 3] = 255;
   };
+  // 卡紙是乾淨的一張紙：不畫粉彩斑，只留一點紙紋，字寫在上面（設計師 P2-6 r2 第 4 條）。
+  // 亮處的卡是粉筆白帶一點證據的色，暗處的卡是炭色（字用粉筆寫）。
+  const cardPaper = cards.map((c) => (at(L, c.cx, c.cy) >= 0.48 ? mix(chalk, c.rgb, 0.12) : c0));
   for (let y = 0; y < H; y++)
     for (let x = 0; x < W; x++) {
       const i = y * W + x;
@@ -316,15 +319,25 @@ export function buildSketch(inp: SketchInput): Sketch {
       const t = tierOf(v);
       const f = Math.min(1, Math.max(0, (stopLine[x] - y) / dry));
       const k = cardAt[i];
-      // 卡紙吃粉筆比較滿，字才讀得出來。
-      const c = t === 4 && k ? 0.8 : cover[t];
+      if (k) {
+        const cp = cardPaper[k - 1];
+        const m = (0.5 - tooth[i]) * 0.04;
+        put(
+          o,
+          cp[0] + (ink[0] - cp[0]) * m,
+          cp[1] + (ink[1] - cp[1]) * m,
+          cp[2] + (ink[2] - cp[2]) * m,
+        );
+        continue;
+      }
+      const c = cover[t];
       if (t !== 2 && f > 0 && tooth[i] < c * f) {
         if (t === 0) put(o, c0[0], c0[1], c0[2]);
         else if (t === 1) put(o, c1[0], c1[1], c1[2]);
         else if (t === 3) {
-          // 淺粉彩帶 15–35% 原色（軟木或卡片紙）。
-          const hue = k ? cards[k - 1].rgb : inp.base.rgb;
-          const m = 0.15 + 0.2 * ((v - 0.48) / 0.22) * (k ? 1 : 0);
+          // 淺粉彩帶 15% 軟木原色。
+          const hue = inp.base.rgb;
+          const m = 0.15;
           put(
             o,
             c3[0] + (hue[0] - c3[0]) * m,

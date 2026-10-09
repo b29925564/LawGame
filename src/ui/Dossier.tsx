@@ -135,16 +135,31 @@ export function Docket({ progress }: { progress: Progress }) {
   );
 }
 
+/** 英文縮寫的句點（No.、Dr.…）不是句子結束。 */
+const ABBR = /(?:^|[\s(])(?:No|Nos|Dr|Mr|Mrs|Ms|St|Jr|Sr|Inc|Co|Corp|Ltd|v|vs|Det|Sgt|Lt)\.$/;
 /**
  * 迷你登錄表一行只放事項的第一個分句（切在第一個「：；。」，英文切在第一個「: 」「; 」「. 」）。
- * 還是太長就換成兩行；不用省略號，也不用漸隱（設計師 P2-6 r2）。
+ * 括號裡的補充說明不算；還是太長就換行；不用省略號，也不用漸隱（設計師 P2-6 r2）。
  */
 export function firstClause(text: string) {
-  const zh = text.search(/[：；。]/);
-  const en = text.search(/[:;.] /);
-  const at = [zh, en].filter((x) => x > 0).sort((a, b) => a - b)[0];
-  if (at === undefined) return text;
-  return text[at] === '.' ? text.slice(0, at + 1) : text.slice(0, at);
+  let depth = 0;
+  for (let i = 1; i < text.length; i++) {
+    const c = text[i];
+    if (c === '(' || c === '（') {
+      // 括號裡是補充說明，不算第一個分句：英文在括號前面斷，補一個句點收尾；中文直接斷。
+      if (depth === 0 && c === '(' && text[i - 1] === ' ') return text.slice(0, i - 1) + '.';
+      if (depth === 0 && c === '（') return text.slice(0, i);
+      depth++;
+    } else if (c === ')' || c === '）') depth = Math.max(0, depth - 1);
+    if (depth) continue;
+    if ('：；。'.includes(c)) return text.slice(0, i);
+    if (/[:;.]/.test(c) && text[i + 1] === ' ') {
+      // 「No. 26-…」「Dr. Brooks」這種縮寫的句點不是句子結束。
+      if (c === '.' && ABBR.test(text.slice(0, i + 1))) continue;
+      return c === '.' ? text.slice(0, i + 1) : text.slice(0, i);
+    }
+  }
+  return text;
 }
 
 /**

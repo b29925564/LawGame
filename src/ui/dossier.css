@@ -372,7 +372,7 @@
   flex-basis: 100%;
   column-gap: 2ch;
   font: 700 12px/16px var(--font-court);
-  letter-spacing: 0.02em;
+  /* 不加字距：手機的卡寬 126px 剛好放得下「案號＋兩格＋序號」一行，時間第二行。 */
   color: var(--paper-muted);
 }
 .photolog-line span {

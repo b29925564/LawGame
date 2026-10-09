@@ -50,7 +50,8 @@
 }
 .fthumb:hover,
 .fthumb[aria-pressed='true'] {
-  background: var(--paper);
+  /* 選中的縮圖還是紙：蓋掉全域「按下」的深底（!important），選中只靠下面的墨框（設計師 P2-6 r2 第 9 條）。 */
+  background: var(--paper) !important;
 }
 .fthumb::before {
   content: '';

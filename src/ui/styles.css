@@ -972,6 +972,8 @@ details summary {
   padding: max(8px, env(safe-area-inset-top)) 14px 0;
   display: grid;
   grid-template-rows: auto auto minmax(0, 1fr) auto;
+  /* 欄寬不跟著內容撐開：分頁列一行不換、放不下自己橫捲，不能把整欄撐得比視窗寬（設計師 P2-6 r2 第 8 條）。 */
+  grid-template-columns: minmax(0, 1fr);
   gap: 10px;
   overflow: hidden;
 }

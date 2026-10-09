@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { episodes } from '../content';
 import type { Progress } from '../engine/save';
-import { currentRow, docketOf } from './Dossier';
+import { currentRow, docketOf, firstClause } from './Dossier';
 
 const at = (episode: 'ep1' | 'ep2', id: string) =>
   episodes[episode].scenes.findIndex((s) => s.id === id);
@@ -53,5 +53,29 @@ describe('案卷登錄表（P2-6；劇本與內容 #234 的規則）', () => {
     ]);
     expect(rows.at(-1)!.entry).toContain('非預謀殺人');
     expect(rows.every((r) => r.done)).toBe(true);
+  });
+});
+
+describe('迷你登錄表的第一個分句（設計師 P2-6 r2 第 7 條）', () => {
+  it('中文切在第一個「：；。」，英文切在「: 」「; 」「. 」並留句點', () => {
+    expect(firstClause('陪審團審理第一日：陪審團遴選，十二名陪審員宣誓。')).toBe(
+      '陪審團審理第一日',
+    );
+    expect(firstClause('Jury trial, day 1. Jury selection; twelve jurors sworn.')).toBe(
+      'Jury trial, day 1.',
+    );
+    expect(firstClause('Indictment filed: one count.')).toBe('Indictment filed');
+  });
+
+  it('縮寫的句點和括號裡的補充說明都不算分句', () => {
+    expect(
+      firstClause(
+        "Order granting defense inspection of defendant's booked smartwatch (property inventory No. 26-0315-088, item 3).",
+      ),
+    ).toBe("Order granting defense inspection of defendant's booked smartwatch.");
+    expect(firstClause('Testimony of Dr. Brooks. Cross-examination.')).toBe(
+      'Testimony of Dr. Brooks.',
+    );
+    expect(firstClause('本院核發檢視令（財物清單 No. 26-0315-088 項 3）。')).toBe('本院核發檢視令');
   });
 });
