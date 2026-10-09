@@ -189,6 +189,40 @@ const interviewScene = z.object({
 /** 卷宗裡的一句話；有 fact 的句子標記後生成事實卡。 */
 const docLine = z.object({ text: z.string(), fact: id.optional() });
 
+/** 卷宗紀錄上的時間，月／日加 24 小時制（設定集第 9 章 PhotoLog、EvidenceBag）。 */
+const stamp = z.string().regex(/^\d\d\/\d\d \d\d:\d\d$/, '紀錄時間格式是 MM/DD HH:MM');
+
+/** 照片紀錄表的四欄。案號是拍照機關自己的號碼，不是法院案號。 */
+const photoLog = z
+  .object({
+    caseNo: z.string(),
+    no: z.number().int().min(1),
+    of: z.number().int().min(1),
+    at: stamp,
+    by: z.string(),
+  })
+  .refine((p) => p.no <= p.of, '照片序號不能大於總張數');
+
+/** 證物袋：袋上印的表頭，加上手寫的保管鏈（每經手一次一行，不斷手、時間遞增）。 */
+const bag = z
+  .object({
+    caseNo: z.string(),
+    item: z.string(),
+    acquiredBy: z.string(),
+    from: z.string(),
+    desc: z.string(),
+    custody: z
+      .array(z.object({ at: stamp, from: z.string(), to: z.string(), purpose: z.string() }))
+      .min(1),
+  })
+  .refine(
+    (b) =>
+      b.custody.every(
+        (c, i) => i === 0 || (b.custody[i - 1].at < c.at && b.custody[i - 1].to === c.from),
+      ),
+    '保管鏈要時間遞增，而且上一手的收受人就是下一手的交出人',
+  );
+
 const card = z.object({
   id,
   name: z.string(),
@@ -206,6 +240,10 @@ const card = z.object({
   /** 一開始就在手上（起訴資料附的）。 */
   held: z.boolean().default(false),
   admitted: z.boolean().default(false),
+  /** 照片類卡片的照片紀錄表。 */
+  photo: photoLog.optional(),
+  /** 扣押物或傳票調閱回來的實物，裝在證物袋裡。 */
+  bag: bag.optional(),
 });
 
 /**
@@ -892,6 +930,22 @@ const scene = z.discriminatedUnion('type', [
     epilogue: z.boolean().default(false),
     owner: z.string(),
     steps: z.array(phoneStep).min(1),
+    /** 演完最後一步之後的警方現場照片（設定集 05-05），照順序排在照片紀錄表裡。 */
+    photos: z
+      .array(
+        z.object({
+          id,
+          subject: z.string(),
+          /** 照片裡的證物牌號碼；沒有證物牌的全景照不填。 */
+          placard: z.number().int().optional(),
+          /** 一格一黃：只有這一張的證物牌是黃。 */
+          highlight: z.boolean().default(false),
+          /** 照片拍到遺體：以「照片已遮蔽」黑條呈現。 */
+          redacted: z.boolean().default(false),
+          photo: photoLog,
+        }),
+      )
+      .optional(),
   }),
   z.object({
     type: z.literal('dialogue'),
@@ -923,6 +977,13 @@ const scene = z.discriminatedUnion('type', [
     epilogue: z.boolean().default(false),
     title: z.string(),
     lines: z.array(z.string()).default([]),
+    /** 案卷登錄表的一行：案件行事曆上的日期（MM/DD/YYYY）與法院紀錄口吻的事項。序號依卡的順序產生。 */
+    docket: z
+      .object({
+        date: z.string().regex(/^\d\d\/\d\d\/\d{4}$/, '登錄表日期格式是 MM/DD/YYYY'),
+        entry: z.string(),
+      })
+      .optional(),
   }),
 ]);
 
