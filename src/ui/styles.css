@@ -18,6 +18,8 @@
   --border-strong: light-dark(#a9b3bf, #3a4757);
   --text: light-dark(#111720, #e7eaee);
   --muted: light-dark(#536071, #8e99a7);
+  /* 還不能按的字（設計師裁定）：深淺兩模式同一個灰，不靠降低不透明度。 */
+  --ink-muted: #8a95a2;
   /* 有資訊的淡字也要 4.5:1（無障礙審查 2026-10-02）。設定集的 #7d8896／#5f6a79 只夠裝飾，使用者 10-09 定案保留這組。 */
   --faint: light-dark(#5a6676, #8a95a2);
 
@@ -232,7 +234,7 @@ button.primary:disabled {
   opacity: 1;
   background: transparent;
   border: 1px solid var(--border-strong);
-  color: var(--muted);
+  color: var(--ink-muted);
   box-shadow: none;
 }
 button.primary:hover:not(:disabled) {
