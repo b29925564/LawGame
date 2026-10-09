@@ -11,7 +11,7 @@
 你怎麼知道我在哪裡做事。: How do you know where I work.
 謝謝。這個我很擅長。: Thank you. It's one of my strengths.
 有窗嗎？: Does it have a window?
-沒有。: No.
+有。打不開。: Yes. It doesn't open.
 也好。我怕高。: Good. I'm not great with heights.
 22:44 抵達 → 22:47 刷卡: 22:44 drop-off → 22:47 badge-in
 訊息可以從兩支手機上收回。通知紀錄不行。: A message can be unsent from either phone. A notification log can't.
@@ -210,7 +210,7 @@
 片頭: Title
 合理懷疑: Reasonable Doubt
 第一集　已收回的訊息: 'Episode One: The Unsent Message'
-'惠特洛克・海爾律師事務所　大廳　週一 08:00': 'Whitlock & Hale, lobby, Monday 08:00'
+'惠特洛克・海爾　大廳　週一 08:00': 'Whitlock & Hale, lobby, Monday 08:00'
 港灣大道一號，頂樓。接待櫃台後的銅牌寫著「惠特洛克・海爾」。「海爾」兩個字底下的漆，比旁邊新。: One Harbor Avenue, top floor. The brass plate behind reception reads "Whitlock & Hale." The paint under "Hale" is newer than the rest.
 葛雷律師，歡迎。四年公設辯護人，兩百多件案子。: Mr. Grey. Welcome. Four years as a public defender, two hundred-some cases.
 我挖你過來，不是看你履歷漂亮，是看你輸得起。: I didn't bring you here for the résumé. I brought you here because you can take a loss.
@@ -485,7 +485,8 @@
 好。就這樣吧。: Okay. Let's do it.
 這是最好的選擇。: It's the right call.
 上一次我這樣說，｜他死在裡面。: The last time I said that,｜he died in there.
-'惠特洛克・海爾　會議室 A　週日 14:00': 'Whitlock & Hale, Conference Room A, Sunday 14:00'
+'惠特洛克・海爾　會議室 A　週日 22:40': 'Whitlock & Hale, Conference Room A, Sunday 22:40'
+'惠特洛克・海爾　走廊　週二 19:00': 'Whitlock & Hale, hallway, Tuesday 19:00'
 明天開庭。你要告訴陪審團一個故事，一個就好。故事要靠你手上的論點撐起來。: Trial is tomorrow. You tell the jury one story. Just one. And it has to stand on the arguments you've actually got.
 檢方的證據有漏洞。我們不指認任何人，只證明他們沒有證明。: The prosecution's case has holes. We don't point at anyone. We prove they haven't proved it.
 最安全。但真兇逍遙法外，伊森只是「查無實據」。: Safest. But whoever did it walks, and Ethan is only ever "not proven".
@@ -906,12 +907,12 @@
 （信）盧卡斯，這裡晚上十點就熄燈。我每天晚上都在想那則訊息。它真的存在過，對吧？: (Letter) Lucas, lights go out at ten here. Every night I think about that message. It really existed, didn't it?
 （信）我姊說你還在找上訴的理由。如果找不到，也不是你的錯。: (Letter) My sister says you're still looking for grounds to appeal. If you can't find any, it's not your fault.
 盧卡斯把信夾進伊森的卷宗，在卷宗的標籤上用鉛筆加了兩個字：上訴。: "Lucas slips the letter into Ethan's file and adds one word to the label in pencil: Appeal."
-'惠特洛克・海爾律師事務所　會議室　週四 15:00': 'Whitlock & Hale, conference room, Thursday 15:00'
+'惠特洛克・海爾　會議室　週四 15:00': 'Whitlock & Hale, conference room, Thursday 15:00'
 不管結果怎麼寫，這一仗你打得比我預期的乾淨。: Whatever the result says, you fought this one cleaner than I expected.
 卡爾德物流的法務今天早上打來了。他們問，你下一次會不會也這樣查到底。: Calder Logistics' general counsel called this morning. They want to know if you'll dig this deep next time too.
 事務所不是公設辯護室。記住這一點。: This firm is not the public defender's office. Remember that.
 她走出會議室，沒有等盧卡斯回答。: She leaves the conference room without waiting for Lucas to answer.
-'盧卡斯的辦公室　影印機旁邊　週四 18:40': "Lucas's office, by the copier, Thursday 18:40"
+'盧卡斯的辦公室　影印機旁邊　週四 20:40': "Lucas's office, by the copier, Thursday 20:40"
 （訊息）蘇菲託我在你桌上放了一個信封。她說你不配，但真相配。: (Text) Sophie asked me to leave an envelope on your desk. She says you don't deserve it. The truth does.
 桌上有一個沒有寄件人的牛皮紙信封。裡面是一封郵件草稿的影本：寄件人葛蘭特・沃斯，收件人只寫了「V.」，狀態：未寄出。最後一行：「星期一我會把碼頭九號的事全部說出來。」: 'On the desk, a manila envelope with no sender. Inside, a photocopy of an email draft: from Grant Voss, to someone listed only as "V.", status: unsent. The last line: "On Monday I''m telling them everything about Pier Nine."'
 （便條）那天晚上，沃斯先生在寫的不是辭退信。是這個。: (Note) What Mr. Voss was writing that night wasn't a termination letter. It was this.
@@ -954,7 +955,7 @@
 對。我敲了兩次，沒有人應。: Yes. I knocked twice. Nobody answered.
 # 卷宗元件（P2-6）：案卷登錄表、證物袋、照片紀錄表。
 '戴文・艾許　惠特洛克・海爾 助理': 'Devon Ash, paralegal, Whitlock & Hale'
-'調閱（傳票回覆）': 'Received (subpoena return)'
+'調閱（傳票回覆）': 'Obtained (subpoena return)'
 '收存': 'Stored'
 '26-CR-0417　辯方傳票 D-1': '26-CR-0417, defense subpoena D-1'
 '26-CR-0417　辯方傳票 D-2': '26-CR-0417, defense subpoena D-2'
@@ -974,12 +975,12 @@
 '心率資料光碟一片，附紀錄保管人證明書': 'One disc of heart-rate data, with custodian of records certificate'
 '手錶廠商　紀錄保管人': 'Watch manufacturer, custodian of records'
 '扣押（入所財物）': 'Seized (booking property)'
-'收存（鑑識完畢返還）': 'Returned after examination'
+'收存（鑑識完畢返還）': 'Stored (returned after examination)'
 '普莉亞・奈爾　數位鑑識專家': 'Priya Nair, digital forensics expert'
 '智慧手錶一支（被告配戴）': 'One smartwatch (worn by defendant)'
 '檢方第一批證據開示送達：起訴書、逮捕報告、警方報告及附件、驗屍報告。': "State's first discovery production served: indictment, arrest report, police report with attachments, autopsy report."
 '稽核紀錄光碟一片，附紀錄保管人證明書': 'One disc of audit logs, with custodian of records certificate'
-'調閱（依 03/19 檢視令）': 'Released (per inspection order of 03/19)'
+'調閱（依 03/19 檢視令）': 'Obtained (per inspection order of 03/19)'
 '證物牌 1：辦公桌旁地毯上的血跡': 'Marker 1: blood on the carpet beside the desk'
 '證物牌 2：水晶獎盃，附比例尺': 'Marker 2: crystal trophy, with scale'
 '財物清單　項 3': 'Inventory item 3'
@@ -989,3 +990,22 @@
 '陪審團審理第二日：檢方傳喚證人蘇菲・馬丁內斯、瑞秋・艾德勒。': 'Jury trial, day 2. State calls Sophie Martinez and Rachel Adler.'
 '陪審團審理第三日：檢方舉證終結；辯方聲請無罪判決，駁回；辯方舉證。': 'Jury trial, day 3. State rests. Defense motion for judgment of acquittal denied. Defense case begins.'
 '預審：本院認定有相當理由，被告應受審判。定 04/06/2026 陪審團審理。': 'Preliminary hearing. Probable cause found; defendant held to answer. Jury trial set for 04/06/2026.'
+'州立監獄　受刑人付費電話': 'State Prison, inmate collect call'
+'本院核發檢視令：准辯方檢視並鑑識被告入所扣押之智慧手錶（財物清單 No. 26-0315-088 項 3）。': "Order granting defense inspection and forensic examination of defendant's booked smartwatch (property inventory No. 26-0315-088, item 3)."
+'辯方聲請對手錶廠商核發文書傳票；本院當庭核發傳票 D-1。': 'Defense motion for subpoena duces tecum to watch manufacturer. Granted from the bench; subpoena D-1 issued.'
+'辯方聲請對卡爾德物流核發文書傳票；本院核發傳票 D-2。同日，卡爾德物流聲請撤銷該傳票。': 'Defense motion for subpoena duces tecum to Calder Logistics. Granted; subpoena D-2 issued. Same day, Calder Logistics moves to quash.'
+'辯方撤回傳票 D-2；卡爾德物流之撤銷聲請毋庸審酌。': 'Defense withdraws subpoena D-2. Calder Logistics motion to quash moot.'
+'撤銷傳票聲請言詞辯論：聲請駁回，傳票 D-2 維持。': 'Hearing on motion to quash. Motion denied; subpoena D-2 stands.'
+'檢方撤回起訴，本院駁回本案。被告當庭釋放。': 'State moves to dismiss. Case dismissed. Defendant released.'
+'被告依認罪協商就二級謀殺一罪認罪。本院接受協商，判處有期徒刑十五年。被告還押，候移監。': 'Plea agreement: defendant pleads guilty to murder in the second degree. Plea accepted; sentenced to 15 years. Defendant remanded pending transfer.'
+'被告依認罪協商改就非預謀殺人一罪認罪。本院接受協商，判處有期徒刑八年。被告還押，候移監。': 'Plea agreement: defendant pleads guilty to voluntary manslaughter. Plea accepted; sentenced to 8 years. Defendant remanded pending transfer.'
+'被告依認罪協商改就過失致死一罪認罪。本院接受協商，判處有期徒刑三年。被告還押，候移監。': 'Plea agreement: defendant pleads guilty to involuntary manslaughter. Plea accepted; sentenced to 3 years. Defendant remanded pending transfer.'
+'被告依認罪協商改就過失致死一罪認罪。本院接受協商，判處緩刑五年。被告當庭釋放。': 'Plea agreement: defendant pleads guilty to involuntary manslaughter. Plea accepted; sentenced to 5 years probation. Defendant released.'
+'陪審團評決：被告二級謀殺罪不成立。被告當庭釋放。': 'Jury verdict: not guilty of murder in the second degree. Defendant released.'
+'陪審團評決：被告二級謀殺罪成立。被告還押，候量刑。': 'Jury verdict: guilty of murder in the second degree. Defendant remanded pending sentencing.'
+'陪審團未能達成一致評決，本院宣告審判無效。': 'Jury unable to reach a unanimous verdict. Mistrial declared.'
+'盧卡斯・葛雷　會見筆記': 'Lucas Grey, client interview notes'
+'卡港警局 巡邏組　逮捕報告': 'Calder Harbor Police Patrol, arrest report'
+'雷・柯瓦斯基警探　卡港警局': 'Det. Ray Kowalski, Calder Harbor Police'
+'盧卡斯・葛雷　電話紀錄': 'Lucas Grey, call notes'
+'辯方聲請排除被告於巡邏車上之陳述：准許。': "Defense motion to suppress defendant's statement in the patrol car. Granted."

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { matches, type BranchContext, type Verdict } from '../engine/episode/branch';
 import { validateEpisode } from '../engine/episode/validate';
 import { validateCase } from '../engine/validate';
 import { cases, episodes } from './index';
@@ -39,14 +40,106 @@ describe('心聲的新寫法', () => {
 });
 
 describe('卷宗元件資料（P2-6）', () => {
+  const iso = (d: string) => d.replace(/^(\d\d)\/(\d\d)\/(\d{4})$/, '$3-$1-$2');
   for (const [name, e] of Object.entries(episodes)) {
     it(`${name} 案卷登錄表的日期照卡的順序遞增`, () => {
-      const iso = (d: string) => d.replace(/^(\d\d)\/(\d\d)\/(\d{4})$/, '$3-$1-$2');
       const dates = e.scenes.flatMap((s) =>
-        s.type === 'card' && s.docket ? [iso(s.docket.date)] : [],
+        s.type === 'card'
+          ? [...(s.filings ?? []), ...(s.docket ? [s.docket] : [])].map((d) => iso(d.date))
+          : [],
       );
       expect(dates.length).toBeGreaterThan(0);
       expect([...dates].sort()).toEqual(dates);
     });
+
+    it(`${name} 每一種收場都有登錄表最後一行`, () => {
+      const rows = e.disposition ?? [];
+      const closing = e.scenes.find((s) => s.type === 'closing');
+      const theories = e.scenes.flatMap((s) =>
+        s.type === 'theory' ? s.theories.map((t) => t.id) : [],
+      );
+      const offers = e.scenes.flatMap((s) =>
+        s.type === 'negotiation' ? s.offers.map((o) => o.id) : [],
+      );
+      const base = {
+        verdict: null,
+        outcome: null,
+        deal: null,
+        theory: null,
+        flags: [],
+        ethics: [],
+        cards: [],
+        presented: [],
+      };
+      const ctxs: BranchContext[] = [
+        ...offers.map((deal) => ({ ...base, outcome: 'deal' as const, deal })),
+        ...(e.scenes.some((s) => s.type === 'trial' && s.fifth)
+          ? [{ ...base, outcome: 'dismissed' as const }]
+          : []),
+        ...Object.keys(closing?.type === 'closing' ? closing.verdicts : {}).flatMap((v) =>
+          [null, ...theories].flatMap((theory) =>
+            [false, true].map((punitive) => ({ ...base, verdict: v as Verdict, theory, punitive })),
+          ),
+        ),
+      ];
+      expect(ctxs.length).toBeGreaterThan(0);
+      for (const c of ctxs)
+        expect(
+          rows.some((r) => matches(r.when, c)),
+          JSON.stringify(c),
+        ).toBe(true);
+      const first = Math.min(
+        ...e.scenes.flatMap((s) =>
+          s.type === 'card' && s.docket ? [+iso(s.docket.date).replace(/-/g, '')] : [],
+        ),
+      );
+      for (const r of rows) expect(+iso(r.date).replace(/-/g, '')).toBeGreaterThan(first);
+    });
   }
+});
+
+describe('Bates（P2-1）', () => {
+  it('內容裡寫的 Bates 跨兩集都不重複', () => {
+    // 同一張卡會出現在好幾個桌面場（共用牌庫），以「集＋卡」為單位收一次。
+    const owner = new Map<string, string>();
+    const dup: string[] = [];
+    const add = (b: string | undefined, who: string) => {
+      if (!b) return;
+      const prev = owner.get(b);
+      if (prev && prev !== who) dup.push(`${b}: ${prev} / ${who}`);
+      owner.set(b, who);
+    };
+    for (const [name, e] of Object.entries(episodes))
+      for (const s of e.scenes) {
+        if (s.type === 'desk')
+          for (const c of s.cards) {
+            add(c.bates, `${name}:${c.id}`);
+            add(c.photo?.bates, `${name}:${c.id}`);
+            for (const b of c.batesIf ?? []) add(b.bates, `${name}:${c.id}`);
+          }
+        if (s.type === 'phone')
+          for (const p of s.photos ?? []) add(p.photo.bates, `${name}:${p.id}`);
+        if (s.type === 'deposition') add(s.video?.bates, `${name}:${s.id}`);
+      }
+    expect(owner.size).toBeGreaterThan(20);
+    expect(dup).toEqual([]);
+  });
+
+  it('每張紙都有出處：Bates、照片沖印號、陳述的時間與製作人、裁定與訴狀的收文章、筆錄頁行', () => {
+    const missing: string[] = [];
+    for (const [name, e] of Object.entries(episodes))
+      for (const s of e.scenes)
+        if (s.type === 'desk')
+          for (const c of s.cards)
+            if (c.kind !== '論點' && !(c.bates || c.photo?.bates || c.taken || c.filed || c.cite))
+              missing.push(`${name}:${c.id}`);
+    expect([...new Set(missing)]).toEqual([]);
+  });
+
+  it('勘誤表引用的第 42 頁第 7 行有錨點', () => {
+    const lines = Object.values(episodes).flatMap((e) =>
+      e.scenes.flatMap((s) => (s.type === 'deposition' ? s.script : [])),
+    );
+    expect(lines.filter((l) => l.cite === '42:7').map((l) => l.id)).toEqual(['p-always']);
+  });
 });

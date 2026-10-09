@@ -72,6 +72,9 @@ export function validateEpisode(e: Episode): string[] {
     branchErrors(s, e, errors);
   }
   effectErrors(e, errors);
+  custodyErrors(e, errors);
+  const { check } = whenChecker(e, errors);
+  e.disposition?.forEach((d, i) => check(d.when, `登錄表最後一行第 ${i + 1} 項`));
   openingErrors(e, errors);
   burdenErrors(e, errors);
   lineErrors(e, errors);
@@ -119,6 +122,7 @@ function burdenErrors(e: Episode, errors: string[]) {
       for (const x of s.endings) wrong(x.when.verdict, `結辯 ${s.id} 的結局 ${x.id}`);
     }
   }
+  e.disposition?.forEach((d, i) => wrong(d.when.verdict, `登錄表最後一行第 ${i + 1} 項`));
 }
 
 /**
@@ -497,6 +501,25 @@ function defenseErrors(s: DefenseScene, e: Episode, errors: string[]) {
 /** 判決、收場、懲罰性賠償要等結辯之後才知道。 */
 const before = (w: When) => !!(w.verdict || w.outcome || w.deal || w.punitive !== undefined);
 
+/** 保管鏈的進度條件：引用的東西要存在；證物在開庭前就經手完了，不能依判決或結果分支。 */
+function custodyErrors(e: Episode, errors: string[]) {
+  const { check } = whenChecker(e, errors);
+  const seen = new Set<string>();
+  for (const s of e.scenes) {
+    if (s.type !== 'desk') continue;
+    for (const c of s.cards) {
+      if (seen.has(c.id)) continue;
+      seen.add(c.id);
+      c.bag?.custody.forEach((h, i) => {
+        if (!h.when) return;
+        const where = `卡片 ${c.id} 的保管鏈第 ${i + 1} 行`;
+        check(h.when, where);
+        if (before(h.when)) errors.push(`${where} 依判決或結果分支，證物在開庭前就經手完了`);
+      });
+    }
+  }
+}
+
 /** 集層級 effects：條件在開庭或調解開始時判斷，不能依判決分支。 */
 function effectErrors(e: Episode, errors: string[]) {
   e.effects.forEach((x, i) => {
@@ -506,8 +529,8 @@ function effectErrors(e: Episode, errors: string[]) {
   });
 }
 
-/** 分支條件：引用的理論要存在；結局 id 不重複；判決類的條件只能用在結辯之後。 */
-function branchErrors(s: Episode['scenes'][number], e: Episode, errors: string[]) {
+/** 分支條件引用的理論、協商條件、卡片、論點都要存在。 */
+function whenChecker(e: Episode, errors: string[]) {
   const theories = new Set(
     e.scenes.flatMap((x) => (x.type === 'theory' ? x.theories.map((t) => t.id) : [])),
   );
@@ -531,6 +554,24 @@ function branchErrors(s: Episode['scenes'][number], e: Episode, errors: string[]
     for (const c of w?.presented ?? [])
       if (!known.has(c)) errors.push(`${where} 的條件引用了不存在的論點：${c}`);
   };
+  return { check, theories, known };
+}
+
+/** 分支條件：引用的理論要存在；結局 id 不重複；判決類的條件只能用在結辯之後。 */
+function branchErrors(s: Episode['scenes'][number], e: Episode, errors: string[]) {
+  const { check, theories, known } = whenChecker(e, errors);
+  if (s.type === 'desk')
+    for (const c of s.cards)
+      for (const b of c.batesIf ?? []) {
+        check(b.when, `卡片 ${c.id} 的 batesIf`);
+        if (before(b.when)) errors.push(`卡片 ${c.id} 的 batesIf 依判決或結果分支`);
+      }
+  if (s.type === 'card')
+    for (const f of s.filings ?? []) {
+      check(f.when, `幕卡 ${s.id} 的登錄表行 ${f.date}`);
+      if (f.when && before(f.when))
+        errors.push(`幕卡 ${s.id} 的登錄表行 ${f.date} 依判決或結果分支，請寫進 disposition`);
+    }
   if (s.type === 'trial' && s.fifth?.theory && !theories.has(s.fifth.theory))
     errors.push(`法庭 ${s.id} 的緘默權撤訴條件引用了不存在的理論：${s.fifth.theory}`);
   if (s.type === 'theory')

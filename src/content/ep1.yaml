@@ -10,6 +10,7 @@ _cards: &cards
     time: '16:30'
     text: 週五下午沃斯指控他盜用公款，說週一報警。他離開時喊了「等稽核報告出來，你會後悔的」。
     source: 看守所會見
+    taken: { at: '03/16 10:30', by: 盧卡斯・葛雷　會見筆記 }
   - id: ethan-ride
     name: 伊森的說法：他叫了車
     kind: 陳述
@@ -17,6 +18,7 @@ _cards: &cards
     time: '22:34'
     text: 他沒有車，當晚叫車前往卡爾德大樓，路上和司機說過話。
     source: 看守所會見
+    taken: { at: '03/16 10:30', by: 盧卡斯・葛雷　會見筆記 }
   - id: ethan-message
     name: 伊森的說法：訊息被收回
     kind: 陳述
@@ -24,28 +26,34 @@ _cards: &cards
     time: '23:14'
     text: 沃斯傳訊叫他上樓；他再看時訊息已被收回，但手錶當時跳過通知。
     source: 看守所會見
+    taken: { at: '03/16 10:30', by: 盧卡斯・葛雷　會見筆記 }
   - id: ethan-flee
     name: 伊森的說法：他為什麼跑
     kind: 陳述
     text: 他有前科，怕警察先抓人再問，所以躲了兩天。
     source: 看守所會見
+    taken: { at: '03/16 10:30', by: 盧卡斯・葛雷　會見筆記 }
   - id: ethan-report
     name: 伊森的說法：他先檢舉了沃斯
     kind: 陳述
     date: 週三
     text: 週三以匿名系統檢舉一筆 3,800 萬美元的應收帳款，掛在空殼公司北門貨運名下。他記得舉報編號。
     source: 看守所會見
+    taken: { at: '03/16 10:30', by: 盧卡斯・葛雷　會見筆記 }
   - id: ethan-trophy
     name: 伊森的說法：獎盃
     kind: 陳述
     date: 週五
     text: 他蹲下探脈搏，站起來時獎盃就在手上，自己也說不出為什麼。
     source: 看守所會見
+    taken: { at: '03/16 10:30', by: 盧卡斯・葛雷　會見筆記 }
   - id: indictment
     name: 起訴書
     kind: 文件
     text: 二級謀殺。卡爾德州訴伊森・蕭。
     source: 檢方證據開示
+    filed: { caseNo: 26-CR-0417, date: 03/16/2026 }
+    bates: DA-000001
     held: true
   - id: arrest-time
     name: 逮捕紀錄
@@ -54,6 +62,7 @@ _cards: &cards
     time: '14:05'
     text: 於友人住處逮捕伊森・蕭。
     source: 逮捕報告
+    bates: CPD-000014
   - id: car-statement
     name: 警車上的供述
     kind: 陳述
@@ -61,6 +70,7 @@ _cards: &cards
     time: '14:20'
     text: 押解途中，被告未經詢問自行陳述：「我只是想讓他住手。」
     source: 逮捕報告
+    taken: { at: '03/15 14:20', by: 卡港警局 巡邏組　逮捕報告 }
   - id: miranda-form
     name: 權利告知書
     kind: 文件
@@ -68,11 +78,13 @@ _cards: &cards
     time: '14:32'
     text: 於分局由柯瓦斯基警探告知並簽署米蘭達權利。
     source: 逮捕報告
+    bates: CPD-000019
   - id: watch-listed
     name: 財物清單：智慧手錶
     kind: 物品
     text: 被告入所時扣押物品：手機 1 支、皮夾 1 個、智慧手錶 1 支。
     source: 看守所財物清單
+    bates: CPD-000021
     bag:
       caseNo: CH-2026-1147
       item: 財物清單　項 3
@@ -88,6 +100,9 @@ _cards: &cards
           from: R. Delgado　看守所財物管理員
           to: 戴文・艾許　惠特洛克・海爾 助理
           purpose: 調閱（依 03/19 檢視令）
+          # 調閱、送鑑、返還都是「手錶鑑識」那件工作（job-watch）；沒做就還沒發生。
+          # 之後的行跟著這一行（保管鏈不斷手），不用每行都寫。
+          when: { cards: [watch-notice] }
         - at: '03/20 13:00'
           from: 戴文・艾許　惠特洛克・海爾 助理
           to: 普莉亞・奈爾　數位鑑識專家
@@ -103,6 +118,7 @@ _cards: &cards
     time: '22:47'
     text: 被告 22:47 刷卡進入 31 樓，23:01 刷卡離開大廳閘門。
     source: 警方報告
+    bates: CPD-000112
     admitted: true
   - id: access-full
     name: 完整門禁紀錄
@@ -111,18 +127,26 @@ _cards: &cards
     time: '23:26'
     text: 附件三未經標註的原始檔：伊森 23:01 離開後，31 樓只剩一個人沒有刷出，那個人 23:26 才刷卡離開大廳。
     source: 警方報告附件三
+    bates: CPD-000127
   - id: autopsy
     name: 驗屍報告
     kind: 文件
     text: 鈍器重擊頭部致死。死亡時間推估 22:00 至 23:30。
     source: 布魯克斯法醫
+    bates: ME-000001
     admitted: true
   - id: watch-photo
     name: 驗屍照片：死者的手錶
     kind: 物品
     text: 死者左腕配戴智慧手錶，錶帶完好，仍扣在腕上；背面有心率感測器，貼著皮膚。
     source: 布魯克斯法醫
-    photo: { caseNo: ME-26-0311, no: 14, of: 46, at: '03/14 09:40', by: T. Nguyen　法醫調查員 }
+    photo:
+      caseNo: ME-26-0311
+      bates: ME-000114
+      no: 14
+      of: 46
+      at: '03/14 09:40'
+      by: T. Nguyen　法醫調查員
   - id: sophie-home
     name: 蘇菲對警方的說法：我直接回家了
     kind: 陳述
@@ -130,6 +154,7 @@ _cards: &cards
     time: '19:02'
     text: 蘇菲 19:02 刷卡離開 31 樓，向警方表示她下班後直接回家，沒有再回大樓。
     source: 警方報告
+    taken: { at: '03/14 16:30', by: 雷・柯瓦斯基警探　卡港警局 }
   - id: parking-log
     name: 停車場進出紀錄
     kind: 文件
@@ -137,6 +162,7 @@ _cards: &cards
     time: '22:40'
     text: 地下停車場的進出紀錄顯示，蘇菲的車週五 22:40 才駛離。
     source: 蘿莎調查
+    bates: WH-000031
   - id: jade-alibi
     name: 潔德證實：蘇菲當晚和她在車上
     kind: 陳述
@@ -144,11 +170,13 @@ _cards: &cards
     time: '20:30'
     text: 潔德・坎農說，蘇菲 20:30 到 22:40 都和她坐在停車場的車上，交給她一份沃斯的行事曆副本。
     source: 電話（潔德・坎農）
+    taken: { at: '03/20 18:40', by: 盧卡斯・葛雷　電話紀錄 }
   - id: blood-report
     name: 補充血跡報告
     kind: 文件
     text: 被告外套袖口血跡與死者 DNA 相符。
     source: 檢方補充開示
+    bates: DA-000047
   - id: ride-receipt
     name: 叫車收據
     kind: 文件
@@ -157,11 +185,13 @@ _cards: &cards
     text: 於東河街 118 號上車，22:44 抵達卡爾德大樓。司機奧瑪・哈桑。
     arrivesAt: '22:44'
     source: 叫車公司
+    bates: WH-000044
   - id: sophie-health-app
     name: 蘇菲陳述：他每天盯著健康 App
     kind: 陳述
     text: 沃斯每天早上、散會之後都低頭看手錶上的健康 App，數字不好看就發脾氣。
     source: 電話（蘇菲・馬丁內斯）
+    taken: { at: '03/18 11:15', by: 盧卡斯・葛雷　電話紀錄 }
   - id: heart-rate
     name: 沃斯手錶的心率紀錄
     kind: 文件
@@ -169,6 +199,7 @@ _cards: &cards
     time: '22:24'
     text: 心率在 22:24 急遽升高後歸零，之後再無讀數。
     source: 手錶廠商（傳票）
+    bates: WH-000052
     bag:
       caseNo: 26-CR-0417　辯方傳票 D-1
       item: 傳票回覆　1 之 1
@@ -195,6 +226,7 @@ _cards: &cards
     time: '23:14'
     text: 沃斯於 21:55 傳訊給瑞秋；22:31 由沃斯桌機發出一則訊息給伊森（伊森的手錶 22:33 才收到推播）；23:14 由同一台桌機收回。
     source: 卡爾德物流（傳票）
+    bates: CALDER-000017
     bag:
       caseNo: 26-CR-0417　辯方傳票 D-2
       item: 傳票回覆　1 之 1
@@ -221,6 +253,7 @@ _cards: &cards
     time: '22:33'
     text: 推播通知：「葛蘭特・沃斯：十點四十五分上來，把筆電帶來。我們私下解決。」
     source: 被告扣押手錶
+    bates: WH-000038
 
   # 第三幕新增的卡片，和第二幕共用同一份牌庫（見 _cards 錨點）。
   - id: arrest-report
@@ -230,6 +263,7 @@ _cards: &cards
     time: '14:05'
     text: 逮捕時間 14:05。備註欄：「嫌犯於巡邏車後座自願陳述。」
     source: 檢方開示
+    bates: CPD-000012
   - id: no-warning
     name: 巡邏車錄影：沒有警告
     kind: 文件
@@ -237,11 +271,13 @@ _cards: &cards
     time: '14:20'
     text: 錄影裡警員沒有唸出米蘭達警告，就開始問他為什麼在大樓裡。
     source: 檢方開示
+    bates: CPD-V-000003
   - id: statement-excluded
     name: 裁定：車上供述已排除
     kind: 文件
     text: 法院裁定排除巡邏車上的供述，檢方不得在陪審團面前提起。
     source: 法院裁定
+    filed: { caseNo: 26-CR-0417, date: 04/03/2026 }
   - id: rachel-2250
     name: 瑞秋的宣誓陳述：隔壁的聲音
     kind: 宣誓陳述
@@ -249,16 +285,46 @@ _cards: &cards
     time: '22:50'
     text: 她在錄取時宣誓說，22:50 聽見隔壁房間有人倒地的聲音。
     source: 證詞錄取
+    cite: '31:12'
   - id: rachel-meeting
     name: 瑞秋的宣誓陳述：整晚都在開會
     kind: 宣誓陳述
     text: 她宣誓說自己 21:00 到 23:30 全程在線上會議裡，沒有離開座位。
     source: 證詞錄取
+    cite: '18:4'
   - id: meeting-name
     name: 會議名稱：北門結案會議
     kind: 陳述
     text: 瑞秋說出的會議名稱，可以據此調閱出席紀錄。
     source: 證詞錄取
+    cite: '19:2'
+
+# 案卷登錄表最後一行（設計審查 r1）：各分支一句，列第一個符合的。
+disposition:
+  - date: 04/08/2026
+    when: { outcome: [dismissed] }
+    entry: 檢方撤回起訴，本院駁回本案。被告當庭釋放。
+  - date: 04/06/2026
+    when: { outcome: [deal], deal: [o-murder2] }
+    entry: 被告依認罪協商就二級謀殺一罪認罪。本院接受協商，判處有期徒刑十五年。被告還押，候移監。
+  - date: 04/06/2026
+    when: { outcome: [deal], deal: [o-manslaughter] }
+    entry: 被告依認罪協商改就非預謀殺人一罪認罪。本院接受協商，判處有期徒刑八年。被告還押，候移監。
+  - date: 04/06/2026
+    when: { outcome: [deal], deal: [o-negligent] }
+    entry: 被告依認罪協商改就過失致死一罪認罪。本院接受協商，判處有期徒刑三年。被告還押，候移監。
+  - date: 04/06/2026
+    when: { outcome: [deal], deal: [o-probation] }
+    entry: 被告依認罪協商改就過失致死一罪認罪。本院接受協商，判處緩刑五年。被告當庭釋放。
+  - date: 04/08/2026
+    when: { verdict: [無罪] }
+    entry: 陪審團評決：被告二級謀殺罪不成立。被告當庭釋放。
+  - date: 04/08/2026
+    when: { verdict: [有罪] }
+    entry: 陪審團評決：被告二級謀殺罪成立。被告還押，候量刑。
+  - date: 04/08/2026
+    when: { verdict: [陪審團僵局] }
+    entry: 陪審團未能達成一致評決，本院宣告審判無效。
 
 scenes:
   # 冷開場（企劃書 10.7）：玩家拿著伊森的手機，親眼看過那則之後被收回的訊息。
@@ -342,18 +408,33 @@ scenes:
         subject: 全景：財務長辦公室，自門口拍攝
         redacted: true
         photo:
-          { caseNo: CH-2026-1147, no: 1, of: 48, at: '03/14 01:12', by: M. Duarte　卡港警局 鑑識組 }
+          caseNo: CH-2026-1147
+          bates: CPD-000301
+          no: 1
+          of: 48
+          at: '03/14 01:12'
+          by: M. Duarte　卡港警局 鑑識組
       - id: scene-blood
         subject: 證物牌 1：辦公桌旁地毯上的血跡
         placard: 1
         photo:
-          { caseNo: CH-2026-1147, no: 2, of: 48, at: '03/14 01:16', by: M. Duarte　卡港警局 鑑識組 }
+          caseNo: CH-2026-1147
+          bates: CPD-000302
+          no: 2
+          of: 48
+          at: '03/14 01:16'
+          by: M. Duarte　卡港警局 鑑識組
       - id: scene-trophy
         subject: 證物牌 2：水晶獎盃，附比例尺
         placard: 2
         highlight: true
         photo:
-          { caseNo: CH-2026-1147, no: 3, of: 48, at: '03/14 01:19', by: M. Duarte　卡港警局 鑑識組 }
+          caseNo: CH-2026-1147
+          bates: CPD-000303
+          no: 3
+          of: 48
+          at: '03/14 01:19'
+          by: M. Duarte　卡港警局 鑑識組
 
   - type: card
     id: title
@@ -370,7 +451,7 @@ scenes:
   - type: dialogue
     id: firm-morning
     act: 第一幕
-    place: 惠特洛克・海爾律師事務所　大廳　週一 08:00
+    place: 惠特洛克・海爾　大廳　週一 08:00
     steps:
       - do: say
         who: 旁白
@@ -410,7 +491,7 @@ scenes:
         text: 有窗嗎？
       - do: say
         who: 羅根・普萊斯
-        text: 沒有。
+        text: 有。打不開。
         mood: 硬
       - do: say
         who: 盧卡斯
@@ -994,6 +1075,7 @@ scenes:
                   text: 我也記著。｜記著我沒去拿的那張紙。
                   voice: 'off'
             - text: 我出庭答辯。
+              place: 惠特洛克・海爾　走廊　週二 19:00
               gives: [chat-audit]
               flags: [whitlock-down, hale-up]
               then:
@@ -1019,6 +1101,21 @@ scenes:
     title: 第三幕　審前
     lines:
       - 十六工時。開庭前能做的事，都在這三天裡。
+    filings:
+      - date: 03/19/2026
+        entry: 本院核發檢視令：准辯方檢視並鑑識被告入所扣押之智慧手錶（財物清單 No. 26-0315-088 項 3）。
+      - date: 03/24/2026
+        when: { cards: [heart-rate] }
+        entry: 辯方聲請對手錶廠商核發文書傳票；本院當庭核發傳票 D-1。
+      - date: 03/25/2026
+        when: { anyFlags: [chat-audit-lost, whitlock-down] }
+        entry: 辯方聲請對卡爾德物流核發文書傳票；本院核發傳票 D-2。同日，卡爾德物流聲請撤銷該傳票。
+      - date: 03/26/2026
+        when: { flags: [chat-audit-lost] }
+        entry: 辯方撤回傳票 D-2；卡爾德物流之撤銷聲請毋庸審酌。
+      - date: 03/31/2026
+        when: { cards: [chat-audit] }
+        entry: 撤銷傳票聲請言詞辯論：聲請駁回，傳票 D-2 維持。
     docket:
       date: 04/03/2026
       entry: 預審：本院認定有相當理由，被告應受審判。定 04/06/2026 陪審團審理。
@@ -1107,6 +1204,7 @@ scenes:
     id: depo-rachel
     act: 第三幕
     place: 惠特洛克・海爾　會議室 B　週五 10:00
+    video: { bates: WH-V-000412, timecode: '00:47:12;08' }
     budget: 12
     witness:
       name: 瑞秋・艾德勒
@@ -1309,59 +1407,6 @@ scenes:
             hush: true
 
   # 第三幕收尾：選案件理論（企劃書 6.9.2）。選了就不能換。
-  - type: theory
-    id: theory
-    act: 第三幕
-    place: 惠特洛克・海爾　會議室 A　週日 14:00
-    intro:
-      - who: 馬庫斯・海爾
-        text: 明天開庭。你要告訴陪審團一個故事，一個就好。故事要靠你手上的論點撐起來。
-        mood: 暖
-      - who: 盧卡斯
-        text: 選了就不能換。中途改口，陪審團只會記得你改過口。
-        mark: { kind: confirm }
-    theories:
-      - id: doubt
-        name: 合理懷疑
-        summary: 檢方的證據有漏洞。我們不指認任何人，只證明他們沒有證明。
-        needs: [arg-a, arg-b]
-        cost: 最安全。但真兇逍遙法外，伊森只是「查無實據」。
-        promises:
-          - id: doubt-called
-            text: 你們會聽到，伊森是被人叫上樓的，不是自己決定去的。
-            argument: arg-a
-          - id: doubt-time
-            text: 你們會聽到，沃斯在伊森抵達之前就已經死了。
-            argument: arg-b
-      - id: sophie
-        name: 另有其人：蘇菲
-        summary: 命案當晚還在大樓的人，對警方說了謊。她是檢方的證人。
-        needs: [arg-h]
-        cost: 情感取向的陪審員容易被說服，但蘇菲的人生會被毀掉。要在庭上讓她自己鬆口，沒有別的證據能替你補。
-        ethicsIf:
-          has: [arg-i]
-          ethics: [smeared-knowing, smeared-knowing]
-        promises:
-          - id: sophie-lied
-            text: 你們會看到，另一個人對警方說了謊。
-            argument: arg-h
-      - id: rachel
-        name: 另有其人：瑞秋
-        summary: 那則訊息是別人傳的，收回訊息的人當時就在 31 樓。她是檢方的證人。
-        needs: [arg-a, arg-b, arg-c, arg-d]
-        cost: 最難。要在庭上彈劾一位看似無懈可擊的證人；做不到，許下的承諾會全部反噬。
-        promises:
-          - id: rachel-time
-            text: 你們會聽到，沃斯在伊森抵達之前就已經死了。
-            argument: arg-b
-          - id: rachel-sender
-            text: 你們會知道，那則訊息是誰傳的。
-            argument: arg-c
-          - id: rachel-alone
-            text: 你們會知道，那一晚 31 樓只剩下一個人。
-            argument: arg-d
-
-  # 第三幕收尾：被告要不要作證（企劃書 10.7 第三幕 6）。決定權在伊森，盧卡斯只能建議。
   - type: dialogue
     id: ethan-testify
     act: 第三幕
@@ -1390,6 +1435,59 @@ scenes:
                 text: ……如果你覺得這樣比較好。
                 mood: 緊
 
+  - type: theory
+    id: theory
+    act: 第三幕
+    place: 惠特洛克・海爾　會議室 A　週日 22:40
+    intro:
+      - who: 馬庫斯・海爾
+        text: 明天開庭。你要告訴陪審團一個故事，一個就好。故事要靠你手上的論點撐起來。
+        mood: 暖
+      - who: 盧卡斯
+        text: 選了就不能換。中途改口，陪審團只會記得你改過口。
+        mark: { kind: confirm }
+    theories:
+      - id: doubt
+        name: 合理懷疑
+        summary: 檢方的證據有漏洞。我們不指認任何人，只證明他們沒有證明。
+        needs: [arg-a, arg-b]
+        cost: 最安全。但真兇逍遙法外，伊森只是「查無實據」。
+        promises:
+          - id: doubt-called
+            text: 你們會聽到，伊森是被人叫上樓的，不是自己決定去的。
+            argument: arg-a
+          - id: doubt-time
+            text: 你們會聽到，沃斯在伊森抵達之前就已經死了。
+            argument: arg-b
+      - id: sophie
+        name: 另有其人：蘇菲
+        summary: 命案當晚還在大樓的人，對警方說了謊。她是檢方的證人。
+        needs: [arg-h]
+        cost: 情感取向的陪審員容易被說服，但蘇菲的人生會被毀掉。要在庭上讓她自己鬆口，沒有別的證據能替你補。
+        ethicsIf:
+          has: [arg-i]
+          ethics: [smeared-knowing]
+        promises:
+          - id: sophie-lied
+            text: 你們會看到，另一個人對警方說了謊。
+            argument: arg-h
+      - id: rachel
+        name: 另有其人：瑞秋
+        summary: 那則訊息是別人傳的，收回訊息的人當時就在 31 樓。她是檢方的證人。
+        needs: [arg-a, arg-b, arg-c, arg-d]
+        cost: 最難。要在庭上彈劾一位看似無懈可擊的證人；做不到，許下的承諾會全部反噬。
+        promises:
+          - id: rachel-time
+            text: 你們會聽到，沃斯在伊森抵達之前就已經死了。
+            argument: arg-b
+          - id: rachel-sender
+            text: 你們會知道，那則訊息是誰傳的。
+            argument: arg-c
+          - id: rachel-alone
+            text: 你們會知道，那一晚 31 樓只剩下一個人。
+            argument: arg-d
+
+  # 第三幕收尾：被告要不要作證（企劃書 10.7 第三幕 6）。決定權在伊森，盧卡斯只能建議。
   - type: card
     id: act4
     act: 第四幕
@@ -1397,6 +1495,10 @@ scenes:
     lines:
       - 卡爾德郡高等法院　第三法庭
       - 先選出十二位陪審員，接著是開場陳述，然後檢方傳喚第一位證人。
+    filings:
+      - date: 04/03/2026
+        when: { cards: [statement-excluded] }
+        entry: 辯方聲請排除被告於巡邏車上之陳述：准許。
     docket:
       date: 04/06/2026
       entry: 陪審團審理第一日：陪審團遴選，十二名陪審員宣誓；雙方開場陳述；檢方傳喚證人雷・柯瓦斯基警探。
@@ -2687,7 +2789,7 @@ scenes:
     when:
       verdict: [無罪, 有罪, 陪審團僵局]
       notFlags: [whitlock-up]
-    place: 惠特洛克・海爾律師事務所　會議室　週四 15:00
+    place: 惠特洛克・海爾　會議室　週四 15:00
     steps:
       - do: say
         who: 馬庫斯・海爾
@@ -2713,7 +2815,7 @@ scenes:
     when:
       outcome: [dismissed]
       notFlags: [whitlock-up]
-    place: 惠特洛克・海爾律師事務所　會議室　週四 15:00
+    place: 惠特洛克・海爾　會議室　週四 15:00
     steps:
       - do: say
         who: 馬庫斯・海爾
@@ -2738,7 +2840,7 @@ scenes:
     epilogue: true
     when:
       flags: [whitlock-up]
-    place: 惠特洛克・海爾律師事務所　會議室　週四 15:00
+    place: 惠特洛克・海爾　會議室　週四 15:00
     steps:
       - do: say
         who: 馬庫斯・海爾
@@ -2764,7 +2866,7 @@ scenes:
     when:
       outcome: [deal]
       notFlags: [whitlock-up]
-    place: 惠特洛克・海爾律師事務所　會議室　週四 15:00
+    place: 惠特洛克・海爾　會議室　週四 15:00
     steps:
       - do: say
         who: 馬庫斯・海爾
@@ -2789,7 +2891,7 @@ scenes:
     epilogue: true
     when:
       theory: [sophie]
-    place: 盧卡斯的辦公室　影印機旁邊　週四 18:40
+    place: 盧卡斯的辦公室　影印機旁邊　週四 20:40
     steps:
       - do: say
         who: 潔德
@@ -2800,7 +2902,7 @@ scenes:
     id: epilogue-envelope
     act: 尾聲
     epilogue: true
-    place: 盧卡斯的辦公室　影印機旁邊　週四 18:40
+    place: 盧卡斯的辦公室　影印機旁邊　週四 20:40
     steps:
       - do: say
         who: 旁白
@@ -2818,7 +2920,6 @@ scenes:
           - text: 十二年前，我父親的那場火。
             hush: true
       - do: choose
-        mode: chat
         options:
           - text: 交給海爾。事務所的事，先問事務所。
             flags: [draft-to-hale]
@@ -2935,6 +3036,7 @@ scenes:
     act: 尾聲
     epilogue: true
     place: 盧卡斯的公寓　23:52
+    call: { caller: 州立監獄　受刑人付費電話, duration: '00:47' }
     steps:
       - do: say
         who: 旁白

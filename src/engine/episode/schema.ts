@@ -119,6 +119,12 @@ const phoneStep = z.discriminatedUnion('do', [
   z.object({ do: z.literal('retract'), time: time.optional(), target: id }),
 ]);
 
+/** 案卷登錄表的一行。 */
+const docketRow = z.object({
+  date: z.string().regex(/^\d\d\/\d\d\/\d{4}$/, '登錄表日期格式是 MM/DD/YYYY'),
+  entry: z.string(),
+});
+
 /** 對話場景：一行一行往下，遇到選擇就停。 */
 const dialogueStep = z.discriminatedUnion('do', [
   line.extend({ do: z.literal('say') }),
@@ -193,9 +199,19 @@ const docLine = z.object({ text: z.string(), fact: id.optional() });
 const stamp = z.string().regex(/^\d\d\/\d\d \d\d:\d\d$/, '紀錄時間格式是 MM/DD HH:MM');
 
 /** 照片紀錄表的四欄。案號是拍照機關自己的號碼，不是法院案號。 */
+/** 文件交出方的 Bates（設定集第 9 章 :11）：前綴是交出的一方，錄影加 -V-，後接六位數。 */
+const batesNo = z
+  .string()
+  .regex(
+    /^(CALDER|CPD|DA|ME|WH|OKF)(-V)?-\d{6}$/,
+    'Bates 格式是 CALDER／CPD／DA／ME／WH／OKF 加六位數',
+  );
+
 const photoLog = z
   .object({
     caseNo: z.string(),
+    /** 沖印本的 Bates（法醫 ME-、警方 CPD-）。 */
+    bates: batesNo.optional(),
     no: z.number().int().min(1),
     of: z.number().int().min(1),
     at: stamp,
@@ -211,8 +227,20 @@ const bag = z
     acquiredBy: z.string(),
     from: z.string(),
     desc: z.string(),
+    /**
+     * 每經手一次一行。寫了 when 的那一行要等條件成立（例如做了那件工作、拿到那張卡）才算發生；
+     * 還沒發生的那一行和之後的每一行都畫成「尚未發生」（見 custody.ts）。
+     */
     custody: z
-      .array(z.object({ at: stamp, from: z.string(), to: z.string(), purpose: z.string() }))
+      .array(
+        z.object({
+          at: stamp,
+          from: z.string(),
+          to: z.string(),
+          purpose: z.string(),
+          when: when.optional(),
+        }),
+      )
       .min(1),
   })
   .refine(
@@ -240,6 +268,24 @@ const card = z.object({
   /** 一開始就在手上（起訴資料附的）。 */
   held: z.boolean().default(false),
   admitted: z.boolean().default(false),
+  /** 這份文件或物品紀錄交出時蓋的 Bates（首頁）。照片卡寫在 photo.bates；陳述、筆錄、法院裁定不蓋。 */
+  bates: batesNo.optional(),
+  /** 依分支換交出方的 Bates：第一筆符合 when 的取代 bates（例如硬藏後由原告交出的群組截圖）。 */
+  batesIf: z.array(z.object({ when, bates: batesNo })).optional(),
+  /** 陳述的出處：記錄的時間與製作人。 */
+  taken: z.object({ at: stamp, by: z.string() }).optional(),
+  /** 法院裁定與訴狀的出處：案號與收文章日期（MM/DD/YYYY）。 */
+  filed: z
+    .object({
+      caseNo: z.string(),
+      date: z.string().regex(/^\d\d\/\d\d\/\d{4}$/, '收文章日期格式是 MM/DD/YYYY'),
+    })
+    .optional(),
+  /** 筆錄與勘誤表的出處：頁:行。 */
+  cite: z
+    .string()
+    .regex(/^\d+:\d+$/, '筆錄頁行格式是 頁:行')
+    .optional(),
   /** 照片類卡片的照片紀錄表。 */
   photo: photoLog.optional(),
   /** 扣押物或傳票調閱回來的實物，裝在證物袋裡。 */
@@ -363,9 +409,13 @@ const deskScene = z.object({
               .array(
                 z.object({
                   text: z.string(),
+                  /** 後續換了時間地點就寫，例如答辯庭當晚在事務所走廊（設定集第 3 章第 12 格）。 */
+                  place: z.string().optional(),
                   then: z.array(line).min(1),
                   gives: z.array(id).default([]),
                   flags: z.array(z.string()).default([]),
+                  /** 選了就記進倫理帳本（例如為了客戶撤回傳票），第一季懲戒聽證會讀得到（企劃書 6.12）。 */
+                  ethics: z.array(z.string()).default([]),
                 }),
               )
               .length(2),
@@ -553,6 +603,13 @@ const depositionScene = z.object({
   side: z.enum(['ours', 'theirs']).default('ours'),
   budget: z.number().int().min(1).default(1),
   witness: z.object({ name: z.string(), role: z.string() }),
+  /** 錄影畫面疊在介面層的出處：錄影那一方的 Bates 與時間碼（HH:MM:SS;FF）。 */
+  video: z
+    .object({
+      bates: batesNo.refine((b) => b.includes('-V-'), '錄影 Bates 要有 -V-'),
+      timecode: z.string().regex(/^\d\d:\d\d:\d\d;\d\d$/, '時間碼格式是 HH:MM:SS;FF'),
+    })
+    .optional(),
   /** 對方主導時發問的律師。 */
   examiner: z.string().default('對造律師'),
   intro: z.array(line).default([]),
@@ -576,6 +633,11 @@ const depositionScene = z.object({
         gives: z.array(id).default([]),
         /** 答了就把這個說法鎖成宣誓陳述（假話是對方問出來的，但是我們的證人說的）。 */
         anchors: id.optional(),
+        /** 劇本別處引用這一句的筆錄頁行（頁:行），例如勘誤表的「第 42 頁第 7 行」。 */
+        cite: z
+          .string()
+          .regex(/^\d+:\d+$/, '筆錄頁行格式是 頁:行')
+          .optional(),
         /** 這題有毛病、玩家卻沒用對異議時才生效：對方多拿到的卡片與留下的旗標。 */
         missed: z
           .object({ gives: z.array(id).default([]), flags: z.array(z.string()).default([]) })
@@ -957,6 +1019,13 @@ const scene = z.discriminatedUnion('type', [
     epilogue: z.boolean().default(false),
     place: z.string(),
     steps: z.array(dialogueStep).min(1),
+    /** 這一場畫成手機來電畫面（設定集第 3 章第 29 格）：來電顯示與通話結束時的時間。 */
+    call: z
+      .object({
+        caller: z.string(),
+        duration: z.string().regex(/^\d\d:\d\d$/, '通話時間格式是 MM:SS'),
+      })
+      .optional(),
   }),
   interviewScene,
   deskScene,
@@ -978,12 +1047,12 @@ const scene = z.discriminatedUnion('type', [
     title: z.string(),
     lines: z.array(z.string()).default([]),
     /** 案卷登錄表的一行：案件行事曆上的日期（MM/DD/YYYY）與法院紀錄口吻的事項。序號依卡的順序產生。 */
-    docket: z
-      .object({
-        date: z.string().regex(/^\d\d\/\d\d\/\d{4}$/, '登錄表日期格式是 MM/DD/YYYY'),
-        entry: z.string(),
-      })
-      .optional(),
+    docket: docketRow.optional(),
+    /**
+     * 上一張卡之後、這張卡之前的其他法院事件（證物袋引用的傳票、檢視令、撤銷聲請），
+     * 排在本卡 docket 那一行前面。寫了 when 的只在那條分支列出。
+     */
+    filings: z.array(docketRow.extend({ when: when.optional() })).optional(),
   }),
 ]);
 
@@ -1009,6 +1078,8 @@ export const episodeSchema = z
         }),
       )
       .default([]),
+    /** 案卷登錄表的最後一行：判決或處分，各分支一句，列第一個符合 when 的。 */
+    disposition: z.array(docketRow.extend({ when })).optional(),
     scenes: z.array(scene).min(1),
   })
   // 庭審與辯方證人場景沒寫 examiner 的，補上這一集的對造律師。

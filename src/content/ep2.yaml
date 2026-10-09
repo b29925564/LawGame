@@ -10,12 +10,14 @@ _cards: &cards
     kind: 文件
     text: 「承攬人得自行決定上線時間與接單與否，本公司不負勞動法上之照顧義務。」
     source: 卡爾德快遞
+    bates: CALDER-001001
     held: true
   - id: complaint
     name: 起訴狀
     kind: 文件
     text: 原告瑪莉索・維加請求過失致死損害賠償 1,200 萬，另請求懲罰性賠償。
     source: 原告
+    filed: { caseNo: 26-CV-1182, date: 04/20/2026 }
     held: true
   - id: autopsy2
     name: 死亡證明：急性心肌梗塞
@@ -24,16 +26,19 @@ _cards: &cards
     time: '18:21'
     text: 死因急性心肌梗塞。發現時坐在駕駛座，安全帶未解。
     source: 卡爾德郡法醫室
+    bates: ME-000501
   - id: med-record
     name: 家醫病歷：高血壓
     kind: 文件
     text: 事發前三個月診斷第二期高血壓，開立降壓藥，囑咐三個月後回診。沒有回診。
     source: 原告開示
+    bates: OKF-000214
   - id: pharmacy
     name: 藥局紀錄：只領過一次藥
     kind: 文件
     text: 降壓藥處方三個月，領藥紀錄只有第一個月。
     source: 藥局（傳票）
+    bates: CALDER-001018
     bag:
       caseNo: 26-CV-1182　被告傳票 D-1
       item: 傳票回覆　1 之 1
@@ -56,6 +61,7 @@ _cards: &cards
     time: '18:09'
     text: 事發前 14 天，「已連續上線 10 小時」提醒共跳出 61 次，每次都按了「略過」。最後一次是 18:09。
     source: 卡爾德快遞系統
+    bates: CALDER-001377
   - id: app-dispatch
     name: App 日誌：死後仍在派單
     kind: 文件
@@ -63,6 +69,7 @@ _cards: &cards
     time: '18:21'
     text: 18:21 起車輛 GPS 靜止。之後系統派單 3 次，均自動判定拒單，扣評分 0.3。
     source: 卡爾德快遞系統
+    bates: CALDER-001402
   - id: voice-memo
     name: 赫克托的語音：「回家吃藥」
     kind: 陳述
@@ -70,55 +77,69 @@ _cards: &cards
     time: '17:52'
     text: 「再跑兩單就回家，回家吃藥。妳先吃，不用等我。」
     source: 原告開示
+    bates: OKF-000233
   - id: trevor-says
     name: 崔佛的說法：提醒一直都在
     kind: 陳述
     text: 疲勞提醒從系統上線就有，司機要不要休息是他們自己決定的。
     source: 會議（崔佛・米爾斯）
+    taken: { at: '05/04 11:00', by: 盧卡斯・葛雷　會議紀錄 }
   - id: lock-spec
     name: 舊版規格書：疲勞鎖
     kind: 文件
     text: 「連續上線 10 小時，強制下線 8 小時，期間不派單。」版本 2.3，兩年前。
     source: 卡爾德快遞系統文件
+    bates: CALDER-002210
   - id: change-ticket
     name: 設定變更單：改為提醒
     kind: 文件
     date: 三月
     text: 「疲勞鎖改為提醒，司機可略過。依法務意見。」簽核人：崔佛・米爾斯。
     source: 卡爾德快遞系統文件
+    bates: CALDER-002231
   - id: chat-peak
     name: 營運群組：「旺季不准任何人被踢下線」
     kind: 陳述
     date: 三月
     text: 崔佛・米爾斯在營運群組：「旺季不准任何人被踢下線。我不管系統怎麼寫。」
     source: 卡爾德快遞內部通訊
+    bates: CALDER-003005
+    # 硬藏後是前營運專員交給原告，原告交出時蓋自己的號碼。
+    batesIf:
+      - when: { flags: ['discovery:rq-chat:concealed'] }
+        bates: OKF-000611
   - id: legal-memo
     name: 法務意見書（惠特洛克・海爾）
     kind: 文件
     date: 三月
     text: 「承攬人非受僱人，貴公司無照顧義務。取消強制下線之法律風險可控。」
     source: 惠特洛克・海爾律師事務所
+    bates: CALDER-003120
   - id: fisher-report
     name: 費雪醫師報告
     kind: 文件
     text: 每週工時超過 60 小時的司機，心血管事件風險是一般人的 2.4 倍。
     source: 原告專家（喬安娜・費雪醫師）
+    bates: OKF-000530
   - id: fisher-sample
     name: 費雪報告附註：樣本是長途卡車司機
     kind: 文件
     text: 附註 7：研究樣本為州際長途貨車司機，單趟平均 9 小時，不含市區短程配送。
     source: 原告專家報告
+    bates: OKF-000548
 
   - id: trevor-sworn
     name: 崔佛的宣誓陳述：提醒一直都在
     kind: 宣誓陳述
     text: 他在錄取時宣誓說，疲勞提醒「從系統上線就是提醒，從來沒有強制下線過」。
     source: 證詞錄取
+    cite: '42:7'
   - id: errata
     name: 勘誤表：崔佛更正錄取證詞
     kind: 文件
     text: 「第 42 頁第 7 行，更正為：三月以前，系統設有強制下線功能。」簽名：崔佛・米爾斯。依規則 30(e) 提出。
     source: 證詞錄取勘誤
+    cite: '42:7'
   - id: rating-penalty
     name: 普莉亞的證詞：死後還在扣分
     kind: 宣誓陳述
@@ -126,11 +147,13 @@ _cards: &cards
     time: '18:25'
     text: 普莉亞在錄取時證稱：GPS 靜止之後，系統仍判定拒單三次，扣了他 0.3 分。
     source: 證詞錄取（原告方）
+    cite: '27:9'
   - id: daubert-ruling
     name: 裁定：費雪醫師證詞排除
     kind: 文件
     text: 本庭排除費雪醫師關於風險倍數之證詞。原告得另以一般醫學證人說明死因。
     source: 雷耶斯法官
+    filed: { caseNo: 26-CV-1182, date: 05/26/2026 }
 
 # 審前選擇的代價：條件在開庭／調解開始時判斷（提案 2026-10-03）。
 effects:
@@ -157,6 +180,34 @@ effects:
   # 勘誤表承認三月以前有疲勞鎖：「我們提醒過」靠的是「提醒一直都在」，它傷得最重（提案第五節）。
   - when: { flags: [trevor-corrected], theory: [warned] }
     jury: 6
+
+# 案卷登錄表最後一行（設計審查 r1）：各分支一句，列第一個符合的。和解金額不上登錄表。
+disposition:
+  - date: 05/28/2026
+    when: { outcome: [deal], deal: [o-full, o-high, o-mid] }
+    entry: 調解成立：雙方簽署和解書，含被告恢復派單系統強制下線功能之條款。原告撤回起訴，本案終結。
+  - date: 05/28/2026
+    when: { outcome: [deal], deal: [o-low] }
+    entry: 調解成立：雙方簽署和解書，被告不承認責任。原告撤回起訴，本案終結。
+  - date: 06/04/2026
+    when: { verdict: [有責], punitive: true, theory: [shared] }
+    entry: 陪審團評決：被告有責；死者與有過失，比例與賠償金額如判決表所載；懲罰性賠償成立。
+  - date: 06/04/2026
+    when: { verdict: [有責], punitive: true }
+    entry: 陪審團評決：被告有責，賠償金額如判決表所載；懲罰性賠償成立。
+  - date: 06/04/2026
+    when: { verdict: [有責], theory: [shared] }
+    entry: 陪審團評決：被告有責；死者與有過失，比例與賠償金額如判決表所載。
+  - date: 06/04/2026
+    when: { verdict: [有責] }
+    entry: 陪審團評決：被告有責，賠償金額如判決表所載。
+  - date: 06/04/2026
+    when: { verdict: [無責] }
+    entry: 陪審團評決：被告無責。
+  - date: 06/04/2026
+    when: { verdict: [陪審團僵局] }
+    entry: 陪審團未達法定票數，本院宣告審判無效。
+
 scenes:
   # 冷開場：玩家拿著赫克托的手機。休息不是不能按，只是每次都有代價。
   - type: phone
@@ -220,6 +271,9 @@ scenes:
     title: 合理懷疑
     lines:
       - 第二集　和解的價格
+    filings:
+      - date: 04/20/2026
+        entry: 原告瑪莉索・維加提出起訴狀：請求過失致死損害賠償及懲罰性賠償。
     docket:
       date: 05/04/2026
       entry: 被告委任惠特洛克・海爾律師事務所為訴訟代理人，具狀陳報。
@@ -384,6 +438,10 @@ scenes:
     title: 第二幕　開示
     lines:
       - 這一次，是對方來跟你要東西。
+    filings:
+      - date: 05/04/2026
+        when: { cards: [pharmacy] }
+        entry: 被告陳報：對非當事人藥局發出文書傳票 D-1，並通知原告。
     docket:
       date: 05/05/2026
       entry: 原告向被告送達第一次文書提出要求。
@@ -687,6 +745,7 @@ scenes:
     id: depo-trevor
     act: 第三幕
     place: 惠特洛克・海爾　會議室 C　週二 10:00
+    video: { bates: OKF-V-000118, timecode: '01:38:21;16' }
     side: theirs
     examiner: 丹尼爾・奧卡福
     witness:
@@ -717,6 +776,7 @@ scenes:
         q: 這個機制一直都是這樣嗎？
         a: 從系統上線就是提醒，從來沒有強制下線過。
         anchors: trevor-sworn
+        cite: '42:7'
       - id: p-ticket
         q: 三月四日有一張設定變更單。簽名的是您嗎？
         a: ……系統每一季都在改版。我不記得每一張變更單。
@@ -746,6 +806,7 @@ scenes:
     id: depo-engineer
     act: 第三幕
     place: 奧卡福勞工法律事務所　會議室　週三 14:00
+    video: { bates: OKF-V-000131, timecode: '00:41:07;22' }
     side: theirs
     examiner: 丹尼爾・奧卡福
     witness:
@@ -764,6 +825,7 @@ scenes:
         q: 赫克托・維加的車停下之後，系統做了什麼？
         a: 系統繼續派單。三次都沒有接，系統自動判定拒單，扣了他的評分。
         gives: [rating-penalty]
+        cite: '27:9'
       - id: e-feel
         q: 妳覺得公司是不是根本不在乎司機的死活？
         a: 我……我只是寫程式的。
@@ -813,7 +875,7 @@ scenes:
         from: 丹尼爾・奧卡福　原告律師
         subject: 調解會議
         body:
-          - 盧卡斯，調解會議排在下週二。瑪莉索會親自來。
+          - 盧卡斯，調解會議排在下週四。瑪莉索會親自來。
           - 她要的東西，不全是錢。你到時候就知道了。
     jobs:
       - id: job-errata
@@ -928,6 +990,10 @@ scenes:
     title: 第四幕　調解
     lines:
       - 和解不是認輸。是兩邊都承認，自己可能會輸。
+    filings:
+      - date: 05/26/2026
+        when: { cards: [daubert-ruling] }
+        entry: 被告聲請排除原告專家費雪醫師之證詞：准許。
     docket:
       date: 05/28/2026
       entry: 法院調解會議（調解室 2）。

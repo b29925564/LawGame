@@ -304,7 +304,7 @@ App 日誌我整理好了（有點多）: App log sorted (it's a lot)
 問：這個機制一直都是這樣嗎？: 'Q: Has this mechanism always worked this way?'
 答：從系統上線就是提醒，從來沒有強制下線過。: "A: It's been a reminder since the system launched. There was never a forced offline."
 調解會議: Mediation
-盧卡斯，調解會議排在下週二。瑪莉索會親自來。: Lucas, mediation is set for next Tuesday. Marisol will be there in person.
+盧卡斯，調解會議排在下週四。瑪莉索會親自來。: Lucas, mediation is set for next Thursday. Marisol will be there in person.
 她要的東西，不全是錢。你到時候就知道了。: What she wants isn't all money. You'll see.
 聲請排除專家證詞：費雪醫師: 'Motion to exclude expert testimony: Dr. Fisher'
 專家說的不是事實，是方法。方法套錯了對象，結論就不該進法庭。: An expert doesn't testify to facts. She testifies to a method. Apply the method to the wrong population and the conclusion doesn't belong in court.
@@ -705,7 +705,7 @@ App 日誌我整理好了（有點多）: App log sorted (it's a lot)
 ……那是系統更新。我們沒有發公告。: "…It was a system update. We didn't put out a notice."
 # 卷宗元件（P2-6）：案卷登錄表、證物袋、照片紀錄表。
 '戴文・艾許　惠特洛克・海爾 助理': 'Devon Ash, paralegal, Whitlock & Hale'
-'調閱（傳票回覆）': 'Received (subpoena return)'
+'調閱（傳票回覆）': 'Obtained (subpoena return)'
 '收存': 'Stored'
 '26-CV-1182　被告傳票 D-1': '26-CV-1182, defense subpoena D-1'
 'K. Lam　紀錄保管人（藥局）': 'K. Lam, custodian of records (pharmacy)'
@@ -719,3 +719,16 @@ App 日誌我整理好了（有點多）: App log sorted (it's a lot)
 '書面證據開示期間屆滿。定 05/28/2026 法院調解會議。': 'Written discovery closed. Court-ordered mediation set for 05/28/2026.'
 '法院調解會議（調解室 2）。': 'Court-ordered mediation conference (Mediation Room 2).'
 '雙方提出審判前聲明、證人名單及陪審團指示草案。定 06/02/2026 陪審團審理。': 'Parties file pretrial statements, witness lists and proposed jury instructions. Jury trial set for 06/02/2026.'
+'被告陳報：對非當事人藥局發出文書傳票 D-1，並通知原告。': "Defendant's notice to plaintiff of subpoena D-1 for records, served on nonparty pharmacy."
+'調解成立：雙方簽署和解書，含被告恢復派單系統強制下線功能之條款。原告撤回起訴，本案終結。': "Settled at mediation. Settlement agreement includes defendant's undertaking to restore mandatory logout in the dispatch system. Plaintiff dismisses; case closed."
+'調解成立：雙方簽署和解書，被告不承認責任。原告撤回起訴，本案終結。': 'Settled at mediation, without admission of liability. Plaintiff dismisses; case closed.'
+'陪審團評決：被告有責；死者與有過失，比例與賠償金額如判決表所載；懲罰性賠償成立。': 'Jury verdict for plaintiff. Comparative fault of decedent and damages as stated on the verdict form. Punitive damages found.'
+'陪審團評決：被告有責，賠償金額如判決表所載；懲罰性賠償成立。': 'Jury verdict for plaintiff. Damages as stated on the verdict form. Punitive damages found.'
+'陪審團評決：被告有責；死者與有過失，比例與賠償金額如判決表所載。': 'Jury verdict for plaintiff. Comparative fault of decedent and damages as stated on the verdict form.'
+'陪審團評決：被告有責，賠償金額如判決表所載。': 'Jury verdict for plaintiff. Damages as stated on the verdict form.'
+'陪審團評決：被告無責。': 'Jury verdict for defendant.'
+陪審團僵局: Hung jury
+'陪審團未達法定票數，本院宣告審判無效。': 'Jury unable to reach the required number of votes. Mistrial declared.'
+'盧卡斯・葛雷　會議紀錄': 'Lucas Grey, meeting notes'
+'原告瑪莉索・維加提出起訴狀：請求過失致死損害賠償及懲罰性賠償。': 'Complaint filed by plaintiff Marisol Vega for wrongful death damages and punitive damages.'
+'被告聲請排除原告專家費雪醫師之證詞：准許。': "Defendant's motion to exclude testimony of plaintiff's expert Dr. Fisher. Granted."
