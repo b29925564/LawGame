@@ -598,6 +598,11 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
     </nav>
   );
 
+  const [juryView, setJuryView] = useState(false);
+  // 陪審團只知道被法庭採納的證據（卡片的 admitted）；論點、發現是盧卡斯自己的推理。
+  const juryCards = pool.filter((c) => 'admitted' in c && c.admitted);
+  // 出處小字（設定集 6.6）：誰畫的、什麼時候。桌面上的板永遠在開庭前，所以是「預審」。
+  const sketchSource = [t('法庭速寫'), 'M. Osei', t('預審')].join('\u3000');
   // 軟木板上的 A、B：放了卡就是那張卡（點了拿下來），空的是提示或挑卡入口。
   const corkSlot = (i: 0 | 1, face: ReactNode) => {
     const c = pool.find((x) => x.id === st.link.cards[i]);
@@ -665,10 +670,21 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
   const nextView = nextQ?.id ?? (st.timeline.length < timedN ? 'timeline' : null);
   const bench = (
     <section className="panel step links">
-      <h3 className="step-head">
-        <span className="step-num">1</span>
-        {qDone ? t('繼續連線') : t('連線')}
-      </h3>
+      <div className="row bench-head">
+        <h3 className="step-head">
+          <span className="step-num">1</span>
+          {qDone ? t('繼續連線') : t('連線')}
+        </h3>
+        {/* 陪審團視角（設定集 8.6）：同一塊板，只畫陪審團聽過的東西。 */}
+        <div className="view-switch" role="group" aria-label={t('看誰知道的案情')}>
+          <button aria-pressed={!juryView} onClick={() => setJuryView(false)}>
+            {t('我知道的案情')}
+          </button>
+          <button aria-pressed={juryView} onClick={() => setJuryView(true)}>
+            {t('陪審團知道的案情')}
+          </button>
+        </div>
+      </div>
       <div
         className={
           (desk.canConnect(st) ? 'link-bench ready' : 'link-bench') +
@@ -691,43 +707,59 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
           compact={!wide}
           onPick={toggleLinkCard}
           slot={corkSlot}
+          jury={{ on: juryView, cards: juryCards, provenance: sketchSource }}
         />
-        <RelationPicker
-          cards={st.link.cards.map((id) => pool.find((c) => c.id === id)?.name)}
-          value={st.link.relation}
-          onPick={setLinkRelation}
-          compact
-        />
-        <div className="row bench-foot">
-          <span />
-          {/* 一格一黃：這題確認了，主按鈕是「下一題」，連起來退成一般按鈕。 */}
-          <button
-            className={qDone ? undefined : 'primary'}
-            disabled={!desk.canConnect(st)}
-            onClick={connect}
-          >
-            {t('連起來')}
-          </button>
+        {/* 陪審團視角只看不動：連線操作收起來，畫面上不留黃（一格一黃給的是下一步，這裡沒有下一步）。
+            位置照留，切換時版面不跳（捲軸出現或消失會讓板子變寬，速寫也得重畫）。 */}
+        <div className="bench-ops-wrap">
+          {juryView && (
+            <p className="jury-note" role="status">
+              {juryCards.length
+                ? t('陪審團只看過法庭採納的證據：{list}。你的連線和推理他們都還沒聽過。', {
+                    list: juryCards.map((c) => t(c.name, scope)).join(t('、')),
+                  })
+                : t('陪審團還沒看過任何證據。你查到的一切，要在法庭上被採納，他們才會知道。')}
+            </p>
+          )}
+          <div className={juryView ? 'bench-ops off' : 'bench-ops'} inert={juryView}>
+            <RelationPicker
+              cards={st.link.cards.map((id) => pool.find((c) => c.id === id)?.name)}
+              value={st.link.relation}
+              onPick={setLinkRelation}
+              compact
+            />
+            <div className="row bench-foot">
+              <span />
+              {/* 一格一黃：這題確認了，主按鈕是「下一題」，連起來退成一般按鈕。 */}
+              <button
+                className={qDone ? undefined : 'primary'}
+                disabled={!desk.canConnect(st)}
+                onClick={connect}
+              >
+                {t('連起來')}
+              </button>
+            </div>
+            {found.length === 0 && (
+              <p className="bench-hint">{t('把兩張卡連起來，發現會出現在下面。')}</p>
+            )}
+            {st.linkNote && (
+              // 連錯：兩張卡抖一下、頂端工時閃紅，也寫出來（體驗評測：只抖一下，第一次玩看不懂）。
+              // 連成功也不另外寫：新的發現便條會亮一下，內容就在便條上（試玩回報：兩處同一句太雜）。
+              <p
+                role="status"
+                className={
+                  st.linkNote.startsWith('連起來了')
+                    ? 'sr-only'
+                    : st.linkMiss
+                      ? 'board-note bad'
+                      : 'board-note'
+                }
+              >
+                {t(st.linkNote, scope)}
+              </p>
+            )}
+          </div>
         </div>
-        {found.length === 0 && (
-          <p className="bench-hint">{t('把兩張卡連起來，發現會出現在下面。')}</p>
-        )}
-        {st.linkNote && (
-          // 連錯：兩張卡抖一下、頂端工時閃紅，也寫出來（體驗評測：只抖一下，第一次玩看不懂）。
-          // 連成功也不另外寫：新的發現便條會亮一下，內容就在便條上（試玩回報：兩處同一句太雜）。
-          <p
-            role="status"
-            className={
-              st.linkNote.startsWith('連起來了')
-                ? 'sr-only'
-                : st.linkMiss
-                  ? 'board-note bad'
-                  : 'board-note'
-            }
-          >
-            {t(st.linkNote, scope)}
-          </p>
-        )}
       </div>
       {!wide && picking && (
         <CardSheet
@@ -845,7 +877,10 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
                     ✓ {t('已確認')} → <span className="arg-name">{t(q.argument.name, scope)}</span>
                   </p>
                   {(nextView || !wide) && (
-                    <button className="primary" onClick={() => setView(nextView)}>
+                    <button
+                      className={juryView ? undefined : 'primary'}
+                      onClick={() => setView(nextView)}
+                    >
                       {nextView === 'timeline'
                         ? t('去排時間線 →')
                         : nextView
@@ -901,7 +936,7 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
                     )}
                     {/* 板上兩張卡和關係都擺好時，眼前的動作是「連起來」，提交先退成一般按鈕。 */}
                     <button
-                      className={desk.canConnect(st) ? undefined : 'primary'}
+                      className={desk.canConnect(st) || juryView ? undefined : 'primary'}
                       disabled={!desk.canSubmit(scene, st, q.id, progress.cards)}
                       onClick={() => submit(q.id)}
                     >
@@ -945,7 +980,7 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
       list
     );
   return (
-    <div className="board3">
+    <div className={juryView ? 'board3 jury' : 'board3'}>
       {list}
       <div className="board-work">{work}</div>
     </div>

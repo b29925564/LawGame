@@ -3,6 +3,7 @@ import type { Relation } from '../engine/constants';
 import { useT } from '../i18n';
 import { useScope } from './lang';
 import './cork.css';
+import { JurySketch, type JuryCard } from './sketch/JurySketch';
 
 /**
  * 證據板（設定集第 9 章 RD-ART-0903）：一塊軟木板，一盞 2700K 吊燈打在中央。
@@ -228,6 +229,7 @@ export function Cork({
   compact,
   onPick,
   slot,
+  jury,
 }: {
   /** A、B 槽裡的卡（沒放就是 undefined）。 */
   focus: [CorkItem | undefined, CorkItem | undefined];
@@ -244,6 +246,8 @@ export function Cork({
   onPick: (id: string) => void;
   /** A、B 槽的內容（卡片按鈕、或空槽的提示）。 */
   slot: (i: 0 | 1, face: ReactNode) => ReactNode;
+  /** 陪審團視角：只畫被採納的卡（設定集 8.6）。 */
+  jury?: { on: boolean; cards: CorkItem[]; provenance: string };
 }) {
   const t = useT();
   const scope = useScope();
@@ -383,6 +387,28 @@ export function Cork({
           {i === 0 ? 'A' : 'B'}
         </span>
       ))}
+      {/* 速寫一直掛著（看不見），在 Worker 裡先畫好：切過去時不用等，也才能交叉淡化。 */}
+      {jury && (
+        <JurySketch
+          on={jury.on}
+          cards={jury.cards.map((c, i): JuryCard => {
+            const inPool = i < 2;
+            const at = inPool ? focusAt[i] : EDGE[(i - 2) % EDGE.length];
+            return {
+              id: c.id,
+              kind: c.kind,
+              name: c.name,
+              text: c.text,
+              time: c.time,
+              at,
+              w: inPool ? focusW : CARD_W,
+              tilt: tilt(c.id, inPool ? 1.2 : 2.5),
+            };
+          })}
+          look={look}
+          provenance={jury.provenance}
+        />
+      )}
       {/* 手機上兩張卡之間沒有空隙，關係看下面選中的那顆。 */}
       {!compact && (focus[0] || focus[1]) && (
         <span
