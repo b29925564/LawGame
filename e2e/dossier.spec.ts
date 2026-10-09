@@ -41,11 +41,11 @@ test('法院系統頂端的案卷登錄表：走過的行照實、目前那一�
     .first()
     .click();
   const docket = page.getByRole('region', { name: '案卷登錄表' });
-  // 幕卡三行、拿到心率紀錄與稽核紀錄才有的法院事件兩行、檢視令一行；之後三張卡和判決各一條黑條。
-  await expect(docket.locator('tbody tr')).toHaveCount(10);
+  // 幕卡三行、拿到心率紀錄與稽核紀錄才有的法院事件兩行、檢視令一行；之後還沒發生的合成一條黑條（設計師 r2 第 6 條）。
+  await expect(docket.locator('tbody tr')).toHaveCount(7);
   await expect(docket.locator('tr[aria-current="step"]')).toContainText('04/03/2026');
   await expect(docket.locator('tr[aria-current="step"]')).toContainText('預審');
-  await expect(docket.getByText('尚未發生')).toHaveCount(4);
+  await expect(docket.getByText('尚未發生')).toHaveCount(1);
 });
 
 test('證物袋與照片紀錄表：證據欄展開看得到，放大檢視是完整版，Esc 關掉', async ({ page }) => {
@@ -61,9 +61,9 @@ test('證物袋與照片紀錄表：證據欄展開看得到，放大檢視是�
   if (await drawer.isVisible()) await drawer.click();
   const bag = page.locator('.card.mini').filter({ hasText: '財物清單' }).first();
   await bag.locator('.mini-btn').click();
-  await expect(bag.locator('.bag-chain li:not(.bag-chain-cols)')).toHaveCount(4);
-  // 還沒做手錶鑑識（沒有 watch-notice）：入所扣押那一手之後都還沒發生，畫成黑條。
-  await expect(bag.locator('.bag-chain .bag-pending')).toHaveCount(3);
+  await expect(bag.locator('.bag-chain li:not(.bag-chain-cols)')).toHaveCount(2);
+  // 還沒做手錶鑑識（沒有 watch-notice）：入所扣押那一手之後都還沒發生，合成一條黑條，不洩漏還剩幾手。
+  await expect(bag.locator('.bag-chain .bag-pending')).toHaveCount(1);
   await expect(bag.locator('.bag-head')).toContainText('CH-2026-1147');
   await bag.getByRole('button', { name: '放大', exact: true }).click();
   const zoom = page.getByRole('dialog', { name: /放大檢視/ });

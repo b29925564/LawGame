@@ -46,7 +46,16 @@ export function SlotList({
             >
               <strong>{name}</strong>
               <span className="muted">
-                {f ? `${t(f.label)}・${when(f.savedAt, lang)}` : t('空')}
+                {f ? (
+                  <>
+                    {t(f.label)}
+                    {t('・')}
+                    {/* 時間整組不斷開（「10:20 AM」的 AM 不單獨一行）。 */}
+                    <span className="when">{when(f.savedAt, lang)}</span>
+                  </>
+                ) : (
+                  t('空')
+                )}
               </span>
               {/* Bates 區間在章節那一行下面，再下面是縮小的案卷登錄表（設計師 P2-6；設定集第 10 章）。 */}
               {f && <SaveBates progress={f.progress} />}
@@ -101,7 +110,7 @@ export function Title() {
           {/* 讀檔清單打開時，黃留給選中的存檔欄那一道（存檔畫面只准一道黃；設計師 P2-6 r1）。 */}
           {auto && (
             <button className={loading ? '' : 'primary'} onClick={() => load('auto')}>
-              {t('繼續（{label}）', { label: auto.label })}
+              {t('繼續（{label}）', { label: t(auto.label) })}
             </button>
           )}
           <button

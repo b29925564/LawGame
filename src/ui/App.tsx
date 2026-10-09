@@ -24,6 +24,7 @@ import { Opening, Theory } from './Theory';
 import { VoirDire } from './VoirDire';
 import { useT } from '../i18n';
 import { SceneScope, useDocumentLang } from './lang';
+import { prose } from './prose';
 
 export function App() {
   const { mode, progress, advance, toTitle, nextEpisode } = useEpisode();
@@ -112,7 +113,7 @@ export function App() {
           {last &&
             card?.lines.map((l) => (
               <p key={l} className="narration">
-                {t(l, card?.id)}
+                {prose(t(l, card?.id))}
               </p>
             ))}
           <div className="stack">

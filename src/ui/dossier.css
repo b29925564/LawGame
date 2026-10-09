@@ -5,6 +5,13 @@
  * 手寫一律 --font-hand（LXGW WenKai TC，數字、時間、英文都一樣）。一張紙最多三套字族。
  */
 
+/* 紙面內文的換行：中文標點不放行首（strict），避開只剩一兩個字的末行（pretty）（設計師 r2 第 12 條）。
+   兩個屬性都會繼承，掛在每一種紙的最外層。 */
+:is(.docket, .photolog, .bag, .zoom-sheet, .mini-body) {
+  text-wrap: pretty;
+  line-break: strict;
+}
+
 /* ── <Docket> 案卷登錄表：法院系統分頁頂端的一張紙。整張是印的：--font-court，中文退回 Noto Serif TC ── */
 .docket {
   width: min(720px, 100%);
@@ -175,8 +182,8 @@
   .docket .dk-future td {
     display: block;
   }
-  /* 只留最近三行（到目前那一行）和一條黑條，聲請卡留在第一屏（設計師 P2-6 r1）。 */
-  .docket:not(.all) :is(.dk-old, .dk-future:not(.dk-next)) {
+  /* 只留目前那一行和前一行，加一條黑條，聲請卡留在第一屏（設計師 P2-6 r1、r2 第 1 條）。 */
+  .docket:not(.all) .dk-old {
     display: none;
   }
   .docket .dk-all {
@@ -192,6 +199,9 @@
   outline: 2px solid var(--text);
   outline-offset: 2px;
 }
+.slot .when {
+  white-space: nowrap;
+}
 .slot .dk-bates {
   margin-top: 1px;
   font: 700 12px/1.5 var(--font-court);
@@ -199,7 +209,7 @@
   font-variant-numeric: tabular-nums;
   color: var(--faint);
 }
-/* 每行一行字，放不下的淡進紙裡（不用刪節號）；還沒發生的行合成一條黑條。 */
+/* 縮小版登錄表：還沒發生的行合成一條黑條。 */
 .dk-mini {
   display: grid;
   gap: 2px;
@@ -224,10 +234,11 @@
 .dk-mini b {
   text-align: right;
 }
+/* 事項只放第一個分句；放不下就換行，不用漸隱、不用省略號（設計師 P2-6 r2）。 */
 .dk-mini .dk-row > span {
-  overflow: hidden;
-  white-space: nowrap;
-  mask-image: linear-gradient(to right, #000 82%, transparent);
+  min-width: 0;
+  text-wrap: pretty;
+  line-break: strict;
 }
 /* 其他存檔欄的目前行只加粗、不上色。 */
 .dk-mini .dk-cur {
@@ -283,13 +294,17 @@
 }
 .photolog-strip {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 6px 12px;
   margin: 0;
   padding: 8px 0 6px;
 }
 .photolog-strip div {
   min-width: 0;
+}
+/* 攝影者的職稱整組不斷開，欄寬不夠時攝影者自己佔滿一整行（設計師 P2-6 r2）。 */
+.photolog-strip .pg {
+  grid-column: 1 / -1;
 }
 .photolog-strip dt {
   font: 400 calc(12px * var(--text-scale)) / 1.3 var(--font-court);
@@ -307,10 +322,18 @@
 .photolog-strip .who-role {
   display: block;
 }
-@container (min-width: 480px) {
+@container (min-width: 360px) {
   .photolog-strip {
-    grid-template-columns: auto auto auto 1fr;
+    grid-template-columns: auto auto minmax(0, 1fr);
     gap: 6px 22px;
+  }
+}
+@container (min-width: 640px) {
+  .photolog-strip {
+    grid-template-columns: auto auto auto minmax(0, 1fr);
+  }
+  .photolog-strip .pg {
+    grid-column: auto;
   }
 }
 @media (max-width: 520px) {
@@ -318,20 +341,28 @@
     font-size: calc(12px * var(--text-scale));
   }
 }
-/* 右下角先留一條黑條當 Bates 的位置，等 P2-1 的出處格式。 */
+/* 右下角的 Bates：Courier 700 12px；還沒有號碼就只是一條黑條。 */
 .photolog-bates {
   display: flex;
   justify-content: flex-end;
+  min-height: 18px;
   padding: 0 0 8px;
 }
-.photolog-bates .redact {
-  flex: none;
-  width: 11em;
-  min-height: 18px;
-  padding: 0 6px;
-  font: 400 11px/1 var(--font-court);
+.photolog-bates b {
+  font: 700 12px/18px var(--font-court);
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
 }
-/* 證據板照片卡：卡名留在底欄，紀錄列一行小字：案號、序號、時間，兩個半形空格分開；放不下整段換行，不漸隱。 */
+.photolog-bates .bates-bar {
+  display: block;
+  width: 11em;
+  height: 14px;
+  margin-top: 2px;
+  background: var(--redact);
+  border-top: 1px solid var(--cine-line);
+}
+/* 證據板照片卡：卡名留在底欄，紀錄列一行小字：案號、序號、時間，兩個半形空格分開；放不下整段換行，不漸隱。
+   字最小 12px（設計師 r2 第 11 條），手機也一樣。 */
 .cork-strip:has(.photolog-line) {
   flex-wrap: wrap;
 }
@@ -340,7 +371,7 @@
   flex-wrap: wrap;
   flex-basis: 100%;
   column-gap: 2ch;
-  font: 700 9px/1.3 var(--font-court);
+  font: 700 12px/16px var(--font-court);
   letter-spacing: 0.02em;
   color: var(--paper-muted);
 }
@@ -384,6 +415,13 @@
 }
 /* 玩家在抽屜裡劃的螢光（一張紙一道）在塑膠高光上面，不被洗白。 */
 .bag mark.hl {
+  z-index: 2;
+}
+/* 有字的那幾行在高光上面：高光只照亮字後面的紙和照片，不洗字。
+   量過：灰字（--paper-muted）在紙上本來只有 5.09:1（淺色）、4.71:1（深色），
+   壓 30% 的白會掉到 2.8:1；字放在高光上面，最低就是原本的 4.71:1（設計師 r2「不用改」第 3 條的條件）。 */
+.bag :is(.bag-label > *, .bag-window > p, .photolog-strip, .photolog-bates, .zoom-sheet > p) {
+  position: relative;
   z-index: 2;
 }
 .bag-window {
@@ -642,7 +680,8 @@
   margin-top: 18px;
 }
 
-/* ── 放大檢視 ── */
+/* ── 放大檢視 ──
+   框的高度最多是視窗高減上下各 16px；標題列不動，下面的內容在框裡捲（設計師 r2 第 5 條）。 */
 .zoom {
   width: min(880px, calc(100vw - 32px));
   max-height: calc(100dvh - 32px);
@@ -651,6 +690,23 @@
   border-radius: var(--radius);
   background: var(--surface);
   color: var(--text);
+}
+.zoom[open] {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.zoom-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+/* 照片不比視窗高：留出標題列、紀錄列和第一段說明的高度，說明卡的上緣在第一屏裡。 */
+.zoom-body > .photolog,
+.zoom-body > .bag {
+  max-width: max(320px, calc((100dvh - 420px) * 1.5));
+  margin-inline: auto;
 }
 .zoom::backdrop {
   background: rgb(6 8 11 / 72%);
@@ -676,8 +732,8 @@
   margin: 0;
   font: 700 18px/1.4 var(--font-doc);
 }
-.zoom > .photolog,
-.zoom > .bag {
+.zoom-body > .photolog,
+.zoom-body > .bag {
   margin-bottom: 12px;
 }
 .zoom-sheet {

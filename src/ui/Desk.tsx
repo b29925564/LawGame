@@ -20,6 +20,7 @@ import { EffectLines, effectsIf } from './Effects';
 import { MarkLines } from './Marks';
 import { ExhibitTag, exhibitNo, FilingThumb, Pleading, Written } from './Pleading';
 import { useScope } from './lang';
+import { prose } from './prose';
 import { useCardPick } from './pick';
 import { Speech } from './Portrait';
 import { RelationPicker } from './RelationPicker';
@@ -1203,13 +1204,15 @@ function Motions({ scene, held }: { scene: DeskScene; held: string[] }) {
             {t('還不能寫')}
           </small>
           <strong>
-            {t('還缺前提：先把 {names} 確認起來', {
-              names: missing
-                .map((id) => `◆ ${t(nameOf(id)?.name ?? argName(scene, id), scope)}`)
-                .join('、'),
-            })}
+            {prose(
+              t('還缺前提：先把 {names} 確認起來', {
+                names: missing
+                  .map((id) => `◆ ${t(nameOf(id)?.name ?? argName(scene, id), scope)}`)
+                  .join('、'),
+              }),
+            )}
           </strong>
-          <span>{t(m.detail, scope)}</span>
+          <span>{prose(t(m.detail, scope))}</span>
         </aside>
       ) : (
         <Pleading

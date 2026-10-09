@@ -167,6 +167,10 @@ h2,
 h3 {
   text-wrap: balance;
 }
+/* 紙面內文的一個詞（prose.tsx）：詞裡不換行，詞與詞之間照常。 */
+.kw {
+  white-space: nowrap;
+}
 * {
   scrollbar-width: thin;
   scrollbar-color: var(--border-strong) transparent;
@@ -614,6 +618,9 @@ details summary {
   font-family: var(--font-doc);
   color: var(--muted);
   line-height: 1.9;
+  /* 每一頁開頭的旁白：不留一兩個字的末行，標點不放行首（設計師 P2-6 r2 第 12 條）。 */
+  text-wrap: pretty;
+  line-break: strict;
   border-left: 2px solid var(--border-strong);
 }
 /* 盧卡斯的內心獨白：提示的主要載體，用螢光筆底色和一般台詞分開。 */
@@ -1087,12 +1094,9 @@ details summary {
   display: none;
 }
 .apps button {
-  /*
-   * 擠不下時先縮、再在字間換行，不讓最後一個分頁被分頁列切掉（版面檢查：英文 Legal terms、Court system）。
-   * 中文詞不拆開：「證據/板」「法院系/統」一字一行（體驗評測 v88 重驗，第 2 集手機六個分頁）。
-   */
-  flex: 0 1 auto;
-  word-break: keep-all;
+  /* 分頁列一律一行：不換行、不縮，數字跟在字的右邊；放不下整列左右捲動（設計師 P2-6 r2）。 */
+  flex: none;
+  white-space: nowrap;
   line-height: var(--lh-tight);
   position: relative;
   min-height: 42px;
@@ -5437,6 +5441,10 @@ button.iou[aria-pressed='true'] {
   line-height: 1.35;
   font-weight: 600;
   overflow-wrap: anywhere;
+}
+/* 捲到卡片時停在黏頂的分組小標（約 30px）下面。 */
+.card.mini {
+  scroll-margin-top: 36px;
 }
 /* 不能放上連線台的畫面：點開才看內容。 */
 .card.mini .mini-body {

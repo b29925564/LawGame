@@ -4,6 +4,7 @@ import { reducedMotion } from '../a11y';
 import { useScope } from '../lang';
 import {
   buildSketch,
+  cardTextLayout,
   drawSketchText,
   drawStrokes,
   type RGB,
@@ -209,6 +210,18 @@ export function JurySketch({
       const size = parseFloat(css.getPropertyValue('--fs-hand')) || 18;
       await document.fonts?.load(`${size}px ${hand}`, words + provenance).catch(() => undefined);
       if (cancelled) return;
+      // 字放不下就把卡撐高（往下長），不切字（設計師 P2-6 r2）。要在算筆觸之前量，輪廓才會跟著卡。
+      const measure = (font: string, x: string) => {
+        ctx.font = font;
+        return ctx.measureText(x).width;
+      };
+      for (const c of sc) {
+        const { need } = cardTextLayout(measure, c, { hand, size });
+        if (need > c.h) {
+          c.cy += (need - c.h) / 2;
+          c.h = need;
+        }
+      }
       const paper = cssColor('var(--sketch-paper)');
       const ink = cssColor('var(--sketch-ink)');
       const chalk = cssColor('var(--chalk)');

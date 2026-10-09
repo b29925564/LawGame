@@ -36,7 +36,8 @@
   height: 96px;
   min-height: 0;
   border: 0;
-  border-radius: 2px;
+  /* 紙沒有圓角；選中的墨框也跟著是直角（設計師 P2-6 r2）。 */
+  border-radius: 0;
   background: var(--paper);
   box-shadow:
     0 1px 0 rgb(0 0 0 / 15%),
@@ -65,7 +66,7 @@
   display: block;
   width: 50px;
   height: 3px;
-  border-radius: 1px;
+  border-radius: 0;
   background: var(--paper-rule);
 }
 .fthumb i:nth-child(2) {
@@ -75,8 +76,9 @@
   width: 28px;
 }
 .fthumb i.open {
+  /* 還沒填的欄：一條實線空格（虛線只給借據存根的撕線）。 */
   background: transparent;
-  border-bottom: 1px dashed var(--paper-muted);
+  border-bottom: 1px solid var(--paper-rule);
   height: 4px;
   border-radius: 0;
 }
@@ -102,7 +104,7 @@
   width: 26px;
   height: 14px;
   border: 1.5px solid var(--paper-ink);
-  border-radius: 2px;
+  border-radius: 0;
   opacity: 0.6;
   transform: rotate(6deg);
 }
@@ -127,6 +129,37 @@
 .fthumb .mini.no,
 .stamp-big.no {
   color: var(--stamp-no);
+}
+
+/* 手機：縮圖縮成一排紙籤（字在紙上、選中是墨框），聲請卡的標題和第一行留在 412×915 的第一屏（設計師 P2-6 r2 第 1 條）。 */
+@media (max-width: 640px) {
+  .filings {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 0;
+  }
+  .fthumb {
+    width: auto;
+    height: 44px;
+    padding: 0 12px 0 20px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .fthumb i,
+  .fthumb .rcv {
+    display: none;
+  }
+  .fthumb .k {
+    position: static;
+    font-size: 12px;
+    color: var(--paper-ink);
+  }
+  .fthumb .mini {
+    position: static;
+    width: 22px;
+    height: 22px;
+  }
 }
 
 /* 聲請狀：訴狀紙，32px 橫格線，左邊雙直線與行號。 */

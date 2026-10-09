@@ -12,7 +12,9 @@ import {
 import { play } from '../engine/sound';
 import { t as tr, useT } from '../i18n';
 import { dossierOf, EvidenceBag, EvidenceZoom, PhotoLog } from './Dossier';
+import { reducedMotion } from './a11y';
 import { useScope } from './lang';
+import { prose } from './prose';
 import { cardHighlights, cardStamps, Hl, Stamp } from './Marks';
 import { useCardPick } from './pick';
 import { TimelineView } from './Timeline';
@@ -232,7 +234,9 @@ export function EvidenceCard({
     const hide = () => setTip(null);
     const body = (
       <>
-        <p>{hl ? <Hl text={item.text} words={hl} live={false} /> : t(item.text, scope)}</p>
+        <p>
+          {hl ? <Hl text={item.text} words={hl} live={false} wrap /> : prose(t(item.text, scope))}
+        </p>
         <p className="mini-src">
           {t(item.kind)}
           {t('・')}
@@ -245,6 +249,14 @@ export function EvidenceCard({
       else {
         setOpen(!open);
         hide();
+        // 展開後把卡捲進來，停在黏頂的分組小標下面（scroll-margin-top），不讓卡名藏在小標後面（設計師 P2-6 r2 第 14 條）。
+        if (!open)
+          requestAnimationFrame(() =>
+            ref.current?.scrollIntoView({
+              block: 'nearest',
+              behavior: reducedMotion() ? 'auto' : 'smooth',
+            }),
+          );
       }
     };
     return (
