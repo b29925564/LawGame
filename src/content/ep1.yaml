@@ -1016,7 +1016,7 @@ scenes:
   - type: deposition
     id: depo-rachel
     act: 第三幕
-    place: 惠特洛克・海爾　會議室 B
+    place: 惠特洛克・海爾　會議室 B　週五 10:00
     budget: 12
     witness:
       name: 瑞秋・艾德勒
@@ -1114,7 +1114,7 @@ scenes:
   - type: negotiation
     id: plea-morrow
     act: 第三幕
-    place: 地方檢察官辦公室　四樓
+    place: 地方檢察官辦公室　四樓　週五 15:30
     opponent:
       name: 凱瑟琳・莫羅
       role: 地方助理檢察官
@@ -1222,7 +1222,7 @@ scenes:
   - type: theory
     id: theory
     act: 第三幕
-    place: 惠特洛克・海爾　會議室 A
+    place: 惠特洛克・海爾　會議室 A　週日 14:00
     intro:
       - who: 馬庫斯・海爾
         text: 明天開庭。你要告訴陪審團一個故事，一個就好。故事要靠你手上的論點撐起來。
@@ -1275,7 +1275,7 @@ scenes:
   - type: dialogue
     id: ethan-testify
     act: 第三幕
-    place: 看守所　會見室
+    place: 看守所　會見室　週日 16:30
     steps:
       - do: say
         who: 伊森・蕭
@@ -2476,7 +2476,7 @@ scenes:
     epilogue: true
     when:
       outcome: [dismissed]
-    place: 卡爾德郡高等法院　第三法庭外走廊　隔天上午
+    place: 卡爾德郡高等法院　第三法庭外走廊　隔天 09:20
     steps:
       - do: say
         who: 旁白
@@ -2513,7 +2513,7 @@ scenes:
     when:
       outcome: [deal]
       deal: [o-murder2]
-    place: 卡爾德郡高等法院　量刑庭
+    place: 卡爾德郡高等法院　量刑庭　週一 10:00
     steps:
       - do: say
         who: 旁白
@@ -2526,7 +2526,7 @@ scenes:
     when:
       outcome: [deal]
       deal: [o-manslaughter]
-    place: 卡爾德郡高等法院　量刑庭
+    place: 卡爾德郡高等法院　量刑庭　週一 10:00
     steps:
       - do: say
         who: 旁白
@@ -2539,7 +2539,7 @@ scenes:
     when:
       outcome: [deal]
       deal: [o-negligent]
-    place: 卡爾德郡高等法院　量刑庭
+    place: 卡爾德郡高等法院　量刑庭　週一 10:00
     steps:
       - do: say
         who: 旁白
@@ -2552,7 +2552,7 @@ scenes:
     when:
       outcome: [deal]
       deal: [o-probation]
-    place: 卡爾德郡高等法院　量刑庭
+    place: 卡爾德郡高等法院　量刑庭　週一 10:00
     steps:
       - do: say
         who: 旁白
@@ -2564,7 +2564,7 @@ scenes:
     epilogue: true
     when:
       outcome: [deal]
-    place: 卡爾德郡高等法院　台階
+    place: 卡爾德郡高等法院　台階　週一 11:20
     steps:
       - do: say
         who: 旁白
@@ -2586,7 +2586,7 @@ scenes:
     act: 尾聲
     when:
       verdict: [有罪]
-    place: 盧卡斯的辦公室　兩週後
+    place: 盧卡斯的辦公室　兩週後 09:10
     steps:
       - do: say
         who: 旁白
@@ -2610,7 +2610,7 @@ scenes:
     when:
       verdict: [無罪, 有罪, 陪審團僵局]
       notFlags: [whitlock-up]
-    place: 惠特洛克・海爾律師事務所　會議室　結案後
+    place: 惠特洛克・海爾律師事務所　會議室　週四 15:00
     steps:
       - do: say
         who: 馬庫斯・海爾
@@ -2636,7 +2636,7 @@ scenes:
     when:
       outcome: [dismissed]
       notFlags: [whitlock-up]
-    place: 惠特洛克・海爾律師事務所　會議室　結案後
+    place: 惠特洛克・海爾律師事務所　會議室　週四 15:00
     steps:
       - do: say
         who: 馬庫斯・海爾
@@ -2661,7 +2661,7 @@ scenes:
     epilogue: true
     when:
       flags: [whitlock-up]
-    place: 惠特洛克・海爾律師事務所　會議室　結案後
+    place: 惠特洛克・海爾律師事務所　會議室　週四 15:00
     steps:
       - do: say
         who: 馬庫斯・海爾
@@ -2687,7 +2687,7 @@ scenes:
     when:
       outcome: [deal]
       notFlags: [whitlock-up]
-    place: 惠特洛克・海爾律師事務所　會議室　結案後
+    place: 惠特洛克・海爾律師事務所　會議室　週四 15:00
     steps:
       - do: say
         who: 馬庫斯・海爾
@@ -2712,7 +2712,7 @@ scenes:
     epilogue: true
     when:
       theory: [sophie]
-    place: 盧卡斯的辦公室　影印機旁邊
+    place: 盧卡斯的辦公室　影印機旁邊　週四 18:40
     steps:
       - do: say
         who: 潔德
@@ -2723,7 +2723,7 @@ scenes:
     id: epilogue-envelope
     act: 尾聲
     epilogue: true
-    place: 盧卡斯的辦公室　影印機旁邊
+    place: 盧卡斯的辦公室　影印機旁邊　週四 18:40
     steps:
       - do: say
         who: 旁白
@@ -2774,7 +2774,7 @@ scenes:
     when:
       theory: [sophie]
       verdict: [無罪]
-    place: 盧卡斯的辦公室　一週後
+    place: 盧卡斯的辦公室　一週後 08:15
     steps:
       - do: say
         who: 旁白
@@ -2797,7 +2797,7 @@ scenes:
     when:
       theory: [sophie]
       verdict: [有罪, 陪審團僵局]
-    place: 盧卡斯的辦公室　一週後
+    place: 盧卡斯的辦公室　一週後 08:15
     steps:
       - do: say
         who: 旁白
@@ -2820,7 +2820,7 @@ scenes:
     when:
       theory: [sophie]
       cards: [arg-i]
-    place: 盧卡斯的辦公室　一週後
+    place: 盧卡斯的辦公室　一週後 08:15
     steps:
       - do: say
         who: 潔德
@@ -2835,7 +2835,7 @@ scenes:
     id: epilogue-call
     act: 尾聲
     epilogue: true
-    place: 盧卡斯的公寓　深夜
+    place: 盧卡斯的公寓　23:52
     steps:
       - do: say
         who: 旁白
