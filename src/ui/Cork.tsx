@@ -69,7 +69,7 @@ function Face({ item }: { item: CorkItem }) {
     case 'photo':
       return (
         <>
-          {/* 警方照片的閃光燈：中心過曝、四角快速變暗；證物立牌降成 --photo-yellow。 */}
+          {/* 警方照片的閃光燈：中心過曝、四角快速變暗；證物立牌灰白。 */}
           <span className="cork-print">
             {item.image ? <img src={item.image} alt="" /> : <i className="cork-tent" />}
           </span>

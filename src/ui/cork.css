@@ -92,7 +92,7 @@
 }
 /* 第 9 章只定了紅、綠兩種線；其他關係用沒染色的棉線。 */
 .cork-string.other path {
-  stroke: #d8d2c4;
+  stroke: #cfccc4;
   stroke-width: 2px;
 }
 /* 兩張卡放上去、還沒選關係：一條鬆的白線。 */
@@ -258,14 +258,14 @@
   object-fit: cover;
   display: block;
 }
-/* 證物立牌：照片裡的黃一律降到 --photo-yellow。 */
+/* 證物立牌：一律灰白（設定集第 5 章；黃只給獎盃那張）。 */
 .cork-tent {
   position: absolute;
   right: 18%;
   bottom: 18%;
   width: 16%;
   aspect-ratio: 1.15;
-  background: var(--photo-yellow);
+  background: #d9d7d0;
   clip-path: polygon(50% 0, 100% 100%, 0 100%);
 }
 .cork-strip {
