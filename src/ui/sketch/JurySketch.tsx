@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useLang, useT } from '../../i18n';
+import { reducedMotion } from '../a11y';
 import { useScope } from '../lang';
 import {
   buildSketch,
@@ -52,9 +53,6 @@ function cssColor(expr: string): RGB {
   probe.remove();
   return [+m[0], +m[1], +m[2]];
 }
-
-const reduced = () =>
-  typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 type Built = { light: boolean[] } & (
   { bitmap: ImageBitmap } | { base: ImageData; strokes: Stroke[] }
@@ -226,7 +224,7 @@ export function JurySketch({
         ink,
         chalk,
       };
-      const animate = !formed && !reduced();
+      const animate = !formed && !reducedMotion();
       const t0 = performance.now();
       const got = await build(input, animate ? 'strokes' : 'bitmap');
       if (cancelled) return;

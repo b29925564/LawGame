@@ -2,6 +2,7 @@ import { execSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { defineConfig, type Plugin } from 'vitest/config';
 import react from '@vitejs/plugin-react';
+import type { Plugin as CssPlugin } from 'postcss';
 import { parse } from 'yaml';
 import { z } from 'zod';
 import { episodeSchema } from './src/engine/episode/schema';
@@ -36,6 +37,56 @@ function content(): Plugin {
   };
 }
 
+/**
+ * 減少動態有兩個來源（設定集 10.6）：系統的 prefers-reduced-motion，和選項頁存在 <html data-reduced-motion> 的玩家設定。
+ * 樣式照舊寫 @media (prefers-reduced-motion: reduce | no-preference)，建置時每個區塊改寫成兩個來源都認：
+ * - 原區塊多一個條件「玩家沒有反過來設定」（reduce 區塊：data-reduced-motion 不是 '0'）；
+ * - 區塊外再放一份給玩家自己設定的情況（reduce 區塊：data-reduced-motion 是 '1'），不看系統。
+ * 條件包在 :where() 裡，不改原本的權重；區塊裡的 @keyframes 搬到區塊外，兩份都用得到。
+ */
+function reducedMotionCss(): CssPlugin {
+  const query = /\(\s*prefers-reduced-motion\s*:\s*(reduce|no-preference)\s*\)/;
+  const guard = (selector: string, cond: string) => {
+    const head = /^(html|:root)(?![\w-])/.exec(selector)?.[1];
+    return head
+      ? `${head}:where(${cond})${selector.slice(head.length)}`
+      : `:where(html${cond}) ${selector}`;
+  };
+  return {
+    postcssPlugin: 'lawgame-reduced-motion',
+    OnceExit(root) {
+      root.walkAtRules('media', (media) => {
+        const kind = query.exec(media.params)?.[1];
+        if (!kind) return;
+        const [keep, own] = kind === 'reduce' ? ['0', '1'] : ['1', '0'];
+        media.walkAtRules(/keyframes$/i, (frames) => {
+          frames.remove();
+          media.before(frames);
+        });
+        const rest = media.params
+          .replace(query, '')
+          .replace(/^\s*and\s+|\s+and\s*$/g, '')
+          .trim();
+        const copy = media.clone();
+        media.walkRules((rule) => {
+          rule.selectors = rule.selectors.map((s) =>
+            guard(s, `:not([data-reduced-motion='${keep}'])`),
+          );
+        });
+        copy.walkRules((rule) => {
+          rule.selectors = rule.selectors.map((s) => guard(s, `[data-reduced-motion='${own}']`));
+        });
+        if (rest) {
+          copy.params = rest;
+          media.after(copy);
+        } else {
+          media.after(copy.nodes);
+        }
+      });
+    },
+  };
+}
+
 /** 標題畫面角落的建置標記：commit 短碼與建置時間（台北時間），分辨快取到的舊頁面。 */
 function build() {
   let sha = 'dev';
@@ -51,6 +102,7 @@ function build() {
 export default defineConfig({
   plugins: [content(), react()],
   define: { __BUILD__: JSON.stringify(build()) },
+  css: { postcss: { plugins: [reducedMotionCss()] } },
   test: {
     include: ['src/**/*.test.ts'],
   },

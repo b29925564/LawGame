@@ -1,11 +1,9 @@
 import { useEffect, useRef } from 'react';
+import { reducedMotion } from './a11y';
 import { hidden, KEYS, opacities, useCourtLight } from './courtLight';
 
 const url = (device: 'desktop' | 'phone', k: number, ext: 'avif' | 'webp') =>
   new URL(`./court/court-${device}-${k}.${ext}`, import.meta.url).href;
-
-const reduced = () =>
-  typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /**
  * 法庭光層試做：四張預先合成的關鍵格疊在一起，只隨陪審團平均改 opacity。
@@ -29,7 +27,7 @@ export function CourtLight({ avg, threshold }: { avg: number; threshold: number 
       shown.current = v;
     };
     const from = shown.current;
-    if (from === null || reduced()) {
+    if (from === null || reducedMotion()) {
       paint(avg);
       return;
     }
