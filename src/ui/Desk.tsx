@@ -30,6 +30,7 @@ import { Redaction } from './Redaction';
 import { Shell, Tabs } from './Shell';
 import { Timeline } from './Timeline';
 import { Recap } from './ActCard';
+import { durUi, reducedMotion } from './a11y';
 
 // 證據庫和左下的證據抽屜內容一模一樣，所以只留抽屜：它在每個畫面都叫得出來。
 type App = 'mail' | 'docs' | 'board' | 'jobs' | 'court' | 'discovery';
@@ -59,7 +60,6 @@ export function Desk({ scene }: { scene: DeskScene }) {
   // 卷宗也掛未讀數：新進來的文件（例如法官的裁定）不會被跳過（體驗評測、劇本與內容）。
   const unreadDocs = scene.docs.filter((d) => !st.readDocs.includes(d.id)).length;
   const finished = desk.done(scene, st);
-  const hoursDrop = useBump(-st.hours);
 
   if (st.report.length) {
     // 聲請的結果印成裁定單（設計稿 inner-voice 2e）：旁白那句是法官的話，章蓋在紙上。
@@ -176,11 +176,8 @@ export function Desk({ scene }: { scene: DeskScene }) {
       resetKey={app}
       head={
         <header className="taskbar">
-          <span
-            className={hoursDrop ? 'hours drop' : 'hours'}
-            aria-label={t('剩餘工時 {n} 小時', { n: st.hours })}
-          >
-            <strong>{st.hours}</strong> {t('工時')}
+          <span className="hours" aria-label={t('剩餘工時 {n} 小時', { n: st.hours })}>
+            <Swap value={st.hours} /> {t('工時')}
           </span>
           <span className="muted small">{t(scene.deadline, scope)}</span>
         </header>
@@ -743,7 +740,16 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
               compact
             />
             <div className="row bench-foot">
-              <span />
+              {st.linkNote && (
+                // 連錯：線沒釘住、兩張卡回原位，頂端工時換成新值，盧卡斯在「連起來」旁邊的便條上用鉛筆寫原因（設計師 P1-8a）。
+                // 連成功不另外寫：新的發現便條會亮一下，內容就在便條上（試玩回報：兩處同一句太雜），這句只給讀屏。
+                <p
+                  role="status"
+                  className={st.linkNote.startsWith('連起來了') ? 'sr-only' : 'board-note'}
+                >
+                  {t(st.linkNote, scope)}
+                </p>
+              )}
               {/* 一格一黃：這題確認了，主按鈕是「下一題」，連起來退成一般按鈕。 */}
               <button
                 className={qDone ? undefined : 'primary'}
@@ -755,22 +761,6 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
             </div>
             {found.length === 0 && (
               <p className="bench-hint">{t('把兩張卡連起來，發現會出現在下面。')}</p>
-            )}
-            {st.linkNote && (
-              // 連錯：線沒釘住、兩張卡回原位，頂端工時閃紅，盧卡斯再用鉛筆寫一句（體驗評測：只有動作，第一次玩看不懂）。
-              // 連成功也不另外寫：新的發現便條會亮一下，內容就在便條上（試玩回報：兩處同一句太雜）。
-              <p
-                role="status"
-                className={
-                  st.linkNote.startsWith('連起來了')
-                    ? 'sr-only'
-                    : st.linkMiss
-                      ? 'board-note bad'
-                      : 'board-note'
-                }
-              >
-                {t(st.linkNote, scope)}
-              </p>
             )}
           </div>
         </div>
@@ -1445,6 +1435,36 @@ function WrapButton({ hours, open, onWrap }: { hours: number; open: number; onWr
     <button className="wide" onClick={() => setArmed(true)}>
       {t('結束調查')}
     </button>
+  );
+}
+
+/**
+ * 數字換值：留在原地，舊值淡出、新值淡入，--dur-ui --ease；不變色、不位移（設計師 P1-8a）。
+ * 減少動態時直接換掉。
+ */
+function Swap({ value }: { value: number }) {
+  const [shown, setShown] = useState(value);
+  const [old, setOld] = useState<number | null>(null);
+  if (value !== shown) {
+    setShown(value);
+    setOld(reducedMotion() ? null : shown);
+  }
+  useEffect(() => {
+    if (old === null) return;
+    const id = setTimeout(() => setOld(null), durUi());
+    return () => clearTimeout(id);
+  }, [old]);
+  return (
+    <strong className="swap">
+      {old !== null && (
+        <span key={`old-${old}`} className="swap-old" aria-hidden>
+          {old}
+        </span>
+      )}
+      <span key={shown} className={old !== null ? 'swap-new' : undefined}>
+        {shown}
+      </span>
+    </strong>
   );
 }
 

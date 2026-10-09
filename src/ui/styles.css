@@ -1854,24 +1854,20 @@ fieldset.relations.compact {
   color: var(--faint);
 }
 
-/* 連線與案情會議的結果：成立用綠邊，站不住用紅邊。 */
+/*
+ * 連線台的說明：盧卡斯寫在便條上的一句鉛筆字（設計師 P1-8a）。便條是紙：--note 底、1px --paper-rule、零圓角、不加投影；
+ * 鉛筆兩個主題同一色 --pencil（對 --note 淺色 8.6:1、深色 5.9:1）。不用紅，紅只代表矛盾。
+ */
 .board-note {
+  flex: 0 1 auto;
   margin: 0;
-  padding: 8px 12px;
-  border: 1px solid color-mix(in srgb, var(--good) 35%, var(--border));
-  border-left: 3px solid var(--good);
-  border-radius: var(--radius);
-  background: color-mix(in srgb, var(--good) 9%, var(--surface));
-  font-size: 0.9em;
-  line-height: 1.6;
-}
-/* 連錯：不用紅（紅只代表矛盾），是盧卡斯在板邊用鉛筆寫的一句（設計師 P1-8a）。 */
-.board-note.bad {
-  padding: 0;
-  border: 0;
-  background: none;
-  color: var(--pencil-ui);
+  padding: 4px 12px;
+  border: 1px solid var(--paper-rule);
+  border-radius: 0;
+  background: var(--note);
+  color: var(--pencil);
   font: 400 calc(var(--fs-hand) * var(--text-scale)) / 1.5 var(--font-hand);
+  letter-spacing: 0;
 }
 
 /* 發現：像釘在板上的一張便條，編號用打字機字，內容用文件字。 */
@@ -3142,7 +3138,7 @@ fieldset.relations.compact {
     animation: slam 0.38s var(--ease) both;
   }
   .board-note {
-    animation: drop 0.28s var(--ease) both;
+    animation: fade var(--dur-ui) var(--ease) both;
   }
   .findings li:last-child {
     animation: ink-in 0.5s var(--ease) both;
@@ -5140,6 +5136,10 @@ button.iou[aria-pressed='true'] {
   align-items: center;
   gap: 12px;
 }
+/* 「連起來」永遠靠右；左邊的空位給連錯的便條。 */
+.bench-foot > button {
+  margin-left: auto;
+}
 .answer-foot .board-note {
   margin: 0;
   flex: 1;
@@ -5351,19 +5351,34 @@ button.iou[aria-pressed='true'] {
   font-family: var(--font-mono, monospace);
   font-size: 0.8em;
 }
-/* 回饋教學：工時掉一格閃紅。連錯、交錯不再抖（設定集：不彈跳、不抖動；設計師 P1-8a）。 */
-@keyframes hours-drop {
-  0% {
-    color: var(--bad);
-    transform: translateY(-4px);
+/*
+ * 工時換值：數字留在原地，舊值淡出、新值淡入，--dur-ui --ease；不變色、不位移（設計師 P1-8a，設定集 10.2 不抖動）。
+ * 減少動態時元件直接換值，不畫舊值。
+ */
+.swap {
+  display: inline-grid;
+}
+.swap > span {
+  grid-area: 1 / 1;
+}
+.swap-old {
+  opacity: 0;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .swap-old {
+    animation: swap-out var(--dur-ui) var(--ease) both;
   }
-  100% {
-    transform: none;
+  .swap-new {
+    animation: fade var(--dur-ui) var(--ease) both;
   }
 }
-.hours.drop strong {
-  display: inline-block;
-  animation: hours-drop 0.6s ease;
+@keyframes swap-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
 }
 .tries {
   display: inline-flex;
@@ -5375,14 +5390,10 @@ button.iou[aria-pressed='true'] {
   border-radius: 50%;
   border: 1px solid var(--border-strong);
 }
+/* 交錯過的那幾顆塗實（墨色），不用紅：紅只代表矛盾（設計師 P1-8a）。 */
 .tries i.miss {
-  border-color: var(--bad);
-  background: var(--bad);
-}
-@media (prefers-reduced-motion: reduce) {
-  .hours.drop strong {
-    animation: none;
-  }
+  border-color: var(--text);
+  background: var(--text);
 }
 /*
  * 證據欄小卡（UX 規格 P1-12）：一行一張，高 40。名稱靠左、時間或種類靠右；

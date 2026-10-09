@@ -8,7 +8,7 @@ import {
 } from 'react';
 import type { Relation } from '../engine/constants';
 import { useT } from '../i18n';
-import { reducedMotion } from './a11y';
+import { durUi, reducedMotion } from './a11y';
 import { PhotoLogLine, type PhotoRecord } from './Dossier';
 import { useScope } from './lang';
 import './cork.css';
@@ -191,12 +191,6 @@ function ease(x: number) {
     else hi = mid;
   }
   return at((lo + hi) / 2, y1, y2);
-}
-
-/** 介面權杖 --dur-ui（180ms），從樣式表讀，和 CSS 一致。 */
-function durUi() {
-  const v = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--dur-ui'));
-  return Number.isFinite(v) ? v : 180;
 }
 
 /**

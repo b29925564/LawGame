@@ -56,11 +56,18 @@ for (const reduced of [false, true])
     page,
   }) => {
     const links = await board(page, reduced);
+    const hours = page.locator('.hours');
+    const before = Number(/\d+/.exec((await hours.getAttribute('aria-label')) ?? '')?.[0]);
     await links.getByRole('button', { name: '連起來' }).click();
-    const note = links.locator('.board-note.bad');
+    // 原因寫在「連起來」同一列的便條上：便條紙、鉛筆字，兩個主題同一色。
+    const note = links.locator('.bench-foot .board-note');
     await expect(note).toContainText('連不起來');
     await expect(note).toHaveCSS('font-family', /LXGW WenKai TC/);
-    await expect(note).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+    await expect(note).toHaveCSS('color', 'rgb(52, 64, 79)');
+    // 工時留在原地換成新值，不閃紅。
+    await expect(hours).toHaveAttribute('aria-label', new RegExp(`剩餘工時 ${before - 1} `));
+    await expect(hours.locator('.swap-old')).toHaveCount(0);
+    await expect(hours.locator('.swap')).toHaveText(String(before - 1));
     // 卡回原位、連線台清空；沒有任何東西在抖。
     await expect(page.locator('.cork-focus.filled')).toHaveCount(0);
     await expect(page.locator('.cork.missing')).toHaveCount(0);

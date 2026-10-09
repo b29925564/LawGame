@@ -100,6 +100,12 @@ export function reducedMotion() {
   return s.chosen ?? s.system;
 }
 
+/** 介面權杖 --dur-ui（180ms），從樣式表讀，JS 補間和 CSS 用同一個時長。 */
+export function durUi() {
+  const v = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--dur-ui'));
+  return Number.isFinite(v) ? v : 180;
+}
+
 /** 啟動時呼叫一次，在第一格畫面之前：幕卡的燈管一進場就要讀到這兩個屬性。 */
 export function restoreA11y() {
   applyPhotosafe(usePhotosafe.getState().on);
