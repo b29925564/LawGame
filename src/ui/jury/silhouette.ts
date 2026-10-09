@@ -554,15 +554,16 @@ export function svg(
  <mask id="lit-${uid}"><rect width="400" height="500" fill="#000"/><g fill="#fff">${sil}</g><g fill="#000" transform="translate(${key.toFixed(1)} 0)">${sil}</g></mask>
  <filter id="rim-${uid}" x="-5%" y="-5%" width="110%" height="110%"><feMorphology in="SourceAlpha" operator="erode" radius="8" result="er"/><feComposite in="SourceAlpha" in2="er" operator="out" result="edge"/><feOffset in="edge" dx="-2" result="sh"/><feComposite in="sh" in2="SourceAlpha" operator="in" result="band"/><feFlood flood-color="#ffe2c0"/><feComposite in2="band" operator="in"/></filter>
  <clipPath id="rimclip-${uid}"><rect x="0" y="${rimTop.toFixed(1)}" width="215" height="${(342 - rimTop).toFixed(1)}"/>${rimTop < CY ? `<rect x="0" y="0" width="262" height="${(rimTop + 24).toFixed(1)}"/>` : ''}<rect x="0" y="372" width="160" height="60"/></clipPath>
+ <clipPath id="armclip-${uid}"><rect x="0" y="380" width="215" height="120"/></clipPath>
 </defs>
 <rect width="400" height="500" fill="var(--cine-bg,#06080b)"/>
 <g class="silhouette" fill="#07090c">${sil}</g>
 <rect width="400" height="500" fill="var(--k-window,#ffe2c0)" opacity=".10" mask="url(#lit-${uid})"/>
 <g clip-path="url(#rimclip-${uid})"><g filter="url(#rim-${uid})" opacity=".9">${sil}</g></g>
 ${s.glasses.map((q) => `<path d="${d(q, false)}" fill="none" stroke="#c9ced6" stroke-width="5.7" opacity=".5"/>`).join('')}
-${pose === 'J4' ? '' : `<path d="${d(s.eye)}" fill="#1a1f26"/><rect x="${(s.eye[0][0] - 12).toFixed(1)}" y="${(s.eye[0][1] - 4).toFixed(1)}" width="5" height="5" fill="var(--k-window,#ffe2c0)" opacity=".9"/>`}
+${pose === 'J4' || shadowPct(v) >= 90 ? '' : `<path d="${d(s.eye)}" fill="#1a1f26"/><rect x="${(s.eye[0][0] - 12).toFixed(1)}" y="${(s.eye[0][1] - 4).toFixed(1)}" width="5" height="5" fill="var(--k-window,#ffe2c0)" opacity=".9"/>`}
 ${notes}
-${pose === 'J3' ? `<path d="${d([morph([N[0] - 120, 436], 'J3'), morph([N[0] + 120, 436], 'J3')], false)}" stroke="var(--k-window,#ffe2c0)" stroke-width="9.3" opacity=".85" fill="none"/>` : ''}
+${pose === 'J3' ? `<path clip-path="url(#armclip-${uid})" d="${d([morph([N[0] - 120, 436], 'J3'), morph([N[0] + 120, 436], 'J3')], false)}" stroke="var(--k-window,#ffe2c0)" stroke-width="9.3" opacity=".85" fill="none"/>` : ''}
 ${label ? `<rect x="14" y="14" width="372" height="472" fill="none" stroke="var(--cine-line,#2a323d)" stroke-dasharray="14 14" stroke-width="3"/><text x="28" y="470" font-family="JetBrains Mono, monospace" font-size="34" fill="var(--cine-muted,#8b95a3)">${label}</text>` : ''}
 </svg>`;
 }

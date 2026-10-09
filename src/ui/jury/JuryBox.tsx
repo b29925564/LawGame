@@ -238,7 +238,7 @@ export function JuryBox({
               />
               <span
                 className={showNumbers ? (over ? 'jb-track th over' : 'jb-track th') : 'jb-track'}
-                style={{ '--tick': tick(v), '--th': threshold } as CSSProperties}
+                style={{ '--tick': showNumbers ? v : tick(v), '--th': threshold } as CSSProperties}
                 aria-hidden
               />
               {showNumbers && (

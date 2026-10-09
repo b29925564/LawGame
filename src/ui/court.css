@@ -2100,6 +2100,10 @@ html[lang='en'] .stamp.rec-stamp b {
 .jurybox > .toggle {
   justify-self: start;
 }
+/* 畫面上的黃留給主按鈕（一格一黃）：勾選框用內文色。 */
+.jurybox > .toggle input {
+  accent-color: var(--text);
+}
 /* 手機收合刻痕條：整條一個熱區（高 44），段數跟陪審團人數走。 */
 .jb-strip-head {
   display: flex;
