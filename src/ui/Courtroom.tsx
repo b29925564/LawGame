@@ -1,5 +1,5 @@
 import { useCaseTerms } from './terms';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { TrialScene } from '../engine/episode/schema';
 import * as trial from '../engine/episode/trial';
 import {
@@ -26,6 +26,7 @@ import { CourtLight } from './CourtLight';
 import { useScope } from './lang';
 import { Stamp } from './Marks';
 import { Speech } from './Portrait';
+import { batesOf, CourtRecord, useCourtEntries } from './Record';
 import { Shell, Tabs } from './Shell';
 
 const glyph: Record<string, string> = {
@@ -214,12 +215,8 @@ export function Courtroom({ scene: raw }: { scene: TrialScene }) {
   // 一次只處理一項證詞，預設停在還沒打完的那一項。
   const pending = scene.witness.claims.find((c) => st.claims[c.id]?.result === 'none');
   const [pick, setPick] = useState<string>(pending?.id ?? scene.witness.claims[0].id);
-  const transcript = useRef<HTMLDivElement>(null);
-  // 新的一句話進來就捲到底，玩家永遠看得到最新的證詞。
-  useEffect(() => {
-    const el = transcript.current;
-    if (el) el.scrollTop = el.scrollHeight;
-  }, [st.log]);
+  const record = useCourtEntries(st.log, scene.witness.name, st.stricken);
+  const bates = batesOf(progress, raw.id);
 
   // 手上確認過的論點，用來對質。論點的強度與標籤定義在調查那一幕的疑問裡。
   const deskScene = deskSceneOf(progress);
@@ -276,18 +273,20 @@ export function Courtroom({ scene: raw }: { scene: TrialScene }) {
           {tail < st.log.length && (
             <details className="earlier">
               <summary>{t('前面的筆錄（{n} 句）', { n: st.log.length - tail })}</summary>
-              <div className="lines transcript full">
-                {st.log.slice(0, -tail).map((l, i) => (
-                  <Speech key={i} line={{ ...l, mood: '平', thought: false }} />
-                ))}
-              </div>
+              <CourtRecord
+                entries={record}
+                until={st.log.length - tail}
+                bates={bates}
+                className="full"
+              />
             </details>
           )}
-          <div className="lines transcript full">
-            {st.log.slice(-tail).map((l, i) => (
-              <Speech key={i} line={{ ...l, mood: '平', thought: false }} />
-            ))}
-          </div>
+          <CourtRecord
+            entries={record}
+            from={st.log.length - tail}
+            bates={bates}
+            className="full"
+          />
           <dl className="stats">
             <dt>{t('成功彈劾')}</dt>
             <dd>
@@ -365,14 +364,7 @@ export function Courtroom({ scene: raw }: { scene: TrialScene }) {
         }
         tabs={
           <>
-            <div className="lines transcript" aria-live="polite" ref={transcript}>
-              {st.log.map((l, i) => (
-                <div key={i} className={l.struck ? 'struck' : ''}>
-                  <Speech line={{ ...l, mood: '平', thought: false }} />
-                  {l.struck && <p className="muted small">{t('（這句話已從陪審團視角刪除）')}</p>}
-                </div>
-              ))}
-            </div>
+            <CourtRecord entries={record} live fit bates={bates} />
             <Jurors scene={scene} jury={st.jury} deltas={st.deltas} strip />
             {st.stage === 'cross' && (
               <Tabs
@@ -442,11 +434,7 @@ export function Courtroom({ scene: raw }: { scene: TrialScene }) {
                 {t('法官把這位證人在這一場說過的話全部從紀錄上拿掉，陪審團不能採用。')}
               </p>
             )}
-            <div className="lines">
-              {st.log.slice(-3).map((l, i) => (
-                <Speech key={i} line={{ ...l, mood: '平', thought: false }} />
-              ))}
-            </div>
+            <CourtRecord entries={record} from={Math.max(0, st.log.length - 3)} bates={bates} />
             <p className="muted small">{t('按「休庭」看這一場的結果。')}</p>
           </section>
         )}

@@ -20,7 +20,6 @@
 法官耐心: Judge’s patience
 開場許下的承諾: Promises made in opening
 '・已兌現': ' · Kept'
-（這句話已從陪審團視角刪除）: (This line has been struck from the jury’s view)
 證詞: Testimony
 '證詞 {n}': 'Claim {n}'
 庭上隨時可以翻。出示哪一個論點，看的就是這裡的強度。: You can open this at any time in court. Which argument to present depends on the strength shown here.
@@ -222,3 +221,17 @@
 '第 {n} 輪': 'Round {n}'
 '站你這邊 {a} 位': '{a} on your side'
 '候選人 {n}／{total}': 'Candidate {n} / {total}'
+
+# Trial transcript (art bible ch. 9 <Transcript>): 25 lines a page, Q/A, redaction bars
+審判筆錄: Trial transcript
+'第 {n} 頁': 'Page {n}'
+立即顯示全文: Show full text
+異議成立: Objection sustained
+已自紀錄刪除: Stricken from the record
+'（{text}）': '({text})'
+'record::問': Q.
+'record::答': A.
+'record::成立': Sustained
+'record::駁回': Overruled
+'record::法官': The Court
+'record::葛雷律師': Mr. Grey

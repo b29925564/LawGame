@@ -160,7 +160,8 @@ export function startTrial(
   };
 }
 
-export const LOG_KEEP = 16;
+/** 筆錄整場都留著：庭上的筆錄有頁行號，前面的話丟掉頁碼就接不上（設定集第 9 章）。400 句只是存檔的上限。 */
+export const LOG_KEEP = 400;
 
 const say = (st: TrialState, ...lines: LogLine[]): TrialState => ({
   ...st,
