@@ -397,7 +397,7 @@ scenes:
   - type: dialogue
     id: firm-morning
     act: 第一幕
-    place: 惠特洛克・海爾律師事務所　大廳　週一 08:00
+    place: 惠特洛克・海爾　大廳　週一 08:00
     steps:
       - do: say
         who: 旁白
@@ -2731,7 +2731,7 @@ scenes:
     when:
       verdict: [無罪, 有罪, 陪審團僵局]
       notFlags: [whitlock-up]
-    place: 惠特洛克・海爾律師事務所　會議室　週四 15:00
+    place: 惠特洛克・海爾　會議室　週四 15:00
     steps:
       - do: say
         who: 馬庫斯・海爾
@@ -2757,7 +2757,7 @@ scenes:
     when:
       outcome: [dismissed]
       notFlags: [whitlock-up]
-    place: 惠特洛克・海爾律師事務所　會議室　週四 15:00
+    place: 惠特洛克・海爾　會議室　週四 15:00
     steps:
       - do: say
         who: 馬庫斯・海爾
@@ -2782,7 +2782,7 @@ scenes:
     epilogue: true
     when:
       flags: [whitlock-up]
-    place: 惠特洛克・海爾律師事務所　會議室　週四 15:00
+    place: 惠特洛克・海爾　會議室　週四 15:00
     steps:
       - do: say
         who: 馬庫斯・海爾
@@ -2808,7 +2808,7 @@ scenes:
     when:
       outcome: [deal]
       notFlags: [whitlock-up]
-    place: 惠特洛克・海爾律師事務所　會議室　週四 15:00
+    place: 惠特洛克・海爾　會議室　週四 15:00
     steps:
       - do: say
         who: 馬庫斯・海爾
