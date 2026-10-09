@@ -945,7 +945,7 @@ const scene = z.discriminatedUnion('type', [
           photo: photoLog,
         }),
       )
-      .default([]),
+      .optional(),
   }),
   z.object({
     type: z.literal('dialogue'),
