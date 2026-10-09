@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { matches, type BranchContext, type Verdict } from '../engine/episode/branch';
 import { validateEpisode } from '../engine/episode/validate';
 import { validateCase } from '../engine/validate';
 import { cases, episodes } from './index';
@@ -39,14 +40,60 @@ describe('心聲的新寫法', () => {
 });
 
 describe('卷宗元件資料（P2-6）', () => {
+  const iso = (d: string) => d.replace(/^(\d\d)\/(\d\d)\/(\d{4})$/, '$3-$1-$2');
   for (const [name, e] of Object.entries(episodes)) {
     it(`${name} 案卷登錄表的日期照卡的順序遞增`, () => {
-      const iso = (d: string) => d.replace(/^(\d\d)\/(\d\d)\/(\d{4})$/, '$3-$1-$2');
       const dates = e.scenes.flatMap((s) =>
-        s.type === 'card' && s.docket ? [iso(s.docket.date)] : [],
+        s.type === 'card'
+          ? [...(s.filings ?? []), ...(s.docket ? [s.docket] : [])].map((d) => iso(d.date))
+          : [],
       );
       expect(dates.length).toBeGreaterThan(0);
       expect([...dates].sort()).toEqual(dates);
+    });
+
+    it(`${name} 每一種收場都有登錄表最後一行`, () => {
+      const rows = e.disposition ?? [];
+      const closing = e.scenes.find((s) => s.type === 'closing');
+      const theories = e.scenes.flatMap((s) =>
+        s.type === 'theory' ? s.theories.map((t) => t.id) : [],
+      );
+      const offers = e.scenes.flatMap((s) =>
+        s.type === 'negotiation' ? s.offers.map((o) => o.id) : [],
+      );
+      const base = {
+        verdict: null,
+        outcome: null,
+        deal: null,
+        theory: null,
+        flags: [],
+        ethics: [],
+        cards: [],
+        presented: [],
+      };
+      const ctxs: BranchContext[] = [
+        ...offers.map((deal) => ({ ...base, outcome: 'deal' as const, deal })),
+        ...(e.scenes.some((s) => s.type === 'trial' && s.fifth)
+          ? [{ ...base, outcome: 'dismissed' as const }]
+          : []),
+        ...Object.keys(closing?.type === 'closing' ? closing.verdicts : {}).flatMap((v) =>
+          [null, ...theories].flatMap((theory) =>
+            [false, true].map((punitive) => ({ ...base, verdict: v as Verdict, theory, punitive })),
+          ),
+        ),
+      ];
+      expect(ctxs.length).toBeGreaterThan(0);
+      for (const c of ctxs)
+        expect(
+          rows.some((r) => matches(r.when, c)),
+          JSON.stringify(c),
+        ).toBe(true);
+      const first = Math.min(
+        ...e.scenes.flatMap((s) =>
+          s.type === 'card' && s.docket ? [+iso(s.docket.date).replace(/-/g, '')] : [],
+        ),
+      );
+      for (const r of rows) expect(+iso(r.date).replace(/-/g, '')).toBeGreaterThan(first);
     });
   }
 });

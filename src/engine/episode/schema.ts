@@ -119,6 +119,12 @@ const phoneStep = z.discriminatedUnion('do', [
   z.object({ do: z.literal('retract'), time: time.optional(), target: id }),
 ]);
 
+/** 案卷登錄表的一行。 */
+const docketRow = z.object({
+  date: z.string().regex(/^\d\d\/\d\d\/\d{4}$/, '登錄表日期格式是 MM/DD/YYYY'),
+  entry: z.string(),
+});
+
 /** 對話場景：一行一行往下，遇到選擇就停。 */
 const dialogueStep = z.discriminatedUnion('do', [
   line.extend({ do: z.literal('say') }),
@@ -363,6 +369,8 @@ const deskScene = z.object({
               .array(
                 z.object({
                   text: z.string(),
+                  /** 後續換了時間地點就寫，例如答辯庭當晚在事務所走廊（設定集第 3 章第 12 格）。 */
+                  place: z.string().optional(),
                   then: z.array(line).min(1),
                   gives: z.array(id).default([]),
                   flags: z.array(z.string()).default([]),
@@ -553,6 +561,13 @@ const depositionScene = z.object({
   side: z.enum(['ours', 'theirs']).default('ours'),
   budget: z.number().int().min(1).default(1),
   witness: z.object({ name: z.string(), role: z.string() }),
+  /** 錄影畫面疊在介面層的出處：錄影那一方的 Bates 與時間碼（HH:MM:SS;FF）。 */
+  video: z
+    .object({
+      bates: z.string().regex(/^[A-Z]+-V-\d{6}$/, '錄影 Bates 格式是 前綴-V-六位數'),
+      timecode: z.string().regex(/^\d\d:\d\d:\d\d;\d\d$/, '時間碼格式是 HH:MM:SS;FF'),
+    })
+    .optional(),
   /** 對方主導時發問的律師。 */
   examiner: z.string().default('對造律師'),
   intro: z.array(line).default([]),
@@ -957,6 +972,13 @@ const scene = z.discriminatedUnion('type', [
     epilogue: z.boolean().default(false),
     place: z.string(),
     steps: z.array(dialogueStep).min(1),
+    /** 這一場畫成手機來電畫面（設定集第 3 章第 29 格）：來電顯示與通話結束時的時間。 */
+    call: z
+      .object({
+        caller: z.string(),
+        duration: z.string().regex(/^\d\d:\d\d$/, '通話時間格式是 MM:SS'),
+      })
+      .optional(),
   }),
   interviewScene,
   deskScene,
@@ -978,12 +1000,12 @@ const scene = z.discriminatedUnion('type', [
     title: z.string(),
     lines: z.array(z.string()).default([]),
     /** 案卷登錄表的一行：案件行事曆上的日期（MM/DD/YYYY）與法院紀錄口吻的事項。序號依卡的順序產生。 */
-    docket: z
-      .object({
-        date: z.string().regex(/^\d\d\/\d\d\/\d{4}$/, '登錄表日期格式是 MM/DD/YYYY'),
-        entry: z.string(),
-      })
-      .optional(),
+    docket: docketRow.optional(),
+    /**
+     * 上一張卡之後、這張卡之前的其他法院事件（證物袋引用的傳票、檢視令、撤銷聲請），
+     * 排在本卡 docket 那一行前面。寫了 when 的只在那條分支列出。
+     */
+    filings: z.array(docketRow.extend({ when: when.optional() })).optional(),
   }),
 ]);
 
@@ -1009,6 +1031,8 @@ export const episodeSchema = z
         }),
       )
       .default([]),
+    /** 案卷登錄表的最後一行：判決或處分，各分支一句，列第一個符合 when 的。 */
+    disposition: z.array(docketRow.extend({ when })).optional(),
     scenes: z.array(scene).min(1),
   })
   // 庭審與辯方證人場景沒寫 examiner 的，補上這一集的對造律師。

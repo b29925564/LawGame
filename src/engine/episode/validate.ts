@@ -72,6 +72,8 @@ export function validateEpisode(e: Episode): string[] {
     branchErrors(s, e, errors);
   }
   effectErrors(e, errors);
+  const { check } = whenChecker(e, errors);
+  e.disposition?.forEach((d, i) => check(d.when, `登錄表最後一行第 ${i + 1} 項`));
   openingErrors(e, errors);
   burdenErrors(e, errors);
   lineErrors(e, errors);
@@ -119,6 +121,7 @@ function burdenErrors(e: Episode, errors: string[]) {
       for (const x of s.endings) wrong(x.when.verdict, `結辯 ${s.id} 的結局 ${x.id}`);
     }
   }
+  e.disposition?.forEach((d, i) => wrong(d.when.verdict, `登錄表最後一行第 ${i + 1} 項`));
 }
 
 /**
@@ -506,8 +509,8 @@ function effectErrors(e: Episode, errors: string[]) {
   });
 }
 
-/** 分支條件：引用的理論要存在；結局 id 不重複；判決類的條件只能用在結辯之後。 */
-function branchErrors(s: Episode['scenes'][number], e: Episode, errors: string[]) {
+/** 分支條件引用的理論、協商條件、卡片、論點都要存在。 */
+function whenChecker(e: Episode, errors: string[]) {
   const theories = new Set(
     e.scenes.flatMap((x) => (x.type === 'theory' ? x.theories.map((t) => t.id) : [])),
   );
@@ -531,6 +534,18 @@ function branchErrors(s: Episode['scenes'][number], e: Episode, errors: string[]
     for (const c of w?.presented ?? [])
       if (!known.has(c)) errors.push(`${where} 的條件引用了不存在的論點：${c}`);
   };
+  return { check, theories, known };
+}
+
+/** 分支條件：引用的理論要存在；結局 id 不重複；判決類的條件只能用在結辯之後。 */
+function branchErrors(s: Episode['scenes'][number], e: Episode, errors: string[]) {
+  const { check, theories, known } = whenChecker(e, errors);
+  if (s.type === 'card')
+    for (const f of s.filings ?? []) {
+      check(f.when, `幕卡 ${s.id} 的登錄表行 ${f.date}`);
+      if (f.when && before(f.when))
+        errors.push(`幕卡 ${s.id} 的登錄表行 ${f.date} 依判決或結果分支，請寫進 disposition`);
+    }
   if (s.type === 'trial' && s.fifth?.theory && !theories.has(s.fifth.theory))
     errors.push(`法庭 ${s.id} 的緘默權撤訴條件引用了不存在的理論：${s.fifth.theory}`);
   if (s.type === 'theory')
