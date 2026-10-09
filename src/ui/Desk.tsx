@@ -1195,8 +1195,8 @@ function Jobs({ scene, held }: { scene: DeskScene; held: string[] }) {
             {done ? (
               <p className="good">{t('已回報。')}</p>
             ) : (
+              // 每張委託卡各一顆，一個畫面會有好幾顆：用次要鈕，黃只留給畫面上唯一的主按鈕（規格 v2.0 §10）。
               <button
-                className="primary"
                 disabled={!desk.canCommission(scene, st, j.id, progress.cards)}
                 onClick={() => commission(j.id)}
               >
