@@ -1689,7 +1689,9 @@ html[lang='en'] .record {
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: 8px;
+  /* 內距寫成變數：黏住的頁首要往上補同樣的量（手機是 0）。 */
+  --rec-sp: 8px;
+  padding: var(--rec-sp);
   scrollbar-width: thin;
 }
 .rec-paper {
@@ -1732,8 +1734,8 @@ html[lang='en'] .record {
  */
 .rec-head.pin {
   position: sticky;
-  /* 捲動框上緣有 8px 內距：黏在框的最上緣，上面不露出捲過去的字。 */
-  top: -8px;
+  /* 黏在框的最上緣（往上補掉捲動框的內距），上面不露出捲過去的字；手機內距是 0，不能補。 */
+  top: calc(-1 * var(--rec-sp));
   z-index: 2;
   margin: 0 calc(-1 * var(--rec-pr)) 0 calc(-1 * var(--rec-pl));
   padding: 0 var(--rec-pr) 0 var(--rec-pl);
@@ -2037,7 +2039,7 @@ html[lang='en'] .stamp.rec-stamp b {
     --rec-base: 13;
   }
   .record .rec-scroll {
-    padding: 0;
+    --rec-sp: 0px;
   }
   .rec-bar-top {
     padding: 0 0 6px;
