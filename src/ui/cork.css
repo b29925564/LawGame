@@ -181,14 +181,22 @@
   color: var(--paper-muted);
   font-variant-numeric: tabular-nums;
 }
+/* 放不下的正文不收刪節號（設定集 9-2：正文只在放大時讀）：
+   留滿 --lines 行，下一行只露上半、淡進紙裡，看得出還有字。剛好放得下的不會被淡掉。 */
 .cork-doc-text,
 .cork-hand {
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
+  --lines: 3;
+  --lh: 22px;
+  display: block;
+  max-height: calc(var(--lh) * (var(--lines) + 0.5));
   overflow: hidden;
+  mask-image: linear-gradient(
+    #000 calc(var(--lh) * var(--lines)),
+    transparent calc(var(--lh) * (var(--lines) + 0.5))
+  );
 }
 .cork-doc-text {
+  --lh: 1.45em;
   color: var(--paper-ink);
 }
 
@@ -216,8 +224,8 @@
   background: repeating-linear-gradient(transparent 0 21px, var(--index-blue) 21px 22px);
 }
 .cork-hand.small {
+  --lines: 2;
   font-size: 13px;
-  -webkit-line-clamp: 2;
 }
 
 /* 便條（論點）：便條色、手寫字，翹角用陰影。 */
@@ -227,9 +235,9 @@
 }
 .cork-card.note b.cork-hand,
 .cork-focus.note b.cork-hand {
+  --lines: 2;
   font-size: 16px;
   background: none;
-  -webkit-line-clamp: 2;
 }
 
 /* 照片：白邊 10px＋底欄。沒有實物縮圖時是警方閃光燈的版式：中心過曝、四角快速變暗、背景死黑。 */
@@ -360,7 +368,7 @@ button.cork-empty:focus-visible {
 /* 邊緣的卡退到暗處：內文只留兩行，卡不會超出板子。 */
 .cork-card .cork-doc-text,
 .cork-card .cork-hand {
-  -webkit-line-clamp: 2;
+  --lines: 2;
 }
 
 /* 一格一黃：板子開著時，證據欄裡放上 A、B 的卡改白框，黃只留給「連起來」。 */
@@ -394,11 +402,81 @@ body:has(.cork) .card .mini-btn[aria-pressed='true'] {
 }
 .cork.compact .cork-doc-text,
 .cork.compact .cork-hand {
-  -webkit-line-clamp: 2;
+  --lines: 2;
 }
 .bench-hint {
   margin: 0;
   font-size: var(--fs-ui-meta);
   color: var(--muted);
   text-align: right;
+}
+
+/* ── 陪審團視角：同一塊板，M. Osei 的粉彩速寫蓋在上面（設定集 8.6）。 ── */
+.cork-sketch {
+  position: absolute;
+  inset: 0;
+  z-index: 9;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  pointer-events: none;
+}
+.cork-sketch.on {
+  opacity: 1;
+  pointer-events: auto;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .cork-sketch {
+    transition: opacity var(--dur-ui) linear;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cork-sketch {
+    transition: opacity var(--dur-rm) linear;
+  }
+}
+/* 「我知道的案情／陪審團知道的案情」切換：選中的是白，不用黃。 */
+.view-switch {
+  display: inline-flex;
+  margin-left: auto;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.view-switch button {
+  min-height: 32px;
+  padding: 4px 12px;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  font-size: var(--fs-ui-meta);
+  color: var(--muted);
+}
+.view-switch button[aria-pressed='true'] {
+  background: var(--text) !important;
+  color: var(--bg);
+  border: none !important;
+  box-shadow: none;
+}
+/* 連線操作與陪審團視角的說明疊在同一塊：切換時版面不動。 */
+.bench-ops-wrap {
+  position: relative;
+}
+.bench-ops {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.jury-note {
+  position: absolute;
+  inset: 0 0 auto;
+  margin: 0;
+  font-size: var(--fs-ui-meta);
+  line-height: 1.6;
+  color: var(--muted);
+}
+/* 陪審團視角：連線操作留著位置但看不見、點不到。 */
+.bench-ops.off {
+  visibility: hidden;
 }
