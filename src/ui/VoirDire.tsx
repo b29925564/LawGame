@@ -6,6 +6,7 @@ import { useT } from '../i18n';
 import { CommitBar } from './Commit';
 import { CardSheet } from './Desk';
 import { IdPhoto } from './IdPhoto';
+import { lookOf } from './jury/JuryBox';
 import { useScope } from './lang';
 import { Speech } from './Portrait';
 import { Shell, Tabs } from './Shell';
@@ -44,6 +45,7 @@ export function VoirDire({ scene }: { scene: VoirDireScene }) {
 
 function VoirDireScreen({ scene }: { scene: VoirDireScene }) {
   const { progress, askJuror, challengeJuror, strikeJuror, seatJury, advance } = useEpisode();
+  const episode = progress.episode;
   const st = voirDireState(progress, scene);
   const t = useT();
   const scope = useScope();
@@ -158,7 +160,7 @@ function VoirDireScreen({ scene }: { scene: VoirDireScene }) {
               onClick={() => pick(c.id)}
             >
               <span className="no">{by ? '–' : i + 1}</span>
-              <IdPhoto who={c.name} size={40} />
+              <IdPhoto who={c.name} size={40} look={lookOf(episode, c.id)} />
               <span className="txt">
                 <strong>
                   {t(c.name, scope)}
@@ -187,7 +189,7 @@ function VoirDireScreen({ scene }: { scene: VoirDireScene }) {
 
   const profile = picked && (
     <section className="panel prof" aria-label={t(picked.name, scope)}>
-      <IdPhoto who={picked.name} size={96} />
+      <IdPhoto who={picked.name} size={96} look={lookOf(episode, picked.id)} />
       <div>
         <h3>{t(picked.name, scope)}</h3>
         <p className="sub">
@@ -265,7 +267,7 @@ function VoirDireScreen({ scene }: { scene: VoirDireScene }) {
         aria-label={t('席 {n}', { n: k + 1 }) + t('・') + name}
         onClick={() => pick(c.id)}
       >
-        <IdPhoto who={c.name} size={wide ? 72 : 28} />
+        <IdPhoto who={c.name} size={wide ? 72 : 28} look={lookOf(episode, c.id)} />
         <span className="n">{wide ? t('席 {n}', { n: k + 1 }) : k + 1}</span>
         <span className="nm2">{surname(name)}</span>
       </button>

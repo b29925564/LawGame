@@ -33,7 +33,6 @@ const ID: Record<string, string> = {
   '崔佛・米爾斯': 'trevor',
   '丹尼爾・奧卡福': 'okafor',
   '瑪莉索・維加': 'marisol',
-  '艾瑪・徐': 'emma',
   '喬安娜・費雪醫師': 'fisher',
   '麥可・唐醫師': 'tang',
 };

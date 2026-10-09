@@ -400,6 +400,34 @@ function hair(p: JurorLook, h: Head): Poly[] {
         ),
       );
       break; // 伊森：微捲亂髮
+    case 'bangs': {
+      // 普莉亞：齊瀏海往前蓋到眉、後面收短（受光側的鉤子在額前）
+      S.push(arc(() => 12, 178, 352, 70).concat(inside));
+      S.push([
+        [CX - rx * 0.1, top + 2],
+        [CX - rx - 16, top + 40],
+        [CX - rx - 22, 172],
+        [CX - rx + 34, 172],
+        [CX - rx * 0.05, top + 40],
+      ]);
+      break;
+    }
+    case 'scrubcap': {
+      // 唐醫師：手術帽，頂部包住、前額一圈帽緣
+      S.push(
+        arc(() => 16, 182, 358, 70)
+          .map(([x, y]): [number, number] => [x, Math.max(y, top - 10)])
+          .concat(inside),
+      );
+      S.push([
+        [CX - rx - 18, top + 58],
+        [CX - rx - 10, top + 40],
+        [CX + rx * 0.2, top + 30],
+        [CX + rx * 0.2, top + 46],
+        [CX - rx - 4, top + 70],
+      ]);
+      break;
+    }
     case 'mohawk': // 兩側推短、頂上一束
       S.push(arc((a) => 6 + 34 * Math.exp(-(((a - 270) / 30) ** 2)), 190, 350).concat(inside));
       break;
@@ -818,6 +846,37 @@ export const LIGHT: Record<string, Light> = {
     side: 'both',
     rim: [R(0, 112, 400, 230), R(0, 372, 400, 60)],
   }, // 布魯克斯：中性平光（誠實）
+  // 次要角色：照身分給燈（設計師 10-09），鉤子都長在受光側
+  screen: {
+    k: '--k-screen,#b9ccff',
+    key: [40, 0],
+    side: 'left',
+    rim: [R(0, 140, 215, 202), R(0, 372, 160, 60)],
+  }, // 普莉亞：鑑識室螢幕光從前下方
+  sodium: {
+    k: '--k-sodium,#ff8a1e',
+    key: [40, 0],
+    side: 'left',
+    rim: [R(0, 60, 230, 282), R(0, 0, 262, 110), R(0, 372, 160, 60)],
+  }, // 奧瑪：夜裡街燈
+  daylight: {
+    k: '--k-daylight,#fff4ea',
+    key: [48, 0],
+    side: 'left',
+    rim: [R(0, 60, 230, 282), R(0, 0, 262, 110), R(0, 372, 160, 60)],
+  }, // 卡爾德：頂樓辦公室晨光
+  overcast: {
+    k: '--k-overcast,#c9d3e2',
+    key: [40, 0],
+    side: 'left',
+    rim: [R(0, 60, 230, 282), R(0, 0, 262, 110), R(0, 372, 160, 60)],
+  }, // 維加：陰天
+  hospital: {
+    k: '--k-fluoro,#e4efe2',
+    key: [0, 40],
+    side: 'both',
+    rim: [R(0, 0, 400, 150), R(0, 150, 150, 80), R(0, 360, 400, 34)],
+  }, // 醫師：醫院日光燈頂光，額前也亮
 };
 
 const d = (poly: Poly, close = true) =>

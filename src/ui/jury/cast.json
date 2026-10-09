@@ -1,5 +1,5 @@
 {
-  "_note": "法庭說話者的剪影參數（設定集第 7.6 章鉤子表與「光的個性」；視覺設計師 #2 10-09 通過 main）。secondary 是設定集沒寫鉤子的次要角色，法庭介面 #2 草稿、待設計師確認。改動先問視覺設計師。",
+  "_note": "法庭說話者的剪影參數（設定集第 7.6 章鉤子表與「光的個性」；視覺設計師 #2 10-09 通過 main）。secondary 是設定集沒寫鉤子的次要角色，照設計師 10-09 第二次裁定重做（鉤子在受光側、坐高 ±12、照身分給燈、32px 與同集陪審員池一起測）。改動先問視覺設計師。",
   "main": [
     {
       "id": "lucas",
@@ -124,86 +124,78 @@
   "secondary": [
     {
       "id": "priya",
-      "hair": "bob",
+      "hair": "bangs",
       "glasses": "square",
-      "build": "narrow",
+      "acc": ["scarf"],
+      "lift": 6,
       "head": "medium",
-      "lift": -24,
-      "light": "window"
+      "build": "medium",
+      "light": "screen"
     },
     {
       "id": "omar",
-      "hair": "buzz",
+      "hair": "receding",
       "beard": "full",
-      "acc": ["collar"],
-      "build": "medium",
-      "head": "wide",
-      "lift": -24,
-      "light": "window"
+      "lift": -12,
+      "head": "medium",
+      "build": "narrow",
+      "light": "sodium"
     },
     {
       "id": "arthur",
       "hair": "quiff",
       "acc": ["collar"],
-      "build": "wide",
-      "head": "narrow",
-      "lift": -24,
-      "light": "window"
+      "lift": 0,
+      "head": "wide",
+      "build": "narrow",
+      "light": "daylight"
     },
     {
       "id": "trevor",
-      "hair": "receding",
-      "acc": ["pads"],
+      "hair": "buzz",
+      "acc": ["readers", "collar"],
+      "lift": -6,
+      "head": "narrow",
       "build": "narrow",
-      "head": "medium",
-      "slope": 6,
-      "lift": -24,
-      "light": "window"
+      "light": "top"
     },
     {
       "id": "okafor",
-      "hair": "buzz",
-      "acc": ["pads"],
+      "hair": "bald",
+      "beard": "goatee",
       "glasses": "square",
-      "build": "wide",
-      "head": "narrow",
-      "lift": 24,
+      "acc": ["pads"],
+      "lift": -12,
+      "head": "wide",
+      "build": "medium",
       "light": "window"
     },
     {
       "id": "marisol",
-      "hair": "wavy",
-      "build": "narrow",
+      "hair": "topbun",
+      "acc": ["hoops", "scarf"],
+      "lift": 6,
       "head": "narrow",
-      "lift": -24,
-      "light": "window"
-    },
-    {
-      "id": "emma",
-      "hair": "topknot",
-      "glasses": "round",
-      "build": "narrow",
-      "head": "narrow",
-      "lift": -24,
-      "light": "window"
+      "build": "medium",
+      "light": "overcast"
     },
     {
       "id": "fisher",
-      "hair": "sidepart",
-      "acc": ["scarf", "readers"],
-      "build": "narrow",
-      "head": "wide",
-      "lift": 24,
-      "light": "window"
+      "hair": "bouffant",
+      "acc": ["readers"],
+      "lift": -6,
+      "head": "medium",
+      "build": "medium",
+      "light": "hospital"
     },
     {
       "id": "tang",
-      "hair": "crew",
+      "hair": "scrubcap",
       "acc": ["headphones"],
-      "build": "narrow",
-      "head": "wide",
-      "lift": 0,
-      "light": "window"
+      "lift": -12,
+      "head": "medium",
+      "build": "medium",
+      "light": "hospital"
     }
   ]
 }

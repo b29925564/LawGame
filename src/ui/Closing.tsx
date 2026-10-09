@@ -17,6 +17,7 @@ import { useMoney, useT } from '../i18n';
 import { CardPick, EvidenceDrawer } from './Evidence';
 import { useScope } from './lang';
 import { IdPhoto } from './IdPhoto';
+import { JurorFace, lookOf } from './jury/JuryBox';
 import { JuryStart } from './JuryStart';
 import { Tally } from './Marks';
 import { Speech } from './Portrait';
@@ -327,6 +328,7 @@ function Verdict({
   const t = useT();
   const scope = useScope();
   const money = useMoney();
+  const episode = useEpisode((s) => s.progress.episode);
   const v = st.verdict!;
   const award = st.award;
   const p = award?.punitive;
@@ -610,9 +612,11 @@ function Verdict({
           {readOut && (
             <section className="panel fore">
               {fore ? (
-                <IdPhoto
-                  who={fore.label.split('・').slice(0, -1).join('・') || fore.label}
-                  size={40}
+                // 陪審團長是陪審員：剪影替身，姿勢與影子跟著他的心證（設計師 10-09）。
+                <JurorFace
+                  look={lookOf(episode, fore.id)}
+                  v={st.jury[fore.id] ?? 0}
+                  seat={t(fore.label, scope)}
                 />
               ) : (
                 <span />

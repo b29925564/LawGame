@@ -1356,7 +1356,7 @@ button.cand.on {
 }
 .panel.fore {
   display: grid;
-  grid-template-columns: 40px minmax(0, 1fr);
+  grid-template-columns: 56px minmax(0, 1fr);
   gap: var(--s3);
   padding: var(--s4);
   align-items: start;
@@ -2175,6 +2175,19 @@ html[lang='en'] .stamp.rec-stamp b {
   background: var(--cine-bg, #06080b);
 }
 .portrait.sil > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+/* 陪審員候選人的檔案照換成剪影替身：4:5、鏡頭層的黑，不加紙色與暗角。 */
+.idphoto.sil .ph {
+  aspect-ratio: 4 / 5;
+  background: var(--cine-bg, #06080b);
+}
+.idphoto.sil .ph::after {
+  content: none;
+}
+.idphoto.sil .ph > svg {
   display: block;
   width: 100%;
   height: 100%;

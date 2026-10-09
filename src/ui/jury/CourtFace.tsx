@@ -14,12 +14,12 @@ export const useInCourt = () => useContext(InCourt);
 
 /**
  * 剪影頭像：J1、受光 85（說話者不吃陪審團的心證曝光，第 1 章「說話者下限」），
- * 虛線框＋「待放 AI 立繪」永遠可見（第 7.6 章）。對不到人就不畫。
+ * 虛線框＋「待放 AI 立繪」加角色名永遠可見（第 7.6 章）。對不到人就不畫。
  */
 export function CourtFace({ who }: { who: string }) {
   const t = useT();
   const look = castLook(who);
-  const label = t('待放 AI 立繪');
+  const label = t('待放 AI 立繪　{name}', { name: t(who) });
   const html = useMemo(
     () => (look ? svg(look, { v: 85, pose: 'J1', label, uid: `face-${look.id}` }) : ''),
     [look, label],
