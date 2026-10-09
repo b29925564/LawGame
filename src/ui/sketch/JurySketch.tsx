@@ -17,7 +17,8 @@ export type JuryCard = {
   id: string;
   kind: string;
   name: string;
-  sub?: string;
+  text?: string;
+  time?: string;
   at: [number, number];
   w: number;
   tilt: number;
@@ -55,7 +56,9 @@ function cssColor(expr: string): RGB {
 const reduced = () =>
   typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-type Built = { bitmap: ImageBitmap } | { base: ImageData; strokes: Stroke[] };
+type Built = { light: boolean[] } & (
+  { bitmap: ImageBitmap } | { base: ImageData; strokes: Stroke[] }
+);
 
 let worker: Worker | null | undefined;
 let seq = 0;
@@ -79,7 +82,7 @@ function build(input: SketchInput, mode: SketchRequest['mode']): Promise<Built> 
   }
   if (!worker) {
     const s = buildSketch(input);
-    return Promise.resolve({ base: s.base, strokes: s.strokes });
+    return Promise.resolve(s);
   }
   const id = ++seq;
   const w = worker;
@@ -179,7 +182,6 @@ export function JurySketch({
       }
       const css = getComputedStyle(host);
       const hand = css.getPropertyValue('--font-hand') || 'cursive';
-      const source = css.getPropertyValue('--font-mono') || 'monospace';
       const sc: SketchCard[] = cards.map((c) => {
         const p = PAPER[look(c.kind)] ?? PAPER.copy;
         const cw = (c.w / 100) * w;
@@ -195,18 +197,22 @@ export function JurySketch({
           lum: p.lum,
           rgb: p.rgb,
           label: t(c.name, scope),
-          sub: c.sub && t(c.sub, scope),
+          body: c.text && t(c.text, scope),
+          time: c.time,
+          motif: /心率|heart-rate/.test(c.id + c.name)
+            ? 'pulse'
+            : look(c.kind) === 'photo'
+              ? 'photo'
+              : 'lines',
         };
       });
       // 手寫字型是依字分包下載的：畫布要用的字先載入，否則會退回別的字型。
-      const words = sc.map((c) => `${c.label}${c.sub ?? ''}`).join('');
-      await Promise.all([
-        document.fonts?.load(`17px ${hand}`, words || '證'),
-        document.fonts?.load(`14px ${source}`, provenance),
-      ]).catch(() => undefined);
+      const words = sc.map((c) => c.label + (c.body ?? '') + (c.time ?? '')).join('');
+      await document.fonts?.load(`17px ${hand}`, words + provenance).catch(() => undefined);
       if (cancelled) return;
       const paper = cssColor('var(--sketch-paper)');
       const ink = cssColor('var(--sketch-ink)');
+      const chalk = cssColor('var(--chalk)');
       const input: SketchInput = {
         w,
         h,
@@ -217,7 +223,7 @@ export function JurySketch({
         base: { lum: 0.43, rgb: [0x8a, 0x6a, 0x48] },
         paper,
         ink,
-        chalk: cssColor('var(--chalk)'),
+        chalk,
       };
       const animate = !formed && !reduced();
       const t0 = performance.now();
@@ -234,9 +240,11 @@ export function JurySketch({
           scale,
           cards: sc,
           ink,
+          chalk,
           paper,
+          light: got.light,
           provenance,
-          fonts: { hand, source },
+          fonts: { hand },
         });
         // 畫完存一份：證據、語言、主題、尺寸都沒變，下次直接貼上。
         const snap = document.createElement('canvas');

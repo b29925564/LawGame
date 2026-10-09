@@ -30,6 +30,11 @@ export type SketchCard = {
   rgb: RGB;
   label: string;
   sub?: string;
+  /** 卡上的內容（手寫）與時刻。 */
+  body?: string;
+  time?: string;
+  /** 卡上畫什麼：字（文件、陳述）、照片、心率線（在 22:24 斷掉）。 */
+  motif?: 'lines' | 'photo' | 'pulse';
 };
 
 export type SketchString = {
@@ -60,6 +65,11 @@ export type Stroke = { pts: number[]; w: number; rgb: RGB; a: number };
 
 /** 圖版的寬（RD-ART-0903-J 是 1440×860）：筆觸數量與長度都以圖版為準換算到這塊板。 */
 const PLATE_W = 1440;
+/** 斜向筆觸的方向（右上 37°），和抖開筆觸同一個方向。 */
+const DIAG = [0.8, -0.6] as const;
+/** 亮度梯度（Sobel 等效）門檻：高於 G_EDGE 完全順著切線，低於 G_FLAT 完全走斜向。 */
+const G_EDGE = 0.09;
+const G_FLAT = 0.04;
 const PLATE_H = 860;
 
 function lampAt(stops: [number, number][], d: number) {
@@ -154,6 +164,8 @@ export type Sketch = {
   base: ImageData;
   /** 依畫的順序排好的筆觸；進場時依序畫出來（--dur-sketch）。 */
   strokes: Stroke[];
+  /** 每張卡在亮處還是暗處：亮處的卡用炭筆寫字，暗處的卡用粉筆寫字。 */
+  light: boolean[];
 };
 
 export function buildSketch(inp: SketchInput): Sketch {
@@ -248,16 +260,19 @@ export function buildSketch(inp: SketchInput): Sketch {
     return Math.min(1, (s - y) / dry);
   };
 
-  // ── 紙紋：模糊 1px 的雜訊拉對比，加上 30° 方向的條紋。
+  // ── 紙紋：模糊 1px 的雜訊，沿筆觸方向（30°）再拉長成一條條的牙口，拉對比；不用逐像素的椒鹽點。
   const noise = new Float32Array(W * H);
   for (let i = 0; i < noise.length; i++) noise[i] = rand();
   const nb = boxBlur(noise, W, H, Math.max(1, Math.round(S)));
+  const reachT = Math.max(2, Math.round(3 * S));
   const tooth = new Float32Array(W * H);
   for (let y = 0; y < H; y++)
     for (let x = 0; x < W; x++) {
-      const i = y * W + x;
-      const streak = 0.5 + 0.5 * Math.sin((x * 0.5 + y * 0.87) / (2.2 * S) + nb[i] * 4);
-      tooth[i] = Math.min(1, Math.max(0, (nb[i] - 0.5) * 3.2 + 0.5)) * 0.7 + streak * 0.3;
+      let acc = 0;
+      for (let k = -reachT; k <= reachT; k++) acc += nb[idx(x + k * 0.87, y - k * 0.5)];
+      const g = acc / (2 * reachT + 1);
+      const streak = 0.5 + 0.5 * Math.sin((x * 0.5 + y * 0.87) / (2.2 * S) + g * 6);
+      tooth[y * W + x] = Math.min(1, Math.max(0, (g - 0.5) * 5.5 + 0.5)) * 0.8 + streak * 0.2;
     }
 
   // 卡片裡面是乾淨的紙：背景排線不畫進卡裡（輪廓另外勾）。
@@ -293,7 +308,7 @@ export function buildSketch(inp: SketchInput): Sketch {
       const f = Math.min(1, Math.max(0, (stopLine[x] - y) / dry));
       const k = cardAt[i];
       // 卡紙吃粉筆比較滿，字才讀得出來。
-      const c = t === 4 && k ? 0.93 : cover[t];
+      const c = t === 4 && k ? 0.8 : cover[t];
       if (t !== 2 && f > 0 && tooth[i] < c * f) {
         if (t === 0) put(o, c0[0], c0[1], c0[2]);
         else if (t === 1) put(o, c1[0], c1[1], c1[2]);
@@ -342,11 +357,22 @@ export function buildSketch(inp: SketchInput): Sketch {
       const gx = at(F, x + S, y) - at(F, x - S, y);
       const gy = at(F, x, y + S) - at(F, x, y - S);
       const m = Math.hypot(gx, gy);
-      // 切線＝梯度轉 90°；梯度太小（光圈正中）就沿 30° 走。
-      let tx = m > 1e-5 ? -gy / m : 0.87;
-      let ty = m > 1e-5 ? gx / m : 0.5;
-      tx *= dir;
-      ty *= dir;
+      // 切線＝梯度轉 90°。梯度小的地方（光圈正中、四角的暗部）沒有方向，切線會繞成同心圓：
+      // 改走固定的斜向筆觸，和切線依梯度大小平滑混合。
+      let tx = m > 1e-6 ? -gy / m : DIAG[0];
+      let ty = m > 1e-6 ? gx / m : DIAG[1];
+      if (tx * DIAG[0] + ty * DIAG[1] < 0) {
+        tx = -tx;
+        ty = -ty;
+      }
+      const sob = 4 * m;
+      const w = Math.min(1, Math.max(0, (sob - G_FLAT) / (G_EDGE - G_FLAT)));
+      const k2 = w * w * (3 - 2 * w);
+      tx = k2 * tx + (1 - k2) * DIAG[0];
+      ty = k2 * ty + (1 - k2) * DIAG[1];
+      const n = Math.hypot(tx, ty) || 1;
+      tx = (tx / n) * dir;
+      ty = (ty / n) * dir;
       jitter = jitter * 0.7 + (rand() - 0.5) * 0.7;
       x += tx * 1.5 * S - ty * jitter * 0.6 * S;
       y += ty * 1.5 * S + tx * jitter * 0.6 * S;
@@ -417,24 +443,120 @@ export function buildSketch(inp: SketchInput): Sketch {
   strokes.length = 0;
   for (const b of buckets) for (const st of b) strokes.push(st);
 
-  // ── 6. 卡片輪廓：炭筆勾兩次，每次有一點抖。
-  for (const c of cards) {
-    const cs = corners(c);
-    for (let pass = 0; pass < 2; pass++)
-      for (let e = 0; e < 4; e++) {
-        const [ax, ay] = cs[e];
-        const [bx, by] = cs[(e + 1) % 4];
-        const pts: number[] = [];
-        const n = 8;
-        for (let k = 0; k <= n; k++) {
-          const t = k / n;
-          pts.push(
-            ax + (bx - ax) * t + (rand() - 0.5) * 1.2 * S,
-            ay + (by - ay) * t + (rand() - 0.5) * 1.2 * S,
-          );
-        }
-        strokes.push({ pts, w: (1.4 - pass * 0.5) * S, rgb: ink, a: 0.85 * fade(c.cx, c.cy) });
+  // ── 6. 卡片：內容畫出來（照片排線、心率線；字最後手寫），輪廓用炭筆勾三次。
+  // 亮處的卡用炭筆，暗處的卡用粉筆（圖版 0903-J）。
+  const light = cards.map((c) => at(L, c.cx, c.cy) >= 0.48);
+  cards.forEach((c, ci) => {
+    const f = fade(c.cx, c.cy);
+    const tone = light[ci] ? ink : chalk;
+    const cos = Math.cos(c.angle);
+    const sin = Math.sin(c.angle);
+    // 卡片座標（左上為原點）→ 畫布座標。
+    const P = (u0: number, v0: number) => [
+      c.cx + (u0 - c.w / 2) * cos - (v0 - c.h / 2) * sin,
+      c.cy + (u0 - c.w / 2) * sin + (v0 - c.h / 2) * cos,
+    ];
+    const line = (u0: number, v0: number, u1: number, v1: number, wobble: number) => {
+      const pts: number[] = [];
+      const n = Math.max(4, Math.round(Math.hypot(u1 - u0, v1 - v0) / (5 * S)));
+      const ph = rand() * 6;
+      for (let k = 0; k <= n; k++) {
+        const t = k / n;
+        const off = Math.sin(t * Math.PI * 1.3 + ph) * wobble + (rand() - 0.5) * 0.5 * S;
+        const [x, y] = P(u0 + (u1 - u0) * t, v0 + (v1 - v0) * t + off);
+        pts.push(x, y);
       }
+      return pts;
+    };
+    const pad = 10 * S;
+    const motif = c.motif ?? 'lines';
+    if (motif === 'photo') {
+      // 照片：影像區用炭筆兩向斜排線塗暗，下面留一條寫字的白邊。
+      const [u0, v0] = [pad, pad];
+      const [u1, v1] = [c.w - pad, c.h - 24 * S];
+      for (let pass = 0; pass < 2; pass++)
+        for (let k = 0; k < u1 - u0 + (v1 - v0); k += 2.6 * S) {
+          // pass 0：「/」，u + v = C；pass 1：「\」，v − u = D。
+          const C = u0 + v0 + k;
+          const D = v0 - u1 + k;
+          const a = pass ? Math.max(u0, v0 - D) : Math.max(u0, C - v1);
+          const b = pass ? Math.min(u1, v1 - D) : Math.min(u1, C - v0);
+          if (b - a < 3 * S) continue;
+          const vy = (u: number) => (pass ? D + u : C - u);
+          strokes.push({
+            pts: line(a, vy(a), b, vy(b), 0.3 * S),
+            w: 1.2 * S,
+            rgb: ink,
+            a: (pass ? 0.45 : 0.7) * f,
+          });
+        }
+    } else if (motif === 'pulse') {
+      // 心率：鋸齒線走到 22:24（約 62%）就斷，斷點一條紅豎線，之後是空白。
+      const v = c.h * 0.42;
+      const end = pad + (c.w - 2 * pad) * 0.62;
+      const pts: number[] = [];
+      let up = true;
+      for (let u0 = pad; u0 <= end; u0 += 7 * S) {
+        const amp = (6 + ((u0 - pad) / (end - pad)) * 8) * S;
+        const [x, y] = P(u0, v + (up ? amp : -amp) + (rand() - 0.5) * 1.5 * S);
+        pts.push(x, y);
+        up = !up;
+      }
+      strokes.push({ pts, w: 2.2 * S, rgb: tone, a: 0.92 * f });
+      strokes.push({
+        pts: line(end, pad * 0.6, end, c.h - pad * 0.6, 0.3 * S),
+        w: 1 * S,
+        rgb: RED,
+        a: 0.85 * f,
+      });
+      const [dx, dy] = P(end, v);
+      strokes.push({ pts: [dx - 1.6 * S, dy, dx + 1.6 * S, dy], w: 3.4 * S, rgb: tone, a: f });
+    }
+    // 輪廓：每邊三筆，筆筆不同——超出角落一點、中段微彎、有的沒畫滿。
+    const edges: [number, number, number, number][] = [
+      [0, 0, c.w, 0],
+      [c.w, 0, c.w, c.h],
+      [c.w, c.h, 0, c.h],
+      [0, c.h, 0, 0],
+    ];
+    for (let pass = 0; pass < 3; pass++)
+      for (const [u0, v0, u1, v1] of edges) {
+        const len = Math.hypot(u1 - u0, v1 - v0);
+        const [du, dv] = [(u1 - u0) / len, (v1 - v0) / len];
+        const over0 = (pass === 0 ? 4 : -2 + rand() * 8) * S;
+        const over1 = pass === 2 ? -len * (0.1 + rand() * 0.25) : -1 + rand() * 6 * S;
+        const shift = (rand() - 0.5) * 3.6 * S;
+        const pts = line(
+          u0 - du * over0 + -dv * shift,
+          v0 - dv * over0 + du * shift,
+          u1 + du * over1 + -dv * shift,
+          v1 + dv * over1 + du * shift,
+          (0.9 + rand() * 1.4) * S,
+        );
+        strokes.push({
+          pts,
+          w: (pass === 0 ? 1.6 : 1.1 - pass * 0.2) * S,
+          rgb: ink,
+          a: (pass === 0 ? 0.85 : 0.6) * f,
+        });
+      }
+  });
+  // ── 7. 停筆線的收尾：沿停筆線方向幾筆越畫越淡的長線。
+  for (let k = 0; k < 7; k++) {
+    const x0 = rand() * W * 0.7;
+    const len = W * (0.12 + rand() * 0.25);
+    const lift = (6 + rand() * 28) * S;
+    const pts: number[] = [];
+    for (let x = x0; x < Math.min(W - 2, x0 + len); x += 3 * S)
+      pts.push(x, stopAt(x) - lift + (rand() - 0.5) * 1.2 * S);
+    if (pts.length < 6) continue;
+    // 收尾線是炭筆與紙之間的中灰，一筆比一筆淡、細。
+    strokes.push({
+      pts,
+      w: (2.6 - k * 0.22) * S,
+      rgb: mix(ink, paper, 0.5),
+      a: Math.max(0.12, 0.62 - k * 0.07),
+    });
   }
   // 連線：粉彩筆觸。矛盾是斷筆，支持是實線，其他是沒染色的棉線。
   for (const s of inp.strings) {
@@ -464,7 +586,7 @@ export function buildSketch(inp: SketchInput): Sketch {
     }
   }
 
-  return { base, strokes };
+  return { base, strokes, light };
 }
 
 /**
@@ -479,32 +601,44 @@ export function drawSketchText(
     scale: number;
     cards: SketchCard[];
     ink: RGB;
+    chalk: RGB;
     paper: RGB;
+    light: boolean[];
     provenance: string;
-    fonts: { hand: string; source: string };
+    fonts: { hand: string };
   },
 ) {
   const S = o.scale;
   ctx.save();
   ctx.scale(S, S);
   ctx.textBaseline = 'top';
-  ctx.fillStyle = `rgb(${o.ink.join(' ')} / 0.92)`;
-  for (const c of o.cards) {
+  o.cards.forEach((c, i) => {
     ctx.save();
     ctx.translate(c.cx, c.cy);
     ctx.rotate(c.angle);
-    const pad = 10;
-    ctx.font = `400 17px ${o.fonts.hand}`;
-    wrap(ctx, c.label, -c.w / 2 + pad, -c.h / 2 + pad, c.w - 2 * pad, 21, 2);
-    if (c.sub) {
-      ctx.font = `400 14px ${o.fonts.hand}`;
-      wrap(ctx, c.sub, -c.w / 2 + pad, -c.h / 2 + pad + 46, c.w - 2 * pad, 18, 2);
+    ctx.translate(-c.w / 2, -c.h / 2);
+    const tone = o.light[i] ? o.ink : o.chalk;
+    ctx.fillStyle = `rgb(${tone.join(' ')} / 0.92)`;
+    const pad = 9;
+    const inner = c.w - 2 * pad;
+    // 下緣：卡名（圖版的「F3 沃斯的心率」），小一號。
+    ctx.font = `400 13px ${o.fonts.hand}`;
+    wrap(ctx, c.label, pad, c.h - pad - 15, inner, 16, 1);
+    ctx.font = `400 15px ${o.fonts.hand}`;
+    if (c.motif === 'pulse') {
+      // 斷點旁寫時刻。
+      if (c.time) ctx.fillText(c.time, pad, c.h * 0.42 + 12);
+    } else if (c.motif !== 'photo' && c.body) {
+      // 卡上的內容：畫家照著卡抄下來的幾行字。
+      const rows = Math.max(1, Math.floor((c.h - 2 * pad - 20) / 18));
+      wrap(ctx, c.body, pad, pad - 1, inner, 18, rows);
     }
     ctx.restore();
-  }
+  });
   // 出處：紙上的字，墨色淡一點，跟畫分開。
   ctx.fillStyle = `rgb(${mix(o.ink, o.paper, 0.25).join(' ')})`;
-  ctx.font = `400 14px ${o.fonts.source}`;
+  // 出處是畫家手寫的圖說：同一支筆（文楷）。
+  ctx.font = `400 14px ${o.fonts.hand}`;
   ctx.textAlign = 'right';
   ctx.textBaseline = 'alphabetic';
   ctx.fillText(o.provenance, o.w - 16, o.h - 14);

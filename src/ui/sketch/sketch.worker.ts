@@ -26,13 +26,29 @@ self.onmessage = (e: MessageEvent<SketchRequest>) => {
       ctx.putImageData(sketch.base, 0, 0);
       drawStrokes(ctx, sketch.strokes, 0, sketch.strokes.length);
       const bitmap = cv.transferToImageBitmap();
-      post({ id, bitmap, n: sketch.strokes.length, built, drawn: performance.now() - t0 - built }, [
-        bitmap,
-      ]);
+      post(
+        {
+          id,
+          bitmap,
+          light: sketch.light,
+          n: sketch.strokes.length,
+          built,
+          drawn: performance.now() - t0 - built,
+        },
+        [bitmap],
+      );
       return;
     }
   }
-  post({ id, base: sketch.base, strokes: sketch.strokes, n: sketch.strokes.length, built }, [
-    sketch.base.data.buffer,
-  ]);
+  post(
+    {
+      id,
+      base: sketch.base,
+      strokes: sketch.strokes,
+      light: sketch.light,
+      n: sketch.strokes.length,
+      built,
+    },
+    [sketch.base.data.buffer],
+  );
 };
