@@ -1,8 +1,9 @@
-import { useEffect, useId, useRef, type ReactNode } from 'react';
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { episodeOf } from '../engine/game';
 import type { Card, Episode } from '../engine/episode/schema';
 import type { Progress } from '../engine/save';
 import { useLang, useT } from '../i18n';
+import { cardHighlights, Hl } from './Marks';
 import { bates, pageAt } from './bates';
 import { useScope } from './lang';
 import { Redaction } from './Redaction';
@@ -11,8 +12,9 @@ import type { Burden } from '../engine/jury';
 
 /**
  * 卷宗的三個標記元件（設定集第 9 章「九個標記元件」；設計師 P2-6 裁定）。
- * 只顯示劇本寫好的資料，不自動產生；字族：印好的表頭用介面字，編號、時間、案號、Bates 用 Courier Prime 700，
- * 手寫的保管鏈用 LXGW WenKai TC。
+ * 只顯示劇本寫好的資料，不自動產生。字族照紙本的規則（設定集第 9 章；設計師 P2-6 r1 更正）：
+ * 紙上印的東西用 Courier Prime（拉丁字母、數字）加 Noto Serif TC（中文），就是 --font-court 那一串；
+ * 手寫的一律 LXGW WenKai TC，數字、時間、英文都一樣。「三套字族」算的是每一張紙。
  */
 
 export type PhotoRecord = NonNullable<Card['photo']>;
@@ -57,8 +59,11 @@ export function Docket({ progress }: { progress: Progress }) {
   const rows = docketOf(ep);
   const cur = currentRow(rows, progress.scene);
   const terms = caseTermsOf(ep.scenes as { burden?: Burden }[]);
+  // 手機：只看最近三行（到目前那一行）和一條黑條，聲請卡留在第一屏；「展開全部」看整張（設計師 P2-6 r1）。
+  const [all, setAll] = useState(false);
+  const hidden = cur - 2 > 0 || cur < rows.length - 2;
   return (
-    <section className="docket" aria-labelledby={id}>
+    <section className={all ? 'docket all' : 'docket'} aria-labelledby={id}>
       <header className="docket-cap">
         <span className="ct">{t('卡爾德郡高等法院')}</span>
         <span className="vs">{t(terms.parties)}</span>
@@ -76,7 +81,7 @@ export function Docket({ progress }: { progress: Progress }) {
         <tbody>
           {rows.map((r, i) =>
             i > cur ? (
-              <tr key={r.no} className="dk-future">
+              <tr key={r.no} className={i === cur + 1 ? 'dk-future dk-next' : 'dk-future'}>
                 <td colSpan={3}>
                   <Redaction label={t('尚未發生')} />
                 </td>
@@ -84,7 +89,7 @@ export function Docket({ progress }: { progress: Progress }) {
             ) : (
               <tr
                 key={r.no}
-                className={i === cur ? 'dk-cur' : undefined}
+                className={i === cur ? 'dk-cur' : i < cur - 2 ? 'dk-old' : undefined}
                 aria-current={i === cur ? 'step' : undefined}
               >
                 <td className="dk-no">{r.no}</td>
@@ -95,13 +100,18 @@ export function Docket({ progress }: { progress: Progress }) {
           )}
         </tbody>
       </table>
+      {hidden && !all && (
+        <button type="button" className="dk-all" onClick={() => setAll(true)}>
+          {t('展開全部')}
+        </button>
+      )}
     </section>
   );
 }
 
 /**
- * 存檔欄的縮小版登錄表：每行一行字，放不下的淡進紙裡；下面一行 Bates 區間（設定集第 10 章）。
- * 只有玩家目前選中（滑過或鍵盤焦點）的那一欄，目前那一行上螢光；其他欄只加粗。整塊放在按鈕裡，
+ * 存檔欄的縮小版登錄表：每行一行字，放不下的淡進紙裡；還沒發生的行合成一條黑條（設定集第 10 章；設計師 P2-6 r1）。
+ * 只有玩家選中（鍵盤焦點）的那一欄，目前那一行上螢光；其他欄只加粗。整塊放在按鈕裡，
  * 對螢幕閱讀器隱藏：按鈕的名稱已經念出存檔名，進度在存檔標籤那一行。
  */
 export function DocketMini({ progress }: { progress: Progress }) {
@@ -111,41 +121,69 @@ export function DocketMini({ progress }: { progress: Progress }) {
   const cur = currentRow(rows, progress.scene);
   return (
     <span className="dk-mini" aria-hidden>
-      {rows.map((r, i) =>
-        i > cur ? (
-          <span key={r.no} className="dk-row dk-future">
-            <i className="dk-bar" />
-          </span>
-        ) : (
-          <span key={r.no} className={i === cur ? 'dk-row dk-cur' : 'dk-row'}>
-            <b>{r.no}</b>
-            <time>{r.date.slice(0, 5)}</time>
-            <span>{t(r.entry)}</span>
-          </span>
-        ),
+      {rows.slice(0, cur + 1).map((r, i) => (
+        <span key={r.no} className={i === cur ? 'dk-row dk-cur' : 'dk-row'}>
+          <b>{r.no}</b>
+          <time>{r.date.slice(0, 5)}</time>
+          <span>{t(r.entry)}</span>
+        </span>
+      ))}
+      {cur < rows.length - 1 && (
+        <span className="dk-row dk-future">
+          <i className="dk-bar" />
+        </span>
       )}
-      <span className="dk-bates">
-        {bates(ep.number, 1)}–{bates(ep.number, pageAt(progress.scene)).slice(-6)}
-      </span>
+    </span>
+  );
+}
+
+/** 存檔欄的 Bates 區間：從這一集的第一頁（和幕卡同一個 pageAt）到存檔那一場。放在章節那一行下面。 */
+export function SaveBates({ progress }: { progress: Progress }) {
+  const ep = episodeOf(progress);
+  return (
+    <span className="dk-bates" aria-hidden>
+      {bates(ep.number, pageAt(0))}–{bates(ep.number, pageAt(progress.scene)).slice(-6)}
     </span>
   );
 }
 
 // ── <PhotoLog> 照片紀錄表 ──
 
-/** 一行版（證據板照片卡的卡名下面）：放大時才讀。 */
+/** 照片序號補成兩位數：07/24。 */
+const serial = (photo: PhotoRecord) =>
+  `${String(photo.no).padStart(2, '0')}/${String(photo.of).padStart(2, '0')}`;
+
+/**
+ * 一行版（證據板照片卡的卡名下面）：只放案號、序號、時間，兩個半形空格分開（「ME-26-0311  14/46  03/14 09:40」）。
+ * 攝影者只在抽屜和放大檢視。放不下就整段換行，不漸隱。
+ */
 export function PhotoLogLine({ photo }: { photo: PhotoRecord }) {
-  const t = useT();
   return (
     <span className="photolog-line">
-      {[photo.caseNo, `${photo.no}/${photo.of}`, photo.at, t(photo.by)].join('\u3000')}
+      {[photo.caseNo, serial(photo), photo.at].map((x) => (
+        <span key={x}>{x}</span>
+      ))}
     </span>
   );
 }
 
+/** 人名加職稱（姓名、全形空格、職稱；英文是逗號）：姓名和職稱分兩段，各自整組不斷開；要不要換行由 CSS 決定。 */
+function Who({ text }: { text: string }) {
+  const t = useT();
+  const shown = t(text);
+  const at = shown.search(/\u3000|, /);
+  if (at < 0) return <span className="who-name">{shown}</span>;
+  return (
+    <>
+      <span className="who-name">{shown.slice(0, at)}</span>
+      <span className="who-role">{shown.slice(at).replace(/^(\u3000|, )/, '')}</span>
+    </>
+  );
+}
+
 /**
- * 白邊照片（零圓角）＋底邊四欄：案號、照片序號、時間、攝影者。
- * 沒有實物照片時是警方閃光燈的版式（中心過曝、四角快速變暗）；redacted 的照片畫「照片已遮蔽」黑條。
+ * 沖印本（零圓角）＋底邊四欄：案號、照片序號、時間、攝影者；右下角留 Bates 的黑條。
+ * 沒有實物照片時是警方閃光燈的版式（中心過曝、四角快速變暗），不畫道具；redacted 的照片畫「照片已遮蔽」黑條。
  */
 export function PhotoLog({
   photo,
@@ -163,13 +201,7 @@ export function PhotoLog({
   return (
     <figure className="photolog">
       <span className="photolog-print">
-        {redacted ? (
-          <Redaction label={t('照片已遮蔽')} />
-        ) : image ? (
-          <img src={image} alt="" />
-        ) : (
-          <i className="cork-tent" />
-        )}
+        {redacted ? <Redaction label={t('照片已遮蔽')} /> : image && <img src={image} alt="" />}
         {children}
       </span>
       <dl className="photolog-strip">
@@ -179,9 +211,7 @@ export function PhotoLog({
         </div>
         <div>
           <dt>{t('照片序號', 'dossier')}</dt>
-          <dd>
-            {String(photo.no).padStart(2, '0')}/{String(photo.of).padStart(2, '0')}
-          </dd>
+          <dd>{serial(photo)}</dd>
         </div>
         <div>
           <dt>{t('時間', 'dossier')}</dt>
@@ -189,22 +219,52 @@ export function PhotoLog({
         </div>
         <div>
           <dt>{t('攝影者', 'dossier')}</dt>
-          <dd>{t(photo.by)}</dd>
+          <dd>
+            <Who text={photo.by} />
+          </dd>
         </div>
       </dl>
+      {/* Bates 的位置先留一條黑條，等 P2-1 的出處格式。 */}
+      <span className="photolog-bates">
+        <Redaction label="Bates" />
+      </span>
     </figure>
   );
 }
 
 // ── <EvidenceBag> 證物袋 ──
 
+/** 印好的欄位裡的單號（No. 26-0315-088、D-1、26-CR-0417）：Courier 700，整組不斷開。 */
+const REF = /((?:No\. )?[A-Z0-9]+(?:-[A-Z0-9]+)+)/;
+
+function Printed({ text, code }: { text: string; code: boolean }) {
+  // 案號、項次整欄是碼：每一段（全形空格或逗號分開）整組不斷開。
+  if (code)
+    return text.split(/\u3000|, /).map((x, i) => (
+      <span key={i} className="seg">
+        {x}
+      </span>
+    ));
+  return text.split(REF).map((x, i) =>
+    i % 2 ? (
+      <span key={i} className="ref">
+        {x}
+      </span>
+    ) : (
+      x
+    ),
+  );
+}
+
 /**
- * 透明袋：兩道 CSS 漸層高光＋1px 白邊（設定集第 9 章，定案做法）。袋裡看得到卡片本身；
- * 袋上印好的表頭每袋一次，保管鏈每經手一次多一行手寫。版面跟著寬度：窄的時候每一手兩行。
+ * 透明袋：兩道 CSS 漸層高光＋1px 白邊（設定集第 9 章，定案做法）。袋裡看得到卡片本身。
+ * 袋上的標籤是看守所系統印出來的（紙本字族），保管鏈每經手一次多一行手寫（LXGW）：兩種聲音分開。
+ * 欄位空著畫黑條。窄的時候欄名疊在值上面，保管鏈留小字欄名。
  */
 export function EvidenceBag({ bag, children }: { bag: BagRecord; children?: ReactNode }) {
   const t = useT();
   const zh = useLang((s) => s.lang) !== 'en';
+  const blank = <Redaction label={t('未填', 'dossier')} />;
   const head: [string, string, boolean][] = [
     ['案號', bag.caseNo, true],
     ['證物項次', t(bag.item), true],
@@ -225,7 +285,9 @@ export function EvidenceBag({ bag, children }: { bag: BagRecord; children?: Reac
           {head.map(([k, v, code]) => (
             <div key={k}>
               <dt>{t(k, 'dossier')}</dt>
-              <dd className={code ? 'code' : 'hand'}>{v}</dd>
+              <dd className={code ? 'code' : undefined}>
+                {v ? <Printed text={v} code={code} /> : blank}
+              </dd>
             </div>
           ))}
         </dl>
@@ -247,16 +309,16 @@ export function EvidenceBag({ bag, children }: { bag: BagRecord; children?: Reac
                 {c.at}
               </span>
               <span className="from">
-                <span className="sr-only">{t('交出', 'dossier')}</span>
-                {t(c.from)}
+                <span className="ck">{t('交出', 'dossier')}</span>
+                {c.from ? <Who text={c.from} /> : blank}
               </span>
               <span className="to">
-                <span className="sr-only">{t('收受', 'dossier')}</span>
-                {t(c.to)}
+                <span className="ck">{t('收受', 'dossier')}</span>
+                {c.to ? <Who text={c.to} /> : blank}
               </span>
               <span className="why">
                 <span className="sr-only">{t('目的', 'dossier')}</span>
-                {t(c.purpose)}
+                {c.purpose ? t(c.purpose) : blank}
               </span>
             </li>
           ))}
@@ -277,13 +339,13 @@ export type ZoomItem = {
   image?: string;
 };
 
-/** 卡片本身（紙）：放大檢視裡、證物袋的窗口裡。 */
-function Sheet({ item }: { item: ZoomItem }) {
+/** 卡片本身（紙）：放大檢視裡、證物袋的窗口裡。玩家在抽屜裡劃的螢光照樣留著（一張紙一道）。 */
+function Sheet({ item, hl }: { item: ZoomItem; hl?: string[] }) {
   const t = useT();
   const scope = useScope();
   return (
     <div className="zoom-sheet">
-      <p>{t(item.text, scope)}</p>
+      <p>{hl ? <Hl text={item.text} words={hl} live={false} /> : t(item.text, scope)}</p>
       <p className="zoom-src">
         {t(item.kind)}
         {t('・')}
@@ -309,13 +371,19 @@ export function EvidenceZoom({
   const t = useT();
   const scope = useScope();
   const ref = useRef<HTMLDialogElement>(null);
-  const { photo, bag } = dossierOf(episodeOf(progress), item.id);
+  const ep = episodeOf(progress);
+  const { photo, bag } = dossierOf(ep, item.id);
+  const hl = cardHighlights(ep)[item.id];
   // 卸載時元素離開文件就自動關閉，不在清理函式裡 close()：那會排一個 close 事件，嚴格模式重掛時把自己關掉。
   useEffect(() => {
     const d = ref.current;
     if (d && !d.open) d.showModal();
   }, []);
-  const body = photo ? <PhotoLog photo={photo} image={item.image} /> : <Sheet item={item} />;
+  const body = photo ? (
+    <PhotoLog photo={photo} image={item.image} />
+  ) : (
+    <Sheet item={item} hl={hl} />
+  );
   return (
     <dialog
       ref={ref}
@@ -339,7 +407,7 @@ export function EvidenceZoom({
         </button>
       </header>
       {bag ? <EvidenceBag bag={bag}>{body}</EvidenceBag> : body}
-      {photo && <Sheet item={item} />}
+      {photo && <Sheet item={item} hl={hl} />}
     </dialog>
   );
 }

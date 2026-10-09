@@ -195,24 +195,31 @@ const stamp = z.string().regex(/^\d\d\/\d\d \d\d:\d\d$/, '紀錄時間格式是 
 /** 照片紀錄表的四欄。案號是拍照機關自己的號碼，不是法院案號。 */
 const photoLog = z
   .object({
-    caseNo: z.string(),
+    caseNo: z.string().min(1),
     no: z.number().int().min(1),
     of: z.number().int().min(1),
     at: stamp,
-    by: z.string(),
+    by: z.string().min(1),
   })
   .refine((p) => p.no <= p.of, '照片序號不能大於總張數');
 
 /** 證物袋：袋上印的表頭，加上手寫的保管鏈（每經手一次一行，不斷手、時間遞增）。 */
 const bag = z
   .object({
-    caseNo: z.string(),
-    item: z.string(),
-    acquiredBy: z.string(),
-    from: z.string(),
-    desc: z.string(),
+    caseNo: z.string().min(1),
+    item: z.string().min(1),
+    acquiredBy: z.string().min(1),
+    from: z.string().min(1),
+    desc: z.string().min(1),
     custody: z
-      .array(z.object({ at: stamp, from: z.string(), to: z.string(), purpose: z.string() }))
+      .array(
+        z.object({
+          at: stamp,
+          from: z.string().min(1),
+          to: z.string().min(1),
+          purpose: z.string().min(1),
+        }),
+      )
       .min(1),
   })
   .refine(

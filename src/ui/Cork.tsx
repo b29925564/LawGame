@@ -75,9 +75,13 @@ function Face({ item }: { item: CorkItem }) {
     case 'photo':
       return (
         <>
-          {/* 警方照片的閃光燈：中心過曝、四角快速變暗；證物立牌灰白。 */}
+          {/* 警方照片的閃光燈：中心過曝、四角快速變暗；證物立牌灰白。有照片紀錄表的（驗屍照片）不畫立牌：放大後會把錯的道具放大（設計師 P2-6 r1）。 */}
           <span className="cork-print">
-            {item.image ? <img src={item.image} alt="" /> : <i className="cork-tent" />}
+            {item.image ? (
+              <img src={item.image} alt="" />
+            ) : (
+              !item.photo && <i className="cork-tent" />
+            )}
           </span>
           <span className="cork-strip">
             <b>{name}</b>
@@ -406,6 +410,8 @@ export function Cork({
                 key={c.id}
                 type="button"
                 className="cork-zoom"
+                // 陪審團視角看的是速寫，不是卷宗：停用。
+                disabled={jury?.on}
                 aria-label={t('放大檢視 {name}', { name: t(c.name, scope) })}
                 style={{ left: `${focusAt[i][0] + focusW}%`, top: `${focusAt[i][1]}%` }}
                 onClick={() => onZoom(c.id)}

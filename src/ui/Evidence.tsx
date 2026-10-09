@@ -295,7 +295,7 @@ export function EvidenceCard({
             {bag ? <EvidenceBag bag={bag}>{body}</EvidenceBag> : body}
             {(photo || bag) && (
               <button type="button" className="link zoom-open" onClick={() => setZoom(true)}>
-                {t('放大檢視')}
+                {t('放大')}
               </button>
             )}
           </div>

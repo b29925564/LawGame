@@ -4753,7 +4753,6 @@ button.iou[aria-pressed='true'] {
 @media (max-width: 520px) {
   :root {
     --fs-vo: 19px;
-    --fs-hand: 17px;
   }
   .vo-frame {
     width: calc(100% - 32px);
@@ -5838,11 +5837,10 @@ button.iou[aria-pressed='true'] {
   font-weight: 700;
 }
 
-/* 英文模式：視覺設計師定的字體配對；行距收到 1.5，數字等寬 */
+/* 英文模式：視覺設計師定的字體配對；行距收到 1.5，數字等寬。手寫在英文也用 LXGW WenKai TC（它有拉丁字母；設計師 #225 審查），所以不覆寫 --font-hand。 */
 :root:lang(en) {
   --font: 'IBM Plex Sans', 'Noto Sans TC', system-ui, sans-serif;
   --font-doc: 'Source Serif 4', 'Noto Serif TC', serif;
-  --font-hand: 'Source Serif 4', serif;
   font-variant-numeric: tabular-nums;
 }
 :root:lang(en) body,
@@ -5850,11 +5848,6 @@ button.iou[aria-pressed='true'] {
 :root:lang(en) .speech,
 :root:lang(en) .doc {
   line-height: 1.5;
-}
-
-:root:lang(en) .sticky,
-:root:lang(en) .iou .sig {
-  font-style: italic;
 }
 
 /* 法庭光層試做（場景光影規格）：四張關鍵格疊在畫面最底，只改 opacity。 */

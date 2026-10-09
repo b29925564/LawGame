@@ -92,7 +92,7 @@
   white-space: nowrap;
 }
 .fthumb.on {
-  outline: 2px solid var(--hl);
+  outline: 2px solid var(--text);
   outline-offset: 2px;
 }
 .fthumb .rcv {
