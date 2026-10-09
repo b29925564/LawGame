@@ -1,0 +1,228 @@
+{
+  "_note": "陪審員剪影參數 v1（視覺設計師 #2，2026-10-09）。id 對 src/content/ep{1,2}.yaml 第 15 場 candidates。改動先問視覺設計師。",
+  "ep1": [
+    {
+      "id": "c-cop",
+      "hair": "crew",
+      "build": "wide",
+      "slope": 8,
+      "jaw": "square",
+      "acc": ["collar"],
+      "lift": -24,
+      "head": "narrow"
+    },
+    {
+      "id": "c-dev",
+      "hair": "pixie",
+      "build": "narrow",
+      "acc": ["hood"],
+      "glasses": "round",
+      "lift": -24,
+      "head": "wide"
+    },
+    { "id": "c-mom", "hair": "ponytail", "build": "medium", "lift": 24, "head": "medium" },
+    {
+      "id": "c-cpa",
+      "hair": "sidepart",
+      "jaw": "long",
+      "acc": ["collar"],
+      "glasses": "square",
+      "lift": 24,
+      "head": "wide",
+      "build": "wide"
+    },
+    {
+      "id": "c-student",
+      "hair": "curly",
+      "build": "narrow",
+      "acc": ["strap"],
+      "lift": -24,
+      "head": "wide"
+    },
+    { "id": "c-fired", "hair": "cap", "build": "medium", "lift": -24, "head": "medium" },
+    {
+      "id": "c-nurse",
+      "hair": "wavy",
+      "acc": ["readers"],
+      "lift": 24,
+      "head": "wide",
+      "build": "narrow"
+    },
+    {
+      "id": "c-driver",
+      "hair": "bald",
+      "build": "wide",
+      "beard": "full",
+      "lift": -24,
+      "head": "wide"
+    },
+    {
+      "id": "c-teacher",
+      "hair": "topbun",
+      "build": "wide",
+      "acc": ["pencil"],
+      "glasses": "cateye",
+      "lift": -12,
+      "head": "wide"
+    },
+    { "id": "c-barista", "hair": "topknot", "build": "narrow", "lift": 0, "head": "medium" },
+    {
+      "id": "c-broker",
+      "hair": "quiff",
+      "acc": ["pads"],
+      "beard": "goatee",
+      "lift": 12,
+      "head": "narrow",
+      "build": "medium"
+    },
+    { "id": "c-chef", "hair": "braid", "build": "narrow", "lift": 12, "head": "narrow" },
+    {
+      "id": "c-clerk",
+      "hair": "receding",
+      "acc": ["collar"],
+      "glasses": "round",
+      "lift": -24,
+      "head": "narrow",
+      "build": "narrow"
+    },
+    {
+      "id": "c-retail",
+      "hair": "long",
+      "build": "narrow",
+      "acc": ["pads"],
+      "lift": -12,
+      "head": "wide"
+    },
+    {
+      "id": "c-farmer",
+      "hair": "shaggy",
+      "build": "wide",
+      "slope": 26,
+      "beard": "full",
+      "lift": 0,
+      "head": "wide"
+    },
+    {
+      "id": "c-dj",
+      "hair": "mohawk",
+      "build": "narrow",
+      "acc": ["headphones"],
+      "lift": 24,
+      "head": "narrow"
+    },
+    {
+      "id": "c-it",
+      "hair": "sidepart",
+      "acc": ["scarf"],
+      "lift": 24,
+      "head": "narrow",
+      "build": "wide"
+    },
+    {
+      "id": "c-guard",
+      "hair": "afro",
+      "build": "wide",
+      "acc": ["epaulette"],
+      "lift": -24,
+      "head": "wide"
+    },
+    { "id": "c-baker", "hair": "headscarf-knot", "build": "narrow", "lift": 24, "head": "wide" },
+    {
+      "id": "c-busdriver",
+      "hair": "buzz",
+      "beard": "goatee",
+      "lift": -12,
+      "head": "narrow",
+      "build": "medium"
+    },
+    {
+      "id": "c-postal",
+      "hair": "bouffant",
+      "acc": ["hoops"],
+      "lift": 0,
+      "head": "wide",
+      "build": "medium"
+    }
+  ],
+  "ep2": [
+    {
+      "id": "c-bus",
+      "hair": "bald",
+      "build": "wide",
+      "acc": ["scarf"],
+      "lift": 0,
+      "head": "narrow"
+    },
+    {
+      "id": "c-actuary",
+      "hair": "long",
+      "acc": ["pads"],
+      "glasses": "square",
+      "lift": 12,
+      "head": "narrow",
+      "build": "narrow"
+    },
+    {
+      "id": "c-logistics",
+      "hair": "buzz",
+      "build": "wide",
+      "beard": "full",
+      "lift": -24,
+      "head": "wide"
+    },
+    { "id": "c-nurse", "hair": "ponytail", "lift": 12, "head": "wide", "build": "narrow" },
+    {
+      "id": "c-student",
+      "hair": "sidepart",
+      "build": "narrow",
+      "acc": ["strap"],
+      "glasses": "round",
+      "lift": -24,
+      "head": "medium"
+    },
+    { "id": "c-night", "hair": "afro", "lift": -12, "head": "narrow", "build": "medium" },
+    {
+      "id": "c-widow",
+      "hair": "topbun",
+      "build": "narrow",
+      "acc": ["hoops"],
+      "lift": 12,
+      "head": "narrow"
+    },
+    {
+      "id": "c-banker",
+      "hair": "sidepart",
+      "acc": ["pads", "collar"],
+      "lift": 24,
+      "head": "narrow",
+      "build": "medium"
+    },
+    { "id": "c-barista", "hair": "braid", "build": "medium", "lift": -24, "head": "narrow" },
+    {
+      "id": "c-retail",
+      "hair": "wavy",
+      "acc": ["pads", "hoops"],
+      "lift": -24,
+      "head": "wide",
+      "build": "narrow"
+    },
+    {
+      "id": "c-pilot",
+      "hair": "crew",
+      "build": "wide",
+      "acc": ["popped"],
+      "glasses": "aviator",
+      "lift": 24,
+      "head": "wide"
+    },
+    {
+      "id": "c-engineer",
+      "hair": "shaggy",
+      "beard": "goatee",
+      "glasses": "square",
+      "lift": -12,
+      "head": "wide",
+      "build": "medium"
+    }
+  ]
+}

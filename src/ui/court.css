@@ -1,0 +1,2171 @@
+/*
+ * 庭審畫面（法庭介面負責）：聲請狀、遴選與判決、調解、審判筆錄。
+ * 在 main.tsx 裡排在 styles.css 後面，層疊順序和原本在 styles.css 檔尾時一樣。
+ * styles.css 前段還有幾塊庭審樣式（法庭、章、借據、票數、耐心燈管）夾在共用規則之間，
+ * 搬過來會改變層疊順序，等那幾個畫面照設定集重做時再一起搬。
+ */
+
+/* ══ 法院系統：聲請狀（UX board-spec §10、視覺規格 §17，法庭介面） ══ */
+:root {
+  /* 紙上的墨水與章：紙永遠是淺色，兩個主題同值。 */
+  --ink-fill: #1f3a68;
+  --stamp-ok: #1f7a4d;
+  --stamp-no: #b3322b;
+}
+.court-desk {
+  display: grid;
+  gap: 12px;
+  justify-items: center;
+  /* 捲到底時狀紙的下緣和投影要完整露出來（體驗評測 v88）。 */
+  padding-bottom: 32px;
+}
+/* 縮圖列和便條跟狀紙左緣對齊。 */
+.court-desk > .filings,
+.court-desk > .prereq-note {
+  width: min(720px, 100%);
+}
+.filings {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  padding: 0 0 22px;
+}
+.fthumb {
+  position: relative;
+  width: 72px;
+  height: 96px;
+  min-height: 0;
+  border: 0;
+  border-radius: 2px;
+  background: var(--paper);
+  box-shadow:
+    0 1px 0 rgb(0 0 0 / 15%),
+    var(--shadow-1);
+  padding: 14px 8px 0 14px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 7px;
+  align-content: start;
+}
+.fthumb:hover,
+.fthumb[aria-pressed='true'] {
+  background: var(--paper);
+}
+.fthumb::before {
+  content: '';
+  position: absolute;
+  left: 9px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  border-left: 1px solid var(--paper-rule);
+  border-right: 1px solid var(--paper-rule);
+}
+.fthumb i {
+  display: block;
+  width: 50px;
+  height: 3px;
+  border-radius: 1px;
+  background: var(--paper-rule);
+}
+.fthumb i:nth-child(2) {
+  width: 35px;
+}
+.fthumb i:nth-child(4) {
+  width: 28px;
+}
+.fthumb i.open {
+  background: transparent;
+  border-bottom: 1px dashed var(--paper-muted);
+  height: 4px;
+  border-radius: 0;
+}
+.fthumb .k {
+  position: absolute;
+  left: -8px;
+  right: -8px;
+  bottom: -20px;
+  text-align: center;
+  font: 500 11px/1 var(--font-mono);
+  color: var(--muted);
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+.fthumb.on {
+  outline: 2px solid var(--hl);
+  outline-offset: 2px;
+}
+.fthumb .rcv {
+  position: absolute;
+  right: 6px;
+  top: 8px;
+  width: 26px;
+  height: 14px;
+  border: 1.5px solid var(--paper-ink);
+  border-radius: 2px;
+  opacity: 0.6;
+  transform: rotate(6deg);
+}
+.fthumb .mini {
+  position: absolute;
+  right: -6px;
+  bottom: 10px;
+  width: 34px;
+  height: 34px;
+  mix-blend-mode: multiply;
+}
+.fthumb .mini svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  font-family: var(--font-doc);
+}
+.fthumb .mini.ok,
+.stamp-big.ok {
+  color: var(--stamp-ok);
+}
+.fthumb .mini.no,
+.stamp-big.no {
+  color: var(--stamp-no);
+}
+
+/* 聲請狀：訴狀紙，32px 橫格線，左邊雙直線與行號。 */
+.plead {
+  position: relative;
+  width: min(720px, 100%);
+  min-height: 512px;
+  background-color: var(--paper);
+  background-image:
+    var(--grain),
+    repeating-linear-gradient(to bottom, transparent 0 31px, rgb(60 50 20 / 9%) 31px 32px);
+  background-position:
+    0 0,
+    0 20px;
+  color: var(--paper-ink);
+  border-radius: 2px;
+  padding: 36px 48px 44px 76px;
+  box-shadow:
+    0 1px 0 rgb(0 0 0 / 18%),
+    0 28px 60px -24px var(--shadow-deep);
+}
+.plead::before {
+  content: '';
+  position: absolute;
+  left: 56px;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  border-left: 1px solid var(--paper-rule);
+  border-right: 1px solid var(--paper-rule);
+}
+.plead .ln {
+  position: absolute;
+  left: 22px;
+  top: 20px;
+  overflow: hidden;
+  display: grid;
+  align-content: start;
+  font: 400 10px/32px var(--font-court);
+  color: var(--paper-muted);
+  opacity: 0.8;
+}
+.plead .cap {
+  text-align: center;
+  display: grid;
+  gap: 4px;
+  margin-bottom: 22px;
+}
+/* 收文章放在抬頭上方，不壓到法院名稱；英文的章比較寬（體驗評測 v88）。 */
+.plead.received .cap {
+  margin-top: 32px;
+}
+.plead .cap .ct {
+  font: 500 13px/1.6 var(--font-doc);
+  letter-spacing: 0.22em;
+  color: var(--paper-muted);
+}
+.plead .cap .vs {
+  font: 500 15px/1.6 var(--font-doc);
+  letter-spacing: 0.1em;
+}
+.plead .cap .no {
+  font: 400 12px/1.6 var(--font-court);
+  color: var(--paper-muted);
+  letter-spacing: 0.06em;
+}
+.plead .cap h2 {
+  margin: 10px 0 0;
+  font: 700 24px/1.3 var(--font-doc);
+  letter-spacing: 0.36em;
+  text-indent: 0.36em;
+  color: var(--paper-ink);
+}
+.plead .cap .topic {
+  font: 400 14px/1.6 var(--font-doc);
+  color: var(--paper-muted);
+}
+.plead .body {
+  /* 行高等於格距，每行字坐在格線上。 */
+  font: 400 17px/32px var(--font-doc);
+  letter-spacing: 0.02em;
+}
+.plead .body p {
+  margin: 0;
+}
+.plead .nw {
+  white-space: nowrap;
+}
+.blank-wrap {
+  position: relative;
+  display: inline-block;
+}
+.blank {
+  position: relative;
+  display: inline-block;
+  min-width: 150px;
+  min-height: 0;
+  margin: 0 4px;
+  padding: 0 10px;
+  border: 0;
+  border-bottom: 1px dashed var(--paper-muted);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  font: 400 19px/1.6 var(--font-hand);
+  color: var(--ink-fill);
+  vertical-align: baseline;
+  text-align: center;
+  letter-spacing: 0.02em;
+}
+button.blank:hover,
+.blank.open {
+  background: var(--hl-wash);
+  border-bottom-color: var(--hl-edge);
+}
+.blank .hint {
+  font: 400 13px/1 var(--font);
+  color: var(--paper-muted);
+}
+.blank.filled {
+  border-bottom: 1px solid var(--paper-ink);
+}
+/* 等證物的空格：從右邊證據欄點一張就放進來。 */
+.blank.hot {
+  border-bottom: 1px dashed var(--hl-edge);
+  background: var(--hl-wash);
+  box-shadow: 0 0 0 1px var(--hl);
+  border-radius: 3px;
+}
+.blank.exhibit {
+  font: 400 13px/1.6 var(--font);
+  color: var(--paper-ink);
+  padding-block: 4px 2px;
+}
+.blank .ex {
+  /* 小籤跟在證物標籤後面，不往上浮：浮起來會壓到上一行的字（體驗評測 v88）。 */
+  display: inline-block;
+  margin-left: 6px;
+  vertical-align: middle;
+  padding: 2px 5px;
+  border: 1.5px solid var(--gold-paper);
+  border-radius: 3px;
+  color: var(--gold-paper);
+  background: var(--paper);
+  font: 600 10px/1 var(--font-mono);
+  letter-spacing: 0.08em;
+  transform: rotate(-6deg);
+  white-space: nowrap;
+}
+/* 列內證物標籤（視覺規格 §16 .etag.row）：紙色、左邊一個孔。 */
+.etag.row {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  padding: 0 10px 0 6px;
+  background: var(--paper);
+  border: 1px solid var(--paper-rule);
+  border-radius: 3px;
+  color: var(--paper-ink);
+  font: 500 13px/1 var(--font);
+  white-space: nowrap;
+  vertical-align: middle;
+}
+.etag.row .etag-hole {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  border: 1px solid var(--paper-rule);
+  background: var(--paper);
+}
+.etag.row.arg > span[aria-hidden]:not(.etag-hole) {
+  color: var(--gold-paper);
+}
+/* 請求、依據的小選單：貼在空格正下方。 */
+.pop {
+  position: absolute;
+  left: 50%;
+  top: calc(100% + 8px);
+  transform: translateX(-50%);
+  min-width: 220px;
+  z-index: 5;
+  background: var(--paper);
+  border: 1px solid var(--paper-rule);
+  border-radius: 6px;
+  box-shadow: var(--shadow-2);
+  padding: 6px;
+  display: grid;
+  text-align: left;
+}
+.pop::before {
+  content: '';
+  position: absolute;
+  left: calc(50% - 6px);
+  top: -6px;
+  width: 10px;
+  height: 10px;
+  background: var(--paper);
+  border-left: 1px solid var(--paper-rule);
+  border-top: 1px solid var(--paper-rule);
+  transform: rotate(45deg);
+}
+.pop .k {
+  padding: 0 12px;
+  font: 500 11px/24px var(--font-mono);
+  letter-spacing: 0.08em;
+  color: var(--paper-muted);
+}
+.pop-list {
+  display: grid;
+}
+.pop-list button {
+  min-height: 36px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  box-shadow: none;
+  text-align: left;
+  font: 500 15px/36px var(--font);
+  color: var(--paper-ink);
+  white-space: nowrap;
+}
+.pop-list button:hover,
+.pop-list button.on {
+  background: light-dark(#eceff3, #c9ccd1);
+}
+.sheet-options .pop-list button {
+  min-height: 52px;
+  font-size: 17px;
+  color: var(--text);
+}
+.sheet-options .pop-list button.on {
+  background: var(--hl-wash);
+}
+.plead .sig {
+  margin-top: 28px;
+  font: 400 13px/1.6 var(--font-court);
+  color: var(--paper-muted);
+}
+.plead .sig b {
+  font: 400 15px/1.6 var(--font-doc);
+  color: var(--paper-ink);
+  border-bottom: 1px solid var(--paper-ink);
+  padding: 0 16px;
+}
+/* 遞狀列在文件流裡：手機上提示換行時不會壓到具狀人。 */
+.plead .commit-row {
+  margin-top: 12px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+.plead .commit-row .zh {
+  font: 400 13px/1.4 var(--font);
+  color: var(--paper-muted);
+}
+.plead .commit-row .cost {
+  margin-left: 8px;
+  font: 500 12px/1 var(--font-mono);
+  opacity: 0.8;
+}
+.plead .bates2 {
+  position: absolute;
+  left: 76px;
+  bottom: 12px;
+  font: 400 11px/1 var(--font-court);
+  color: var(--paper-muted);
+}
+/* 法官的一句話：左邊色線，章蓋在右邊，壓到簽名欄也沒關係。 */
+.plead .judge {
+  position: relative;
+  margin-top: 18px;
+  padding: 10px 150px 10px 14px;
+  border-left: 3px solid var(--stamp-no);
+  font: 400 15px/1.7 var(--font-court);
+  color: var(--paper-ink);
+}
+.plead .judge.ok {
+  border-left-color: var(--stamp-ok);
+}
+.plead .judge small {
+  display: block;
+  font: 400 12px/1.4 var(--font-court);
+  color: var(--paper-muted);
+}
+.plead .judge .stamp-big {
+  position: absolute;
+  /* 章轉 8 度會多出約 10px；往內收，不把整張紙撐寬。 */
+  right: 12px;
+  top: -18px;
+}
+.stamp-big {
+  display: block;
+  width: 132px;
+  height: 132px;
+  opacity: 0.86;
+  mix-blend-mode: multiply;
+  transform: rotate(-8deg);
+}
+.stamp-big svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.stamp-big .ring {
+  font: 500 8px/1 var(--font-mono);
+  letter-spacing: 2.2px;
+}
+.stamp-big .word {
+  font-family: var(--font-doc);
+  font-weight: 900;
+}
+.stamp-big .word.latin {
+  font-family: var(--font-mono);
+  font-weight: 700;
+}
+.stamp-rcv {
+  position: absolute;
+  right: 44px;
+  top: 10px;
+  padding: 6px 10px;
+  border: 2px solid var(--paper-ink);
+  border-radius: 3px;
+  font: 400 11px/1.4 var(--font-court);
+  color: var(--paper-ink);
+  letter-spacing: 0.08em;
+  text-align: center;
+  transform: rotate(6deg);
+  opacity: 0.72;
+  mix-blend-mode: multiply;
+}
+.stamp-rcv b {
+  display: block;
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0.2em;
+}
+/* 前提沒到：一張便條，不給狀紙。 */
+.prereq-note {
+  max-width: 720px;
+  display: grid;
+  gap: 6px;
+  padding: 14px 18px;
+  background: var(--note);
+  color: var(--paper-ink);
+  border-radius: 2px;
+  box-shadow: var(--shadow-1);
+}
+.prereq-note small {
+  font: 500 12px/1.4 var(--font-mono);
+  color: var(--gold-paper);
+  letter-spacing: 0.06em;
+}
+.prereq-note strong {
+  font-size: 16px;
+}
+@media (max-width: 760px) {
+  .plead {
+    padding: 28px 18px 44px 44px;
+  }
+  .plead::before {
+    left: 32px;
+  }
+  .plead .ln {
+    left: 8px;
+  }
+  .plead .cap h2 {
+    letter-spacing: 0.2em;
+  }
+  .plead .bates2 {
+    left: 44px;
+  }
+  .plead .judge {
+    padding-right: 84px;
+  }
+  .plead .judge .stamp-big {
+    top: -6px;
+    right: -8px;
+    width: 88px;
+    height: 88px;
+  }
+
+  .stamp-rcv {
+    right: 12px;
+    top: 10px;
+  }
+  .blank {
+    min-width: 110px;
+  }
+  /* 手機上收文章比例大，抬頭往下讓兩行。 */
+  .plead.received .cap {
+    margin-top: 64px;
+  }
+}
+
+/* 詰問自動結束：中間欄一張卡，標題說為什麼停，下面是最後幾句。 */
+.panel.adjourn h2 {
+  font-size: 20px;
+}
+.panel.adjourn .lines {
+  font-size: 1.05em;
+}
+/* 休庭頁：前面的筆錄收起來，最後四句放第一屏。 */
+details.earlier > summary {
+  font-size: var(--fs-ui-meta);
+  color: var(--muted);
+}
+details.earlier[open] > .lines {
+  margin-top: 10px;
+}
+/* 狀紙空格和後面的逗號一起換行。 */
+.plead .glue {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  align-items: baseline;
+  max-width: 100%;
+}
+.plead .glue > .blank {
+  min-width: 0;
+  flex: 0 1 auto;
+}
+.plead .glue > .blank-wrap {
+  min-width: 0;
+  flex: 0 1 auto;
+}
+.plead .glue > .blank-wrap > .blank {
+  max-width: 100%;
+}
+
+/* ═══ 陪審團遴選與判決（視覺規格 v1.4 §18，圖版 10、11） ═══ */
+/* 檔案照（§16 模板 B）：配角真立繪到位前都用這張。 */
+.idphoto {
+  --w: 96px;
+  width: var(--w);
+  display: grid;
+  grid-template-rows: 1fr auto;
+  gap: 3px;
+  padding: 4px;
+  border-radius: var(--radius);
+  background: var(--surface-3);
+  border: 1px solid var(--border-strong);
+  box-shadow: var(--inset-hi), var(--shadow-1);
+  flex: none;
+}
+.idphoto .ph {
+  position: relative;
+  aspect-ratio: 3 / 4;
+  border-radius: 3px;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(
+    180deg,
+    light-dark(#ebe4cf, #cdc3a9) 0%,
+    light-dark(#d8cfb3, #b3a98d) 100%
+  );
+}
+.idphoto .ph::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(85% 75% at 50% 32%, transparent 55%, rgb(0 0 0 / 24%) 100%);
+  pointer-events: none;
+}
+.idphoto .ph b {
+  font: 700 calc(var(--w) * 0.4) / 1 var(--font-doc);
+  color: var(--gold-paper);
+}
+.idphoto .ph img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.idphoto .nm {
+  font: 400 10px/1 var(--font-court);
+  color: var(--muted);
+  text-align: center;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.idphoto.s40 {
+  padding: 2px;
+  gap: 0;
+  grid-template-rows: 1fr;
+  border-radius: 4px;
+}
+.idphoto.s28 {
+  padding: 1px;
+  gap: 0;
+  grid-template-rows: 1fr;
+  border-radius: 3px;
+}
+.idphoto.s28 .ph {
+  border-radius: 2px;
+}
+
+/* 頂列：左眉標＋標題，右三個額度數字；右上角留給選單鈕。 */
+.trialbar {
+  min-height: var(--taskbar-h);
+  display: flex;
+  align-items: center;
+  gap: var(--s5);
+  padding: 0 128px 0 var(--s5);
+  border-bottom: 1px solid var(--border);
+  background: light-dark(rgb(247 248 250 / 60%), rgb(7 9 12 / 55%));
+}
+.trialbar .eb {
+  font: 500 var(--fs-ui-label) / 1 var(--font-mono);
+  letter-spacing: var(--track-label);
+  color: var(--muted);
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.trialbar .eb::before {
+  content: '';
+  width: 16px;
+  height: 2px;
+  background: var(--hl);
+}
+.trialbar .eb b {
+  color: var(--text);
+  font: 700 var(--fs-ui-head) / 1 var(--font);
+  letter-spacing: 0;
+}
+.tb-tally {
+  margin-left: auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px var(--s5);
+  font: 500 var(--fs-ui-meta) / 1 var(--font);
+  color: var(--muted);
+}
+.tb-tally > span {
+  white-space: nowrap;
+}
+.tb-tally b {
+  font: 600 var(--fs-ui-num) / 1 var(--font-mono);
+  color: var(--text);
+  margin-left: 6px;
+  vertical-align: -3px;
+}
+.tb-tally b.low {
+  color: light-dark(var(--hl-edge), var(--hl));
+}
+.tb-tally small {
+  font: 500 11px/1 var(--font-mono);
+  color: var(--faint);
+  margin-left: 2px;
+}
+
+.vd-screen {
+  height: 100dvh;
+  max-width: 1680px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+}
+.vd {
+  display: grid;
+  grid-template-columns: 600px minmax(0, 1fr);
+  gap: var(--s5);
+  padding: var(--s4) var(--s5) var(--s5);
+  min-height: 0;
+}
+.cand-list.panel {
+  padding: 0;
+  gap: 0;
+  overflow: hidden;
+  min-height: 0;
+}
+.cand-list .panel-head {
+  padding: var(--s2) var(--s4);
+  border-bottom: 1px solid var(--border);
+}
+.cand-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-bottom: 16px;
+  /* 底部淡出：最後一列不會看起來像被切掉。 */
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 24px), transparent);
+}
+.cands {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+button.cand {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 22px 40px minmax(0, 1fr) auto;
+  column-gap: var(--s3);
+  align-items: center;
+  min-height: 64px;
+  padding: var(--s2) var(--s4) var(--s2) calc(var(--s4) - 3px);
+  text-align: left;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  border-left: 3px solid transparent;
+  border-radius: 0;
+  box-shadow: none;
+  font-weight: 400;
+}
+button.cand:hover:not(.on) {
+  background: color-mix(in srgb, var(--text) 4%, transparent);
+}
+.cand .no {
+  font: 600 var(--fs-ui-label) / 1 var(--font-mono);
+  color: var(--muted);
+  text-align: right;
+}
+.cand .txt {
+  min-width: 0;
+}
+.cand strong {
+  display: block;
+  font: 600 var(--fs-ui-row) / 1.3 var(--font);
+  color: var(--text);
+}
+.cand strong span {
+  font-weight: 400;
+  color: var(--muted);
+  font-size: var(--fs-ui-meta);
+  margin-left: 8px;
+}
+.cand .line {
+  display: block;
+  margin-top: 2px;
+  font: 400 var(--fs-ui-cap) / 1.45 var(--font);
+  color: var(--muted);
+}
+.cand .st {
+  display: grid;
+  justify-items: end;
+  gap: 6px;
+  font: 500 11px/1 var(--font-mono);
+  color: var(--faint);
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+.cand .seatno,
+.cand .gone {
+  font: 600 11px/1 var(--font-mono);
+  padding: 4px 6px;
+  border: 1px solid var(--border-strong);
+  border-radius: 3px;
+  color: var(--text);
+}
+.cand .gone {
+  color: var(--muted);
+  transform: rotate(-4deg);
+}
+button.cand.on {
+  background: var(--hl-wash);
+  border-top: 1px solid var(--hl-edge);
+  border-bottom-color: var(--hl-edge);
+  border-left-color: var(--hl);
+}
+.cand.on .seatno {
+  border-color: var(--hl-edge);
+}
+.cand.bench {
+  opacity: 0.78;
+}
+.cand.struck {
+  opacity: 0.5;
+}
+.cand.struck strong {
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+}
+.cutline {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  height: 28px;
+  margin: 0;
+  padding: 0 var(--s4);
+  font: 500 11px/1 var(--font-mono);
+  letter-spacing: 0.1em;
+  color: light-dark(var(--hl-edge), var(--hl));
+  background: light-dark(rgb(255 208 46 / 10%), rgb(244 197 61 / 5%));
+  white-space: nowrap;
+}
+.cutline::before,
+.cutline::after {
+  content: '';
+  flex: 1;
+  border-top: 1px dashed currentColor;
+  opacity: 0.7;
+}
+
+.vd-right {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: var(--s4);
+  min-width: 0;
+  min-height: 0;
+}
+/* 陪審席：木色箱＋扶手。 */
+.box {
+  position: relative;
+  padding: var(--s5) var(--s5) var(--s4);
+  border-radius: var(--radius);
+  background: linear-gradient(
+    180deg,
+    light-dark(#d9cdb6, #2a2219) 0%,
+    light-dark(#c9b99b, #1d1711) 100%
+  );
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 12%),
+    inset 0 -10px 0 light-dark(rgb(90 60 30 / 18%), rgb(0 0 0 / 30%)),
+    var(--shadow-1),
+    0 24px 48px -24px var(--shadow-deep);
+}
+.box::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 6px;
+  border-radius: var(--radius) var(--radius) 0 0;
+  background: light-dark(#8a6a43, #5a4630);
+}
+.box .k {
+  font: 500 var(--fs-ui-label) / 1 var(--font-mono);
+  letter-spacing: var(--track-label);
+  color: light-dark(#5b4630, #b7a283);
+  margin-bottom: var(--s4);
+  display: flex;
+  justify-content: space-between;
+  gap: var(--s3);
+}
+.seats {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: var(--s4) var(--s3);
+  justify-items: center;
+}
+.seats.back {
+  margin: 0 -36px var(--s3) 36px;
+}
+.seatc {
+  display: grid;
+  gap: 6px;
+  justify-items: center;
+  min-height: 0;
+  padding: 0;
+  background: none;
+  border: 0;
+  box-shadow: none;
+  border-radius: var(--radius);
+}
+.seatc .n {
+  font: 600 11px/1 var(--font-mono);
+  color: light-dark(#5b4630, #b7a283);
+  letter-spacing: 0.06em;
+}
+.seatc .nm2 {
+  font: 500 12px/1.2 var(--font);
+  color: light-dark(#3a2c1d, #d8c9b0);
+  max-width: 84px;
+  text-align: center;
+  white-space: nowrap;
+}
+.seatc .slot0 {
+  width: 72px;
+  aspect-ratio: 3 / 4.3;
+  border: 1.5px dashed light-dark(#8a6a43, #6b5640);
+  border-radius: var(--radius);
+  display: grid;
+  place-items: center;
+  font: 600 13px/1 var(--font-mono);
+  color: light-dark(#8a6a43, #8a7258);
+}
+.seatc.on .idphoto {
+  outline: 2px solid var(--hl);
+  outline-offset: 2px;
+}
+
+/* 人物卡：檔案照、名字、問過的題目；按鈕貼在卡片底部。 */
+.panel.prof {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: var(--s4);
+  padding: var(--s4);
+  min-height: 0;
+}
+.prof > .idphoto {
+  align-self: start;
+}
+.prof h3 {
+  font: 700 20px/1.3 var(--font-doc);
+  margin: 0;
+}
+.prof .sub {
+  margin: 4px 0 0;
+  font: 400 var(--fs-ui-meta) / 1.4 var(--font);
+  color: var(--muted);
+}
+.prof .qa {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 6px;
+  align-content: start;
+  min-height: 0;
+  overflow-y: auto;
+  padding-top: var(--s3);
+  border-top: 1px solid var(--border);
+}
+.qa .jq {
+  font: 500 var(--fs-ui-label) / 1.4 var(--font-mono);
+  color: var(--muted);
+  letter-spacing: 0.04em;
+}
+.qa .ja {
+  margin: 0 0 var(--s2);
+  font: 400 var(--fs-ui-row) / 1.6 var(--font-doc);
+  padding-left: var(--s3);
+  border-left: 2px solid var(--border-strong);
+}
+.qa .jh {
+  margin: 0;
+  font: 400 var(--fs-ui-cap) / 1.5 var(--font);
+  color: var(--muted);
+}
+.prof .acts,
+.prof .commit-bar {
+  grid-column: 1 / -1;
+  align-self: end;
+}
+.prof .acts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s2);
+}
+.prof.empty {
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+}
+.commitbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--s4);
+  align-items: center;
+  padding: var(--s3) var(--s4);
+  border: 1px solid var(--commit-edge);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: 0 -12px 32px -16px var(--shadow-deep);
+}
+.commitbar .who {
+  margin: 0;
+  font: 400 var(--fs-ui-cap) / 1.5 var(--font);
+  color: var(--muted);
+}
+.commitbar .who b {
+  color: var(--text);
+  font-weight: 600;
+}
+/* 窄版：陪審席縮成一排 28px 檔案照，放在名單上面。 */
+.box.mini {
+  padding: 14px 10px 10px;
+}
+.box.mini .k {
+  margin-bottom: 8px;
+}
+.box.mini .k span + span {
+  display: none;
+}
+.box.mini .seats {
+  grid-template-columns: repeat(6, 28px);
+  justify-content: space-evenly;
+  gap: 8px 4px;
+}
+.box.mini .seatc {
+  gap: 2px;
+}
+.box.mini .seatc .nm2 {
+  display: none;
+}
+.box.mini .seatc .n {
+  font-size: 10px;
+}
+.box.mini .seatc .slot0 {
+  width: 28px;
+  font-size: 10px;
+}
+.shell-body > .cands {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  overflow: hidden;
+}
+.card-sheet .prof {
+  border: 0;
+  box-shadow: none;
+  padding: 0;
+  background: none;
+}
+@media (max-width: 520px) {
+  button.cand {
+    grid-template-columns: 18px 40px minmax(0, 1fr) auto;
+    column-gap: 10px;
+    padding-inline: 9px 12px;
+  }
+  .cand strong span {
+    display: block;
+    margin-left: 0;
+  }
+  .panel.prof {
+    grid-template-columns: 72px minmax(0, 1fr);
+  }
+  .panel.prof > .idphoto {
+    --w: 72px !important;
+  }
+}
+
+/* 判決頁：上面結論帶，下面判決表｜評議兩欄等高。 */
+.vdict {
+  /* 和遴選頁同一個左右框；不鎖視窗高，「繼續」接在內容後面（視覺設計師）。 */
+  max-width: 1680px;
+  margin: 0 auto;
+  padding: var(--s5);
+  display: grid;
+  align-content: start;
+  gap: var(--s5);
+}
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: var(--s5);
+  padding-bottom: var(--s4);
+  border-bottom: 1px solid var(--border);
+}
+.hero .ey {
+  margin: 0;
+  font: 500 var(--fs-ui-label) / 1 var(--font-mono);
+  letter-spacing: 0.14em;
+  color: var(--muted);
+}
+.hero h1 {
+  margin: 10px 0 0;
+  font: 700 34px/1.2 var(--font-doc);
+  letter-spacing: 0.04em;
+}
+.hero .why {
+  margin: 10px 0 0;
+  font: 400 var(--fs-ui-body) / 1.6 var(--font);
+  color: var(--muted);
+  max-width: 46em;
+}
+.hero .why b {
+  color: var(--text);
+  font-weight: 600;
+}
+.hero .amt {
+  margin: 0;
+  text-align: right;
+  /* 右上角是選單鈕：金額排在它下面。 */
+  padding-top: 52px;
+}
+.hero .amt small {
+  display: block;
+  font: 500 var(--fs-ui-label) / 1 var(--font-mono);
+  letter-spacing: var(--track-label);
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+.hero .amt b {
+  font: 600 44px/1 var(--font-mono);
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+}
+.hero .amt b i {
+  font: 500 18px/1 var(--font);
+  color: var(--muted);
+  margin-left: 6px;
+}
+.hero .amt.disp {
+  font: 700 20px/1.4 var(--font-doc);
+}
+.vcols {
+  display: grid;
+  grid-template-columns: 560px minmax(0, 1fr);
+  gap: var(--s5);
+  min-height: 0;
+}
+.lcol {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  min-height: 0;
+}
+.vform {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 28px 32px;
+  border-radius: 2px;
+  background: var(--paper);
+  background-image: var(--grain);
+  color: var(--paper-ink);
+  box-shadow:
+    0 1px 0 rgb(0 0 0 / 18%),
+    0 24px 56px -24px var(--shadow-deep);
+}
+.vform .fh {
+  text-align: center;
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--paper-ink);
+  margin-bottom: 4px;
+}
+.vform .fh p {
+  margin: 0;
+}
+.vform .fh .c {
+  font: 500 12px/1.6 var(--font-doc);
+  letter-spacing: 0.2em;
+  color: var(--paper-muted);
+}
+.vform .fh h2 {
+  margin: 0;
+  font: 700 20px/1.4 var(--font-doc);
+  letter-spacing: 0.3em;
+  text-indent: 0.3em;
+}
+.vform .fh .en {
+  font: 400 11px/1.4 var(--font-court);
+  letter-spacing: 0.16em;
+  color: var(--paper-muted);
+}
+.fq {
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: baseline;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--paper-rule);
+}
+.fq .qn {
+  font: 400 12px/1 var(--font-court);
+  color: var(--paper-muted);
+}
+.fq .ql {
+  font: 400 15px/1.5 var(--font-doc);
+}
+.fq .ql small {
+  display: block;
+  margin-top: 2px;
+  font: 400 12px/1.5 var(--font);
+  color: var(--paper-muted);
+}
+.fq .qv {
+  font: 400 21px/1 var(--font-hand);
+  color: var(--ink-fill);
+  white-space: nowrap;
+}
+.fq .qv i {
+  font-style: normal;
+  font-size: 14px;
+  margin-left: 3px;
+}
+.fq.total {
+  border-bottom: 3px double var(--paper-ink);
+}
+.fq.total .ql {
+  font-weight: 700;
+}
+.fq.total .qv {
+  font-size: 26px;
+}
+.vform .signs {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 12px;
+  margin-top: auto;
+  padding-top: 18px;
+  font: 400 12px/1.6 var(--font-court);
+  color: var(--paper-muted);
+}
+.vform .signs b {
+  display: inline-block;
+  min-width: 150px;
+  margin-left: 8px;
+  border-bottom: 1px solid var(--paper-ink);
+  font: 400 20px/1.2 var(--font-hand);
+  color: var(--ink-fill);
+  text-align: center;
+}
+.vform.short {
+  flex: none;
+}
+.lcol .ledger-tip {
+  margin: 0;
+}
+.fold > summary {
+  font: 500 var(--fs-ui-meta) / 1.4 var(--font);
+  color: var(--muted);
+}
+.fold .faint {
+  color: var(--faint);
+  margin-left: 6px;
+}
+.fold .ledger-reasons {
+  margin-top: var(--s2);
+}
+
+.delib {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  min-width: 0;
+}
+.panel.trend {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 8px var(--s4);
+  align-items: center;
+  padding: var(--s3) var(--s4);
+}
+.trend .k {
+  font: 500 var(--fs-ui-label) / 1 var(--font-mono);
+  letter-spacing: var(--track-label);
+  color: var(--muted);
+}
+.trend-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px var(--s3);
+  font: 500 var(--fs-ui-meta) / 1 var(--font);
+  color: var(--muted);
+}
+.trend-steps li {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  white-space: nowrap;
+}
+.trend-steps .arrow {
+  color: var(--faint);
+  font-family: var(--font-mono);
+}
+.trend-need {
+  grid-column: 2;
+  margin: 0;
+  font: 400 var(--fs-ui-cap) / 1.4 var(--font);
+  color: var(--muted);
+}
+.vpips {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  vertical-align: middle;
+}
+.vpips i {
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+  border: 1.5px solid var(--border-strong);
+}
+.vpips i.y {
+  background: var(--good);
+  border-color: var(--good);
+}
+.panel.rounds {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  gap: 0;
+}
+.rnd {
+  display: grid;
+  grid-template-columns: 64px auto minmax(0, 1fr);
+  gap: var(--s4);
+  align-items: center;
+  padding: var(--s3) var(--s4);
+  border-bottom: 1px solid var(--border);
+}
+.rnd:last-child {
+  border-bottom: 0;
+}
+.rnd .rk {
+  font: 600 var(--fs-ui-label) / 1 var(--font-mono);
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.rnd > span:nth-child(2) {
+  display: flex;
+  align-items: center;
+}
+.rnd .vpips {
+  max-width: calc(6 * 15px);
+}
+.rnd .vpips i {
+  width: 12px;
+  height: 12px;
+}
+.rnd .vt {
+  font: 600 var(--fs-ui-meta) / 1 var(--font-mono);
+  margin-left: 10px;
+  white-space: nowrap;
+}
+.rnd p {
+  margin: 0;
+  font: 400 var(--fs-ui-cap) / 1.5 var(--font);
+  color: var(--muted);
+}
+.panel.fore {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr);
+  gap: var(--s3);
+  padding: var(--s4);
+  align-items: start;
+}
+.fore .who {
+  margin: 0 0 6px;
+  font: 500 var(--fs-ui-label) / 1 var(--font-mono);
+  letter-spacing: var(--track-label);
+  color: var(--muted);
+}
+.fore blockquote {
+  margin: 0;
+  font: 500 18px/1.6 var(--font-doc);
+}
+.epi {
+  display: grid;
+  gap: var(--s3);
+  padding: 0 var(--s4);
+}
+.epi > p {
+  margin: 0;
+  font: 400 var(--fs-ui-row) / 1.7 var(--font-doc);
+  color: var(--muted);
+}
+.epi .msg {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  font: 400 var(--fs-ui-row) / 1.6 var(--font);
+}
+.epi .msg small {
+  display: block;
+  font: 500 11px/1 var(--font-mono);
+  color: var(--muted);
+  letter-spacing: 0.06em;
+  margin-bottom: 4px;
+}
+.delib .go {
+  align-self: flex-end;
+  margin-top: auto;
+}
+@media (max-width: 1099px) {
+  .vdict {
+    padding: max(12px, env(safe-area-inset-top)) 14px 24px;
+    gap: var(--s4);
+  }
+  .vdict .hero {
+    padding-right: 84px;
+  }
+  .vcols {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .hero .amt {
+    padding-top: 0;
+  }
+}
+@media (max-width: 520px) {
+  .vdict .hero {
+    grid-template-columns: minmax(0, 1fr);
+    padding-right: 0;
+  }
+  .vdict .hero .ey {
+    padding-right: 84px;
+    line-height: 1.4;
+  }
+  .hero h1 {
+    font-size: 26px;
+  }
+  .hero .amt {
+    text-align: left;
+  }
+  .hero .amt b {
+    font-size: 36px;
+  }
+  .vform {
+    padding: 20px 16px;
+  }
+  .rnd {
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 6px var(--s3);
+  }
+  .rnd p {
+    grid-column: 1 / -1;
+  }
+  .epi {
+    padding: 0;
+  }
+  .panel.trend {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .trend-steps {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 8px var(--s3);
+  }
+  .trend-steps li {
+    display: contents;
+  }
+  .trend-steps .arrow {
+    display: none;
+  }
+  .trend-need {
+    grid-column: 1;
+  }
+  .delib .go {
+    align-self: stretch;
+  }
+}
+/* 英文的風向標籤長，排成一列會把最後一段擠到下一行：改成和手機一樣一段一行（體驗評測 v88）。 */
+html[lang='en'] .trend-steps {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 8px var(--s3);
+}
+html[lang='en'] .trend-steps li {
+  display: contents;
+}
+html[lang='en'] .trend-steps .arrow {
+  display: none;
+}
+/* 英文抬頭不拉字距：拉開的拉丁字母讀起來像斷字。 */
+html[lang='en'] .vform .fh h2 {
+  letter-spacing: 0.04em;
+  text-indent: 0;
+}
+html[lang='en'] .vform .fh .c {
+  letter-spacing: 0.08em;
+}
+
+/* 調解：對方信心與每一檔條件的門檻（體驗評測 v88：看不到信心，攤牌後開價沒動也沒有回饋）。 */
+.patience.conf {
+  gap: 4px 10px;
+}
+.confbar {
+  position: relative;
+  width: 120px;
+  height: 6px;
+  border-radius: 3px;
+  /* 已填和未填要分得出來（非文字對比 3:1）：軌道有描邊，填色用深淺兩模式都夠對比的 accent。 */
+  background: var(--surface-3);
+  box-shadow: inset 0 0 0 1px var(--muted);
+}
+.confbar i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: 3px;
+  /* 對方的信心不是玩家的手：灰，不用黃（一格一黃，第一道關卡 B2）。 */
+  background: var(--muted);
+  transition: width 0.4s var(--ease);
+}
+.confbar b {
+  position: absolute;
+  top: -3px;
+  width: 2px;
+  height: 12px;
+  margin-left: -1px;
+  background: var(--text);
+  box-shadow: 0 0 0 1px var(--surface);
+}
+.nego-move {
+  margin: 0 0 var(--s3);
+  line-height: 1.6;
+}
+.nego-move b {
+  margin-right: 8px;
+}
+.nego-next {
+  margin: 4px 0 0;
+}
+/* 調解的條件階梯：每一檔信心門檻對應的條件，目前這一檔用螢光標示。 */
+.nego-ladder {
+  /* 價和標記不要隔半個畫面（體驗評測 v89）。 */
+  max-width: 560px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  column-gap: var(--s3);
+  list-style: none;
+  margin: var(--s2) 0 var(--s3);
+  padding: 0;
+  border-top: 1px solid var(--border);
+}
+.nego-ladder li {
+  display: grid;
+  /* subgrid 讓每一列的價和標記對齊同一欄；價和標記不換行，窄螢幕由門檻那欄讓位
+     （體驗評測 v89：英文「$2.5 million」被拆成兩行）。 */
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+  gap: var(--s3);
+  align-items: baseline;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
+}
+.nego-ladder .th {
+  color: var(--muted);
+  font-size: 13px;
+}
+.nego-ladder .v {
+  font-weight: 600;
+  white-space: nowrap;
+}
+.nego-ladder .tg {
+  display: flex;
+  white-space: nowrap;
+  gap: 8px;
+  font-size: 13px;
+}
+.nego-ladder .tg b {
+  color: var(--text);
+}
+.nego-ladder .tg em {
+  font-style: normal;
+  color: var(--bad);
+}
+.nego-ladder li.on {
+  /* 目前這一檔：淡底＋左緣一條正文色。黃只給下一步（「打電話請示」），一格一黃（第一道關卡 B2）。 */
+  background: var(--surface-2);
+  box-shadow: inset 3px 0 0 var(--text);
+}
+.nego-ladder li.on .th {
+  color: var(--text);
+}
+/* 深色模式的 wash 上 --bad 只有 4.39：目前這一檔的「超過授權」改用正文色，前面加一顆紅點。 */
+.nego-ladder li.on .tg em {
+  color: var(--text);
+}
+.nego-ladder li.on .tg em::before {
+  content: '';
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-right: 6px;
+  border-radius: 50%;
+  background: var(--bad);
+  vertical-align: 1px;
+}
+.fore blockquote .nw {
+  white-space: nowrap;
+}
+/* 手機：門檻自己一行，條件在下一行，可以換行；第 1 集的條件是一整句，擠在同一列會疊字（遊戲測試員 v90）。 */
+@media (max-width: 520px) {
+  .nego-ladder {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .nego-ladder li {
+    row-gap: 2px;
+  }
+  .nego-ladder li .th {
+    grid-column: 1 / -1;
+  }
+  .nego-ladder .v {
+    white-space: normal;
+  }
+}
+
+/* ══ 審判筆錄（設定集第 9 章 <Transcript>、10.3 異議）：25 行一頁、行號、問／答、黑條、裁定章、Bates ══ */
+.record {
+  /* 一行的字數固定（record.ts measureFor）：中文 24 字、英文 44 字元。字級與行距由 Record.tsx 依框算好寫進來，這裡是預設。 */
+  --rec-base: 15;
+  --rec-measure: 24;
+  --rec-fs: calc(var(--rec-base) * 1px * var(--text-scale));
+  --rec-row: calc(var(--rec-fs) * 2);
+  /* 行號欄寬與紙的內距；換頁的間隔要伸到紙邊，所以要知道內距。 */
+  --rec-gutter: calc(var(--rec-fs) * 2.2);
+  --rec-pl: calc(var(--rec-gutter) + var(--rec-fs) * 0.8);
+  --rec-pr: calc(var(--rec-fs) * 0.6);
+  --rec-gap-bg: var(--surface);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  mask-image: none;
+  box-shadow: none;
+  padding: 0;
+  gap: 0;
+  scroll-behavior: auto;
+}
+html[lang='en'] .record {
+  --rec-measure: 26.4;
+}
+.rec-bar-top {
+  display: flex;
+  justify-content: flex-end;
+  padding: 6px 8px 0;
+}
+.rec-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 8px;
+  scrollbar-width: thin;
+}
+.rec-paper {
+  position: relative;
+  width: 100%;
+  min-width: calc((var(--rec-measure) + 3.6) * var(--rec-fs));
+  padding: 0 var(--rec-pr) calc(var(--rec-fs) * 0.4) var(--rec-pl);
+  border-radius: 0;
+  background:
+    /* 訴狀紙的左側雙直線，行號在線外 */
+    linear-gradient(var(--paper-rule), var(--paper-rule)) var(--rec-gutter) 0 / 1px 100% no-repeat,
+    linear-gradient(var(--paper-rule), var(--paper-rule)) calc(var(--rec-gutter) + 3px) 0 / 1px 100%
+      no-repeat,
+    var(--paper);
+  box-shadow: 0 1px 0 rgb(0 0 0 / 18%);
+  color: var(--paper-ink);
+  font: 400 var(--rec-fs) / var(--rec-row) var(--font-court);
+  font-variant-numeric: tabular-nums;
+}
+.rec-head {
+  display: flex;
+  height: var(--rec-row);
+  align-items: center;
+  justify-content: space-between;
+  gap: 1em;
+  font: 400 calc(var(--rec-fs) * 0.75) / 1 var(--font-court);
+  letter-spacing: 0.08em;
+  color: var(--paper-muted);
+  text-transform: uppercase;
+}
+.rec-head::before {
+  content: attr(data-l);
+}
+.rec-head::after {
+  content: attr(data-r);
+}
+/* Bates：每頁右下，Courier Prime 粗體、碳粉色（設定集第 9 章）。 */
+.rec-foot {
+  display: flex;
+  height: var(--rec-row);
+  align-items: flex-end;
+  justify-content: flex-end;
+  font: 700 calc(var(--rec-fs) * 0.75) / 1 var(--font-court);
+  letter-spacing: 0.04em;
+  color: var(--toner);
+}
+.rec-foot::after {
+  content: attr(data-b);
+}
+.rec-entry {
+  margin: 0;
+}
+.rec-line {
+  display: contents;
+}
+.rec-row {
+  display: block;
+  position: relative;
+  height: var(--rec-row);
+  padding-left: var(--indent, 0);
+  white-space: pre;
+}
+.rec-row::before {
+  content: attr(data-no);
+  position: absolute;
+  top: 0;
+  left: calc(-1 * var(--rec-pl));
+  width: calc(var(--rec-gutter) - var(--rec-fs) * 0.45);
+  text-align: right;
+  font: 400 calc(var(--rec-fs) * 0.75) / var(--rec-row) var(--font-court);
+  color: var(--paper-muted);
+  user-select: none;
+}
+/* 目前行：頁邊一道螢光，筆錄層唯一的黃（設定集 10.3）。紙是淺的，加 1px --hl-edge 才看得出邊。 */
+.rec-row.cur::after {
+  content: '';
+  position: absolute;
+  top: calc(50% - 0.45em);
+  left: calc(-1 * var(--rec-pl) + 3px);
+  width: 4px;
+  height: 0.9em;
+  background: var(--hl);
+  box-shadow: 0 0 0 1px var(--hl-edge);
+}
+.rec-tag {
+  font-weight: 700;
+}
+.rec-entry.q .rec-tag,
+.rec-entry.a .rec-tag {
+  display: inline-block;
+  width: 2.4em;
+  font-weight: 400;
+}
+.rec-tx {
+  position: relative;
+}
+.rec-cjk {
+  font-family: 'Noto Serif TC', serif;
+}
+.rec-entry.note {
+  color: var(--paper-muted);
+}
+/* 黑條：零圓角、上緣 1px、條內小字（設定集第 1、9 章）。報讀念的是條上的字，不是被蓋掉的話。 */
+.rec-bar,
+.rec-unbar {
+  height: 1.3em;
+  border-top: 1px solid var(--cine-line);
+  border-radius: 0;
+  background: var(--redact);
+}
+.rec-bar {
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+  width: var(--w);
+  padding-left: 0.5em;
+  transform-origin: left;
+}
+.rec-bar small {
+  font: 500 calc(var(--rec-fs) * 0.75) / 1 var(--font-mono);
+  color: var(--redact-label);
+  white-space: nowrap;
+}
+/* 駁回：證人照答，蓋在那句上的黑條抽走（scaleX 1 → 0，從右收；只在動態開著時有）。 */
+.rec-unbar {
+  display: none;
+  position: absolute;
+  left: -0.1em;
+  right: -0.1em;
+  top: calc(50% - 0.65em);
+  transform-origin: right;
+}
+/* 裁定章：靛藍小章落在異議那一行右邊（設定集 10.3）。 */
+.stamp.rec-stamp {
+  --ink: var(--stamp);
+  /* 章連外框縮在自己那一行的行高內，雙線框：外框 1px＋內框 1px（設定集第 9 章 <Stamp>）。 */
+  --h: calc(var(--rec-row) - 6px);
+  vertical-align: middle;
+  height: var(--h);
+  align-content: center;
+  margin-left: 0.8em;
+  padding: 0 5px;
+  border-width: 1px;
+  outline: 1px solid var(--ink);
+  outline-offset: 1.5px;
+  white-space: nowrap;
+  mix-blend-mode: multiply;
+}
+/* 章內字至少 11px（視覺設計師 #2） */
+.stamp.rec-stamp b {
+  font-size: max(11px, min(var(--rec-fs) * 0.9, var(--h) - 4px));
+  line-height: 1;
+}
+html[lang='en'] .stamp.rec-stamp b {
+  font: 700 max(11px, min(var(--rec-fs) * 0.8, var(--h) - 2px)) / 1 var(--font-court);
+  letter-spacing: 0.06em;
+  margin-right: -0.06em;
+  text-transform: uppercase;
+}
+/* 換頁：兩張紙之間露出桌面，下一張紙頂上一行頁碼。 */
+.rec-break {
+  display: block;
+}
+.rec-break::before {
+  content: '';
+  display: block;
+  height: 12px;
+  margin: calc(var(--rec-fs) * 0.4) calc(-1 * var(--rec-pr)) 0 calc(-1 * var(--rec-pl));
+  background: var(--rec-gap-bg);
+  box-shadow:
+    0 -1px 0 rgb(0 0 0 / 18%),
+    0 1px 0 var(--paper-rule) inset;
+}
+.rec-pad {
+  display: block;
+}
+/* 「立即顯示全文」常駐在紙的上方：按下去之後新的話整段出現，再按一次恢復逐行。 */
+.rec-skip {
+  min-height: 32px;
+  padding: 4px 12px;
+  font: inherit;
+  font-size: var(--fs-ui-meta);
+  font-weight: 500;
+  line-height: 1.3;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+}
+.rec-skip[aria-pressed='true'] {
+  border-color: var(--text);
+}
+.rec-skip[aria-pressed='true']::before {
+  content: '✓ ';
+}
+.record.full {
+  max-height: none;
+  overflow: visible;
+}
+.record.full .rec-scroll {
+  overflow: visible;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* 逐行出現（不是逐字）；黑條斷奏蓋上。 */
+  .rec-row.new {
+    animation: iv-fade var(--dur-rm) linear both;
+    animation-delay: calc(var(--k) * var(--dur-ui));
+  }
+  .rec-row.new .rec-bar {
+    animation: rec-redact var(--dur-redact-in) steps(4) both;
+    animation-delay: calc(var(--k) * var(--dur-ui) + var(--dur-rm));
+  }
+  .rec-row.striking .rec-bar {
+    animation: rec-redact var(--dur-redact-in) steps(4) both;
+    animation-delay: calc(var(--k) * var(--dur-redact-in));
+  }
+  /* 法官那一句出現之後，章才落下（墨色 60% → 100%）；落下之前看不到。 */
+  .rec-stamp.new {
+    animation:
+      rec-wait 0s calc(var(--ks) * var(--dur-ui)) backwards,
+      rec-stamp var(--dur-stamp) ease-in calc(var(--ks) * var(--dur-ui)) both;
+  }
+  .rec-unbar {
+    display: block;
+    animation: rec-unbar var(--dur-redact-out) steps(12) both;
+    animation-delay: calc(var(--ku) * var(--dur-ui) + var(--dur-stamp));
+  }
+  @keyframes rec-redact {
+    from {
+      scale: 0 1;
+    }
+  }
+  @keyframes rec-unbar {
+    to {
+      scale: 0 1;
+    }
+  }
+  @keyframes rec-stamp {
+    from {
+      opacity: 0.6;
+      scale: 1.15;
+    }
+  }
+  @keyframes rec-wait {
+    from,
+    to {
+      visibility: hidden;
+    }
+  }
+}
+/* 減少動態：本來就整段直接出現，這顆鈕沒有作用。 */
+@media (prefers-reduced-motion: reduce) {
+  .rec-bar-top {
+    display: none;
+  }
+}
+
+/* 桌機：法庭左欄放得下中文 24 字／英文 44 字元的筆錄紙（約 480）；中間欄至少留 340。 */
+@media (min-width: 1024px) {
+  .shell:has(> .shell-tabs > .record) {
+    grid-template-columns: clamp(320px, 100vw - 804px, 480px) minmax(0, 1fr);
+    grid-template-rows: auto auto minmax(0, 1fr) auto auto;
+  }
+  .shell:has(> .shell-tabs > .record) > .shell-tabs > .record {
+    grid-row: 2 / 6;
+    margin-bottom: 12px;
+  }
+  /* 陪審團面板是 HUD：放在中間欄、按鈕列上方（左欄留給 25 行的筆錄紙）。 */
+  .shell:has(> .shell-tabs > .record) > .shell-tabs > .jurybox {
+    grid-column: 2;
+    grid-row: 4;
+    padding-top: 8px;
+  }
+  .shell:has(> .shell-tabs > .record) > .shell-foot {
+    grid-row: 5;
+  }
+}
+/* 手機：筆錄往下撐到底部按鈕列上方（中間的提示與詰問區照內容長，最多半個螢幕）；紙幾乎貼齊螢幕寬，兩側各 8px。 */
+@media (max-width: 1023px) {
+  .shell:has(> .shell-tabs > .record) {
+    grid-template-rows: auto minmax(0, 1fr) auto auto;
+  }
+  .shell:has(> .shell-tabs > .record) > .shell-tabs {
+    min-height: 0;
+  }
+  .shell:has(> .shell-tabs > .record) > .shell-body {
+    max-height: 50dvh;
+  }
+  .shell-tabs > .record {
+    flex: 1 1 auto;
+    min-height: 8rem;
+    max-height: none;
+  }
+}
+@media (max-width: 520px) {
+  .record {
+    --rec-base: 14;
+    margin-inline: -6px;
+    border: none;
+    border-radius: 0;
+    background: none;
+  }
+  html[lang='en'] .record {
+    --rec-base: 13;
+  }
+  .record .rec-scroll {
+    padding: 0;
+  }
+  .rec-bar-top {
+    padding: 0 0 6px;
+  }
+}
+
+/* ══ 陪審團面板（設定集第 8.4、8.5、10.1 章）：剪影替身、四階影子、刻痕軌道 ══ */
+.jurybox {
+  /* 點頭：以底邊中心 ±3°、兩次共 400ms（第 8.2 章；全域權杖沒有這一項，先在這裡命名）。 */
+  --dur-nod: 400ms;
+  display: grid;
+  gap: 8px;
+  justify-content: start;
+}
+.jb-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+.jb-head h2 {
+  margin: 0;
+}
+.jb-head h2 .muted {
+  font-size: var(--fs-ui-meta);
+  font-weight: 400;
+}
+.jf-legend {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-ui-label);
+  color: var(--muted);
+  white-space: nowrap;
+}
+.jf-legend svg {
+  width: 14px;
+  height: 14px;
+}
+.jb-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 56px);
+  gap: 12px 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.jb-cell {
+  display: grid;
+  justify-items: center;
+  align-content: start;
+}
+/* 頭像屬於鏡頭層：永遠黑底，不跟主題變。 */
+.jf-face {
+  position: relative;
+  display: block;
+  width: 56px;
+  height: 70px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--cine-bg);
+}
+.jf-tilt,
+.jf-svg {
+  position: absolute;
+  inset: 0;
+}
+.jf-tilt {
+  transform-origin: 50% 100%;
+}
+.jf-label {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.jf-label rect {
+  fill: none;
+  stroke: var(--cine-line);
+  stroke-dasharray: 14 14;
+  stroke-width: 3;
+}
+.jf-label text {
+  font: 34px var(--font-mono);
+  fill: var(--cine-muted);
+}
+.jf-svg svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+/* 影子＝懷疑：從卡面右側吃進來，左緣羽化 12 單位（56 寬時約 1.7px），#06080b 92%。 */
+.jf-shadow {
+  position: absolute;
+  inset: 0 0 0 auto;
+  width: var(--sh);
+  background: linear-gradient(to right, transparent 0, rgb(6 8 11 / 92%) 1.7px);
+  pointer-events: none;
+}
+.jb-track {
+  position: relative;
+  width: 40px;
+  height: 4px;
+  margin-top: 7px;
+  border-radius: 999px;
+  background: var(--border);
+}
+/* 刻痕：五格之一（0／25／50／75／100）。 */
+.jb-track::after,
+.jb-seg::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: calc(var(--tick) * 1%);
+  width: 2px;
+  height: 8px;
+  translate: -1px 0;
+  background: var(--text);
+}
+/* 顯示數值：門檻刻度線、過門檻軌道填滿 --bad。 */
+.jb-track.th::before {
+  content: '';
+  position: absolute;
+  top: -3px;
+  left: calc(var(--th) * 1%);
+  height: 10px;
+  border-left: 1px dashed var(--muted);
+}
+.jb-track.over {
+  background: var(--bad);
+}
+.jb-num {
+  margin-top: 6px;
+  font: 500 13px/1 var(--font-mono);
+}
+.jb-num.over {
+  color: var(--bad);
+  font-weight: 700;
+}
+.jurybox.collapsed {
+  justify-content: stretch;
+  max-width: 358px;
+}
+.jurybox > .toggle {
+  justify-self: start;
+}
+/* 畫面上的黃留給主按鈕（一格一黃）：勾選框用內文色。 */
+.jurybox > .toggle input {
+  accent-color: var(--text);
+}
+/* 手機收合刻痕條：整條一個熱區（高 44），段數跟陪審團人數走。 */
+.jb-strip-head {
+  display: flex;
+  justify-content: space-between;
+  height: 20px;
+  margin: 0;
+  font-size: var(--fs-ui-meta);
+  color: var(--muted);
+}
+.jb-strip {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  column-gap: 4px;
+  align-items: center;
+  width: 100%;
+  max-width: 358px;
+  height: 44px;
+  padding: 0 13px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  cursor: pointer;
+}
+.jb-seg {
+  position: relative;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--border);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .jf-shadow {
+    transition: width var(--dur-shadow) var(--ease-light);
+  }
+  .jf-svg.in {
+    animation: iv-fade var(--dur-shadow) linear both;
+  }
+  .jf-tilt[data-nod] {
+    animation: jf-nod var(--dur-nod) var(--ease) both;
+  }
+  @keyframes jf-nod {
+    25%,
+    75% {
+      rotate: 3deg;
+    }
+    50% {
+      rotate: -3deg;
+    }
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .jf-svg.in {
+    animation: iv-fade var(--dur-rm) linear both;
+  }
+}
+@media (max-width: 480px) {
+  .jb-grid {
+    grid-template-columns: repeat(6, 48px);
+  }
+  .jf-face {
+    width: 48px;
+    height: 60px;
+  }
+}

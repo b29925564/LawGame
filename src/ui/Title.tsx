@@ -78,7 +78,7 @@ export function Title() {
         疑
       </span>
       <div className="title-head">
-        <span className="title-rule" aria-hidden />
+        {/* 標準字的黃直線只在沒有別的黃的畫面出現；標題畫面的黃留給「新遊戲」（規格 v2.0 §19 裁定）。 */}
         {/* 一字一行排成直式；每個字是區塊，所以名字要另外給，不然讀成「合 理 懷 疑」。 */}
         <h1 aria-label={t('合理懷疑')}>
           {[...'合理懷疑'].map((c, i) => (

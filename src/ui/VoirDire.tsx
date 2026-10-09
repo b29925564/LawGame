@@ -9,6 +9,7 @@ import { IdPhoto } from './IdPhoto';
 import { useScope } from './lang';
 import { Speech } from './Portrait';
 import { Shell, Tabs } from './Shell';
+import { Recap } from './ActCard';
 
 type Filter = 'all' | 'seated' | 'unasked';
 
@@ -57,6 +58,7 @@ export function VoirDire({ scene }: { scene: VoirDireScene }) {
           {t(scene.place, scope)}
         </p>
         <div className="lines">
+          <Recap />
           {scene.intro.map((l, i) => (
             <Speech key={i} line={l} />
           ))}

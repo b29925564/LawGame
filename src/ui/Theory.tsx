@@ -9,6 +9,7 @@ import { CommitBar } from './Commit';
 import { JuryStart } from './JuryStart';
 import { useScope } from './lang';
 import { Speech } from './Portrait';
+import { Recap } from './ActCard';
 
 /**
  * 案件理論（企劃書 6.9.2）：整集最大的策略決定，選了不能換。
@@ -33,6 +34,7 @@ export function Theory({ scene }: { scene: TheoryScene }) {
           {t(scene.place, scope)}
         </p>
         <div className="lines">
+          <Recap />
           {scene.intro.map((l, i) => (
             <Speech key={i} line={l} />
           ))}
