@@ -10,6 +10,7 @@ _cards: &cards
     kind: 文件
     text: 「承攬人得自行決定上線時間與接單與否，本公司不負勞動法上之照顧義務。」
     source: 卡爾德快遞
+    bates: CALDER-001001
     held: true
   - id: complaint
     name: 起訴狀
@@ -24,16 +25,19 @@ _cards: &cards
     time: '18:21'
     text: 死因急性心肌梗塞。發現時坐在駕駛座，安全帶未解。
     source: 卡爾德郡法醫室
+    bates: ME-000501
   - id: med-record
     name: 家醫病歷：高血壓
     kind: 文件
     text: 事發前三個月診斷第二期高血壓，開立降壓藥，囑咐三個月後回診。沒有回診。
     source: 原告開示
+    bates: OKF-000214
   - id: pharmacy
     name: 藥局紀錄：只領過一次藥
     kind: 文件
     text: 降壓藥處方三個月，領藥紀錄只有第一個月。
     source: 藥局（傳票）
+    bates: CALDER-001018
     bag:
       caseNo: 26-CV-1182　被告傳票 D-1
       item: 傳票回覆　1 之 1
@@ -56,6 +60,7 @@ _cards: &cards
     time: '18:09'
     text: 事發前 14 天，「已連續上線 10 小時」提醒共跳出 61 次，每次都按了「略過」。最後一次是 18:09。
     source: 卡爾德快遞系統
+    bates: CALDER-001377
   - id: app-dispatch
     name: App 日誌：死後仍在派單
     kind: 文件
@@ -63,6 +68,7 @@ _cards: &cards
     time: '18:21'
     text: 18:21 起車輛 GPS 靜止。之後系統派單 3 次，均自動判定拒單，扣評分 0.3。
     source: 卡爾德快遞系統
+    bates: CALDER-001402
   - id: voice-memo
     name: 赫克托的語音：「回家吃藥」
     kind: 陳述
@@ -70,6 +76,7 @@ _cards: &cards
     time: '17:52'
     text: 「再跑兩單就回家，回家吃藥。妳先吃，不用等我。」
     source: 原告開示
+    bates: OKF-000233
   - id: trevor-says
     name: 崔佛的說法：提醒一直都在
     kind: 陳述
@@ -80,34 +87,40 @@ _cards: &cards
     kind: 文件
     text: 「連續上線 10 小時，強制下線 8 小時，期間不派單。」版本 2.3，兩年前。
     source: 卡爾德快遞系統文件
+    bates: CALDER-002210
   - id: change-ticket
     name: 設定變更單：改為提醒
     kind: 文件
     date: 三月
     text: 「疲勞鎖改為提醒，司機可略過。依法務意見。」簽核人：崔佛・米爾斯。
     source: 卡爾德快遞系統文件
+    bates: CALDER-002231
   - id: chat-peak
     name: 營運群組：「旺季不准任何人被踢下線」
     kind: 陳述
     date: 三月
     text: 崔佛・米爾斯在營運群組：「旺季不准任何人被踢下線。我不管系統怎麼寫。」
     source: 卡爾德快遞內部通訊
+    bates: CALDER-003005
   - id: legal-memo
     name: 法務意見書（惠特洛克・海爾）
     kind: 文件
     date: 三月
     text: 「承攬人非受僱人，貴公司無照顧義務。取消強制下線之法律風險可控。」
     source: 惠特洛克・海爾律師事務所
+    bates: CALDER-003120
   - id: fisher-report
     name: 費雪醫師報告
     kind: 文件
     text: 每週工時超過 60 小時的司機，心血管事件風險是一般人的 2.4 倍。
     source: 原告專家（喬安娜・費雪醫師）
+    bates: OKF-000530
   - id: fisher-sample
     name: 費雪報告附註：樣本是長途卡車司機
     kind: 文件
     text: 附註 7：研究樣本為州際長途貨車司機，單趟平均 9 小時，不含市區短程配送。
     source: 原告專家報告
+    bates: OKF-000548
 
   - id: trevor-sworn
     name: 崔佛的宣誓陳述：提醒一直都在
@@ -750,6 +763,7 @@ scenes:
         q: 這個機制一直都是這樣嗎？
         a: 從系統上線就是提醒，從來沒有強制下線過。
         anchors: trevor-sworn
+        cite: '42:7'
       - id: p-ticket
         q: 三月四日有一張設定變更單。簽名的是您嗎？
         a: ……系統每一季都在改版。我不記得每一張變更單。

@@ -46,6 +46,7 @@ _cards: &cards
     kind: 文件
     text: 二級謀殺。卡爾德州訴伊森・蕭。
     source: 檢方證據開示
+    bates: DA-000001
     held: true
   - id: arrest-time
     name: 逮捕紀錄
@@ -54,6 +55,7 @@ _cards: &cards
     time: '14:05'
     text: 於友人住處逮捕伊森・蕭。
     source: 逮捕報告
+    bates: CPD-000014
   - id: car-statement
     name: 警車上的供述
     kind: 陳述
@@ -68,11 +70,13 @@ _cards: &cards
     time: '14:32'
     text: 於分局由柯瓦斯基警探告知並簽署米蘭達權利。
     source: 逮捕報告
+    bates: CPD-000019
   - id: watch-listed
     name: 財物清單：智慧手錶
     kind: 物品
     text: 被告入所時扣押物品：手機 1 支、皮夾 1 個、智慧手錶 1 支。
     source: 看守所財物清單
+    bates: CPD-000021
     bag:
       caseNo: CH-2026-1147
       item: 財物清單　項 3
@@ -103,6 +107,7 @@ _cards: &cards
     time: '22:47'
     text: 被告 22:47 刷卡進入 31 樓，23:01 刷卡離開大廳閘門。
     source: 警方報告
+    bates: CPD-000112
     admitted: true
   - id: access-full
     name: 完整門禁紀錄
@@ -111,18 +116,26 @@ _cards: &cards
     time: '23:26'
     text: 附件三未經標註的原始檔：伊森 23:01 離開後，31 樓只剩一個人沒有刷出，那個人 23:26 才刷卡離開大廳。
     source: 警方報告附件三
+    bates: CPD-000127
   - id: autopsy
     name: 驗屍報告
     kind: 文件
     text: 鈍器重擊頭部致死。死亡時間推估 22:00 至 23:30。
     source: 布魯克斯法醫
+    bates: ME-000001
     admitted: true
   - id: watch-photo
     name: 驗屍照片：死者的手錶
     kind: 物品
     text: 死者左腕配戴智慧手錶，錶帶完好，仍扣在腕上；背面有心率感測器，貼著皮膚。
     source: 布魯克斯法醫
-    photo: { caseNo: ME-26-0311, no: 14, of: 46, at: '03/14 09:40', by: T. Nguyen　法醫調查員 }
+    photo:
+      caseNo: ME-26-0311
+      bates: ME-000114
+      no: 14
+      of: 46
+      at: '03/14 09:40'
+      by: T. Nguyen　法醫調查員
   - id: sophie-home
     name: 蘇菲對警方的說法：我直接回家了
     kind: 陳述
@@ -137,6 +150,7 @@ _cards: &cards
     time: '22:40'
     text: 地下停車場的進出紀錄顯示，蘇菲的車週五 22:40 才駛離。
     source: 蘿莎調查
+    bates: WH-000031
   - id: jade-alibi
     name: 潔德證實：蘇菲當晚和她在車上
     kind: 陳述
@@ -149,6 +163,7 @@ _cards: &cards
     kind: 文件
     text: 被告外套袖口血跡與死者 DNA 相符。
     source: 檢方補充開示
+    bates: DA-000047
   - id: ride-receipt
     name: 叫車收據
     kind: 文件
@@ -157,6 +172,7 @@ _cards: &cards
     text: 於東河街 118 號上車，22:44 抵達卡爾德大樓。司機奧瑪・哈桑。
     arrivesAt: '22:44'
     source: 叫車公司
+    bates: WH-000044
   - id: sophie-health-app
     name: 蘇菲陳述：他每天盯著健康 App
     kind: 陳述
@@ -169,6 +185,7 @@ _cards: &cards
     time: '22:24'
     text: 心率在 22:24 急遽升高後歸零，之後再無讀數。
     source: 手錶廠商（傳票）
+    bates: WH-000052
     bag:
       caseNo: 26-CR-0417　辯方傳票 D-1
       item: 傳票回覆　1 之 1
@@ -195,6 +212,7 @@ _cards: &cards
     time: '23:14'
     text: 沃斯於 21:55 傳訊給瑞秋；22:31 由沃斯桌機發出一則訊息給伊森（伊森的手錶 22:33 才收到推播）；23:14 由同一台桌機收回。
     source: 卡爾德物流（傳票）
+    bates: CALDER-000017
     bag:
       caseNo: 26-CR-0417　辯方傳票 D-2
       item: 傳票回覆　1 之 1
@@ -221,6 +239,7 @@ _cards: &cards
     time: '22:33'
     text: 推播通知：「葛蘭特・沃斯：十點四十五分上來，把筆電帶來。我們私下解決。」
     source: 被告扣押手錶
+    bates: WH-000038
 
   # 第三幕新增的卡片，和第二幕共用同一份牌庫（見 _cards 錨點）。
   - id: arrest-report
@@ -230,6 +249,7 @@ _cards: &cards
     time: '14:05'
     text: 逮捕時間 14:05。備註欄：「嫌犯於巡邏車後座自願陳述。」
     source: 檢方開示
+    bates: CPD-000012
   - id: no-warning
     name: 巡邏車錄影：沒有警告
     kind: 文件
@@ -237,6 +257,7 @@ _cards: &cards
     time: '14:20'
     text: 錄影裡警員沒有唸出米蘭達警告，就開始問他為什麼在大樓裡。
     source: 檢方開示
+    bates: CPD-V-000003
   - id: statement-excluded
     name: 裁定：車上供述已排除
     kind: 文件
@@ -369,18 +390,33 @@ scenes:
         subject: 全景：財務長辦公室，自門口拍攝
         redacted: true
         photo:
-          { caseNo: CH-2026-1147, no: 1, of: 48, at: '03/14 01:12', by: M. Duarte　卡港警局 鑑識組 }
+          caseNo: CH-2026-1147
+          bates: CPD-000301
+          no: 1
+          of: 48
+          at: '03/14 01:12'
+          by: M. Duarte　卡港警局 鑑識組
       - id: scene-blood
         subject: 證物牌 1：辦公桌旁地毯上的血跡
         placard: 1
         photo:
-          { caseNo: CH-2026-1147, no: 2, of: 48, at: '03/14 01:16', by: M. Duarte　卡港警局 鑑識組 }
+          caseNo: CH-2026-1147
+          bates: CPD-000302
+          no: 2
+          of: 48
+          at: '03/14 01:16'
+          by: M. Duarte　卡港警局 鑑識組
       - id: scene-trophy
         subject: 證物牌 2：水晶獎盃，附比例尺
         placard: 2
         highlight: true
         photo:
-          { caseNo: CH-2026-1147, no: 3, of: 48, at: '03/14 01:19', by: M. Duarte　卡港警局 鑑識組 }
+          caseNo: CH-2026-1147
+          bates: CPD-000303
+          no: 3
+          of: 48
+          at: '03/14 01:19'
+          by: M. Duarte　卡港警局 鑑識組
 
   - type: card
     id: title
