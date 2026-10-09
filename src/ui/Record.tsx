@@ -13,7 +13,6 @@ import {
   type RecordRow,
   type Redaction,
 } from './record';
-import './court.css';
 
 const NARRATOR = '旁白';
 // 筆錄上的發言人寫職稱，不寫名字（真的筆錄是「THE COURT:」「MR. GREY:」）。
@@ -160,14 +159,16 @@ export function CourtRecord({
   useEffect(() => {
     const el = box.current;
     if (!el || !live) return;
-    const target = el.querySelector<HTMLElement>(
-      `[data-row="${mounted.current ? firstNew : Math.max(0, rows.length - 1)}"]`,
-    );
-    if (target) {
-      const off = target.getBoundingClientRect().top - el.getBoundingClientRect().top;
-      el.scrollTop = mounted.current
-        ? el.scrollTop + off - 12
-        : el.scrollTop + off + target.offsetHeight - el.clientHeight + 24;
+    // 新的一批：把第一句新的捲到頂，但不超過「最後一句剛好看得到」，內容還放得下時就不動。
+    // 掛載時：捲到最後一句剛好在底。
+    const lastRow = el.querySelector<HTMLElement>(`[data-row="${Math.max(0, rows.length - 1)}"]`);
+    const first = el.querySelector<HTMLElement>(`[data-row="${firstNew}"]`);
+    if (lastRow) {
+      const top = el.getBoundingClientRect().top;
+      const needed =
+        el.scrollTop + lastRow.getBoundingClientRect().bottom - top - el.clientHeight + 24;
+      const desired = first ? el.scrollTop + first.getBoundingClientRect().top - top - 12 : needed;
+      el.scrollTop = mounted.current ? Math.max(el.scrollTop, Math.min(desired, needed)) : needed;
     }
     if (mounted.current && entries.length > batch) setRevealing(true);
     mounted.current = true;
@@ -192,10 +193,12 @@ export function CourtRecord({
     if (g && g[0].entry === r.entry) g.push(r);
     else groups.push([r]);
   }
+  // 庭上的那份把這一頁補滿 25 行：行號是紙上印好的，還沒寫到的行也在。還沒開口時是一張空白的第 1 頁。
   const last = shown[shown.length - 1];
+  const upTo = last?.line ?? 0;
   const pad =
-    live && last && last.line < ROWS_PER_PAGE
-      ? Array.from({ length: ROWS_PER_PAGE - last.line }, (_, i) => last.line + i + 1)
+    live && upTo < ROWS_PER_PAGE
+      ? Array.from({ length: ROWS_PER_PAGE - upTo }, (_, i) => upTo + i + 1)
       : [];
   const labelW = (label: string) => textWidth(t(label), zh) * 0.75 + 1.2;
 
@@ -214,7 +217,7 @@ export function CourtRecord({
         style={{ '--rec-measure': MEASURE } as CSSProperties}
       >
         <span className="rec-probe" ref={probe} aria-hidden />
-        {shown[0] && pageHead(shown[0].page)}
+        {(shown[0] || live) && pageHead(shown[0]?.page ?? 1)}
         {groups.map((g) => {
           const e = entries[g[0].entry];
           const label = e.redact ? t(e.redact) : '';
