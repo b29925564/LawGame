@@ -491,8 +491,9 @@ export function buildSketch(inp: SketchInput): Sketch {
           });
         }
     } else if (motif === 'pulse') {
-      // 心率：鋸齒線走到 22:24（約 62%）就斷，斷點一條紅豎線，之後是空白。
-      const v = c.h * 0.42;
+      // 心率：鋸齒線走到 22:24（約 62%）停下，接一小段炭筆平線，之後留白。
+      // 不用紅：紅在證據板上只代表矛盾。
+      const v = c.h * 0.3;
       const end = pad + (c.w - 2 * pad) * 0.62;
       const pts: number[] = [];
       let up = true;
@@ -502,15 +503,11 @@ export function buildSketch(inp: SketchInput): Sketch {
         pts.push(x, y);
         up = !up;
       }
-      strokes.push({ pts, w: 2.2 * S, rgb: tone, a: 0.92 * f });
-      strokes.push({
-        pts: line(end, pad * 0.6, end, c.h - pad * 0.6, 0.3 * S),
-        w: 1 * S,
-        rgb: RED,
-        a: 0.85 * f,
-      });
-      const [dx, dy] = P(end, v);
-      strokes.push({ pts: [dx - 1.6 * S, dy, dx + 1.6 * S, dy], w: 3.4 * S, rgb: tone, a: f });
+      const [lx, ly] = [pts[pts.length - 2], pts[pts.length - 1]];
+      const flat = line(end, v, end + (c.w - 2 * pad) * 0.14, v, 0.25 * S);
+      flat[0] = lx;
+      flat[1] = ly;
+      strokes.push({ pts: [...pts, ...flat.slice(2)], w: 2.2 * S, rgb: tone, a: 0.92 * f });
     }
     // 輪廓：每邊三筆，筆筆不同——超出角落一點、中段微彎、有的沒畫滿。
     const edges: [number, number, number, number][] = [
@@ -605,7 +602,8 @@ export function drawSketchText(
     paper: RGB;
     light: boolean[];
     provenance: string;
-    fonts: { hand: string };
+    /** 手寫字型與字級（--fs-hand：桌機 18px、手機 16px）。 */
+    fonts: { hand: string; size: number };
   },
 ) {
   const S = o.scale;
@@ -622,16 +620,28 @@ export function drawSketchText(
     const pad = 9;
     const inner = c.w - 2 * pad;
     // 下緣：卡名（圖版的「F3 沃斯的心率」），小一號。
-    ctx.font = `400 13px ${o.fonts.hand}`;
-    wrap(ctx, c.label, pad, c.h - pad - 15, inner, 16, 1);
-    ctx.font = `400 15px ${o.fonts.hand}`;
+    // 卡名寫不下就寫小一點（最小 12px），還是不下才分兩行往上寫。
+    let ls = 14;
+    ctx.font = `400 ${ls}px ${o.fonts.hand}`;
+    const lw = ctx.measureText(c.label).width;
+    if (lw > inner) {
+      ls = Math.max(12, Math.floor((14 * inner) / lw));
+      ctx.font = `400 ${ls}px ${o.fonts.hand}`;
+    }
+    const two = ctx.measureText(c.label).width > inner;
+    wrap(ctx, c.label, pad, c.h - pad - (two ? 2 : 1) * (ls + 2), inner, ls + 2, 2);
+    ctx.font = `400 ${o.fonts.size}px ${o.fonts.hand}`;
     if (c.motif === 'pulse') {
       // 斷點旁寫時刻。
-      if (c.time) ctx.fillText(c.time, pad, c.h * 0.42 + 12);
+      if (c.time) {
+        ctx.font = `400 14px ${o.fonts.hand}`;
+        ctx.fillText(c.time, pad, c.h * 0.3 + 15);
+      }
     } else if (c.motif !== 'photo' && c.body) {
       // 卡上的內容：畫家照著卡抄下來的幾行字。
-      const rows = Math.max(1, Math.floor((c.h - 2 * pad - 20) / 18));
-      wrap(ctx, c.body, pad, pad - 1, inner, 18, rows);
+      const lh = Math.round(o.fonts.size * 1.25);
+      const rows = Math.max(1, Math.floor((c.h - 2 * pad - 18) / lh));
+      wrap(ctx, c.body, pad, pad - 1, inner, lh, rows);
     }
     ctx.restore();
   });
@@ -658,8 +668,9 @@ function wrap(
   let n = 0;
   for (const ch of s) {
     if (ctx.measureText(line + ch).width > maxW && line) {
+      // 寫不下就停筆：畫家只抄得下這麼多，不加刪節號。
       if (n === lines - 1) {
-        ctx.fillText(line.slice(0, -1) + '…', x, y + n * lh);
+        ctx.fillText(line, x, y + n * lh);
         return;
       }
       ctx.fillText(line, x, y + n * lh);

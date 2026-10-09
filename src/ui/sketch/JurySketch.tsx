@@ -208,7 +208,8 @@ export function JurySketch({
       });
       // 手寫字型是依字分包下載的：畫布要用的字先載入，否則會退回別的字型。
       const words = sc.map((c) => c.label + (c.body ?? '') + (c.time ?? '')).join('');
-      await document.fonts?.load(`17px ${hand}`, words + provenance).catch(() => undefined);
+      const size = parseFloat(css.getPropertyValue('--fs-hand')) || 18;
+      await document.fonts?.load(`${size}px ${hand}`, words + provenance).catch(() => undefined);
       if (cancelled) return;
       const paper = cssColor('var(--sketch-paper)');
       const ink = cssColor('var(--sketch-ink)');
@@ -244,7 +245,7 @@ export function JurySketch({
           paper,
           light: got.light,
           provenance,
-          fonts: { hand },
+          fonts: { hand, size },
         });
         // 畫完存一份：證據、語言、主題、尺寸都沒變，下次直接貼上。
         const snap = document.createElement('canvas');
