@@ -60,7 +60,10 @@
 發現: Findings
 '發現 {n}': 'Finding {n}'
 還沒有發現: No findings yet
-在上面把兩張卡連起來，發現會出現在這裡。: Link two cards above and your findings appear here.
+尚未發現: No findings yet
+把兩張卡連起來，發現會出現在下面。: Link two cards and your findings appear below.
+尚未取得　需傳票: 'Not obtained · subpoena needed'
+尚未取得　需聲請: 'Not obtained · motion needed'
 '：': ': '
 已放進答案: In answer
 '已用過 {n}': 'Used ({n})'

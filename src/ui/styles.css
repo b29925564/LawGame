@@ -1647,9 +1647,9 @@ fieldset.relations.compact {
   min-inline-size: 0;
 }
 .relations.compact [aria-checked='true'] {
-  background: var(--hl) !important;
-  color: var(--hl-ink);
-  border-color: transparent;
+  background: var(--text) !important;
+  color: var(--bg);
+  border-color: transparent !important;
   box-shadow: none;
 }
 .relations.compact p {
@@ -4892,9 +4892,10 @@ button.iou[aria-pressed='true'] {
   background: var(--surface);
 }
 .q-item[aria-current='true'] {
-  border-color: var(--hl);
+  /* 一格一黃：黃留給「連起來」；選中的疑問是白框（設計師 P2-7 審查）。 */
+  border-color: var(--text);
   border-left-width: 3px;
-  background: var(--hl-wash);
+  background: var(--surface-2);
 }
 .q-num {
   font-family: var(--font-mono, monospace);
