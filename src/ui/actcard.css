@@ -127,6 +127,8 @@
   margin-top: calc(10 * var(--u));
   padding-left: 0.04em;
   font: 900 calc(128 * var(--u)) / 1.05 var(--font-doc);
+  /* 幕名寬度不能壓到左邊的標題欄：字多（英文）時依字寬縮（--n 是以中文字寬計的字數）。 */
+  font-size: min(calc(128 * var(--u)), calc(640 * var(--u) / var(--n, 2)));
   letter-spacing: 0.04em;
   background: linear-gradient(180deg, #f4f5f7 0%, #dfe3e8 38%, #8b95a3 100%);
   background-clip: text;
@@ -364,6 +366,19 @@
     flex-direction: column;
     gap: 0.6em;
     font: 500 max(12px, calc(12 * var(--u))) / 1.3 var(--font-mono);
+  }
+  /* 英文幕名不直排（拉丁字母直立排會一字一行）：橫排置中，依字寬縮到放得下。 */
+  .act-card.latin .act-head {
+    flex-direction: column;
+    align-items: center;
+    gap: calc(10 * var(--u));
+  }
+  .act-stage .act-card.latin .act-kick,
+  .act-card.latin .act-big {
+    writing-mode: horizontal-tb;
+  }
+  .act-card.latin .act-big {
+    font-size: min(56px, calc(1100 * var(--u) / var(--n, 2)));
   }
 }
 

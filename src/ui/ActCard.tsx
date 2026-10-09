@@ -27,6 +27,9 @@ export function splitHeadline(text: string, mode: 'act' | 'day' = 'act'): Headli
   return { kicker: parts[0], title: parts[1], day: parts[2] };
 }
 
+/** 幕名的字寬，以中文字為 1：拉丁字母約半個字寬。 */
+const width = (s: string) => [...s].reduce((n, c) => n + (CJK.test(c) ? 1 : 0.55), 0);
+
 /** 幕序字距：「第四幕」寫成「第 四 幕」（四個字以內的中文才拉開）。 */
 export function spaced(kicker: string) {
   const chars = [...kicker];
@@ -174,7 +177,10 @@ export function ActCard({
       data-auto={onDone ? '' : undefined}
     >
       <div className="act-wrap">
-        <section className="act-card" aria-label={[headline.kicker, headline.title].join(' ')}>
+        <section
+          className={CJK.test(headline.title) ? 'act-card' : 'act-card latin'}
+          aria-label={[headline.kicker, headline.title].join(' ')}
+        >
           <span className="act-tube" aria-hidden />
           <span className="act-cone" aria-hidden />
           <div className="act-caption" aria-hidden>
@@ -211,10 +217,7 @@ export function ActCard({
             )}
             <h1 className="act-title">
               <span className="rd" style={d(5)}>
-                <span
-                  className="act-big"
-                  style={{ '--n': [...headline.title].length } as CSSProperties}
-                >
+                <span className="act-big" style={{ '--n': width(headline.title) } as CSSProperties}>
                   {headline.title}
                 </span>
               </span>
