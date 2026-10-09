@@ -23,6 +23,7 @@ import { useScope } from './lang';
 import { useCardPick } from './pick';
 import { Speech } from './Portrait';
 import { relationMark, RelationPicker } from './RelationPicker';
+import { Redaction } from './Redaction';
 import { Shell, Tabs } from './Shell';
 import { Timeline } from './Timeline';
 
@@ -585,7 +586,11 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
         {/* 還沒出現的疑問只留一行：看得出案子還沒查完，又不佔一排空框（UX 規格）。 */}
         {scene.questions.length > questions.length && (
           <li className="q-locked">
-            {t('還有 {n} 題，查到線索後出現', { n: scene.questions.length - questions.length })}
+            <Redaction
+              label={t('還有 {n} 題，查到線索後出現', {
+                n: scene.questions.length - questions.length,
+              })}
+            />
           </li>
         )}
       </ul>
@@ -732,8 +737,8 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
                 {t('發現')}
               </h3>
               {found.length === 0 ? (
-                <p className="slot-card found-empty">
-                  {t('在上面把兩張卡連起來，發現會出現在這裡。')}
+                <p className="found-empty">
+                  <Redaction label={t('在上面把兩張卡連起來，發現會出現在這裡。')} />
                 </p>
               ) : (
                 (() => {
