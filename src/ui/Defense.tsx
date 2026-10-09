@@ -7,7 +7,7 @@ import { termsOf } from '../engine/jury';
 import { useScope } from './lang';
 import { MarkLines } from './Marks';
 import { Speech } from './Portrait';
-import { Transcript } from './Shell';
+import { CourtRecord, useCourtEntries } from './Record';
 
 /**
  * 辯方證人（企劃書 6.9.6）：先準備，再直接詰問。
@@ -22,6 +22,7 @@ export function Defense({ scene: raw }: { scene: DefenseScene }) {
   const scope = useScope();
   const [intro, setIntro] = useState(st.stage === 'prep' && st.log.length === 0);
   const rules = juryAfterTrial(progress)?.rules;
+  const record = useCourtEntries(st.log, scene.witness.name);
 
   if (intro)
     return (
@@ -69,9 +70,6 @@ export function Defense({ scene: raw }: { scene: DefenseScene }) {
   const open = [...scene.questions]
     .filter((q) => left > 0 && !st.asked.includes(q.id))
     .sort((a, b) => a.seq - b.seq);
-  const lines = st.log.map((l, i) => (
-    <Speech key={i} line={{ who: l.who, text: l.text, mood: '平', thought: false }} />
-  ));
   return (
     <main className="scene">
       <p className="eyebrow">
@@ -93,10 +91,10 @@ export function Defense({ scene: raw }: { scene: DefenseScene }) {
       )}
       {st.log.length > 0 &&
         (st.stage === 'direct' ? (
-          <Transcript count={st.log.length}>{lines}</Transcript>
+          <CourtRecord entries={record} live />
         ) : (
           // 詰問結束後整份筆錄攤開，不再擠在小框裡只露半句。
-          <div className="lines transcript full">{lines}</div>
+          <CourtRecord entries={record} className="full" />
         ))}
       {st.stage === 'direct' ? (
         <>

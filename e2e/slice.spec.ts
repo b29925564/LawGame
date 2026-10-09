@@ -316,7 +316,7 @@ async function playToRachelLast(page: Page) {
   await page.getByRole('button', { name: '不異議' }).click();
   await page.getByRole('button', { name: '聽下一個問題' }).click();
   await page.getByRole('button', { name: '誘導' }).click();
-  await expect(page.getByText('（這句話已從陪審團視角刪除）')).toBeVisible();
+  await expect(page.locator('.rec-bar').getByText('異議成立')).toBeVisible();
   for (let i = 0; i < 4; i++) {
     await page.getByRole('button', { name: '聽下一個問題' }).click();
     await page.getByRole('button', { name: '不異議' }).click();

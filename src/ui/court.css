@@ -1,0 +1,185 @@
+/*
+ * 庭審畫面（法庭介面負責）。
+ * 這個檔先只放新元件；styles.css 裡既有的庭審區塊等權杖 PR 合併後再搬過來。
+ */
+
+/* ══ 審判筆錄（設定集第 9 章 <Transcript>）：25 行一頁、行號、問／答、黑條 ══ */
+.record {
+  --rec-fs: calc(15px * var(--text-scale));
+  --rec-row: calc(var(--rec-fs) * 2);
+  /* 行號欄寬與紙的內距；換頁的間隔要伸到紙邊，所以要知道內距。 */
+  --rec-gutter: calc(var(--rec-fs) * 2.2);
+  --rec-pl: calc(var(--rec-gutter) + var(--rec-fs) * 0.8);
+  --rec-pr: calc(var(--rec-fs) * 0.6);
+  --rec-gap-bg: var(--surface);
+  mask-image: none;
+  box-shadow: none;
+  padding: 8px;
+  gap: 0;
+  scrollbar-width: thin;
+}
+.rec-paper {
+  position: relative;
+  /* 筆錄紙一行固定長（record.ts 的 MEASURE）：寬的畫面上就是一張置中的紙，不拉長。 */
+  max-width: calc(
+    var(--rec-measure) * var(--rec-fs) + var(--rec-pl) + var(--rec-pr) + var(--rec-fs)
+  );
+  margin-inline: auto;
+  width: 100%;
+  padding: 0 var(--rec-pr) calc(var(--rec-fs) * 0.6) var(--rec-pl);
+  border-radius: 0;
+  background:
+    /* 訴狀紙的左側雙直線，行號在線外 */
+    linear-gradient(var(--paper-rule), var(--paper-rule)) var(--rec-gutter) 0 / 1px 100% no-repeat,
+    linear-gradient(var(--paper-rule), var(--paper-rule)) calc(var(--rec-gutter) + 3px) 0 / 1px 100%
+      no-repeat,
+    var(--paper);
+  box-shadow: 0 1px 0 rgb(0 0 0 / 18%);
+  color: var(--paper-ink);
+  font: 400 var(--rec-fs) / var(--rec-row) var(--font-court);
+  font-variant-numeric: tabular-nums;
+}
+.rec-probe {
+  display: block;
+  height: 0;
+}
+.rec-head {
+  display: flex;
+  min-height: 2em;
+  justify-content: space-between;
+  gap: 1em;
+  padding-top: calc(var(--rec-fs) * 0.5);
+  font: 400 calc(11px * var(--text-scale)) / 2 var(--font-court);
+  letter-spacing: 0.08em;
+  color: var(--paper-muted);
+  text-transform: uppercase;
+}
+.rec-head::before {
+  content: attr(data-l);
+}
+.rec-head::after {
+  content: attr(data-r);
+}
+.rec-entry {
+  margin: 0;
+}
+.rec-line {
+  display: contents;
+}
+.rec-row {
+  display: block;
+  position: relative;
+  height: var(--rec-row);
+  padding-left: var(--indent, 0);
+  white-space: pre;
+}
+.rec-row::before {
+  content: attr(data-no);
+  position: absolute;
+  top: 0;
+  left: calc(-1 * var(--rec-pl));
+  width: calc(var(--rec-gutter) - var(--rec-fs) * 0.45);
+  text-align: right;
+  font: 400 calc(11px * var(--text-scale)) / var(--rec-row) var(--font-court);
+  color: var(--paper-muted);
+  user-select: none;
+}
+.rec-tag {
+  font-weight: 700;
+}
+.rec-entry.q .rec-tag,
+.rec-entry.a .rec-tag {
+  display: inline-block;
+  width: 2.4em;
+  font-weight: 400;
+}
+.rec-cjk {
+  font-family: 'Noto Serif TC', serif;
+}
+.rec-entry.note {
+  color: var(--paper-muted);
+}
+/* 黑條：零圓角、上緣 1px、條內小字（設定集第 1、9 章）。報讀念的是條上的字，不是被蓋掉的話。 */
+.rec-bar {
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+  width: var(--w);
+  height: 1.3em;
+  padding-left: 0.5em;
+  border-top: 1px solid var(--cine-line);
+  border-radius: 0;
+  background: var(--redact);
+  transform-origin: left;
+}
+.rec-bar small {
+  font: 500 calc(11px * var(--text-scale)) / 1 var(--font-mono);
+  color: var(--redact-label);
+  white-space: nowrap;
+}
+/* 換頁：兩張紙之間露出桌面，下一張紙頂上一行頁碼。 */
+.rec-break {
+  display: block;
+}
+.rec-break::before {
+  content: '';
+  display: block;
+  height: 12px;
+  margin: calc(var(--rec-fs) * 0.6) calc(-1 * var(--rec-pr)) 0 calc(-1 * var(--rec-pl));
+  background: var(--rec-gap-bg);
+  box-shadow:
+    0 -1px 0 rgb(0 0 0 / 18%),
+    0 1px 0 var(--paper-rule) inset;
+}
+.rec-pad {
+  display: block;
+}
+.rec-skip {
+  position: sticky;
+  bottom: 0;
+  align-self: flex-end;
+  margin-top: -40px;
+  min-height: 32px;
+  padding: 4px 12px;
+  font: 500 var(--fs-ui-meta) / 1.3 var(--font-ui, inherit);
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+}
+.record.full {
+  max-height: none;
+  overflow: visible;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* 逐行出現（不是逐字）；黑條斷奏蓋上。 */
+  .rec-row.new {
+    animation: iv-fade var(--dur-rm) linear both;
+    animation-delay: calc(var(--k) * var(--dur-ui));
+  }
+  .rec-row.new .rec-bar {
+    animation: rec-redact var(--dur-redact-in) steps(4) both;
+    animation-delay: calc(var(--k) * var(--dur-ui) + var(--dur-rm));
+  }
+  .rec-row.striking .rec-bar {
+    animation: rec-redact var(--dur-redact-in) steps(4) both;
+    animation-delay: calc(var(--k) * var(--dur-redact-in));
+  }
+  @keyframes rec-redact {
+    from {
+      scale: 0 1;
+    }
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rec-skip {
+    display: none;
+  }
+}
+@media (max-width: 520px) {
+  .record {
+    --rec-fs: calc(14px * var(--text-scale));
+    padding: 8px;
+  }
+}
