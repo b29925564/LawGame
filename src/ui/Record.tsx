@@ -360,6 +360,8 @@ export function CourtRecord({
                             className={`stamp sm rec-stamp${isNew ? ' new' : ''}`}
                             role="img"
                             aria-label={t(e.ruling, 'record')}
+                            // 每枚章轉的角度不一樣（±3°），照句子算，重畫不會跳。
+                            style={{ '--rot': `${((g[0].entry * 5) % 7) - 3}deg` } as CSSProperties}
                           >
                             <b>{t(e.ruling, 'record')}</b>
                           </span>

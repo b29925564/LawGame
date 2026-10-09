@@ -1779,21 +1779,30 @@ html[lang='en'] .record {
   transform-origin: right;
 }
 /* 裁定章：靛藍小章落在異議那一行右邊（設定集 10.3）。 */
-.rec-stamp {
+.stamp.rec-stamp {
   --ink: var(--stamp);
+  /* 章連外框縮在自己那一行的行高內，雙線框：外框 1px＋內框 1px（設定集第 9 章 <Stamp>）。 */
+  --h: calc(var(--rec-row) - 6px);
   vertical-align: middle;
+  height: var(--h);
+  align-content: center;
   margin-left: 0.8em;
-  padding: 2px 6px 1px;
+  padding: 0 5px;
+  border-width: 1px;
+  outline: 1px solid var(--ink);
+  outline-offset: 1.5px;
   white-space: nowrap;
   mix-blend-mode: multiply;
 }
-.rec-stamp b {
-  font-size: calc(var(--rec-fs) * 0.9);
+/* 章內字至少 11px（視覺設計師 #2） */
+.stamp.rec-stamp b {
+  font-size: max(11px, min(var(--rec-fs) * 0.9, var(--h) - 4px));
+  line-height: 1;
 }
-html[lang='en'] .rec-stamp b {
-  font: 700 calc(var(--rec-fs) * 0.8) / 1 var(--font-court);
-  letter-spacing: 0.08em;
-  margin-right: -0.08em;
+html[lang='en'] .stamp.rec-stamp b {
+  font: 700 max(11px, min(var(--rec-fs) * 0.8, var(--h) - 2px)) / 1 var(--font-court);
+  letter-spacing: 0.06em;
+  margin-right: -0.06em;
   text-transform: uppercase;
 }
 /* 換頁：兩張紙之間露出桌面，下一張紙頂上一行頁碼。 */
