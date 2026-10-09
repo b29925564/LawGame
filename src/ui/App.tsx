@@ -12,7 +12,7 @@ import { Desk } from './Desk';
 import { Dialogue } from './Dialogue';
 import { GameMenu } from './GameMenu';
 import { Interview } from './Interview';
-import { ActCard, kelvinOf, PlaceSlate, splitHeadline } from './ActCard';
+import { ActCard, PlaceSlate, Recap, splitHeadline } from './ActCard';
 import { Announcer } from './Marks';
 import { Negotiation } from './Negotiation';
 import { Phone } from './Phone';
@@ -63,7 +63,6 @@ export function App() {
           day ? 'day' : 'act',
         )
       : { kicker: '', title: '' };
-  const lines = card ? (opening ? card.lines.slice(1) : card.lines) : [];
   // 場記：這張卡之後第一個有地點的場景；後面沒有就用前面最後一個。
   const placed = (list: typeof ep.scenes) =>
     list.find((x): x is typeof x & { place: string } => 'place' in x && !!x.place);
@@ -71,9 +70,7 @@ export function App() {
   const where = card
     ? (placed(ep.scenes.slice(at + 1)) ?? placed(ep.scenes.slice(0, at).reverse()))
     : placed(ep.scenes.slice().reverse());
-  const slate = where && t(where.place, where.id);
-  // 旁白裡和場記重複的地點不再寫一次。
-  const said = lines.filter((l) => !where?.place.startsWith(l));
+  const slate = where && { raw: where.place, text: t(where.place, where.id) };
   // 地點字卡：換了地點、前一場又不是幕卡（幕卡自己有場記）時，左下一行場記。
   const here = scene && 'place' in scene && scene.place ? scene.place : '';
   const before = ep.scenes[at - 1];
@@ -85,9 +82,7 @@ export function App() {
     <SceneScope.Provider value={scene?.id}>
       <Announcer />
       <GameMenu />
-      {moved && scene && (
-        <PlaceSlate key={scene.id} place={t(here, scene.id)} kelvin={kelvinOf(here)} />
-      )}
+      <PlaceSlate id={scene?.id} place={moved ? { raw: here, text: t(here, scene?.id) } : null} />
       {scene?.type === 'phone' && <Phone key={scene.id} scene={scene} />}
       {scene?.type === 'dialogue' && <Dialogue key={scene.id} scene={scene} />}
       {scene?.type === 'interview' && <Interview key={scene.id} scene={scene} />}
@@ -100,29 +95,21 @@ export function App() {
       {scene?.type === 'theory' && <Theory key={scene.id} scene={scene} />}
       {scene?.type === 'opening' && <Opening key={scene.id} scene={scene} />}
       {scene?.type === 'closing' && <Closing key={scene.id} scene={scene} />}
-      {(!scene || scene.type === 'card') && (
-        <ActCard
-          headline={headline}
-          place={slate}
-          bates={bates}
-          lines={said.length > 0 && said.map((l) => <p key={l}>{t(l, scene?.id)}</p>)}
-        >
-          {scene ? (
-            <button className="primary" onClick={advance}>
-              {t('繼續')}
-            </button>
-          ) : (
-            <div className="stack">
-              {next && (
-                <button className="primary" onClick={nextEpisode}>
-                  {t('繼續第 {n} 集', { n: episodes[next as keyof typeof episodes].number })}
-                </button>
-              )}
-              <button className={next ? '' : 'primary'} onClick={toTitle}>
-                {t('回標題')}
+      {scene?.type === 'card' && (
+        <ActCard key={scene.id} headline={headline} place={slate} bates={bates} onDone={advance} />
+      )}
+      {!scene && (
+        <ActCard key="end" headline={headline} place={slate} bates={bates} lines={<Recap />}>
+          <div className="stack">
+            {next && (
+              <button className="primary" onClick={nextEpisode}>
+                {t('繼續第 {n} 集', { n: episodes[next as keyof typeof episodes].number })}
               </button>
-            </div>
-          )}
+            )}
+            <button className={next ? '' : 'primary'} onClick={toTitle}>
+              {t('回標題')}
+            </button>
+          </div>
         </ActCard>
       )}
     </SceneScope.Provider>

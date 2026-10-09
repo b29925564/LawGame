@@ -28,6 +28,7 @@ import { Stamp } from './Marks';
 import { Speech } from './Portrait';
 import { batesOf, CourtRecord, useCourtEntries } from './Record';
 import { Shell, Tabs } from './Shell';
+import { Recap } from './ActCard';
 
 /**
  * 法庭裡的陪審團（設定集第 8.4、10.1 章）：剪影替身與四階影子。桌機放在中間欄（HUD 的位置），
@@ -192,6 +193,7 @@ export function Courtroom({ scene: raw }: { scene: TrialScene }) {
             {t(scene.day, scope)}
           </p>
           <div className="lines">
+            <Recap />
             {scene.intro.map((l, i) => (
               <Speech key={i} line={l} />
             ))}

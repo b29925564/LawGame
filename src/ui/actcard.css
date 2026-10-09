@@ -427,3 +427,20 @@
     }
   }
 }
+
+/* 硬切：停留結束（或玩家跳過）時整格黑 83ms，接著換下一場。 */
+.act-stage.cut::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: var(--cine-bg);
+}
+/* 幕卡的回顧與目標移到下一場第一則旁白區塊：和那一場的旁白同一個樣式。 */
+.recap {
+  display: contents;
+}
+.shell-body > .recap {
+  display: block;
+  margin: 0 0 var(--s4);
+}

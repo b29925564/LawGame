@@ -1,5 +1,7 @@
-import type { CSSProperties, ReactNode } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { episodeOf, useEpisode } from '../engine/game';
 import { useLang, useT } from '../i18n';
+import { kelvinOf, rigOf } from './rigs';
 import { useCaseTerms } from './terms';
 import './actcard.css';
 
@@ -44,23 +46,74 @@ export function splitSlate(place: string): [string, string] {
   return [place, ''];
 }
 
+/** 場記的地點：raw 是中文原文（判斷燈組與色溫用），text 是畫面語言的寫法。 */
+export type Place = { raw: string; text: string };
+
+/** 場記一行：左欄地點，右欄「日、時刻、色溫」。法庭讀燈組（11.3），其他地點讀地點自帶的日子時刻。 */
+function useSlate(place: Place | undefined, day?: string): [string, string] {
+  const t = useT();
+  const en = useLang((s) => s.lang) === 'en';
+  if (!place) return ['', ''];
+  const [where, when] = splitSlate(place.text);
+  const rig = rigOf(place.raw, day);
+  const k = rig?.kelvin ?? kelvinOf(place.raw);
+  const right = [rig ? `${t(rig.label)} ${rig.time}` : when, `${k}K`]
+    .filter(Boolean)
+    .join(en ? '  ' : '\u3000');
+  return [where, right];
+}
+
+const reduced = () =>
+  typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+
 /**
- * 地點的色溫（設定集 1、3 章：色溫只表示時間與地盤）。法院、看守所、走廊是機構燈管 4100K；
- * 律所白天是燈管、入夜是檯燈 2700K；檢察署是窗光 7000K；碼頭陰天 6500K。
- * 法庭依開庭日走燈組：第二天下午西窗 4800K、第三天陰天 6500K。
+ * 幕卡的時間（11.3 進場時間）：燈管 900ms，黑條每 83ms 一條、共 8 條，每條抽 500ms；停 2.5 秒；切黑 83ms。
+ * 減少動態：整張卡 120ms 淡入、沒有黑條，一樣停 2.5 秒。
  */
-export function kelvinOf(place: string, day?: string) {
-  const hour = Number(/(\d{1,2}):\d{2}/.exec(place)?.[1] ?? 12);
-  if (/法院|法庭|Court/.test(place)) {
-    if (day && /第二|Two/.test(day)) return 4800;
-    if (day && /第三|Three/.test(day)) return 6500;
-    return 4100;
-  }
-  if (/看守所|Jail|Detention/.test(place)) return 4100;
-  if (/檢察|District Attorney/.test(place)) return 7000;
-  if (/港|碼頭|Harbor|Port|Dock/.test(place)) return 6500;
-  if (/深夜|晚上|[Nn]ight|[Ee]vening/.test(place)) return 2700;
-  return hour >= 19 || hour < 6 ? 2700 : 4100;
+const HOLD = 2500;
+const CUT = 83;
+const ENTER = 900 + 7 * 83 + 500;
+const ENTER_RM = 120;
+
+/** 選單開著時，幕卡不切走、按鍵也不跳過。 */
+const menuOpen = () => !!document.querySelector('dialog[open], [role="dialog"]');
+
+function useCut(onDone?: () => void) {
+  const [black, setBlack] = useState(false);
+  const done = useRef(onDone);
+  useEffect(() => {
+    done.current = onDone;
+  });
+  const auto = !!onDone;
+  useEffect(() => {
+    if (!auto) return;
+    let id = 0;
+    const fire = () => {
+      if (menuOpen()) id = window.setTimeout(fire, 500);
+      else setBlack(true);
+    };
+    id = window.setTimeout(fire, (reduced() ? ENTER_RM : ENTER) + HOLD);
+    const key = (e: KeyboardEvent) => {
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      if (menuOpen()) return;
+      // 焦點在按鈕上（例如選單鈕）時，按鍵是那顆按鈕的。
+      if (e.target instanceof HTMLElement && e.target.closest('button, a, input, select, textarea'))
+        return;
+      e.preventDefault();
+      setBlack(true);
+    };
+    window.addEventListener('keydown', key);
+    return () => {
+      clearTimeout(id);
+      window.removeEventListener('keydown', key);
+    };
+  }, [auto]);
+  useEffect(() => {
+    if (!black) return;
+    const id = window.setTimeout(() => done.current?.(), CUT);
+    return () => clearTimeout(id);
+  }, [black]);
+  return { black, skip: () => auto && setBlack(true) };
 }
 
 /**
@@ -75,21 +128,22 @@ export function ActCard({
   bates,
   lines,
   children,
+  onDone,
 }: {
   headline: Headline;
-  /** 場記（已翻譯）：地點與日子、時刻。 */
-  place?: string;
+  /** 場記：下一場戲的地點。 */
+  place?: Place;
   bates: string;
   lines?: ReactNode;
-  children: ReactNode;
+  children?: ReactNode;
+  /** 有這個就是鏡頭：進場完停 2.5 秒，硬切（83ms 黑）進下一場；點一下、Enter、空白鍵可以跳過。 */
+  onDone?: () => void;
 }) {
+  const cut = useCut(onDone);
   const t = useT();
   const en = useLang((s) => s.lang) === 'en';
   const { plaintiff, defendant, caseNo } = useCaseTerms();
-  const [where, when] = place ? splitSlate(place) : ['', ''];
-  // 日卡的「第二天」是大字，場記右欄不再寫，但色溫照那一天的燈組。
-  const k = place ? kelvinOf(place, headline.day ?? headline.title) : undefined;
-  const right = [headline.day, when, k && `${k}K`].filter(Boolean).join(en ? '  ' : '\u3000');
+  const [where, right] = useSlate(place, headline.day ?? headline.title);
   const d = (n: number) => ({ '--d': n }) as CSSProperties;
   const [comma, stop] = en ? [',', '.'] : ['，', '。'];
   // 案件標題欄五行：當事人、身分（縮排）、「訴」；黑條前三行一起抽、後兩行一起抽。
@@ -101,7 +155,11 @@ export function ActCard({
     [t('被告', 'caption') + stop, true, 1],
   ];
   return (
-    <main className="scene title-card act-stage">
+    <main
+      className={cut.black ? 'scene title-card act-stage cut' : 'scene title-card act-stage'}
+      onClick={cut.skip}
+      data-auto={onDone ? '' : undefined}
+    >
       <div className="act-wrap">
         <section className="act-card" aria-label={[headline.kicker, headline.title].join(' ')}>
           <span className="act-tube" aria-hidden />
@@ -167,7 +225,7 @@ export function ActCard({
         </section>
       </div>
       {lines && <div className="act-lines">{lines}</div>}
-      <div className="act-actions">{children}</div>
+      {children && <div className="act-actions">{children}</div>}
     </main>
   );
 }
@@ -176,14 +234,40 @@ export function ActCard({
  * 地點字卡（設定集 11.3）：換地點但沒有幕卡時，鏡頭左下一行場記，前面一段 14×2 的黃短槓。
  * 淡入 180ms、停 2.5 秒、淡出 180ms；不擋操作，讀屏照常唸。
  */
-export function PlaceSlate({ place, kelvin }: { place: string; kelvin: number }) {
+export function PlaceSlate({ id, place }: { id?: string; place: Place | null }) {
   const en = useLang((s) => s.lang) === 'en';
-  const [where, when] = splitSlate(place);
-  const sep = en ? '  ' : '\u3000';
-  const text = [where, when, `${kelvin}K`].filter(Boolean).join(sep);
+  const [where, right] = useSlate(place ?? undefined);
+  if (!place) return null;
   return (
-    <p className="place-slate" role="status">
-      {text}
+    <p key={id} className="place-slate" role="status">
+      {[where, right].join(en ? '  ' : '\u3000')}
     </p>
+  );
+}
+
+/**
+ * 幕卡上的回顧與目標（「緩刑五年……」「先選出十二位陪審員……」）不寫在卡上（設定集 11.3：卡是鏡頭），
+ * 移到下一場第一則旁白區塊，一字不刪。和場記重複的地點不再寫一次。
+ */
+export function Recap() {
+  const { progress } = useEpisode();
+  const t = useT();
+  const ep = episodeOf(progress);
+  const card = ep.scenes[progress.scene - 1];
+  if (card?.type !== 'card') return null;
+  const here = ep.scenes[progress.scene];
+  const place = here && 'place' in here ? (here.place ?? '') : '';
+  const lines = (card.act === '片頭' ? card.lines.slice(1) : card.lines).filter(
+    (l) => !(place && place.startsWith(l)),
+  );
+  if (lines.length === 0) return null;
+  return (
+    <div className="recap">
+      {lines.map((l) => (
+        <p key={l} className="narration">
+          {t(l, card.id)}
+        </p>
+      ))}
+    </div>
   );
 }

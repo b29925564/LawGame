@@ -3,8 +3,16 @@ import { expect, test, type Page } from '@playwright/test';
 // 整集通關一次就接近 30 秒，CI 機器較慢。
 test.describe.configure({ timeout: 90_000 });
 
-const next = (page: Page, name: string | RegExp = '繼續') =>
-  page.getByRole('button', { name }).first().click();
+/** 按「繼續」；遇到幕卡（自己停 2.5 秒後切走，沒有按鈕）就點一下跳過。 */
+async function next(page: Page, name: string | RegExp = '繼續') {
+  const button = page.getByRole('button', { name }).first();
+  const card = page.locator('main[data-auto]');
+  await button.or(card).first().waitFor();
+  if (await card.isVisible()) {
+    await card.click();
+    await card.waitFor({ state: 'detached' });
+  } else await button.click();
+}
 
 /**
  * 卡片按鈕只比對第一行的名字。
