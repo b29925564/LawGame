@@ -1583,15 +1583,18 @@ html[lang='en'] .vform .fh .c {
 .nego-ladder li.on .tg em {
   color: var(--text);
 }
-.nego-ladder li.on .tg em::before {
+/* 每一列都留紅點的位置、只有目前這一檔塗色：紅點才不會把那一列的字往右推 13px（遊戲測試員 v90）。 */
+.nego-ladder .tg em::before {
   content: '';
   display: inline-block;
   width: 7px;
   height: 7px;
   margin-right: 6px;
   border-radius: 50%;
-  background: var(--bad);
   vertical-align: 1px;
+}
+.nego-ladder li.on .tg em::before {
+  background: var(--bad);
 }
 .fore blockquote .nw {
   white-space: nowrap;
