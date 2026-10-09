@@ -1611,30 +1611,48 @@ html[lang='en'] .vform .fh .c {
   }
 }
 
-/* ══ 審判筆錄（設定集第 9 章 <Transcript>）：25 行一頁、行號、問／答、黑條 ══ */
+/* ══ 審判筆錄（設定集第 9 章 <Transcript>、10.3 異議）：25 行一頁、行號、問／答、黑條、裁定章、Bates ══ */
 .record {
-  --rec-fs: calc(15px * var(--text-scale));
+  /* 一行的字數固定（record.ts measureFor）：中文 24 字、英文 44 字元。字級與行距由 Record.tsx 依框算好寫進來，這裡是預設。 */
+  --rec-base: 15;
+  --rec-measure: 24;
+  --rec-fs: calc(var(--rec-base) * 1px * var(--text-scale));
   --rec-row: calc(var(--rec-fs) * 2);
   /* 行號欄寬與紙的內距；換頁的間隔要伸到紙邊，所以要知道內距。 */
   --rec-gutter: calc(var(--rec-fs) * 2.2);
   --rec-pl: calc(var(--rec-gutter) + var(--rec-fs) * 0.8);
   --rec-pr: calc(var(--rec-fs) * 0.6);
   --rec-gap-bg: var(--surface);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   mask-image: none;
   box-shadow: none;
-  padding: 8px;
+  padding: 0;
   gap: 0;
+  scroll-behavior: auto;
+}
+html[lang='en'] .record {
+  --rec-measure: 26.4;
+}
+.rec-bar-top {
+  display: flex;
+  justify-content: flex-end;
+  padding: 6px 8px 0;
+}
+.rec-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 8px;
   scrollbar-width: thin;
 }
 .rec-paper {
   position: relative;
-  /* 筆錄紙一行固定長（record.ts 的 MEASURE）：寬的畫面上就是一張置中的紙，不拉長。 */
-  max-width: calc(
-    var(--rec-measure) * var(--rec-fs) + var(--rec-pl) + var(--rec-pr) + var(--rec-fs)
-  );
-  margin-inline: auto;
   width: 100%;
-  padding: 0 var(--rec-pr) calc(var(--rec-fs) * 0.6) var(--rec-pl);
+  min-width: calc((var(--rec-measure) + 3.6) * var(--rec-fs));
+  padding: 0 var(--rec-pr) calc(var(--rec-fs) * 0.4) var(--rec-pl);
   border-radius: 0;
   background:
     /* 訴狀紙的左側雙直線，行號在線外 */
@@ -1647,17 +1665,13 @@ html[lang='en'] .vform .fh .c {
   font: 400 var(--rec-fs) / var(--rec-row) var(--font-court);
   font-variant-numeric: tabular-nums;
 }
-.rec-probe {
-  display: block;
-  height: 0;
-}
 .rec-head {
   display: flex;
-  min-height: 2em;
+  height: var(--rec-row);
+  align-items: center;
   justify-content: space-between;
   gap: 1em;
-  padding-top: calc(var(--rec-fs) * 0.5);
-  font: 400 calc(11px * var(--text-scale)) / 2 var(--font-court);
+  font: 400 calc(var(--rec-fs) * 0.75) / 1 var(--font-court);
   letter-spacing: 0.08em;
   color: var(--paper-muted);
   text-transform: uppercase;
@@ -1667,6 +1681,19 @@ html[lang='en'] .vform .fh .c {
 }
 .rec-head::after {
   content: attr(data-r);
+}
+/* Bates：每頁右下，Courier Prime 粗體、碳粉色（設定集第 9 章）。 */
+.rec-foot {
+  display: flex;
+  height: var(--rec-row);
+  align-items: flex-end;
+  justify-content: flex-end;
+  font: 700 calc(var(--rec-fs) * 0.75) / 1 var(--font-court);
+  letter-spacing: 0.04em;
+  color: var(--toner);
+}
+.rec-foot::after {
+  content: attr(data-b);
 }
 .rec-entry {
   margin: 0;
@@ -1688,9 +1715,20 @@ html[lang='en'] .vform .fh .c {
   left: calc(-1 * var(--rec-pl));
   width: calc(var(--rec-gutter) - var(--rec-fs) * 0.45);
   text-align: right;
-  font: 400 calc(11px * var(--text-scale)) / var(--rec-row) var(--font-court);
+  font: 400 calc(var(--rec-fs) * 0.75) / var(--rec-row) var(--font-court);
   color: var(--paper-muted);
   user-select: none;
+}
+/* 目前行：頁邊一道螢光，筆錄層唯一的黃（設定集 10.3）。紙是淺的，加 1px --hl-edge 才看得出邊。 */
+.rec-row.cur::after {
+  content: '';
+  position: absolute;
+  top: calc(50% - 0.45em);
+  left: calc(-1 * var(--rec-pl) + 3px);
+  width: 4px;
+  height: 0.9em;
+  background: var(--hl);
+  box-shadow: 0 0 0 1px var(--hl-edge);
 }
 .rec-tag {
   font-weight: 700;
@@ -1701,6 +1739,9 @@ html[lang='en'] .vform .fh .c {
   width: 2.4em;
   font-weight: 400;
 }
+.rec-tx {
+  position: relative;
+}
 .rec-cjk {
   font-family: 'Noto Serif TC', serif;
 }
@@ -1708,22 +1749,52 @@ html[lang='en'] .vform .fh .c {
   color: var(--paper-muted);
 }
 /* 黑條：零圓角、上緣 1px、條內小字（設定集第 1、9 章）。報讀念的是條上的字，不是被蓋掉的話。 */
+.rec-bar,
+.rec-unbar {
+  height: 1.3em;
+  border-top: 1px solid var(--cine-line);
+  border-radius: 0;
+  background: var(--redact);
+}
 .rec-bar {
   display: inline-flex;
   align-items: center;
   vertical-align: middle;
   width: var(--w);
-  height: 1.3em;
   padding-left: 0.5em;
-  border-top: 1px solid var(--cine-line);
-  border-radius: 0;
-  background: var(--redact);
   transform-origin: left;
 }
 .rec-bar small {
-  font: 500 calc(11px * var(--text-scale)) / 1 var(--font-mono);
+  font: 500 calc(var(--rec-fs) * 0.75) / 1 var(--font-mono);
   color: var(--redact-label);
   white-space: nowrap;
+}
+/* 駁回：證人照答，蓋在那句上的黑條抽走（scaleX 1 → 0，從右收；只在動態開著時有）。 */
+.rec-unbar {
+  display: none;
+  position: absolute;
+  left: -0.1em;
+  right: -0.1em;
+  top: calc(50% - 0.65em);
+  transform-origin: right;
+}
+/* 裁定章：靛藍小章落在異議那一行右邊（設定集 10.3）。 */
+.rec-stamp {
+  --ink: var(--stamp);
+  vertical-align: middle;
+  margin-left: 0.8em;
+  padding: 2px 6px 1px;
+  white-space: nowrap;
+  mix-blend-mode: multiply;
+}
+.rec-stamp b {
+  font-size: calc(var(--rec-fs) * 0.9);
+}
+html[lang='en'] .rec-stamp b {
+  font: 700 calc(var(--rec-fs) * 0.8) / 1 var(--font-court);
+  letter-spacing: 0.08em;
+  margin-right: -0.08em;
+  text-transform: uppercase;
 }
 /* 換頁：兩張紙之間露出桌面，下一張紙頂上一行頁碼。 */
 .rec-break {
@@ -1733,7 +1804,7 @@ html[lang='en'] .vform .fh .c {
   content: '';
   display: block;
   height: 12px;
-  margin: calc(var(--rec-fs) * 0.6) calc(-1 * var(--rec-pr)) 0 calc(-1 * var(--rec-pl));
+  margin: calc(var(--rec-fs) * 0.4) calc(-1 * var(--rec-pr)) 0 calc(-1 * var(--rec-pl));
   background: var(--rec-gap-bg);
   box-shadow:
     0 -1px 0 rgb(0 0 0 / 18%),
@@ -1742,11 +1813,8 @@ html[lang='en'] .vform .fh .c {
 .rec-pad {
   display: block;
 }
+/* 「立即顯示全文」常駐在紙的上方：按下去之後新的話整段出現，再按一次恢復逐行。 */
 .rec-skip {
-  position: sticky;
-  bottom: 0;
-  align-self: flex-end;
-  margin-top: -40px;
   min-height: 32px;
   padding: 4px 12px;
   font: inherit;
@@ -1758,8 +1826,17 @@ html[lang='en'] .vform .fh .c {
   border: 1px solid var(--border-strong);
   border-radius: var(--radius);
 }
+.rec-skip[aria-pressed='true'] {
+  border-color: var(--text);
+}
+.rec-skip[aria-pressed='true']::before {
+  content: '✓ ';
+}
 .record.full {
   max-height: none;
+  overflow: visible;
+}
+.record.full .rec-scroll {
   overflow: visible;
 }
 
@@ -1777,20 +1854,85 @@ html[lang='en'] .vform .fh .c {
     animation: rec-redact var(--dur-redact-in) steps(4) both;
     animation-delay: calc(var(--k) * var(--dur-redact-in));
   }
+  /* 法官那一句出現之後，章才落下（墨色 60% → 100%）；落下之前看不到。 */
+  .rec-stamp.new {
+    animation:
+      rec-wait 0s calc(var(--ks) * var(--dur-ui)) backwards,
+      rec-stamp var(--dur-stamp) ease-in calc(var(--ks) * var(--dur-ui)) both;
+  }
+  .rec-unbar {
+    display: block;
+    animation: rec-unbar var(--dur-redact-out) steps(12) both;
+    animation-delay: calc(var(--ku) * var(--dur-ui) + var(--dur-stamp));
+  }
   @keyframes rec-redact {
     from {
       scale: 0 1;
     }
   }
+  @keyframes rec-unbar {
+    to {
+      scale: 0 1;
+    }
+  }
+  @keyframes rec-stamp {
+    from {
+      opacity: 0.6;
+      scale: 1.15;
+    }
+  }
+  @keyframes rec-wait {
+    from,
+    to {
+      visibility: hidden;
+    }
+  }
 }
+/* 減少動態：本來就整段直接出現，這顆鈕沒有作用。 */
 @media (prefers-reduced-motion: reduce) {
-  .rec-skip {
+  .rec-bar-top {
     display: none;
+  }
+}
+
+/* 桌機：法庭左欄放得下中文 24 字／英文 44 字元的筆錄紙（約 480）；中間欄至少留 340。 */
+@media (min-width: 1024px) {
+  .shell:has(> .shell-tabs > .record) {
+    grid-template-columns: clamp(320px, 100vw - 804px, 480px) minmax(0, 1fr);
+  }
+}
+/* 手機：筆錄往下撐到底部按鈕列上方（中間的提示與詰問區照內容長，最多半個螢幕）；紙幾乎貼齊螢幕寬，兩側各 8px。 */
+@media (max-width: 1023px) {
+  .shell:has(> .shell-tabs > .record) {
+    grid-template-rows: auto minmax(0, 1fr) auto auto;
+  }
+  .shell:has(> .shell-tabs > .record) > .shell-tabs {
+    min-height: 0;
+  }
+  .shell:has(> .shell-tabs > .record) > .shell-body {
+    max-height: 50dvh;
+  }
+  .shell-tabs > .record {
+    flex: 1 1 auto;
+    min-height: 8rem;
+    max-height: none;
   }
 }
 @media (max-width: 520px) {
   .record {
-    --rec-fs: calc(14px * var(--text-scale));
-    padding: 8px;
+    --rec-base: 14;
+    margin-inline: -6px;
+    border: none;
+    border-radius: 0;
+    background: none;
+  }
+  html[lang='en'] .record {
+    --rec-base: 13;
+  }
+  .record .rec-scroll {
+    padding: 0;
+  }
+  .rec-bar-top {
+    padding: 0 0 6px;
   }
 }

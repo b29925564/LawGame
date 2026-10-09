@@ -7,7 +7,7 @@ import { termsOf } from '../engine/jury';
 import { useScope } from './lang';
 import { MarkLines } from './Marks';
 import { Speech } from './Portrait';
-import { CourtRecord, useCourtEntries } from './Record';
+import { batesOf, CourtRecord, useCourtEntries } from './Record';
 
 /**
  * 辯方證人（企劃書 6.9.6）：先準備，再直接詰問。
@@ -23,6 +23,7 @@ export function Defense({ scene: raw }: { scene: DefenseScene }) {
   const [intro, setIntro] = useState(st.stage === 'prep' && st.log.length === 0);
   const rules = juryAfterTrial(progress)?.rules;
   const record = useCourtEntries(st.log, scene.witness.name);
+  const bates = batesOf(progress, raw.id);
 
   if (intro)
     return (
@@ -91,10 +92,10 @@ export function Defense({ scene: raw }: { scene: DefenseScene }) {
       )}
       {st.log.length > 0 &&
         (st.stage === 'direct' ? (
-          <CourtRecord entries={record} live />
+          <CourtRecord entries={record} live bates={bates} />
         ) : (
           // 詰問結束後整份筆錄攤開，不再擠在小框裡只露半句。
-          <CourtRecord entries={record} className="full" />
+          <CourtRecord entries={record} bates={bates} className="full" />
         ))}
       {st.stage === 'direct' ? (
         <>

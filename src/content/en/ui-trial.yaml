@@ -231,5 +231,7 @@
 '（{text}）': '({text})'
 'record::問': Q.
 'record::答': A.
+'record::成立': Sustained
+'record::駁回': Overruled
 'record::法官': The Court
 'record::葛雷律師': Mr. Grey

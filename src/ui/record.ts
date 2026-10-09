@@ -9,10 +9,12 @@
 export const ROWS_PER_PAGE = 25;
 
 /**
- * 一行的寬（em）。真的筆錄紙每行一樣長，所以行寬固定：同一份筆錄在桌機、手機、休庭頁都是同一頁同一行。
- * 只有放不下（字級調大、很窄的視窗）時才縮，那時頁行號跟著字級變。
+ * 一行的寬（em），照語言固定（視覺設計師 #2，10-09）：中文一行 24 字，英文一行 44 個字元（Courier 0.6em）。
+ * 真的筆錄紙每行一樣長：同一種語言在桌機、手機、休庭頁都是同一頁同一行，放不下時縮的是字級，不是行寬。
  */
-export const MEASURE = 15;
+export const MEASURE_ZH = 24;
+export const MEASURE_EN = 44 * 0.6;
+export const measureFor = (zh: boolean) => (zh ? MEASURE_ZH : MEASURE_EN);
 
 /** 一句話在筆錄裡的格式：問、答、其他人發言（列名字）、括號裡的紀錄說明。 */
 export type RecordKind = 'q' | 'a' | 'say' | 'note';
@@ -20,12 +22,19 @@ export type RecordKind = 'q' | 'a' | 'say' | 'note';
 /** 黑條上寫的字：當庭異議成立的那句，或法官下令整段刪除的證詞（設定集 10.3、7-3）。 */
 export type Redaction = '異議成立' | '已自紀錄刪除';
 
+/** 法官對異議的裁定：一枚小章蓋在異議那一行的右邊（設定集 10.3）。 */
+export type Ruling = '成立' | '駁回';
+
 export interface RecordEntry {
   kind: RecordKind;
   /** 第一行前面的標記：「問」「答」或「法官：」，已經翻譯好。 */
   tag: string;
   text: string;
   redact?: Redaction;
+  /** 這句是律師的異議：法官怎麼裁定。 */
+  ruling?: Ruling;
+  /** 異議被駁回、證人照樣回答的那句：出現時蓋著黑條，裁定後黑條抽走。 */
+  unbar?: boolean;
 }
 
 export interface RecordRow {
@@ -189,4 +198,25 @@ export function kindsOf(
     if (l.who !== judge && log[i + 1]?.who === witness) return 'q';
     return 'say';
   });
+}
+
+/**
+ * 庭上的異議與裁定（設定集 10.3）：律師說「異議，…」、下一句是法官，就是一次異議。
+ * 法官說「異議駁回」或證人的回答沒被刪＝駁回；回答被刪＝成立。
+ * 駁回後證人照樣回答的那句記成 unbar：黑條抽走，證詞留在紀錄裡。
+ */
+export function rulingsOf(
+  log: readonly { who: string; text: string; struck?: boolean }[],
+  { lawyer, judge, witness }: { lawyer: string; judge: string; witness: string },
+): { ruling?: Ruling; unbar?: boolean }[] {
+  const out: { ruling?: Ruling; unbar?: boolean }[] = log.map(() => ({}));
+  log.forEach((l, i) => {
+    const bench = log[i + 1];
+    if (l.who !== lawyer || !l.text.startsWith('異議') || bench?.who !== judge) return;
+    const answer = log[i + 2]?.who === witness ? log[i + 2] : undefined;
+    const overruled = bench.text.startsWith('異議駁回') || (answer && !answer.struck);
+    out[i].ruling = overruled ? '駁回' : '成立';
+    if (overruled && answer) out[i + 2].unbar = true;
+  });
+  return out;
 }

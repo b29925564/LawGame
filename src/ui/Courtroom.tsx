@@ -26,7 +26,7 @@ import { CourtLight } from './CourtLight';
 import { useScope } from './lang';
 import { Stamp } from './Marks';
 import { Speech } from './Portrait';
-import { CourtRecord, useCourtEntries } from './Record';
+import { batesOf, CourtRecord, useCourtEntries } from './Record';
 import { Shell, Tabs } from './Shell';
 
 const glyph: Record<string, string> = {
@@ -216,6 +216,7 @@ export function Courtroom({ scene: raw }: { scene: TrialScene }) {
   const pending = scene.witness.claims.find((c) => st.claims[c.id]?.result === 'none');
   const [pick, setPick] = useState<string>(pending?.id ?? scene.witness.claims[0].id);
   const record = useCourtEntries(st.log, scene.witness.name, st.stricken);
+  const bates = batesOf(progress, raw.id);
 
   // 手上確認過的論點，用來對質。論點的強度與標籤定義在調查那一幕的疑問裡。
   const deskScene = deskSceneOf(progress);
@@ -272,10 +273,20 @@ export function Courtroom({ scene: raw }: { scene: TrialScene }) {
           {tail < st.log.length && (
             <details className="earlier">
               <summary>{t('前面的筆錄（{n} 句）', { n: st.log.length - tail })}</summary>
-              <CourtRecord entries={record} until={st.log.length - tail} className="full" />
+              <CourtRecord
+                entries={record}
+                until={st.log.length - tail}
+                bates={bates}
+                className="full"
+              />
             </details>
           )}
-          <CourtRecord entries={record} from={st.log.length - tail} className="full" />
+          <CourtRecord
+            entries={record}
+            from={st.log.length - tail}
+            bates={bates}
+            className="full"
+          />
           <dl className="stats">
             <dt>{t('成功彈劾')}</dt>
             <dd>
@@ -353,7 +364,7 @@ export function Courtroom({ scene: raw }: { scene: TrialScene }) {
         }
         tabs={
           <>
-            <CourtRecord entries={record} live />
+            <CourtRecord entries={record} live fit bates={bates} />
             <Jurors scene={scene} jury={st.jury} deltas={st.deltas} strip />
             {st.stage === 'cross' && (
               <Tabs
@@ -423,7 +434,7 @@ export function Courtroom({ scene: raw }: { scene: TrialScene }) {
                 {t('法官把這位證人在這一場說過的話全部從紀錄上拿掉，陪審團不能採用。')}
               </p>
             )}
-            <CourtRecord entries={record} from={Math.max(0, st.log.length - 3)} />
+            <CourtRecord entries={record} from={Math.max(0, st.log.length - 3)} bates={bates} />
             <p className="muted small">{t('按「休庭」看這一場的結果。')}</p>
           </section>
         )}

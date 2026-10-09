@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { kindsOf, layout, ROWS_PER_PAGE, textWidth, wrap, type RecordEntry } from './record';
+import {
+  kindsOf,
+  layout,
+  measureFor,
+  ROWS_PER_PAGE,
+  rulingsOf,
+  textWidth,
+  wrap,
+  type RecordEntry,
+} from './record';
 
 describe('筆錄排版', () => {
   it('中文一字 1em、拉丁字 0.6em', () => {
@@ -54,5 +63,33 @@ describe('筆錄排版', () => {
       'a',
       'note',
     ]);
+  });
+
+  it('行寬照語言固定：中文 24 字、英文 44 個字元', () => {
+    expect(measureFor(true)).toBe(24);
+    expect(wrap('x'.repeat(44) + ' y', measureFor(false))).toEqual(['x'.repeat(44), 'y']);
+    expect(wrap('一'.repeat(25), measureFor(true))).toEqual(['一'.repeat(24), '一']);
+  });
+
+  it('異議：回答被刪＝成立；法官駁回、證人照答＝駁回，那句黑條抽走', () => {
+    const who = { lawyer: '盧卡斯', judge: '法官', witness: '瑞秋' };
+    const sustained = [
+      { who: '莫羅', text: '問' },
+      { who: '盧卡斯', text: '異議，誘導。' },
+      { who: '法官', text: '異議成立。' },
+      { who: '瑞秋', text: '答', struck: true },
+    ];
+    expect(rulingsOf(sustained, who)[1]).toEqual({ ruling: '成立' });
+    const overruled = [
+      { who: '莫羅', text: '問' },
+      { who: '盧卡斯', text: '異議，傳聞。' },
+      { who: '法官', text: '異議駁回。律師，這個問題沒有問題。' },
+      { who: '瑞秋', text: '答' },
+    ];
+    const r = rulingsOf(overruled, who);
+    expect(r[1]).toEqual({ ruling: '駁回' });
+    expect(r[3]).toEqual({ unbar: true });
+    // 法官叫停（耐心用完）：沒有回答，只有章。
+    expect(rulingsOf(overruled.slice(0, 3), who)[1]).toEqual({ ruling: '駁回' });
   });
 });
