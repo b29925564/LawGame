@@ -1,8 +1,9 @@
+import type { CSSProperties } from 'react';
 import { useSettings } from '../engine/settings';
 import { useT } from '../i18n';
 import { useCourtLight } from './courtLight';
 import { LangSwitch } from './lang';
-import { usePhotosafe } from './photosafe';
+import { usePhotosafe, useReducedMotion } from './a11y';
 
 const VOLUMES = [
   ['master', '總音量'],
@@ -10,6 +11,10 @@ const VOLUMES = [
   ['sfx', '音效'],
   ['ambience', '環境音'],
 ] as const;
+
+/** 滑桿已填段的長度：WebKit 沒有填段的偽元素，用漸層畫，位置由這個變數給。 */
+const fill = (value: number, min: number, max: number) =>
+  ({ '--fill': `${((value - min) / (max - min)) * 100}%` }) as CSSProperties;
 
 /** 輔助選項（企劃書 6.14）：字級、異議窗、數值顯示、畫外字幕、聲音與音量。 */
 export function SettingsPanel() {
@@ -19,6 +24,7 @@ export function SettingsPanel() {
   const t = useT();
   const { on: light, setOn: setLight } = useCourtLight();
   const { on: safe, setOn: setSafe } = usePhotosafe();
+  const { on: still, setOn: setStill } = useReducedMotion();
   return (
     <div className="stack settings">
       <LangSwitch />
@@ -30,6 +36,7 @@ export function SettingsPanel() {
           max="1.4"
           step="0.1"
           value={textScale}
+          style={fill(textScale, 0.9, 1.4)}
           onChange={(e) => set({ textScale: Number(e.target.value) })}
         />
       </label>
@@ -73,11 +80,16 @@ export function SettingsPanel() {
         />
         {t('字幕自動前進')}
       </label>
-      {/* 光敏安全和系統的「減少動態」分開：只怕閃的人仍然可以保留完整的動態。 */}
+      {/* 兩個獨立開關（設定集 10.6）：只怕閃的人仍然可以保留完整的動態，反之亦然。 */}
       <label className="toggle">
         <input type="checkbox" checked={safe} onChange={(e) => setSafe(e.target.checked)} />
         {t('光敏安全')}
         <small className="muted">{t('拿掉所有閃爍，燈改成單次漸亮')}</small>
+      </label>
+      <label className="toggle">
+        <input type="checkbox" checked={still} onChange={(e) => setStill(e.target.checked)} />
+        {t('減少動態')}
+        <small className="muted">{t('移動、縮放與推鏡改成淡入或直接切；沒設定時跟隨系統')}</small>
       </label>
       <label className="toggle">
         <input type="checkbox" checked={sound} onChange={(e) => set({ sound: e.target.checked })} />
@@ -95,6 +107,7 @@ export function SettingsPanel() {
               max="1"
               step="0.05"
               value={levels[key]}
+              style={fill(levels[key], 0, 1)}
               aria-valuetext={`${Math.round(levels[key] * 100)}%`}
               onChange={(e) => set({ [key]: Number(e.target.value) })}
             />

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { episodeOf, useEpisode } from '../engine/game';
 import { useLang, useT } from '../i18n';
+import { reducedMotion } from './a11y';
 import { kelvinOf, rigOf } from './rigs';
 import { useCaseTerms } from './terms';
 import './actcard.css';
@@ -67,9 +68,6 @@ function useSlate(place: Place | undefined, day?: string): [string, string] {
   return [where, right];
 }
 
-const reduced = () =>
-  typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
-
 /**
  * 幕卡的時間（11.3 進場時間）：燈管 900ms，黑條每 83ms 一條、共 8 條，每條抽 500ms；停 2.5 秒；切黑 83ms。
  * 減少動態：整張卡 120ms 淡入、沒有黑條，一樣停 2.5 秒。
@@ -83,7 +81,7 @@ function useHeld(on: boolean) {
   const [held, setHeld] = useState(false);
   useEffect(() => {
     if (!on) return;
-    const id = window.setTimeout(() => setHeld(true), (reduced() ? ENTER_RM : ENTER) + HOLD);
+    const id = window.setTimeout(() => setHeld(true), (reducedMotion() ? ENTER_RM : ENTER) + HOLD);
     return () => clearTimeout(id);
   }, [on]);
   return held;
@@ -106,7 +104,7 @@ function useCut(onDone?: () => void) {
       if (menuOpen()) id = window.setTimeout(fire, 500);
       else setBlack(true);
     };
-    id = window.setTimeout(fire, (reduced() ? ENTER_RM : ENTER) + HOLD);
+    id = window.setTimeout(fire, (reducedMotion() ? ENTER_RM : ENTER) + HOLD);
     const key = (e: KeyboardEvent) => {
       if (e.key !== 'Enter' && e.key !== ' ') return;
       if (menuOpen()) return;

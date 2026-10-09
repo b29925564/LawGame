@@ -56,6 +56,8 @@
 法庭光影（試做）: Courtroom lighting (test)
 光敏安全: Photosensitivity safe mode
 拿掉所有閃爍，燈改成單次漸亮: Removes all flashing; lights fade up once instead
+減少動態: Reduce motion
+移動、縮放與推鏡改成淡入或直接切；沒設定時跟隨系統: Movement, zooms and push-ins become fades or cuts; follows your system setting until you change it
 陳述: Statement
 文件: Document
 物品: Object

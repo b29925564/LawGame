@@ -2,6 +2,7 @@ import { Fragment, useCallback, useEffect, useRef, useState, type CSSProperties 
 import { createPortal } from 'react-dom';
 import type { Line } from '../engine/episode/schema';
 import { useSettings } from '../engine/settings';
+import { reducedMotion } from './a11y';
 import { useT } from '../i18n';
 import { useScope } from './lang';
 import { announce } from './Marks';
@@ -74,8 +75,7 @@ export function VoiceOver({ line, onDone }: { line: Line; onDone: () => void }) 
   const shownAt = useRef(0);
   const beat = beats[i];
   const tm = voTiming(beat.text);
-  const reduced =
-    typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const reduced = reducedMotion();
 
   const next = (at?: { x: number; y: number }) => {
     if (i + 1 < beats.length) {
