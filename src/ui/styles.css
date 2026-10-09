@@ -608,11 +608,13 @@ details summary {
   --border-strong: #3d4756;
   --surface: #11161d;
   --surface-2: #171e27;
+  /* 鏡頭層不跟淺色主題：會被元件拿去用的表面色都要在這裡釘成深色（:root 的 light-dark() 已在淺色算好）。 */
+  --surface-3: #212a35;
+  --bg: var(--cine-bg);
   --accent: #f4c53d;
   --hl: #f4c53d;
   --hl-wash: rgb(244 197 61 / 13%);
   --inset-hi: inset 0 1px 0 rgb(255 255 255 / 4%);
-  --shadow-1: 0 1px 2px rgb(0 0 0 / 40%);
   color-scheme: dark;
 }
 
@@ -658,14 +660,6 @@ details summary {
 }
 .title-screen h1 span {
   display: block;
-}
-/* 題字旁邊的一道螢光筆。 */
-.title-rule {
-  width: 6px;
-  border-radius: 3px;
-  background: var(--hl);
-  transform-origin: top;
-  margin-block: 0.4em 1.6em;
 }
 .title-foot {
   grid-column: 1 / -1;
@@ -3060,9 +3054,6 @@ fieldset.relations.compact {
   .title-screen h1 span:nth-child(4) {
     animation-delay: 0.24s;
   }
-  .title-rule {
-    animation: grow-y 0.9s 0.35s var(--ease) both;
-  }
   .title-foot {
     animation: rise 0.7s 0.45s var(--ease) both;
   }
@@ -3095,11 +3086,6 @@ fieldset.relations.compact {
       opacity: 0;
       filter: blur(6px);
       transform: translateY(6px);
-    }
-  }
-  @keyframes grow-y {
-    from {
-      transform: scaleY(0);
     }
   }
   @keyframes slam {
