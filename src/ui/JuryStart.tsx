@@ -32,7 +32,7 @@ export function JuryStart({ jury, civil }: { jury: Lean | undefined; civil: bool
       </span>
       {leans.length > 0 && (
         <span className="jury-start-note">
-          {t('{tags}取向的陪審員反彈', { tags: leans.map((x) => t(x)).join('、') })}
+          {t('{tags}取向的陪審員反彈', { tags: leans.map((x) => t(x)).join(t('、')) })}
         </span>
       )}
     </div>

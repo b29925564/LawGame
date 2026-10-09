@@ -15,7 +15,7 @@ export const useInCourt = () => useContext(InCourt);
 
 /**
  * 剪影頭像：J1、受光 85（說話者不吃陪審團的心證曝光，第 1 章「說話者下限」），
- * 虛線框＋框外上方「待放 AI 立繪　{全名}」永遠可見（第 7.6 章、第 7 章 :9）。對不到人就不畫。
+ * 虛線框＋框外上方「待放 AI 立繪\u3000{全名}」永遠可見（第 7.6 章、第 7 章 :9）。對不到人就不畫。
  */
 export function CourtFace({ who }: { who: string }) {
   const t = useT();

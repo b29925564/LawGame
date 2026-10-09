@@ -240,7 +240,19 @@ if (process.env.VITEST_32PX)
       lines.push(
         `${ep}：說話者 ${talk.length}（${talk.map((l) => l.id).join('、')}）＋陪審員 ${pool.length}＝${all.length} 人 ${(all.length * (all.length - 1)) / 2} 對；<12% ${pairs.length} 對`,
       );
-      for (const p of pairs) lines.push(`  ${p.d.toFixed(1)}%  ${p.a} – ${p.b}`);
+      for (const p of pairs) {
+        lines.push(
+          `  ${p.d.toFixed(1)}%  ${p.a} – ${p.b}（左：${p.a}\u3000中：${p.b}\u3000右：差異，+ 只有左、- 只有右）`,
+        );
+        const [A, B] = [p.a, p.b].map((id) => sil(all.find((l) => l.id === id)!));
+        for (let y = 0; y < GH; y++) {
+          const row = (f: (i: number) => string) =>
+            Array.from({ length: GW }, (_, x) => f(y * GW + x)).join('');
+          lines.push(
+            `    ${row((i) => (A[i] ? '█' : '·'))}  ${row((i) => (B[i] ? '█' : '·'))}  ${row((i) => (A[i] === B[i] ? (A[i] ? '░' : '·') : A[i] ? '+' : '-'))}`,
+          );
+        }
+      }
       const near = all
         .flatMap((a, i) => all.slice(i + 1).map((b) => ({ a: a.id, b: b.id, d: diff(a, b) })))
         .sort((p, q) => p.d - q.d)

@@ -322,7 +322,7 @@ export function Negotiation({ scene }: { scene: NegotiationScene }) {
       )}
 
       {tab === 'reveal' && (
-        <section className="panel">
+        <section className="panel reveal">
           <h2>{t('攤牌')}</h2>
           {st.credit > 0 && (
             <p className="muted small">

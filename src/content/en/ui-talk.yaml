@@ -122,5 +122,5 @@
 信心低於 {n}: Confidence below {n}
 現在: Now
 超過授權: Over authority
-被識破過 {n} 次：攤牌的效果只剩 {p}%。: 'Caught bluffing {n} times: your showdowns now land at {p}%.'
+被識破過 {n} 次：攤牌的效果只剩 {p}%。: 'Caught bluffing {n} time{n:s}: your showdowns now land at {p}%.'
 建議撐下去（回合用完，等於離席上法庭）: Advise holding out (no rounds left, so this means walking out to trial)

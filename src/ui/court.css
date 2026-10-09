@@ -7,11 +7,9 @@
 
 /* ══ 法院系統：聲請狀（UX board-spec §10、視覺規格 §17，法庭介面） ══ */
 :root {
-  /* 紙上的墨水與章：紙永遠是淺色，兩個主題同值。 */
+  /* 紙上的墨水：紙永遠是淺色，兩個主題同值。
+     章一律 --stamp 靛藍印泥、雙線框、±3°（設定集第 9 章：不用紅章，紅只代表有罪傾向）；准駁靠章上的字分。 */
   --ink-fill: #1f3a68;
-  /* 章一律靛藍印泥（設定集第 9 章：不用紅章，紅只代表有罪傾向）；准駁靠章上的字分。 */
-  --stamp-ok: var(--stamp);
-  --stamp-no: var(--stamp);
 }
 .court-desk {
   display: grid;
@@ -102,10 +100,19 @@
   top: 8px;
   width: 26px;
   height: 14px;
-  border: 1.5px solid var(--paper-ink);
+  border: 1px solid var(--stamp);
   border-radius: 2px;
-  opacity: 0.6;
-  transform: rotate(6deg);
+  opacity: 0.72;
+  rotate: 3deg;
+  mix-blend-mode: multiply;
+}
+/* 收文記號縮小版也是雙線框：內框 1px。 */
+.fthumb .rcv::after {
+  content: '';
+  position: absolute;
+  inset: 1px;
+  border: 1px solid var(--stamp);
+  border-radius: 1px;
 }
 .fthumb .mini {
   position: absolute;
@@ -113,6 +120,8 @@
   bottom: 10px;
   width: 34px;
   height: 34px;
+  color: var(--stamp);
+  rotate: var(--rot);
   mix-blend-mode: multiply;
 }
 .fthumb .mini svg {
@@ -121,13 +130,14 @@
   overflow: visible;
   font-family: var(--font-doc);
 }
+/* 准 −3°、駁回 +3°（視覺規格 v2.0 §17）。 */
 .fthumb .mini.ok,
 .stamp-big.ok {
-  color: var(--stamp-ok);
+  --rot: -3deg;
 }
 .fthumb .mini.no,
 .stamp-big.no {
-  color: var(--stamp-no);
+  --rot: 3deg;
 }
 
 /* 聲請狀：訴狀紙，32px 橫格線，左邊雙直線與行號。 */
@@ -141,7 +151,7 @@
     repeating-linear-gradient(to bottom, transparent 0 31px, rgb(60 50 20 / 9%) 31px 32px);
   background-position:
     0 0,
-    0 20px;
+    0 var(--grid-y, 20px);
   color: var(--paper-ink);
   border-radius: 2px;
   padding: 36px 48px 44px 76px;
@@ -162,7 +172,7 @@
 .plead .ln {
   position: absolute;
   left: 22px;
-  top: 20px;
+  top: var(--grid-y, 20px);
   overflow: hidden;
   display: grid;
   align-content: start;
@@ -213,6 +223,53 @@
 .plead .body p {
   margin: 0;
 }
+/* 量基線的探針（Pleading.tsx）。 */
+.plead .baseline {
+  display: inline-block;
+  width: 0;
+  height: 0;
+}
+/*
+ * 空格裡每行也是 32px：手機上換行的空格、兩行的證物格，後面的行都留在格線上（設計師第二輪）。
+ * --bl＝內文字型和空格字型在 32px 行裡的基線差（實量，zh／en 不同）：用 padding 把空格裡的字推到內文的基線，
+ * 再用同樣大小的負 margin 收回，空格佔的高度永遠是整數行。底線畫成背景，疊在最後一行的格線（＝基線）上：
+ * --ul＝32px 行裡基線以下到行底的距離減 1。
+ */
+.plead .body .blank {
+  --bl: 0px;
+  --ul: 8px;
+  --u: var(--paper-muted);
+  line-height: 32px;
+  padding-block: max(var(--bl), 0px) max(-1 * var(--bl), 0px);
+  margin-block: min(var(--bl), 0px) min(-1 * var(--bl), 0px);
+  border-bottom: 0;
+  background-image: linear-gradient(var(--u), var(--u));
+  background-size: 100% 1px;
+  background-position: 0 calc(100% - var(--ul) - max(var(--bl), 0px));
+  background-repeat: no-repeat;
+}
+.plead .body .blank.filled {
+  --u: var(--paper-ink);
+}
+.plead .body .blank.open,
+.plead .body .blank.hot {
+  --u: var(--hl-edge);
+}
+@media (hover: hover) {
+  .plead .body button.blank:hover {
+    --u: var(--hl-edge);
+  }
+}
+.plead .body .blank.exhibit {
+  --bl: 2px;
+}
+:root:lang(en) .plead .body .blank {
+  --bl: -1px;
+  --ul: 9px;
+}
+:root:lang(en) .plead .body .blank.exhibit {
+  --bl: 2px;
+}
 .plead .nw {
   white-space: nowrap;
 }
@@ -238,10 +295,16 @@
   text-align: center;
   letter-spacing: 0.02em;
 }
-button.blank:hover,
+/* 觸控裝置點過之後 :hover 會黏住，看起來像選中：hover 只給有滑鼠的裝置（設計師第二輪）。 */
 .blank.open {
   background: var(--hl-wash);
   border-bottom-color: var(--hl-edge);
+}
+@media (hover: hover) {
+  button.blank:hover {
+    background: var(--hl-wash);
+    border-bottom-color: var(--hl-edge);
+  }
 }
 .blank .hint {
   font: 400 13px/1 var(--font);
@@ -272,7 +335,7 @@ button.blank:hover,
   border-radius: 3px;
   color: var(--gold-paper);
   background: var(--paper);
-  font: 600 10px/1 var(--font-mono);
+  font: 700 10px/1 var(--font-court);
   letter-spacing: 0.08em;
   transform: rotate(-6deg);
   white-space: nowrap;
@@ -351,9 +414,13 @@ button.blank:hover,
   color: var(--paper-ink);
   white-space: nowrap;
 }
-.pop-list button:hover,
 .pop-list button.on {
   background: light-dark(#eceff3, #c9ccd1);
+}
+@media (hover: hover) {
+  .pop-list button:hover {
+    background: light-dark(#eceff3, #c9ccd1);
+  }
 }
 .sheet-options .pop-list button {
   min-height: 52px;
@@ -389,14 +456,14 @@ button.blank:hover,
 }
 .plead .commit-row .cost {
   margin-left: 8px;
-  font: 500 12px/1 var(--font-mono);
+  font: 700 12px/1 var(--font-court);
   opacity: 0.8;
 }
 .plead .bates2 {
   position: absolute;
   left: 76px;
   bottom: 12px;
-  font: 400 11px/1 var(--font-court);
+  font: 700 11px/1 var(--font-court);
   color: var(--paper-muted);
 }
 /* 法官的一句話：左邊色線，章蓋在右邊，壓到簽名欄也沒關係。 */
@@ -404,12 +471,9 @@ button.blank:hover,
   position: relative;
   margin-top: 18px;
   padding: 10px 150px 10px 14px;
-  border-left: 3px solid var(--stamp-no);
+  border-left: 3px solid var(--stamp);
   font: 400 15px/1.7 var(--font-court);
   color: var(--paper-ink);
-}
-.plead .judge.ok {
-  border-left-color: var(--stamp-ok);
 }
 .plead .judge small {
   display: block;
@@ -418,49 +482,68 @@ button.blank:hover,
 }
 .plead .judge .stamp-big {
   position: absolute;
-  /* 章轉 8 度會多出約 10px；往內收，不把整張紙撐寬。 */
   right: 12px;
   top: -18px;
 }
 .stamp-big {
+  --o: 0.86;
   display: block;
   width: 132px;
   height: 132px;
-  opacity: 0.86;
+  color: var(--stamp);
+  opacity: var(--o);
   mix-blend-mode: multiply;
-  transform: rotate(-8deg);
+  rotate: var(--rot);
 }
 .stamp-big svg {
   width: 100%;
   height: 100%;
   overflow: visible;
 }
+/* 狀紙只用三套字族（設定集第 9 章）：外圈 Courier、中央 Serif 900，英文的 GRANTED／DENIED 也一樣。 */
 .stamp-big .ring {
-  font: 500 8px/1 var(--font-mono);
+  font: 700 8px/1 var(--font-court);
   letter-spacing: 2.2px;
 }
 .stamp-big .word {
   font-family: var(--font-doc);
   font-weight: 900;
 }
-.stamp-big .word.latin {
-  font-family: var(--font-mono);
-  font-weight: 700;
-}
+/* 收文章：--stamp 雙線框（外框 2px＋內框 1px），轉 3°（視覺規格 v2.0 §17）。 */
 .stamp-rcv {
+  --o: 0.72;
   position: absolute;
   right: 44px;
   top: 10px;
-  padding: 6px 10px;
-  border: 2px solid var(--paper-ink);
+  padding: 7px 12px;
+  border: 2px solid var(--stamp);
   border-radius: 3px;
   font: 400 11px/1.4 var(--font-court);
-  color: var(--paper-ink);
+  color: var(--stamp);
   letter-spacing: 0.08em;
   text-align: center;
-  transform: rotate(6deg);
-  opacity: 0.72;
+  rotate: 3deg;
+  opacity: var(--o);
   mix-blend-mode: multiply;
+}
+.stamp-rcv::after {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  border: 1px solid var(--stamp);
+  border-radius: 1px;
+}
+/* 落章：--dur-stamp ease-in，墨色 60% → 100%，不縮放、不回彈（設定集第 10.2 章）。減少動態時直接出現。 */
+@media (prefers-reduced-motion: no-preference) {
+  .stamp-big,
+  .stamp-rcv {
+    animation: court-stamp var(--dur-stamp) ease-in both;
+  }
+  @keyframes court-stamp {
+    from {
+      opacity: calc(var(--o) * 0.6);
+    }
+  }
 }
 .stamp-rcv b {
   display: block;
@@ -735,8 +818,10 @@ button.cand {
   box-shadow: none;
   font-weight: 400;
 }
-button.cand:hover:not(.on) {
-  background: color-mix(in srgb, var(--text) 4%, transparent);
+@media (hover: hover) {
+  button.cand:hover:not(.on) {
+    background: color-mix(in srgb, var(--text) 4%, transparent);
+  }
 }
 .cand .no {
   font: 600 var(--fs-ui-label) / 1 var(--font-mono);
@@ -797,6 +882,7 @@ button.cand.on {
 /*
  * 全域的「選取＝螢光筆」（styles.css [aria-pressed='true']）在這幾個畫面會和黃主按鈕同框：
  * 選中改墨色左緣＋淡底，黃留給下一步（一幀一個黃）。
+ * 框是 2px 墨色（外框 1px＋內圈 1px）：手機上點過的 hover 也是灰底細框，選中要一眼分得出來（設計師第二輪）。
  */
 button.cand[aria-pressed='true'],
 .closing-args [aria-pressed='true'],
@@ -804,7 +890,28 @@ button.cand[aria-pressed='true'],
 .rec-bar-top [aria-pressed='true'] {
   border-color: var(--text) !important;
   background: light-dark(rgb(17 23 32 / 5%), rgb(231 234 238 / 6%)) !important;
-  box-shadow: inset 3px 0 0 var(--text);
+  box-shadow:
+    inset 0 0 0 1px var(--text),
+    inset 4px 0 0 var(--text);
+}
+/* 開場的借據選取：墨色框，不用 --hl（黃只給「許下 n 個承諾」那顆主按鈕）。 */
+.iou-pick[aria-pressed='true'] .iou {
+  outline-color: var(--text);
+}
+/* 借據：「擔保」不換行；存根上的兩位數號碼橫排成一格（Chromium 不支援 digits 2，用 all 包在號碼上）。 */
+.iou-terms dt {
+  white-space: nowrap;
+}
+.iou-stub .no {
+  text-combine-upright: all;
+  letter-spacing: 0;
+}
+/* 「出示」「亮出」和結辯的順序號：墨色 600，不用黃（淺色的赭、深色的 #f4c53d 都是黃家族，會和主按鈕成兩道黃）。 */
+.claim .pick .verb,
+.panel.reveal .pick .verb,
+.closing-args .pick .verb {
+  color: var(--text);
+  font-weight: 600;
 }
 .cand.bench {
   opacity: 0.78;
@@ -1205,8 +1312,14 @@ button.cand[aria-pressed='true'],
   font: 400 12px/1.5 var(--font);
   color: var(--paper-muted);
 }
+/*
+ * 陪審長的手寫：英文介面也用 LXGW WenKai TC（設定集第 9 章的手寫字，有拉丁字母），不退回 Source Serif 4 正體。
+ * 全域 --font-hand 的英文值歸介面與操作 #2；這裡只管判決書上這兩處。
+ */
 .fq .qv {
-  font: 400 21px/1 var(--font-hand);
+  font:
+    400 21px/1 'LXGW WenKai TC',
+    var(--font-hand);
   color: var(--ink-fill);
   white-space: nowrap;
 }
@@ -1239,7 +1352,9 @@ button.cand[aria-pressed='true'],
   min-width: 150px;
   margin-left: 8px;
   border-bottom: 1px solid var(--paper-ink);
-  font: 400 20px/1.2 var(--font-hand);
+  font:
+    400 20px/1.2 'LXGW WenKai TC',
+    var(--font-hand);
   color: var(--ink-fill);
   text-align: center;
 }
@@ -1327,9 +1442,10 @@ button.cand[aria-pressed='true'],
   border-radius: 2px;
   border: 1.5px solid var(--border-strong);
 }
+/* 站你這邊的票：實心墨色（規格 v2.0：綠只代表成立，風向不用綠）。 */
 .vpips i.y {
-  background: var(--good);
-  border-color: var(--good);
+  background: var(--text);
+  border-color: var(--text);
 }
 .panel.rounds {
   list-style: none;
@@ -1510,9 +1626,19 @@ html[lang='en'] .vform .fh .c {
 
 /*
  * 法官耐心燈管（設定集第 10.2、10.6 章）：熄一根是 --dur-tube-off 一次降到 0，不閃。
- * 最後一根熄掉時閃兩下（亮兩次、每次一格 --dur-tube-off，每秒約 2 次，低於 3 次；面積遠小於 2%）。
- * 光敏安全（html[data-photosafe='1']）不閃，只剩那一次漸暗；減少動態直接熄（建置時 @media 會連玩家設定一起認）。
+ * 最後一根熄掉（歸零）時閃兩下：亮兩次、每次一格 --dur-tube-off，中間全暗，每秒約 2 次，低於 3 次；面積遠小於 2%。
+ * 結束時是空心（第 10 章「熄滅＝空心」）。
+ * 光敏安全（html[data-photosafe='1']）不閃：歸零是一次 900ms 漸暗，和一般熄一根的 240ms 分得開；點亮 700ms（第 11 章）。
+ * 減少動態直接熄（建置時 @media 會連玩家設定一起認）。
  */
+:root {
+  /* 亮著的燈管色：.pip.on 和歸零閃爍共用（淺色介面上燈管色幾乎看不見，淺色用深一點的綠）。 */
+  --tube-lit: light-dark(#5f8f68, var(--tube-on));
+}
+.patience .pip.on {
+  background: var(--tube-lit);
+  border-color: var(--tube-lit);
+}
 .patience .pip {
   transition: none;
 }
@@ -1525,17 +1651,23 @@ html[lang='en'] .vform .fh .c {
   html:not([data-photosafe='1']) .patience .pip.spent {
     animation: tube-spent calc(var(--dur-tube-off) * 4) step-end both;
   }
-  /* 亮的顏色同 styles.css 的 .patience .pip.on。 */
+  html[data-photosafe='1'] .patience .pip.on {
+    transition-duration: 700ms;
+  }
+  html[data-photosafe='1'] .patience .pip.spent {
+    transition-duration: 900ms;
+  }
   @keyframes tube-spent {
     25%,
     75% {
-      background-color: light-dark(#5f8f68, var(--tube-on));
-      border-color: light-dark(#5f8f68, var(--tube-on));
+      background-color: var(--tube-lit);
+      border-color: var(--tube-lit);
     }
     0%,
     50%,
     100% {
       background-color: transparent;
+      border-color: var(--border-strong);
     }
   }
 }
@@ -2300,13 +2432,14 @@ html[lang='en'] .stamp.rec-stamp b {
   .jf-tilt[data-nod] {
     animation: jf-nod var(--dur-nod) var(--ease) both;
   }
+  /* 點頭兩次：0 → +3°（朝辯方）→ 0 → +3° → 0，不越過 0；越過去像搖頭（視覺設計師 #2）。 */
   @keyframes jf-nod {
     25%,
     75% {
       rotate: 3deg;
     }
     50% {
-      rotate: -3deg;
+      rotate: 0deg;
     }
   }
 }

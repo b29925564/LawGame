@@ -154,7 +154,7 @@
 逾期: If broken
 '全體往{yes} {n}': 'All jurors toward {yes} {n}'
 葛雷: Gray
-"債權人\u3000陪審團": 'Creditor: the jury'
+債權人・陪審團: 'Creditor: the jury'
 已兌現: Kept
 逾期未兌現: Broken
 "第 {round} 輪\u3000{no} {ng}\u3000{yes} {g}": 'Round {round} · {no} {ng} · {yes} {g}'

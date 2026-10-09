@@ -290,7 +290,7 @@ const surname = (name: string) =>
     .filter(Boolean)
     .pop() ?? name;
 
-/** 票格：站在你這邊的票實心（--good），另一邊空心。看的是對你有沒有利，不看有責或無罪。 */
+/** 票格：站在你這邊的票實心墨色，另一邊空心。看的是對你有沒有利，不看有責或無罪。 */
 function Pips({ ours }: { ours: boolean[] }) {
   return (
     <span className="vpips" aria-hidden>

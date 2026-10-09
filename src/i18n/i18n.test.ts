@@ -23,6 +23,23 @@ describe('雙語查表', () => {
     expect(t('主張{v}', { v: 'Not guilty' })).toBe('argues for not guilty');
   });
 
+  it('英文單複數：{n:s} 與 {n:one|other}', () => {
+    useLang.setState({ lang: 'en' });
+    install({
+      '許下 {n} 個承諾': 'Make {n} promise{n:s}',
+      '已經有 {a} 位陪審員站你這邊。': '{a} {a:juror was|jurors were} already on your side.',
+    });
+    expect(t('許下 {n} 個承諾', { n: 1 })).toBe('Make 1 promise');
+    expect(t('許下 {n} 個承諾', { n: 3 })).toBe('Make 3 promises');
+    expect(t('已經有 {a} 位陪審員站你這邊。', { a: 1 })).toBe('1 juror was already on your side.');
+    expect(t('已經有 {a} 位陪審員站你這邊。', { a: 0 })).toBe(
+      '0 jurors were already on your side.',
+    );
+    expect(translate('許下 1 個承諾')).toBe('Make 1 promise');
+    useLang.setState({ lang: 'zh' });
+    expect(t('許下 {n} 個承諾', { n: 1 })).toBe('許下 1 個承諾');
+  });
+
   it('樣板代入的值也會再查表', () => {
     install({ '辯方可以詰問{name}。': 'The defense may examine {name}.', 崔佛: 'Trevor' });
     expect(translate('辯方可以詰問崔佛。')).toBe('The defense may examine Trevor.');

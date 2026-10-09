@@ -1196,7 +1196,7 @@ function Motions({ scene, held }: { scene: DeskScene; held: string[] }) {
             {t('還缺前提：先把 {names} 確認起來', {
               names: missing
                 .map((id) => `◆ ${t(nameOf(id)?.name ?? argName(scene, id), scope)}`)
-                .join('、'),
+                .join(t('、')),
             })}
           </strong>
           <span>{t(m.detail, scope)}</span>

@@ -127,7 +127,9 @@ export function Theory({ scene }: { scene: TheoryScene }) {
                 {!ok && (
                   <span className="bad-text small">
                     {t('還缺 {list}', {
-                      list: missing.map((n) => t(argName(n), scope).split(/：|: /)[0]).join('、'),
+                      list: missing
+                        .map((n) => t(argName(n), scope).split(/：|: /)[0])
+                        .join(t('、')),
                     })}
                   </span>
                 )}

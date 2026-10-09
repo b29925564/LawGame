@@ -4558,9 +4558,9 @@ button.iou[aria-pressed='true'] {
     }
   }
 }
+/* 章在減少動態時直接出現，不淡入（視覺設計師 #2）。 */
 @media (prefers-reduced-motion: reduce) {
   .sticky.enter,
-  .stamp.enter,
   .vo-veil,
   .vo-frame {
     animation: iv-fade var(--dur-rm) linear both;
