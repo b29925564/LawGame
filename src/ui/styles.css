@@ -3032,8 +3032,9 @@ fieldset.relations.compact {
   .scene > :nth-child(n + 3) {
     animation-delay: 0.08s;
   }
+  /* 異議面板只是一般介面淡入，不 slam、不回彈（設定集第 10.2、10.3 章）。 */
   .objection {
-    animation: slam 0.38s var(--ease) both;
+    animation: fade var(--dur-ui) var(--ease) both;
   }
   .board-note {
     animation: drop 0.28s var(--ease) both;
@@ -3050,9 +3051,6 @@ fieldset.relations.compact {
   .menu-panel {
     animation: drop 0.24s var(--ease) both;
     transform-origin: top right;
-  }
-  .juror.react .face {
-    animation: pop 0.36s var(--ease);
   }
   /* 黑條蓋上：四格斷奏，從左邊拉過去（設定集第 9 章 --dur-redact-in）。 */
   .redact {
@@ -3108,16 +3106,6 @@ fieldset.relations.compact {
       transform: translateY(6px);
     }
   }
-  @keyframes slam {
-    0% {
-      opacity: 0;
-      transform: scale(1.04);
-    }
-    60% {
-      opacity: 1;
-      transform: scale(0.995);
-    }
-  }
   @keyframes sheet-up {
     from {
       transform: translateY(100%);
@@ -3127,11 +3115,6 @@ fieldset.relations.compact {
     from {
       opacity: 0;
       transform: translateY(-6px) scale(0.98);
-    }
-  }
-  @keyframes pop {
-    40% {
-      transform: scale(1.18);
     }
   }
   @keyframes mark {
@@ -4438,10 +4421,10 @@ button.iou[aria-pressed='true'] {
       clip-path: inset(0 0 100% 0);
     }
   }
+  /* 蓋章只把墨色從 60% 拉到 100%，不縮放（設定集第 10.2 章 --dur-stamp）。 */
   @keyframes stamp {
     from {
       opacity: 0.6;
-      scale: 1.12;
     }
   }
   @keyframes ignite {

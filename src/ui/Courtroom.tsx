@@ -145,6 +145,26 @@ function ObjectionWindow({
 }
 
 /** 法庭畫面：說話者頭像是剪影替身（P4-2）。 */
+/**
+ * 法官耐心燈管（設定集第 10.2、10.6 章）：熄一根是一次降到 0、不閃；最後一根熄掉時閃兩下。
+ * 閃不閃、漸不漸暗都交給 court.css 讀 html[data-photosafe]／html[data-reduced-motion]。
+ */
+function Tubes({ n, max }: { n: number; max: number }) {
+  const [prev, setPrev] = useState(n);
+  const [spent, setSpent] = useState(false);
+  if (n !== prev) {
+    setPrev(n);
+    setSpent(n <= 0 && prev > 0);
+  }
+  return (
+    <span className="pips" aria-hidden>
+      {Array.from({ length: max }, (_, i) => (
+        <span key={i} className={i < n ? 'pip on' : spent && i === 0 ? 'pip spent' : 'pip'} />
+      ))}
+    </span>
+  );
+}
+
 export function Courtroom({ scene }: { scene: TrialScene }) {
   return (
     <CourtCast>
@@ -306,11 +326,7 @@ function CourtroomScreen({ scene: raw }: { scene: TrialScene }) {
               aria-label={t('法官耐心 {a} / {b}', { a: st.patience, b: scene.patience })}
             >
               {t('法官耐心')}
-              <span className="pips" aria-hidden>
-                {Array.from({ length: scene.patience }, (_, i) => (
-                  <span key={i} className={i < st.patience ? 'pip on' : 'pip'} />
-                ))}
-              </span>
+              <Tubes n={st.patience} max={scene.patience} />
             </p>
             {promised.length > 0 && (
               <ul className="iou-chips" aria-label={t('開場許下的承諾')}>
