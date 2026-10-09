@@ -402,3 +402,57 @@ body:has(.cork) .card .mini-btn[aria-pressed='true'] {
   color: var(--muted);
   text-align: right;
 }
+
+/* ── 陪審團視角：同一塊板，M. Osei 的粉彩速寫蓋在上面（設定集 8.6）。 ── */
+.cork-sketch {
+  position: absolute;
+  inset: 0;
+  z-index: 9;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  pointer-events: none;
+}
+.cork-sketch.on {
+  opacity: 1;
+  pointer-events: auto;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .cork-sketch {
+    transition: opacity var(--dur-ui) linear;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cork-sketch {
+    transition: opacity var(--dur-rm) linear;
+  }
+}
+/* 「我知道的案情／陪審團知道的案情」切換：選中的是白，不用黃。 */
+.view-switch {
+  display: inline-flex;
+  margin-left: auto;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.view-switch button {
+  min-height: 32px;
+  padding: 4px 12px;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  font-size: var(--fs-ui-meta);
+  color: var(--muted);
+}
+.view-switch button[aria-pressed='true'] {
+  background: var(--text) !important;
+  color: var(--bg);
+  border: none !important;
+  box-shadow: none;
+}
+.jury-note {
+  margin: 0;
+  font-size: var(--fs-ui-meta);
+  color: var(--muted);
+}

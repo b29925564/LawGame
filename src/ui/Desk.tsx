@@ -27,6 +27,7 @@ import { Cork, type CorkItem } from './Cork';
 import { Redaction } from './Redaction';
 import { Shell, Tabs } from './Shell';
 import { Timeline } from './Timeline';
+import { useCaseTerms } from './terms';
 
 // 證據庫和左下的證據抽屜內容一模一樣，所以只留抽屜：它在每個畫面都叫得出來。
 type App = 'mail' | 'docs' | 'board' | 'jobs' | 'court' | 'discovery';
@@ -598,6 +599,12 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
     </nav>
   );
 
+  const caseTerms = useCaseTerms();
+  const [juryView, setJuryView] = useState(false);
+  // 陪審團只知道被法庭採納的證據（卡片的 admitted）；論點、發現是盧卡斯自己的推理。
+  const juryCards = pool.filter((c) => 'admitted' in c && c.admitted);
+  // 簽名是鏡頭層的出處標記：不翻譯（設定集 8.6 第 7 步）。
+  const sketchSignature = `M. Osei\u30002026\u3000${caseTerms.parties.replaceAll('\u3000', '')}`;
   // 軟木板上的 A、B：放了卡就是那張卡（點了拿下來），空的是提示或挑卡入口。
   const corkSlot = (i: 0 | 1, face: ReactNode) => {
     const c = pool.find((x) => x.id === st.link.cards[i]);
@@ -665,10 +672,21 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
   const nextView = nextQ?.id ?? (st.timeline.length < timedN ? 'timeline' : null);
   const bench = (
     <section className="panel step links">
-      <h3 className="step-head">
-        <span className="step-num">1</span>
-        {qDone ? t('繼續連線') : t('連線')}
-      </h3>
+      <div className="row bench-head">
+        <h3 className="step-head">
+          <span className="step-num">1</span>
+          {qDone ? t('繼續連線') : t('連線')}
+        </h3>
+        {/* 陪審團視角（設定集 8.6）：同一塊板，只畫陪審團聽過的東西。 */}
+        <div className="view-switch" role="group" aria-label={t('看誰知道的案情')}>
+          <button aria-pressed={!juryView} onClick={() => setJuryView(false)}>
+            {t('我知道的案情')}
+          </button>
+          <button aria-pressed={juryView} onClick={() => setJuryView(true)}>
+            {t('陪審團知道的案情')}
+          </button>
+        </div>
+      </div>
       <div
         className={
           (desk.canConnect(st) ? 'link-bench ready' : 'link-bench') +
@@ -691,7 +709,17 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
           compact={!wide}
           onPick={toggleLinkCard}
           slot={corkSlot}
+          jury={{ on: juryView, cards: juryCards, signature: sketchSignature }}
         />
+        {juryView && (
+          <p className="jury-note" role="status">
+            {juryCards.length
+              ? t('陪審團只看過法庭採納的證據：{list}。你的連線和推理他們都還沒聽過。', {
+                  list: juryCards.map((c) => t(c.name, scope)).join(t('、')),
+                })
+              : t('陪審團還沒看過任何證據。你查到的一切，要在法庭上被採納，他們才會知道。')}
+          </p>
+        )}
         <RelationPicker
           cards={st.link.cards.map((id) => pool.find((c) => c.id === id)?.name)}
           value={st.link.relation}
