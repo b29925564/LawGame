@@ -23,7 +23,8 @@ import { Tally } from './Marks';
 import { Speech } from './Portrait';
 import { Shell, Tabs } from './Shell';
 import { useState } from 'react';
-import { CourtCast } from './jury/CourtFace';
+import { CourtCast, CourtFace } from './jury/CourtFace';
+import { castLook } from './jury/cast';
 
 /** 結辯與判決（企劃書 6.9.8、6.10）：挑三個論點排順序、選基調，然後看三輪評議。 */
 /** 法庭畫面：說話者頭像是剪影替身（P4-2）。 */
@@ -258,7 +259,7 @@ function ClosingScreen({ scene }: { scene: ClosingScene }) {
               <Speech key={i} line={l} />
             ))}
           </div>
-          <div className="stack">
+          <div className="stack closing-tones">
             {scene.tones.map((tone) => (
               <CardPick
                 key={tone.id}
@@ -653,7 +654,12 @@ function Verdict({
               const via = text.match(/^[（(]([^）)]{1,12})[）)]\s*/);
               return (
                 <div key={i} className="msg">
-                  <IdPhoto who={l.who} size={28} />
+                  {/* 人在法庭：剪影替身；訊息、電話不在場：證件照（設計師 10-09：桌上證件照、庭上剪影）。 */}
+                  {!via && castLook(l.who) ? (
+                    <CourtFace who={l.who} />
+                  ) : (
+                    <IdPhoto who={l.who} size={28} />
+                  )}
                   <div>
                     <small>
                       {t(l.who)}
