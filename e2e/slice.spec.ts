@@ -279,17 +279,17 @@ async function playToRachelLast(page: Page) {
   await expect(page.getByText('那就法庭見')).toBeVisible();
   await next(page);
 
-  // 第三幕收尾：選案件理論。四條論點都確認了，選難的那條。
+  // 週日下午看守所：伊森想作證。答應他，第三天辯方舉證時他會上證人席。
+  const testify = page.getByRole('button', { name: /每天練一遍最難聽的問題/ });
+  await until(page, testify);
+  await testify.click();
+  await next(page);
+
+  // 第三幕收尾（週日深夜）：選案件理論。四條論點都確認了，選難的那條。
   await page.getByRole('button', { name: '選擇案件理論' }).click();
   // 點卡片只是選中，底部定案列的按鈕才真的選定。
   await page.locator('button.theory-card', { hasText: '另有其人：瑞秋' }).click();
   await page.getByRole('button', { name: '以這個理論開庭' }).click();
-  await next(page);
-
-  // 伊森想作證。答應他，第三天辯方舉證時他會上證人席。
-  const testify = page.getByRole('button', { name: /每天練一遍最難聽的問題/ });
-  await until(page, testify);
-  await testify.click();
   await next(page);
 
   await next(page); // 第四幕字卡

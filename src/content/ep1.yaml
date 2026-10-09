@@ -260,6 +260,33 @@ _cards: &cards
     text: 瑞秋說出的會議名稱，可以據此調閱出席紀錄。
     source: 證詞錄取
 
+# 案卷登錄表最後一行（設計審查 r1）：各分支一句，列第一個符合的。
+disposition:
+  - date: 04/08/2026
+    when: { outcome: [dismissed] }
+    entry: 檢方撤回起訴，本院駁回本案。被告當庭釋放。
+  - date: 04/06/2026
+    when: { outcome: [deal], deal: [o-murder2] }
+    entry: 被告依認罪協商就二級謀殺一罪認罪。本院接受協商，判處有期徒刑十五年。被告還押，候移監。
+  - date: 04/06/2026
+    when: { outcome: [deal], deal: [o-manslaughter] }
+    entry: 被告依認罪協商改就非預謀殺人一罪認罪。本院接受協商，判處有期徒刑八年。被告還押，候移監。
+  - date: 04/06/2026
+    when: { outcome: [deal], deal: [o-negligent] }
+    entry: 被告依認罪協商改就過失致死一罪認罪。本院接受協商，判處有期徒刑三年。被告還押，候移監。
+  - date: 04/06/2026
+    when: { outcome: [deal], deal: [o-probation] }
+    entry: 被告依認罪協商改就過失致死一罪認罪。本院接受協商，判處緩刑五年。被告當庭釋放。
+  - date: 04/08/2026
+    when: { verdict: [無罪] }
+    entry: 陪審團評決：被告二級謀殺罪不成立。被告當庭釋放。
+  - date: 04/08/2026
+    when: { verdict: [有罪] }
+    entry: 陪審團評決：被告二級謀殺罪成立。被告還押，候量刑。
+  - date: 04/08/2026
+    when: { verdict: [陪審團僵局] }
+    entry: 陪審團未能達成一致評決，本院宣告審判無效。
+
 scenes:
   # 冷開場（企劃書 10.7）：玩家拿著伊森的手機，親眼看過那則之後被收回的訊息。
   # 字卡只寫鏡頭拍得到的東西，不替伊森解釋心理；為什麼不報警，留到第一幕由他自己回答。
@@ -410,7 +437,7 @@ scenes:
         text: 有窗嗎？
       - do: say
         who: 羅根・普萊斯
-        text: 沒有。
+        text: 有。打不開。
         mood: 硬
       - do: say
         who: 盧卡斯
@@ -994,6 +1021,7 @@ scenes:
                   text: 我也記著。｜記著我沒去拿的那張紙。
                   voice: 'off'
             - text: 我出庭答辯。
+              place: 惠特洛克・海爾　走廊　週二 19:00
               gives: [chat-audit]
               flags: [whitlock-down, hale-up]
               then:
@@ -1019,6 +1047,21 @@ scenes:
     title: 第三幕　審前
     lines:
       - 十六工時。開庭前能做的事，都在這三天裡。
+    filings:
+      - date: 03/19/2026
+        entry: 本院核發檢視令：准辯方檢視並鑑識被告入所扣押之智慧手錶（財物清單 No. 26-0315-088 項 3）。
+      - date: 03/24/2026
+        when: { cards: [heart-rate] }
+        entry: 辯方聲請對手錶廠商核發文書傳票；本院當庭核發傳票 D-1。
+      - date: 03/25/2026
+        when: { anyFlags: [chat-audit-lost, whitlock-down] }
+        entry: 辯方聲請對卡爾德物流核發文書傳票；本院核發傳票 D-2。同日，卡爾德物流聲請撤銷該傳票。
+      - date: 03/26/2026
+        when: { flags: [chat-audit-lost] }
+        entry: 辯方撤回傳票 D-2；卡爾德物流之撤銷聲請毋庸審酌。
+      - date: 03/31/2026
+        when: { cards: [chat-audit] }
+        entry: 撤銷傳票聲請言詞辯論：聲請駁回，傳票 D-2 維持。
     docket:
       date: 04/03/2026
       entry: 預審：本院認定有相當理由，被告應受審判。定 04/06/2026 陪審團審理。
@@ -1107,6 +1150,7 @@ scenes:
     id: depo-rachel
     act: 第三幕
     place: 惠特洛克・海爾　會議室 B　週五 10:00
+    video: { bates: WH-V-000412, timecode: '00:47:12;08' }
     budget: 12
     witness:
       name: 瑞秋・艾德勒
@@ -1309,10 +1353,38 @@ scenes:
             hush: true
 
   # 第三幕收尾：選案件理論（企劃書 6.9.2）。選了就不能換。
+  - type: dialogue
+    id: ethan-testify
+    act: 第三幕
+    place: 看守所　會見室　週日 16:30
+    steps:
+      - do: say
+        who: 伊森・蕭
+        text: 他們會說我跑了兩天。我想上去講。我想自己講。
+        mood: 緊
+      - do: say
+        who: 盧卡斯
+        text: 你一站上去，莫羅就能問四年前的事。
+      - do: choose
+        prompt: 伊森在等你的意見。
+        options:
+          - text: 好。從今天開始，每天練一遍最難聽的問題。
+            flags: [ethan-testifies]
+            then:
+              - who: 伊森・蕭
+                text: 好。好。我會練。
+                mood: 緊
+          - text: 我建議你不要。陪審團需要的是證據，不是你上去講。
+            flags: [ethan-silent]
+            then:
+              - who: 伊森・蕭
+                text: ……如果你覺得這樣比較好。
+                mood: 緊
+
   - type: theory
     id: theory
     act: 第三幕
-    place: 惠特洛克・海爾　會議室 A　週日 14:00
+    place: 惠特洛克・海爾　會議室 A　週日 22:40
     intro:
       - who: 馬庫斯・海爾
         text: 明天開庭。你要告訴陪審團一個故事，一個就好。故事要靠你手上的論點撐起來。
@@ -1362,34 +1434,6 @@ scenes:
             argument: arg-d
 
   # 第三幕收尾：被告要不要作證（企劃書 10.7 第三幕 6）。決定權在伊森，盧卡斯只能建議。
-  - type: dialogue
-    id: ethan-testify
-    act: 第三幕
-    place: 看守所　會見室　週日 16:30
-    steps:
-      - do: say
-        who: 伊森・蕭
-        text: 他們會說我跑了兩天。我想上去講。我想自己講。
-        mood: 緊
-      - do: say
-        who: 盧卡斯
-        text: 你一站上去，莫羅就能問四年前的事。
-      - do: choose
-        prompt: 伊森在等你的意見。
-        options:
-          - text: 好。從今天開始，每天練一遍最難聽的問題。
-            flags: [ethan-testifies]
-            then:
-              - who: 伊森・蕭
-                text: 好。好。我會練。
-                mood: 緊
-          - text: 我建議你不要。陪審團需要的是證據，不是你上去講。
-            flags: [ethan-silent]
-            then:
-              - who: 伊森・蕭
-                text: ……如果你覺得這樣比較好。
-                mood: 緊
-
   - type: card
     id: act4
     act: 第四幕
@@ -2789,7 +2833,7 @@ scenes:
     epilogue: true
     when:
       theory: [sophie]
-    place: 盧卡斯的辦公室　影印機旁邊　週四 18:40
+    place: 盧卡斯的辦公室　影印機旁邊　週四 20:40
     steps:
       - do: say
         who: 潔德
@@ -2800,7 +2844,7 @@ scenes:
     id: epilogue-envelope
     act: 尾聲
     epilogue: true
-    place: 盧卡斯的辦公室　影印機旁邊　週四 18:40
+    place: 盧卡斯的辦公室　影印機旁邊　週四 20:40
     steps:
       - do: say
         who: 旁白
@@ -2935,6 +2979,7 @@ scenes:
     act: 尾聲
     epilogue: true
     place: 盧卡斯的公寓　23:52
+    call: { caller: 州立監獄　受刑人付費電話, duration: '00:47' }
     steps:
       - do: say
         who: 旁白
