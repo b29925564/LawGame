@@ -62,7 +62,7 @@ test('證物袋與照片紀錄表：證據欄展開看得到，放大檢視是�
   await bag.locator('.mini-btn').click();
   await expect(bag.locator('.bag-chain li:not(.bag-chain-cols)')).toHaveCount(4);
   await expect(bag.locator('.bag-head')).toContainText('CH-2026-1147');
-  await bag.getByRole('button', { name: '放大檢視' }).click();
+  await bag.getByRole('button', { name: '放大', exact: true }).click();
   const zoom = page.getByRole('dialog', { name: /放大檢視/ });
   await expect(zoom).toBeVisible();
   await expect(zoom.locator('.bag-chain')).toContainText('R. Delgado');
@@ -82,7 +82,16 @@ test('存檔欄：縮小的登錄表加 Bates 區間', async ({ page }) => {
   await page.getByRole('tab', { name: '讀檔' }).click();
   const auto = page.locator('.slot').first();
   await expect(auto.locator('.dk-cur')).toContainText('04/08');
-  await expect(auto.locator('.dk-bates')).toHaveText('WH-E01-000001–000330');
-  // 冷開場還沒走到第一張登錄卡：每一行都是黑條。
-  await expect(page.locator('.slot').nth(1).locator('.dk-row:not(.dk-future)')).toHaveCount(0);
+  // 從這一集的第一頁起，和幕卡同一套頁碼。
+  await expect(auto.locator('.dk-bates')).toHaveText('WH-E01-000057–000330');
+  // 冷開場還沒走到第一張登錄卡：沒有一行字，只有一條黑條。
+  const cold = page.locator('.slot').nth(1);
+  await expect(cold.locator('.dk-row:not(.dk-future)')).toHaveCount(0);
+  await expect(cold.locator('.dk-bar')).toHaveCount(1);
+  // 存檔畫面只准一道黃：滑鼠滑過不上螢光，鍵盤選中的那一欄才上。
+  await auto.hover();
+  await expect(page.locator('.slot.sel')).toHaveCount(0);
+  await auto.focus();
+  await expect(auto).toHaveClass(/\bsel\b/);
+  await expect(page.locator('.slot.sel')).toHaveCount(1);
 });
