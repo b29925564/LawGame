@@ -1512,18 +1512,18 @@ html[lang='en'] .vform .fh .c {
 /*
  * 法官耐心燈管（設定集第 10.2、10.6 章）：熄一根是 --dur-tube-off 一次降到 0，不閃。
  * 最後一根熄掉時閃兩下（亮兩次、每次一格 --dur-tube-off，每秒約 2 次，低於 3 次；面積遠小於 2%）。
- * 光敏安全（html[data-photosafe='1']）不閃，只剩那一次漸暗；減少動態直接熄。兩個開關互不連動。
+ * 光敏安全（html[data-photosafe='1']）不閃，只剩那一次漸暗；減少動態直接熄（建置時 @media 會連玩家設定一起認）。
  */
 .patience .pip {
   transition: none;
 }
 @media (prefers-reduced-motion: no-preference) {
-  html:not([data-reduced-motion='1']) .patience .pip {
+  .patience .pip {
     transition:
       background-color var(--dur-tube-off) var(--ease-light),
       border-color var(--dur-tube-off) var(--ease-light);
   }
-  html:not([data-reduced-motion='1']):not([data-photosafe='1']) .patience .pip.spent {
+  html:not([data-photosafe='1']) .patience .pip.spent {
     animation: tube-spent calc(var(--dur-tube-off) * 4) step-end both;
   }
   /* 亮的顏色同 styles.css 的 .patience .pip.on。 */
