@@ -12,6 +12,7 @@ import { Desk } from './Desk';
 import { Dialogue } from './Dialogue';
 import { GameMenu } from './GameMenu';
 import { Interview } from './Interview';
+import { ActCard, PlaceSlate, Recap, splitHeadline } from './ActCard';
 import { Announcer } from './Marks';
 import { Negotiation } from './Negotiation';
 import { Phone } from './Phone';
@@ -44,13 +45,48 @@ export function App() {
     );
 
   const scene = sceneOf(progress);
-  const next = scene ? null : followingEpisode(progress);
+  const ep = episodeOf(progress);
+  // 集尾卡（這一集最後一場是卡）：跑完進場、停 2.5 秒後不切場，選項出現在卡下。
+  const last = scene?.type === 'card' && progress.scene === ep.scenes.length - 1;
+  const next = scene && !last ? null : followingEpisode(progress);
   // 讀同一場的存檔也要重新掛載，元件裡的狀態（例如訪談的「結束會見」）才會重置。
   const sceneKey = `${loadId}:${scene?.id}`;
+  // 幕卡（設定集 11.3）：片頭卡的集名寫在第一行；同一幕的第二張卡是日卡；集尾也是同一個版型。
+  const card = scene?.type === 'card' ? scene : null;
+  const opening = card?.act === '片頭';
+  const prevCard = ep.scenes
+    .slice(0, progress.scene)
+    .reverse()
+    .find((x) => x.type === 'card');
+  const day = !!card && prevCard?.type === 'card' && prevCard.act === card.act;
+  const headline = !scene
+    ? { kicker: t('第 {n} 集', { n: ep.number }), title: t('本集完') }
+    : card
+      ? splitHeadline(
+          opening ? t(card.lines[0], card.id) : t(card.title, card.id),
+          day ? 'day' : 'act',
+        )
+      : { kicker: '', title: '' };
+  // 場記：這張卡之後第一個有地點的場景；後面沒有就用前面最後一個。
+  const placed = (list: typeof ep.scenes) =>
+    list.find((x): x is typeof x & { place: string } => 'place' in x && !!x.place);
+  const at = progress.scene;
+  const where = card
+    ? (placed(ep.scenes.slice(at + 1)) ?? placed(ep.scenes.slice(0, at).reverse()))
+    : placed(ep.scenes.slice().reverse());
+  const slate = where && { raw: where.place, text: t(where.place, where.id) };
+  // 地點字卡：換了地點、前一場又不是幕卡（幕卡自己有場記）時，左下一行場記。
+  const here = scene && 'place' in scene && scene.place ? scene.place : '';
+  const before = ep.scenes[at - 1];
+  const moved =
+    !!here && before?.type !== 'card' && placed(ep.scenes.slice(0, at).reverse())?.place !== here;
+  // Bates 是裝飾性的出處數字：集數＋場景序。
+  const bates = `WH-E${String(ep.number).padStart(2, '0')}-${String(57 + at * 13).padStart(6, '0')}`;
   return (
     <SceneScope.Provider value={scene?.id}>
       <Announcer />
       <GameMenu />
+      <PlaceSlate id={scene?.id} place={moved ? { raw: here, text: t(here, scene?.id) } : null} />
       {scene?.type === 'phone' && <Phone key={sceneKey} scene={scene} />}
       {scene?.type === 'dialogue' && <Dialogue key={sceneKey} scene={scene} />}
       {scene?.type === 'interview' && <Interview key={sceneKey} scene={scene} />}
@@ -63,33 +99,47 @@ export function App() {
       {scene?.type === 'theory' && <Theory key={sceneKey} scene={scene} />}
       {scene?.type === 'opening' && <Opening key={sceneKey} scene={scene} />}
       {scene?.type === 'closing' && <Closing key={sceneKey} scene={scene} />}
-      {(!scene || scene.type === 'card') && (
-        <main className="scene title-card">
-          {/* 本集完：眉標寫是哪一集，不跟大標重複（體驗評測 v88）。 */}
-          <p className="eyebrow">
-            {scene
-              ? t(scene.act)
-              : `${t('第 {n} 集', { n: episodeOf(progress).number })}・${t(episodeOf(progress).title)}`}
-          </p>
-          <h1>{t(scene?.type === 'card' ? scene.title : '本集完', scene?.id)}</h1>
-          {scene?.type === 'card' && scene.lines.map((l) => <p key={l}>{t(l, scene.id)}</p>)}
-          {scene ? (
-            <button className="primary" onClick={advance}>
-              {t('繼續')}
-            </button>
-          ) : (
-            <div className="stack">
-              {next && (
-                <button className="primary" onClick={nextEpisode}>
-                  {t('繼續第 {n} 集', { n: episodes[next as keyof typeof episodes].number })}
-                </button>
-              )}
-              <button className={next ? '' : 'primary'} onClick={toTitle}>
-                {t('回標題')}
+      {scene?.type === 'card' && !last && (
+        <ActCard key={sceneKey} headline={headline} place={slate} bates={bates} onDone={advance} />
+      )}
+      {(!scene || last) && (
+        <ActCard
+          key={scene?.id ?? 'end'}
+          headline={headline}
+          place={slate}
+          bates={bates}
+          lines={!last && <Recap />}
+        >
+          {/* 集尾卡的那一句（「第 1 集到此結束。」）沒有下一場可以放，和選項一起出現在卡下。 */}
+          {last &&
+            card?.lines.map((l) => (
+              <p key={l} className="narration">
+                {t(l, card?.id)}
+              </p>
+            ))}
+          <div className="stack">
+            {next && (
+              <button
+                className="primary"
+                onClick={() => {
+                  if (last) advance();
+                  nextEpisode();
+                }}
+              >
+                {t('繼續第 {n} 集', { n: episodes[next as keyof typeof episodes].number })}
               </button>
-            </div>
-          )}
-        </main>
+            )}
+            <button
+              className={next ? '' : 'primary'}
+              onClick={() => {
+                if (last) advance();
+                toTitle();
+              }}
+            >
+              {t('回標題')}
+            </button>
+          </div>
+        </ActCard>
       )}
     </SceneScope.Provider>
   );

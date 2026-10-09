@@ -27,7 +27,7 @@ test('冷開場：看過的訊息被收回，換場自動存檔，可從標題�
   await expect(page.getByText('我們私下解決')).toHaveCount(0);
   await next();
   await next();
-  await expect(page.getByRole('heading', { name: '合理懷疑' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '已收回的訊息' })).toBeVisible();
 
   await page.getByRole('button', { name: '選單' }).click();
   await page.getByRole('button', { name: '存到存檔 1' }).click();
@@ -37,7 +37,7 @@ test('冷開場：看過的訊息被收回，換場自動存檔，可從標題�
   await expect(page.getByRole('button', { name: /繼續（第 1 集・片頭）/ })).toBeVisible();
   await page.getByRole('button', { name: '讀取存檔' }).click();
   await page.getByRole('button', { name: '讀取存檔 1' }).click();
-  await expect(page.getByRole('heading', { name: '合理懷疑' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '已收回的訊息' })).toBeVisible();
 });
 
 /** 開新遊戲，在第一個電話場景裡回覆老闆——這是場景內的進度，換場前不會自動存檔。 */

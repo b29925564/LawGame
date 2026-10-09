@@ -3,6 +3,7 @@ import type { PhoneScene } from '../engine/episode/schema';
 import { sceneChoices, useEpisode } from '../engine/game';
 import { useT } from '../i18n';
 import { useScope } from './lang';
+import { Redaction } from './Redaction';
 
 /** 冷開場：伊森的手機畫面。 */
 export function Phone({ scene }: { scene: PhoneScene }) {
@@ -85,7 +86,11 @@ function Screen({
                 key={i}
                 className={`bubble${b.mine ? ' mine' : ''}${b.retracted ? ' retracted' : ''}`}
               >
-                {b.retracted ? t('此訊息已被收回') : t(b.text, scope)}
+                {b.retracted ? (
+                  <Redaction label={t('此訊息已被收回')} meta={b.retractedAt} />
+                ) : (
+                  t(b.text, scope)
+                )}
               </li>
             ))}
           </ol>

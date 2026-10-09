@@ -7,7 +7,8 @@ import { termsOf } from '../engine/jury';
 import { useScope } from './lang';
 import { MarkLines } from './Marks';
 import { Speech } from './Portrait';
-import { Transcript } from './Shell';
+import { batesOf, CourtRecord, useCourtEntries } from './Record';
+import { Recap } from './ActCard';
 
 /**
  * 辯方證人（企劃書 6.9.6）：先準備，再直接詰問。
@@ -22,6 +23,8 @@ export function Defense({ scene: raw }: { scene: DefenseScene }) {
   const scope = useScope();
   const [intro, setIntro] = useState(st.stage === 'prep' && st.log.length === 0);
   const rules = juryAfterTrial(progress)?.rules;
+  const record = useCourtEntries(st.log, scene.witness.name);
+  const bates = batesOf(progress, raw.id);
 
   if (intro)
     return (
@@ -31,6 +34,7 @@ export function Defense({ scene: raw }: { scene: DefenseScene }) {
           {scene.day ? `・${t(scene.day, scope)}` : ''}
         </p>
         <div className="lines">
+          <Recap />
           {scene.intro.map((l, i) => (
             <Speech key={i} line={l} />
           ))}
@@ -69,9 +73,6 @@ export function Defense({ scene: raw }: { scene: DefenseScene }) {
   const open = [...scene.questions]
     .filter((q) => left > 0 && !st.asked.includes(q.id))
     .sort((a, b) => a.seq - b.seq);
-  const lines = st.log.map((l, i) => (
-    <Speech key={i} line={{ who: l.who, text: l.text, mood: '平', thought: false }} />
-  ));
   return (
     <main className="scene">
       <p className="eyebrow">
@@ -93,10 +94,10 @@ export function Defense({ scene: raw }: { scene: DefenseScene }) {
       )}
       {st.log.length > 0 &&
         (st.stage === 'direct' ? (
-          <Transcript count={st.log.length}>{lines}</Transcript>
+          <CourtRecord entries={record} live bates={bates} />
         ) : (
           // 詰問結束後整份筆錄攤開，不再擠在小框裡只露半句。
-          <div className="lines transcript full">{lines}</div>
+          <CourtRecord entries={record} bates={bates} className="full" />
         ))}
       {st.stage === 'direct' ? (
         <>

@@ -4,6 +4,7 @@ import { autosaveOnHide } from './engine/game';
 import { restoreLang } from './i18n';
 import { App } from './ui/App';
 import './ui/styles.css';
+import './ui/court.css';
 
 restoreLang();
 autosaveOnHide();
