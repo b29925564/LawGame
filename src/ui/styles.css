@@ -18,6 +18,8 @@
   --border-strong: light-dark(#a9b3bf, #3a4757);
   --text: light-dark(#111720, #e7eaee);
   --muted: light-dark(#536071, #8e99a7);
+  /* 還不能按的字（設計師裁定）：深淺兩模式同一個灰，不靠降低不透明度。 */
+  --ink-muted: #8a95a2;
   /* 有資訊的淡字也要 4.5:1（無障礙審查 2026-10-02）。設定集的 #7d8896／#5f6a79 只夠裝飾，使用者 10-09 定案保留這組。 */
   --faint: light-dark(#5a6676, #8a95a2);
 
@@ -226,11 +228,13 @@ button.commit:hover:not(:disabled) {
   border-color: var(--commit-edge);
 }
 /* 還不能按的主要按鈕是一格虛線的空位，不是一塊褪色的黃。 */
+/* 還不能按的主按鈕：長得跟一般按鈕一樣（實線 1px 框、淡字），不是黃、不是虛線空位。
+   黃只給真正能做的下一步（設計師裁定，第一道關卡 C1）。 */
 button.primary:disabled {
   opacity: 1;
   background: transparent;
-  border: 1px dashed var(--border-strong);
-  color: var(--faint);
+  border: 1px solid var(--border-strong);
+  color: var(--ink-muted);
   box-shadow: none;
 }
 button.primary:hover:not(:disabled) {
@@ -1302,7 +1306,7 @@ details summary {
 .card > .muted.small {
   margin-top: 4px;
   padding-top: 6px;
-  border-top: 1px dashed var(--border);
+  border-top: 1px solid var(--border);
   font-size: 0.78em;
   letter-spacing: 0.04em;
 }
@@ -1401,7 +1405,7 @@ details summary {
 .pick.compact .pick-text {
   flex: 1 1 100%;
   padding-top: 4px;
-  border-top: 1px dashed var(--border);
+  border-top: 1px solid var(--border);
 }
 .relations.support .stack {
   gap: 4px;
@@ -1470,7 +1474,7 @@ details summary {
 .term .in-game {
   margin-top: 8px;
   padding-top: 8px;
-  border-top: 1px dashed var(--border-strong);
+  border-top: 1px solid var(--border-strong);
   color: var(--muted);
   font-size: 0.9em;
 }
@@ -1513,7 +1517,7 @@ details summary {
   display: flex;
   align-items: center;
   padding: 8px 12px;
-  border: 1px dashed var(--border-strong);
+  border: 1px solid var(--border-strong);
   border-radius: var(--radius);
   color: var(--faint);
   font-size: 0.9em;
@@ -1613,7 +1617,7 @@ button.relation.on,
 .link-knot span {
   min-width: 28px;
   padding: 3px 9px;
-  border: 1px dashed var(--border-strong);
+  border: 1px solid var(--border-strong);
   border-radius: 999px;
   background: var(--surface-2);
   color: var(--faint);
@@ -2056,10 +2060,14 @@ fieldset.relations.compact {
   color: var(--good);
   border-color: color-mix(in srgb, var(--good) 40%, var(--border));
 }
+/* 還沒拿到的前提是「沒有資訊」：黑條，不用虛線紅框（設定集第 9 章）。 */
 .needs .lack {
-  color: var(--bad);
-  border-style: dashed;
-  border-color: color-mix(in srgb, var(--bad) 50%, var(--border));
+  border: 0;
+  border-top: 1px solid var(--cine-line);
+  border-radius: 0;
+  background: var(--redact);
+  color: var(--redact-label);
+  font-family: var(--font-mono);
 }
 
 /* ── 證據抽屜 ── */
@@ -2231,8 +2239,12 @@ fieldset.relations.compact {
 .actions > .row > [role='tablist'] {
   display: contents;
 }
+/* 一格一黃：選中的分頁是白框，黃只留給下一步（第一道關卡 B2）。 */
 .actions [aria-selected='true'] {
   color: var(--text);
+  border-color: var(--text) !important;
+  background: var(--surface-2) !important;
+  box-shadow: inset 3px 0 0 var(--text);
 }
 
 /* ── 法庭 ── */
@@ -2546,7 +2558,7 @@ fieldset.relations.compact {
 .candidate-body .row {
   margin-top: 4px;
   padding-top: 12px;
-  border-top: 1px dashed var(--border-strong);
+  border-top: 1px solid var(--border-strong);
 }
 .candidate-body .row button {
   background: var(--surface);
@@ -3729,7 +3741,7 @@ mark.hl::after {
 }
 .ruler-window.ghost {
   background: none;
-  border: 1px dashed var(--border-strong);
+  border: 1px solid var(--border-strong);
   transition: none;
 }
 .ruler-window .lbl {
@@ -3797,7 +3809,7 @@ mark.hl::after {
 .gap-mark::after {
   content: '';
   flex: 1 1 auto;
-  border-top: 1px dashed var(--border-strong);
+  border-top: 1px solid var(--border-strong);
 }
 /* 兩點同時亮起：兩列一起點亮，軌道上連一條線 */
 .timeline li.sync {
@@ -4063,7 +4075,7 @@ mark.hl::after {
 .iou[data-state='draft'] {
   background: transparent;
   color: var(--text);
-  outline: 1px dashed var(--border-strong);
+  outline: 1px solid var(--border-strong);
   box-shadow: none;
 }
 .iou[data-state='draft'] .iou-stub {
@@ -4125,7 +4137,9 @@ button.iou[aria-pressed='true'] {
   color: var(--stamp-ui);
 }
 .iou-chips li[data-state='broken'] {
-  border-style: dashed;
+  /* 食言的承諾：劃掉、字變淡，不用虛線框。 */
+  color: var(--muted);
+  text-decoration: line-through;
 }
 
 /* ══ 陪審團最後票數：沒被說服的那一席亮著 ══ */
@@ -5344,7 +5358,7 @@ button.iou[aria-pressed='true'] {
 .card.mini .mini-body .mini-src {
   margin-top: 6px;
   padding-top: 6px;
-  border-top: 1px dashed var(--border);
+  border-top: 1px solid var(--border);
   font-family: var(--font);
   font-size: 12px;
   letter-spacing: 0.04em;
@@ -5406,7 +5420,7 @@ button.iou[aria-pressed='true'] {
 .mini-full .mini-src {
   margin-top: 8px;
   padding-top: 6px;
-  border-top: 1px dashed var(--border);
+  border-top: 1px solid var(--border);
   font-family: var(--font);
   font-size: 12px;
   letter-spacing: 0.04em;
@@ -5548,7 +5562,7 @@ button.iou[aria-pressed='true'] {
   align-items: center;
   margin-top: 4px;
   padding: 10px 12px;
-  border-top: 1px dashed var(--border);
+  border-top: 1px solid var(--border);
 }
 /* 直排的 panel 裡 flex-basis:100% 會吃掉整個面板的高度，把上面的表壓扁。 */
 .panel > .commit-bar {
@@ -5602,7 +5616,7 @@ button.iou[aria-pressed='true'] {
 }
 .job > .cost-lines {
   padding: 8px 10px;
-  border: 1px dashed var(--border);
+  border: 1px solid var(--border);
   border-radius: var(--radius);
 }
 /* 錄取結束：每一題一列，左邊是結果標籤。 */
@@ -5839,7 +5853,8 @@ body:has(.court-light) {
 /* 調解室：開庭風險和和解條件同一張表，放在最後一列對照 */
 .stats.authority dt.risk,
 .stats.authority dd.risk {
-  border-top: 1px dashed var(--border);
+  /* 開庭風險是算得出來的估計，不是「還不知道」：一般的實線分隔。 */
+  border-top: 1px solid var(--border);
   background: var(--surface-2);
 }
 .stats dd small,
