@@ -2780,10 +2780,15 @@ fieldset.relations.compact {
   color: var(--bubble-out-text);
 }
 .bubble.retracted {
+  /* 整個泡泡被黑條蓋滿，不留半句（設定集第 11.5 章③）：黑條藏的是證據，原文不留在畫面上。 */
+  display: flex;
+  min-width: 60%;
+  padding: 0;
+  border-radius: 0;
   background: transparent;
-  border: 1px dashed var(--border-strong);
-  color: var(--muted);
-  font-size: 0.9em;
+}
+.bubble.retracted .redact {
+  padding: 8px 13px;
 }
 .replies {
   display: flex;
@@ -3036,8 +3041,10 @@ fieldset.relations.compact {
   .juror.react .face {
     animation: pop 0.36s var(--ease);
   }
-  .bubble.retracted {
-    animation: retract 1.2s ease-out;
+  /* 黑條蓋上：四格斷奏，從左邊拉過去（設定集第 9 章 --dur-redact-in）。 */
+  .redact {
+    transform-origin: left;
+    animation: bar-in var(--dur-redact-in) steps(4) both;
   }
   .sentence.made span {
     animation: mark 0.5s var(--ease) both;
@@ -3112,11 +3119,6 @@ fieldset.relations.compact {
   @keyframes pop {
     40% {
       transform: scale(1.18);
-    }
-  }
-  @keyframes retract {
-    from {
-      opacity: 0.2;
     }
   }
   @keyframes mark {
@@ -4985,16 +4987,8 @@ button.iou[aria-pressed='true'] {
   box-shadow: inset 0 1px 0 var(--border-strong);
 }
 .found-empty {
-  display: grid;
-  place-items: center;
-  min-height: 72px;
+  display: flex;
   margin: 0;
-  padding: 12px;
-  border: 1px dashed var(--border);
-  border-radius: var(--radius);
-  font-size: 13px;
-  color: var(--faint);
-  text-align: center;
 }
 .result-card {
   justify-content: space-between;
@@ -5489,11 +5483,28 @@ button.iou[aria-pressed='true'] {
 }
 /* 還沒出現的疑問：清單底部一行。 */
 .q-locked {
-  padding: 10px 14px;
-  border: 1px dashed var(--border);
-  border-radius: var(--radius);
-  font-size: 13px;
-  color: var(--faint);
+  display: flex;
+}
+
+/* ── 黑條 <Redaction>（設定集第 1、9 章；權杖 --redact、--redact-label 兩主題同值） ── */
+.redact {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  min-height: var(--row-h);
+  padding: 0 var(--s3);
+  background: var(--redact);
+  border-top: 1px solid var(--cine-line);
+  border-radius: 0;
+  color: var(--redact-label);
+  /* 條內小字有中文，用 13（設定集的 11 是英數尺寸；中文最小值見規格 §1）。 */
+  font: 500 var(--fs-ui-meta) / var(--lh-tight) var(--font-mono);
+  letter-spacing: 0.04em;
+}
+.redact-meta {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
 }
 
 /* 證據開示 */
