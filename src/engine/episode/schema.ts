@@ -270,6 +270,22 @@ const card = z.object({
   admitted: z.boolean().default(false),
   /** 這份文件或物品紀錄交出時蓋的 Bates（首頁）。照片卡寫在 photo.bates；陳述、筆錄、法院裁定不蓋。 */
   bates: batesNo.optional(),
+  /** 依分支換交出方的 Bates：第一筆符合 when 的取代 bates（例如硬藏後由原告交出的群組截圖）。 */
+  batesIf: z.array(z.object({ when, bates: batesNo })).optional(),
+  /** 陳述的出處：記錄的時間與製作人。 */
+  taken: z.object({ at: stamp, by: z.string() }).optional(),
+  /** 法院裁定與訴狀的出處：案號與收文章日期（MM/DD/YYYY）。 */
+  filed: z
+    .object({
+      caseNo: z.string(),
+      date: z.string().regex(/^\d\d\/\d\d\/\d{4}$/, '收文章日期格式是 MM/DD/YYYY'),
+    })
+    .optional(),
+  /** 筆錄與勘誤表的出處：頁:行。 */
+  cite: z
+    .string()
+    .regex(/^\d+:\d+$/, '筆錄頁行格式是 頁:行')
+    .optional(),
   /** 照片類卡片的照片紀錄表。 */
   photo: photoLog.optional(),
   /** 扣押物或傳票調閱回來的實物，裝在證物袋裡。 */

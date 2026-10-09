@@ -115,6 +115,7 @@ describe('Bates（P2-1）', () => {
           for (const c of s.cards) {
             add(c.bates, `${name}:${c.id}`);
             add(c.photo?.bates, `${name}:${c.id}`);
+            for (const b of c.batesIf ?? []) add(b.bates, `${name}:${c.id}`);
           }
         if (s.type === 'phone')
           for (const p of s.photos ?? []) add(p.photo.bates, `${name}:${p.id}`);
@@ -122,6 +123,17 @@ describe('Bates（P2-1）', () => {
       }
     expect(owner.size).toBeGreaterThan(20);
     expect(dup).toEqual([]);
+  });
+
+  it('每張紙都有出處：Bates、照片沖印號、陳述的時間與製作人、裁定與訴狀的收文章、筆錄頁行', () => {
+    const missing: string[] = [];
+    for (const [name, e] of Object.entries(episodes))
+      for (const s of e.scenes)
+        if (s.type === 'desk')
+          for (const c of s.cards)
+            if (c.kind !== '論點' && !(c.bates || c.photo?.bates || c.taken || c.filed || c.cite))
+              missing.push(`${name}:${c.id}`);
+    expect([...new Set(missing)]).toEqual([]);
   });
 
   it('勘誤表引用的第 42 頁第 7 行有錨點', () => {
