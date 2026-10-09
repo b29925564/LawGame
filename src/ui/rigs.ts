@@ -18,7 +18,8 @@ export function rigOf(place: string, day?: string): Rig | null {
 
 /**
  * 法庭以外的地點色溫，照第 5 章的場景光表與設計師 P4-8 光表裁定（色溫只表示時間與地盤）：
- * 大廳晨光 5600K；海爾辦公室窗光 5600K、入夜桌燈 2700K；惠特洛克辦公室夕照 3200K、只剩桌燈時 2700K；
+ * 大廳晨光 5600K；海爾辦公室窗光 5600K、入夜桌燈 2700K；惠特洛克辦公室上午日光 5600K（工作單 3.5、日照表）、
+ * 黃昏夕照 3200K、入夜桌燈 2700K；
  * 四十二樓是惠特洛克辦公室的夜景，桌燈 2700K。
  * 事務所會議室：B（錄取）柔光框 5000K；C 上午側面天光 5600K；A 下午天光 4800K（沒寫字母的就是 A）。
  * 奧卡福事務所會議室天光 4800K；法院調解室陰天高窗 6500K；法院台階照太陽，上午 5600K、16 點後低太陽 3600K。
@@ -40,7 +41,7 @@ export function kelvinOf(place: string) {
   if (/法院|法庭/.test(place)) return 4100;
   if (/四十二樓/.test(place)) return 2700;
   if (/海爾的辦公室/.test(place)) return night ? 2700 : 5600;
-  if (/惠特洛克的辦公室/.test(place)) return night ? 2700 : 3200;
+  if (/惠特洛克的辦公室/.test(place)) return night ? 2700 : hour >= 17 ? 3200 : 5600;
   if (/奧卡福/.test(place)) return 4800;
   if (/會議室 ?B/.test(place)) return 5000;
   if (/會議室 ?C/.test(place)) return 5600;
