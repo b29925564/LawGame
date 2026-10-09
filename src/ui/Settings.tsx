@@ -2,6 +2,7 @@ import { useSettings } from '../engine/settings';
 import { useT } from '../i18n';
 import { useCourtLight } from './courtLight';
 import { LangSwitch } from './lang';
+import { usePhotosafe } from './photosafe';
 
 const VOLUMES = [
   ['master', '總音量'],
@@ -17,6 +18,7 @@ export function SettingsPanel() {
   const levels = useSettings();
   const t = useT();
   const { on: light, setOn: setLight } = useCourtLight();
+  const { on: safe, setOn: setSafe } = usePhotosafe();
   return (
     <div className="stack settings">
       <LangSwitch />
@@ -70,6 +72,12 @@ export function SettingsPanel() {
           onChange={(e) => set({ voAuto: e.target.checked })}
         />
         {t('字幕自動前進')}
+      </label>
+      {/* 光敏安全和系統的「減少動態」分開：只怕閃的人仍然可以保留完整的動態。 */}
+      <label className="toggle">
+        <input type="checkbox" checked={safe} onChange={(e) => setSafe(e.target.checked)} />
+        {t('光敏安全')}
+        <small className="muted">{t('拿掉所有閃爍，燈改成單次漸亮')}</small>
       </label>
       <label className="toggle">
         <input type="checkbox" checked={sound} onChange={(e) => set({ sound: e.target.checked })} />

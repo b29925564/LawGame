@@ -820,6 +820,16 @@ details summary {
   min-height: 36px;
   color: var(--text);
 }
+/* 開關下面一行說明（光敏安全）：換到下一行，對齊開關的字。 */
+.settings .toggle:has(small) {
+  flex-wrap: wrap;
+  row-gap: 2px;
+}
+.settings .toggle small {
+  flex-basis: 100%;
+  padding-left: 26px;
+  font-size: var(--fs-ui-meta);
+}
 .settings input[type='range'] {
   min-height: 44px;
 }
