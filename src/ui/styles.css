@@ -9,15 +9,18 @@
 :root {
   color-scheme: light dark;
 
-  --bg: light-dark(#e3e6ea, #07090c);
-  --surface: light-dark(#f7f8fa, #1c2430);
-  --surface-2: light-dark(#eceff3, #232c38);
-  --surface-3: light-dark(#dfe3e9, #2b3542);
-  --border: light-dark(#cdd3db, #303b4a);
-  --border-strong: light-dark(#a9b3bf, #435062);
+  /* 設定集第 2 章介面層（規格 v2.0）。深色 --bg ＝ --grade-floor，場景最暗處接進介面沒有接縫；#07090c 只給替身剪影。 */
+  --bg: light-dark(#e3e6ea, #0b0e13);
+  --surface: light-dark(#f7f8fa, #131920);
+  --surface-2: light-dark(#eceff3, #19202a);
+  --surface-3: light-dark(#dfe3e9, #212a35);
+  --border: light-dark(#cdd3db, #252f3c);
+  --border-strong: light-dark(#a9b3bf, #3a4757);
   --text: light-dark(#111720, #e7eaee);
   --muted: light-dark(#536071, #8e99a7);
-  /* 有資訊的淡字也要 4.5:1（無障礙審查 2026-10-02）。 */
+  /* 還不能按的字（設計師裁定）：深淺兩模式同一個灰，不靠降低不透明度。 */
+  --ink-muted: #8a95a2;
+  /* 有資訊的淡字也要 4.5:1（無障礙審查 2026-10-02）。設定集的 #7d8896／#5f6a79 只夠裝飾，使用者 10-09 定案保留這組。 */
   --faint: light-dark(#5a6676, #8a95a2);
 
   /* 螢光筆：填色與填色上的字。 */
@@ -27,7 +30,8 @@
   --commit-bg: light-dark(#1d232b, #161c25);
   --commit-bg-hover: light-dark(#262e38, #1f2731);
   --commit-ink: #f1ece0;
-  --commit-edge: light-dark(#c9a24a, #b8893a);
+  /* 設定集沒有金色：定案＝深底＋1px 墨色邊＋🔒（規格 v2.0 裁定 15）。 */
+  --commit-edge: light-dark(#111720, #e7eaee);
   /*
    * 圖層五層（UX 規格五）：版面上的固定列 < 證據欄與抽屜 < 提示框 < 選單 < 就地回饋。
    * 畫外字幕在選單正下方（選單 − 1），獨白中也打得開選單。
@@ -41,10 +45,9 @@
   /* 鍵盤焦點框：淺色底上螢光黃只有 1.4:1，改深色；深色模式維持黃。 */
   --focus: light-dark(#16130a, #f4c53d);
   --hl-wash: light-dark(rgb(255 208 46 / 22%), rgb(244 197 61 / 8%));
-  /* 論點的金（視覺設計師定）：「重要」，比螢光黃（「選中」）暗、濁，深色下對黃 1.9:1。 */
-  --gold: light-dark(#9a6b14, #b8893a);
-  /* 金落在淺色紙面（便條、索引卡）時固定用深金，不隨主題變。 */
-  --gold-paper: #8f6a1f;
+  /* 設定集沒有金色語意，金＋黃＝兩個黃（規格 v2.0 #5）：舊的金權杖退成墨色，論點靠 ◆ 和左線分辨。 */
+  --gold: var(--text);
+  --gold-paper: var(--paper-ink);
   /* 當成文字色用的強調色：淺色模式要夠深才讀得到。 */
   --accent: light-dark(#7f5a00, #f4c53d);
   --accent-text: var(--hl-ink);
@@ -55,7 +58,7 @@
   /* 文件永遠是紙：深色模式裡稍微壓暗，不刺眼。 */
   --paper: light-dark(#fdfdfc, #dcdfe3);
   --paper-ink: #19202a;
-  --paper-muted: #5a6574;
+  --paper-muted: light-dark(#5a6574, #56616f); /* 深色紙上 4.71:1（設定集第 2 章） */
   --paper-rule: #c3cad3;
   --paper-margin: #d9534f;
 
@@ -65,12 +68,16 @@
   --cine-muted: #8b95a3;
   --cine-line: #2a323d;
 
-  --shadow-color: light-dark(rgb(24 36 52 / 9%), rgb(0 0 0 / 42%));
-  --shadow-deep: light-dark(rgb(24 36 52 / 28%), rgb(0 0 0 / 85%));
+  /* 介面住在光裡：半透明、讓光透過、不投自己的影子（設定集第 10 章）。陰影權杖留著名字，值歸零。 */
+  --shadow-color: transparent;
+  --shadow-deep: transparent;
   --hi-color: light-dark(rgb(255 255 255 / 75%), rgb(255 255 255 / 8%));
-  --shadow-1: 0 1px 2px var(--shadow-color);
-  --shadow-2: 0 16px 40px -10px var(--shadow-deep);
+  --shadow-1: 0 0 0 transparent;
+  --shadow-2: 0 0 0 transparent;
   --inset-hi: inset 0 1px 0 var(--hi-color);
+  /* 疊在鏡頭層上的 HUD 用：半透明＋模糊（設定集第 10 章）。 */
+  --panel-glass: light-dark(rgb(247 248 250 / 86%), rgb(19 25 32 / 82%));
+  --panel-blur: 10px;
 
   --radius: 6px;
   --font: 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', system-ui, sans-serif;
@@ -113,8 +120,9 @@
   /* 捲動框（.shell-body）頂端留 2px 給焦點框；釘頂的東西往上補回這 2px，上緣才不會露出捲過去的內容。 */
   --stick-top: -2px;
   /* 桌面的光（視覺規格 §4；之後 3D 桌面進來就拿掉）：檯燈在左上，天光在上，四角壓暗。 */
-  --lamp: light-dark(rgb(255 236 200 / 55%), rgb(255 186 100 / 13%));
-  --sky: light-dark(rgb(255 255 255 / 70%), rgb(62 80 104 / 8%));
+  /* 深色：桌面不再被燈提亮，面板要比桌面亮（規格 v2.0 §4），檯燈只留一點暖，不抬底。 */
+  --lamp: light-dark(rgb(255 236 200 / 55%), rgb(255 186 100 / 4%));
+  --sky: light-dark(rgb(255 255 255 / 70%), rgb(62 80 104 / 0%));
   --vignette: light-dark(rgb(24 36 52 / 10%), rgb(0 0 0 / 60%));
 
   /* 紙張雜訊，疊在底色上讓大片的墨色不那麼平。 */
@@ -145,6 +153,8 @@ body {
     var(--grain), radial-gradient(140% 110% at 50% 40%, transparent 50%, var(--vignette) 100%),
     radial-gradient(900px 520px at 18% -8%, var(--lamp), transparent 70%),
     radial-gradient(120% 70% at 50% -10%, var(--sky), transparent 60%), var(--bg);
+  /* 紙紋零均值（設定集第 2 章顆粒）：overlay 在暗部自動減弱，不再把桌面整片抬亮、吃掉面板和桌面的亮度差。 */
+  background-blend-mode: overlay, normal, normal, normal;
   background-attachment: fixed;
 }
 ::selection {
@@ -171,12 +181,12 @@ button {
   background: var(--surface);
   color: var(--text);
   cursor: pointer;
-  box-shadow: var(--inset-hi), var(--shadow-1);
+  box-shadow: var(--inset-hi);
   transition:
-    background-color 0.18s var(--ease),
-    border-color 0.18s var(--ease),
-    color 0.18s var(--ease),
-    transform 0.12s var(--ease);
+    background-color var(--dur-ui) var(--ease),
+    border-color var(--dur-ui) var(--ease),
+    color var(--dur-ui) var(--ease),
+    transform var(--dur-rm) var(--ease);
 }
 button:hover:not(:disabled) {
   border-color: var(--border-strong);
@@ -202,9 +212,8 @@ button.primary {
   color: var(--hl-ink);
   font-weight: 700;
   letter-spacing: 0.02em;
-  box-shadow:
-    inset 0 -2px 0 rgb(0 0 0 / 14%),
-    0 6px 18px -8px light-dark(rgb(160 120 0 / 55%), rgb(244 197 61 / 45%));
+  /* 不加光暈（規格 v2.0 §10）。 */
+  box-shadow: var(--inset-hi);
 }
 /* 定案鈕：只給不可逆的動作。黃色實心是「主要」，深底描金邊是「定案」，形狀就分得開。 */
 button.commit {
@@ -219,11 +228,13 @@ button.commit:hover:not(:disabled) {
   border-color: var(--commit-edge);
 }
 /* 還不能按的主要按鈕是一格虛線的空位，不是一塊褪色的黃。 */
+/* 還不能按的主按鈕：長得跟一般按鈕一樣（實線 1px 框、淡字），不是黃、不是虛線空位。
+   黃只給真正能做的下一步（設計師裁定，第一道關卡 C1）。 */
 button.primary:disabled {
   opacity: 1;
   background: transparent;
-  border: 1px dashed var(--border-strong);
-  color: var(--faint);
+  border: 1px solid var(--border-strong);
+  color: var(--ink-muted);
   box-shadow: none;
 }
 button.primary:hover:not(:disabled) {
@@ -240,13 +251,13 @@ button.link {
   padding: 6px 0;
   text-align: left;
   text-decoration: underline;
-  text-decoration-color: var(--hl);
+  text-decoration-color: var(--border-strong);
   text-decoration-thickness: 2px;
   text-underline-offset: 5px;
 }
 button.link:hover:not(:disabled) {
   background: none;
-  color: var(--accent);
+  text-decoration-color: var(--text);
 }
 
 /* 選取、按下、勾選：一律是螢光筆的邊與淡淡的底。 */
@@ -332,11 +343,8 @@ details summary {
   letter-spacing: 0.14em;
 }
 .eyebrow::before {
-  content: '';
-  flex: 0 0 18px;
-  height: 3px;
-  border-radius: 2px;
-  background: var(--hl);
+  /* 眉標前的黃槓拿掉（規格 v2.0 §4）：黃只給玩家的手。 */
+  content: none;
 }
 
 /* ── 一般場景（對話、回報、休庭） ── */
@@ -418,6 +426,7 @@ details summary {
 }
 
 .panel {
+  /* 桌面的面板是實心 --surface，不投影；半透明（--panel-glass）只給疊在鏡頭層上的 HUD（規格 v2.0 裁定 14）。 */
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -425,10 +434,7 @@ details summary {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  box-shadow:
-    var(--inset-hi),
-    var(--shadow-1),
-    0 24px 48px -24px var(--shadow-deep);
+  box-shadow: var(--inset-hi);
 }
 .panel > p {
   margin: 0;
@@ -569,17 +575,17 @@ details summary {
   left: 14px;
   top: 50%;
   translate: 0 -54%;
-  color: var(--accent);
+  color: var(--muted);
   font-weight: 700;
   font-size: 1.2em;
-  transition: translate 0.18s var(--ease);
+  transition: translate var(--dur-ui) var(--ease);
 }
 .choices button:hover:not(:disabled)::before,
 .replies button:hover:not(:disabled)::before {
   translate: 3px -54%;
 }
 .choices button:hover:not(:disabled) {
-  border-color: var(--hl);
+  border-color: var(--border-strong);
 }
 .next {
   align-self: flex-start;
@@ -598,7 +604,7 @@ details summary {
   margin: 0;
   color: var(--cine-text);
   background:
-    var(--grain), radial-gradient(90% 60% at 85% 0%, rgb(244 197 61 / 10%), transparent 60%),
+    var(--grain), radial-gradient(90% 60% at 85% 0%, rgb(255 180 107 / 8%), transparent 60%),
     radial-gradient(70% 50% at 0% 100%, rgb(60 82 110 / 22%), transparent 70%), var(--cine-bg);
   --muted: var(--cine-muted);
   --text: var(--cine-text);
@@ -606,11 +612,13 @@ details summary {
   --border-strong: #3d4756;
   --surface: #11161d;
   --surface-2: #171e27;
+  /* 鏡頭層不跟淺色主題：會被元件拿去用的表面色都要在這裡釘成深色（:root 的 light-dark() 已在淺色算好）。 */
+  --surface-3: #212a35;
+  --bg: var(--cine-bg);
   --accent: #f4c53d;
   --hl: #f4c53d;
   --hl-wash: rgb(244 197 61 / 13%);
   --inset-hi: inset 0 1px 0 rgb(255 255 255 / 4%);
-  --shadow-1: 0 1px 2px rgb(0 0 0 / 40%);
   color-scheme: dark;
 }
 
@@ -656,14 +664,6 @@ details summary {
 }
 .title-screen h1 span {
   display: block;
-}
-/* 題字旁邊的一道螢光筆。 */
-.title-rule {
-  width: 6px;
-  border-radius: 3px;
-  background: var(--hl);
-  transform-origin: top;
-  margin-block: 0.4em 1.6em;
 }
 .title-foot {
   grid-column: 1 / -1;
@@ -721,7 +721,7 @@ details summary {
   text-align: center;
 }
 .title-card .eyebrow {
-  color: var(--hl);
+  color: var(--cine-muted);
   letter-spacing: 0.4em;
   font-size: 14px;
 }
@@ -739,7 +739,6 @@ details summary {
   letter-spacing: 0.14em;
   line-height: 1.25;
   padding-bottom: 18px;
-  background: linear-gradient(var(--hl), var(--hl)) bottom center / 56px 4px no-repeat;
 }
 .title-card p:not(.eyebrow) {
   margin: 0;
@@ -962,7 +961,7 @@ details summary {
   font-weight: 600;
   line-height: 1;
   letter-spacing: -0.02em;
-  color: var(--accent);
+  color: var(--text);
 }
 .taskbar > .muted {
   text-align: right;
@@ -1030,7 +1029,7 @@ details summary {
   bottom: -1px;
   height: 3px;
   border-radius: 3px 3px 0 0;
-  background: var(--hl);
+  background: var(--text);
   scale: 0 1;
   transition: scale 0.25s var(--ease);
 }
@@ -1066,9 +1065,9 @@ details summary {
   margin-left: 6px;
   padding: 0 5px;
   border-radius: 9px;
-  /* 未讀數是「該看了」，不是錯誤：螢光筆黃，不用紅（視覺規格 §4）。 */
-  background: var(--hl);
-  color: var(--hl-ink);
+  /* 未讀數是「該看了」，不是錯誤也不是玩家的手：不用紅也不用黃（規格 v2.0 §4）。 */
+  background: var(--surface-3);
+  color: var(--text);
   font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 600;
@@ -1117,7 +1116,7 @@ details summary {
   height: 8px;
   margin-right: 8px;
   border-radius: 50%;
-  background: var(--hl);
+  background: var(--text);
   vertical-align: 2px;
 }
 
@@ -1307,7 +1306,7 @@ details summary {
 .card > .muted.small {
   margin-top: 4px;
   padding-top: 6px;
-  border-top: 1px dashed var(--border);
+  border-top: 1px solid var(--border);
   font-size: 0.78em;
   letter-spacing: 0.04em;
 }
@@ -1316,10 +1315,10 @@ details summary {
  * 證據欄、手機挑卡片、清單的 ◆A、確認後的答案四處同一個記號。
  */
 .card.arg {
-  border-left: 3px solid var(--gold);
+  border-left: 3px solid var(--border-strong);
 }
 .pick[data-kind='論點'] {
-  border-left: 3px solid var(--gold);
+  border-left: 3px solid var(--border-strong);
 }
 .card.arg > strong::before,
 .card.arg .mini-btn > strong::before,
@@ -1348,7 +1347,7 @@ details summary {
   font-size: 0.86em;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
-  color: var(--accent);
+  color: var(--muted);
 }
 .tag {
   font-size: 12px;
@@ -1406,7 +1405,7 @@ details summary {
 .pick.compact .pick-text {
   flex: 1 1 100%;
   padding-top: 4px;
-  border-top: 1px dashed var(--border);
+  border-top: 1px solid var(--border);
 }
 .relations.support .stack {
   gap: 4px;
@@ -1421,6 +1420,13 @@ details summary {
   flex-shrink: 0;
   min-height: 34px;
   white-space: nowrap;
+}
+/* 篩選不是玩家的標記，按下不用黃（規格 v2.0 §6）：墨色底、底色字。 */
+.chips.kinds button[aria-pressed='true'] {
+  border-color: var(--text) !important;
+  background: var(--text) !important;
+  color: var(--bg);
+  box-shadow: none;
 }
 /* 抽屜是直排：篩選列不准被清單擠扁，清單自己捲。 */
 .sheet > * {
@@ -1468,7 +1474,7 @@ details summary {
 .term .in-game {
   margin-top: 8px;
   padding-top: 8px;
-  border-top: 1px dashed var(--border-strong);
+  border-top: 1px solid var(--border-strong);
   color: var(--muted);
   font-size: 0.9em;
 }
@@ -1511,7 +1517,7 @@ details summary {
   display: flex;
   align-items: center;
   padding: 8px 12px;
-  border: 1px dashed var(--border-strong);
+  border: 1px solid var(--border-strong);
   border-radius: var(--radius);
   color: var(--faint);
   font-size: 0.9em;
@@ -1611,7 +1617,7 @@ button.relation.on,
 .link-knot span {
   min-width: 28px;
   padding: 3px 9px;
-  border: 1px dashed var(--border-strong);
+  border: 1px solid var(--border-strong);
   border-radius: 999px;
   background: var(--surface-2);
   color: var(--faint);
@@ -1623,18 +1629,18 @@ button.relation.on,
 }
 .link-knot span.set {
   border-style: solid;
-  border-color: var(--hl);
-  background: color-mix(in srgb, var(--hl) 16%, var(--surface-2));
+  border-color: var(--border-strong);
+  background: var(--surface-3);
   color: var(--text);
 }
 .link-bench.ready .link-knot {
-  background-image: linear-gradient(var(--hl), var(--hl));
+  background-image: linear-gradient(var(--text), var(--text));
   background-size: 100% 2px;
 }
 .link-bench.ready .link-knot span {
   border: 1px solid transparent;
-  background: var(--hl);
-  color: var(--hl-ink);
+  background: var(--text);
+  color: var(--bg);
 }
 
 fieldset.relations.compact {
@@ -1645,9 +1651,9 @@ fieldset.relations.compact {
   min-inline-size: 0;
 }
 .relations.compact [aria-checked='true'] {
-  background: var(--hl) !important;
-  color: var(--hl-ink);
-  border-color: transparent;
+  background: var(--text) !important;
+  color: var(--bg);
+  border-color: transparent !important;
   box-shadow: none;
 }
 .relations.compact p {
@@ -1780,8 +1786,8 @@ fieldset.relations.compact {
   height: 20px;
   padding: 0 6px;
   border-radius: 999px;
-  background: var(--hl);
-  color: var(--hl-ink);
+  background: var(--surface-3);
+  color: var(--text);
   font-family: var(--font-mono);
   font-size: 12px;
   letter-spacing: 0;
@@ -1797,9 +1803,9 @@ fieldset.relations.compact {
 .findings li {
   padding: 10px 14px 12px;
   border: 1px solid var(--border);
-  border-left: 3px solid var(--hl);
+  border-left: 3px solid var(--border-strong);
   border-radius: var(--radius);
-  background: linear-gradient(90deg, var(--hl-wash), transparent 70%), var(--surface);
+  background: var(--surface);
 }
 .findings strong,
 .pick[data-kind='發現'] .pick-name {
@@ -1807,7 +1813,7 @@ fieldset.relations.compact {
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.08em;
-  color: var(--accent);
+  color: var(--muted);
 }
 .findings p,
 .pick[data-kind='發現'] .pick-text {
@@ -1819,7 +1825,7 @@ fieldset.relations.compact {
 }
 /* 論點卡在任何清單裡都帶螢光筆邊，一眼分得出是自己推出來的。 */
 .pick[data-kind='論點'] {
-  border-left: 3px solid var(--hl);
+  border-left: 3px solid var(--border-strong);
 }
 .board-empty {
   display: flex;
@@ -1873,7 +1879,7 @@ fieldset.relations.compact {
   font-size: var(--fs-ui-meta);
 }
 .timeline li {
-  transition: transform 0.18s var(--ease);
+  transition: transform var(--dur-ui) var(--ease);
 }
 .timeline li.dragging {
   transition: none;
@@ -1911,7 +1917,7 @@ fieldset.relations.compact {
   border-radius: var(--radius);
   transition:
     background-color 0.15s var(--ease),
-    transform 0.18s var(--ease);
+    transform var(--dur-ui) var(--ease);
 }
 .timeline li > div {
   grid-column: 1;
@@ -1932,7 +1938,7 @@ fieldset.relations.compact {
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: var(--hl);
+  background: var(--text);
   box-shadow: 0 0 0 3px var(--surface);
 }
 .timeline time {
@@ -1942,7 +1948,7 @@ fieldset.relations.compact {
   font-size: 0.84em;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
-  color: var(--accent);
+  color: var(--muted);
 }
 .timeline p {
   margin: 0;
@@ -2054,10 +2060,14 @@ fieldset.relations.compact {
   color: var(--good);
   border-color: color-mix(in srgb, var(--good) 40%, var(--border));
 }
+/* 還沒拿到的前提是「沒有資訊」：黑條，不用虛線紅框（設定集第 9 章）。 */
 .needs .lack {
-  color: var(--bad);
-  border-style: dashed;
-  border-color: color-mix(in srgb, var(--bad) 50%, var(--border));
+  border: 0;
+  border-top: 1px solid var(--cine-line);
+  border-radius: 0;
+  background: var(--redact);
+  color: var(--redact-label);
+  font-family: var(--font-mono);
 }
 
 /* ── 證據抽屜 ── */
@@ -2229,8 +2239,12 @@ fieldset.relations.compact {
 .actions > .row > [role='tablist'] {
   display: contents;
 }
+/* 一格一黃：選中的分頁是白框，黃只留給下一步（第一道關卡 B2）。 */
 .actions [aria-selected='true'] {
   color: var(--text);
+  border-color: var(--text) !important;
+  background: var(--surface-2) !important;
+  box-shadow: inset 3px 0 0 var(--text);
 }
 
 /* ── 法庭 ── */
@@ -2544,7 +2558,7 @@ fieldset.relations.compact {
 .candidate-body .row {
   margin-top: 4px;
   padding-top: 12px;
-  border-top: 1px dashed var(--border-strong);
+  border-top: 1px solid var(--border-strong);
 }
 .candidate-body .row button {
   background: var(--surface);
@@ -2604,7 +2618,7 @@ fieldset.relations.compact {
   display: flex;
   align-items: center;
   gap: 12px;
-  color: var(--hl);
+  color: var(--cine-text);
   font-family: var(--font-mono);
   font-size: 14px;
   font-variant-numeric: tabular-nums;
@@ -2778,10 +2792,15 @@ fieldset.relations.compact {
   color: var(--bubble-out-text);
 }
 .bubble.retracted {
+  /* 整個泡泡被黑條蓋滿，不留半句（設定集第 11.5 章③）：黑條藏的是證據，原文不留在畫面上。 */
+  display: flex;
+  min-width: 60%;
+  padding: 0;
+  border-radius: 0;
   background: transparent;
-  border: 1px dashed var(--border-strong);
-  color: var(--muted);
-  font-size: 0.9em;
+}
+.bubble.retracted .redact {
+  padding: 8px 13px;
 }
 .replies {
   display: flex;
@@ -3034,8 +3053,10 @@ fieldset.relations.compact {
   .juror.react .face {
     animation: pop 0.36s var(--ease);
   }
-  .bubble.retracted {
-    animation: retract 1.2s ease-out;
+  /* 黑條蓋上：四格斷奏，從左邊拉過去（設定集第 9 章 --dur-redact-in）。 */
+  .redact {
+    transform-origin: left;
+    animation: bar-in var(--dur-redact-in) steps(4) both;
   }
   .sentence.made span {
     animation: mark 0.5s var(--ease) both;
@@ -3051,9 +3072,6 @@ fieldset.relations.compact {
   }
   .title-screen h1 span:nth-child(4) {
     animation-delay: 0.24s;
-  }
-  .title-rule {
-    animation: grow-y 0.9s 0.35s var(--ease) both;
   }
   .title-foot {
     animation: rise 0.7s 0.45s var(--ease) both;
@@ -3089,11 +3107,6 @@ fieldset.relations.compact {
       transform: translateY(6px);
     }
   }
-  @keyframes grow-y {
-    from {
-      transform: scaleY(0);
-    }
-  }
   @keyframes slam {
     0% {
       opacity: 0;
@@ -3118,11 +3131,6 @@ fieldset.relations.compact {
   @keyframes pop {
     40% {
       transform: scale(1.18);
-    }
-  }
-  @keyframes retract {
-    from {
-      opacity: 0.2;
     }
   }
   @keyframes mark {
@@ -3171,7 +3179,7 @@ fieldset.relations.compact {
   }
   .shell-tabs > .apps [aria-current='true'] {
     background: var(--surface-2);
-    box-shadow: inset 0 -3px 0 var(--hl);
+    box-shadow: inset 0 -3px 0 var(--text);
   }
   .shell-foot {
     margin-inline: 0;
@@ -3366,7 +3374,7 @@ fieldset.relations.compact {
 /* ══ 心聲改成介面與畫外字幕（設計稿 ui/design-review/inner-voice）══ */
 :root {
   /* 紀錄層（核心 5.3、5.6） */
-  --note: light-dark(#efe8cf, #d8d1b8);
+  --note: light-dark(#f0e7dd, #c6c0ba); /* 設定集第 2 章定案值：對 --hl ΔE2000 > 25，便條不是黃色 */
   --index-card: light-dark(
     #f6f5f0,
     #e1e0db
@@ -3385,6 +3393,25 @@ fieldset.relations.compact {
   --redact: #000;
   --redact-label: #6d7887;
   --sub-scrim: rgb(6 8 11 / 60%);
+  /* 紀錄層其餘權杖（設定集第 2、9 章；值照抄，不在元件裡另寫色碼） */
+  --exhibit-def: var(--hl);
+  --exhibit-def-ink: var(--hl-ink);
+  --exhibit-state: light-dark(#c3d5e8, #b9cde3);
+  --exhibit-state-ink: #1d2c3f;
+  --toner: #141414;
+  --copy-paper: light-dark(#efeee9, #e1e0db);
+  --newsprint: light-dark(#e9e4d7, #dcd7ca);
+  --kraft: light-dark(#a8865c, #9b7b53);
+  --kraft-dark: #7d6040;
+  --photo-yellow: #a3924f;
+  --sketch-paper: light-dark(#a3acb5, #8e98a2);
+  --sketch-paper-past: light-dark(#c2b49b, #b7a88f);
+  --sketch-ink: #17181b;
+  --chalk: #eeece6;
+  --m-cork: #8a6a48;
+  --k-tungsten: #ffb46b;
+  --k-screen: #b9ccff;
+  --grade-floor: light-dark(#4a525c, #0b0e13);
   --k-window: #ffe2c0;
   --k-fluoro: #e4efe2;
 
@@ -3406,6 +3433,16 @@ fieldset.relations.compact {
   --dur-redact-out: 500ms;
   --dur-tube-off: 240ms;
   --dur-rm: 120ms;
+  /* 設定集第 10.2 章其餘動態權杖。元件裡不寫裸毫秒；不彈、不震、不回彈。 */
+  --dur-cut-black: 83ms;
+  --dur-shadow: 300ms;
+  --dur-tube-ignite: 900ms;
+  --dur-lightmove: 400ms;
+  --dur-rack: 900ms;
+  --dur-pull: 1200ms;
+  --dur-turn: 1500ms;
+  --dur-sketch: 900ms;
+  --dur-push: 8000ms;
   --dur-write: 60ms; /* 新增：手寫每一個字 */
   --dur-narrow: 1200ms; /* 新增：時間窗收窄 */
   --dur-vo-char: 50ms; /* 新增：畫外字幕每一個字 */
@@ -3704,7 +3741,7 @@ mark.hl::after {
 }
 .ruler-window.ghost {
   background: none;
-  border: 1px dashed var(--border-strong);
+  border: 1px solid var(--border-strong);
   transition: none;
 }
 .ruler-window .lbl {
@@ -3772,7 +3809,7 @@ mark.hl::after {
 .gap-mark::after {
   content: '';
   flex: 1 1 auto;
-  border-top: 1px dashed var(--border-strong);
+  border-top: 1px solid var(--border-strong);
 }
 /* 兩點同時亮起：兩列一起點亮，軌道上連一條線 */
 .timeline li.sync {
@@ -4038,7 +4075,7 @@ mark.hl::after {
 .iou[data-state='draft'] {
   background: transparent;
   color: var(--text);
-  outline: 1px dashed var(--border-strong);
+  outline: 1px solid var(--border-strong);
   box-shadow: none;
 }
 .iou[data-state='draft'] .iou-stub {
@@ -4100,7 +4137,9 @@ button.iou[aria-pressed='true'] {
   color: var(--stamp-ui);
 }
 .iou-chips li[data-state='broken'] {
-  border-style: dashed;
+  /* 食言的承諾：劃掉、字變淡，不用虛線框。 */
+  color: var(--muted);
+  text-decoration: line-through;
 }
 
 /* ══ 陪審團最後票數：沒被說服的那一席亮著 ══ */
@@ -4873,9 +4912,10 @@ button.iou[aria-pressed='true'] {
   background: var(--surface);
 }
 .q-item[aria-current='true'] {
-  border-color: var(--hl);
+  /* 一格一黃：黃留給「連起來」；選中的疑問是白框（設計師 P2-7 審查）。 */
+  border-color: var(--text);
   border-left-width: 3px;
-  background: var(--hl-wash);
+  background: var(--surface-2);
 }
 .q-num {
   font-family: var(--font-mono, monospace);
@@ -4964,21 +5004,12 @@ button.iou[aria-pressed='true'] {
   position: sticky;
   bottom: 0;
   z-index: var(--z-base);
-  box-shadow:
-    0 -12px 24px -8px rgb(0 0 0 / 35%),
-    var(--shadow-1);
+  /* 不投影（規格 v2.0 §9）：靠上緣一條較強的線和桌面分開。 */
+  box-shadow: inset 0 1px 0 var(--border-strong);
 }
 .found-empty {
-  display: grid;
-  place-items: center;
-  min-height: 72px;
+  display: flex;
   margin: 0;
-  padding: 12px;
-  border: 1px dashed var(--border);
-  border-radius: var(--radius);
-  font-size: 13px;
-  color: var(--faint);
-  text-align: center;
 }
 .result-card {
   justify-content: space-between;
@@ -5027,9 +5058,10 @@ button.iou[aria-pressed='true'] {
   top: -9px;
   left: 10px;
   padding: 0 6px;
-  border-radius: 999px;
-  background: var(--hl);
-  color: var(--hl-ink);
+  border-radius: 3px;
+  background: var(--surface-3);
+  color: var(--text);
+  font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 700;
   line-height: 18px;
@@ -5332,7 +5364,7 @@ button.iou[aria-pressed='true'] {
 .card.mini .mini-body .mini-src {
   margin-top: 6px;
   padding-top: 6px;
-  border-top: 1px dashed var(--border);
+  border-top: 1px solid var(--border);
   font-family: var(--font);
   font-size: 12px;
   letter-spacing: 0.04em;
@@ -5394,7 +5426,7 @@ button.iou[aria-pressed='true'] {
 .mini-full .mini-src {
   margin-top: 8px;
   padding-top: 6px;
-  border-top: 1px dashed var(--border);
+  border-top: 1px solid var(--border);
   font-family: var(--font);
   font-size: 12px;
   letter-spacing: 0.04em;
@@ -5422,13 +5454,13 @@ button.iou[aria-pressed='true'] {
 }
 /* 時間線入口：在疑問清單最上面，帶一條進度。 */
 .q-item.timeline-entry {
-  border-color: color-mix(in srgb, var(--hl) 45%, var(--border));
+  border-color: var(--border-strong);
 }
 .q-item.timeline-entry[aria-current='true'] {
   border-color: var(--hl);
 }
 .q-item.timeline-entry .q-num {
-  color: var(--accent);
+  color: var(--text);
   font-weight: 700;
 }
 .tl-meter {
@@ -5442,7 +5474,7 @@ button.iou[aria-pressed='true'] {
 .tl-meter i {
   display: block;
   height: 100%;
-  background: var(--hl);
+  background: var(--text);
 }
 /* 確認過的疑問：一行 ✓ 01 短句 ◆A。 */
 .q-item.done {
@@ -5472,11 +5504,28 @@ button.iou[aria-pressed='true'] {
 }
 /* 還沒出現的疑問：清單底部一行。 */
 .q-locked {
-  padding: 10px 14px;
-  border: 1px dashed var(--border);
-  border-radius: var(--radius);
-  font-size: 13px;
-  color: var(--faint);
+  display: flex;
+}
+
+/* ── 黑條 <Redaction>（設定集第 1、9 章；權杖 --redact、--redact-label 兩主題同值） ── */
+.redact {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  min-height: var(--row-h);
+  padding: 0 var(--s3);
+  background: var(--redact);
+  border-top: 1px solid var(--cine-line);
+  border-radius: 0;
+  color: var(--redact-label);
+  /* 條內小字有中文，用 13（設定集的 11 是英數尺寸；中文最小值見規格 §1）。 */
+  font: 500 var(--fs-ui-meta) / var(--lh-tight) var(--font-mono);
+  letter-spacing: 0.04em;
+}
+.redact-meta {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
 }
 
 /* 證據開示 */
@@ -5519,7 +5568,7 @@ button.iou[aria-pressed='true'] {
   align-items: center;
   margin-top: 4px;
   padding: 10px 12px;
-  border-top: 1px dashed var(--border);
+  border-top: 1px solid var(--border);
 }
 /* 直排的 panel 裡 flex-basis:100% 會吃掉整個面板的高度，把上面的表壓扁。 */
 .panel > .commit-bar {
@@ -5573,7 +5622,7 @@ button.iou[aria-pressed='true'] {
 }
 .job > .cost-lines {
   padding: 8px 10px;
-  border: 1px dashed var(--border);
+  border: 1px solid var(--border);
   border-radius: var(--radius);
 }
 /* 錄取結束：每一題一列，左邊是結果標籤。 */
@@ -5693,7 +5742,10 @@ button.iou[aria-pressed='true'] {
   font-size: 13px;
 }
 .lang-switch button[aria-pressed='true'] {
-  background: var(--surface-3);
+  /* 設定值不是玩家的手：蓋掉全域選取的黃邊（一格一黃）。 */
+  border-color: transparent !important;
+  background: var(--surface-3) !important;
+  box-shadow: none;
   color: var(--text);
   font-weight: 700;
 }
@@ -5807,7 +5859,8 @@ body:has(.court-light) {
 /* 調解室：開庭風險和和解條件同一張表，放在最後一列對照 */
 .stats.authority dt.risk,
 .stats.authority dd.risk {
-  border-top: 1px dashed var(--border);
+  /* 開庭風險是算得出來的估計，不是「還不知道」：一般的實線分隔。 */
+  border-top: 1px solid var(--border);
   background: var(--surface-2);
 }
 .stats dd small,
@@ -6112,1488 +6165,6 @@ body:has(.court-light) {
   }
 }
 
-/* ══ 法院系統：聲請狀（UX board-spec §10、視覺規格 §17，法庭介面） ══ */
-:root {
-  /* 紙上的墨水與章：紙永遠是淺色，兩個主題同值。 */
-  --ink-fill: #1f3a68;
-  --stamp-ok: #1f7a4d;
-  --stamp-no: #b3322b;
-}
-.court-desk {
-  display: grid;
-  gap: 12px;
-  justify-items: center;
-  /* 捲到底時狀紙的下緣和投影要完整露出來（體驗評測 v88）。 */
-  padding-bottom: 32px;
-}
-/* 縮圖列和便條跟狀紙左緣對齊。 */
-.court-desk > .filings,
-.court-desk > .prereq-note {
-  width: min(720px, 100%);
-}
-.filings {
-  display: flex;
-  gap: 12px;
-  align-items: flex-end;
-  padding: 0 0 22px;
-}
-.fthumb {
-  position: relative;
-  width: 72px;
-  height: 96px;
-  min-height: 0;
-  border: 0;
-  border-radius: 2px;
-  background: var(--paper);
-  box-shadow:
-    0 1px 0 rgb(0 0 0 / 15%),
-    var(--shadow-1);
-  padding: 14px 8px 0 14px;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 7px;
-  align-content: start;
-}
-.fthumb:hover,
-.fthumb[aria-pressed='true'] {
-  background: var(--paper);
-}
-.fthumb::before {
-  content: '';
-  position: absolute;
-  left: 9px;
-  top: 0;
-  bottom: 0;
-  width: 2px;
-  border-left: 1px solid var(--paper-rule);
-  border-right: 1px solid var(--paper-rule);
-}
-.fthumb i {
-  display: block;
-  width: 50px;
-  height: 3px;
-  border-radius: 1px;
-  background: var(--paper-rule);
-}
-.fthumb i:nth-child(2) {
-  width: 35px;
-}
-.fthumb i:nth-child(4) {
-  width: 28px;
-}
-.fthumb i.open {
-  background: transparent;
-  border-bottom: 1px dashed var(--paper-muted);
-  height: 4px;
-  border-radius: 0;
-}
-.fthumb .k {
-  position: absolute;
-  left: -8px;
-  right: -8px;
-  bottom: -20px;
-  text-align: center;
-  font: 500 11px/1 var(--font-mono);
-  color: var(--muted);
-  letter-spacing: 0.04em;
-  white-space: nowrap;
-}
-.fthumb.on {
-  outline: 2px solid var(--hl);
-  outline-offset: 2px;
-}
-.fthumb .rcv {
-  position: absolute;
-  right: 6px;
-  top: 8px;
-  width: 26px;
-  height: 14px;
-  border: 1.5px solid var(--paper-ink);
-  border-radius: 2px;
-  opacity: 0.6;
-  transform: rotate(6deg);
-}
-.fthumb .mini {
-  position: absolute;
-  right: -6px;
-  bottom: 10px;
-  width: 34px;
-  height: 34px;
-  mix-blend-mode: multiply;
-}
-.fthumb .mini svg {
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-  font-family: var(--font-doc);
-}
-.fthumb .mini.ok,
-.stamp-big.ok {
-  color: var(--stamp-ok);
-}
-.fthumb .mini.no,
-.stamp-big.no {
-  color: var(--stamp-no);
-}
-
-/* 聲請狀：訴狀紙，32px 橫格線，左邊雙直線與行號。 */
-.plead {
-  position: relative;
-  width: min(720px, 100%);
-  min-height: 512px;
-  background-color: var(--paper);
-  background-image:
-    var(--grain),
-    repeating-linear-gradient(to bottom, transparent 0 31px, rgb(60 50 20 / 9%) 31px 32px);
-  background-position:
-    0 0,
-    0 20px;
-  color: var(--paper-ink);
-  border-radius: 2px;
-  padding: 36px 48px 44px 76px;
-  box-shadow:
-    0 1px 0 rgb(0 0 0 / 18%),
-    0 28px 60px -24px var(--shadow-deep);
-}
-.plead::before {
-  content: '';
-  position: absolute;
-  left: 56px;
-  top: 0;
-  bottom: 0;
-  width: 3px;
-  border-left: 1px solid var(--paper-rule);
-  border-right: 1px solid var(--paper-rule);
-}
-.plead .ln {
-  position: absolute;
-  left: 22px;
-  top: 20px;
-  overflow: hidden;
-  display: grid;
-  align-content: start;
-  font: 400 10px/32px var(--font-court);
-  color: var(--paper-muted);
-  opacity: 0.8;
-}
-.plead .cap {
-  text-align: center;
-  display: grid;
-  gap: 4px;
-  margin-bottom: 22px;
-}
-/* 收文章放在抬頭上方，不壓到法院名稱；英文的章比較寬（體驗評測 v88）。 */
-.plead.received .cap {
-  margin-top: 32px;
-}
-.plead .cap .ct {
-  font: 500 13px/1.6 var(--font-doc);
-  letter-spacing: 0.22em;
-  color: var(--paper-muted);
-}
-.plead .cap .vs {
-  font: 500 15px/1.6 var(--font-doc);
-  letter-spacing: 0.1em;
-}
-.plead .cap .no {
-  font: 400 12px/1.6 var(--font-court);
-  color: var(--paper-muted);
-  letter-spacing: 0.06em;
-}
-.plead .cap h2 {
-  margin: 10px 0 0;
-  font: 700 24px/1.3 var(--font-doc);
-  letter-spacing: 0.36em;
-  text-indent: 0.36em;
-  color: var(--paper-ink);
-}
-.plead .cap .topic {
-  font: 400 14px/1.6 var(--font-doc);
-  color: var(--paper-muted);
-}
-.plead .body {
-  /* 行高等於格距，每行字坐在格線上。 */
-  font: 400 17px/32px var(--font-doc);
-  letter-spacing: 0.02em;
-}
-.plead .body p {
-  margin: 0;
-}
-.plead .nw {
-  white-space: nowrap;
-}
-.blank-wrap {
-  position: relative;
-  display: inline-block;
-}
-.blank {
-  position: relative;
-  display: inline-block;
-  min-width: 150px;
-  min-height: 0;
-  margin: 0 4px;
-  padding: 0 10px;
-  border: 0;
-  border-bottom: 1px dashed var(--paper-muted);
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
-  font: 400 19px/1.6 var(--font-hand);
-  color: var(--ink-fill);
-  vertical-align: baseline;
-  text-align: center;
-  letter-spacing: 0.02em;
-}
-button.blank:hover,
-.blank.open {
-  background: var(--hl-wash);
-  border-bottom-color: var(--hl-edge);
-}
-.blank .hint {
-  font: 400 13px/1 var(--font);
-  color: var(--paper-muted);
-}
-.blank.filled {
-  border-bottom: 1px solid var(--paper-ink);
-}
-/* 等證物的空格：從右邊證據欄點一張就放進來。 */
-.blank.hot {
-  border-bottom: 1px dashed var(--hl-edge);
-  background: var(--hl-wash);
-  box-shadow: 0 0 0 1px var(--hl);
-  border-radius: 3px;
-}
-.blank.exhibit {
-  font: 400 13px/1.6 var(--font);
-  color: var(--paper-ink);
-  padding-block: 4px 2px;
-}
-.blank .ex {
-  /* 小籤跟在證物標籤後面，不往上浮：浮起來會壓到上一行的字（體驗評測 v88）。 */
-  display: inline-block;
-  margin-left: 6px;
-  vertical-align: middle;
-  padding: 2px 5px;
-  border: 1.5px solid var(--gold-paper);
-  border-radius: 3px;
-  color: var(--gold-paper);
-  background: var(--paper);
-  font: 600 10px/1 var(--font-mono);
-  letter-spacing: 0.08em;
-  transform: rotate(-6deg);
-  white-space: nowrap;
-}
-/* 列內證物標籤（視覺規格 §16 .etag.row）：紙色、左邊一個孔。 */
-.etag.row {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: 24px;
-  padding: 0 10px 0 6px;
-  background: var(--paper);
-  border: 1px solid var(--paper-rule);
-  border-radius: 3px;
-  color: var(--paper-ink);
-  font: 500 13px/1 var(--font);
-  white-space: nowrap;
-  vertical-align: middle;
-}
-.etag.row .etag-hole {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  border: 1px solid var(--paper-rule);
-  background: var(--paper);
-}
-.etag.row.arg > span[aria-hidden]:not(.etag-hole) {
-  color: var(--gold-paper);
-}
-/* 請求、依據的小選單：貼在空格正下方。 */
-.pop {
-  position: absolute;
-  left: 50%;
-  top: calc(100% + 8px);
-  transform: translateX(-50%);
-  min-width: 220px;
-  z-index: 5;
-  background: var(--paper);
-  border: 1px solid var(--paper-rule);
-  border-radius: 6px;
-  box-shadow: var(--shadow-2);
-  padding: 6px;
-  display: grid;
-  text-align: left;
-}
-.pop::before {
-  content: '';
-  position: absolute;
-  left: calc(50% - 6px);
-  top: -6px;
-  width: 10px;
-  height: 10px;
-  background: var(--paper);
-  border-left: 1px solid var(--paper-rule);
-  border-top: 1px solid var(--paper-rule);
-  transform: rotate(45deg);
-}
-.pop .k {
-  padding: 0 12px;
-  font: 500 11px/24px var(--font-mono);
-  letter-spacing: 0.08em;
-  color: var(--paper-muted);
-}
-.pop-list {
-  display: grid;
-}
-.pop-list button {
-  min-height: 36px;
-  padding: 0 12px;
-  border: 0;
-  border-radius: 4px;
-  background: transparent;
-  box-shadow: none;
-  text-align: left;
-  font: 500 15px/36px var(--font);
-  color: var(--paper-ink);
-  white-space: nowrap;
-}
-.pop-list button:hover,
-.pop-list button.on {
-  background: light-dark(#eceff3, #c9ccd1);
-}
-.sheet-options .pop-list button {
-  min-height: 52px;
-  font-size: 17px;
-  color: var(--text);
-}
-.sheet-options .pop-list button.on {
-  background: var(--hl-wash);
-}
-.plead .sig {
-  margin-top: 28px;
-  font: 400 13px/1.6 var(--font-court);
-  color: var(--paper-muted);
-}
-.plead .sig b {
-  font: 400 15px/1.6 var(--font-doc);
-  color: var(--paper-ink);
-  border-bottom: 1px solid var(--paper-ink);
-  padding: 0 16px;
-}
-/* 遞狀列在文件流裡：手機上提示換行時不會壓到具狀人。 */
-.plead .commit-row {
-  margin-top: 12px;
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  justify-content: flex-end;
-  flex-wrap: wrap;
-}
-.plead .commit-row .zh {
-  font: 400 13px/1.4 var(--font);
-  color: var(--paper-muted);
-}
-.plead .commit-row .cost {
-  margin-left: 8px;
-  font: 500 12px/1 var(--font-mono);
-  opacity: 0.8;
-}
-.plead .bates2 {
-  position: absolute;
-  left: 76px;
-  bottom: 12px;
-  font: 400 11px/1 var(--font-court);
-  color: var(--paper-muted);
-}
-/* 法官的一句話：左邊色線，章蓋在右邊，壓到簽名欄也沒關係。 */
-.plead .judge {
-  position: relative;
-  margin-top: 18px;
-  padding: 10px 150px 10px 14px;
-  border-left: 3px solid var(--stamp-no);
-  font: 400 15px/1.7 var(--font-court);
-  color: var(--paper-ink);
-}
-.plead .judge.ok {
-  border-left-color: var(--stamp-ok);
-}
-.plead .judge small {
-  display: block;
-  font: 400 12px/1.4 var(--font-court);
-  color: var(--paper-muted);
-}
-.plead .judge .stamp-big {
-  position: absolute;
-  /* 章轉 8 度會多出約 10px；往內收，不把整張紙撐寬。 */
-  right: 12px;
-  top: -18px;
-}
-.stamp-big {
-  display: block;
-  width: 132px;
-  height: 132px;
-  opacity: 0.86;
-  mix-blend-mode: multiply;
-  transform: rotate(-8deg);
-}
-.stamp-big svg {
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-}
-.stamp-big .ring {
-  font: 500 8px/1 var(--font-mono);
-  letter-spacing: 2.2px;
-}
-.stamp-big .word {
-  font-family: var(--font-doc);
-  font-weight: 900;
-}
-.stamp-big .word.latin {
-  font-family: var(--font-mono);
-  font-weight: 700;
-}
-.stamp-rcv {
-  position: absolute;
-  right: 44px;
-  top: 10px;
-  padding: 6px 10px;
-  border: 2px solid var(--paper-ink);
-  border-radius: 3px;
-  font: 400 11px/1.4 var(--font-court);
-  color: var(--paper-ink);
-  letter-spacing: 0.08em;
-  text-align: center;
-  transform: rotate(6deg);
-  opacity: 0.72;
-  mix-blend-mode: multiply;
-}
-.stamp-rcv b {
-  display: block;
-  font-size: 13px;
-  font-weight: 400;
-  letter-spacing: 0.2em;
-}
-/* 前提沒到：一張便條，不給狀紙。 */
-.prereq-note {
-  max-width: 720px;
-  display: grid;
-  gap: 6px;
-  padding: 14px 18px;
-  background: var(--note);
-  color: var(--paper-ink);
-  border-radius: 2px;
-  box-shadow: var(--shadow-1);
-}
-.prereq-note small {
-  font: 500 12px/1.4 var(--font-mono);
-  color: var(--gold-paper);
-  letter-spacing: 0.06em;
-}
-.prereq-note strong {
-  font-size: 16px;
-}
-@media (max-width: 760px) {
-  .plead {
-    padding: 28px 18px 44px 44px;
-  }
-  .plead::before {
-    left: 32px;
-  }
-  .plead .ln {
-    left: 8px;
-  }
-  .plead .cap h2 {
-    letter-spacing: 0.2em;
-  }
-  .plead .bates2 {
-    left: 44px;
-  }
-  .plead .judge {
-    padding-right: 84px;
-  }
-  .plead .judge .stamp-big {
-    top: -6px;
-    right: -8px;
-    width: 88px;
-    height: 88px;
-  }
-
-  .stamp-rcv {
-    right: 12px;
-    top: 10px;
-  }
-  .blank {
-    min-width: 110px;
-  }
-  /* 手機上收文章比例大，抬頭往下讓兩行。 */
-  .plead.received .cap {
-    margin-top: 64px;
-  }
-}
-
-/* 詰問自動結束：中間欄一張卡，標題說為什麼停，下面是最後幾句。 */
-.panel.adjourn h2 {
-  font-size: 20px;
-}
-.panel.adjourn .lines {
-  font-size: 1.05em;
-}
-/* 休庭頁：前面的筆錄收起來，最後四句放第一屏。 */
-details.earlier > summary {
-  font-size: var(--fs-ui-meta);
-  color: var(--muted);
-}
-details.earlier[open] > .lines {
-  margin-top: 10px;
-}
-/* 狀紙空格和後面的逗號一起換行。 */
-.plead .glue {
-  display: inline-flex;
-  flex-wrap: nowrap;
-  align-items: baseline;
-  max-width: 100%;
-}
-.plead .glue > .blank {
-  min-width: 0;
-  flex: 0 1 auto;
-}
-.plead .glue > .blank-wrap {
-  min-width: 0;
-  flex: 0 1 auto;
-}
-.plead .glue > .blank-wrap > .blank {
-  max-width: 100%;
-}
-
-/* ═══ 陪審團遴選與判決（視覺規格 v1.4 §18，圖版 10、11） ═══ */
-/* 檔案照（§16 模板 B）：配角真立繪到位前都用這張。 */
-.idphoto {
-  --w: 96px;
-  width: var(--w);
-  display: grid;
-  grid-template-rows: 1fr auto;
-  gap: 3px;
-  padding: 4px;
-  border-radius: var(--radius);
-  background: var(--surface-3);
-  border: 1px solid var(--border-strong);
-  box-shadow: var(--inset-hi), var(--shadow-1);
-  flex: none;
-}
-.idphoto .ph {
-  position: relative;
-  aspect-ratio: 3 / 4;
-  border-radius: 3px;
-  overflow: hidden;
-  display: grid;
-  place-items: center;
-  background: linear-gradient(
-    180deg,
-    light-dark(#ebe4cf, #cdc3a9) 0%,
-    light-dark(#d8cfb3, #b3a98d) 100%
-  );
-}
-.idphoto .ph::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(85% 75% at 50% 32%, transparent 55%, rgb(0 0 0 / 24%) 100%);
-  pointer-events: none;
-}
-.idphoto .ph b {
-  font: 700 calc(var(--w) * 0.4) / 1 var(--font-doc);
-  color: var(--gold-paper);
-}
-.idphoto .ph img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-.idphoto .nm {
-  font: 400 10px/1 var(--font-court);
-  color: var(--muted);
-  text-align: center;
-  letter-spacing: 0.04em;
-  white-space: nowrap;
-  overflow: hidden;
-}
-.idphoto.s40 {
-  padding: 2px;
-  gap: 0;
-  grid-template-rows: 1fr;
-  border-radius: 4px;
-}
-.idphoto.s28 {
-  padding: 1px;
-  gap: 0;
-  grid-template-rows: 1fr;
-  border-radius: 3px;
-}
-.idphoto.s28 .ph {
-  border-radius: 2px;
-}
-
-/* 頂列：左眉標＋標題，右三個額度數字；右上角留給選單鈕。 */
-.trialbar {
-  min-height: var(--taskbar-h);
-  display: flex;
-  align-items: center;
-  gap: var(--s5);
-  padding: 0 128px 0 var(--s5);
-  border-bottom: 1px solid var(--border);
-  background: light-dark(rgb(247 248 250 / 60%), rgb(7 9 12 / 55%));
-}
-.trialbar .eb {
-  font: 500 var(--fs-ui-label) / 1 var(--font-mono);
-  letter-spacing: var(--track-label);
-  color: var(--muted);
-  display: flex;
-  gap: 10px;
-  align-items: center;
-}
-.trialbar .eb::before {
-  content: '';
-  width: 16px;
-  height: 2px;
-  background: var(--hl);
-}
-.trialbar .eb b {
-  color: var(--text);
-  font: 700 var(--fs-ui-head) / 1 var(--font);
-  letter-spacing: 0;
-}
-.tb-tally {
-  margin-left: auto;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px var(--s5);
-  font: 500 var(--fs-ui-meta) / 1 var(--font);
-  color: var(--muted);
-}
-.tb-tally > span {
-  white-space: nowrap;
-}
-.tb-tally b {
-  font: 600 var(--fs-ui-num) / 1 var(--font-mono);
-  color: var(--text);
-  margin-left: 6px;
-  vertical-align: -3px;
-}
-.tb-tally b.low {
-  color: light-dark(var(--hl-edge), var(--hl));
-}
-.tb-tally small {
-  font: 500 11px/1 var(--font-mono);
-  color: var(--faint);
-  margin-left: 2px;
-}
-
-.vd-screen {
-  height: 100dvh;
-  max-width: 1680px;
-  margin: 0 auto;
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
-}
-.vd {
-  display: grid;
-  grid-template-columns: 600px minmax(0, 1fr);
-  gap: var(--s5);
-  padding: var(--s4) var(--s5) var(--s5);
-  min-height: 0;
-}
-.cand-list.panel {
-  padding: 0;
-  gap: 0;
-  overflow: hidden;
-  min-height: 0;
-}
-.cand-list .panel-head {
-  padding: var(--s2) var(--s4);
-  border-bottom: 1px solid var(--border);
-}
-.cand-scroll {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  padding-bottom: 16px;
-  /* 底部淡出：最後一列不會看起來像被切掉。 */
-  mask-image: linear-gradient(to bottom, #000 calc(100% - 24px), transparent);
-}
-.cands {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-button.cand {
-  width: 100%;
-  display: grid;
-  grid-template-columns: 22px 40px minmax(0, 1fr) auto;
-  column-gap: var(--s3);
-  align-items: center;
-  min-height: 64px;
-  padding: var(--s2) var(--s4) var(--s2) calc(var(--s4) - 3px);
-  text-align: left;
-  background: transparent;
-  border: 0;
-  border-bottom: 1px solid var(--border);
-  border-left: 3px solid transparent;
-  border-radius: 0;
-  box-shadow: none;
-  font-weight: 400;
-}
-button.cand:hover:not(.on) {
-  background: color-mix(in srgb, var(--text) 4%, transparent);
-}
-.cand .no {
-  font: 600 var(--fs-ui-label) / 1 var(--font-mono);
-  color: var(--muted);
-  text-align: right;
-}
-.cand .txt {
-  min-width: 0;
-}
-.cand strong {
-  display: block;
-  font: 600 var(--fs-ui-row) / 1.3 var(--font);
-  color: var(--text);
-}
-.cand strong span {
-  font-weight: 400;
-  color: var(--muted);
-  font-size: var(--fs-ui-meta);
-  margin-left: 8px;
-}
-.cand .line {
-  display: block;
-  margin-top: 2px;
-  font: 400 var(--fs-ui-cap) / 1.45 var(--font);
-  color: var(--muted);
-}
-.cand .st {
-  display: grid;
-  justify-items: end;
-  gap: 6px;
-  font: 500 11px/1 var(--font-mono);
-  color: var(--faint);
-  letter-spacing: 0.04em;
-  white-space: nowrap;
-}
-.cand .seatno,
-.cand .gone {
-  font: 600 11px/1 var(--font-mono);
-  padding: 4px 6px;
-  border: 1px solid var(--border-strong);
-  border-radius: 3px;
-  color: var(--text);
-}
-.cand .gone {
-  color: var(--muted);
-  transform: rotate(-4deg);
-}
-button.cand.on {
-  background: var(--hl-wash);
-  border-top: 1px solid var(--hl-edge);
-  border-bottom-color: var(--hl-edge);
-  border-left-color: var(--hl);
-}
-.cand.on .seatno {
-  border-color: var(--hl-edge);
-}
-.cand.bench {
-  opacity: 0.78;
-}
-.cand.struck {
-  opacity: 0.5;
-}
-.cand.struck strong {
-  text-decoration: line-through;
-  text-decoration-thickness: 1px;
-}
-.cutline {
-  display: flex;
-  align-items: center;
-  gap: var(--s3);
-  height: 28px;
-  margin: 0;
-  padding: 0 var(--s4);
-  font: 500 11px/1 var(--font-mono);
-  letter-spacing: 0.1em;
-  color: light-dark(var(--hl-edge), var(--hl));
-  background: light-dark(rgb(255 208 46 / 10%), rgb(244 197 61 / 5%));
-  white-space: nowrap;
-}
-.cutline::before,
-.cutline::after {
-  content: '';
-  flex: 1;
-  border-top: 1px dashed currentColor;
-  opacity: 0.7;
-}
-
-.vd-right {
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto;
-  gap: var(--s4);
-  min-width: 0;
-  min-height: 0;
-}
-/* 陪審席：木色箱＋扶手。 */
-.box {
-  position: relative;
-  padding: var(--s5) var(--s5) var(--s4);
-  border-radius: var(--radius);
-  background: linear-gradient(
-    180deg,
-    light-dark(#d9cdb6, #2a2219) 0%,
-    light-dark(#c9b99b, #1d1711) 100%
-  );
-  box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 12%),
-    inset 0 -10px 0 light-dark(rgb(90 60 30 / 18%), rgb(0 0 0 / 30%)),
-    var(--shadow-1),
-    0 24px 48px -24px var(--shadow-deep);
-}
-.box::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 0;
-  height: 6px;
-  border-radius: var(--radius) var(--radius) 0 0;
-  background: light-dark(#8a6a43, #5a4630);
-}
-.box .k {
-  font: 500 var(--fs-ui-label) / 1 var(--font-mono);
-  letter-spacing: var(--track-label);
-  color: light-dark(#5b4630, #b7a283);
-  margin-bottom: var(--s4);
-  display: flex;
-  justify-content: space-between;
-  gap: var(--s3);
-}
-.seats {
-  display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: var(--s4) var(--s3);
-  justify-items: center;
-}
-.seats.back {
-  margin: 0 -36px var(--s3) 36px;
-}
-.seatc {
-  display: grid;
-  gap: 6px;
-  justify-items: center;
-  min-height: 0;
-  padding: 0;
-  background: none;
-  border: 0;
-  box-shadow: none;
-  border-radius: var(--radius);
-}
-.seatc .n {
-  font: 600 11px/1 var(--font-mono);
-  color: light-dark(#5b4630, #b7a283);
-  letter-spacing: 0.06em;
-}
-.seatc .nm2 {
-  font: 500 12px/1.2 var(--font);
-  color: light-dark(#3a2c1d, #d8c9b0);
-  max-width: 84px;
-  text-align: center;
-  white-space: nowrap;
-}
-.seatc .slot0 {
-  width: 72px;
-  aspect-ratio: 3 / 4.3;
-  border: 1.5px dashed light-dark(#8a6a43, #6b5640);
-  border-radius: var(--radius);
-  display: grid;
-  place-items: center;
-  font: 600 13px/1 var(--font-mono);
-  color: light-dark(#8a6a43, #8a7258);
-}
-.seatc.on .idphoto {
-  outline: 2px solid var(--hl);
-  outline-offset: 2px;
-}
-
-/* 人物卡：檔案照、名字、問過的題目；按鈕貼在卡片底部。 */
-.panel.prof {
-  display: grid;
-  grid-template-columns: 96px minmax(0, 1fr);
-  grid-template-rows: auto minmax(0, 1fr) auto;
-  gap: var(--s4);
-  padding: var(--s4);
-  min-height: 0;
-}
-.prof > .idphoto {
-  align-self: start;
-}
-.prof h3 {
-  font: 700 20px/1.3 var(--font-doc);
-  margin: 0;
-}
-.prof .sub {
-  margin: 4px 0 0;
-  font: 400 var(--fs-ui-meta) / 1.4 var(--font);
-  color: var(--muted);
-}
-.prof .qa {
-  grid-column: 1 / -1;
-  display: grid;
-  gap: 6px;
-  align-content: start;
-  min-height: 0;
-  overflow-y: auto;
-  padding-top: var(--s3);
-  border-top: 1px solid var(--border);
-}
-.qa .jq {
-  font: 500 var(--fs-ui-label) / 1.4 var(--font-mono);
-  color: var(--muted);
-  letter-spacing: 0.04em;
-}
-.qa .ja {
-  margin: 0 0 var(--s2);
-  font: 400 var(--fs-ui-row) / 1.6 var(--font-doc);
-  padding-left: var(--s3);
-  border-left: 2px solid var(--border-strong);
-}
-.qa .jh {
-  margin: 0;
-  font: 400 var(--fs-ui-cap) / 1.5 var(--font);
-  color: var(--muted);
-}
-.prof .acts,
-.prof .commit-bar {
-  grid-column: 1 / -1;
-  align-self: end;
-}
-.prof .acts {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--s2);
-}
-.prof.empty {
-  display: grid;
-  place-items: center;
-  color: var(--muted);
-}
-.commitbar {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: var(--s4);
-  align-items: center;
-  padding: var(--s3) var(--s4);
-  border: 1px solid var(--commit-edge);
-  border-radius: var(--radius);
-  background: var(--surface);
-  box-shadow: 0 -12px 32px -16px var(--shadow-deep);
-}
-.commitbar .who {
-  margin: 0;
-  font: 400 var(--fs-ui-cap) / 1.5 var(--font);
-  color: var(--muted);
-}
-.commitbar .who b {
-  color: var(--text);
-  font-weight: 600;
-}
-/* 窄版：陪審席縮成一排 28px 檔案照，放在名單上面。 */
-.box.mini {
-  padding: 14px 10px 10px;
-}
-.box.mini .k {
-  margin-bottom: 8px;
-}
-.box.mini .k span + span {
-  display: none;
-}
-.box.mini .seats {
-  grid-template-columns: repeat(6, 28px);
-  justify-content: space-evenly;
-  gap: 8px 4px;
-}
-.box.mini .seatc {
-  gap: 2px;
-}
-.box.mini .seatc .nm2 {
-  display: none;
-}
-.box.mini .seatc .n {
-  font-size: 10px;
-}
-.box.mini .seatc .slot0 {
-  width: 28px;
-  font-size: 10px;
-}
-.shell-body > .cands {
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--surface);
-  overflow: hidden;
-}
-.card-sheet .prof {
-  border: 0;
-  box-shadow: none;
-  padding: 0;
-  background: none;
-}
-@media (max-width: 520px) {
-  button.cand {
-    grid-template-columns: 18px 40px minmax(0, 1fr) auto;
-    column-gap: 10px;
-    padding-inline: 9px 12px;
-  }
-  .cand strong span {
-    display: block;
-    margin-left: 0;
-  }
-  .panel.prof {
-    grid-template-columns: 72px minmax(0, 1fr);
-  }
-  .panel.prof > .idphoto {
-    --w: 72px !important;
-  }
-}
-
-/* 判決頁：上面結論帶，下面判決表｜評議兩欄等高。 */
-.vdict {
-  /* 和遴選頁同一個左右框；不鎖視窗高，「繼續」接在內容後面（視覺設計師）。 */
-  max-width: 1680px;
-  margin: 0 auto;
-  padding: var(--s5);
-  display: grid;
-  align-content: start;
-  gap: var(--s5);
-}
-.hero {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: end;
-  gap: var(--s5);
-  padding-bottom: var(--s4);
-  border-bottom: 1px solid var(--border);
-}
-.hero .ey {
-  margin: 0;
-  font: 500 var(--fs-ui-label) / 1 var(--font-mono);
-  letter-spacing: 0.14em;
-  color: var(--muted);
-}
-.hero h1 {
-  margin: 10px 0 0;
-  font: 700 34px/1.2 var(--font-doc);
-  letter-spacing: 0.04em;
-}
-.hero .why {
-  margin: 10px 0 0;
-  font: 400 var(--fs-ui-body) / 1.6 var(--font);
-  color: var(--muted);
-  max-width: 46em;
-}
-.hero .why b {
-  color: var(--text);
-  font-weight: 600;
-}
-.hero .amt {
-  margin: 0;
-  text-align: right;
-  /* 右上角是選單鈕：金額排在它下面。 */
-  padding-top: 52px;
-}
-.hero .amt small {
-  display: block;
-  font: 500 var(--fs-ui-label) / 1 var(--font-mono);
-  letter-spacing: var(--track-label);
-  color: var(--muted);
-  margin-bottom: 8px;
-}
-.hero .amt b {
-  font: 600 44px/1 var(--font-mono);
-  letter-spacing: -0.02em;
-  white-space: nowrap;
-}
-.hero .amt b i {
-  font: 500 18px/1 var(--font);
-  color: var(--muted);
-  margin-left: 6px;
-}
-.hero .amt.disp {
-  font: 700 20px/1.4 var(--font-doc);
-}
-.vcols {
-  display: grid;
-  grid-template-columns: 560px minmax(0, 1fr);
-  gap: var(--s5);
-  min-height: 0;
-}
-.lcol {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s3);
-  min-height: 0;
-}
-.vform {
-  position: relative;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  padding: 28px 32px;
-  border-radius: 2px;
-  background: var(--paper);
-  background-image: var(--grain);
-  color: var(--paper-ink);
-  box-shadow:
-    0 1px 0 rgb(0 0 0 / 18%),
-    0 24px 56px -24px var(--shadow-deep);
-}
-.vform .fh {
-  text-align: center;
-  padding-bottom: 12px;
-  border-bottom: 2px solid var(--paper-ink);
-  margin-bottom: 4px;
-}
-.vform .fh p {
-  margin: 0;
-}
-.vform .fh .c {
-  font: 500 12px/1.6 var(--font-doc);
-  letter-spacing: 0.2em;
-  color: var(--paper-muted);
-}
-.vform .fh h2 {
-  margin: 0;
-  font: 700 20px/1.4 var(--font-doc);
-  letter-spacing: 0.3em;
-  text-indent: 0.3em;
-}
-.vform .fh .en {
-  font: 400 11px/1.4 var(--font-court);
-  letter-spacing: 0.16em;
-  color: var(--paper-muted);
-}
-.fq {
-  display: grid;
-  grid-template-columns: 26px minmax(0, 1fr) auto;
-  gap: 10px;
-  align-items: baseline;
-  padding: 11px 0;
-  border-bottom: 1px solid var(--paper-rule);
-}
-.fq .qn {
-  font: 400 12px/1 var(--font-court);
-  color: var(--paper-muted);
-}
-.fq .ql {
-  font: 400 15px/1.5 var(--font-doc);
-}
-.fq .ql small {
-  display: block;
-  margin-top: 2px;
-  font: 400 12px/1.5 var(--font);
-  color: var(--paper-muted);
-}
-.fq .qv {
-  font: 400 21px/1 var(--font-hand);
-  color: var(--ink-fill);
-  white-space: nowrap;
-}
-.fq .qv i {
-  font-style: normal;
-  font-size: 14px;
-  margin-left: 3px;
-}
-.fq.total {
-  border-bottom: 3px double var(--paper-ink);
-}
-.fq.total .ql {
-  font-weight: 700;
-}
-.fq.total .qv {
-  font-size: 26px;
-}
-.vform .signs {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  gap: 12px;
-  margin-top: auto;
-  padding-top: 18px;
-  font: 400 12px/1.6 var(--font-court);
-  color: var(--paper-muted);
-}
-.vform .signs b {
-  display: inline-block;
-  min-width: 150px;
-  margin-left: 8px;
-  border-bottom: 1px solid var(--paper-ink);
-  font: 400 20px/1.2 var(--font-hand);
-  color: var(--ink-fill);
-  text-align: center;
-}
-.vform.short {
-  flex: none;
-}
-.lcol .ledger-tip {
-  margin: 0;
-}
-.fold > summary {
-  font: 500 var(--fs-ui-meta) / 1.4 var(--font);
-  color: var(--muted);
-}
-.fold .faint {
-  color: var(--faint);
-  margin-left: 6px;
-}
-.fold .ledger-reasons {
-  margin-top: var(--s2);
-}
-
-.delib {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s3);
-  min-width: 0;
-}
-.panel.trend {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: 8px var(--s4);
-  align-items: center;
-  padding: var(--s3) var(--s4);
-}
-.trend .k {
-  font: 500 var(--fs-ui-label) / 1 var(--font-mono);
-  letter-spacing: var(--track-label);
-  color: var(--muted);
-}
-.trend-steps {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px var(--s3);
-  font: 500 var(--fs-ui-meta) / 1 var(--font);
-  color: var(--muted);
-}
-.trend-steps li {
-  display: flex;
-  align-items: center;
-  gap: var(--s3);
-  white-space: nowrap;
-}
-.trend-steps .arrow {
-  color: var(--faint);
-  font-family: var(--font-mono);
-}
-.trend-need {
-  grid-column: 2;
-  margin: 0;
-  font: 400 var(--fs-ui-cap) / 1.4 var(--font);
-  color: var(--muted);
-}
-.vpips {
-  display: inline-flex;
-  flex-wrap: wrap;
-  gap: 3px;
-  vertical-align: middle;
-}
-.vpips i {
-  width: 9px;
-  height: 9px;
-  border-radius: 2px;
-  border: 1.5px solid var(--border-strong);
-}
-.vpips i.y {
-  background: var(--good);
-  border-color: var(--good);
-}
-.panel.rounds {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  gap: 0;
-}
-.rnd {
-  display: grid;
-  grid-template-columns: 64px auto minmax(0, 1fr);
-  gap: var(--s4);
-  align-items: center;
-  padding: var(--s3) var(--s4);
-  border-bottom: 1px solid var(--border);
-}
-.rnd:last-child {
-  border-bottom: 0;
-}
-.rnd .rk {
-  font: 600 var(--fs-ui-label) / 1 var(--font-mono);
-  letter-spacing: 0.06em;
-  color: var(--muted);
-  white-space: nowrap;
-}
-.rnd > span:nth-child(2) {
-  display: flex;
-  align-items: center;
-}
-.rnd .vpips {
-  max-width: calc(6 * 15px);
-}
-.rnd .vpips i {
-  width: 12px;
-  height: 12px;
-}
-.rnd .vt {
-  font: 600 var(--fs-ui-meta) / 1 var(--font-mono);
-  margin-left: 10px;
-  white-space: nowrap;
-}
-.rnd p {
-  margin: 0;
-  font: 400 var(--fs-ui-cap) / 1.5 var(--font);
-  color: var(--muted);
-}
-.panel.fore {
-  display: grid;
-  grid-template-columns: 40px minmax(0, 1fr);
-  gap: var(--s3);
-  padding: var(--s4);
-  align-items: start;
-}
-.fore .who {
-  margin: 0 0 6px;
-  font: 500 var(--fs-ui-label) / 1 var(--font-mono);
-  letter-spacing: var(--track-label);
-  color: var(--muted);
-}
-.fore blockquote {
-  margin: 0;
-  font: 500 18px/1.6 var(--font-doc);
-}
-.epi {
-  display: grid;
-  gap: var(--s3);
-  padding: 0 var(--s4);
-}
-.epi > p {
-  margin: 0;
-  font: 400 var(--fs-ui-row) / 1.7 var(--font-doc);
-  color: var(--muted);
-}
-.epi .msg {
-  display: grid;
-  grid-template-columns: 28px minmax(0, 1fr);
-  gap: 10px;
-  align-items: start;
-  font: 400 var(--fs-ui-row) / 1.6 var(--font);
-}
-.epi .msg small {
-  display: block;
-  font: 500 11px/1 var(--font-mono);
-  color: var(--muted);
-  letter-spacing: 0.06em;
-  margin-bottom: 4px;
-}
-.delib .go {
-  align-self: flex-end;
-  margin-top: auto;
-}
-@media (max-width: 1099px) {
-  .vdict {
-    padding: max(12px, env(safe-area-inset-top)) 14px 24px;
-    gap: var(--s4);
-  }
-  .vdict .hero {
-    padding-right: 84px;
-  }
-  .vcols {
-    grid-template-columns: minmax(0, 1fr);
-  }
-  .hero .amt {
-    padding-top: 0;
-  }
-}
-@media (max-width: 520px) {
-  .vdict .hero {
-    grid-template-columns: minmax(0, 1fr);
-    padding-right: 0;
-  }
-  .vdict .hero .ey {
-    padding-right: 84px;
-    line-height: 1.4;
-  }
-  .hero h1 {
-    font-size: 26px;
-  }
-  .hero .amt {
-    text-align: left;
-  }
-  .hero .amt b {
-    font-size: 36px;
-  }
-  .vform {
-    padding: 20px 16px;
-  }
-  .rnd {
-    grid-template-columns: auto minmax(0, 1fr);
-    gap: 6px var(--s3);
-  }
-  .rnd p {
-    grid-column: 1 / -1;
-  }
-  .epi {
-    padding: 0;
-  }
-  .panel.trend {
-    grid-template-columns: minmax(0, 1fr);
-  }
-  .trend-steps {
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr);
-    gap: 8px var(--s3);
-  }
-  .trend-steps li {
-    display: contents;
-  }
-  .trend-steps .arrow {
-    display: none;
-  }
-  .trend-need {
-    grid-column: 1;
-  }
-  .delib .go {
-    align-self: stretch;
-  }
-}
-/* 英文的風向標籤長，排成一列會把最後一段擠到下一行：改成和手機一樣一段一行（體驗評測 v88）。 */
-html[lang='en'] .trend-steps {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: 8px var(--s3);
-}
-html[lang='en'] .trend-steps li {
-  display: contents;
-}
-html[lang='en'] .trend-steps .arrow {
-  display: none;
-}
-/* 英文抬頭不拉字距：拉開的拉丁字母讀起來像斷字。 */
-html[lang='en'] .vform .fh h2 {
-  letter-spacing: 0.04em;
-  text-indent: 0;
-}
-html[lang='en'] .vform .fh .c {
-  letter-spacing: 0.08em;
-}
-
 /*
  * 書桌頂列一列 48 高（視覺規格 §4）：工時、分頁同一條基線，預審與選單靠右；
  * 底線從內容左緣拉到證據欄右緣（外框格線內，不滿版）。證據欄頂端對齊頂列下方。
@@ -7695,129 +6266,5 @@ html[lang='en'] .vform .fh .c {
 @media (min-width: 1024px) and (max-width: 1279px) {
   .shell:has(> .shell-head > .taskbar) {
     --drawer-gutter: 340px;
-  }
-}
-
-/* 調解：對方信心與每一檔條件的門檻（體驗評測 v88：看不到信心，攤牌後開價沒動也沒有回饋）。 */
-.patience.conf {
-  gap: 4px 10px;
-}
-.confbar {
-  position: relative;
-  width: 120px;
-  height: 6px;
-  border-radius: 3px;
-  /* 已填和未填要分得出來（非文字對比 3:1）：軌道有描邊，填色用深淺兩模式都夠對比的 accent。 */
-  background: var(--surface-3);
-  box-shadow: inset 0 0 0 1px var(--muted);
-}
-.confbar i {
-  position: absolute;
-  inset: 0 auto 0 0;
-  border-radius: 3px;
-  background: var(--accent);
-  transition: width 0.4s var(--ease);
-}
-.confbar b {
-  position: absolute;
-  top: -3px;
-  width: 2px;
-  height: 12px;
-  margin-left: -1px;
-  background: var(--text);
-  box-shadow: 0 0 0 1px var(--surface);
-}
-.nego-move {
-  margin: 0 0 var(--s3);
-  line-height: 1.6;
-}
-.nego-move b {
-  margin-right: 8px;
-}
-.nego-next {
-  margin: 4px 0 0;
-}
-/* 調解的條件階梯：每一檔信心門檻對應的條件，目前這一檔用螢光標示。 */
-.nego-ladder {
-  /* 價和標記不要隔半個畫面（體驗評測 v89）。 */
-  max-width: 560px;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
-  column-gap: var(--s3);
-  list-style: none;
-  margin: var(--s2) 0 var(--s3);
-  padding: 0;
-  border-top: 1px solid var(--border);
-}
-.nego-ladder li {
-  display: grid;
-  /* subgrid 讓每一列的價和標記對齊同一欄；價和標記不換行，窄螢幕由門檻那欄讓位
-     （體驗評測 v89：英文「$2.5 million」被拆成兩行）。 */
-  grid-column: 1 / -1;
-  grid-template-columns: subgrid;
-  gap: var(--s3);
-  align-items: baseline;
-  padding: 6px 8px;
-  border-bottom: 1px solid var(--border);
-}
-.nego-ladder .th {
-  color: var(--muted);
-  font-size: 13px;
-}
-.nego-ladder .v {
-  font-weight: 600;
-  white-space: nowrap;
-}
-.nego-ladder .tg {
-  display: flex;
-  white-space: nowrap;
-  gap: 8px;
-  font-size: 13px;
-}
-.nego-ladder .tg b {
-  color: var(--text);
-}
-.nego-ladder .tg em {
-  font-style: normal;
-  color: var(--bad);
-}
-.nego-ladder li.on {
-  /* 目前這一檔：螢光筆底＋左緣一條黃。深色模式的 wash 只有 8%，門檻字才不會被底色吃掉（體驗評測 v89：3.23）。 */
-  background: var(--hl-wash);
-  box-shadow: inset 3px 0 0 var(--hl);
-}
-.nego-ladder li.on .th {
-  color: var(--text);
-}
-/* 深色模式的 wash 上 --bad 只有 4.39：目前這一檔的「超過授權」改用正文色，前面加一顆紅點。 */
-.nego-ladder li.on .tg em {
-  color: var(--text);
-}
-.nego-ladder li.on .tg em::before {
-  content: '';
-  display: inline-block;
-  width: 7px;
-  height: 7px;
-  margin-right: 6px;
-  border-radius: 50%;
-  background: var(--bad);
-  vertical-align: 1px;
-}
-.fore blockquote .nw {
-  white-space: nowrap;
-}
-/* 手機：門檻自己一行，條件在下一行，可以換行；第 1 集的條件是一整句，擠在同一列會疊字（遊戲測試員 v90）。 */
-@media (max-width: 520px) {
-  .nego-ladder {
-    grid-template-columns: minmax(0, 1fr) auto;
-  }
-  .nego-ladder li {
-    row-gap: 2px;
-  }
-  .nego-ladder li .th {
-    grid-column: 1 / -1;
-  }
-  .nego-ladder .v {
-    white-space: normal;
   }
 }

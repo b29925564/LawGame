@@ -662,7 +662,7 @@ scenes:
   - type: deposition
     id: depo-trevor
     act: 第三幕
-    place: 惠特洛克・海爾　會議室 C
+    place: 惠特洛克・海爾　會議室 C　週二 10:00
     side: theirs
     examiner: 丹尼爾・奧卡福
     witness:
@@ -721,7 +721,7 @@ scenes:
   - type: deposition
     id: depo-engineer
     act: 第三幕
-    place: 奧卡福勞工法律事務所　會議室
+    place: 奧卡福勞工法律事務所　會議室　週三 14:00
     side: theirs
     examiner: 丹尼爾・奧卡福
     witness:
@@ -909,7 +909,7 @@ scenes:
   - type: negotiation
     id: mediation
     act: 第四幕
-    place: 卡爾德郡高等法院　調解室 2
+    place: 卡爾德郡高等法院　調解室 2　週四 10:00
     opponent:
       name: 丹尼爾・奧卡福
       role: 原告律師
@@ -1030,7 +1030,7 @@ scenes:
   - type: theory
     id: theory
     act: 第五幕
-    place: 惠特洛克・海爾　會議室 A
+    place: 惠特洛克・海爾　會議室 A　週一 15:00
     intro:
       - who: 馬庫斯・海爾
         text: 民事案沒有無罪，只有責任多少。你要告訴陪審團，這筆帳該怎麼算。
@@ -1882,7 +1882,7 @@ scenes:
     when:
       outcome: [deal]
       deal: [o-full, o-high, o-mid]
-    place: 卡爾德郡高等法院　調解室外的走廊
+    place: 卡爾德郡高等法院　調解室外的走廊　週四 12:40
     steps:
       - do: say
         who: 旁白
@@ -1901,7 +1901,7 @@ scenes:
     when:
       outcome: [deal]
       deal: [o-low]
-    place: 卡爾德郡高等法院　調解室外的走廊
+    place: 卡爾德郡高等法院　調解室外的走廊　週四 12:40
     steps:
       - do: say
         who: 旁白
@@ -1922,7 +1922,7 @@ scenes:
     when:
       flags: [trevor-corrected]
       verdict: [有責]
-    place: 卡爾德郡高等法院　五樓走廊
+    place: 卡爾德郡高等法院　五樓走廊　週四 17:05
     steps:
       - do: say
         who: 旁白
@@ -1949,7 +1949,7 @@ scenes:
     epilogue: true
     when:
       flags: [memo-produced]
-    place: 惠特洛克・海爾　四十二樓　晚上 21:30
+    place: 惠特洛克・海爾　四十二樓　週四 21:30
     steps:
       - do: say
         who: 旁白
@@ -1984,7 +1984,7 @@ scenes:
     epilogue: true
     when:
       ethics: [offered-perjury]
-    place: 惠特洛克・海爾　影印室　晚上 22:10
+    place: 惠特洛克・海爾　影印室　週四 22:10
     steps:
       - do: say
         who: 戴文
@@ -2003,7 +2003,7 @@ scenes:
     when:
       ethics: [coached-witness]
       notEthics: [offered-perjury]
-    place: 惠特洛克・海爾　影印室　晚上 22:10
+    place: 惠特洛克・海爾　影印室　週四 22:10
     steps:
       - do: say
         who: 戴文
@@ -2020,7 +2020,7 @@ scenes:
     epilogue: true
     when:
       notEthics: [offered-perjury, coached-witness]
-    place: 惠特洛克・海爾　影印室　晚上 22:10
+    place: 惠特洛克・海爾　影印室　週四 22:10
     steps:
       - do: say
         who: 戴文
@@ -2034,7 +2034,7 @@ scenes:
     id: epilogue-devon
     act: 尾聲
     epilogue: true
-    place: 惠特洛克・海爾　影印室　晚上 22:10
+    place: 惠特洛克・海爾　影印室　週四 22:10
     steps:
       - do: say
         who: 旁白
