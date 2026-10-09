@@ -17,10 +17,14 @@ export function rigOf(place: string, day?: string): Rig | null {
 }
 
 /**
- * 法庭以外的地點色溫，照第 5 章的場景光表（色溫只表示時間與地盤）：
+ * 法庭以外的地點色溫，照第 5 章的場景光表與設計師 P4-8 光表裁定（色溫只表示時間與地盤）：
  * 大廳晨光 5600K；海爾辦公室窗光 5600K、入夜桌燈 2700K；惠特洛克辦公室夕照 3200K、只剩桌燈時 2700K；
- * 律所會議室（錄取）平光 5000K；看守所螢光 4100K；檢察署窗光 7000K；碼頭九號鈉燈 1800K；港邊夜 6500K；
- * 盧卡斯的桌面照工時的光層：白天窗光 6500K、傍晚 3200K、入夜檯燈 2700K。法院走廊與其他機構是燈管 4100K。
+ * 四十二樓是惠特洛克辦公室的夜景，桌燈 2700K。
+ * 事務所會議室：B（錄取）柔光框 5000K；C 上午側面天光 5600K；A 下午天光 4800K（沒寫字母的就是 A）。
+ * 奧卡福事務所會議室天光 4800K；法院調解室陰天高窗 6500K；法院台階照太陽，上午 5600K、16 點後低太陽 3600K。
+ * 走廊與影印室是燈管 4100K，下班後也一樣（影印室沒有窗）；看守所螢光 4100K；檢察署窗光 7000K；
+ * 碼頭九號鈉燈 1800K；港邊夜 6500K；盧卡斯的桌面照工時的光層：白天窗光 6500K、傍晚 3200K、入夜檯燈 2700K。
+ * 法院和其他機構是燈管 4100K。
  */
 export function kelvinOf(place: string) {
   const hour = Number(/(\d{1,2}):\d{2}/.exec(place)?.[1] ?? 12);
@@ -30,11 +34,17 @@ export function kelvinOf(place: string) {
   if (/港/.test(place)) return 6500;
   if (/看守所/.test(place)) return 4100;
   if (/檢察/.test(place)) return 7000;
-  if (/台階/.test(place)) return 5600;
+  if (/台階/.test(place)) return hour >= 16 ? 3600 : 5600;
+  if (/走廊|影印室/.test(place)) return 4100;
+  if (/調解室/.test(place)) return 6500;
   if (/法院|法庭/.test(place)) return 4100;
+  if (/四十二樓/.test(place)) return 2700;
   if (/海爾的辦公室/.test(place)) return night ? 2700 : 5600;
   if (/惠特洛克的辦公室/.test(place)) return night ? 2700 : 3200;
-  if (/會議室/.test(place)) return night ? 2700 : 5000;
+  if (/奧卡福/.test(place)) return 4800;
+  if (/會議室 ?B/.test(place)) return 5000;
+  if (/會議室 ?C/.test(place)) return 5600;
+  if (/會議室/.test(place)) return night ? 2700 : hour >= 12 ? 4800 : 5600;
   if (/盧卡斯/.test(place)) return night ? 2700 : hour >= 17 ? 3200 : 6500;
   return night ? 2700 : 4100;
 }
