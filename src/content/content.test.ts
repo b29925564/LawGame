@@ -3,6 +3,8 @@ import { matches, type BranchContext, type Verdict } from '../engine/episode/bra
 import { validateEpisode } from '../engine/episode/validate';
 import { validateCase } from '../engine/validate';
 import { cases, episodes } from './index';
+import en1 from './en/ep1.yaml';
+import en2 from './en/ep2.yaml';
 
 describe('劇本驗證器', () => {
   for (const [name, c] of Object.entries(cases)) {
@@ -142,4 +144,21 @@ describe('Bates（P2-1）', () => {
     );
     expect(lines.filter((l) => l.cite === '42:7').map((l) => l.id)).toEqual(['p-always']);
   });
+});
+
+describe('英文登錄表', () => {
+  const en = { ep1: en1, ep2: en2 } as Record<string, Record<string, string>>;
+  for (const [name, e] of Object.entries(episodes))
+    it(`${name} 每一行的第一個分句在 64 個字元以內（存檔卡約兩行）`, () => {
+      const rows = [
+        ...e.scenes.flatMap((s) =>
+          s.type === 'card' ? [...(s.filings ?? []), ...(s.docket ? [s.docket] : [])] : [],
+        ),
+        ...(e.disposition ?? []),
+      ];
+      const long = rows
+        .map((r) => (en[name][r.entry] ?? '').split(/(?<=\.)\s/)[0])
+        .filter((first) => !first || first.length > 64);
+      expect(long).toEqual([]);
+    });
 });
