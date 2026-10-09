@@ -1770,6 +1770,8 @@ html[lang='en'] .record {
   /* 黏在框的最上緣（往上補掉捲動框的內距），上面不露出捲過去的字；手機內距是 0，不能補。 */
   top: calc(-1 * var(--rec-sp));
   z-index: 2;
+  /* 框頂在小數像素上時，上一行的字會從頁首上緣露出 1px：往上多蓋 2px 紙色。 */
+  box-shadow: 0 -2px 0 var(--paper);
   margin: 0 calc(-1 * var(--rec-pr)) 0 calc(-1 * var(--rec-pl));
   padding: 0 var(--rec-pr) 0 var(--rec-pl);
   background:
