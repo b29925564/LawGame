@@ -7,6 +7,7 @@ import { EvidenceDrawer } from './Evidence';
 import { useScope } from './lang';
 import { Speech } from './Portrait';
 import { Shell, Tabs, Transcript } from './Shell';
+import { Recap } from './ActCard';
 
 /** 對方主導時每一題的結果標籤。 */
 const REVIEW = {
@@ -45,6 +46,7 @@ export function Deposition({ scene }: { scene: DepositionScene }) {
           {t('{a}・{b}', { a: t(scene.act, scope), b: t(scene.place, scope) })}
         </p>
         <div className="lines">
+          <Recap />
           {scene.intro.map((l, i) => (
             <Speech key={i} line={l} />
           ))}

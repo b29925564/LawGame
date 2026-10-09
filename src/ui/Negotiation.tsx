@@ -9,6 +9,7 @@ import { CardPick, EvidenceDrawer } from './Evidence';
 import { useScope } from './lang';
 import { Speech } from './Portrait';
 import { Shell, Tabs, Transcript } from './Shell';
+import { Recap } from './ActCard';
 
 /** 認罪協商（企劃書 6.8）：攤牌會洩底，虛張聲勢看證據清單，決定權在委託人手上。 */
 export function Negotiation({ scene }: { scene: NegotiationScene }) {
@@ -118,6 +119,7 @@ export function Negotiation({ scene }: { scene: NegotiationScene }) {
           {t('{a}・{b}', { a: t(scene.act, scope), b: t(scene.place, scope) })}
         </p>
         <div className="lines">
+          <Recap />
           {scene.intro.map((l, i) => (
             <Speech key={i} line={l} />
           ))}

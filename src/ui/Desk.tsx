@@ -27,6 +27,7 @@ import { Cork, type CorkItem } from './Cork';
 import { Redaction } from './Redaction';
 import { Shell, Tabs } from './Shell';
 import { Timeline } from './Timeline';
+import { Recap } from './ActCard';
 
 // 證據庫和左下的證據抽屜內容一模一樣，所以只留抽屜：它在每個畫面都叫得出來。
 type App = 'mail' | 'docs' | 'board' | 'jobs' | 'court' | 'discovery';
@@ -203,6 +204,7 @@ export function Desk({ scene }: { scene: DeskScene }) {
         </>
       }
     >
+      {st.hours === scene.hours && <Recap />}
       {app === 'mail' && <Mail scene={scene} />}
       {app === 'docs' && <Docs scene={scene} />}
       {app === 'board' && <Board scene={scene} held={held} />}

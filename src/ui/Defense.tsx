@@ -9,6 +9,7 @@ import { MarkLines } from './Marks';
 import { Speech } from './Portrait';
 import { batesOf, CourtRecord, useCourtEntries } from './Record';
 import { CourtCast } from './jury/CourtFace';
+import { Recap } from './ActCard';
 
 /**
  * 辯方證人（企劃書 6.9.6）：先準備，再直接詰問。
@@ -43,6 +44,7 @@ function DefenseScreen({ scene: raw }: { scene: DefenseScene }) {
           {scene.day ? `・${t(scene.day, scope)}` : ''}
         </p>
         <div className="lines">
+          <Recap />
           {scene.intro.map((l, i) => (
             <Speech key={i} line={l} />
           ))}

@@ -1,0 +1,464 @@
+/*
+ * 幕卡（設定集 11.3 RD-ART-1103A／B，互動頁 live/titles.html）。鏡頭層：永遠黑底，不跟主題。
+ * 以 1360 寬為基準單位 u：所有尺寸寫成 N × 100cqw / 1360，卡片任何寬度都等比例。
+ */
+.title-card.act-stage {
+  justify-content: center;
+  background: var(--grain), var(--cine-bg);
+  gap: 20px;
+  padding: max(56px, env(safe-area-inset-top)) 24px max(32px, env(safe-area-inset-bottom));
+}
+.act-wrap {
+  width: min(100%, 1360px, calc((100dvh - 230px) * 2.35));
+  min-width: min(100%, 320px);
+  container: act-wrap / inline-size;
+  display: flex;
+  justify-content: center;
+}
+.act-card {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 2.35 / 1;
+  overflow: hidden;
+  container: act-card / inline-size;
+  background: var(--cine-bg);
+  border: 1px solid #11161d;
+  text-align: left;
+  color: var(--cine-text);
+}
+.act-card > * {
+  --u: calc(100cqw / 1360);
+}
+/* 顆粒（7%） */
+.act-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.07;
+  background-image: var(--grain);
+}
+/* 燈管：上緣 34u，左右各留 30%，高 5u；下方光錐 13% → 0。 */
+.act-tube {
+  position: absolute;
+  left: 30%;
+  right: 30%;
+  top: calc(34 * var(--u));
+  height: max(2px, calc(5 * var(--u)));
+  border-radius: 3px;
+  background: var(--k-fluoro);
+  box-shadow:
+    0 0 calc(10 * var(--u)) rgb(228 239 226 / 70%),
+    0 0 calc(40 * var(--u)) rgb(228 239 226 / 25%);
+}
+.act-cone {
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  top: calc(36 * var(--u));
+  height: 75%;
+  pointer-events: none;
+  background: radial-gradient(
+    55% 100% at 50% 0,
+    rgb(228 239 226 / 13%),
+    rgb(228 239 226 / 4.5%) 45%,
+    transparent 78%
+  );
+}
+/* 案件標題欄：當事人／「）」／案號。案號是法院文件字 Courier Prime 700。 */
+.act-caption {
+  position: absolute;
+  left: calc(70 * var(--u));
+  top: calc(80 * var(--u));
+  display: grid;
+  grid-template-columns: auto auto auto;
+  column-gap: calc(26 * var(--u));
+  align-items: center;
+  font: 400 max(14px, calc(22 * var(--u))) / 1.75 var(--font-doc);
+}
+.act-l {
+  white-space: nowrap;
+}
+.act-l.act-i {
+  padding-left: 2.2em;
+}
+.act-p {
+  color: var(--cine-muted);
+}
+.act-no {
+  grid-column: 3;
+  grid-row: 3;
+  white-space: nowrap;
+  font: 700 max(14px, calc(24 * var(--u))) / 1.2 var(--font-court);
+  letter-spacing: 0.04em;
+}
+.act-no i {
+  margin-right: 0.7em;
+  font: 400 max(14px, calc(22 * var(--u))) / 1 var(--font-doc);
+  font-style: normal;
+  letter-spacing: 0.12em;
+  color: var(--cine-muted);
+}
+/* 幕序與幕名：垂直置中偏上。幕名上亮下暗，最暗端不暗於 #8b95a3；不加陰影、不描邊。 */
+.act-head {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 48%;
+  transform: translateY(-50%);
+  text-align: center;
+}
+.act-stage .act-card .act-kick {
+  margin: 0;
+  max-width: none;
+  padding-left: 0.5em;
+  font: 500 max(14px, calc(22 * var(--u))) / 1.4 var(--font-doc);
+  letter-spacing: 0.5em;
+  color: var(--cine-muted);
+}
+.act-card .act-title {
+  margin: 0;
+  padding: 0;
+  font: inherit;
+  letter-spacing: normal;
+}
+.act-card .act-big {
+  display: inline-block;
+  margin-top: calc(10 * var(--u));
+  padding-left: 0.04em;
+  font: 900 calc(128 * var(--u)) / 1.05 var(--font-doc);
+  /* 幕名寬度不能壓到左邊的標題欄：字多（英文）時依字寬縮（--n 是以中文字寬計的字數）。 */
+  font-size: min(calc(128 * var(--u)), calc(640 * var(--u) / var(--n, 2)));
+  letter-spacing: 0.04em;
+  background: linear-gradient(180deg, #f4f5f7 0%, #dfe3e8 38%, #8b95a3 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+/* 場記：左右 70u、下 46u，上方 1px 線；左地點 muted，右日子與時刻 text。 */
+.act-stage .act-card .act-slate {
+  position: absolute;
+  left: calc(70 * var(--u));
+  right: calc(70 * var(--u));
+  bottom: calc(46 * var(--u));
+  display: flex;
+  justify-content: space-between;
+  gap: 1em;
+  padding-top: calc(16 * var(--u));
+  margin: 0;
+  max-width: none;
+  border-top: 1px solid var(--cine-line);
+  font: 500 max(12px, calc(15 * var(--u))) / 1.3 var(--font-mono);
+  letter-spacing: 0.08em;
+  color: var(--cine-muted);
+}
+.act-slate b {
+  font-weight: 500;
+  color: var(--cine-text);
+}
+.act-bates {
+  position: absolute;
+  right: calc(26 * var(--u));
+  bottom: calc(16 * var(--u));
+  font: 700 max(12px, calc(13 * var(--u))) / 1 var(--font-court);
+  letter-spacing: 0.06em;
+  color: #5f6a79;
+}
+/* 卡下方：旁白（工時、這一幕要做什麼）與「繼續」。 */
+.act-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: 40em;
+  text-align: center;
+}
+.act-lines p {
+  margin: 0;
+  font-family: var(--font-doc);
+  color: var(--cine-muted);
+  line-height: 1.8;
+}
+.act-actions button {
+  min-width: 160px;
+}
+
+/* 黑條：蓋住字，抽走時 scaleX 1→0，原點在右。 */
+.act-card .rd {
+  position: relative;
+  display: inline-block;
+}
+.act-card .rd::after {
+  content: '';
+  position: absolute;
+  inset: -0.08em -0.12em;
+  background: var(--redact);
+  border-top: 1px solid var(--cine-line);
+  transform-origin: right;
+  transform: scaleX(0);
+}
+
+/* ── 進場 ── */
+@media (prefers-reduced-motion: no-preference) {
+  .act-tube,
+  .act-cone {
+    animation: act-ignite var(--dur-tube-ignite) steps(1, end) both;
+  }
+  .act-card .act-big {
+    animation: act-lit var(--dur-tube-ignite) steps(1, end) both;
+  }
+  .act-card .rd::after {
+    transform: scaleX(1);
+    animation: act-pull var(--dur-redact-out) steps(12, end) forwards;
+    animation-delay: calc(var(--d, 0) * var(--dur-cut-black) + var(--dur-tube-ignite));
+  }
+  .act-lines {
+    animation: act-rise var(--dur-ui) var(--ease-light) both;
+    animation-delay: calc(var(--dur-tube-ignite) + 6 * var(--dur-cut-black));
+  }
+  /* 集尾選項在停留結束後才掛上，掛上就淡入，不再等。 */
+  .act-actions {
+    animation: act-rise var(--dur-ui) var(--ease-light) both;
+  }
+  /* 光敏安全：燈管只做單次 700ms 漸亮，不脈衝。 */
+  html[data-photosafe='1'] .act-tube,
+  html[data-photosafe='1'] .act-cone,
+  html[data-photosafe='1'] .act-big {
+    animation: act-rise 700ms var(--ease-light) both;
+  }
+  /* 淺色主題切進鏡頭層：--dur-theme 200ms 從淺色暗下來。 */
+  .act-stage::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    pointer-events: none;
+    background: light-dark(#e3e6ea, transparent);
+    color-scheme: inherit;
+    animation: act-fade-out var(--dur-theme) var(--ease-light) both;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .act-card {
+    animation: act-rise var(--dur-rm) linear both;
+  }
+}
+@keyframes act-ignite {
+  0% {
+    opacity: 0;
+  }
+  11% {
+    opacity: 0.85;
+  }
+  22% {
+    opacity: 0.08;
+  }
+  55% {
+    opacity: 0.9;
+  }
+  66% {
+    opacity: 0.15;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+@keyframes act-lit {
+  0% {
+    filter: brightness(0);
+  }
+  11% {
+    filter: brightness(0.8);
+  }
+  22% {
+    filter: brightness(0.1);
+  }
+  55% {
+    filter: brightness(0.9);
+  }
+  66% {
+    filter: brightness(0.2);
+  }
+  100% {
+    filter: brightness(1);
+  }
+}
+@keyframes act-pull {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+@keyframes act-rise {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes act-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+/* ── 卡寬窄於 900px：9:16 直排版。標題欄置頂、幕序與幕名直排；字級有 px 下限。 ── */
+@container act-wrap (max-width: 899px) {
+  .act-card {
+    aspect-ratio: 9 / 16;
+    width: min(100%, 420px);
+  }
+  .act-card > * {
+    --u: calc(100cqw / 420);
+  }
+  .act-tube {
+    left: 18%;
+    right: 18%;
+    top: calc(30 * var(--u));
+  }
+  .act-cone {
+    height: 85%;
+  }
+  .act-caption {
+    left: calc(26 * var(--u));
+    right: calc(26 * var(--u));
+    top: max(64px, calc(70 * var(--u)));
+    column-gap: calc(12 * var(--u));
+    font: 400 max(14px, calc(15 * var(--u))) / 1.7 var(--font-doc);
+  }
+  .act-no {
+    grid-column: 1 / -1;
+    grid-row: 6;
+    margin-top: 0.8em;
+    font: 700 max(14px, calc(16 * var(--u))) / 1.2 var(--font-court);
+  }
+  .act-no i {
+    font: 400 max(14px, calc(15 * var(--u))) / 1 var(--font-doc);
+  }
+  .act-head {
+    top: 62%;
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: center;
+    gap: calc(14 * var(--u));
+  }
+  .act-stage .act-card .act-kick,
+  .act-card .act-big {
+    writing-mode: vertical-rl;
+    text-orientation: upright;
+  }
+  .act-stage .act-card .act-kick {
+    padding: 0;
+    font: 500 max(15px, calc(18 * var(--u))) / 1.4 var(--font-doc);
+    letter-spacing: 0.4em;
+  }
+  .act-card .act-big {
+    margin: 0;
+    /* 直排幕名的高度要留給場記：字多時依字數縮（--n 是幕名字數）。 */
+    font-size: min(max(56px, calc(72 * var(--u))), calc(300 * var(--u) / var(--n, 2)));
+    background: linear-gradient(180deg, #f4f5f7, #8b95a3);
+    background-clip: text;
+    -webkit-background-clip: text;
+  }
+  .act-stage .act-card .act-slate {
+    left: calc(26 * var(--u));
+    right: calc(26 * var(--u));
+    bottom: max(36px, calc(40 * var(--u)));
+    flex-direction: column;
+    gap: 0.6em;
+    font: 500 max(12px, calc(12 * var(--u))) / 1.3 var(--font-mono);
+  }
+  /* 英文幕名不直排（拉丁字母直立排會一字一行）：橫排置中，依字寬縮到放得下。 */
+  .act-card.latin .act-head {
+    flex-direction: column;
+    align-items: center;
+    gap: calc(10 * var(--u));
+  }
+  .act-stage .act-card.latin .act-kick,
+  .act-card.latin .act-big {
+    writing-mode: horizontal-tb;
+  }
+  .act-card.latin .act-big {
+    font-size: min(56px, calc(1100 * var(--u) / var(--n, 2)));
+  }
+}
+
+/* ── 地點字卡（11.3）：鏡頭左下一行場記。黃短槓是這一格唯一的黃，2.5 秒後連字一起淡出。 ── */
+.place-slate {
+  position: fixed;
+  left: max(var(--s5), env(safe-area-inset-left));
+  bottom: max(var(--s5), env(safe-area-inset-bottom));
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: calc(100vw - 2 * var(--s5));
+  margin: 0;
+  padding: 6px 12px;
+  background: var(--cine-bg);
+  color: var(--cine-text);
+  font: 500 13px / 1.4 var(--font-mono);
+  letter-spacing: 0.06em;
+  pointer-events: none;
+  opacity: 0;
+  animation: place-slate 2860ms linear both;
+}
+.place-slate::before {
+  content: '';
+  flex: none;
+  width: 14px;
+  height: 2px;
+  background: var(--hl);
+}
+@keyframes place-slate {
+  0% {
+    opacity: 0;
+  }
+  6.3% {
+    opacity: 1;
+  }
+  93.7% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@media (max-width: 640px) {
+  /* 手機：底下是按鈕列（玩家的手），場記抬到按鈕列上方，不蓋住按鈕。 */
+  .place-slate {
+    left: var(--s4);
+    bottom: calc(max(var(--s4), env(safe-area-inset-bottom)) + 88px);
+    max-width: calc(100vw - 2 * var(--s4));
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  /* 減少動態：不淡入淡出，停 2.5 秒後直接收掉。 */
+  .place-slate {
+    animation: place-slate-cut 2500ms steps(1, end) both;
+  }
+  @keyframes place-slate-cut {
+    0% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+}
+
+/* 硬切：停留結束（或玩家跳過）時整格黑 83ms，接著換下一場。 */
+.act-stage.cut::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: var(--cine-bg);
+}
+/* 幕卡的回顧與目標移到下一場第一則旁白區塊：和那一場的旁白同一個樣式。 */
+.recap {
+  display: contents;
+}
+.shell-body > .recap {
+  display: block;
+  margin: 0 0 var(--s4);
+}
