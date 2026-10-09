@@ -155,7 +155,7 @@
 懲罰性賠償看的是被告隱瞞了什麼，開示和證據要先處理。: Punitive damages turn on what the defendant hid; deal with discovery and the evidence first.
 懲罰性賠償可能再加同額: Punitive damages could add the same amount again
 懲罰性賠償可能另加 {r} 倍: 'Punitive damages could add {r}× on top'
-'你主張死者過失 {base}%，陪審團寫下 {fault}%。': 'You argued the deceased was {base}% at fault. The jury wrote {fault}%.'
+'理論起點：死者過失 {base}%　陪審團寫下：{fault}%': 'Theory start: deceased {base}% at fault · Jury wrote: {fault}%'
 '開庭：約 {low}到 {high}': 'Trial: about {low} to {high}'
 ，懲罰性賠償另計: ', punitive damages extra'
 開庭：結果由陪審團決定: 'Trial: the jury decides'
@@ -236,8 +236,8 @@
 'record::駁回': Overruled
 'record::法官': The Court
 'record::葛雷律師': Mr. Grey
-'待放 AI 立繪　{no}': 'AI art TBD  {no}'
-'待放 AI 立繪　{name}': 'AI art TBD  {name}'
+待放 AI 立繪: AI art TBD
+陪審員: Jurors
 影子＝懷疑: Shadow = doubt
 陪審團（收合）: Jury (collapsed)
 點開看臉: Tap to see faces

@@ -103,11 +103,11 @@
     {
       "id": "ray",
       "hair": "crew",
-      "neck": 56,
+      "neck": 66,
       "build": "wide",
-      "head": "wide",
-      "slope": 8,
-      "lift": -24,
+      "head": "medium",
+      "slope": 32,
+      "lift": 0,
       "light": "top"
     },
     {
@@ -153,11 +153,11 @@
     {
       "id": "trevor",
       "hair": "buzz",
-      "acc": ["readers", "collar"],
+      "acc": ["collar"],
       "lift": -6,
       "head": "narrow",
       "build": "narrow",
-      "light": "top"
+      "light": "desk"
     },
     {
       "id": "okafor",
@@ -168,7 +168,7 @@
       "lift": -12,
       "head": "wide",
       "build": "medium",
-      "light": "window"
+      "light": "counsel"
     },
     {
       "id": "marisol",
@@ -182,7 +182,6 @@
     {
       "id": "fisher",
       "hair": "bouffant",
-      "acc": ["readers"],
       "lift": -6,
       "head": "medium",
       "build": "medium",

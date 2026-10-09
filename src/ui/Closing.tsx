@@ -13,6 +13,7 @@ import {
   useEpisode,
 } from '../engine/game';
 import { ledger, type LedgerItem } from '../engine/ledger';
+import { useSettings } from '../engine/settings';
 import { useMoney, useT } from '../i18n';
 import { CardPick, EvidenceDrawer } from './Evidence';
 import { useScope } from './lang';
@@ -332,7 +333,9 @@ function Verdict({
   const episode = useEpisode((s) => s.progress.episode);
   const v = st.verdict!;
   const award = st.award;
-  const claimed = award?.base !== undefined && award.base !== award.fault;
+  // 理論起點對陪審團寫下的過失比例：是遊戲讀數，只在「顯示數值」打開時出現（設計師第二輪）。
+  const { showNumbers } = useSettings();
+  const claimed = showNumbers && award?.base !== undefined;
   const p = award?.punitive;
   const jurors = rules?.jurors ?? [];
   const n = jurors.length;
@@ -460,10 +463,7 @@ function Verdict({
                     </div>
                     <div className="fq">
                       <span className="qn">3.</span>
-                      <span className="ql">
-                        {t('死者過失比例')}
-                        {award.why && <small>{t(award.why, scope)}</small>}
-                      </span>
+                      <span className="ql">{t('死者過失比例')}</span>
                       <span className="qv">
                         {award.fault}
                         <i>%</i>
@@ -526,15 +526,16 @@ function Verdict({
               <span className="ledger-key">{t('下次可以試')}</span> {tips[top[0].kind]}
             </p>
           )}
-          {(items.length > 0 || claimed) && (
+          {(items.length > 0 || claimed || award?.why) && (
             <details className="fold ledger">
               <summary>
                 {t('完整帳目')} <span className="faint">{t('每一筆怎麼算出來的')}</span>
               </summary>
-              {/* 理論和陪審團寫下的差多少：不放在判決書上（遊戲讀數不是世界裡的東西，設計師 10-09），收在帳目裡講一句。 */}
+              {/* 判決書是世界裡的文件，不印遊戲的設計文字：理論怎麼算過失、起點和陪審團寫下的差多少，都收在帳目裡（設計師第二輪）。 */}
+              {award?.why && <p className="ledger-why">{t(award.why, scope)}</p>}
               {claimed && (
                 <p className="ledger-claim">
-                  {t('你主張死者過失 {base}%，陪審團寫下 {fault}%。', {
+                  {t('理論起點：死者過失 {base}%　陪審團寫下：{fault}%', {
                     base: award?.base ?? 0,
                     fault: award?.fault ?? 0,
                   })}
@@ -620,6 +621,7 @@ function Verdict({
                   look={lookOf(episode, fore.id)}
                   v={st.jury[fore.id] ?? 0}
                   seat={t(fore.label, scope)}
+                  name={foreParts.length > 1 ? foreParts[foreParts.length - 2] : foreParts[0]}
                 />
               ) : (
                 <span />
@@ -650,8 +652,9 @@ function Verdict({
               if (l.mark || l.voice === 'off' || l.thought) return <Speech key={i} line={l} />;
               const text = t(l.text, scope);
               if (l.who === '旁白') return <p key={i}>{text}</p>;
-              // 「（訊息）漂亮。」→ 寄件人一行寫「亞瑟・卡爾德・訊息」，內文只留話。
-              const via = text.match(/^[（(]([^）)]{1,12})[）)]\s*/);
+              // 「（訊息）漂亮。」→ 寄件人一行寫「亞瑟・卡爾德・訊息」，內文只留話。只有真的頻道（訊息、電話、信、便條）
+              // 才算不在場；「（他沒有回頭）」是舞台指示，人還在庭上（設計師第二輪）。
+              const via = text.match(CHANNEL);
               return (
                 <div key={i} className="msg">
                   {/* 人在法庭：剪影替身；訊息、電話不在場：證件照（設計師 10-09：桌上證件照、庭上剪影）。 */}
@@ -679,6 +682,8 @@ function Verdict({
     </main>
   );
 }
+
+const CHANNEL = /^[（(](訊息|電話|信|便條|Text|Phone|On the phone|Letter|Note)[）)]\s*/;
 
 function Money({ v }: { v: string }) {
   const { n, unit } = splitMoney(v);

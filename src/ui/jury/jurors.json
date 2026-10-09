@@ -1,5 +1,5 @@
 {
-  "_note": "陪審員剪影參數 v1（視覺設計師 #2，2026-10-09）。id 對 src/content/ep{1,2}.yaml 第 15 場 candidates。改動先問視覺設計師。",
+  "_note": "陪審員剪影參數 v2（視覺設計師 #2，2026-10-09）。id 對 src/content/ep{1,2}.yaml 第 15 場 candidates。改動先問視覺設計師。 v2（2026-10-09 21:40Z）：32px 合池測試改參數，見 jury-silhouette-spec.md §5。c-pilot 的 popped 換 epaulette（避開馬可斯的高領）。",
   "ep1": [
     {
       "id": "c-cop",
@@ -20,7 +20,7 @@
       "lift": -24,
       "head": "wide"
     },
-    { "id": "c-mom", "hair": "ponytail", "build": "medium", "lift": 24, "head": "medium" },
+    { "id": "c-mom", "hair": "ponytail", "build": "narrow", "lift": -24, "head": "medium" },
     {
       "id": "c-cpa",
       "hair": "sidepart",
@@ -28,8 +28,8 @@
       "acc": ["collar"],
       "glasses": "square",
       "lift": 24,
-      "head": "wide",
-      "build": "wide"
+      "head": "narrow",
+      "build": "medium"
     },
     {
       "id": "c-student",
@@ -39,7 +39,7 @@
       "lift": -24,
       "head": "wide"
     },
-    { "id": "c-fired", "hair": "cap", "build": "medium", "lift": -24, "head": "medium" },
+    { "id": "c-fired", "hair": "cap", "build": "wide", "lift": -12, "head": "wide" },
     {
       "id": "c-nurse",
       "hair": "wavy",
@@ -59,21 +59,21 @@
     {
       "id": "c-teacher",
       "hair": "topbun",
-      "build": "wide",
+      "build": "narrow",
       "acc": ["pencil"],
       "glasses": "cateye",
-      "lift": -12,
-      "head": "wide"
+      "lift": 0,
+      "head": "narrow"
     },
-    { "id": "c-barista", "hair": "topknot", "build": "narrow", "lift": 0, "head": "medium" },
+    { "id": "c-barista", "hair": "topknot", "build": "narrow", "lift": -24, "head": "narrow" },
     {
       "id": "c-broker",
       "hair": "quiff",
       "acc": ["pads"],
       "beard": "goatee",
-      "lift": 12,
-      "head": "narrow",
-      "build": "medium"
+      "lift": -12,
+      "head": "medium",
+      "build": "narrow"
     },
     { "id": "c-chef", "hair": "braid", "build": "narrow", "lift": 12, "head": "narrow" },
     {
@@ -82,7 +82,7 @@
       "acc": ["collar"],
       "glasses": "round",
       "lift": -24,
-      "head": "narrow",
+      "head": "wide",
       "build": "narrow"
     },
     {
@@ -114,9 +114,9 @@
       "id": "c-it",
       "hair": "sidepart",
       "acc": ["scarf"],
-      "lift": 24,
-      "head": "narrow",
-      "build": "wide"
+      "lift": -24,
+      "head": "wide",
+      "build": "medium"
     },
     {
       "id": "c-guard",
@@ -139,9 +139,9 @@
       "id": "c-postal",
       "hair": "bouffant",
       "acc": ["hoops"],
-      "lift": 0,
-      "head": "wide",
-      "build": "medium"
+      "lift": 24,
+      "head": "narrow",
+      "build": "wide"
     }
   ],
   "ep2": [
@@ -150,7 +150,7 @@
       "hair": "bald",
       "build": "wide",
       "acc": ["scarf"],
-      "lift": 0,
+      "lift": 18,
       "head": "narrow"
     },
     {
@@ -186,7 +186,7 @@
       "hair": "topbun",
       "build": "narrow",
       "acc": ["hoops"],
-      "lift": 12,
+      "lift": 24,
       "head": "narrow"
     },
     {
@@ -210,10 +210,10 @@
       "id": "c-pilot",
       "hair": "crew",
       "build": "wide",
-      "acc": ["popped"],
+      "acc": ["epaulette"],
       "glasses": "aviator",
-      "lift": 24,
-      "head": "wide"
+      "lift": -24,
+      "head": "narrow"
     },
     {
       "id": "c-engineer",

@@ -851,8 +851,8 @@ export const LIGHT: Record<string, Light> = {
     k: '--k-screen,#b9ccff',
     key: [40, 0],
     side: 'left',
-    rim: [R(0, 140, 215, 202), R(0, 372, 160, 60)],
-  }, // 普莉亞：鑑識室螢幕光從前下方
+    rim: [R(0, 84, 215, 258), R(0, 372, 160, 60)],
+  }, // 普莉亞：鑑識室螢幕光從前方，額前的齊瀏海也照到（鉤子在受光側，設計師第二輪）
   sodium: {
     k: '--k-sodium,#ff8a1e',
     key: [40, 0],
@@ -871,6 +871,18 @@ export const LIGHT: Record<string, Light> = {
     side: 'left',
     rim: [R(0, 60, 230, 282), R(0, 0, 262, 110), R(0, 372, 160, 60)],
   }, // 維加：陰天
+  desk: {
+    k: '--k-neutral,#f5f3ee',
+    key: [30, -24],
+    side: 'left',
+    rim: [R(0, 150, 232, 240), R(0, 372, 170, 60)],
+  }, // 崔佛：辦公桌上的 LED 檯燈從前下方打上來（不是頂光，設計師第二輪），襯衫領尖亮起
+  counsel: {
+    k: '--k-window,#ffe2c0',
+    key: [40, -10],
+    side: 'left',
+    rim: [R(0, 60, 232, 330), R(0, 372, 160, 60)],
+  }, // 奧卡福：法院走廊的低角度窗光，從前方略低處來，下巴的山羊鬍讀得到（設計師第二輪）
   hospital: {
     k: '--k-fluoro,#e4efe2',
     key: [0, 40],
@@ -879,22 +891,29 @@ export const LIGHT: Record<string, Light> = {
   }, // 醫師：醫院日光燈頂光，額前也亮
 };
 
+// 暖燈裸色在黃色禁區（設定集第 2 章：色相 50–100°、C* > 30 時 L* ≤ 68）：鎢絲、黃昏的輪廓光、眼神光、
+// 配件受光都壓不透明度，乘上剪影的黑之後才落在禁區外（設計師第二輪：tungsten ≤ .80、dusk ≤ .75）。
+const CAP: Record<string, number> = { '--k-tungsten': 0.8, '--k-dusk': 0.75 };
+export const inkOpacity = (k: string, base: number) => Math.min(base, CAP[k.split(',')[0]] ?? 1);
+/** 剪影本體的顏色：輪廓光、眼神光都疊在它上面。 */
+export const SIL = '#07090c';
+
 const d = (poly: Poly, close = true) =>
   'M' + poly.map(([x, y]) => `${x.toFixed(1)} ${y.toFixed(1)}`).join('L') + (close ? 'Z' : '');
 
 /**
  * 一張卡面的 SVG（viewBox 400×500）。影子不在這裡：影子要能 300ms 移動（--dur-shadow），
  * 由元件疊一層 HTML 遮罩（參考實作把影子畫在 SVG 裡，形狀與羽化照抄到 CSS）。
- * label：虛線框上的字（已翻譯，「待放 AI 立繪」加席號）；空字串＝不畫框。
+ * frame：畫「待放 AI 立繪」的虛線框。標籤的字不畫在框裡，由 Tbd 放在框外上方（設定集第 7 章 :9、第 5 章 0502）。
  */
 export function svg(
   p: JurorLook,
   {
     v = 60,
     pose,
-    label = '',
+    frame = false,
     uid = p.id,
-  }: { v?: number; pose?: Pose; label?: string; uid?: string } = {},
+  }: { v?: number; pose?: Pose; frame?: boolean; uid?: string } = {},
 ) {
   pose = pose || poseFor(v);
   const s = shapes(p, pose),
@@ -929,7 +948,9 @@ export function svg(
     pose === 'J4' ? `<path d="M150 470h140v30h-140z" fill="var(${K})" opacity=".4"/>` : '';
   // 配件自己接光（珍珠、口袋巾上緣）：只在那盞燈照得到的一側；不進 32px 測試。
   const acc =
-    s.lit.map((q) => `<path d="${d(q)}" fill="var(${K})" opacity=".8"/>`).join('') +
+    s.lit
+      .map((q) => `<path d="${d(q)}" fill="var(${K})" opacity="${inkOpacity(K, 0.8)}"/>`)
+      .join('') +
     s.edge
       .map(
         (q) =>
@@ -944,13 +965,13 @@ export function svg(
  <clipPath id="armclip-${uid}">${armClip}</clipPath>${extra ? `<clipPath id="xclip-${uid}">${rects(extra.rim)}</clipPath>${rimFilter(`xrim-${uid}`, hex(extra.k), 0)}` : ''}
 </defs>
 <rect width="400" height="500" fill="var(--cine-bg,#06080b)"/>
-<g class="silhouette" fill="#07090c">${sil}</g>
+<g class="silhouette" fill="${SIL}">${sil}</g>
 <rect width="400" height="500" fill="var(${K})" opacity="${L?.flat ? '.06' : '.10'}" mask="url(#lit-${uid})"/>
-<g clip-path="url(#rimclip-${uid})"><g filter="url(#rim-${uid})" opacity=".9">${sil}</g></g>${extra ? `<g clip-path="url(#xclip-${uid})"><g filter="url(#xrim-${uid})" opacity=".9">${sil}</g></g>` : ''}
+<g clip-path="url(#rimclip-${uid})"><g filter="url(#rim-${uid})" opacity="${inkOpacity(K, 0.9)}">${sil}</g></g>${extra ? `<g clip-path="url(#xclip-${uid})"><g filter="url(#xrim-${uid})" opacity="${inkOpacity(extra.k, 0.9)}">${sil}</g></g>` : ''}
 ${acc}${s.glasses.map((q) => `<path d="${d(q, false)}" fill="none" stroke="#c9ced6" stroke-width="5.7" opacity=".5"/>`).join('')}
-${pose === 'J4' || shadowPct(v) >= 90 ? '' : `<path d="${d(s.eye)}" fill="#1a1f26"/><rect x="${(s.eye[0][0] - 12).toFixed(1)}" y="${(s.eye[0][1] - 4).toFixed(1)}" width="5" height="5" fill="var(${K})" opacity=".9"/>`}
+${pose === 'J4' || shadowPct(v) >= 90 ? '' : `<path d="${d(s.eye)}" fill="#1a1f26"/><rect x="${(s.eye[0][0] - 12).toFixed(1)}" y="${(s.eye[0][1] - 4).toFixed(1)}" width="5" height="5" fill="var(${K})" opacity="${inkOpacity(K, 0.9)}"/>`}
 ${notes}
-${pose === 'J3' ? `<path clip-path="url(#armclip-${uid})" d="${d([morph([N[0] - 120, 436], 'J3'), morph([N[0] + 120, 436], 'J3')], false)}" stroke="var(${K})" stroke-width="9.3" opacity=".85" fill="none"/>` : ''}
-${label ? `<rect x="14" y="14" width="372" height="472" fill="none" stroke="var(--cine-line,#2a323d)" stroke-dasharray="14 14" stroke-width="3"/><text x="28" y="470" font-family="JetBrains Mono, monospace" font-size="34" fill="var(--cine-muted,#8b95a3)">${label}</text>` : ''}
+${pose === 'J3' ? `<path clip-path="url(#armclip-${uid})" d="${d([morph([N[0] - 120, 436], 'J3'), morph([N[0] + 120, 436], 'J3')], false)}" stroke="var(${K})" stroke-width="9.3" opacity="${inkOpacity(K, 0.85)}" fill="none"/>` : ''}
+${frame ? '<rect x="14" y="14" width="372" height="472" fill="none" stroke="var(--cine-line,#2a323d)" stroke-dasharray="14 14" stroke-width="3"/>' : ''}
 </svg>`;
 }

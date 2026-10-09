@@ -8,8 +8,8 @@ import { MarkLine } from './Marks';
 import { VoLine } from './VoiceOver';
 
 /**
- * 角色頭像，4:5。盧卡斯用正式立繪（cast.ts）；其他人在法庭是剪影替身（jury/CourtFace），
- * 法庭外還是暫代版，用固定的五官元件畫出來，情緒換表情。
+ * 角色頭像，4:5。盧卡斯用正式立繪（cast.ts）；其他人在法庭是剪影替身（jury/CourtFace）。
+ * 法庭外的五官元件是待下架的舊暫代：使用者 10-09 決定配角在桌上一律用檔案照（IdPhoto 模板 B），換圖排給介面與操作 #2。
  */
 const palette: Record<string, string> = {
   盧卡斯: '#1f4e8c',
