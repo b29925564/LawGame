@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { episodes } from '../../content';
+import { useEpisode } from '../game';
 import type { Relation } from '../schema';
 import * as desk from './desk';
 import * as interview from './interview';
@@ -254,6 +255,26 @@ describe('審前動議', () => {
     expect(desk.heldCards(investigate, fight)).toContain('chat-audit');
     // 決定過就不能反悔。
     expect(desk.resolveTwist(investigate, fight, 'm-chat', 0)).toBe(fight);
+  });
+
+  it('撤回傳票記進倫理帳本，出庭答辯不記；決定過再按也不會重複記', () => {
+    const base = fill(solved(), 'm-chat', '相關性', '核發傳票給卡爾德物流', ['arg-a']);
+    const granted = desk.file(investigate, base, 'm-chat');
+    const at = episodes.ep1.scenes.indexOf(investigate);
+    const g = () => useEpisode.getState();
+    const play = (option: number) => {
+      g().newGame('ep1');
+      useEpisode.setState({
+        progress: { ...g().progress, scene: at, scenes: { [investigate.id]: granted } },
+      });
+      g().resolveTwist('m-chat', option);
+      g().resolveTwist('m-chat', option);
+      g().resolveTwist('m-chat', 1 - option);
+      return g().progress.ethics ?? [];
+    };
+    expect(play(0)).toEqual(['client-sold-out']);
+    expect(play(1)).toEqual([]);
+    g().toTitle();
   });
 });
 

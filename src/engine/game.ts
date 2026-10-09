@@ -3,6 +3,7 @@ import { episodes } from '../content';
 import type { Relation, Tag } from './schema';
 import * as branch from './episode/branch';
 import * as closing from './episode/closing';
+import * as custody from './episode/custody';
 import * as defense from './episode/defense';
 import * as depo from './episode/deposition';
 import * as discovery from './episode/discovery';
@@ -258,6 +259,11 @@ export function caseClosed(p: Progress): { outcome: branch.Outcome; deal: string
       return { outcome: 'dismissed', deal: null };
   }
   return null;
+}
+
+/** 證物袋的保管鏈照目前進度：哪幾行已經發生（見 custody.ts）。 */
+export function custodyOf(p: Progress, bag: custody.Bag) {
+  return custody.custodyRows(bag, branchContext(p));
 }
 
 export function branchContext(p: Progress): branch.BranchContext {
@@ -788,11 +794,20 @@ export const useEpisode = create<GameState>()((set, get) => {
         (s, st) => desk.file(s, st, m, get().progress.cards),
         (s, st) => desk.heldCards(s, st, get().progress.cards),
       ),
-    resolveTwist: (m, option) =>
+    resolveTwist: (m, option) => {
+      const s = sceneOf(get().progress);
+      if (s?.type !== 'desk') return;
+      const was = desk.motionAttempt(deskState(get().progress, s), m).twist;
       onDesk(
         (s, st) => desk.resolveTwist(s, st, m, option),
         (s, st) => desk.heldCards(s, st, get().progress.cards),
-      ),
+      );
+      // 這一次真的做了決定，才把那個選項的倫理紀錄記進帳本。
+      const p = get().progress;
+      if (was !== null || desk.motionAttempt(deskState(p, s), m).twist !== option) return;
+      const gained = s.motions.find((x) => x.id === m)?.twist?.options[option]?.ethics ?? [];
+      if (gained.length) set({ progress: { ...p, ethics: [...(p.ethics ?? []), ...gained] } });
+    },
     wrapDesk: () => onDesk((_s, st) => desk.wrap(st)),
     respondDiscovery: (r, resp) => {
       onDesk((s, st) => discovery.respond(s, st, r, resp, get().progress.cards));

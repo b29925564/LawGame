@@ -72,6 +72,7 @@ export function validateEpisode(e: Episode): string[] {
     branchErrors(s, e, errors);
   }
   effectErrors(e, errors);
+  custodyErrors(e, errors);
   const { check } = whenChecker(e, errors);
   e.disposition?.forEach((d, i) => check(d.when, `登錄表最後一行第 ${i + 1} 項`));
   openingErrors(e, errors);
@@ -499,6 +500,25 @@ function defenseErrors(s: DefenseScene, e: Episode, errors: string[]) {
 
 /** 判決、收場、懲罰性賠償要等結辯之後才知道。 */
 const before = (w: When) => !!(w.verdict || w.outcome || w.deal || w.punitive !== undefined);
+
+/** 保管鏈的進度條件：引用的東西要存在；證物在開庭前就經手完了，不能依判決或結果分支。 */
+function custodyErrors(e: Episode, errors: string[]) {
+  const { check } = whenChecker(e, errors);
+  const seen = new Set<string>();
+  for (const s of e.scenes) {
+    if (s.type !== 'desk') continue;
+    for (const c of s.cards) {
+      if (seen.has(c.id)) continue;
+      seen.add(c.id);
+      c.bag?.custody.forEach((h, i) => {
+        if (!h.when) return;
+        const where = `卡片 ${c.id} 的保管鏈第 ${i + 1} 行`;
+        check(h.when, where);
+        if (before(h.when)) errors.push(`${where} 依判決或結果分支，證物在開庭前就經手完了`);
+      });
+    }
+  }
+}
 
 /** 集層級 effects：條件在開庭或調解開始時判斷，不能依判決分支。 */
 function effectErrors(e: Episode, errors: string[]) {

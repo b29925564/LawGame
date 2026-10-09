@@ -88,6 +88,9 @@ _cards: &cards
           from: R. Delgado　看守所財物管理員
           to: 戴文・艾許　惠特洛克・海爾 助理
           purpose: 調閱（依 03/19 檢視令）
+          # 調閱、送鑑、返還都是「手錶鑑識」那件工作（job-watch）；沒做就還沒發生。
+          # 之後的行跟著這一行（保管鏈不斷手），不用每行都寫。
+          when: { cards: [watch-notice] }
         - at: '03/20 13:00'
           from: 戴文・艾許　惠特洛克・海爾 助理
           to: 普莉亞・奈爾　數位鑑識專家
@@ -1412,7 +1415,7 @@ scenes:
         cost: 情感取向的陪審員容易被說服，但蘇菲的人生會被毀掉。要在庭上讓她自己鬆口，沒有別的證據能替你補。
         ethicsIf:
           has: [arg-i]
-          ethics: [smeared-knowing, smeared-knowing]
+          ethics: [smeared-knowing]
         promises:
           - id: sophie-lied
             text: 你們會看到，另一個人對警方說了謊。
@@ -2862,7 +2865,6 @@ scenes:
           - text: 十二年前，我父親的那場火。
             hush: true
       - do: choose
-        mode: chat
         options:
           - text: 交給海爾。事務所的事，先問事務所。
             flags: [draft-to-hale]

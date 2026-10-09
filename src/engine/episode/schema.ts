@@ -217,8 +217,20 @@ const bag = z
     acquiredBy: z.string(),
     from: z.string(),
     desc: z.string(),
+    /**
+     * 每經手一次一行。寫了 when 的那一行要等條件成立（例如做了那件工作、拿到那張卡）才算發生；
+     * 還沒發生的那一行和之後的每一行都畫成「尚未發生」（見 custody.ts）。
+     */
     custody: z
-      .array(z.object({ at: stamp, from: z.string(), to: z.string(), purpose: z.string() }))
+      .array(
+        z.object({
+          at: stamp,
+          from: z.string(),
+          to: z.string(),
+          purpose: z.string(),
+          when: when.optional(),
+        }),
+      )
       .min(1),
   })
   .refine(
@@ -374,6 +386,8 @@ const deskScene = z.object({
                   then: z.array(line).min(1),
                   gives: z.array(id).default([]),
                   flags: z.array(z.string()).default([]),
+                  /** 選了就記進倫理帳本（例如為了客戶撤回傳票），第一季懲戒聽證會讀得到（企劃書 6.12）。 */
+                  ethics: z.array(z.string()).default([]),
                 }),
               )
               .length(2),
