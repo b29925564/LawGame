@@ -1,0 +1,527 @@
+/*
+ * 卷宗的三個標記元件（設定集第 9 章；設計師 P2-6 裁定）：案卷登錄表、照片紀錄表、證物袋，和放大檢視。
+ * main.tsx 在 styles.css 之後載入，同權重時蓋得過通用樣式。
+ * 字族：印好的表頭用介面字；編號、時間、案號、Bates 用 Courier Prime 700；手寫用 LXGW WenKai TC。
+ */
+
+/* ── <Docket> 案卷登錄表：法院系統分頁頂端的一張紙 ── */
+.docket {
+  width: min(720px, 100%);
+  margin: 0 auto var(--s4);
+  padding: 22px 28px 18px;
+  background-color: var(--paper);
+  background-image: var(--grain);
+  color: var(--paper-ink);
+  border-radius: 2px;
+  /* 紙疊在紙層：1px 紙邊，不投影（規格 v2.0 §3）。 */
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 14%);
+}
+.docket-cap {
+  display: grid;
+  gap: 2px;
+  margin-bottom: 14px;
+  text-align: center;
+}
+.docket-cap .ct {
+  font: 500 12px/1.6 var(--font-doc);
+  letter-spacing: 0.22em;
+  color: var(--paper-muted);
+}
+.docket-cap .vs {
+  font: 500 14px/1.6 var(--font-doc);
+  letter-spacing: 0.1em;
+}
+.docket-cap .no {
+  font: 700 12px/1.6 var(--font-court);
+  letter-spacing: 0.06em;
+  color: var(--paper-muted);
+}
+.docket-cap h3 {
+  margin: 6px 0 0;
+  font: 700 19px/1.3 var(--font-doc);
+  letter-spacing: 0.3em;
+  text-indent: 0.3em;
+}
+.docket table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.docket th {
+  padding: 0 8px 6px;
+  border-bottom: 1px solid var(--paper-ink);
+  font: 500 11px/1.3 var(--font);
+  letter-spacing: 0.12em;
+  color: var(--paper-muted);
+  text-align: left;
+  white-space: nowrap;
+}
+.docket td {
+  padding: 8px;
+  border-bottom: 1px solid var(--paper-rule);
+  vertical-align: baseline;
+}
+.docket .dk-no,
+.docket .dk-date {
+  font: 700 13px/1.6 var(--font-court);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.docket .dk-no {
+  width: 2.5em;
+  text-align: right;
+}
+.docket .dk-date {
+  width: 7.5em;
+}
+.docket .dk-entry {
+  font: 400 14px/1.65 var(--font-doc);
+}
+/* 還沒發生的行：整行黑條，條內小字。 */
+.docket .dk-future td {
+  padding: 5px 0;
+}
+.docket .dk-future .redact {
+  min-height: 30px;
+}
+/*
+ * 目前那一行：螢光筆從左劃到右（--dur-hl 330ms steps(8)）。紙是淺色表面：加 --hl-edge 2px 左邊線、字加粗
+ * （設定集第 9 章「淺色表面上的螢光」）。整張紙只有這一道。
+ */
+.docket .dk-cur,
+.slot:is(:hover, :focus-visible) .dk-mini .dk-cur {
+  background-image: linear-gradient(var(--hl), var(--hl));
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  color: var(--hl-ink);
+  font-weight: 700;
+}
+.docket .dk-cur td:first-child {
+  box-shadow: inset 2px 0 0 var(--hl-edge);
+}
+.docket .dk-cur .dk-entry {
+  font-weight: 700;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .docket .dk-cur,
+  .slot:is(:hover, :focus-visible) .dk-mini .dk-cur {
+    animation: dk-swipe var(--dur-hl) steps(8) both;
+  }
+}
+@keyframes dk-swipe {
+  from {
+    background-size: 0% 100%;
+  }
+}
+@media (max-width: 640px) {
+  .docket {
+    padding: 18px 14px 14px;
+  }
+  .docket td {
+    padding: 7px 5px;
+  }
+  .docket .dk-date {
+    width: auto;
+  }
+}
+
+/* ── 存檔欄的縮小版：每行一行字，放不下的淡進紙裡（不用刪節號） ── */
+.dk-mini {
+  display: grid;
+  gap: 2px;
+  width: 100%;
+  margin-top: 6px;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+.dk-mini .dk-row {
+  display: grid;
+  grid-template-columns: 1.6em 3.6em minmax(0, 1fr);
+  gap: 6px;
+  align-items: baseline;
+  padding: 0 4px;
+}
+.dk-mini b,
+.dk-mini time {
+  font: 700 11px/1.5 var(--font-court);
+  font-variant-numeric: tabular-nums;
+}
+.dk-mini b {
+  text-align: right;
+}
+.dk-mini .dk-row > span {
+  overflow: hidden;
+  white-space: nowrap;
+  mask-image: linear-gradient(to right, #000 82%, transparent);
+}
+/* 其他存檔欄的目前行只加粗、不上色；滑過或鍵盤選中的那一欄才上螢光（上面）。 */
+.dk-mini .dk-cur {
+  color: var(--text);
+  font-weight: 700;
+}
+.dk-mini .dk-future {
+  grid-template-columns: 1fr;
+}
+.dk-mini .dk-bar {
+  display: block;
+  height: 9px;
+  margin: 3px 0;
+  background: var(--redact);
+  border-top: 1px solid var(--cine-line);
+}
+.dk-mini .dk-bates {
+  margin-top: 2px;
+  padding: 0 4px;
+  font: 700 11px/1.5 var(--font-court);
+  letter-spacing: 0.04em;
+  color: var(--faint);
+}
+
+/* ── <PhotoLog> 照片紀錄表：白邊照片（零圓角）＋底邊四欄 ── */
+.photolog {
+  container-type: inline-size;
+  margin: 0 0 10px;
+  padding: 10px 10px 0;
+  background: #f4f4f1;
+  border-radius: 0;
+  color: var(--paper-ink);
+}
+/* 4×6 照片 1:1.5。沒有實物照片時是警方閃光燈的版式：中心過曝、四角快速變暗、背景死黑。 */
+.photolog-print {
+  position: relative;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 3 / 2;
+  overflow: hidden;
+  background: radial-gradient(
+    120% 95% at 48% 46%,
+    #d6d6d1 0,
+    #8d8d88 20%,
+    #2b2c2e 52%,
+    #070708 84%
+  );
+}
+.photolog-print img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.photolog-print .redact {
+  flex: none;
+  width: 70%;
+}
+.photolog-strip {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 12px;
+  margin: 0;
+  padding: 8px 0 10px;
+}
+.photolog-strip div {
+  min-width: 0;
+}
+.photolog-strip dt {
+  font: 500 10px/1.3 var(--font);
+  letter-spacing: 0.08em;
+  color: var(--paper-muted);
+}
+.photolog-strip dd {
+  margin: 0;
+  font: 700 12px/1.45 var(--font-court);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+@container (min-width: 480px) {
+  .photolog-strip {
+    grid-template-columns: auto auto auto 1fr;
+    gap: 6px 22px;
+  }
+}
+/* 證據板照片卡：卡名留在底欄，紀錄列一行小字，放大時才讀。 */
+.cork-strip:has(.photolog-line) {
+  flex-wrap: wrap;
+}
+.photolog-line {
+  flex-basis: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  font: 700 9px/1.3 var(--font-court);
+  letter-spacing: 0.02em;
+  color: var(--paper-muted);
+  mask-image: linear-gradient(to right, #000 85%, transparent);
+}
+
+/* ── <EvidenceBag> 證物袋：透明袋，兩道 CSS 漸層高光＋1px 白邊（定案做法） ── */
+.bag {
+  /* 填進空格的字：藍黑墨水（規格 v2.0 --ink-fill）。 */
+  --ink-fill: #1f3a68;
+  container-type: inline-size;
+  position: relative;
+  margin: 0 0 10px;
+  padding: 10px;
+  border: 1px solid rgb(255 255 255 / 72%);
+  background: rgb(214 220 228 / 12%);
+}
+/* 塑膠在東西上面：高光蓋在袋裡的紙和印刷上，點擊穿過去。 */
+.bag::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(112deg, transparent 16%, rgb(255 255 255 / 16%) 22%, transparent 29%),
+    linear-gradient(112deg, transparent 60%, rgb(255 255 255 / 10%) 64%, transparent 70%);
+}
+.bag-window {
+  padding: 10px 12px;
+  background-color: var(--paper);
+  background-image: var(--grain);
+  color: var(--paper-ink);
+  font: 400 14px/1.6 var(--font-doc);
+}
+.bag-window .photolog {
+  margin: -10px -12px 0;
+}
+.bag-window p {
+  margin: 0;
+}
+.bag-window .mini-src,
+.bag-window .zoom-src {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--paper-rule);
+  font: 400 12px/1.5 var(--font);
+  color: var(--paper-muted);
+}
+/* 袋上印好的白色欄位。 */
+.bag-label {
+  margin-top: 10px;
+  padding: 10px 12px 6px;
+  background: rgb(250 250 247 / 94%);
+  color: #19202a;
+}
+.bag-title,
+.bag-chain-title {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0;
+  font: 700 12px/1.4 var(--font);
+  letter-spacing: 0.18em;
+}
+.bag-title {
+  padding-bottom: 4px;
+  border-bottom: 2px solid currentColor;
+}
+.bag-chain-title {
+  margin-top: 10px;
+  padding-bottom: 2px;
+  border-bottom: 1px solid currentColor;
+}
+.bag-title span,
+.bag-chain-title span {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+}
+.bag-head {
+  display: grid;
+  margin: 0;
+}
+.bag-head div {
+  display: grid;
+  grid-template-columns: 7.5em minmax(0, 1fr);
+  gap: 8px;
+  align-items: baseline;
+  padding: 3px 0;
+  border-bottom: 1px solid rgb(0 0 0 / 14%);
+}
+.bag-head dt {
+  font: 500 11px/1.4 var(--font);
+  color: #5a6574;
+}
+.bag-head dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.bag-head dd.code {
+  font: 700 13px/1.45 var(--font-court);
+}
+.bag-head dd.hand,
+.bag-chain li:not(.bag-chain-cols) {
+  font: 400 var(--fs-hand) / 1.35 var(--font-hand);
+  color: var(--ink-fill);
+}
+/* 保管鏈：每一手一行。窄的時候兩三行：時間＋目的、交出、→ 收受。 */
+.bag-chain {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.bag-chain li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas:
+    'at why'
+    'from from'
+    'to to';
+  column-gap: 10px;
+  padding: 5px 0;
+  border-bottom: 1px solid rgb(0 0 0 / 14%);
+}
+.bag-chain .at {
+  grid-area: at;
+  white-space: nowrap;
+}
+.bag-chain .why {
+  grid-area: why;
+  text-align: right;
+}
+.bag-chain .from {
+  grid-area: from;
+}
+.bag-chain .to {
+  grid-area: to;
+}
+.bag-chain .to::before {
+  content: '→ ' / '';
+}
+.bag-chain .bag-chain-cols {
+  display: none;
+}
+@container (min-width: 560px) {
+  /* 欄寬用手寫字級算：表頭小字和手寫列對得齊。 */
+  .bag-chain li {
+    grid-template-columns:
+      calc(var(--fs-hand) * 6.4) minmax(0, 1fr) minmax(0, 1fr)
+      calc(var(--fs-hand) * 8.5);
+    grid-template-areas: 'at from to why';
+    align-items: baseline;
+  }
+  .bag-chain .why {
+    text-align: left;
+  }
+  .bag-chain .to::before {
+    content: none;
+  }
+  .bag-chain .bag-chain-cols {
+    display: grid;
+    padding: 4px 0 2px;
+    font: 500 10px/1.3 var(--font);
+    letter-spacing: 0.08em;
+    color: #5a6574;
+  }
+  .bag-chain-cols span:nth-child(1) {
+    grid-area: at;
+  }
+  .bag-chain-cols span:nth-child(2) {
+    grid-area: from;
+  }
+  .bag-chain-cols span:nth-child(3) {
+    grid-area: to;
+  }
+  .bag-chain-cols span:nth-child(4) {
+    grid-area: why;
+  }
+}
+
+/* ── 證據欄展開 ── */
+.card.mini .mini-body .photolog,
+.card.mini .mini-body .bag {
+  margin-top: 4px;
+}
+.card.mini .mini-body .zoom-open {
+  min-height: 32px;
+  padding: 4px 0;
+  font-size: 13px;
+}
+
+/* ── 證據板光圈裡的「放大」：標記層，不被吊燈調光、不歪 ── */
+.cork .cork-zoom {
+  position: absolute;
+  z-index: 7;
+  translate: -100% -50%;
+  margin-left: -6px;
+  min-height: 26px;
+  padding: 2px 10px;
+  border: 1px solid #3a4757;
+  border-radius: 3px;
+  background: #19202a;
+  box-shadow: none;
+  color: #e7eaee;
+  font: 500 12px/20px var(--font);
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+.cork .cork-zoom:hover {
+  border-color: #8e99a7;
+  background: #19202a;
+}
+
+/* ── 放大檢視 ── */
+.zoom {
+  width: min(880px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  padding: 18px 22px 22px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+}
+.zoom::backdrop {
+  background: rgb(6 8 11 / 72%);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .zoom[open] {
+    animation: iv-fade var(--dur-ui) var(--ease) both;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .zoom[open] {
+    animation: iv-fade var(--dur-rm) linear both;
+  }
+}
+.zoom-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--s3);
+  margin-bottom: 12px;
+}
+.zoom-head h2 {
+  margin: 0;
+  font: 700 18px/1.4 var(--font-doc);
+}
+.zoom > .photolog,
+.zoom > .bag {
+  margin-bottom: 12px;
+}
+.zoom-sheet {
+  padding: 14px 16px;
+  background-color: var(--paper);
+  background-image: var(--grain);
+  color: var(--paper-ink);
+  font: 400 15px/1.8 var(--font-doc);
+}
+.bag-window .zoom-sheet {
+  padding: 0;
+  background: none;
+}
+.zoom-sheet p {
+  margin: 0;
+}
+.zoom-src {
+  margin-top: 8px;
+  padding-top: 6px;
+  border-top: 1px solid var(--paper-rule);
+  font: 400 12px/1.5 var(--font);
+  color: var(--paper-muted);
+}
+@media (max-width: 640px) {
+  .zoom {
+    padding: 14px;
+  }
+  .bag {
+    padding: 8px;
+  }
+}

@@ -72,3 +72,24 @@
 第一日: Day One
 第二日: Day Two
 第三日: Day Three
+# 卷宗元件（P2-6）：案卷登錄表、照片紀錄表、證物袋、放大檢視。
+案卷登錄表: Docket
+'dossier::序號': No.
+'dossier::日期': Date
+'dossier::事項': Proceedings
+尚未發生: Not yet entered
+'dossier::案號': Case No.
+'dossier::照片序號': Photo No.
+'dossier::時間': Taken
+'dossier::攝影者': Photographer
+照片已遮蔽: Photo withheld
+'dossier::證物項次': Item No.
+'dossier::取得方式與單號': Obtained by / ref.
+'dossier::取得地點或提出人': Location or produced by
+'dossier::內容說明': Description
+'dossier::日期時間': Date / time
+'dossier::交出': Released by
+'dossier::收受': Received by
+'dossier::目的': Purpose
+放大檢視 {name}: 'Close-up: {name}'
+放大檢視: Close-up

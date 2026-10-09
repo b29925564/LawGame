@@ -24,6 +24,7 @@ import { useCardPick } from './pick';
 import { Speech } from './Portrait';
 import { RelationPicker } from './RelationPicker';
 import { Cork, type CorkItem } from './Cork';
+import { Docket, EvidenceZoom } from './Dossier';
 import { Redaction } from './Redaction';
 import { Shell, Tabs } from './Shell';
 import { Timeline } from './Timeline';
@@ -209,6 +210,8 @@ export function Desk({ scene }: { scene: DeskScene }) {
       {app === 'docs' && <Docs scene={scene} />}
       {app === 'board' && <Board scene={scene} held={held} />}
       {app === 'jobs' && <Jobs scene={scene} held={held} />}
+      {/* 法院系統分頁頂端是案卷登錄表的主要位置（設計師 P2-6）：真的登錄表就住在法院系統裡。 */}
+      {app === 'court' && <Docket progress={progress} />}
       {app === 'court' && <Motions scene={scene} held={held} />}
       {app === 'discovery' && <Discovery scene={scene} />}
     </Shell>
@@ -470,6 +473,9 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
     }));
   const pool = [...args, ...scene.cards.filter((c) => held.includes(c.id))];
   const nameOf = (id: string) => pool.find((c) => c.id === id)?.name ?? id;
+  // 光圈裡的照片或證物袋按「放大」：完整的照片紀錄表與保管鏈（設計師 P2-6）。
+  const [zoomed, setZoomed] = useState<string | null>(null);
+  const zoomCard = scene.cards.find((c) => c.id === zoomed);
   const found = desk.findings(scene, st).map((l, i) => ({
     id: l.id,
     name: `發現 ${i + 1}`,
@@ -710,7 +716,11 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
           onPick={toggleLinkCard}
           slot={corkSlot}
           jury={{ on: juryView, cards: juryCards, provenance: sketchSource }}
+          onZoom={setZoomed}
         />
+        {zoomCard && (
+          <EvidenceZoom item={zoomCard} progress={progress} onClose={() => setZoomed(null)} />
+        )}
         {/* 陪審團視角只看不動：連線操作收起來，畫面上不留黃（一格一黃給的是下一步，這裡沒有下一步）。
             位置照留，切換時版面不跳（捲軸出現或消失會讓板子變寬，速寫也得重畫）。 */}
         <div className="bench-ops-wrap">

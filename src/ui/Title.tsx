@@ -6,6 +6,7 @@ import { LangSwitch } from './lang';
 import { readSave, SLOTS, type Slot } from '../engine/save';
 import { unlockAudio } from '../engine/sound';
 import { Credits } from './Credits';
+import { DocketMini } from './Dossier';
 
 const when = (t: number, lang: string) =>
   new Date(t).toLocaleString(lang === 'en' ? 'en-US' : 'zh-TW', {
@@ -44,6 +45,8 @@ export function SlotList({
               <span className="muted">
                 {f ? `${t(f.label)}・${when(f.savedAt, lang)}` : t('空')}
               </span>
+              {/* 縮小的案卷登錄表加 Bates 區間（設計師 P2-6；設定集第 10 章）。 */}
+              {f && <DocketMini progress={f.progress} />}
             </button>
           </li>
         );
