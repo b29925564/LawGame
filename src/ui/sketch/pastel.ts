@@ -11,8 +11,9 @@
  *   5. 邊界用斜向短筆觸抖開；最暗處加稀疏 45° 排線
  *   6. 卡片輪廓、連線用炭筆／粉彩再勾一次
  *   7. 下緣是沒畫完的紙：停筆線以下只剩紙紋
- *   8. 右下角簽名（出處標記，不翻譯、不隨主題變）
+ *   8. 字最後寫（drawSketchText）：卡名是畫家的手寫炭筆字；下緣是出處小字（設定集 6.6）
  * 固定種子：同一個版面每次畫出來都一樣。
+ * buildSketch 不碰 DOM，可以放在 Worker 裡算（sketch.worker.ts）；字要用頁面載入的字型，回主執行緒寫。
  */
 
 export type RGB = [number, number, number];
@@ -46,18 +47,31 @@ export type SketchInput = {
   scale: number;
   cards: SketchCard[];
   strings: SketchString[];
-  /** 吊燈：離中心的距離（以半寬為 1）→ 亮度倍率。 */
-  lamp: (d: number) => number;
+  /** 吊燈光圈的停點：離中心的距離（以半寬為 1）→ 亮度倍率。 */
+  lamp: [number, number][];
   base: { lum: number; rgb: RGB };
   paper: RGB;
   ink: RGB;
   chalk: RGB;
-  signature: string;
-  fonts: { doc: string; hand: string };
 };
 
 /** 一筆：一串點，起筆粗、收筆細。 */
-type Stroke = { pts: number[]; w: number; rgb: RGB; a: number };
+export type Stroke = { pts: number[]; w: number; rgb: RGB; a: number };
+
+/** 圖版的寬（RD-ART-0903-J 是 1440×860）：筆觸數量與長度都以圖版為準換算到這塊板。 */
+const PLATE_W = 1440;
+const PLATE_H = 860;
+
+function lampAt(stops: [number, number][], d: number) {
+  for (let i = 1; i < stops.length; i++) {
+    const [d1, v1] = stops[i];
+    if (d <= d1) {
+      const [d0, v0] = stops[i - 1];
+      return v0 + ((v1 - v0) * (d - d0)) / (d1 - d0);
+    }
+  }
+  return stops[stops.length - 1][1];
+}
 
 const RED: RGB = [0xb8, 0x32, 0x2c];
 const GREEN: RGB = [0x2f, 0x7a, 0x52];
@@ -140,8 +154,6 @@ export type Sketch = {
   base: ImageData;
   /** 依畫的順序排好的筆觸；進場時依序畫出來（--dur-sketch）。 */
   strokes: Stroke[];
-  /** 最後才寫的字：卡片內容與簽名。 */
-  text: (ctx: CanvasRenderingContext2D) => void;
 };
 
 export function buildSketch(inp: SketchInput): Sketch {
@@ -157,47 +169,78 @@ export function buildSketch(inp: SketchInput): Sketch {
     h: c.h * S,
   }));
 
+  // 卡片遮罩：每個像素在哪張卡上（0 是軟木，k 是第 k 張卡）。逐像素判斷太慢，先算一次。
+  const cardAt = new Uint8Array(W * H);
+  cards.forEach((c, k) => {
+    const cs = corners(c);
+    const x0 = Math.max(0, Math.floor(Math.min(...cs.map((p) => p[0]))));
+    const x1 = Math.min(W - 1, Math.ceil(Math.max(...cs.map((p) => p[0]))));
+    const y0 = Math.max(0, Math.floor(Math.min(...cs.map((p) => p[1]))));
+    const y1 = Math.min(H - 1, Math.ceil(Math.max(...cs.map((p) => p[1]))));
+    for (let y = y0; y <= y1; y++)
+      for (let x = x0; x <= x1; x++) if (inCard(c, x, y)) cardAt[y * W + x] = k + 1;
+  });
+  const idx = (x: number, y: number) =>
+    Math.min(H - 1, Math.max(0, Math.round(y))) * W + Math.min(W - 1, Math.max(0, Math.round(x)));
+
   // ── 1. 亮度場：軟木 × 吊燈，卡片是紙（也在燈下）。
   const raw = new Float32Array(W * H);
   const half = W / 2;
+  // 光圈倍率查表（d 0–2，每 1/512 一格）。
+  const lamp = new Float32Array(1024);
+  for (let k = 0; k < 1024; k++) lamp[k] = lampAt(inp.lamp, k / 512);
   for (let y = 0; y < H; y++)
     for (let x = 0; x < W; x++) {
-      const d = Math.hypot(x - W / 2, y - H / 2) / half;
-      let lum = inp.base.lum;
-      for (const c of cards) if (inCard(c, x, y)) lum = c.lum;
-      raw[y * W + x] = lum * inp.lamp(d);
+      const i = y * W + x;
+      const dx = x - W / 2;
+      const dy = y - H / 2;
+      const d = Math.sqrt(dx * dx + dy * dy) / half;
+      const k = cardAt[i];
+      raw[i] = (k ? cards[k - 1].lum : inp.base.lum) * lamp[Math.min(1023, Math.round(d * 512))];
     }
   // 5%–98.5% 拉到 0–1，gamma 1.7（速寫畫家把暗部畫得比相機亮），模糊 3px。
-  const sorted = Float32Array.from(raw).sort();
-  const lo = sorted[Math.floor(sorted.length * 0.05)];
+  // 百分位用直方圖（2048 格）取，不排序整張圖。
+  const pct = (() => {
+    let max = 1e-6;
+    for (let i = 0; i < raw.length; i++) if (raw[i] > max) max = raw[i];
+    const bins = new Uint32Array(2048);
+    for (let i = 0; i < raw.length; i++) bins[Math.min(2047, Math.floor((raw[i] / max) * 2048))]++;
+    return (q: number) => {
+      const target = raw.length * q;
+      let acc = 0;
+      for (let b = 0; b < 2048; b++) {
+        acc += bins[b];
+        if (acc > target) return ((b + 0.5) / 2048) * max;
+      }
+      return max;
+    };
+  })();
+  const lo = pct(0.05);
   // 上限至少是滿光下的白紙：板上卡少時，軟木不會被拉成最亮的一階。
-  const hi = Math.max(sorted[Math.floor(sorted.length * 0.985)], 0.95);
+  const hi = Math.max(pct(0.985), 0.95);
   const norm = new Float32Array(W * H);
+  const gamma = new Float32Array(4097);
+  for (let k = 0; k <= 4096; k++) gamma[k] = Math.pow(k / 4096, 1 / 1.7);
+  const span = Math.max(1e-6, hi - lo);
   for (let i = 0; i < norm.length; i++)
-    norm[i] = Math.pow(Math.min(1, Math.max(0, (raw[i] - lo) / Math.max(1e-6, hi - lo))), 1 / 1.7);
+    norm[i] = gamma[Math.round(Math.min(1, Math.max(0, (raw[i] - lo) / span)) * 4096)];
   const L = boxBlur(norm, W, H, Math.round(3 * S));
   // 筆觸方向用更大的模糊：順著光圈的切線，而不是逐像素的雜訊。
   const F = boxBlur(boxBlur(norm, W, H, Math.round(10 * S)), W, H, Math.round(6 * S));
-  const at = (a: Float32Array, x: number, y: number) =>
-    a[
-      Math.min(H - 1, Math.max(0, Math.round(y))) * W + Math.min(W - 1, Math.max(0, Math.round(x)))
-    ];
-
-  // 原色：軟木或卡片紙（淺粉彩帶 15–35% 原色）。
-  const hueAt = (x: number, y: number): RGB => {
-    for (let i = cards.length - 1; i >= 0; i--) if (inCard(cards[i], x, y)) return cards[i].rgb;
-    return inp.base.rgb;
-  };
+  const at = (a: Float32Array, x: number, y: number) => a[idx(x, y)];
 
   // ── 下緣沒畫完：停筆線（兩個正弦疊出的粗糙邊）；以上 46px 乾擦變薄。
   const band = (70 + ((inp.w - 640) * 90) / 800) * S;
   const p1 = rand() * 6;
   const p2 = rand() * 6;
-  const stopAt = (x: number) =>
-    H -
-    Math.max(40 * S, band) +
-    Math.sin(x / (W / 3.1) + p1) * 9 * S +
-    Math.sin(x / (W / 11.7) + p2) * 4 * S;
+  const stopLine = new Float32Array(W);
+  for (let x = 0; x < W; x++)
+    stopLine[x] =
+      H -
+      Math.max(40 * S, band) +
+      Math.sin(x / (W / 3.1) + p1) * 9 * S +
+      Math.sin(x / (W / 11.7) + p2) * 4 * S;
+  const stopAt = (x: number) => stopLine[Math.min(W - 1, Math.max(0, Math.round(x)))];
   const dry = 46 * S;
   const fade = (x: number, y: number) => {
     const s = stopAt(x);
@@ -218,43 +261,63 @@ export function buildSketch(inp: SketchInput): Sketch {
     }
 
   // 卡片裡面是乾淨的紙：背景排線不畫進卡裡（輪廓另外勾）。
-  const onCard = (x: number, y: number) => cards.some((c) => inCard(c, x, y));
+  const onCard = (x: number, y: number) => cardAt[idx(x, y)] > 0;
 
   // ── 2–3. 分階上色，紙紋決定哪裡吃到粉彩。
   const ink = inp.ink;
   const chalk = inp.chalk;
   const paper = inp.paper;
   const base = new ImageData(W, H);
+  // 這塊板就是圖版的那塊板：筆觸數量照圖版給，長度依板寬比例縮（太小的板不再縮，筆觸會糊成點）。
+  const u = Math.min(1, Math.max(0.6, inp.w / PLATE_W));
+  const plate = (inp.w * PLATE_H) / (inp.h * PLATE_W);
   const tierOf = (v: number) => (v < 0.12 ? 0 : v < 0.24 ? 1 : v < 0.48 ? 2 : v < 0.7 ? 3 : 4);
   const cover = [0.6, 0.5, 0, 0.65, 0.8];
+  // 逐像素不配置陣列：固定的幾個顏色先算好，紙紋只差一個係數。
+  const c0 = mix(ink, paper, 0.08);
+  const c1 = mix(ink, paper, 0.45);
+  const c3 = mix(paper, chalk, 0.45);
+  const d = base.data;
+  const put = (o: number, r: number, g: number, b: number) => {
+    d[o] = r;
+    d[o + 1] = g;
+    d[o + 2] = b;
+    d[o + 3] = 255;
+  };
   for (let y = 0; y < H; y++)
     for (let x = 0; x < W; x++) {
       const i = y * W + x;
+      const o = i * 4;
       const v = L[i];
       const t = tierOf(v);
-      let col: RGB;
-      const f = fade(x, y);
+      const f = Math.min(1, Math.max(0, (stopLine[x] - y) / dry));
+      const k = cardAt[i];
       // 卡紙吃粉筆比較滿，字才讀得出來。
-      const c = t === 4 && onCard(x, y) ? 0.93 : cover[t];
+      const c = t === 4 && k ? 0.93 : cover[t];
       if (t !== 2 && f > 0 && tooth[i] < c * f) {
-        if (t === 0) col = mix(ink, paper, 0.08);
-        else if (t === 1) col = mix(ink, paper, 0.45);
-        else if (t === 3)
-          col = mix(
-            mix(paper, chalk, 0.45),
-            hueAt(x, y),
-            0.15 + 0.2 * ((v - 0.48) / 0.22) * (onCard(x, y) ? 1 : 0),
+        if (t === 0) put(o, c0[0], c0[1], c0[2]);
+        else if (t === 1) put(o, c1[0], c1[1], c1[2]);
+        else if (t === 3) {
+          // 淺粉彩帶 15–35% 原色（軟木或卡片紙）。
+          const hue = k ? cards[k - 1].rgb : inp.base.rgb;
+          const m = 0.15 + 0.2 * ((v - 0.48) / 0.22) * (k ? 1 : 0);
+          put(
+            o,
+            c3[0] + (hue[0] - c3[0]) * m,
+            c3[1] + (hue[1] - c3[1]) * m,
+            c3[2] + (hue[2] - c3[2]) * m,
           );
-        else col = chalk;
+        } else put(o, chalk[0], chalk[1], chalk[2]);
       } else {
         // 紙本身也有一點紋理。
-        col = mix(paper, ink, (0.5 - tooth[i]) * 0.06);
+        const m = (0.5 - tooth[i]) * 0.06;
+        put(
+          o,
+          paper[0] + (ink[0] - paper[0]) * m,
+          paper[1] + (ink[1] - paper[1]) * m,
+          paper[2] + (ink[2] - paper[2]) * m,
+        );
       }
-      const o = i * 4;
-      base.data[o] = col[0];
-      base.data[o + 1] = col[1];
-      base.data[o + 2] = col[2];
-      base.data[o + 3] = 255;
     }
 
   const strokes: Stroke[] = [];
@@ -298,16 +361,16 @@ export function buildSketch(inp: SketchInput): Sketch {
   for (let y = 0; y < H; y += step)
     for (let x = 0; x < W; x += step) {
       const v = at(L, x, y);
-      const p = 0.06 + 0.1 * (1 - v);
+      const p = (0.06 + 0.1 * (1 - v)) * 2;
       if (rand() > p) continue;
       const sx = x + rand() * step;
       const sy = y + rand() * step;
       if (fade(sx, sy) <= 0.05 || onCard(sx, sy)) continue;
-      const len = (v < 0.3 ? 16 + rand() * 10 : v < 0.62 ? 9 + rand() * 6 : 4 + rand() * 4) * S;
+      const len = (v < 0.3 ? 16 + rand() * 10 : v < 0.62 ? 9 + rand() * 6 : 4 + rand() * 4) * S * u;
       const pts = trace(sx, sy, len, rand() < 0.5 ? 1 : -1);
       if (pts.length < 6) continue;
       const c = colorOf(v);
-      const w0 = (0.9 + rand() * 1.3) * S;
+      const w0 = (0.9 + rand() * 1.3) * S * Math.sqrt(u);
       strokes.push({ pts, w: w0, rgb: c.rgb, a: c.a * fade(sx, sy) });
       if (rand() < 0.3) {
         const back = pts.slice();
@@ -318,8 +381,8 @@ export function buildSketch(inp: SketchInput): Sketch {
       }
     }
 
-  // ── 5. 邊界抖開：斜向短筆觸（1440×860 上 26,000 條，依面積換算）。
-  const dith = Math.round((26000 * W * H) / (1440 * 860 * S * S));
+  // ── 5. 邊界抖開：斜向短筆觸（圖版 1440×860 上 26,000 條；板子比例不同時依面積換算）。
+  const dith = Math.round(26000 / plate);
   for (let k = 0; k < dith; k++) {
     const x = rand() * W;
     const y = rand() * H;
@@ -327,7 +390,7 @@ export function buildSketch(inp: SketchInput): Sketch {
     if (f <= 0.1 || onCard(x, y)) continue;
     const v = Math.min(1, Math.max(0, at(L, x, y) + (rand() - 0.5) * 0.12));
     const c = colorOf(v);
-    const l = (3 + rand() * 6) * S;
+    const l = (3 + rand() * 6) * S * u;
     strokes.push({
       pts: [x, y, x + l * 0.7, y - l * 0.7],
       w: 0.8 * S,
@@ -340,15 +403,19 @@ export function buildSketch(inp: SketchInput): Sketch {
     const x = rand() * W;
     const y = rand() * H;
     if (at(L, x, y) >= 0.12 || fade(x, y) < 0.5) continue;
-    const l = (10 + rand() * 12) * S;
+    const l = (10 + rand() * 12) * S * u;
     strokes.push({ pts: [x, y, x + l * 0.71, y + l * 0.71], w: 0.9 * S, rgb: ink, a: 0.5 });
   }
   // 依畫的順序：先背景排線（由外往內），卡片輪廓和連線最後。
-  strokes.sort(
-    (a, b) =>
-      Math.hypot(b.pts[0] - W / 2, b.pts[1] - H / 2) -
-      Math.hypot(a.pts[0] - W / 2, a.pts[1] - H / 2),
-  );
+  // 依離中心的距離分桶（由遠到近），比逐一比較的排序快得多。
+  const reach = Math.hypot(W, H) / 2;
+  const buckets: Stroke[][] = Array.from({ length: 1024 }, () => []);
+  for (const st of strokes) {
+    const r = Math.hypot(st.pts[0] - W / 2, st.pts[1] - H / 2) / reach;
+    buckets[1023 - Math.min(1023, Math.floor(r * 1024))].push(st);
+  }
+  strokes.length = 0;
+  for (const b of buckets) for (const st of b) strokes.push(st);
 
   // ── 6. 卡片輪廓：炭筆勾兩次，每次有一點抖。
   for (const c of cards) {
@@ -397,34 +464,51 @@ export function buildSketch(inp: SketchInput): Sketch {
     }
   }
 
-  // ── 7–8. 字：卡片內容用粉筆或炭筆（看卡在第幾階），簽名在右下角留白的紙上。
-  const text = (ctx: CanvasRenderingContext2D) => {
-    ctx.save();
-    ctx.textBaseline = 'top';
-    for (const c of cards) {
-      const v = at(L, c.cx, c.cy);
-      ctx.save();
-      ctx.translate(c.cx, c.cy);
-      ctx.rotate(c.angle);
-      ctx.fillStyle = v >= 0.48 ? `rgb(${ink.join(' ')} / 0.9)` : `rgb(${chalk.join(' ')} / 0.85)`;
-      ctx.font = `600 ${13 * S}px ${inp.fonts.doc}`;
-      const pad = 10 * S;
-      wrap(ctx, c.label, -c.w / 2 + pad, -c.h / 2 + pad + 4 * S, c.w - 2 * pad, 18 * S, 2);
-      if (c.sub) {
-        ctx.font = `400 ${12 * S}px ${inp.fonts.doc}`;
-        wrap(ctx, c.sub, -c.w / 2 + pad, -c.h / 2 + pad + 42 * S, c.w - 2 * pad, 17 * S, 2);
-      }
-      ctx.restore();
-    }
-    ctx.fillStyle = `rgb(${ink.join(' ')})`;
-    ctx.font = `400 ${17 * S}px ${inp.fonts.hand}`;
-    ctx.textAlign = 'right';
-    ctx.textBaseline = 'alphabetic';
-    ctx.fillText(inp.signature, W - 18 * S, H - 16 * S);
-    ctx.restore();
-  };
+  return { base, strokes };
+}
 
-  return { base, strokes, text };
+/**
+ * 7–8. 字：卡名與副標是畫家的手寫（--font-hand、炭筆色），寫在卡紙上；
+ * 出處小字 14px 放在下緣沒畫完的紙上（設定集 6.6「法庭速寫 M. Osei 庭審第一日」）。
+ */
+export function drawSketchText(
+  ctx: CanvasRenderingContext2D,
+  o: {
+    w: number;
+    h: number;
+    scale: number;
+    cards: SketchCard[];
+    ink: RGB;
+    paper: RGB;
+    provenance: string;
+    fonts: { hand: string; source: string };
+  },
+) {
+  const S = o.scale;
+  ctx.save();
+  ctx.scale(S, S);
+  ctx.textBaseline = 'top';
+  ctx.fillStyle = `rgb(${o.ink.join(' ')} / 0.92)`;
+  for (const c of o.cards) {
+    ctx.save();
+    ctx.translate(c.cx, c.cy);
+    ctx.rotate(c.angle);
+    const pad = 10;
+    ctx.font = `400 17px ${o.fonts.hand}`;
+    wrap(ctx, c.label, -c.w / 2 + pad, -c.h / 2 + pad, c.w - 2 * pad, 21, 2);
+    if (c.sub) {
+      ctx.font = `400 14px ${o.fonts.hand}`;
+      wrap(ctx, c.sub, -c.w / 2 + pad, -c.h / 2 + pad + 46, c.w - 2 * pad, 18, 2);
+    }
+    ctx.restore();
+  }
+  // 出處：紙上的字，墨色淡一點，跟畫分開。
+  ctx.fillStyle = `rgb(${mix(o.ink, o.paper, 0.25).join(' ')})`;
+  ctx.font = `400 14px ${o.fonts.source}`;
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'alphabetic';
+  ctx.fillText(o.provenance, o.w - 16, o.h - 14);
+  ctx.restore();
 }
 
 function wrap(
@@ -457,12 +541,12 @@ function wrap(
  * 每一筆描成一個填滿的多邊形（兩側沿法線偏移），一筆只呼叫一次 fill，兩萬筆也畫得動。
  */
 export function drawStrokes(
-  ctx: CanvasRenderingContext2D,
+  ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
   strokes: Stroke[],
   start: number,
   end: number,
 ) {
-  for (let i = start; i < end; i++) {
+  for (let i = Math.max(0, start); i < Math.min(end, strokes.length); i++) {
     const s = strokes[i];
     const p = s.pts;
     const n = p.length / 2;

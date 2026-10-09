@@ -1,7 +1,16 @@
 import { useEffect, useRef, useState } from 'react';
 import { useLang, useT } from '../../i18n';
 import { useScope } from '../lang';
-import { buildSketch, drawStrokes, type RGB, type SketchCard } from './pastel';
+import {
+  buildSketch,
+  drawSketchText,
+  drawStrokes,
+  type RGB,
+  type SketchCard,
+  type SketchInput,
+  type Stroke,
+} from './pastel';
+import type { SketchRequest } from './sketch.worker';
 
 /** 板上要畫的卡：位置（%）與卡寬（%）。 */
 export type JuryCard = {
@@ -24,16 +33,6 @@ const STOPS: [number, number][] = [
   [0.84, 0.22],
   [1, 0.15],
 ];
-function lamp(d: number) {
-  for (let i = 1; i < STOPS.length; i++) {
-    const [d1, v1] = STOPS[i];
-    if (d <= d1) {
-      const [d0, v0] = STOPS[i - 1];
-      return v0 + ((v1 - v0) * (d - d0)) / (d1 - d0);
-    }
-  }
-  return 0.15;
-}
 
 /** 卡紙的亮度與顏色（照片白邊、影印紙、便條）。 */
 const PAPER: Record<string, { lum: number; rgb: RGB; ratio: number }> = {
@@ -56,7 +55,46 @@ function cssColor(expr: string): RGB {
 const reduced = () =>
   typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+type Built = { bitmap: ImageBitmap } | { base: ImageData; strokes: Stroke[] };
+
+let worker: Worker | null | undefined;
+let seq = 0;
+const waiting = new Map<number, (b: Built) => void>();
+/** 速寫在 Worker 裡算；沒有 Worker（測試環境、舊瀏覽器）就在這裡算。 */
+function build(input: SketchInput, mode: SketchRequest['mode']): Promise<Built> {
+  if (worker === undefined) {
+    try {
+      worker = new Worker(new URL('./sketch.worker.ts', import.meta.url), { type: 'module' });
+      worker.onmessage = (e: MessageEvent<Built & { id: number }>) => {
+        waiting.get(e.data.id)?.(e.data);
+        waiting.delete(e.data.id);
+      };
+      worker.onerror = () => {
+        worker = null;
+        // Worker 起不來：已經送出的改在主執行緒算。
+      };
+    } catch {
+      worker = null;
+    }
+  }
+  if (!worker) {
+    const s = buildSketch(input);
+    return Promise.resolve({ base: s.base, strokes: s.strokes });
+  }
+  const id = ++seq;
+  const w = worker;
+  return new Promise((resolve) => {
+    waiting.set(id, resolve);
+    w.postMessage({ id, mode, input } satisfies SketchRequest);
+  });
+}
+
+/** 畫好的速寫依「採納的證據＋版面＋語言＋主題」快取：證據沒變就不重畫。 */
+const cache = new Map<string, ImageBitmap | HTMLCanvasElement>();
+const CACHE_MAX = 6;
+
 // 第一次切進來才依筆觸順序成形（--dur-sketch 900ms）；之後是 180ms 交叉淡化。
+// 筆觸在 Worker 裡事先算好，切過去的那一刻就開始畫。
 let formed = false;
 
 /**
@@ -67,17 +105,19 @@ export function JurySketch({
   on,
   cards,
   look,
-  signature,
+  provenance,
 }: {
   on: boolean;
   cards: JuryCard[];
   look: (kind: string) => string;
-  signature: string;
+  /** 出處小字：「法庭速寫 M. Osei 預審」或「…庭審第一日」。 */
+  provenance: string;
 }) {
   const t = useT();
   const scope = useScope();
   const ref = useRef<HTMLCanvasElement>(null);
   const [scheme, setScheme] = useState(0);
+  const [size, setSize] = useState('');
   useEffect(() => {
     if (typeof matchMedia === 'undefined') return;
     const mq = matchMedia('(prefers-color-scheme: dark)');
@@ -85,8 +125,35 @@ export function JurySketch({
     mq.addEventListener('change', on);
     return () => mq.removeEventListener('change', on);
   }, []);
+  useEffect(() => {
+    const host = ref.current?.parentElement;
+    if (!host || typeof ResizeObserver === 'undefined') return;
+    let timer = 0;
+    // 掛上時的尺寸就是第一次畫的尺寸；之後真的變了才重畫（拖拉視窗時等停下來）。
+    let last = `${host.clientWidth}x${host.clientHeight}`;
+    const ro = new ResizeObserver(() => {
+      clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        const now = `${host.clientWidth}x${host.clientHeight}`;
+        if (now !== last) setSize((last = now));
+      }, 200);
+    });
+    ro.observe(host);
+    return () => {
+      ro.disconnect();
+      clearTimeout(timer);
+    };
+  }, []);
   const lang = useLang((s) => s.lang);
-  const key = `${cards.map((c) => c.id).join()}|${lang}|${scheme}|${signature}`;
+  const key = `${cards.map((c) => `${c.id}@${c.at.join(',')}`).join()}|${lang}|${scheme}|${provenance}|${size}`;
+
+  // 第一次成形要等玩家真的切過來才開始畫；筆觸先在 Worker 算好放著。
+  const onRef = useRef(on);
+  const play = useRef<(() => void) | null>(null);
+  useEffect(() => {
+    onRef.current = on;
+    if (on) play.current?.();
+  }, [on]);
 
   useEffect(() => {
     const cv = ref.current;
@@ -100,11 +167,19 @@ export function JurySketch({
       if (cancelled) return;
       const w = host.clientWidth;
       const h = host.clientHeight;
+      if (!w || !h) return;
       const scale = Math.min(2, window.devicePixelRatio || 1);
-      cv.width = Math.round(w * scale);
-      cv.height = Math.round(h * scale);
-      const doc = getComputedStyle(host).getPropertyValue('--font-doc') || 'serif';
-      const hand = getComputedStyle(host).getPropertyValue('--font-hand') || 'serif';
+      const full = `${key}|${w}x${h}@${scale}`;
+      const hit = cache.get(full);
+      if (hit) {
+        cv.width = Math.round(w * scale);
+        cv.height = Math.round(h * scale);
+        ctx.drawImage(hit, 0, 0);
+        return;
+      }
+      const css = getComputedStyle(host);
+      const hand = css.getPropertyValue('--font-hand') || 'cursive';
+      const source = css.getPropertyValue('--font-mono') || 'monospace';
       const sc: SketchCard[] = cards.map((c) => {
         const p = PAPER[look(c.kind)] ?? PAPER.copy;
         const cw = (c.w / 100) * w;
@@ -123,47 +198,100 @@ export function JurySketch({
           sub: c.sub && t(c.sub, scope),
         };
       });
-      const sketch = buildSketch({
+      // 手寫字型是依字分包下載的：畫布要用的字先載入，否則會退回別的字型。
+      const words = sc.map((c) => `${c.label}${c.sub ?? ''}`).join('');
+      await Promise.all([
+        document.fonts?.load(`17px ${hand}`, words || '證'),
+        document.fonts?.load(`14px ${source}`, provenance),
+      ]).catch(() => undefined);
+      if (cancelled) return;
+      const paper = cssColor('var(--sketch-paper)');
+      const ink = cssColor('var(--sketch-ink)');
+      const input: SketchInput = {
         w,
         h,
         scale,
         cards: sc,
         strings: [],
-        lamp,
+        lamp: STOPS,
         base: { lum: 0.43, rgb: [0x8a, 0x6a, 0x48] },
-        paper: cssColor('var(--sketch-paper)'),
-        ink: cssColor('var(--sketch-ink)'),
+        paper,
+        ink,
         chalk: cssColor('var(--chalk)'),
-        signature,
-        fonts: { doc, hand },
-      });
-      ctx.putImageData(sketch.base, 0, 0);
-      const all = sketch.strokes.length;
-      if (formed || reduced()) {
-        drawStrokes(ctx, sketch.strokes, 0, all);
-        sketch.text(ctx);
+      };
+      const animate = !formed && !reduced();
+      const t0 = performance.now();
+      const got = await build(input, animate ? 'strokes' : 'bitmap');
+      if (cancelled) return;
+      performance.measure?.('jury-sketch-build', { start: t0 });
+      // 換畫布尺寸會清空畫布：算好才換，舊的畫面留到最後一刻。
+      cv.width = Math.round(w * scale);
+      cv.height = Math.round(h * scale);
+      const finish = () => {
+        drawSketchText(ctx, {
+          w,
+          h,
+          scale,
+          cards: sc,
+          ink,
+          paper,
+          provenance,
+          fonts: { hand, source },
+        });
+        // 畫完存一份：證據、語言、主題、尺寸都沒變，下次直接貼上。
+        const snap = document.createElement('canvas');
+        snap.width = cv.width;
+        snap.height = cv.height;
+        snap.getContext('2d')?.drawImage(cv, 0, 0);
+        cache.set(full, snap);
+        if (cache.size > CACHE_MAX) cache.delete(cache.keys().next().value as string);
+      };
+      if ('bitmap' in got) {
+        ctx.drawImage(got.bitmap, 0, 0);
+        got.bitmap.close();
+        finish();
+        performance.measure?.('jury-sketch', { start: t0 });
         return;
       }
-      formed = true;
-      const t0 = performance.now();
-      let done = 0;
-      const frame = (now: number) => {
-        if (cancelled) return;
-        const k = Math.min(1, (now - t0) / 900);
-        const upto = Math.round(all * k);
-        drawStrokes(ctx, sketch.strokes, done, upto);
-        done = upto;
-        if (k < 1) raf = requestAnimationFrame(frame);
-        else sketch.text(ctx);
+      if (!animate) {
+        ctx.putImageData(got.base, 0, 0);
+        drawStrokes(ctx, got.strokes, 0, got.strokes.length);
+        finish();
+        return;
+      }
+      // 依筆觸順序成形（--dur-sketch 900ms）：底層先鋪，筆觸一批一批畫上去，字最後寫。
+      play.current = () => {
+        play.current = null;
+        formed = true;
+        ctx.putImageData(got.base, 0, 0);
+        const all = got.strokes.length;
+        // 起點取第一格的時間戳：rAF 的時間戳是這一格開始的時間，可能早於呼叫當下。
+        let start = -1;
+        let done = 0;
+        const frame = (now: number) => {
+          if (cancelled) return;
+          if (start < 0) start = now;
+          const k = Math.min(1, Math.max(0, (now - start) / 900));
+          const upto = Math.round(all * k);
+          drawStrokes(ctx, got.strokes, done, upto);
+          done = upto;
+          if (k < 1) raf = requestAnimationFrame(frame);
+          else {
+            finish();
+            performance.measure?.('jury-sketch-form', { start, detail: { strokes: all } });
+          }
+        };
+        raf = requestAnimationFrame(frame);
       };
-      raf = requestAnimationFrame(frame);
+      if (onRef.current) play.current();
     };
     void run();
     return () => {
       cancelled = true;
+      play.current = null;
       cancelAnimationFrame(raf);
     };
-    // key 涵蓋卡片、語言與主題。
+    // key 涵蓋卡片、語言、主題與尺寸。
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key]);
 

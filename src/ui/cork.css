@@ -451,8 +451,24 @@ body:has(.cork) .card .mini-btn[aria-pressed='true'] {
   border: none !important;
   box-shadow: none;
 }
+/* 連線操作與陪審團視角的說明疊在同一塊：切換時版面不動。 */
+.bench-ops-wrap {
+  position: relative;
+}
+.bench-ops {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
 .jury-note {
+  position: absolute;
+  inset: 0 0 auto;
   margin: 0;
   font-size: var(--fs-ui-meta);
+  line-height: 1.6;
   color: var(--muted);
+}
+/* 陪審團視角：連線操作留著位置但看不見、點不到。 */
+.bench-ops.off {
+  visibility: hidden;
 }
