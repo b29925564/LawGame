@@ -39,9 +39,10 @@ export function spaced(kicker: string) {
 export function splitSlate(place: string): [string, string] {
   const zh = /^(.*)\u3000((?:週|第.天|隔天|一週後|兩週後|\d{1,2}:\d{2}).*)$/.exec(place);
   if (zh) return [zh[1], zh[2]];
-  const en = /^(.*?)[.,] ((?:Mon|Tue|Wed|Thu|Fri|Sat|Sun|Day|The next|One week|Two weeks|\d{1,2}:\d{2}).*)$/.exec(
-    place,
-  );
+  const en =
+    /^(.*?)[.,] ((?:Mon|Tue|Wed|Thu|Fri|Sat|Sun|Day|The next|One week|Two weeks|\d{1,2}:\d{2}).*)$/.exec(
+      place,
+    );
   if (en) return [en[1], en[2]];
   return [place, ''];
 }
