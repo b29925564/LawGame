@@ -3,8 +3,17 @@ import { expect, test, type Page } from '@playwright/test';
 // 整集通關一次就接近 30 秒，CI 機器較慢。
 test.describe.configure({ timeout: 90_000 });
 
-const next = (page: Page, name: string | RegExp = '繼續') =>
-  page.getByRole('button', { name }).first().click();
+/** 按「繼續」；遇到幕卡（自己停 2.5 秒後切走，沒有按鈕）就點一下跳過。 */
+async function next(page: Page, name: string | RegExp = '繼續') {
+  // 精確比對：集尾卡下的「繼續第 2 集」不是「繼續」。
+  const button = page.getByRole('button', { name, exact: typeof name === 'string' }).first();
+  const card = page.locator('main[data-auto]');
+  await button.or(card).first().waitFor();
+  if (await card.isVisible()) {
+    await card.click();
+    await card.waitFor({ state: 'detached' });
+  } else await button.click();
+}
 
 /**
  * 卡片按鈕只比對第一行的名字。
@@ -76,7 +85,12 @@ async function toList(page: Page) {
 
 /** 一直按「繼續」直到某個東西出現；對話長度改了測試也不會壞。 */
 async function until(page: Page, target: ReturnType<Page['getByRole']>, limit = 30) {
+  const go = page
+    .getByRole('button', { name: '繼續', exact: true })
+    .or(page.locator('main[data-auto]'));
   for (let i = 0; i < limit; i++) {
+    // 集尾卡的那一句停留結束才出現：等目標或下一步其中一個先出來。
+    await target.or(go).first().waitFor();
     if (await target.isVisible().catch(() => false)) return;
     await next(page);
   }
