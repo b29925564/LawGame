@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
-import { custodyOf, episodeOf } from '../engine/game';
+import { branchContext, caseClosed, custodyOf, episodeOf } from '../engine/game';
+import { matches } from '../engine/episode/branch';
 import type { Card, Episode } from '../engine/episode/schema';
 import type { Progress } from '../engine/save';
 import { useLang, useT } from '../i18n';
@@ -32,20 +33,42 @@ export function dossierOf(ep: Episode, id: string): { photo?: PhotoRecord; bag?:
 
 // ── <Docket> 案卷登錄表 ──
 
-/** 登錄表的一行：每張寫了 docket 的幕卡或日卡一行，序號依卡的順序從 1 起。 */
-export type DocketRow = { no: number; at: number; date: string; entry: string };
+/** 登錄表的一行。done 是已經發生（寫出日期與事項）；沒發生的畫黑條「尚未發生」。 */
+export type DocketRow = { no: number; date: string; entry: string; done: boolean };
 
-export function docketOf(ep: Episode): DocketRow[] {
-  const rows: DocketRow[] = [];
+/**
+ * 案卷登錄表照進度（劇本與內容 #234 的規則）：
+ * - 每張寫了 docket 的幕卡一行，那張卡的 filings 排在它前面；序號依列出來的順序從 1 起。
+ * - 走過的卡：filings 寫了 when 的，條件成立才列；沒成立的分支行不列，也不畫黑條。
+ * - 還沒走到的卡：卡本身和沒寫 when 的 filings 畫黑條；寫了 when 的先不列，免得暴露分支。
+ * - 提前收場（協商成交、撤回起訴）跳過的卡不列。
+ * - 最後一行是 disposition：判決或收場前一條黑條，之後列第一個符合的。
+ */
+export function docketOf(p: Progress): DocketRow[] {
+  const ep = episodeOf(p);
+  const ctx = branchContext(p);
+  const closed = caseClosed(p);
+  const rows: Omit<DocketRow, 'no'>[] = [];
   ep.scenes.forEach((s, at) => {
-    if (s.type === 'card' && s.docket) rows.push({ no: rows.length + 1, at, ...s.docket });
+    if (s.type !== 'card' || (closed && at > closed.at)) return;
+    const done = at <= p.scene;
+    for (const f of s.filings ?? [])
+      if (!f.when || (done && matches(f.when, ctx)))
+        rows.push({ date: f.date, entry: f.entry, done });
+    if (s.docket) rows.push({ ...s.docket, done });
   });
-  return rows;
+  if (ep.disposition) {
+    const decided = ctx.verdict !== null || ctx.outcome !== null;
+    const hit = decided ? ep.disposition.find((d) => matches(d.when, ctx)) : undefined;
+    if (hit) rows.push({ date: hit.date, entry: hit.entry, done: true });
+    else if (!decided) rows.push({ date: '', entry: '', done: false });
+  }
+  return rows.map((r, i) => ({ no: i + 1, ...r }));
 }
 
-/** 目前那一行：走過的最後一張登錄卡。還沒走到第一張是 −1（每一行都還沒發生）。 */
-export function currentRow(rows: readonly DocketRow[], scene: number) {
-  return rows.reduce((cur, r, i) => (r.at <= scene ? i : cur), -1);
+/** 目前那一行：已經發生的最後一行。一行都還沒發生是 −1。 */
+export function currentRow(rows: readonly DocketRow[]) {
+  return rows.reduce((cur, r, i) => (r.done ? i : cur), -1);
 }
 
 /**
@@ -56,8 +79,8 @@ export function Docket({ progress }: { progress: Progress }) {
   const t = useT();
   const id = useId();
   const ep = episodeOf(progress);
-  const rows = docketOf(ep);
-  const cur = currentRow(rows, progress.scene);
+  const rows = docketOf(progress);
+  const cur = currentRow(rows);
   const terms = caseTermsOf(ep.scenes as { burden?: Burden }[]);
   // 手機：只看最近三行（到目前那一行）和一條黑條，聲請卡留在第一屏；「展開全部」看整張（設計師 P2-6 r1）。
   const [all, setAll] = useState(false);
@@ -116,9 +139,8 @@ export function Docket({ progress }: { progress: Progress }) {
  */
 export function DocketMini({ progress }: { progress: Progress }) {
   const t = useT();
-  const ep = episodeOf(progress);
-  const rows = docketOf(ep);
-  const cur = currentRow(rows, progress.scene);
+  const rows = docketOf(progress);
+  const cur = currentRow(rows);
   return (
     <span className="dk-mini" aria-hidden>
       {rows.slice(0, cur + 1).map((r, i) => (

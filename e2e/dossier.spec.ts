@@ -41,10 +41,11 @@ test('法院系統頂端的案卷登錄表：走過的行照實、目前那一�
     .first()
     .click();
   const docket = page.getByRole('region', { name: '案卷登錄表' });
-  await expect(docket.locator('tbody tr')).toHaveCount(6);
+  // 幕卡三行、拿到心率紀錄與稽核紀錄才有的法院事件兩行、檢視令一行；之後三張卡和判決各一條黑條。
+  await expect(docket.locator('tbody tr')).toHaveCount(10);
   await expect(docket.locator('tr[aria-current="step"]')).toContainText('04/03/2026');
   await expect(docket.locator('tr[aria-current="step"]')).toContainText('預審');
-  await expect(docket.getByText('尚未發生')).toHaveCount(3);
+  await expect(docket.getByText('尚未發生')).toHaveCount(4);
 });
 
 test('證物袋與照片紀錄表：證據欄展開看得到，放大檢視是完整版，Esc 關掉', async ({ page }) => {
