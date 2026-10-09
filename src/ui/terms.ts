@@ -8,12 +8,16 @@ const UI = {
     deal: '認罪協商成立',
     caseNo: 'No. 26-CR-0417',
     parties: '卡爾德州　訴　伊森・蕭',
+    plaintiff: '卡爾德州',
+    defendant: '伊森・蕭',
   },
   civil: {
     other: '原告律師',
     deal: '和解成立',
     caseNo: 'No. 26-CV-1182',
     parties: '維加　訴　卡爾德物流',
+    plaintiff: '維加',
+    defendant: '卡爾德物流',
   },
 } as const;
 

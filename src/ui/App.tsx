@@ -12,6 +12,7 @@ import { Desk } from './Desk';
 import { Dialogue } from './Dialogue';
 import { GameMenu } from './GameMenu';
 import { Interview } from './Interview';
+import { ActCard, kelvinOf, PlaceSlate, splitHeadline } from './ActCard';
 import { Announcer } from './Marks';
 import { Negotiation } from './Negotiation';
 import { Phone } from './Phone';
@@ -45,10 +46,48 @@ export function App() {
 
   const scene = sceneOf(progress);
   const next = scene ? null : followingEpisode(progress);
+  const ep = episodeOf(progress);
+  // 幕卡（設定集 11.3）：片頭卡的集名寫在第一行；同一幕的第二張卡是日卡；集尾也是同一個版型。
+  const card = scene?.type === 'card' ? scene : null;
+  const opening = card?.act === '片頭';
+  const prevCard = ep.scenes
+    .slice(0, progress.scene)
+    .reverse()
+    .find((x) => x.type === 'card');
+  const day = !!card && prevCard?.type === 'card' && prevCard.act === card.act;
+  const headline = !scene
+    ? { kicker: t('第 {n} 集', { n: ep.number }), title: t('本集完') }
+    : card
+      ? splitHeadline(
+          opening ? t(card.lines[0], card.id) : t(card.title, card.id),
+          day ? 'day' : 'act',
+        )
+      : { kicker: '', title: '' };
+  const lines = card ? (opening ? card.lines.slice(1) : card.lines) : [];
+  // 場記：這張卡之後第一個有地點的場景；後面沒有就用前面最後一個。
+  const placed = (list: typeof ep.scenes) =>
+    list.find((x): x is typeof x & { place: string } => 'place' in x && !!x.place);
+  const at = progress.scene;
+  const where = card
+    ? (placed(ep.scenes.slice(at + 1)) ?? placed(ep.scenes.slice(0, at).reverse()))
+    : placed(ep.scenes.slice().reverse());
+  const slate = where && t(where.place, where.id);
+  // 旁白裡和場記重複的地點不再寫一次。
+  const said = lines.filter((l) => !where?.place.startsWith(l));
+  // 地點字卡：換了地點、前一場又不是幕卡（幕卡自己有場記）時，左下一行場記。
+  const here = scene && 'place' in scene && scene.place ? scene.place : '';
+  const before = ep.scenes[at - 1];
+  const moved =
+    !!here && before?.type !== 'card' && placed(ep.scenes.slice(0, at).reverse())?.place !== here;
+  // Bates 是裝飾性的出處數字：集數＋場景序。
+  const bates = `WH-E${String(ep.number).padStart(2, '0')}-${String(57 + at * 13).padStart(6, '0')}`;
   return (
     <SceneScope.Provider value={scene?.id}>
       <Announcer />
       <GameMenu />
+      {moved && scene && (
+        <PlaceSlate key={scene.id} place={t(here, scene.id)} kelvin={kelvinOf(here)} />
+      )}
       {scene?.type === 'phone' && <Phone key={scene.id} scene={scene} />}
       {scene?.type === 'dialogue' && <Dialogue key={scene.id} scene={scene} />}
       {scene?.type === 'interview' && <Interview key={scene.id} scene={scene} />}
@@ -62,15 +101,12 @@ export function App() {
       {scene?.type === 'opening' && <Opening key={scene.id} scene={scene} />}
       {scene?.type === 'closing' && <Closing key={scene.id} scene={scene} />}
       {(!scene || scene.type === 'card') && (
-        <main className="scene title-card">
-          {/* 本集完：眉標寫是哪一集，不跟大標重複（體驗評測 v88）。 */}
-          <p className="eyebrow">
-            {scene
-              ? t(scene.act)
-              : `${t('第 {n} 集', { n: episodeOf(progress).number })}・${t(episodeOf(progress).title)}`}
-          </p>
-          <h1>{t(scene?.type === 'card' ? scene.title : '本集完', scene?.id)}</h1>
-          {scene?.type === 'card' && scene.lines.map((l) => <p key={l}>{t(l, scene.id)}</p>)}
+        <ActCard
+          headline={headline}
+          place={slate}
+          bates={bates}
+          lines={said.length > 0 && said.map((l) => <p key={l}>{t(l, scene?.id)}</p>)}
+        >
           {scene ? (
             <button className="primary" onClick={advance}>
               {t('繼續')}
@@ -87,7 +123,7 @@ export function App() {
               </button>
             </div>
           )}
-        </main>
+        </ActCard>
       )}
     </SceneScope.Provider>
   );

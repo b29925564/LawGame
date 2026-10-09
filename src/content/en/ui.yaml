@@ -58,3 +58,10 @@
 文件: Document
 物品: Object
 宣誓陳述: Affidavit
+# 幕卡的案件標題欄（設定集 11.3）
+卡爾德州: State of Calder
+維加: Marisol Vega
+'caption::原告': Plaintiff
+'caption::被告': Defendant
+'caption::訴': v.
+'caption::案號': Case No.
