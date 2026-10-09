@@ -800,7 +800,8 @@ button.cand.on {
  */
 button.cand[aria-pressed='true'],
 .closing-args [aria-pressed='true'],
-.closing-tones [aria-pressed='true'] {
+.closing-tones [aria-pressed='true'],
+.rec-bar-top [aria-pressed='true'] {
   border-color: var(--text) !important;
   background: light-dark(rgb(17 23 32 / 5%), rgb(231 234 238 / 6%)) !important;
   box-shadow: inset 3px 0 0 var(--text);
