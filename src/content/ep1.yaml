@@ -10,6 +10,7 @@ _cards: &cards
     time: '16:30'
     text: 週五下午沃斯指控他盜用公款，說週一報警。他離開時喊了「等稽核報告出來，你會後悔的」。
     source: 看守所會見
+    taken: { at: '03/16 10:30', by: 盧卡斯・葛雷　會見筆記 }
   - id: ethan-ride
     name: 伊森的說法：他叫了車
     kind: 陳述
@@ -17,6 +18,7 @@ _cards: &cards
     time: '22:34'
     text: 他沒有車，當晚叫車前往卡爾德大樓，路上和司機說過話。
     source: 看守所會見
+    taken: { at: '03/16 10:30', by: 盧卡斯・葛雷　會見筆記 }
   - id: ethan-message
     name: 伊森的說法：訊息被收回
     kind: 陳述
@@ -24,28 +26,33 @@ _cards: &cards
     time: '23:14'
     text: 沃斯傳訊叫他上樓；他再看時訊息已被收回，但手錶當時跳過通知。
     source: 看守所會見
+    taken: { at: '03/16 10:30', by: 盧卡斯・葛雷　會見筆記 }
   - id: ethan-flee
     name: 伊森的說法：他為什麼跑
     kind: 陳述
     text: 他有前科，怕警察先抓人再問，所以躲了兩天。
     source: 看守所會見
+    taken: { at: '03/16 10:30', by: 盧卡斯・葛雷　會見筆記 }
   - id: ethan-report
     name: 伊森的說法：他先檢舉了沃斯
     kind: 陳述
     date: 週三
     text: 週三以匿名系統檢舉一筆 3,800 萬美元的應收帳款，掛在空殼公司北門貨運名下。他記得舉報編號。
     source: 看守所會見
+    taken: { at: '03/16 10:30', by: 盧卡斯・葛雷　會見筆記 }
   - id: ethan-trophy
     name: 伊森的說法：獎盃
     kind: 陳述
     date: 週五
     text: 他蹲下探脈搏，站起來時獎盃就在手上，自己也說不出為什麼。
     source: 看守所會見
+    taken: { at: '03/16 10:30', by: 盧卡斯・葛雷　會見筆記 }
   - id: indictment
     name: 起訴書
     kind: 文件
     text: 二級謀殺。卡爾德州訴伊森・蕭。
     source: 檢方證據開示
+    filed: { caseNo: 26-CR-0417, date: 03/16/2026 }
     bates: DA-000001
     held: true
   - id: arrest-time
@@ -63,6 +70,7 @@ _cards: &cards
     time: '14:20'
     text: 押解途中，被告未經詢問自行陳述：「我只是想讓他住手。」
     source: 逮捕報告
+    taken: { at: '03/15 14:20', by: 卡港警局 巡邏組　逮捕報告 }
   - id: miranda-form
     name: 權利告知書
     kind: 文件
@@ -146,6 +154,7 @@ _cards: &cards
     time: '19:02'
     text: 蘇菲 19:02 刷卡離開 31 樓，向警方表示她下班後直接回家，沒有再回大樓。
     source: 警方報告
+    taken: { at: '03/14 16:30', by: 雷・柯瓦斯基警探　卡港警局 }
   - id: parking-log
     name: 停車場進出紀錄
     kind: 文件
@@ -161,6 +170,7 @@ _cards: &cards
     time: '20:30'
     text: 潔德・坎農說，蘇菲 20:30 到 22:40 都和她坐在停車場的車上，交給她一份沃斯的行事曆副本。
     source: 電話（潔德・坎農）
+    taken: { at: '03/20 18:40', by: 盧卡斯・葛雷　電話紀錄 }
   - id: blood-report
     name: 補充血跡報告
     kind: 文件
@@ -181,6 +191,7 @@ _cards: &cards
     kind: 陳述
     text: 沃斯每天早上、散會之後都低頭看手錶上的健康 App，數字不好看就發脾氣。
     source: 電話（蘇菲・馬丁內斯）
+    taken: { at: '03/18 11:15', by: 盧卡斯・葛雷　電話紀錄 }
   - id: heart-rate
     name: 沃斯手錶的心率紀錄
     kind: 文件
@@ -266,6 +277,7 @@ _cards: &cards
     kind: 文件
     text: 法院裁定排除巡邏車上的供述，檢方不得在陪審團面前提起。
     source: 法院裁定
+    filed: { caseNo: 26-CR-0417, date: 04/03/2026 }
   - id: rachel-2250
     name: 瑞秋的宣誓陳述：隔壁的聲音
     kind: 宣誓陳述
@@ -273,16 +285,19 @@ _cards: &cards
     time: '22:50'
     text: 她在錄取時宣誓說，22:50 聽見隔壁房間有人倒地的聲音。
     source: 證詞錄取
+    cite: '31:12'
   - id: rachel-meeting
     name: 瑞秋的宣誓陳述：整晚都在開會
     kind: 宣誓陳述
     text: 她宣誓說自己 21:00 到 23:30 全程在線上會議裡，沒有離開座位。
     source: 證詞錄取
+    cite: '18:4'
   - id: meeting-name
     name: 會議名稱：北門結案會議
     kind: 陳述
     text: 瑞秋說出的會議名稱，可以據此調閱出席紀錄。
     source: 證詞錄取
+    cite: '19:2'
 
 # 案卷登錄表最後一行（設計審查 r1）：各分支一句，列第一個符合的。
 disposition:
@@ -1480,6 +1495,10 @@ scenes:
     lines:
       - 卡爾德郡高等法院　第三法庭
       - 先選出十二位陪審員，接著是開場陳述，然後檢方傳喚第一位證人。
+    filings:
+      - date: 04/03/2026
+        when: { cards: [statement-excluded] }
+        entry: 辯方聲請排除被告於巡邏車上之陳述：准許。
     docket:
       date: 04/06/2026
       entry: 陪審團審理第一日：陪審團遴選，十二名陪審員宣誓；雙方開場陳述；檢方傳喚證人雷・柯瓦斯基警探。

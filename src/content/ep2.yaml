@@ -17,6 +17,7 @@ _cards: &cards
     kind: 文件
     text: 原告瑪莉索・維加請求過失致死損害賠償 1,200 萬，另請求懲罰性賠償。
     source: 原告
+    filed: { caseNo: 26-CV-1182, date: 04/20/2026 }
     held: true
   - id: autopsy2
     name: 死亡證明：急性心肌梗塞
@@ -82,6 +83,7 @@ _cards: &cards
     kind: 陳述
     text: 疲勞提醒從系統上線就有，司機要不要休息是他們自己決定的。
     source: 會議（崔佛・米爾斯）
+    taken: { at: '05/04 11:00', by: 盧卡斯・葛雷　會議紀錄 }
   - id: lock-spec
     name: 舊版規格書：疲勞鎖
     kind: 文件
@@ -102,6 +104,10 @@ _cards: &cards
     text: 崔佛・米爾斯在營運群組：「旺季不准任何人被踢下線。我不管系統怎麼寫。」
     source: 卡爾德快遞內部通訊
     bates: CALDER-003005
+    # 硬藏後是前營運專員交給原告，原告交出時蓋自己的號碼。
+    batesIf:
+      - when: { flags: ['discovery:rq-chat:concealed'] }
+        bates: OKF-000611
   - id: legal-memo
     name: 法務意見書（惠特洛克・海爾）
     kind: 文件
@@ -127,11 +133,13 @@ _cards: &cards
     kind: 宣誓陳述
     text: 他在錄取時宣誓說，疲勞提醒「從系統上線就是提醒，從來沒有強制下線過」。
     source: 證詞錄取
+    cite: '42:7'
   - id: errata
     name: 勘誤表：崔佛更正錄取證詞
     kind: 文件
     text: 「第 42 頁第 7 行，更正為：三月以前，系統設有強制下線功能。」簽名：崔佛・米爾斯。依規則 30(e) 提出。
     source: 證詞錄取勘誤
+    cite: '42:7'
   - id: rating-penalty
     name: 普莉亞的證詞：死後還在扣分
     kind: 宣誓陳述
@@ -139,11 +147,13 @@ _cards: &cards
     time: '18:25'
     text: 普莉亞在錄取時證稱：GPS 靜止之後，系統仍判定拒單三次，扣了他 0.3 分。
     source: 證詞錄取（原告方）
+    cite: '27:9'
   - id: daubert-ruling
     name: 裁定：費雪醫師證詞排除
     kind: 文件
     text: 本庭排除費雪醫師關於風險倍數之證詞。原告得另以一般醫學證人說明死因。
     source: 雷耶斯法官
+    filed: { caseNo: 26-CV-1182, date: 05/26/2026 }
 
 # 審前選擇的代價：條件在開庭／調解開始時判斷（提案 2026-10-03）。
 effects:
@@ -261,6 +271,9 @@ scenes:
     title: 合理懷疑
     lines:
       - 第二集　和解的價格
+    filings:
+      - date: 04/20/2026
+        entry: 原告瑪莉索・維加提出起訴狀：請求過失致死損害賠償及懲罰性賠償。
     docket:
       date: 05/04/2026
       entry: 被告委任惠特洛克・海爾律師事務所為訴訟代理人，具狀陳報。
@@ -812,6 +825,7 @@ scenes:
         q: 赫克托・維加的車停下之後，系統做了什麼？
         a: 系統繼續派單。三次都沒有接，系統自動判定拒單，扣了他的評分。
         gives: [rating-penalty]
+        cite: '27:9'
       - id: e-feel
         q: 妳覺得公司是不是根本不在乎司機的死活？
         a: 我……我只是寫程式的。
@@ -976,6 +990,10 @@ scenes:
     title: 第四幕　調解
     lines:
       - 和解不是認輸。是兩邊都承認，自己可能會輸。
+    filings:
+      - date: 05/26/2026
+        when: { cards: [daubert-ruling] }
+        entry: 被告聲請排除原告專家費雪醫師之證詞：准許。
     docket:
       date: 05/28/2026
       entry: 法院調解會議（調解室 2）。

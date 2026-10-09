@@ -560,6 +560,12 @@ function whenChecker(e: Episode, errors: string[]) {
 /** 分支條件：引用的理論要存在；結局 id 不重複；判決類的條件只能用在結辯之後。 */
 function branchErrors(s: Episode['scenes'][number], e: Episode, errors: string[]) {
   const { check, theories, known } = whenChecker(e, errors);
+  if (s.type === 'desk')
+    for (const c of s.cards)
+      for (const b of c.batesIf ?? []) {
+        check(b.when, `卡片 ${c.id} 的 batesIf`);
+        if (before(b.when)) errors.push(`卡片 ${c.id} 的 batesIf 依判決或結果分支`);
+      }
   if (s.type === 'card')
     for (const f of s.filings ?? []) {
       check(f.when, `幕卡 ${s.id} 的登錄表行 ${f.date}`);
