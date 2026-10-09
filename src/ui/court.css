@@ -1678,6 +1678,8 @@ html[lang='en'] .vform .fh .c {
   --rec-gutter: calc(var(--rec-fs) * 2.2);
   --rec-pl: calc(var(--rec-gutter) + var(--rec-fs) * 0.8);
   --rec-pr: calc(var(--rec-fs) * 0.6);
+  /* 行尾掛出去的標點佔的寬（em）：中文全形 1、英文 0.6（Record.tsx paperX 同一個數）。 */
+  --rec-hang: 1;
   --rec-gap-bg: var(--surface);
   display: flex;
   flex-direction: column;
@@ -1690,6 +1692,7 @@ html[lang='en'] .vform .fh .c {
 }
 html[lang='en'] .record {
   --rec-measure: 26.4;
+  --rec-hang: 0.6;
 }
 /*
  * 手機：外框 .shell 的格線欄是 auto，會被筆錄紙的最小寬（一行字數 × 字級）撐開，右邊被 overflow 切掉
@@ -1722,15 +1725,13 @@ html[lang='en'] .record {
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
-  /* 內距寫成變數：黏住的頁首要往上補同樣的量（手機是 0）。 */
-  --rec-sp: 8px;
-  padding: var(--rec-sp);
+  padding: 8px;
   scrollbar-width: thin;
 }
 .rec-paper {
   position: relative;
   width: 100%;
-  min-width: calc((var(--rec-measure) + 3.6) * var(--rec-fs));
+  min-width: calc((var(--rec-measure) + 3.6 + var(--rec-hang)) * var(--rec-fs));
   padding: 0 var(--rec-pr) calc(var(--rec-fs) * 0.4) var(--rec-pl);
   border-radius: 0;
   background:
@@ -1755,36 +1756,12 @@ html[lang='en'] .record {
   color: var(--paper-muted);
   text-transform: uppercase;
 }
+/* 頁首：左邊「審判筆錄　第 N 卷」，右邊頁碼（卷＝Bates 裡的 T，設計師 10-09）。 */
 .rec-head::before {
-  content: attr(data-l);
+  content: attr(data-l) '\3000' attr(data-v);
 }
 .rec-head::after {
   content: attr(data-r);
-}
-/*
- * 最上面那張頁首黏在框頂（框是看紙的視窗，設計師 10-09）：拉到紙邊、背景照抄紙的雙直線，
- * 捲上來的行號不會從頁首旁邊露出來。頁碼由 Record.tsx 跟著捲到的那一頁換。
- */
-.rec-head.pin {
-  position: sticky;
-  /* 黏在框的最上緣（往上補掉捲動框的內距），上面不露出捲過去的字；手機內距是 0，不能補。 */
-  top: calc(-1 * var(--rec-sp));
-  z-index: 2;
-  /* 框頂在小數像素上時，上一行的字會從頁首上緣露出 1px：往上多蓋 2px 紙色。 */
-  box-shadow: 0 -2px 0 var(--paper);
-  margin: 0 calc(-1 * var(--rec-pr)) 0 calc(-1 * var(--rec-pl));
-  padding: 0 var(--rec-pr) 0 var(--rec-pl);
-  background:
-    linear-gradient(var(--paper-rule), var(--paper-rule)) var(--rec-gutter) 0 / 1px 100% no-repeat,
-    linear-gradient(var(--paper-rule), var(--paper-rule)) calc(var(--rec-gutter) + 3px) 0 / 1px 100%
-      no-repeat,
-    var(--paper);
-}
-/* 手機：一頁要捲，Bates 也印在黏住的頁首上（卷、頁、Bates）。 */
-@media (max-width: 1023px) {
-  .rec-head.pin[data-b]::after {
-    content: attr(data-r) '\3000' attr(data-b);
-  }
 }
 /* Bates：每頁右下，Courier Prime 粗體、碳粉色（設定集第 9 章）。 */
 .rec-foot {
@@ -2062,6 +2039,66 @@ html[lang='en'] .stamp.rec-stamp b {
     max-height: none;
   }
 }
+
+/*
+ * 手機（設計師 10-09）：框是看紙的視窗，一頁 25 行要捲。
+ * - 每張頁首都黏在框頂（頁首、換頁的間隔不再包在段落裡，才能黏在整張紙上）；下一頁的頁首捲上來時
+ *   蓋掉上一張，頁首上的卷、頁、Bates 永遠是它底下那幾行的。
+ * - 框高＝頁首＋整數行（Record.tsx 算），捲動對齊整行，頁首下、框底都不會露出半行或半條黑條；
+ *   換頁的間隔、Bates 也各是一行高。最少頁首加 5 行。
+ * - 筆錄外框的高只聽版面（contain: size），不讓紙的長度回頭撐開它；法庭的格線至少留給它這麼高。
+ * 休庭頁攤開的那份（.full）照紙的原樣排，不黏。
+ */
+@media (max-width: 1023px) {
+  .shell:has(> .shell-tabs > .record) {
+    grid-template-rows: auto minmax(min-content, 1fr) auto auto;
+  }
+  .shell-tabs > .record,
+  .scene > .record.live {
+    contain: size;
+  }
+  .scene > .record.live {
+    height: max(120px, 26dvh);
+  }
+  .record:not(.full) {
+    --rec-whole: 1;
+  }
+  .record:not(.full) .rec-scroll {
+    padding-block: 0;
+    scroll-snap-type: y mandatory;
+    scroll-padding-top: var(--rec-row);
+  }
+  .record:not(.full) .rec-paper {
+    padding-bottom: 0;
+  }
+  .record:not(.full) :is(.rec-row, .rec-foot) {
+    scroll-snap-align: start;
+  }
+  .record:not(.full) :is(.rec-entry, .rec-break) {
+    display: contents;
+  }
+  .record:not(.full) .rec-break::before {
+    height: var(--rec-row);
+    margin: 0 calc(-1 * var(--rec-pr)) 0 calc(-1 * var(--rec-pl));
+  }
+  .record:not(.full) .rec-head {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    margin: 0 calc(-1 * var(--rec-pr)) 0 calc(-1 * var(--rec-pl));
+    padding: 0 var(--rec-pr) 0 var(--rec-pl);
+    /* 框頂在小數像素上時，上一行的字會從頁首上緣露出 1px：往上多蓋 2px 紙色。 */
+    box-shadow: 0 -2px 0 var(--paper);
+    background:
+      linear-gradient(var(--paper-rule), var(--paper-rule)) var(--rec-gutter) 0 / 1px 100% no-repeat,
+      linear-gradient(var(--paper-rule), var(--paper-rule)) calc(var(--rec-gutter) + 3px) 0 / 1px
+        100% no-repeat,
+      var(--paper);
+  }
+  .record:not(.full) .rec-head::after {
+    content: attr(data-r) '\3000' attr(data-b);
+  }
+}
 @media (max-width: 520px) {
   .record {
     --rec-base: 14;
@@ -2074,7 +2111,7 @@ html[lang='en'] .stamp.rec-stamp b {
     --rec-base: 13;
   }
   .record .rec-scroll {
-    --rec-sp: 0px;
+    padding: 0;
   }
   .rec-bar-top {
     padding: 0 0 6px;

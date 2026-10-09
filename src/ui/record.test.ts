@@ -30,6 +30,26 @@ describe('筆錄排版', () => {
     expect(wrap('abcdefghijkl', 3)).toEqual(['abcde', 'fghij', 'kl']);
   });
 
+  it('裁定章放不下時，最後一個詞換行，章跟著它（章不蓋在字上）', () => {
+    // 英文：最後一個詞往下掉。
+    expect(wrap('Objection, hearsay.', 14, 14, false, 5)).toEqual(['Objection,', 'hearsay.']);
+    // 放得下就不動。
+    expect(wrap('Objection, hearsay.', 14, 14, false, 2)).toEqual(['Objection, hearsay.']);
+    // 中文：最後一個字連同後面的標點一起掉；前面的開頭括號跟著走。
+    expect(wrap('異議，傳聞。', 6, 6, true, 2)).toEqual(['異議，傳', '聞。']);
+    expect(wrap('異議，「傳聞」。', 8, 8, true, 3)).toEqual(['異議，「傳', '聞」。']);
+    expect(wrap('一二「三」。', 6, 6, true, 2)).toEqual(['一二', '「三」。']);
+    // layout 照每句的裁定留寬。
+    const rows = layout(
+      [{ kind: 'say', tag: 'X:', text: 'Objection, hearsay.', ruling: '成立' }],
+      20,
+      false,
+      () => 6,
+    );
+    expect(rows.map((r) => r.text)).toEqual(['Objection,', 'hearsay.']);
+    expect(rows[0].space).toBe(true);
+  });
+
   it('第一行扣掉標記，續行從行首開始', () => {
     expect(wrap('一二三四五六七', 5, 3)).toEqual(['一二三', '四五六七']);
   });

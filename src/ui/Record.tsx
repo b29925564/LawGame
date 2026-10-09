@@ -73,10 +73,13 @@ export function useCourtEntries(
   }, [key, witness, stricken, scope, en]);
 }
 
-// 紙的左右（em）：行號欄＋雙直線＋內距、右內距，再留 0.3em 給還沒載完的退回字型。
-const PAPER_X = 3 + 0.6 + 0.3;
+// 紙的左右（em）：行號欄＋雙直線＋內距、右內距，再留一個字給行尾掛出去的標點（中文全形 1em、英文 0.6em），
+// 括號說明縮排再深，掛出去的「。）」也不貼紙邊（設計師 10-09）。CSS 的 --rec-hang 是同一個數。
+const paperX = (zh: boolean) => 3 + 0.6 + (zh ? 1 : 0.6);
 // 一頁的高（行）：頁首一行、25 行、Bates 一行，再加紙底的內距。
 const PAGE_ROWS = ROWS_PER_PAGE + 2.4;
+// 手機上框至少放得下頁首加 5 個整行（設計師 10-09）。
+const MIN_ROWS = 6;
 
 /**
  * 字級與行距跟著框算：一行的字數固定（measureFor），所以字級＝框寬 ÷ 一行的 em，
@@ -92,29 +95,59 @@ const stampEm = (label: string, zh: boolean, fs: number) => {
   return 0.8 + (label.length * px + 18) / fs;
 };
 
-function useFit(box: RefObject<HTMLDivElement | null>, zh: boolean, fit: boolean) {
-  const [size, setSize] = useState<{ fs: number; row: number } | null>(null);
+interface Fit {
+  fs: number;
+  row: number;
+  /** 手機：捲動框的高＝頁首＋整數行（px）；整張筆錄的最小高＝按鈕列＋頁首＋5 行。 */
+  h?: number;
+  min?: number;
+}
+
+/**
+ * whole：庭上那份在手機（CSS 在 ≤1023px 給 .record --rec-whole: 1）。框是看紙的視窗，
+ * 框高收成頁首加整數行，捲動也對齊整行，不會有半行（或半條黑條）露在頁首下或框底（設計師 10-09）。
+ * 這時筆錄外框的高由版面決定（court.css 的 contain: size），量外框不會跟著框高打轉。
+ */
+function useFit(box: RefObject<HTMLDivElement | null>, zh: boolean, fit: boolean, live: boolean) {
+  const [size, setSize] = useState<Fit | null>(null);
   useLayoutEffect(() => {
     const el = box.current;
-    if (!el) return;
+    const root = el?.parentElement;
+    if (!el || !root) return;
     const read = () => {
       const cs = getComputedStyle(el);
       const base = parseFloat(cs.getPropertyValue('--rec-base')) || 15;
       const scale = parseFloat(cs.getPropertyValue('--text-scale')) || 1;
+      const whole = live && cs.getPropertyValue('--rec-whole').trim() === '1';
+      const padY = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
+      const bar =
+        el.previousElementSibling instanceof HTMLElement ? el.previousElementSibling : null;
+      const barH = bar?.offsetHeight ?? 0;
       const w = el.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
-      const h = el.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+      const h = (whole ? root.clientHeight - barH : el.clientHeight) - padY;
       if (w <= 0) return;
-      const fs = Math.min(base * scale, w / (measureFor(zh) + PAPER_X));
+      const fs = Math.min(base * scale, w / (measureFor(zh) + paperX(zh)));
       const row = fit && h > 0 ? Math.max(fs * 1.5, Math.min(fs * 2, h / PAGE_ROWS)) : fs * 2;
       const r = (n: number) => Math.floor(n * 100) / 100;
-      setSize((s) => (s && s.fs === r(fs) && s.row === r(row) ? s : { fs: r(fs), row: r(row) }));
+      // 手機的行高取整數 px：每一行、每個捲動停點都落在整數上，頁首下與框底不會露出零點幾 px 的上一行。
+      const next: Fit = { fs: r(fs), row: whole ? Math.ceil(row) : r(row) };
+      if (whole) {
+        next.h = Math.max(MIN_ROWS, Math.floor(h / next.row + 0.01)) * next.row;
+        next.min = Math.ceil(barH + padY + MIN_ROWS * next.row);
+      }
+      setSize((s) =>
+        s && s.fs === next.fs && s.row === next.row && s.h === next.h && s.min === next.min
+          ? s
+          : next,
+      );
     };
     read();
     if (typeof ResizeObserver === 'undefined') return;
     const ro = new ResizeObserver(read);
     ro.observe(el);
+    ro.observe(root);
     return () => ro.disconnect();
-  }, [box, zh, fit]);
+  }, [box, zh, fit, live]);
   return size;
 }
 
@@ -198,10 +231,17 @@ export function CourtRecord({
 }) {
   const t = useT();
   const zh = useLang((s) => s.lang) === 'zh';
-  const rows = useMemo(() => layout(entries, measureFor(zh), zh), [entries, zh]);
+  // 裁定章在最後一行要留的寬：照章上的字最小 11px 時算（字級越小章越寬），各種寬度都放得下，
+  // 行號也不會因為字級不同而跑掉。
+  const granted = stampEm(t('成立', 'record'), zh, 11);
+  const overruled = stampEm(t('駁回', 'record'), zh, 11);
+  const rows = useMemo(
+    () => layout(entries, measureFor(zh), zh, (r) => (r === '成立' ? granted : overruled)),
+    [entries, zh, granted, overruled],
+  );
   const shown = rows.filter((r) => r.entry >= from && r.entry < until);
   const box = useRef<HTMLDivElement>(null);
-  const size = useFit(box, zh, live && fit);
+  const size = useFit(box, zh, live && fit, live);
   const [instant, setInstant] = useInstant();
 
   // 這一批新進來的話從第幾句開始（掛載時已經有的話不重播），以及這一次才被蓋上黑條的句子
@@ -237,67 +277,42 @@ export function CourtRecord({
     return last;
   };
 
-  // 新的一批進來：翻到最後一句所在的那一頁（一頁放得下時整頁對齊；放不下就讓最後一句剛好在底）。
+  // 新的一批進來：翻到最後一句所在的那一頁，從那頁的頁首放起；放不下就讓最後一行剛好在框底。
+  // 頁首正好一行高、在第 1 行正上方，所以用第 1 行的位置往上推一行（手機的頁首是黏住的，量它會量到黏住的位置）。
   useEffect(() => {
     const el = box.current;
     const last = rows[rows.length - 1];
-    if (!el || !live || !last) return;
-    const top = el.getBoundingClientRect().top;
+    if (!el || !live || !last || !size) return;
+    const cs = getComputedStyle(el);
+    const padT = parseFloat(cs.paddingTop);
+    const padB = parseFloat(cs.paddingBottom);
+    const top = el.getBoundingClientRect().top + el.clientTop;
     const y = (n: Element) => el.scrollTop + n.getBoundingClientRect().top - top;
-    const page = el.querySelector(`[data-page="${last.page}"]`);
+    const head = rows.find((r) => r.page === last.page) ?? last;
+    const headEl = el.querySelector(`[data-row="${head.index}"]`);
     const lastEl = el.querySelector(`[data-row="${last.index}"]`);
-    // 第一張頁首是黏住的，量到的是黏住的位置；它本來就在紙頂。
-    let target = page && !page.classList.contains('pin') ? y(page) : 0;
+    let target = headEl ? y(headEl) - size.row - padT : 0;
     if (lastEl) {
-      const bottom = y(lastEl) + lastEl.getBoundingClientRect().height;
-      if (bottom > target + el.clientHeight) target = bottom - el.clientHeight + 8;
+      const bottom = y(lastEl) + size.row;
+      if (bottom > target + el.clientHeight - padB) target = bottom - el.clientHeight + padB;
     }
-    el.scrollTop = target;
-    // 只在句數或行距變了的時候翻頁，不搶使用者往回翻的捲動位置。
+    el.scrollTop = Math.max(0, target);
+    // 只在句數或框變了的時候翻頁，不搶使用者往回翻的捲動位置。
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [entries.length, live, size?.row]);
-
-  // 框是看這張紙的視窗（手機一頁放不下 25 行，設計師 10-09）：最上面那張頁首黏在框頂，
-  // 頁碼跟著捲到的那一頁走，換頁時頁首一直看得到。
-  const [viewPage, setViewPage] = useState(0);
-  useEffect(() => {
-    const el = box.current;
-    if (!el) return;
-    let raf = 0;
-    const read = () => {
-      raf = 0;
-      const top = el.getBoundingClientRect().top + el.clientHeight * 0.15;
-      let page = 0;
-      for (const n of Array.from(el.querySelectorAll<HTMLElement>('[data-row]'))) {
-        const r = rows[Number(n.dataset.row)];
-        if (!r) continue;
-        if (n.getBoundingClientRect().bottom > top) break;
-        page = r.page;
-      }
-      setViewPage(page);
-    };
-    const onScroll = () => {
-      if (!raf) raf = requestAnimationFrame(read);
-    };
-    el.addEventListener('scroll', onScroll, { passive: true });
-    read();
-    return () => {
-      el.removeEventListener('scroll', onScroll);
-      if (raf) cancelAnimationFrame(raf);
-    };
-  }, [rows]);
+  }, [entries.length, live, size?.row, size?.h]);
 
   // 頁首、行號、Bates 是紙上印好的東西：用屬性交給 CSS 畫，不進文字內容，報讀與搜尋都只讀到證詞本身。
-  const pageHead = (page: number, first = false) => (
+  // 每張頁首都帶卷、頁、Bates；手機上每張都黏在框頂，下一頁的頁首捲上來時蓋掉上一張，
+  // 所以頁首上的頁碼永遠是它底下那幾行的頁（設計師 10-09）。卷＝Bates 裡的 T。
+  const vol = bates && /-T(\d+)-$/.exec(bates)?.[1];
+  const pageHead = (page: number) => (
     <span
-      className={first ? 'rec-head pin' : 'rec-head'}
+      className="rec-head"
       aria-hidden
-      data-page={first ? page : undefined}
       data-l={t('審判筆錄')}
-      data-r={t('第 {n} 頁', { n: first ? Math.max(page, viewPage) : page })}
-      data-b={
-        first && bates ? `${bates}${String(Math.max(page, viewPage)).padStart(4, '0')}` : undefined
-      }
+      data-v={vol ? t('第 {n} 卷', { n: vol }) : undefined}
+      data-r={t('第 {n} 頁', { n: page })}
+      data-b={bates ? `${bates}${String(page).padStart(4, '0')}` : undefined}
     />
   );
   const pageFoot = (page: number) =>
@@ -326,10 +341,14 @@ export function CourtRecord({
 
   return (
     <div
-      className={`lines transcript record ${className}`}
+      className={`lines transcript record${live ? ' live' : ''} ${className}`}
       style={
         size
-          ? ({ '--rec-fs': `${size.fs}px`, '--rec-row': `${size.row}px` } as CSSProperties)
+          ? ({
+              '--rec-fs': `${size.fs}px`,
+              '--rec-row': `${size.row}px`,
+              minHeight: size.min,
+            } as CSSProperties)
           : undefined
       }
     >
@@ -348,9 +367,14 @@ export function CourtRecord({
           </button>
         </div>
       )}
-      <div className="rec-scroll" ref={box} aria-live={live ? 'polite' : undefined}>
+      <div
+        className="rec-scroll"
+        ref={box}
+        aria-live={live ? 'polite' : undefined}
+        style={size?.h ? { height: size.h, flex: 'none' } : undefined}
+      >
         <div className="rec-paper">
-          {(shown[0] || live) && pageHead(shown[0]?.page ?? 1, true)}
+          {(shown[0] || live) && pageHead(shown[0]?.page ?? 1)}
           {groups.map((g) => {
             const e = entries[g[0].entry];
             const label = e.redact ? t(e.redact) : '';
@@ -375,7 +399,7 @@ export function CourtRecord({
                   return (
                     <span key={r.index} className="rec-line">
                       {r.line === 1 && r.index > 0 && r !== shown[0] && (
-                        <span className="rec-break" aria-hidden data-page={r.page}>
+                        <span className="rec-break" aria-hidden>
                           {pageHead(r.page)}
                         </span>
                       )}
