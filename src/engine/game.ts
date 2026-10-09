@@ -586,6 +586,8 @@ interface GameState {
   toggleLinkCard: (card: string) => void;
   setLinkRelation: (r: Relation) => void;
   connect: () => void;
+  /** 連錯的線鬆脫之後，兩張卡回原位。 */
+  releaseLink: () => void;
   submit: (qid: string) => void;
   /** 法庭 */
   nextQuestion: () => void;
@@ -828,6 +830,7 @@ export const useEpisode = create<GameState>()((set, get) => {
     toggleLinkCard: (card) => onDesk((_s, st) => desk.toggleLinkCard(st, card)),
     setLinkRelation: (r) => onDesk((_s, st) => desk.setLinkRelation(st, r)),
     connect: () => onDesk((s, st) => desk.connect(s, st)),
+    releaseLink: () => onDesk((_s, st) => desk.releaseLink(st)),
     submit: (qid) =>
       onDesk(
         (s, st) => desk.submit(s, st, qid, get().progress.cards),

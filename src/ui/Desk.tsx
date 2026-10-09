@@ -456,6 +456,7 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
     toggleLinkCard,
     setLinkRelation,
     connect,
+    releaseLink,
     submit,
     toggleTimeline,
     moveTimeline,
@@ -463,6 +464,13 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
   const t = useT();
   const scope = useScope();
   const st = deskState(progress, scene);
+  // 連錯的線還在鬆脫、卡還沒回原位：這段時間不能再按「連起來」（板子演完才放回卡）。
+  const [released, setReleased] = useState(st.badLinks);
+  const loosening = st.badLinks !== released && st.link.cards.length === 2;
+  const settle = () => {
+    setReleased(st.badLinks);
+    releaseLink();
+  };
   // 確認過的論點也是卡片，可以拿來連線或回答後面的疑問（例如「那則訊息是誰傳的」要用論點 B）。
   const args = scene.questions
     .filter((q) => st.confirmed.includes(q.id))
@@ -518,12 +526,8 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
   }, [linking, poolIds, picked, toggleLinkCard]);
   const [kind, setKind, showKind] = useKindFilter();
   const [picking, setPicking] = useState(false);
-  // 連錯、交錯的那一下才抖；之後重開畫面不再抖。
-  const badShake = useBump(st.badLinks);
   // 剛連出來的那條發現亮一下；畫面一打開就有的不亮。
   const fresh = useBump(st.found.length) ? st.found[st.found.length - 1] : null;
-  const missTotal = Object.values(st.tried ?? {}).reduce((n, v) => n + v.length, 0);
-  const missShake = useBump(missTotal) ? shown : null;
   const status = (id: string) =>
     st.confirmed.includes(id)
       ? 'done'
@@ -694,12 +698,7 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
           </button>
         </div>
       </div>
-      <div
-        className={
-          (desk.canConnect(st) ? 'link-bench ready' : 'link-bench') +
-          (badShake ? (st.linkMiss === 'relation' ? ' shake-rel' : ' shake') : '')
-        }
-      >
+      <div className={desk.canConnect(st) ? 'link-bench ready' : 'link-bench'}>
         <Cork
           focus={
             [0, 1].map((i) => pool.find((x) => x.id === st.link.cards[i])) as [
@@ -718,6 +717,8 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
           slot={corkSlot}
           jury={{ on: juryView, cards: juryCards, provenance: sketchSource }}
           onZoom={setZoomed}
+          misses={st.badLinks}
+          onMissDone={settle}
         />
         {zoomCard && (
           <EvidenceZoom item={zoomCard} progress={progress} onClose={() => setZoomed(null)} />
@@ -746,7 +747,7 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
               {/* 一格一黃：這題確認了，主按鈕是「下一題」，連起來退成一般按鈕。 */}
               <button
                 className={qDone ? undefined : 'primary'}
-                disabled={!desk.canConnect(st)}
+                disabled={!desk.canConnect(st) || loosening}
                 onClick={connect}
               >
                 {t('連起來')}
@@ -756,7 +757,7 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
               <p className="bench-hint">{t('把兩張卡連起來，發現會出現在下面。')}</p>
             )}
             {st.linkNote && (
-              // 連錯：兩張卡抖一下、頂端工時閃紅，也寫出來（體驗評測：只抖一下，第一次玩看不懂）。
+              // 連錯：線沒釘住、兩張卡回原位，頂端工時閃紅，盧卡斯再用鉛筆寫一句（體驗評測：只有動作，第一次玩看不懂）。
               // 連成功也不另外寫：新的發現便條會亮一下，內容就在便條上（試玩回報：兩處同一句太雜）。
               <p
                 role="status"
@@ -904,11 +905,7 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
                 </div>
               ) : (
                 <>
-                  <ul
-                    className={
-                      missShake === q.id ? 'slots-row answer-slots shake' : 'slots-row answer-slots'
-                    }
-                  >
+                  <ul className="slots-row answer-slots">
                     {Array.from({ length: q.answer.length }, (_, k) => {
                       const c = item(a.cards[k]);
                       return (

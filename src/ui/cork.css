@@ -165,9 +165,29 @@
 .cork.compact .cork-focus.filled {
   transform: rotate(var(--tilt, 0deg));
 }
+/*
+ * 進出光圈（設計師 P1-8a）：放上時從原位推進來，連錯時退回原位，--dur-ui 180ms --ease。
+ * 退回時恢復原尺寸與傾角；手機上沒有原位，就地淡出。線鬆脫時關係結和「放大」標記跟著淡掉。
+ */
+.cork-focus.filled.away {
+  transform: rotate(var(--tilt, 0deg));
+}
+.cork-focus.gone {
+  opacity: 0;
+}
+.cork.missing :is(.cork-knot, .cork-zoom) {
+  opacity: 0;
+  pointer-events: none;
+}
 @media (prefers-reduced-motion: no-preference) {
   .cork-focus {
-    transition: transform var(--dur-ui) var(--ease-light);
+    transition-property: left, top, width, transform, opacity;
+    transition-duration: var(--dur-ui);
+    transition-timing-function: var(--ease);
+  }
+  .cork-knot,
+  .cork .cork-zoom {
+    transition: opacity var(--dur-ui) var(--ease);
   }
 }
 

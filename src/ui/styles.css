@@ -1865,10 +1865,13 @@ fieldset.relations.compact {
   font-size: 0.9em;
   line-height: 1.6;
 }
+/* 連錯：不用紅（紅只代表矛盾），是盧卡斯在板邊用鉛筆寫的一句（設計師 P1-8a）。 */
 .board-note.bad {
-  border-color: color-mix(in srgb, var(--bad) 35%, var(--border));
-  border-left-color: var(--bad);
-  background: color-mix(in srgb, var(--bad) 9%, var(--surface));
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--pencil-ui);
+  font: 400 calc(var(--fs-hand) * var(--text-scale)) / 1.5 var(--font-hand);
 }
 
 /* 發現：像釘在板上的一張便條，編號用打字機字，內容用文件字。 */
@@ -5348,34 +5351,7 @@ button.iou[aria-pressed='true'] {
   font-family: var(--font-mono, monospace);
   font-size: 0.8em;
 }
-/* 回饋教學（設計稿 board-redesign 修訂）：連錯、交錯抖一下；工時掉一格閃紅。 */
-@keyframes shake {
-  0%,
-  100% {
-    transform: none;
-  }
-  20%,
-  60% {
-    transform: translateX(-5px);
-  }
-  40%,
-  80% {
-    transform: translateX(5px);
-  }
-}
-.shake .slot-card,
-.shake.answer-slots,
-.shake-rel .link-knot span,
-.shake-rel .relations [aria-checked='true'] {
-  animation: shake 0.4s ease;
-}
-/* 卡對了、關係錯：只有關係在抖，而且變紅；卡片不動。 */
-.shake-rel .link-knot span,
-.shake-rel .relations [aria-checked='true'] {
-  background: var(--bad) !important;
-  border-color: var(--bad);
-  color: #fff;
-}
+/* 回饋教學：工時掉一格閃紅。連錯、交錯不再抖（設定集：不彈跳、不抖動；設計師 P1-8a）。 */
 @keyframes hours-drop {
   0% {
     color: var(--bad);
@@ -5404,8 +5380,6 @@ button.iou[aria-pressed='true'] {
   background: var(--bad);
 }
 @media (prefers-reduced-motion: reduce) {
-  .shake .slot-card,
-  .shake.answer-slots,
   .hours.drop strong {
     animation: none;
   }

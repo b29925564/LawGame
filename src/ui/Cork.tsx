@@ -1,6 +1,14 @@
-import { useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from 'react';
 import type { Relation } from '../engine/constants';
 import { useT } from '../i18n';
+import { reducedMotion } from './a11y';
 import { PhotoLogLine, type PhotoRecord } from './Dossier';
 import { useScope } from './lang';
 import './cork.css';
@@ -125,17 +133,26 @@ function String_({
   to,
   relation,
   h,
+  sagPx = SAG,
+  fallPx = 0,
+  opacity,
 }: {
   from: [number, number];
   to: [number, number];
   relation: Relation | null;
   h: number;
+  /** 下垂（px）；沒釘住的線會加深。 */
+  sagPx?: number;
+  /** B 端從圖釘鬆脫後往下掉的距離（px）。 */
+  fallPx?: number;
+  opacity?: number;
 }) {
-  const sag = (SAG / Math.max(h, 1)) * 100;
-  const mx = (from[0] + to[0]) / 2;
+  const px = (v: number) => (v / Math.max(h, 1)) * 100;
+  const end: [number, number] = [to[0], to[1] + px(fallPx)];
+  const mx = (from[0] + end[0]) / 2;
   // 二次曲線中點的下垂是控制點偏移的一半。
-  const my = (from[1] + to[1]) / 2 + sag * 2;
-  const d = `M${from[0]} ${from[1]} Q${mx} ${my} ${to[0]} ${to[1]}`;
+  const my = (from[1] + end[1]) / 2 + px(sagPx) * 2;
+  const d = `M${from[0]} ${from[1]} Q${mx} ${my} ${end[0]} ${end[1]}`;
   const kind =
     relation === '矛盾'
       ? 'contra'
@@ -146,7 +163,7 @@ function String_({
           : 'pending';
   const up = (1 / Math.max(h, 1)) * 100;
   return (
-    <g className={`cork-string ${kind}`}>
+    <g className={`cork-string ${kind}`} style={opacity === undefined ? undefined : { opacity }}>
       <path d={d} vectorEffect="non-scaling-stroke" />
       {kind === 'contra' && (
         <path
@@ -157,6 +174,77 @@ function String_({
         />
       )}
     </g>
+  );
+}
+
+/** 介面權杖 --ease 的 cubic-bezier(0.16, 1, 0.3, 1)：給 JS 補間用，和 CSS 同一條曲線。 */
+function ease(x: number) {
+  const [x1, y1, x2, y2] = [0.16, 1, 0.3, 1];
+  const at = (t: number, a: number, b: number) =>
+    3 * a * t * (1 - t) ** 2 + 3 * b * t ** 2 * (1 - t) + t ** 3;
+  // 用二分法從 x 反求 t（單調），再算 y。
+  let lo = 0;
+  let hi = 1;
+  for (let i = 0; i < 20; i++) {
+    const mid = (lo + hi) / 2;
+    if (at(mid, x1, x2) < x) lo = mid;
+    else hi = mid;
+  }
+  return at((lo + hi) / 2, y1, y2);
+}
+
+/** 介面權杖 --dur-ui（180ms），從樣式表讀，和 CSS 一致。 */
+function durUi() {
+  const v = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--dur-ui'));
+  return Number.isFinite(v) ? v : 180;
+}
+
+/**
+ * 連錯：這條線沒釘住（設計師 P1-8a，取代抖動）。下垂從 34px 加深、B 端從圖釘鬆脫往下掉、淡出，
+ * --dur-ui 180ms --ease。演完叫 onDone，接著兩張卡退出光圈回原位。
+ */
+function LooseString({
+  from,
+  to,
+  relation,
+  h,
+  onDone,
+}: {
+  from: [number, number];
+  to: [number, number];
+  relation: Relation | null;
+  h: number;
+  onDone: () => void;
+}) {
+  const [k, setK] = useState(0);
+  const done = useRef(onDone);
+  useEffect(() => {
+    done.current = onDone;
+  });
+  useEffect(() => {
+    const dur = durUi();
+    let raf = 0;
+    let t0 = -1;
+    const step = (now: number) => {
+      if (t0 < 0) t0 = now;
+      const p = Math.min(1, (now - t0) / dur);
+      setK(ease(p));
+      if (p < 1) raf = requestAnimationFrame(step);
+      else done.current();
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+  return (
+    <String_
+      from={from}
+      to={to}
+      relation={relation}
+      h={h}
+      sagPx={SAG + 60 * k}
+      fallPx={90 * k}
+      opacity={1 - k}
+    />
   );
 }
 
@@ -242,6 +330,8 @@ export function Cork({
   slot,
   jury,
   onZoom,
+  misses = 0,
+  onMissDone,
 }: {
   /** A、B 槽裡的卡（沒放就是 undefined）。 */
   focus: [CorkItem | undefined, CorkItem | undefined];
@@ -262,6 +352,9 @@ export function Cork({
   jury?: { on: boolean; cards: CorkItem[]; provenance: string };
   /** 光圈裡有照片紀錄表或證物袋的卡：標記層一顆「放大檢視」（設計師 P2-6）。 */
   onZoom?: (id: string) => void;
+  /** 連錯的次數：一變多就演「線沒釘住」，演完叫 onMissDone 把兩張卡放回原位。 */
+  misses?: number;
+  onMissDone?: () => void;
 }) {
   const t = useT();
   const scope = useScope();
@@ -318,6 +411,69 @@ export function Cork({
   // 關係結掛在 A–B 線的最低點。
   const knot = { left: (abFrom[0] + abTo[0]) / 2, top: abFrom[1] + (SAG / Math.max(h, 1)) * 100 };
 
+  // 卡的原位：邊緣分到的位置。放進光圈時原位空著（不重複畫），退出時回到這裡。
+  const originOf = (id: string) => placed.find((p) => p.item.id === id)?.at;
+  const focusIds = focus.map((c) => c?.id ?? '');
+
+  // 連錯（設計師 P1-8a，取代抖動）：線沒釘住、鬆脫淡出 → 兩張卡退出光圈回原位 → 清掉連線台。
+  // 兩段都是 --dur-ui 180ms --ease；減少動態時線直接消失、卡直接歸位。
+  type Miss = {
+    phase: 'drop' | 'return';
+    from: [number, number];
+    to: [number, number];
+    relation: Relation | null;
+  };
+  const [seenMisses, setSeenMisses] = useState(misses);
+  const [miss, setMiss] = useState<Miss | null>(null);
+  if (misses !== seenMisses) {
+    setSeenMisses(misses);
+    if (focus[0] && focus[1])
+      setMiss({
+        phase: reducedMotion() ? 'return' : 'drop',
+        from: abFrom,
+        to: abTo,
+        relation,
+      });
+  }
+  const missDone = useRef(onMissDone);
+  useEffect(() => {
+    missDone.current = onMissDone;
+  });
+  // 演到一半板子被收起來（換題、切到陪審團視角）：直接把卡放回去，不留在連線台上。
+  const missing = useRef(false);
+  useEffect(() => {
+    missing.current = !!miss;
+  });
+  useEffect(() => () => void (missing.current && missDone.current?.()), []);
+  useEffect(() => {
+    if (miss?.phase !== 'return') return;
+    const id = setTimeout(
+      () => {
+        setMiss(null);
+        missDone.current?.();
+      },
+      reducedMotion() ? 0 : durUi(),
+    );
+    return () => clearTimeout(id);
+  }, [miss?.phase]);
+
+  // 放上光圈：剛放上的卡先畫一格在原位，下一格才推進光圈，轉場看得到從哪裡來。
+  const ids = focusIds.join(',');
+  const [prevIds, setPrevIds] = useState(ids);
+  const [arriving, setArriving] = useState<string[]>([]);
+  if (ids !== prevIds) {
+    const before = prevIds.split(',');
+    setPrevIds(ids);
+    setArriving(focusIds.filter((id) => id && !before.includes(id)));
+  }
+  useEffect(() => {
+    if (!arriving.length) return;
+    let raf = requestAnimationFrame(() => {
+      raf = requestAnimationFrame(() => setArriving([]));
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [arriving]);
+
   // 影子沿離燈方向拉長（燈在板中央）。
   const away = (at: [number, number], w: number) => {
     const dx = at[0] + w / 2 - 50;
@@ -332,52 +488,78 @@ export function Cork({
   return (
     <div
       ref={ref}
-      className={compact ? 'cork compact' : 'cork'}
+      className={['cork', compact && 'compact', miss && 'missing'].filter(Boolean).join(' ')}
       style={{ '--cork-tile': tile ? `url(${tile})` : 'none' } as CSSProperties}
     >
       <svg className="cork-strings" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden>
         {strings.map((s) => (
           <String_ key={s.key} from={s.from} to={s.to} relation={s.relation} h={h} />
         ))}
-        {focus[0] && focus[1] && <String_ from={abFrom} to={abTo} relation={relation} h={h} />}
+        {miss?.phase === 'drop' ? (
+          <LooseString
+            from={miss.from}
+            to={miss.to}
+            relation={miss.relation}
+            h={h}
+            onDone={() => setMiss((m) => m && { ...m, phase: 'return' })}
+          />
+        ) : (
+          !miss &&
+          focus[0] &&
+          focus[1] && <String_ from={abFrom} to={abTo} relation={relation} h={h} />
+        )}
       </svg>
-      {placed.map(({ item, at }) => (
-        <button
-          key={item.id}
-          type="button"
-          tabIndex={-1}
-          aria-hidden
-          className={`cork-card ${look(item.kind)}`}
-          style={
-            {
-              left: `${at[0]}%`,
-              top: `${at[1]}%`,
-              width: `${CARD_W}%`,
-              '--tilt': `${tilt(item.id)}deg`,
-              ...away(at, CARD_W),
-            } as CSSProperties
-          }
-          onClick={() => onPick(item.id)}
-        >
-          <Face item={item} />
-        </button>
-      ))}
-      {focus.map((c, i) => (
-        <div
-          key={i}
-          className={c ? `cork-focus filled ${look(c.kind)}` : 'cork-focus'}
-          style={
-            {
-              left: `${focusAt[i][0]}%`,
-              top: `${focusAt[i][1]}%`,
-              width: `${focusW}%`,
-              '--tilt': c ? `${tilt(c.id, 1.2)}deg` : '0deg',
-            } as CSSProperties
-          }
-        >
-          {slot(i as 0 | 1, c ? <Face item={c} /> : null)}
-        </div>
-      ))}
+      {placed
+        .filter(({ item }) => !focusIds.includes(item.id))
+        .map(({ item, at }) => (
+          <button
+            key={item.id}
+            type="button"
+            tabIndex={-1}
+            aria-hidden
+            className={`cork-card ${look(item.kind)}`}
+            style={
+              {
+                left: `${at[0]}%`,
+                top: `${at[1]}%`,
+                width: `${CARD_W}%`,
+                '--tilt': `${tilt(item.id)}deg`,
+                ...away(at, CARD_W),
+              } as CSSProperties
+            }
+            onClick={() => onPick(item.id)}
+          >
+            <Face item={item} />
+          </button>
+        ))}
+      {focus.map((c, i) => {
+        // 退回原位（連錯）或剛放上（還在原位那一格）：畫在原位、原尺寸；手機上沒有原位，就地淡出。
+        const back = !!c && (miss?.phase === 'return' || arriving.includes(c.id));
+        const at = back && c ? originOf(c.id) : undefined;
+        return (
+          <div
+            key={c ? c.id : `empty-${i}`}
+            className={[
+              'cork-focus',
+              c && `filled ${look(c.kind)}`,
+              back && 'away',
+              back && !at && 'gone',
+            ]
+              .filter(Boolean)
+              .join(' ')}
+            style={
+              {
+                left: `${(at ?? focusAt[i])[0]}%`,
+                top: `${(at ?? focusAt[i])[1]}%`,
+                width: `${at ? CARD_W : focusW}%`,
+                '--tilt': c ? `${at ? tilt(c.id) : tilt(c.id, 1.2)}deg` : '0deg',
+              } as CSSProperties
+            }
+          >
+            {slot(i as 0 | 1, c ? <Face item={c} /> : null)}
+          </div>
+        );
+      })}
       <div className="cork-lamp" aria-hidden />
       <div className="cork-warm" aria-hidden />
       {/* 標記層：不被吊燈調光。 */}
