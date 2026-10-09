@@ -225,13 +225,17 @@ button.commit:hover:not(:disabled) {
   background: var(--commit-bg-hover);
   border-color: var(--commit-edge);
 }
-/* 還不能按的主要按鈕是一格虛線的空位，不是一塊褪色的黃。 */
+/*
+ * 還不能按的主要按鈕長得像一般按鈕：實線 1px 框、淡字、不是黃、不能點（設計師 10-09 第一道關卡裁定：
+ * 虛線只用在沒有資訊的地方，而那種地方設定集第 9 章已改用黑條）。黃色留給真正能做的下一步。
+ */
 button.primary:disabled {
   opacity: 1;
-  background: transparent;
-  border: 1px dashed var(--border-strong);
-  color: var(--faint);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--muted);
   box-shadow: none;
+  cursor: not-allowed;
 }
 button.primary:hover:not(:disabled) {
   background: var(--hl);

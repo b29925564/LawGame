@@ -83,6 +83,15 @@ const PAGE_ROWS = ROWS_PER_PAGE + 2.4;
  * 最大是 CSS 的 --rec-base（桌機 15、手機中文 14、英文 13）。
  * fit：框是版面給的固定高度（庭上的那份），行距收到一整頁 25 行剛好放得下，最密 1.5 倍、最鬆 2 倍。
  */
+/**
+ * 裁定章佔的寬（em，以筆錄字級 fs 計）：章上的字最小 11px（court.css），所以先算 px 再換回 em。
+ * 字（中文 0.9fs、英文 Courier 0.8fs×0.6 加字距）＋左距 0.8em＋框、內距與外框約 18px。
+ */
+const stampEm = (label: string, zh: boolean, fs: number) => {
+  const px = zh ? Math.max(11, fs * 0.9) : Math.max(11, fs * 0.8) * 0.6 * 1.06;
+  return 0.8 + (label.length * px + 18) / fs;
+};
+
 function useFit(box: RefObject<HTMLDivElement | null>, zh: boolean, fit: boolean) {
   const [size, setSize] = useState<{ fs: number; row: number } | null>(null);
   useLayoutEffect(() => {
@@ -237,7 +246,8 @@ export function CourtRecord({
     const y = (n: Element) => el.scrollTop + n.getBoundingClientRect().top - top;
     const page = el.querySelector(`[data-page="${last.page}"]`);
     const lastEl = el.querySelector(`[data-row="${last.index}"]`);
-    let target = page ? y(page) : 0;
+    // 第一張頁首是黏住的，量到的是黏住的位置；它本來就在紙頂。
+    let target = page && !page.classList.contains('pin') ? y(page) : 0;
     if (lastEl) {
       const bottom = y(lastEl) + lastEl.getBoundingClientRect().height;
       if (bottom > target + el.clientHeight) target = bottom - el.clientHeight + 8;
@@ -247,14 +257,47 @@ export function CourtRecord({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [entries.length, live, size?.row]);
 
+  // 框是看這張紙的視窗（手機一頁放不下 25 行，設計師 10-09）：最上面那張頁首黏在框頂，
+  // 頁碼跟著捲到的那一頁走，換頁時頁首一直看得到。
+  const [viewPage, setViewPage] = useState(0);
+  useEffect(() => {
+    const el = box.current;
+    if (!el) return;
+    let raf = 0;
+    const read = () => {
+      raf = 0;
+      const top = el.getBoundingClientRect().top + el.clientHeight * 0.15;
+      let page = 0;
+      for (const n of Array.from(el.querySelectorAll<HTMLElement>('[data-row]'))) {
+        const r = rows[Number(n.dataset.row)];
+        if (!r) continue;
+        if (n.getBoundingClientRect().bottom > top) break;
+        page = r.page;
+      }
+      setViewPage(page);
+    };
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(read);
+    };
+    el.addEventListener('scroll', onScroll, { passive: true });
+    read();
+    return () => {
+      el.removeEventListener('scroll', onScroll);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, [rows]);
+
   // 頁首、行號、Bates 是紙上印好的東西：用屬性交給 CSS 畫，不進文字內容，報讀與搜尋都只讀到證詞本身。
   const pageHead = (page: number, first = false) => (
     <span
-      className="rec-head"
+      className={first ? 'rec-head pin' : 'rec-head'}
       aria-hidden
       data-page={first ? page : undefined}
       data-l={t('審判筆錄')}
-      data-r={t('第 {n} 頁', { n: page })}
+      data-r={t('第 {n} 頁', { n: first ? Math.max(page, viewPage) : page })}
+      data-b={
+        first && bates ? `${bates}${String(Math.max(page, viewPage)).padStart(4, '0')}` : undefined
+      }
     />
   );
   const pageFoot = (page: number) =>
@@ -357,7 +400,16 @@ export function CourtRecord({
                         {r.space && ' '}
                         {e.ruling && r.index === endRow && (
                           <span
-                            className={`stamp sm rec-stamp${isNew ? ' new' : ''}`}
+                            className={`stamp sm rec-stamp${isNew ? ' new' : ''}${
+                              // 這一行已經寫到紙邊、章放不下：章貼著紙的右緣蓋，壓到句尾也不出紙（第一道關卡：英文 SUSTAINED 出界）。
+                              r.indent +
+                                (r.first && e.tag ? textWidth(e.tag, zh) + 0.6 : 0) +
+                                r.width +
+                                stampEm(t(e.ruling, 'record'), zh, size?.fs ?? 15) >
+                              measureFor(zh)
+                                ? ' tight'
+                                : ''
+                            }`}
                             role="img"
                             aria-label={t(e.ruling, 'record')}
                             // 每枚章轉的角度不一樣（±3°），照句子算，重畫不會跳。

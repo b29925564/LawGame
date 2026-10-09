@@ -331,6 +331,7 @@ function Verdict({
   const episode = useEpisode((s) => s.progress.episode);
   const v = st.verdict!;
   const award = st.award;
+  const claimed = award?.base !== undefined && award.base !== award.fault;
   const p = award?.punitive;
   const jurors = rules?.jurors ?? [];
   const n = jurors.length;
@@ -460,14 +461,6 @@ function Verdict({
                       <span className="qn">3.</span>
                       <span className="ql">
                         {t('死者過失比例')}
-                        {award.base !== undefined && award.base !== award.fault && (
-                          <small>
-                            {t('理論 {base}%，票數浮動 {d}', {
-                              base: award.base,
-                              d: `${award.fault > award.base ? '+' : '−'}${Math.abs(award.fault - award.base)}`,
-                            })}
-                          </small>
-                        )}
                         {award.why && <small>{t(award.why, scope)}</small>}
                       </span>
                       <span className="qv">
@@ -532,11 +525,20 @@ function Verdict({
               <span className="ledger-key">{t('下次可以試')}</span> {tips[top[0].kind]}
             </p>
           )}
-          {items.length > 0 && (
+          {(items.length > 0 || claimed) && (
             <details className="fold ledger">
               <summary>
                 {t('完整帳目')} <span className="faint">{t('每一筆怎麼算出來的')}</span>
               </summary>
+              {/* 理論和陪審團寫下的差多少：不放在判決書上（遊戲讀數不是世界裡的東西，設計師 10-09），收在帳目裡講一句。 */}
+              {claimed && (
+                <p className="ledger-claim">
+                  {t('你主張死者過失 {base}%，陪審團寫下 {fault}%。', {
+                    base: award?.base ?? 0,
+                    fault: award?.fault ?? 0,
+                  })}
+                </p>
+              )}
               <ol className="ledger-reasons">
                 {items.map((it, i) => (
                   <li key={i} className={it.kind === 'punitive' ? 'money' : undefined}>

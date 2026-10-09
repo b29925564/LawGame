@@ -9,8 +9,9 @@
 :root {
   /* 紙上的墨水與章：紙永遠是淺色，兩個主題同值。 */
   --ink-fill: #1f3a68;
-  --stamp-ok: #1f7a4d;
-  --stamp-no: #b3322b;
+  /* 章一律靛藍印泥（設定集第 9 章：不用紅章，紅只代表有罪傾向）；准駁靠章上的字分。 */
+  --stamp-ok: var(--stamp);
+  --stamp-no: var(--stamp);
 }
 .court-desk {
   display: grid;
@@ -76,7 +77,7 @@
 }
 .fthumb i.open {
   background: transparent;
-  border-bottom: 1px dashed var(--paper-muted);
+  border-bottom: 1px solid var(--paper-muted);
   height: 4px;
   border-radius: 0;
 }
@@ -92,7 +93,7 @@
   white-space: nowrap;
 }
 .fthumb.on {
-  outline: 2px solid var(--hl);
+  outline: 2px solid var(--text);
   outline-offset: 2px;
 }
 .fthumb .rcv {
@@ -227,7 +228,7 @@
   margin: 0 4px;
   padding: 0 10px;
   border: 0;
-  border-bottom: 1px dashed var(--paper-muted);
+  border-bottom: 1px solid var(--paper-muted);
   border-radius: 0;
   background: transparent;
   box-shadow: none;
@@ -251,7 +252,7 @@ button.blank:hover,
 }
 /* 等證物的空格：從右邊證據欄點一張就放進來。 */
 .blank.hot {
-  border-bottom: 1px dashed var(--hl-edge);
+  border-bottom: 1px solid var(--hl-edge);
   background: var(--hl-wash);
   box-shadow: 0 0 0 1px var(--hl);
   border-radius: 3px;
@@ -646,12 +647,6 @@ details.earlier[open] > .lines {
   gap: 10px;
   align-items: center;
 }
-.trialbar .eb::before {
-  content: '';
-  width: 16px;
-  height: 2px;
-  background: var(--hl);
-}
 .trialbar .eb b {
   color: var(--text);
   font: 700 var(--fs-ui-head) / 1 var(--font);
@@ -675,7 +670,9 @@ details.earlier[open] > .lines {
   vertical-align: -3px;
 }
 .tb-tally b.low {
-  color: light-dark(var(--hl-edge), var(--hl));
+  /* 剩最後一次：粗底線，不用黃（一幀一個黃，第一道關卡 B2）。 */
+  text-decoration: underline 2px;
+  text-underline-offset: 4px;
 }
 .tb-tally small {
   font: 500 11px/1 var(--font-mono);
@@ -787,14 +784,15 @@ button.cand:hover:not(.on) {
   color: var(--muted);
   transform: rotate(-4deg);
 }
+/* 選中的候選人：墨色左緣＋淡底。黃只給下一步（規格 v2.0 §1，第一道關卡 B2）。 */
 button.cand.on {
-  background: var(--hl-wash);
-  border-top: 1px solid var(--hl-edge);
-  border-bottom-color: var(--hl-edge);
-  border-left-color: var(--hl);
+  background: light-dark(rgb(17 23 32 / 5%), rgb(231 234 238 / 6%));
+  border-top: 1px solid var(--border-strong);
+  border-bottom-color: var(--border-strong);
+  border-left-color: var(--text);
 }
 .cand.on .seatno {
-  border-color: var(--hl-edge);
+  border-color: var(--text);
 }
 .cand.bench {
   opacity: 0.78;
@@ -815,16 +813,15 @@ button.cand.on {
   padding: 0 var(--s4);
   font: 500 11px/1 var(--font-mono);
   letter-spacing: 0.1em;
-  color: light-dark(var(--hl-edge), var(--hl));
-  background: light-dark(rgb(255 208 46 / 10%), rgb(244 197 61 / 5%));
+  color: var(--muted);
+  background: light-dark(rgb(17 23 32 / 4%), rgb(231 234 238 / 4%));
   white-space: nowrap;
 }
 .cutline::before,
 .cutline::after {
   content: '';
   flex: 1;
-  border-top: 1px dashed currentColor;
-  opacity: 0.7;
+  border-top: 1px solid var(--border);
 }
 
 .vd-right {
@@ -904,7 +901,7 @@ button.cand.on {
 .seatc .slot0 {
   width: 72px;
   aspect-ratio: 3 / 4.3;
-  border: 1.5px dashed light-dark(#8a6a43, #6b5640);
+  border: 1px solid light-dark(#8a6a43, #6b5640);
   border-radius: var(--radius);
   display: grid;
   place-items: center;
@@ -912,7 +909,7 @@ button.cand.on {
   color: light-dark(#8a6a43, #8a7258);
 }
 .seatc.on .idphoto {
-  outline: 2px solid var(--hl);
+  outline: 2px solid var(--text);
   outline-offset: 2px;
 }
 
@@ -1236,6 +1233,11 @@ button.cand.on {
 }
 .lcol .ledger-tip {
   margin: 0;
+}
+.ledger-claim {
+  margin: 8px 0 0;
+  font: 400 var(--fs-ui-meta) / 1.5 var(--font);
+  color: var(--text);
 }
 .fold > summary {
   font: 500 var(--fs-ui-meta) / 1.4 var(--font);
@@ -1635,6 +1637,27 @@ html[lang='en'] .vform .fh .c {
 html[lang='en'] .record {
   --rec-measure: 26.4;
 }
+/*
+ * 手機：外框 .shell 的格線欄是 auto，會被筆錄紙的最小寬（一行字數 × 字級）撐開，右邊被 overflow 切掉
+ * （第一道關卡 S1：借據章、立即顯示全文、詰問完畢都被裁到）。法庭畫面把欄寬鎖在螢幕內，紙的字級再照框寬算。
+ */
+@media (max-width: 1023px) {
+  .shell:has(.record) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.record,
+.rec-scroll {
+  min-width: 0;
+}
+/* 筆錄的寬只聽外框的，不讓紙的最小寬回頭撐開外框（休庭頁、陪審團長頁也一樣）；字級再照這個寬算。 */
+.record {
+  contain: inline-size;
+}
+/* 證詞分頁列不被筆錄擠扁（同一張截圖：「✓ 證詞 1」下半截被切掉）。 */
+.shell:has(.record) > .shell-tabs > .apps {
+  flex-shrink: 0;
+}
 .rec-bar-top {
   display: flex;
   justify-content: flex-end;
@@ -1682,6 +1705,29 @@ html[lang='en'] .record {
 .rec-head::after {
   content: attr(data-r);
 }
+/*
+ * 最上面那張頁首黏在框頂（框是看紙的視窗，設計師 10-09）：拉到紙邊、背景照抄紙的雙直線，
+ * 捲上來的行號不會從頁首旁邊露出來。頁碼由 Record.tsx 跟著捲到的那一頁換。
+ */
+.rec-head.pin {
+  position: sticky;
+  /* 捲動框上緣有 8px 內距：黏在框的最上緣，上面不露出捲過去的字。 */
+  top: -8px;
+  z-index: 2;
+  margin: 0 calc(-1 * var(--rec-pr)) 0 calc(-1 * var(--rec-pl));
+  padding: 0 var(--rec-pr) 0 var(--rec-pl);
+  background:
+    linear-gradient(var(--paper-rule), var(--paper-rule)) var(--rec-gutter) 0 / 1px 100% no-repeat,
+    linear-gradient(var(--paper-rule), var(--paper-rule)) calc(var(--rec-gutter) + 3px) 0 / 1px 100%
+      no-repeat,
+    var(--paper);
+}
+/* 手機：一頁要捲，Bates 也印在黏住的頁首上（卷、頁、Bates）。 */
+@media (max-width: 1023px) {
+  .rec-head.pin[data-b]::after {
+    content: attr(data-r) '\3000' attr(data-b);
+  }
+}
 /* Bates：每頁右下，Courier Prime 粗體、碳粉色（設定集第 9 章）。 */
 .rec-foot {
   display: flex;
@@ -1719,14 +1765,23 @@ html[lang='en'] .record {
   color: var(--paper-muted);
   user-select: none;
 }
-/* 目前行：頁邊一道螢光，筆錄層唯一的黃（設定集 10.3）。紙是淺的，加 1px --hl-edge 才看得出邊。 */
+/*
+ * 目前行：頁邊一道炭色 2px（設計師 10-09 裁定：黃只給玩家下一個動作，主按鈕能按時記號讓位）。
+ * 異議分鏡（第 10.3 章）期間輸入鎖住、畫面上沒有主按鈕，那時才換成黃；分鏡做好時（P3-1／3-2）
+ * 由分鏡在 .record 上加 data-beat，這裡已先接好。
+ */
 .rec-row.cur::after {
   content: '';
   position: absolute;
   top: calc(50% - 0.45em);
+  left: calc(-1 * var(--rec-pl) + 4px);
+  width: 2px;
+  height: 0.9em;
+  background: var(--paper-ink);
+}
+.record[data-beat] .rec-row.cur::after {
   left: calc(-1 * var(--rec-pl) + 3px);
   width: 4px;
-  height: 0.9em;
   background: var(--hl);
   box-shadow: 0 0 0 1px var(--hl-edge);
 }
@@ -1746,6 +1801,8 @@ html[lang='en'] .record {
   font-family: 'Noto Serif TC', serif;
 }
 .rec-entry.note {
+  /* 全域 .note 是 14px，筆錄裡的說明要跟筆錄同字級，不然英文長句會跑出紙邊（第一道關卡重跑時找到）。 */
+  font-size: inherit;
   color: var(--paper-muted);
 }
 /* 黑條：零圓角、上緣 1px、條內小字（設定集第 1、9 章）。報讀念的是條上的字，不是被蓋掉的話。 */
@@ -1793,6 +1850,12 @@ html[lang='en'] .record {
   outline-offset: 1.5px;
   white-space: nowrap;
   mix-blend-mode: multiply;
+}
+.stamp.rec-stamp.tight {
+  position: absolute;
+  right: 3px;
+  top: 3px;
+  margin-left: 0;
 }
 /* 章內字至少 11px（視覺設計師 #2） */
 .stamp.rec-stamp b {
@@ -2012,7 +2075,7 @@ html[lang='en'] .stamp.rec-stamp b {
   display: block;
   width: 56px;
   height: 70px;
-  border-radius: 4px;
+  border-radius: var(--radius);
   overflow: hidden;
   background: var(--cine-bg);
 }
@@ -2080,7 +2143,7 @@ html[lang='en'] .stamp.rec-stamp b {
   top: -3px;
   left: calc(var(--th) * 1%);
   height: 10px;
-  border-left: 1px dashed var(--muted);
+  border-left: 1px solid var(--muted);
 }
 .jb-track.over {
   background: var(--bad);

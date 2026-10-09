@@ -68,9 +68,7 @@ function DefenseScreen({ scene: raw }: { scene: DefenseScene }) {
             <li key={o.id} className="panel">
               <strong>{t(o.label, scope)}</strong>
               <p className="muted">{t(o.detail, scope)}</p>
-              <button className="primary" onClick={() => prepareWitness(o.id)}>
-                {t('就這樣準備')}
-              </button>
+              <button onClick={() => prepareWitness(o.id)}>{t('就這樣準備')}</button>
             </li>
           ))}
         </ul>
