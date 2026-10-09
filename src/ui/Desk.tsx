@@ -22,9 +22,12 @@ import { ExhibitTag, exhibitNo, FilingThumb, Pleading, Written } from './Pleadin
 import { useScope } from './lang';
 import { useCardPick } from './pick';
 import { Speech } from './Portrait';
-import { relationMark, RelationPicker } from './RelationPicker';
+import { RelationPicker } from './RelationPicker';
+import { Cork, type CorkItem } from './Cork';
+import { Redaction } from './Redaction';
 import { Shell, Tabs } from './Shell';
 import { Timeline } from './Timeline';
+import { Recap } from './ActCard';
 
 // 證據庫和左下的證據抽屜內容一模一樣，所以只留抽屜：它在每個畫面都叫得出來。
 type App = 'mail' | 'docs' | 'board' | 'jobs' | 'court' | 'discovery';
@@ -201,6 +204,7 @@ export function Desk({ scene }: { scene: DeskScene }) {
         </>
       }
     >
+      {st.hours === scene.hours && <Recap />}
       {app === 'mail' && <Mail scene={scene} />}
       {app === 'docs' && <Docs scene={scene} />}
       {app === 'board' && <Board scene={scene} held={held} />}
@@ -585,44 +589,80 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
         {/* 還沒出現的疑問只留一行：看得出案子還沒查完，又不佔一排空框（UX 規格）。 */}
         {scene.questions.length > questions.length && (
           <li className="q-locked">
-            {t('還有 {n} 題，查到線索後出現', { n: scene.questions.length - questions.length })}
+            <Redaction
+              label={t('還有 {n} 題，查到線索後出現', {
+                n: scene.questions.length - questions.length,
+              })}
+            />
           </li>
         )}
       </ul>
     </nav>
   );
 
-  const slot = (i: number) => {
+  const [juryView, setJuryView] = useState(false);
+  // 陪審團只知道被法庭採納的證據（卡片的 admitted）；論點、發現是盧卡斯自己的推理。
+  const juryCards = pool.filter((c) => 'admitted' in c && c.admitted);
+  // 出處小字（設定集 6.6）：誰畫的、什麼時候。桌面上的板永遠在開庭前，所以是「預審」。
+  const sketchSource = [t('法庭速寫'), 'M. Osei', t('預審')].join('\u3000');
+  // 軟木板上的 A、B：放了卡就是那張卡（點了拿下來），空的是提示或挑卡入口。
+  const corkSlot = (i: 0 | 1, face: ReactNode) => {
     const c = pool.find((x) => x.id === st.link.cards[i]);
-    const tag = i === 0 ? 'A' : 'B';
-    return (
-      <li className={c ? 'slot-card filled' : 'slot-card'}>
-        <span className="slot-tag" aria-hidden>
-          {tag}
-        </span>
-        {c ? (
-          <button
-            className="slot-clear"
-            onClick={() => toggleLinkCard(c.id)}
-            aria-label={t('拿下 {name}', { name: t(c.name, scope) })}
-          >
-            {t(c.name, scope)}
-          </button>
-        ) : wide ? (
-          <span className="slot-hint">{t('點右邊的卡片放上來')}</span>
-        ) : (
-          // 手機：空格就是挑卡片的入口，挑完回到這裡看得到 A、B（UX 規格 P1-11）。
-          <button
-            className="slot-open"
-            disabled={i > st.link.cards.length}
-            onClick={() => setPicking(true)}
-          >
-            {t('放一張卡')}
-          </button>
-        )}
-      </li>
+    if (c)
+      return (
+        <button
+          className="cork-pick"
+          onClick={() => toggleLinkCard(c.id)}
+          aria-label={t('拿下 {name}', { name: t(c.name, scope) })}
+        >
+          {face}
+        </button>
+      );
+    return wide ? (
+      <span className="cork-empty">{t('點右邊的卡片放上來')}</span>
+    ) : (
+      // 手機：空格就是挑卡片的入口，挑完回到這裡看得到 A、B（UX 規格 P1-11）。
+      <button
+        className="cork-empty"
+        disabled={i > st.link.cards.length}
+        onClick={() => setPicking(true)}
+      >
+        {t('放一張卡')}
+      </button>
     );
   };
+  // 板邊連過的線：最新的兩條、不含正在比對的卡。
+  const byId = (id: string) => pool.find((c) => c.id === id);
+  const corkLinks = desk
+    .findings(scene, st)
+    .slice()
+    .reverse()
+    .filter((l) => !l.cards.some((id) => st.link.cards.includes(id)))
+    .flatMap((l) => {
+      const [a, b] = [byId(l.cards[0]), byId(l.cards[1])];
+      return a && b ? [{ a, b, relation: l.relation }] : [];
+    })
+    .filter(
+      (l, i, all) =>
+        i === 0 || ![all[0].a.id, all[0].b.id].some((id) => id === l.a.id || id === l.b.id),
+    )
+    .slice(0, 2);
+  // 提得出聲請、還沒核准的卡：黑條佔位（設定集第 9 章「尚未取得」）。一個畫面最多三條黑條。
+  const bars = (scene.questions.length > questions.length ? 1 : 0) + (found.length === 0 ? 1 : 0);
+  const have = pool.map((c) => c.id);
+  const pending = scene.motions
+    .filter((m) => m.gives.length && m.needs.every((n) => have.includes(n)))
+    .filter((m) => !desk.motionAttempt(st, m.id).ruling)
+    .flatMap((m) =>
+      m.gives
+        .filter((id) => !have.includes(id))
+        .map((id) => ({
+          id,
+          name: scene.cards.find((c) => c.id === id)?.name ?? id,
+          why: m.label.includes('傳票') ? '尚未取得　需傳票' : '尚未取得　需聲請',
+        })),
+    )
+    .slice(0, Math.max(0, 3 - bars));
 
   // 確認之後連線台照常能用（發現是共用的），但不再是頁面主角（UX 規格四之 3）。
   const qDone = !!q && st.confirmed.includes(q.id);
@@ -632,53 +672,96 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
   const nextView = nextQ?.id ?? (st.timeline.length < timedN ? 'timeline' : null);
   const bench = (
     <section className="panel step links">
-      <h3 className="step-head">
-        <span className="step-num">1</span>
-        {qDone ? t('繼續連線') : t('連線')}
-      </h3>
+      <div className="row bench-head">
+        <h3 className="step-head">
+          <span className="step-num">1</span>
+          {qDone ? t('繼續連線') : t('連線')}
+        </h3>
+        {/* 陪審團視角（設定集 8.6）：同一塊板，只畫陪審團聽過的東西。 */}
+        <div className="view-switch" role="group" aria-label={t('看誰知道的案情')}>
+          <button aria-pressed={!juryView} onClick={() => setJuryView(false)}>
+            {t('我知道的案情')}
+          </button>
+          <button aria-pressed={juryView} onClick={() => setJuryView(true)}>
+            {t('陪審團知道的案情')}
+          </button>
+        </div>
+      </div>
       <div
         className={
           (desk.canConnect(st) ? 'link-bench ready' : 'link-bench') +
           (badShake ? (st.linkMiss === 'relation' ? ' shake-rel' : ' shake') : '')
         }
       >
-        <ul className="slots-row">
-          {slot(0)}
-          <li className="link-knot" aria-hidden>
-            <span className={st.link.relation ? 'set' : undefined}>
-              {st.link.relation ? relationMark[st.link.relation] : t('？')}
-            </span>
-          </li>
-          {slot(1)}
-        </ul>
-        <RelationPicker
-          cards={st.link.cards.map((id) => pool.find((c) => c.id === id)?.name)}
-          value={st.link.relation}
-          onPick={setLinkRelation}
-          compact
+        <Cork
+          focus={
+            [0, 1].map((i) => pool.find((x) => x.id === st.link.cards[i])) as [
+              CorkItem | undefined,
+              CorkItem | undefined,
+            ]
+          }
+          relation={st.link.relation}
+          relationLabel={st.link.relation ? t(st.link.relation) : t('？')}
+          ready={desk.canConnect(st)}
+          links={corkLinks}
+          loose={pool}
+          pending={pending}
+          compact={!wide}
+          onPick={toggleLinkCard}
+          slot={corkSlot}
+          jury={{ on: juryView, cards: juryCards, provenance: sketchSource }}
         />
-        <div className="row bench-foot">
-          <span />
-          <button className="primary" disabled={!desk.canConnect(st)} onClick={connect}>
-            {t('連起來')}
-          </button>
+        {/* 陪審團視角只看不動：連線操作收起來，畫面上不留黃（一格一黃給的是下一步，這裡沒有下一步）。
+            位置照留，切換時版面不跳（捲軸出現或消失會讓板子變寬，速寫也得重畫）。 */}
+        <div className="bench-ops-wrap">
+          {juryView && (
+            <p className="jury-note" role="status">
+              {juryCards.length
+                ? t('陪審團只看過法庭採納的證據：{list}。你的連線和推理他們都還沒聽過。', {
+                    list: juryCards.map((c) => t(c.name, scope)).join(t('、')),
+                  })
+                : t('陪審團還沒看過任何證據。你查到的一切，要在法庭上被採納，他們才會知道。')}
+            </p>
+          )}
+          <div className={juryView ? 'bench-ops off' : 'bench-ops'} inert={juryView}>
+            <RelationPicker
+              cards={st.link.cards.map((id) => pool.find((c) => c.id === id)?.name)}
+              value={st.link.relation}
+              onPick={setLinkRelation}
+              compact
+            />
+            <div className="row bench-foot">
+              <span />
+              {/* 一格一黃：這題確認了，主按鈕是「下一題」，連起來退成一般按鈕。 */}
+              <button
+                className={qDone ? undefined : 'primary'}
+                disabled={!desk.canConnect(st)}
+                onClick={connect}
+              >
+                {t('連起來')}
+              </button>
+            </div>
+            {found.length === 0 && (
+              <p className="bench-hint">{t('把兩張卡連起來，發現會出現在下面。')}</p>
+            )}
+            {st.linkNote && (
+              // 連錯：兩張卡抖一下、頂端工時閃紅，也寫出來（體驗評測：只抖一下，第一次玩看不懂）。
+              // 連成功也不另外寫：新的發現便條會亮一下，內容就在便條上（試玩回報：兩處同一句太雜）。
+              <p
+                role="status"
+                className={
+                  st.linkNote.startsWith('連起來了')
+                    ? 'sr-only'
+                    : st.linkMiss
+                      ? 'board-note bad'
+                      : 'board-note'
+                }
+              >
+                {t(st.linkNote, scope)}
+              </p>
+            )}
+          </div>
         </div>
-        {st.linkNote && (
-          // 連錯：兩張卡抖一下、頂端工時閃紅，也寫出來（體驗評測：只抖一下，第一次玩看不懂）。
-          // 連成功也不另外寫：新的發現便條會亮一下，內容就在便條上（試玩回報：兩處同一句太雜）。
-          <p
-            role="status"
-            className={
-              st.linkNote.startsWith('連起來了')
-                ? 'sr-only'
-                : st.linkMiss
-                  ? 'board-note bad'
-                  : 'board-note'
-            }
-          >
-            {t(st.linkNote, scope)}
-          </p>
-        )}
       </div>
       {!wide && picking && (
         <CardSheet
@@ -732,8 +815,8 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
                 {t('發現')}
               </h3>
               {found.length === 0 ? (
-                <p className="slot-card found-empty">
-                  {t('在上面把兩張卡連起來，發現會出現在這裡。')}
+                <p className="found-empty">
+                  <Redaction label={t('尚未發現')} />
                 </p>
               ) : (
                 (() => {
@@ -796,7 +879,10 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
                     ✓ {t('已確認')} → <span className="arg-name">{t(q.argument.name, scope)}</span>
                   </p>
                   {(nextView || !wide) && (
-                    <button className="primary" onClick={() => setView(nextView)}>
+                    <button
+                      className={juryView ? undefined : 'primary'}
+                      onClick={() => setView(nextView)}
+                    >
                       {nextView === 'timeline'
                         ? t('去排時間線 →')
                         : nextView
@@ -850,8 +936,9 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
                         {t(st.feedback[q.id], scope)}
                       </p>
                     )}
+                    {/* 板上兩張卡和關係都擺好時，眼前的動作是「連起來」，提交先退成一般按鈕。 */}
                     <button
-                      className="primary"
+                      className={desk.canConnect(st) || juryView ? undefined : 'primary'}
                       disabled={!desk.canSubmit(scene, st, q.id, progress.cards)}
                       onClick={() => submit(q.id)}
                     >
@@ -895,7 +982,7 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
       list
     );
   return (
-    <div className="board3">
+    <div className={juryView ? 'board3 jury' : 'board3'}>
       {list}
       <div className="board-work">{work}</div>
     </div>
@@ -1195,8 +1282,8 @@ function Jobs({ scene, held }: { scene: DeskScene; held: string[] }) {
             {done ? (
               <p className="good">{t('已回報。')}</p>
             ) : (
+              // 每張委託卡各一顆，一個畫面會有好幾顆：用次要鈕，黃只留給畫面上唯一的主按鈕（規格 v2.0 §10）。
               <button
-                className="primary"
                 disabled={!desk.canCommission(scene, st, j.id, progress.cards)}
                 onClick={() => commission(j.id)}
               >

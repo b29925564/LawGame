@@ -150,7 +150,7 @@ App 日誌：死後仍在派單: 'App log: orders kept coming after death'
 您已拒絕訂單。今日評分 4.6 → 4.5。: Order declined. Today's rating 4.6 → 4.5.
 新訂單：南港市場 → 港灣大道 88 號。請於 60 秒內接單。: 'New order: South Harbor Market → 88 Harbor Avenue. Accept within 60 seconds.'
 第二集　和解的價格: 'Episode Two: The Price of a Settlement'
-惠特洛克的辦公室　週一 09:00: Whitlock's office, Monday 9:00 a.m.
+'惠特洛克的辦公室　週一 09:00': "Whitlock's office, Monday 09:00"
 惠特洛克的桌上只有一份卷宗，封面貼著藍色標籤：維加訴卡爾德物流。: "There is one file on Whitlock's desk, a blue label on the cover: Vega v. Calder Logistics."
 一名外送司機在車上心臟病發。家屬要一千兩百萬，還要懲罰性賠償。: A delivery driver had a heart attack in his van. The family wants twelve million, plus punitive damages.
 上一個案子，你讓卡爾德的名字上了三週新聞。這一個，你替他們把名字拿下來。: Last case, you put Calder's name in the news for three weeks. This one, you take it back out.
@@ -163,7 +163,7 @@ App 日誌：死後仍在派單: 'App log: orders kept coming after death'
 他是承攬人，葛雷律師。上線是他按的，下線也是。: He was a contractor, Mr. Grey. He tapped online. He could have tapped offline.
 葛雷律師是在預演對方會怎麼說。對吧？: Mr. Grey is rehearsing what the other side will say. Aren't you?
 羅根當你的二席。對方律師是丹尼爾・奧卡福，我想你認識。: Logan is your second chair. Opposing counsel is Daniel Okafor. I believe you know him.
-走廊　週一 09:40: Hallway, Monday 9:40 a.m.
+'走廊　週一 09:40': 'Hallway, Monday 09:40'
 民事案。你沒打過幾場吧。: A civil case. You haven't tried many of those.
 刑事案，你要讓陪審團懷疑。民事案，對方只要讓他們覺得「比較可能」。: In a criminal case, you make the jury doubt. In a civil case, the other side only has to make them think it's "more likely than not."
 一半多一點點。這次站在線上的是你。: A little over half. And this time you're the one standing on the line.
@@ -272,7 +272,7 @@ App 日誌我整理好了（有點多）: App log sorted (it's a lot)
 第三幕　審前: 'Act Three: Pretrial'
 宣誓過的話，在法庭上改一個字，就是別人的武器。: Once it's said under oath, changing a single word in court hands the other side a weapon.
 包括你自己的證人。: Your own witnesses included.
-惠特洛克・海爾　會議室 C: Whitlock & Hale, Conference Room C
+'惠特洛克・海爾　會議室 C　週二 10:00': 'Whitlock & Hale, Conference Room C, Tuesday 10:00'
 卡爾德快遞　營運副總: VP of Operations, Calder Express
 對方錄取自己人，你能做的只有異議和指示不答。他說出口的每一句，奧卡福都會拿到逐字稿。: When the other side deposes your own man, all you can do is object and instruct him not to answer. Every word he says, Okafor gets in the transcript.
 你要先知道他會在哪裡說謊，才知道哪一題要擋。: You need to know where he's going to lie before you know which question to block.
@@ -283,7 +283,7 @@ App 日誌我整理好了（有點多）: App log sorted (it's a lot)
 三月十四日有一張設定變更單。簽名的是您嗎？: There is a configuration change ticket dated March 14. Is that your signature on it?
 ……系統每一季都在改版。我不記得每一張變更單。: "…The system changes every quarter. I don't remember every change ticket."
 營運部。我是營運部的主管。: Operations. I run Operations.
-奧卡福勞工法律事務所　會議室: Okafor Labor Law, conference room
+'奧卡福勞工法律事務所　會議室　週三 14:00': 'Okafor Labor Law, conference room, Wednesday 14:00'
 卡爾德快遞　資深系統工程師: Senior Systems Engineer, Calder Express
 這次換你坐我們這邊了。看起來很不習慣。: Your turn on our side of the table this time. You look uncomfortable.
 徐小姐，妳負責卡爾德快遞派單系統的哪一部分？: Ms. Hsu, which part of the Calder Express dispatch system are you responsible for?
@@ -324,7 +324,7 @@ App 日誌我整理好了（有點多）: App log sorted (it's a lot)
 還是不能讓它變貴。亞瑟給的數字是一百五十萬。: It still can't get expensive. Arthur's number is one and a half million.
 第四幕　調解: 'Act Four: Mediation'
 和解不是認輸。是兩邊都承認，自己可能會輸。: A settlement isn't surrender. It's both sides admitting they might lose.
-卡爾德郡高等法院　調解室 2: Calder County Superior Court, Mediation Room 2
+'卡爾德郡高等法院　調解室 2　週四 10:00': 'Calder County Superior Court, Mediation Room 2, Thursday 10:00'
 原告律師: Counsel for the plaintiff
 調解室很小。瑪莉索・維加坐在奧卡福旁邊，手裡握著一支舊手機，螢幕裂了一角。: The mediation room is small. Marisol Vega sits beside Okafor, an old phone in her hand, one corner of the screen cracked.
 我們有派單日誌、死後的扣分，還有一個說「一個下午就能改回去」的工程師。你有什麼，盧卡斯？: We have the dispatch log, the rating docked after he died, and an engineer who says it takes "an afternoon" to change back. What do you have, Lucas?
@@ -357,7 +357,7 @@ App 日誌我整理好了（有點多）: App log sorted (it's a lot)
 第五幕　庭審: 'Act Five: Trial'
 六個人，五票就能判。: Six people. Five votes decide it.
 這一次，站在線上的是你。: This time, you're the one standing on the line.
-惠特洛克・海爾　會議室 A: Whitlock & Hale, Conference Room A
+'惠特洛克・海爾　會議室 A　週一 15:00': 'Whitlock & Hale, Conference Room A, Monday 15:00'
 民事案沒有無罪，只有責任多少。你要告訴陪審團，這筆帳該怎麼算。: There's no "not guilty" in a civil case. Only how much of the fault. You tell the jury how to do the math.
 亞瑟要的是無責。他不在乎你怎麼講，只在乎判決書上那兩個字。: Arthur wants no liability. He doesn't care how you argue it. He cares about the words on the verdict form.
 他自己的選擇: His own choice
@@ -601,14 +601,14 @@ App 日誌我整理好了（有點多）: App log sorted (it's a lot)
 （電話）上訴的事，明天早上來我辦公室談。: (Phone) The appeal. My office, tomorrow morning.
 陪審長站起來。「庭上，我們沒有辦法達到所需的票數。」: The foreperson stands. "Your Honor, we are unable to reach the required number of votes."
 法官宣布審判無效。走廊上，奧卡福遞給盧卡斯一張名片，背面寫著一個數字。: The judge declares a mistrial. In the hallway, Okafor hands Lucas a business card. There is a number written on the back.
-卡爾德郡高等法院　調解室外的走廊: Calder County Superior Court, hallway outside the mediation room
+'卡爾德郡高等法院　調解室外的走廊　週四 12:40': 'Calder County Superior Court, hallway outside the mediation room, Thursday 12:40'
 和解書第七條：「被告承諾於六十日內，恢復派單系統之強制下線功能。」: 'Settlement, clause seven: "The defendant undertakes to restore the dispatch system''s forced-offline function within sixty days."'
 謝謝你。我知道你是他們的律師。: Thank you. I know you're their lawyer.
 （訊息）第七條。你讓我多付了一個條款，葛雷律師。我會記得。: (Text) Clause seven. You cost me an extra term, Mr. Grey. I'll remember that.
 九十萬。沒有條款，沒有道歉。和解書最後一行寫著：「被告不因本和解承認任何責任。」: 'Nine hundred thousand. No terms, no apology. The last line of the settlement reads: "The defendant admits no liability by this settlement."'
 漂亮。: Nicely done.
 瑪莉索從調解室出來，經過盧卡斯身邊，沒有停下來。: Marisol comes out of the mediation room and passes Lucas without stopping.
-惠特洛克・海爾　影印室　晚上 22:10: Whitlock & Hale, copy room. 10:10 p.m.
+'惠特洛克・海爾　影印室　週四 22:10': 'Whitlock & Hale, copy room, Thursday 22:10'
 影印機還在出紙。戴文把一張舊文件放上掃描台，放大到百分之四百。: The copier is still feeding out pages. Devon lays an old document on the scanner and zooms to four hundred percent.
 葛雷律師，等一下。那份文件保存政策的附件，二〇一六年那張。: Mr. Grey, wait. The attachment to the records retention policy. The one from 2016.
 「碼頭九號倉庫維修紀錄備份：依政策銷毀。」核准人簽名……我放大了。: '"Pier Nine warehouse maintenance record backups: destroyed per policy." The approver''s signature… I zoomed in.'
@@ -673,13 +673,13 @@ App 日誌我整理好了（有點多）: App log sorted (it's a lot)
 '走廊上，奧卡福把那張截圖收回卷宗。他沒有看盧卡斯。': "In the hallway, Okafor slides the screenshot back into his file. He doesn't look at Lucas."
 '（訊息）你在法庭上說我們的系統有錯，然後贏了。我不確定該不該謝你。': "(Text) You told a courtroom our system was flawed, and then you won. I'm not sure whether to thank you."
 '你說了他們有錯。判決書上沒有，但你說了。': "You said they got it wrong. It isn't on the verdict form, but you said it."
-'卡爾德郡高等法院　五樓走廊': 'Calder County Superior Court, fifth-floor hallway'
+'卡爾德郡高等法院　五樓走廊　週四 17:05': 'Calder County Superior Court, fifth-floor hallway, Thursday 17:05'
 '崔佛・米爾斯在電梯前停下來。他沒有轉身。': "Trevor Mills stops in front of the elevator. He doesn't turn around."
 '我照你說的更正了。然後我們輸了。': 'I corrected it, like you said. And then we lost.'
 '我們輸的不是那一句。': "That's not the line that lost it."
 '陪審團不會這樣想。亞瑟也不會。': "The jury won't see it that way. Neither will Arthur."
 '電梯門開了。門關上之前，他看了盧卡斯一眼，像在看一個算錯數字的人。': 'The elevator opens. Before the doors close, he gives Lucas one look, the kind you give a man who got the math wrong.'
-'惠特洛克・海爾　四十二樓　晚上 21:30': 'Whitlock & Hale, 42nd floor. 9:30 p.m.'
+'惠特洛克・海爾　四十二樓　週四 21:30': 'Whitlock & Hale, 42nd floor, Thursday 21:30'
 '惠特洛克的辦公室只開了一盞桌燈。桌上放著一份影本，右上角蓋著原告律師事務所的收件章。': "Only the desk lamp is on in Whitlock's office. On the desk lies a photocopy, the plaintiff firm's received stamp in the top right corner."
 '那份意見是我簽的。你把它交出去之前，有沒有想過要先問我？': 'I signed that opinion. Before you handed it over, did it occur to you to ask me first?'
 '……我想過。': '…It did.'
