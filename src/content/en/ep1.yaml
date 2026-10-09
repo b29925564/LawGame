@@ -271,7 +271,7 @@
 二十四工時。讀文件、擺卡片、和自己人講話都不花錢。: Twenty-four hours. Reading files, laying out cards and talking to your own people cost nothing.
 查不完是這一行的常態。: Never finishing is normal in this line of work.
 第三幕　審前: 'Act Three: Pretrial'
-十六工時。開庭前能做的事，都在這三個星期裡。: Sixteen hours. Everything that can be done before trial happens in these three weeks.
+十六工時。開庭前能做的事，都在這三天裡。: Sixteen hours. Everything that can be done before trial happens in these three days.
 第四幕　庭審　第一天: 'Act Four: Trial, Day One'
 卡爾德郡高等法院　第三法庭: Calder County Superior Court, Courtroom 3
 先選出十二位陪審員，接著是開場陳述，然後檢方傳喚第一位證人。: First, seat twelve jurors. Then opening statements. Then the prosecution calls its first witness.
@@ -952,3 +952,40 @@
 技術上可以。我們沒有排除這個可能。: Technically, yes. We haven't ruled it out.
 有可能。手錶不在手腕上，心率就是零。: It's possible. Off the wrist, the heart rate reads zero.
 對。我敲了兩次，沒有人應。: Yes. I knocked twice. Nobody answered.
+# 卷宗元件（P2-6）：案卷登錄表、證物袋、照片紀錄表。
+'戴文・艾許　惠特洛克・海爾 助理': 'Devon Ash, paralegal, Whitlock & Hale'
+'調閱（傳票回覆）': 'Received (subpoena return)'
+'收存': 'Stored'
+'26-CR-0417　辯方傳票 D-1': '26-CR-0417, defense subpoena D-1'
+'26-CR-0417　辯方傳票 D-2': '26-CR-0417, defense subpoena D-2'
+'L. Ferris　紀錄保管人（手錶廠商）': 'L. Ferris, custodian of records (watch manufacturer)'
+'M. Duarte　卡港警局 鑑識組': 'M. Duarte, Calder Harbor Police Crime Scene Unit'
+'R. Delgado　看守所財物管理員': 'R. Delgado, jail property officer'
+'S. Pruitt　卡爾德物流 資訊部紀錄保管人': 'S. Pruitt, custodian of records, IT, Calder Logistics'
+'T. Nguyen　法醫調查員': 'T. Nguyen, medical examiner investigator'
+'伊森・蕭　被告': 'Ethan Shaw, defendant'
+'傳票 D-1（03/24 雷耶斯法官當庭核發）': 'Subpoena D-1 (issued from the bench by Judge Reyes, 03/24)'
+'傳票 D-2（03/25 核發；03/31 撤銷聲請駁回）': 'Subpoena D-2 (issued 03/25; motion to quash denied 03/31)'
+'傳票回覆　1 之 1': 'Subpoena return, 1 of 1'
+'入所扣押　財物清單 No. 26-0315-088': 'Seized at booking, property inventory No. 26-0315-088'
+'全景：財務長辦公室，自門口拍攝': "Overall: CFO's office, from the doorway"
+'卡爾德港看守所　入所處': 'Calder Harbor Detention Center, intake'
+'卡爾德物流　紀錄保管人': 'Calder Logistics, custodian of records'
+'心率資料光碟一片，附紀錄保管人證明書': 'One disc of heart-rate data, with custodian of records certificate'
+'手錶廠商　紀錄保管人': 'Watch manufacturer, custodian of records'
+'扣押（入所財物）': 'Seized (booking property)'
+'收存（鑑識完畢返還）': 'Returned after examination'
+'普莉亞・奈爾　數位鑑識專家': 'Priya Nair, digital forensics expert'
+'智慧手錶一支（被告配戴）': 'One smartwatch (worn by defendant)'
+'檢方第一批證據開示送達：起訴書、逮捕報告、警方報告及附件、驗屍報告。': "State's first discovery production served: indictment, arrest report, police report with attachments, autopsy report."
+'稽核紀錄光碟一片，附紀錄保管人證明書': 'One disc of audit logs, with custodian of records certificate'
+'調閱（依 03/19 檢視令）': 'Released (per inspection order of 03/19)'
+'證物牌 1：辦公桌旁地毯上的血跡': 'Marker 1: blood on the carpet beside the desk'
+'證物牌 2：水晶獎盃，附比例尺': 'Marker 2: crystal trophy, with scale'
+'財物清單　項 3': 'Inventory item 3'
+'起訴書提出：二級謀殺一罪。被告在押；惠特洛克・海爾律師事務所具狀為被告辯護人。': 'Indictment filed: one count of murder in the second degree. Defendant in custody. Whitlock & Hale files notice of appearance for the defendant.'
+'送鑑': 'Sent for examination'
+'陪審團審理第一日：陪審團遴選，十二名陪審員宣誓；雙方開場陳述；檢方傳喚證人雷・柯瓦斯基警探。': 'Jury trial, day 1. Jury selection; twelve jurors sworn. Opening statements. State calls Detective Ray Kowalski.'
+'陪審團審理第二日：檢方傳喚證人蘇菲・馬丁內斯、瑞秋・艾德勒。': 'Jury trial, day 2. State calls Sophie Martinez and Rachel Adler.'
+'陪審團審理第三日：檢方舉證終結；辯方聲請無罪判決，駁回；辯方舉證。': 'Jury trial, day 3. State rests. Defense motion for judgment of acquittal denied. Defense case begins.'
+'預審：本院認定有相當理由，被告應受審判。定 04/06/2026 陪審團審理。': 'Preliminary hearing. Probable cause found; defendant held to answer. Jury trial set for 04/06/2026.'

@@ -270,14 +270,90 @@ button.link:hover:not(:disabled) {
   box-shadow: inset 3px 0 0 var(--hl);
 }
 
-input[type='checkbox'],
-input[type='range'] {
-  accent-color: var(--hl);
-}
+/*
+ * 核取方塊與滑桿是設定值，不是玩家的手（設計師 P1-7）：一律中性。
+ * 黃只在正在操作的那一個控制項上，也就是鍵盤焦點圈（上面的 :focus-visible）或拖曳中的滑桿；滑鼠懸停不算。
+ * 設計師說的 --ink 就是介面的字墨 --text。
+ */
 input[type='checkbox'] {
+  appearance: none;
+  flex: none;
+  display: inline-grid;
+  place-content: center;
   width: 18px;
   height: 18px;
   margin: 0;
+  border: 1px solid var(--border-strong);
+  border-radius: 3px;
+  background: var(--surface);
+  cursor: pointer;
+}
+input[type='checkbox']::before {
+  content: '';
+  width: 10px;
+  height: 5px;
+  border: solid var(--bg);
+  border-width: 0 0 2px 2px;
+  transform: translateY(-1px) rotate(-45deg);
+  visibility: hidden;
+}
+input[type='checkbox']:checked {
+  border-color: var(--text);
+  background: var(--text);
+}
+input[type='checkbox']:checked::before {
+  visibility: visible;
+}
+input[type='checkbox']:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+/* 滑桿：已填段 --ink-muted、拇指 --ink。WebKit 的填段用漸層畫，長度由 --fill 給（Settings.tsx）。 */
+input[type='range'] {
+  appearance: none;
+  height: 24px;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+}
+input[type='range']::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 2px;
+  background: linear-gradient(
+    to right,
+    var(--ink-muted) var(--fill, 0%),
+    var(--border) var(--fill, 0%)
+  );
+}
+input[type='range']::-webkit-slider-thumb {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  margin-top: -6px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--text);
+}
+input[type='range']::-moz-range-track {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--border);
+}
+input[type='range']::-moz-range-progress {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--ink-muted);
+}
+input[type='range']::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--text);
+}
+input[type='range']:active:not(:disabled) {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
 }
 select,
 .find {
@@ -820,6 +896,16 @@ details summary {
   gap: 10px;
   min-height: 36px;
   color: var(--text);
+}
+/* 開關下面一行說明（光敏安全）：換到下一行，對齊開關的字。 */
+.settings .toggle:has(small) {
+  flex-wrap: wrap;
+  row-gap: 2px;
+}
+.settings .toggle small {
+  flex-basis: 100%;
+  padding-left: 26px;
+  font-size: var(--fs-ui-meta);
 }
 .settings input[type='range'] {
   min-height: 44px;
@@ -2240,8 +2326,9 @@ fieldset.relations.compact {
 .actions > .row > [role='tablist'] {
   display: contents;
 }
-/* 一格一黃：選中的分頁是白框，黃只留給下一步（第一道關卡 B2）。 */
-.actions [aria-selected='true'] {
+/* 一格一黃：選中的分頁是白框，黃只留給下一步（第一道關卡 B2）；選單的分頁同一套（P1-7）。 */
+.actions [aria-selected='true'],
+.menu-panel [role='tab'][aria-selected='true'] {
   color: var(--text);
   border-color: var(--text) !important;
   background: var(--surface-2) !important;
@@ -4190,9 +4277,15 @@ button.iou[aria-pressed='true'] {
 }
 .tally-head {
   display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
-  gap: 18px;
+  gap: 4px 18px;
   font-variant-numeric: tabular-nums;
+}
+/* 手機上一行放不下時整段換到下一行，不在「僵局」「一致」中間斷；真的比一行還寬才在段內換行。 */
+.tally-head > * {
+  flex: none;
+  max-width: 100%;
 }
 .tally-head .count {
   font: 700 15px/1 var(--font-mono);
@@ -5720,11 +5813,11 @@ button.iou[aria-pressed='true'] {
   font-size: 13px;
 }
 .lang-switch button[aria-pressed='true'] {
-  /* 設定值不是玩家的手：蓋掉全域選取的黃邊（一格一黃）。 */
+  /* 設定值不是玩家的手：蓋掉全域選取的黃邊（一格一黃）。選中那格實心墨色底（P1-7）。 */
   border-color: transparent !important;
-  background: var(--surface-3) !important;
+  background: var(--text) !important;
   box-shadow: none;
-  color: var(--text);
+  color: var(--bg);
   font-weight: 700;
 }
 

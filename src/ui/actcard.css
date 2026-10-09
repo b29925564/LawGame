@@ -211,12 +211,18 @@
     animation: act-pull var(--dur-redact-out) steps(12, end) forwards;
     animation-delay: calc(var(--d, 0) * var(--dur-cut-black) + var(--dur-tube-ignite));
   }
-  .act-lines {
+  /* styles.css 的通用場景淡入（.scene > *、.title-card > :not(h1) 0.8s、.title-card h1 墨水暈開）不能套在幕卡上：
+     整張卡淡入會把燈管的兩次脈衝吃掉。幕卡的進場只有燈管和黑條（11.3）。選擇器要比那幾條重。 */
+  .scene.act-stage > .act-wrap,
+  .act-stage .act-card .act-title {
+    animation: none;
+  }
+  .scene.act-stage > .act-lines {
     animation: act-rise var(--dur-ui) var(--ease-light) both;
     animation-delay: calc(var(--dur-tube-ignite) + 6 * var(--dur-cut-black));
   }
   /* 集尾選項在停留結束後才掛上，掛上就淡入，不再等。 */
-  .act-actions {
+  .scene.act-stage > .act-actions {
     animation: act-rise var(--dur-ui) var(--ease-light) both;
   }
   /* 光敏安全：燈管只做單次 700ms 漸亮，不脈衝。 */

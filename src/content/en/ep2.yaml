@@ -216,7 +216,7 @@ App 日誌我整理好了（有點多）: App log sorted (it's a lot)
 一次: Once
 請戴文向資訊部調派單系統的設定變更紀錄: Have Devon pull the dispatch system's change records from IT
 規格書說「另見變更單」。要看是誰、什麼時候、為什麼改的。: The spec says "see the change ticket." Who changed it, when, and why.
-資訊部給了。三月十四日，崔佛・米爾斯簽的。理由欄只寫四個字：依法務意見。: 'IT sent it. March 14, signed by Trevor Mills. The reason field says three words: per legal advice.'
+資訊部給了。三月四日，崔佛・米爾斯簽的。理由欄只寫四個字：依法務意見。: 'IT sent it. March 4, signed by Trevor Mills. The reason field says three words: per legal advice.'
 還有……他們連營運群組的截圖一起寄來了。我想他們沒看就寄了。: Also… they sent the ops chat screenshots along with it. I don't think they looked before sending.
 請羅根從事務所檔案調出那份法務意見: Have Logan pull the legal opinion from the firm's files
 寫這份意見的是事務所自己。羅根知道放在哪裡。: The firm wrote that opinion itself. Logan knows where it's kept.
@@ -280,7 +280,7 @@ App 日誌我整理好了（有點多）: App log sorted (it's a lot)
 連續上線十小時跳出提醒。司機可以休息，也可以略過。: After ten hours online, a reminder appears. The driver can rest or skip it.
 這個機制一直都是這樣嗎？: Has this mechanism always worked this way?
 從系統上線就是提醒，從來沒有強制下線過。: It's been a reminder since the system launched. There was never a forced offline.
-三月十四日有一張設定變更單。簽名的是您嗎？: There is a configuration change ticket dated March 14. Is that your signature on it?
+三月四日有一張設定變更單。簽名的是您嗎？: There is a configuration change ticket dated March 4. Is that your signature on it?
 ……系統每一季都在改版。我不記得每一張變更單。: "…The system changes every quarter. I don't remember every change ticket."
 營運部。我是營運部的主管。: Operations. I run Operations.
 '奧卡福勞工法律事務所　會議室　週三 14:00': 'Okafor Labor Law, conference room, Wednesday 14:00'
@@ -574,7 +574,7 @@ App 日誌我整理好了（有點多）: App log sorted (it's a lot)
 赫克托・維加連續上線十小時的時候，App 做了什麼？: When Hector Vega had been online for ten hours, what did the app do?
 跳出提醒。他最後十四天，一共收到六十一次。: It showed a reminder. In his last fourteen days, he got sixty-one of them.
 疲勞提醒的設計，一直都是這樣嗎？: Has the fatigue reminder always been designed this way?
-米爾斯先生，這是三月十四日的設定變更單。簽名的是您嗎？: Mr. Mills, this is the change ticket dated March 14. Is that your signature?
+米爾斯先生，這是三月四日的設定變更單。簽名的是您嗎？: Mr. Mills, this is the change ticket dated March 4. Is that your signature?
 ……是我。: '…It is.'
 米爾斯先生，「從來沒有」這四個字，是誰教您說的？: Mr. Mills, the word "never." Who taught you to say it?
 我……律師跟我對過答案。: I… the lawyer went over the answers with me.
@@ -703,3 +703,19 @@ App 日誌我整理好了（有點多）: App log sorted (it's a lot)
 赫克托: Hector
 米爾斯先生，被告說公司盡了告知義務。三月您簽掉強制下線的那天，告知過哪一位司機？: Mr. Mills, the defense says the company met its duty to warn. The day in March you signed off on removing forced offline, which driver did you tell?
 ……那是系統更新。我們沒有發公告。: "…It was a system update. We didn't put out a notice."
+# 卷宗元件（P2-6）：案卷登錄表、證物袋、照片紀錄表。
+'戴文・艾許　惠特洛克・海爾 助理': 'Devon Ash, paralegal, Whitlock & Hale'
+'調閱（傳票回覆）': 'Received (subpoena return)'
+'收存': 'Stored'
+'26-CV-1182　被告傳票 D-1': '26-CV-1182, defense subpoena D-1'
+'K. Lam　紀錄保管人（藥局）': 'K. Lam, custodian of records (pharmacy)'
+'傳票 D-1（05/04 以法院名義發出，通知原告 14 日）': "Subpoena D-1 (issued under court seal 05/04; 14 days' notice to plaintiff)"
+'傳票回覆　1 之 1': 'Subpoena return, 1 of 1'
+'藥局　紀錄保管人': 'Pharmacy, custodian of records'
+'領藥紀錄列印本一頁，附紀錄保管人證明書': 'One-page printout of pickup records, with custodian of records certificate'
+'盧卡斯・葛雷　惠特洛克・海爾 律師': 'Lucas Grey, attorney, Whitlock & Hale'
+'被告委任惠特洛克・海爾律師事務所為訴訟代理人，具狀陳報。': 'Notice of appearance filed: Whitlock & Hale for defendant.'
+'原告向被告送達第一次文書提出要求。': 'Plaintiff serves first requests for production on defendant.'
+'書面證據開示期間屆滿。定 05/28/2026 法院調解會議。': 'Written discovery closed. Court-ordered mediation set for 05/28/2026.'
+'法院調解會議（調解室 2）。': 'Court-ordered mediation conference (Mediation Room 2).'
+'雙方提出審判前聲明、證人名單及陪審團指示草案。定 06/02/2026 陪審團審理。': 'Parties file pretrial statements, witness lists and proposed jury instructions. Jury trial set for 06/02/2026.'
