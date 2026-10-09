@@ -5,6 +5,8 @@ export interface Bubble {
   mine: boolean;
   text: string;
   retracted: boolean;
+  /** 被收回的時刻（劇本 retract 步驟的 time）；黑條裡寫「此訊息已被收回 23:14」。 */
+  retractedAt?: string;
 }
 
 export interface Line {
@@ -77,6 +79,7 @@ export function phoneView(
           const b = list.find((x) => x.id === s.target);
           if (b) {
             b.retracted = true;
+            b.retractedAt = time || undefined;
             thread = who;
           }
         }
