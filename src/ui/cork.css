@@ -1,0 +1,404 @@
+/*
+ * 證據板（設定集第 9 章 RD-ART-0903）。軟木板是世界裡的實物：不跟淺／深色主題換色，
+ * 卡片影子、棉線影子是實物的影子（介面元件仍不投影）。
+ * 合成順序：軟木 → 卡 → 棉線 → 吊燈 multiply → 2700K soft-light → 標記層（槽位標籤、關係結、黑條，不被調光）。
+ */
+.cork {
+  --index-blue: #b9c9e3; /* 索引卡藍橫線 */
+  --string-red: #b8322c;
+  --string-green: #2f7a52;
+  --string-glint: #ffe2c0; /* 暖白高光（--k-window） */
+  --cork-frame: #2a1c12;
+  position: relative;
+  isolation: isolate;
+  container-type: inline-size;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  border: 10px solid var(--cork-frame);
+  border-radius: 2px;
+  background:
+    var(--cork-tile) 0 0 / 256px 256px repeat,
+    var(--m-cork);
+  /* 木框內緣壓一道暗：板面是凹進框裡的。 */
+  box-shadow:
+    inset 0 0 0 1px rgb(0 0 0 / 55%),
+    inset 0 6px 14px rgb(0 0 0 / 45%);
+  color-scheme: light;
+}
+.cork.compact {
+  aspect-ratio: 4 / 3;
+}
+
+/* 吊燈：multiply 徑向光圈（亮度曲線照 RD-ART-0903 實測），中心在板中央。 */
+.cork-lamp {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  mix-blend-mode: multiply;
+  background: radial-gradient(
+    circle 50cqw at 50% 50%,
+    #fff 0,
+    #f4f2f0 34%,
+    #d9d4cf 46%,
+    #a8a39e 52%,
+    #8c8781 66%,
+    #3a3836 84%,
+    #262524 100%
+  );
+}
+/* 2700K soft-light：光圈半徑 520/1400 板寬。 */
+.cork-warm {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  pointer-events: none;
+  mix-blend-mode: soft-light;
+  background: radial-gradient(
+    circle 37cqw at 50% 50%,
+    rgb(255 180 107 / 55%),
+    rgb(255 180 107 / 0%) 100%
+  );
+}
+
+/* ── 棉線：3px，下垂 34px，影子偏移 (4, 7)。在卡片上面、燈光下面。 ── */
+.cork-strings {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+  filter: drop-shadow(4px 7px 1px rgb(0 0 0 / 50%));
+}
+.cork-string path {
+  fill: none;
+  stroke-width: 3px;
+  stroke-linecap: butt;
+}
+.cork-string.support path {
+  stroke: var(--string-green);
+}
+.cork-string.contra path {
+  stroke: var(--string-red);
+  stroke-dasharray: 6 4;
+}
+.cork-string.contra path.glint {
+  stroke: var(--string-glint);
+  stroke-opacity: 0.6;
+  stroke-width: 1px;
+}
+/* 第 9 章只定了紅、綠兩種線；其他關係用沒染色的棉線。 */
+.cork-string.other path {
+  stroke: #cfccc4;
+  stroke-width: 2px;
+}
+/* 兩張卡放上去、還沒選關係：一條鬆的白線。 */
+.cork-string.pending path {
+  stroke: #e7e4dc;
+  stroke-opacity: 0.75;
+  stroke-width: 1.5px;
+  stroke-dasharray: 2 4;
+}
+
+/* ── 卡片：紙是實物，零圓角；圖釘是深色小圓（圓形的例外）。 ── */
+.cork-card,
+.cork-focus {
+  position: absolute;
+  z-index: 2;
+  transform: rotate(var(--tilt, 0deg));
+  transform-origin: 50% 7px;
+}
+.cork-card,
+.cork-pick {
+  all: unset;
+  box-sizing: border-box;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  padding: 14px 11px 12px;
+  background: var(--copy-paper);
+  color: var(--paper-ink);
+  font: 400 12px/1.45 var(--font-doc);
+  text-align: left;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+.cork-card {
+  position: absolute;
+  z-index: 2;
+  transform: rotate(var(--tilt, 0deg));
+  transform-origin: 50% 7px;
+  /* 其他卡：影子模糊 22px，沿離燈方向拉長（--sx、--sy 由元件依位置算）。 */
+  box-shadow: var(--sx, 0) var(--sy, 8px) 22px -4px rgb(0 0 0 / 72%);
+}
+.cork-card::before,
+.cork-pick::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 2px;
+  width: 11px;
+  height: 11px;
+  margin-left: -5.5px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 32%, #6a707a 0, #23262c 45%, #0f1013 100%);
+  box-shadow: 1px 2px 2px rgb(0 0 0 / 60%);
+}
+.cork-card:focus-visible,
+.cork-pick:focus-visible {
+  outline: 2px solid var(--focus, #e7eaee);
+  outline-offset: 3px;
+}
+
+/* 比對中的兩張：推進光圈，放大 1.15，影子模糊 14px、位移短。 */
+.cork-focus.filled {
+  transform: rotate(var(--tilt, 0deg)) scale(1.15);
+}
+.cork-focus .cork-pick {
+  box-shadow: 1px 3px 14px -2px rgb(0 0 0 / 70%);
+}
+.cork.compact .cork-focus.filled {
+  transform: rotate(var(--tilt, 0deg));
+}
+@media (prefers-reduced-motion: no-preference) {
+  .cork-focus {
+    transition: transform var(--dur-ui) var(--ease-light);
+  }
+}
+
+/* 影印紙：卡名、時間、內文前三行。 */
+.cork-doc-name {
+  font: 700 13px/1.35 var(--font-doc);
+}
+.cork-card time,
+.cork-pick time {
+  font: 500 11px/1.2 var(--font-mono);
+  color: var(--paper-muted);
+  font-variant-numeric: tabular-nums;
+}
+.cork-doc-text,
+.cork-hand {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+}
+.cork-doc-text {
+  color: var(--paper-ink);
+}
+
+/* 索引卡：卡名在紅頂線上方，手寫字寫在藍橫線上。 */
+.cork-card.index,
+.cork-focus.index .cork-pick {
+  background: var(--note);
+}
+.cork-index-head {
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--paper-margin);
+}
+.cork-index-head b {
+  font: 700 13px/1.35 var(--font-doc);
+}
+.cork-index-head small {
+  font: 400 11px/1.3 var(--font-doc);
+  color: var(--paper-muted);
+}
+.cork-hand {
+  font: 400 15px/22px var(--font-hand);
+  color: var(--pencil);
+  background: repeating-linear-gradient(transparent 0 21px, var(--index-blue) 21px 22px);
+}
+.cork-hand.small {
+  font-size: 13px;
+  -webkit-line-clamp: 2;
+}
+
+/* 便條（論點）：便條色、手寫字，翹角用陰影。 */
+.cork-card.note,
+.cork-focus.note .cork-pick {
+  background: linear-gradient(168deg, transparent 72%, rgb(0 0 0 / 8%)), var(--note);
+}
+.cork-card.note b.cork-hand,
+.cork-focus.note b.cork-hand {
+  font-size: 16px;
+  background: none;
+  -webkit-line-clamp: 2;
+}
+
+/* 照片：白邊 10px＋底欄。沒有實物縮圖時是警方閃光燈的版式：中心過曝、四角快速變暗、背景死黑。 */
+.cork-card.photo,
+.cork-focus.photo .cork-pick {
+  padding: 10px 10px 0;
+  gap: 0;
+  background: #f4f4f1;
+}
+.cork-print {
+  position: relative;
+  display: block;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background: radial-gradient(
+    120% 95% at 48% 46%,
+    #d6d6d1 0,
+    #8d8d88 20%,
+    #2b2c2e 52%,
+    #070708 84%
+  );
+}
+.cork-print img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+/* 證物立牌：一律灰白（設定集第 5 章；黃只給獎盃那張）。 */
+.cork-tent {
+  position: absolute;
+  right: 18%;
+  bottom: 18%;
+  width: 16%;
+  aspect-ratio: 1.15;
+  background: #d9d7d0;
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+}
+.cork-strip {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 6px;
+  padding: 6px 0 8px;
+}
+.cork-strip b {
+  font: 700 12px/1.3 var(--font-doc);
+}
+
+/* ── 空槽：不是「沒有資訊」，是等玩家放卡的位置。 ── */
+.cork-empty {
+  all: unset;
+  box-sizing: border-box;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  min-height: 112px;
+  padding: 12px;
+  background: rgb(0 0 0 / 28%);
+  outline: 1px solid rgb(238 236 230 / 32%);
+  outline-offset: -1px;
+  color: var(--chalk);
+  font: 500 13px/1.45 var(--font);
+  text-align: center;
+  text-wrap: balance;
+}
+button.cork-empty {
+  cursor: pointer;
+}
+button.cork-empty:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+button.cork-empty:focus-visible {
+  outline: 2px solid var(--chalk);
+}
+
+/* ── 標記層：槽位標籤、關係結、黑條。介面物件，不被調光、不歪。 ── */
+.cork .cork-tag {
+  z-index: 7;
+  margin: -9px 0 0 8px;
+}
+.cork-knot {
+  position: absolute;
+  z-index: 7;
+  translate: -50% -50%;
+  padding: 2px 9px;
+  border: 1px solid #3a4757;
+  border-radius: 3px;
+  background: #19202a;
+  color: #8e99a7;
+  font: 700 12px/18px var(--font-mono);
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+.cork-knot.set {
+  color: #e7eaee;
+}
+/* 三樣都齊：結變白（黃留給「連起來」主按鈕）。 */
+.cork-knot.ready {
+  border-color: #e7eaee;
+  background: #e7eaee;
+  color: #0b0e13;
+}
+/* 尚未取得：黑條佔位，左上卡名、左下「尚未取得　需傳票」，上緣 1px。 */
+.cork-redact {
+  position: absolute;
+  z-index: 7;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 18px;
+  min-height: 92px;
+  padding: 10px 11px;
+  background: var(--redact);
+  border-top: 1px solid var(--cine-line);
+}
+.cork-redact b {
+  font: 700 12px/1.35 var(--font-doc);
+  color: var(--cine-muted);
+}
+.cork-redact span {
+  font: 500 11px/1.3 var(--font-mono);
+  letter-spacing: 0.04em;
+  color: var(--redact-label);
+}
+
+/* 邊緣的卡退到暗處：內文只留兩行，卡不會超出板子。 */
+.cork-card .cork-doc-text,
+.cork-card .cork-hand {
+  -webkit-line-clamp: 2;
+}
+
+/* 一格一黃：板子開著時，證據欄裡放上 A、B 的卡改白框，黃只留給「連起來」。 */
+body:has(.cork) .card.pickable.on,
+body:has(.cork) .card.mini.on {
+  border-color: var(--text);
+  background: var(--surface-2);
+}
+body:has(.cork) .card .mini-btn[aria-pressed='true'] {
+  border-color: transparent !important;
+  background: transparent !important;
+  box-shadow: none;
+}
+
+/* 發現便條：放進答案的那條是白框；編號不用黃。 */
+.board3 .found[aria-pressed='true'],
+.board-one .found[aria-pressed='true'] {
+  border-color: var(--text) !important;
+  background: var(--surface-2) !important;
+  box-shadow: inset 3px 0 0 var(--text);
+}
+.board3 .found-head,
+.board-one .found-head {
+  color: var(--text);
+}
+
+/* 手機：只有光圈裡的兩張，字不小於 12px。 */
+.cork.compact .cork-pick,
+.cork.compact .cork-empty {
+  min-height: 0;
+}
+.cork.compact .cork-doc-text,
+.cork.compact .cork-hand {
+  -webkit-line-clamp: 2;
+}
+.bench-hint {
+  margin: 0;
+  font-size: var(--fs-ui-meta);
+  color: var(--muted);
+  text-align: right;
+}

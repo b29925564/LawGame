@@ -22,7 +22,8 @@ import { ExhibitTag, exhibitNo, FilingThumb, Pleading, Written } from './Pleadin
 import { useScope } from './lang';
 import { useCardPick } from './pick';
 import { Speech } from './Portrait';
-import { relationMark, RelationPicker } from './RelationPicker';
+import { RelationPicker } from './RelationPicker';
+import { Cork, type CorkItem } from './Cork';
 import { Redaction } from './Redaction';
 import { Shell, Tabs } from './Shell';
 import { Timeline } from './Timeline';
@@ -597,37 +598,64 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
     </nav>
   );
 
-  const slot = (i: number) => {
+  // 軟木板上的 A、B：放了卡就是那張卡（點了拿下來），空的是提示或挑卡入口。
+  const corkSlot = (i: 0 | 1, face: ReactNode) => {
     const c = pool.find((x) => x.id === st.link.cards[i]);
-    const tag = i === 0 ? 'A' : 'B';
-    return (
-      <li className={c ? 'slot-card filled' : 'slot-card'}>
-        <span className="slot-tag" aria-hidden>
-          {tag}
-        </span>
-        {c ? (
-          <button
-            className="slot-clear"
-            onClick={() => toggleLinkCard(c.id)}
-            aria-label={t('拿下 {name}', { name: t(c.name, scope) })}
-          >
-            {t(c.name, scope)}
-          </button>
-        ) : wide ? (
-          <span className="slot-hint">{t('點右邊的卡片放上來')}</span>
-        ) : (
-          // 手機：空格就是挑卡片的入口，挑完回到這裡看得到 A、B（UX 規格 P1-11）。
-          <button
-            className="slot-open"
-            disabled={i > st.link.cards.length}
-            onClick={() => setPicking(true)}
-          >
-            {t('放一張卡')}
-          </button>
-        )}
-      </li>
+    if (c)
+      return (
+        <button
+          className="cork-pick"
+          onClick={() => toggleLinkCard(c.id)}
+          aria-label={t('拿下 {name}', { name: t(c.name, scope) })}
+        >
+          {face}
+        </button>
+      );
+    return wide ? (
+      <span className="cork-empty">{t('點右邊的卡片放上來')}</span>
+    ) : (
+      // 手機：空格就是挑卡片的入口，挑完回到這裡看得到 A、B（UX 規格 P1-11）。
+      <button
+        className="cork-empty"
+        disabled={i > st.link.cards.length}
+        onClick={() => setPicking(true)}
+      >
+        {t('放一張卡')}
+      </button>
     );
   };
+  // 板邊連過的線：最新的兩條、不含正在比對的卡。
+  const byId = (id: string) => pool.find((c) => c.id === id);
+  const corkLinks = desk
+    .findings(scene, st)
+    .slice()
+    .reverse()
+    .filter((l) => !l.cards.some((id) => st.link.cards.includes(id)))
+    .flatMap((l) => {
+      const [a, b] = [byId(l.cards[0]), byId(l.cards[1])];
+      return a && b ? [{ a, b, relation: l.relation }] : [];
+    })
+    .filter(
+      (l, i, all) =>
+        i === 0 || ![all[0].a.id, all[0].b.id].some((id) => id === l.a.id || id === l.b.id),
+    )
+    .slice(0, 2);
+  // 提得出聲請、還沒核准的卡：黑條佔位（設定集第 9 章「尚未取得」）。一個畫面最多三條黑條。
+  const bars = (scene.questions.length > questions.length ? 1 : 0) + (found.length === 0 ? 1 : 0);
+  const have = pool.map((c) => c.id);
+  const pending = scene.motions
+    .filter((m) => m.gives.length && m.needs.every((n) => have.includes(n)))
+    .filter((m) => !desk.motionAttempt(st, m.id).ruling)
+    .flatMap((m) =>
+      m.gives
+        .filter((id) => !have.includes(id))
+        .map((id) => ({
+          id,
+          name: scene.cards.find((c) => c.id === id)?.name ?? id,
+          why: m.label.includes('傳票') ? '尚未取得　需傳票' : '尚未取得　需聲請',
+        })),
+    )
+    .slice(0, Math.max(0, 3 - bars));
 
   // 確認之後連線台照常能用（發現是共用的），但不再是頁面主角（UX 規格四之 3）。
   const qDone = !!q && st.confirmed.includes(q.id);
@@ -647,15 +675,23 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
           (badShake ? (st.linkMiss === 'relation' ? ' shake-rel' : ' shake') : '')
         }
       >
-        <ul className="slots-row">
-          {slot(0)}
-          <li className="link-knot" aria-hidden>
-            <span className={st.link.relation ? 'set' : undefined}>
-              {st.link.relation ? relationMark[st.link.relation] : t('？')}
-            </span>
-          </li>
-          {slot(1)}
-        </ul>
+        <Cork
+          focus={
+            [0, 1].map((i) => pool.find((x) => x.id === st.link.cards[i])) as [
+              CorkItem | undefined,
+              CorkItem | undefined,
+            ]
+          }
+          relation={st.link.relation}
+          relationLabel={st.link.relation ? t(st.link.relation) : t('？')}
+          ready={desk.canConnect(st)}
+          links={corkLinks}
+          loose={pool}
+          pending={pending}
+          compact={!wide}
+          onPick={toggleLinkCard}
+          slot={corkSlot}
+        />
         <RelationPicker
           cards={st.link.cards.map((id) => pool.find((c) => c.id === id)?.name)}
           value={st.link.relation}
@@ -664,10 +700,18 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
         />
         <div className="row bench-foot">
           <span />
-          <button className="primary" disabled={!desk.canConnect(st)} onClick={connect}>
+          {/* 一格一黃：這題確認了，主按鈕是「下一題」，連起來退成一般按鈕。 */}
+          <button
+            className={qDone ? undefined : 'primary'}
+            disabled={!desk.canConnect(st)}
+            onClick={connect}
+          >
             {t('連起來')}
           </button>
         </div>
+        {found.length === 0 && (
+          <p className="bench-hint">{t('把兩張卡連起來，發現會出現在下面。')}</p>
+        )}
         {st.linkNote && (
           // 連錯：兩張卡抖一下、頂端工時閃紅，也寫出來（體驗評測：只抖一下，第一次玩看不懂）。
           // 連成功也不另外寫：新的發現便條會亮一下，內容就在便條上（試玩回報：兩處同一句太雜）。
@@ -738,7 +782,7 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
               </h3>
               {found.length === 0 ? (
                 <p className="found-empty">
-                  <Redaction label={t('在上面把兩張卡連起來，發現會出現在這裡。')} />
+                  <Redaction label={t('尚未發現')} />
                 </p>
               ) : (
                 (() => {
@@ -855,8 +899,9 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
                         {t(st.feedback[q.id], scope)}
                       </p>
                     )}
+                    {/* 板上兩張卡和關係都擺好時，眼前的動作是「連起來」，提交先退成一般按鈕。 */}
                     <button
-                      className="primary"
+                      className={desk.canConnect(st) ? undefined : 'primary'}
                       disabled={!desk.canSubmit(scene, st, q.id, progress.cards)}
                       onClick={() => submit(q.id)}
                     >
