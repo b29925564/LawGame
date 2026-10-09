@@ -467,7 +467,7 @@ scenes:
         gives: [change-ticket, chat-peak]
         report:
           - who: 戴文
-            text: 資訊部給了。三月十四日，崔佛・米爾斯簽的。理由欄只寫四個字：依法務意見。
+            text: 資訊部給了。三月四日，崔佛・米爾斯簽的。理由欄只寫四個字：依法務意見。
           - who: 戴文
             text: 還有……他們連營運群組的截圖一起寄來了。我想他們沒看就寄了。
           - who: 盧卡斯
@@ -718,7 +718,7 @@ scenes:
         a: 從系統上線就是提醒，從來沒有強制下線過。
         anchors: trevor-sworn
       - id: p-ticket
-        q: 三月十四日有一張設定變更單。簽名的是您嗎？
+        q: 三月四日有一張設定變更單。簽名的是您嗎？
         a: ……系統每一季都在改版。我不記得每一張變更單。
         objection: 缺乏基礎
         missed: { gives: [change-ticket] }
@@ -1710,7 +1710,7 @@ scenes:
         when: { notFlags: [trevor-corrected] }
         ethicsIf: { has: [arg-g], ethics: [offered-perjury] }
         door:
-          q: 米爾斯先生，這是三月十四日的設定變更單。簽名的是您嗎？
+          q: 米爾斯先生，這是三月四日的設定變更單。簽名的是您嗎？
           a: ……是我。
           # 自己的證人在陪審團面前被自己簽名的文件打臉：比第 1 集的「開門」重得多。
           penalty: 20
