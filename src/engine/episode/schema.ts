@@ -957,6 +957,13 @@ const scene = z.discriminatedUnion('type', [
     epilogue: z.boolean().default(false),
     place: z.string(),
     steps: z.array(dialogueStep).min(1),
+    /** 這一場畫成手機來電畫面（設定集第 3 章第 29 格）：來電顯示與通話結束時的時間。 */
+    call: z
+      .object({
+        caller: z.string(),
+        duration: z.string().regex(/^\d\d:\d\d$/, '通話時間格式是 MM:SS'),
+      })
+      .optional(),
   }),
   interviewScene,
   deskScene,
