@@ -1,0 +1,209 @@
+{
+  "_note": "法庭說話者的剪影參數（設定集第 7.6 章鉤子表與「光的個性」；視覺設計師 #2 10-09 通過 main）。secondary 是設定集沒寫鉤子的次要角色，法庭介面 #2 草稿、待設計師確認。改動先問視覺設計師。",
+  "main": [
+    {
+      "id": "lucas",
+      "hair": "fringe",
+      "build": "medium",
+      "head": "narrow",
+      "lift": 8,
+      "light": "backrim"
+    },
+    {
+      "id": "rachel",
+      "hair": "bob",
+      "acc": ["pearl"],
+      "build": "narrow",
+      "head": "medium",
+      "lift": 8,
+      "light": "window"
+    },
+    {
+      "id": "ethan",
+      "hair": "messy",
+      "hunch": true,
+      "build": "medium",
+      "head": "medium",
+      "lift": -16,
+      "light": "flat"
+    },
+    {
+      "id": "marcus",
+      "hair": "slick",
+      "acc": ["highcollar", "pocketsq"],
+      "build": "wide",
+      "head": "medium",
+      "lift": 12,
+      "light": "back"
+    },
+    {
+      "id": "victoria",
+      "hair": "crop",
+      "acc": ["turtleneck"],
+      "build": "narrow",
+      "head": "narrow",
+      "lift": 16,
+      "light": "front"
+    },
+    {
+      "id": "logan",
+      "hair": "sidepart",
+      "square": true,
+      "build": "medium",
+      "head": "medium",
+      "lift": 0,
+      "light": "top"
+    },
+    {
+      "id": "rosa",
+      "hair": "tightcurl",
+      "acc": ["popped"],
+      "build": "medium",
+      "head": "narrow",
+      "lift": -20,
+      "light": "side"
+    },
+    {
+      "id": "devon",
+      "hair": "curly",
+      "glasses": "big",
+      "build": "narrow",
+      "head": "wide",
+      "lift": -20,
+      "light": "lamp"
+    },
+    {
+      "id": "catherine",
+      "hair": "ponytail",
+      "acc": ["arms"],
+      "build": "medium",
+      "head": "narrow",
+      "lift": 20,
+      "light": "right"
+    },
+    {
+      "id": "augustus",
+      "hair": "receding",
+      "robe": true,
+      "glasses": "halfmoon",
+      "build": "wide",
+      "head": "wide",
+      "lift": 4,
+      "light": "bench"
+    },
+    {
+      "id": "sophie",
+      "hair": "long",
+      "acc": ["clip"],
+      "build": "narrow",
+      "head": "medium",
+      "lift": -4,
+      "light": "window"
+    },
+    {
+      "id": "ray",
+      "hair": "crew",
+      "neck": 56,
+      "build": "wide",
+      "head": "wide",
+      "slope": 8,
+      "lift": -24,
+      "light": "top"
+    },
+    {
+      "id": "ellen",
+      "hair": "tightcurl",
+      "acc": ["collar", "chain"],
+      "glasses": "round",
+      "build": "medium",
+      "head": "wide",
+      "lift": 20,
+      "light": "neutral"
+    }
+  ],
+  "secondary": [
+    {
+      "id": "priya",
+      "hair": "bob",
+      "glasses": "square",
+      "build": "narrow",
+      "head": "medium",
+      "lift": -24,
+      "light": "window"
+    },
+    {
+      "id": "omar",
+      "hair": "buzz",
+      "beard": "full",
+      "acc": ["collar"],
+      "build": "medium",
+      "head": "wide",
+      "lift": -24,
+      "light": "window"
+    },
+    {
+      "id": "arthur",
+      "hair": "quiff",
+      "acc": ["collar"],
+      "build": "wide",
+      "head": "narrow",
+      "lift": -24,
+      "light": "window"
+    },
+    {
+      "id": "trevor",
+      "hair": "receding",
+      "acc": ["pads"],
+      "build": "narrow",
+      "head": "medium",
+      "slope": 6,
+      "lift": -24,
+      "light": "window"
+    },
+    {
+      "id": "okafor",
+      "hair": "buzz",
+      "acc": ["pads"],
+      "glasses": "square",
+      "build": "wide",
+      "head": "narrow",
+      "lift": 24,
+      "light": "window"
+    },
+    {
+      "id": "marisol",
+      "hair": "wavy",
+      "build": "narrow",
+      "head": "narrow",
+      "lift": -24,
+      "light": "window"
+    },
+    {
+      "id": "emma",
+      "hair": "topknot",
+      "glasses": "round",
+      "build": "narrow",
+      "head": "narrow",
+      "lift": -24,
+      "light": "window"
+    },
+    {
+      "id": "fisher",
+      "hair": "sidepart",
+      "acc": ["scarf", "readers"],
+      "build": "narrow",
+      "head": "wide",
+      "lift": 24,
+      "light": "window"
+    },
+    {
+      "id": "tang",
+      "hair": "crew",
+      "acc": ["headphones"],
+      "build": "narrow",
+      "head": "wide",
+      "lift": 0,
+      "light": "window"
+    }
+  ]
+}

@@ -3,11 +3,13 @@ import type { Line } from '../engine/episode/schema';
 import { useT } from '../i18n';
 import { LUCAS, lucas } from './cast';
 import { useScope } from './lang';
+import { CourtFace, useInCourt } from './jury/CourtFace';
 import { MarkLine } from './Marks';
 import { VoLine } from './VoiceOver';
 
 /**
- * 角色頭像，4:5。盧卡斯用正式立繪（cast.ts）；其他人還是暫代版，用固定的五官元件畫出來，情緒換表情。
+ * 角色頭像，4:5。盧卡斯用正式立繪（cast.ts）；其他人在法庭是剪影替身（jury/CourtFace），
+ * 法庭外還是暫代版，用固定的五官元件畫出來，情緒換表情。
  */
 const palette: Record<string, string> = {
   盧卡斯: '#1f4e8c',
@@ -54,11 +56,14 @@ export function Portrait({
   decorative?: boolean;
 }) {
   const t = useT();
+  const inCourt = useInCourt();
   const a11y = decorative
     ? ({ 'aria-hidden': true } as const)
     : ({ role: 'img', 'aria-label': t(who) } as const);
   const color = palette[who] ?? '#4a5866';
   if (who === '旁白') return null;
+  // 法庭裡的配角是剪影替身（P4-2），不再用暫代的五官；盧卡斯照舊放立繪。
+  if (inCourt && who !== LUCAS) return <CourtFace who={who} />;
   const src = who === LUCAS ? lucas(mood, 144) : undefined;
   if (src)
     return (

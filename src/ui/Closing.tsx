@@ -22,9 +22,19 @@ import { Tally } from './Marks';
 import { Speech } from './Portrait';
 import { Shell, Tabs } from './Shell';
 import { useState } from 'react';
+import { CourtCast } from './jury/CourtFace';
 
 /** 結辯與判決（企劃書 6.9.8、6.10）：挑三個論點排順序、選基調，然後看三輪評議。 */
+/** 法庭畫面：說話者頭像是剪影替身（P4-2）。 */
 export function Closing({ scene }: { scene: ClosingScene }) {
+  return (
+    <CourtCast>
+      <ClosingScreen scene={scene} />
+    </CourtCast>
+  );
+}
+
+function ClosingScreen({ scene }: { scene: ClosingScene }) {
   const { progress, pickArg, setTone, deliver, advance } = useEpisode();
   const st = closingState(progress, scene);
   const terms = useCaseTerms();

@@ -2168,3 +2168,14 @@ html[lang='en'] .stamp.rec-stamp b {
     height: 60px;
   }
 }
+
+/* 法庭說話者的剪影替身（P4-2）：同陪審團那套 SVG，卡面是鏡頭層的黑，不吃淺色主題。 */
+.portrait.sil {
+  overflow: hidden;
+  background: var(--cine-bg, #06080b);
+}
+.portrait.sil > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}

@@ -9,6 +9,7 @@ import { IdPhoto } from './IdPhoto';
 import { useScope } from './lang';
 import { Speech } from './Portrait';
 import { Shell, Tabs } from './Shell';
+import { CourtCast } from './jury/CourtFace';
 
 type Filter = 'all' | 'seated' | 'unasked';
 
@@ -32,7 +33,16 @@ function useMedia(q: string) {
  * 又躺在最底下。這裡收成一行一位，點開才看名單細節，
  * 額度釘在上面、決定按鈕釘在下面。
  */
+/** 法庭畫面：說話者頭像是剪影替身（P4-2）。 */
 export function VoirDire({ scene }: { scene: VoirDireScene }) {
+  return (
+    <CourtCast>
+      <VoirDireScreen scene={scene} />
+    </CourtCast>
+  );
+}
+
+function VoirDireScreen({ scene }: { scene: VoirDireScene }) {
   const { progress, askJuror, challengeJuror, strikeJuror, seatJury, advance } = useEpisode();
   const st = voirDireState(progress, scene);
   const t = useT();

@@ -28,6 +28,7 @@ import { Stamp } from './Marks';
 import { Speech } from './Portrait';
 import { batesOf, CourtRecord, useCourtEntries } from './Record';
 import { Shell, Tabs } from './Shell';
+import { CourtCast } from './jury/CourtFace';
 
 /**
  * 法庭裡的陪審團（設定集第 8.4、10.1 章）：剪影替身與四階影子。桌機放在中間欄（HUD 的位置），
@@ -142,7 +143,16 @@ function ObjectionWindow({
   );
 }
 
-export function Courtroom({ scene: raw }: { scene: TrialScene }) {
+/** 法庭畫面：說話者頭像是剪影替身（P4-2）。 */
+export function Courtroom({ scene }: { scene: TrialScene }) {
+  return (
+    <CourtCast>
+      <CourtroomScreen scene={scene} />
+    </CourtCast>
+  );
+}
+
+function CourtroomScreen({ scene: raw }: { scene: TrialScene }) {
   const {
     progress,
     advance,

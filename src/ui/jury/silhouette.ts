@@ -1,6 +1,7 @@
 /**
- * 陪審員剪影替身（設定集第 7.6、8.2、8.4 章）。照視覺設計師 #2 的參考實作
- * ux/jury-silhouettes/jury-silhouette.mjs v1 移植，數字一個都不改；要改先問視覺設計師。
+ * 剪影替身（設定集第 7.6、8.2、8.4 章）：陪審員與法庭上的說話者。照視覺設計師 #2 的參考實作
+ * ux/jury-silhouettes/jury-silhouette.mjs 移植，主要角色的新增照 cast-draft（設計師 10-09 通過），
+ * 數字一個都不改；要改先問視覺設計師。
  *
  * 座標 400×500（y 向下），兩眼連線 y = 190，頸根 N = (225, 365)，下巴 y = 342。
  * 每個形狀都是頂點多邊形，姿勢一律用第 8.2 章的頂點 morph，不准整張 transform。
@@ -21,7 +22,14 @@ export interface JurorLook {
   lift?: number;
   beard?: 'full' | 'goatee';
   acc?: string[];
-  glasses?: 'round' | 'square' | 'cateye' | 'aviator';
+  glasses?: 'round' | 'square' | 'cateye' | 'aviator' | 'halfmoon' | 'big';
+  /** 主要角色才有（設定集第 7.6 章鉤子表）：粗頸、縮肩、方肩、法袍。 */
+  neck?: number;
+  hunch?: boolean;
+  square?: boolean;
+  robe?: boolean;
+  /** 主要角色「光的個性」（LIGHT）；陪審員沒有，走共用的左側主光。 */
+  light?: string;
   /** 席號（入座後才有）。 */
   no?: string;
 }
@@ -81,28 +89,71 @@ interface Torso {
 
 // ── 頸與肩
 function torso(p: JurorLook): Torso {
-  const b = BUILD[p.build || 'medium'],
+  const b = { ...BUILD[p.build || 'medium'] },
     sl = p.slope ?? 14,
     x = N[0];
+  if (p.neck) b.nw = p.neck; // 粗頸（柯瓦斯基）
   const L = (dx: number, y: number): Pt => [x - dx, y],
     R = (dx: number, y: number): Pt => [x + dx, y];
+  const tn = (p.acc || []).includes('turtleneck') ? 14 : 0; // 高領（惠特洛克）：頸變粗、筒狀一路到下巴
   const neck = [
-    L(b.nw, 300 - (p.lift || 0)),
-    R(b.nw, 300 - (p.lift || 0)),
-    R(b.nw + 4, 372),
-    L(b.nw + 4, 372),
+    L(b.nw + tn, 300 - (p.lift || 0)),
+    R(b.nw + tn, 300 - (p.lift || 0)),
+    R(b.nw + 4 + tn, 372),
+    L(b.nw + 4 + tn, 372),
   ];
+  const hu = p.hunch ? 22 : 0; // 縮起來的肩（伊森）：肩線整組上提、往頸靠
+  // 全劇最方正的肩線（普萊斯）
+  if (p.square)
+    return {
+      neck,
+      b,
+      sl,
+      sh: [
+        L(b.nw + 2, 366),
+        L(b.sw * 0.6, 372),
+        L(b.sw, 378),
+        L(b.sw + 4, 392),
+        L(b.sw + 8, 500),
+        R(b.sw + 8, 500),
+        R(b.sw + 4, 392),
+        R(b.sw, 378),
+        R(b.sw * 0.6, 372),
+        R(b.nw + 2, 366),
+      ],
+    };
+  // 法袍：圓而寬、從頸根就鼓起的肩（雷耶斯）
+  if (p.robe)
+    return {
+      neck,
+      b,
+      sl,
+      sh: [
+        L(b.nw + 2, 360),
+        L(b.nw + 44, 364),
+        L(b.sw * 0.72, 380),
+        L(b.sw * 0.96, 408),
+        L(b.sw + 14, 448),
+        L(b.sw + 20, 500),
+        R(b.sw + 20, 500),
+        R(b.sw + 14, 448),
+        R(b.sw * 0.96, 408),
+        R(b.sw * 0.72, 380),
+        R(b.nw + 44, 364),
+        R(b.nw + 2, 360),
+      ],
+    };
   const sh = [
-    L(b.nw + 2, 366),
-    L(b.sw * 0.5, 386 + sl * 0.4),
-    L(b.sw * 0.82, 404 + sl),
+    L(b.nw + 2, 366 - hu),
+    L(b.sw * 0.5, 386 + sl * 0.4 - hu * 1.6),
+    L(b.sw * 0.82, 404 + sl - hu),
     L(b.sw, 432 + sl * 1.2),
     L(b.sw + 8, 500),
     R(b.sw + 8, 500),
     R(b.sw, 432 + sl * 1.2),
-    R(b.sw * 0.82, 404 + sl),
-    R(b.sw * 0.5, 386 + sl * 0.4),
-    R(b.nw + 2, 366),
+    R(b.sw * 0.82, 404 + sl - hu),
+    R(b.sw * 0.5, 386 + sl * 0.4 - hu * 1.6),
+    R(b.nw + 2, 366 - hu),
   ];
   return { neck, sh, b, sl };
 }
@@ -272,6 +323,83 @@ function hair(p: JurorLook, h: Head): Poly[] {
       ]);
       break;
     }
+    // ── 主要角色（第 7.6 章鉤子表；法庭介面 #2 草稿 10-09）
+    case 'fringe': {
+      // 盧卡斯：中分碎蓋，頂部較長、碎瀏海往前蓋到眉毛，兩側收短
+      S.push(
+        arc((a) => 18 + 3 * Math.sin(rad(a * 9)) - 10 * ss(315, 350, a), 182, 352, 90).concat(
+          inside,
+        ),
+      );
+      S.push([
+        [CX - rx * 0.3, top + 4],
+        [CX - rx - 18, top + 44],
+        [CX - rx - 28, 150],
+        [CX - rx - 20, 166],
+        [CX - rx - 6, 160],
+        [CX - rx + 4, 174],
+        [CX - rx + 16, 162],
+        [CX - rx + 28, 172],
+        [CX - rx * 0.2, top + 44],
+      ]); // 碎瀏海像屋簷往前伸、尾端參差蓋到眉
+      break;
+    }
+    case 'bob': {
+      // 瑞秋：及下巴不對稱鮑伯，前側（左）長到下巴、後側短到耳下
+      S.push(arc(() => 15, 165, 375, 80).concat(inside));
+      S.push([
+        [CX - rx - 14, CY - 10],
+        [CX - rx - 18, CY + 60],
+        [CX - rx - 6, 326],
+        [CX - rx + 36, 318],
+        [CX - rx + 30, CY],
+      ]);
+      S.push([
+        [CX + rx + 14, CY - 10],
+        [CX + rx + 16, CY + 40],
+        [CX + rx - 4, 272],
+        [CX + rx - 44, 266],
+        [CX + rx - 40, CY],
+      ]);
+      break;
+    }
+    case 'slick': {
+      // 海爾：銀灰後梳，前額貼、往後腦堆高後掃
+      S.push(
+        arc((a) => 6 + 22 * ss(250, 330, a) - 10 * ss(345, 360, a), 190, 360, 70).concat(inside),
+      );
+      S.push([
+        [CX + rx * 0.5, top + 6],
+        [CX + rx + 24, top + 34],
+        [CX + rx + 22, CY - 20],
+        [CX + rx * 0.7, CY - 30],
+      ]);
+      break;
+    }
+    case 'crop': {
+      // 惠特洛克：貼耳銀白短髮，蓋過耳、收在耳垂下
+      S.push(arc(() => 9, 160, 380, 80).concat(inside));
+      S.push([
+        [CX + rx + 8, CY - 20],
+        [CX + rx + 10, 262],
+        [CX + rx - 30, 270],
+        [CX + rx - 30, CY],
+      ]);
+      break;
+    }
+    case 'tightcurl':
+      S.push(arc((a) => 14 + 4 * Math.sin(rad(a * 22)), 168, 372, 140).concat(inside));
+      break; // 貼頭短捲（門多薩、布魯克斯）
+    case 'messy':
+      S.push(
+        arc((a) => 22 + 9 * Math.sin(rad(a * 7)) + 6 * Math.sin(rad(a * 17)), 172, 368, 110).concat(
+          [
+            [CX + rx * 0.9, CY + 20],
+            [CX - rx * 0.8, CY],
+          ],
+        ),
+      );
+      break; // 伊森：微捲亂髮
     case 'mohawk': // 兩側推短、頂上一束
       S.push(arc((a) => 6 + 34 * Math.exp(-(((a - 270) / 30) ** 2)), 190, 350).concat(inside));
       break;
@@ -283,6 +411,8 @@ function hair(p: JurorLook, h: Head): Poly[] {
 function extras(p: JurorLook, h: Head, t: Torso) {
   const S: Poly[] = [],
     H: Poly[] = [],
+    LIT: Poly[] = [],
+    EDGE: Poly[] = [],
     rx = h.rx,
     top = CY - h.ry,
     x = N[0],
@@ -389,6 +519,54 @@ function extras(p: JurorLook, h: Head, t: Torso) {
         [CX + 72, top - 68],
         [CX + 28, top - 24],
       ]); // 髮髻上的鉛筆
+    if (a === 'pearl') {
+      H.push(ell(CX - rx + 22, 336, 9, 9, 0, 360, 16));
+      LIT.push(ell(CX - rx + 20, 334, 4, 4, 0, 360, 12));
+    } // 珍珠垂在鮑伯前緣髮尾下；它是彈劾時最後一個還亮著的高光                                               // 瑞秋的珍珠：垂在鮑伯下緣、下顎外側（只此一人）
+    if (a === 'highcollar')
+      S.push(
+        [
+          [x - b.nw - 10, 374],
+          [x - b.nw - 4, 318],
+          [x - b.nw + 12, 352],
+        ],
+        [
+          [x + b.nw + 10, 374],
+          [x + b.nw + 4, 318],
+          [x + b.nw - 12, 352],
+        ],
+      ); // 高挺領口
+    if (a === 'pocketsq')
+      EDGE.push([
+        [x - b.sw * 0.62, 468],
+        [x - b.sw * 0.5, 446],
+        [x - b.sw * 0.4, 468],
+      ]); // 口袋巾三角：海爾永遠在逆光裡，整塊不發亮，只在上緣留一道亮邊（設計師 10-09）
+    if (a === 'arms')
+      S.push([
+        [x - b.sw - 6, 444],
+        [x - 60, 430],
+        [x + 60, 430],
+        [x + b.sw + 6, 444],
+        [x + b.sw + 30, 500],
+        [x - b.sw - 30, 500],
+      ]); // 手肘往外撐                                // 雙臂交抱（莫羅）：J1 也抱
+    if (a === 'clip')
+      H.push([
+        [CX - rx * 0.86, CY - 52],
+        [CX - rx - 26, CY - 60],
+        [CX - rx - 24, CY - 46],
+        [CX - rx * 0.86, CY - 40],
+      ]); // 單側髮夾，從近側髮緣伸出
+    if (a === 'chain')
+      H.push([
+        [CX - rx * 0.62, 196],
+        [CX - rx * 1.04, 284],
+        [CX - rx * 0.66, 352],
+        [CX - rx * 0.62, 346],
+        [CX - rx * 0.96, 284],
+        [CX - rx * 0.56, 198],
+      ]); // 眼鏡鍊：從鏡腳垂到頸側（只此一人）
     if (a === 'readers')
       H.push([
         [CX - rx * 0.5, top + 18],
@@ -397,7 +575,7 @@ function extras(p: JurorLook, h: Head, t: Torso) {
         [CX + rx * 0.1, top + 16],
       ]); // 推到頭頂的老花眼鏡
   }
-  return { head: H, body: S };
+  return { head: H, body: S, lit: LIT, edge: EDGE };
 }
 
 // 眼鏡只畫線（第 8.4 章：0.8px、不透明度 ≤ 0.6），不進剪影
@@ -438,6 +616,28 @@ function glasses(p: JurorLook): Poly[] {
       [
         [ex + 20, ey - 8],
         [CX + 40, ey - 8],
+      ],
+    ];
+  if (p.glasses === 'halfmoon')
+    return [
+      [
+        [ex - 22, ey + 2],
+        [ex + 22, ey + 2],
+        [ex + 18, ey + 16],
+        [ex - 18, ey + 16],
+        [ex - 22, ey + 2],
+      ],
+      [
+        [ex + 22, ey + 4],
+        [CX + 40, ey - 2],
+      ],
+    ];
+  if (p.glasses === 'big')
+    return [
+      ell(ex, ey, 28, 28, 0, 360, 28),
+      [
+        [ex + 28, ey],
+        [CX + 40, ey - 4],
       ],
     ];
   if (p.glasses === 'aviator')
@@ -513,13 +713,112 @@ export function shapes(p: JurorLook, pose: Pose = 'J1') {
       [N[0] - 124, 500],
     ]); // 抱胸前臂
   const m = (poly: Poly) => poly.map((q) => morph(q, pose));
+  const lit = [
+    ...ex.lit.filter((q) => q[0][1] < 400).map(up),
+    ...ex.lit.filter((q) => q[0][1] >= 400),
+  ];
   return {
+    edge: ex.edge.map(m),
+    lit: lit.map(m),
     fill: fill.map(m),
     glasses: glasses(p).map(up).map(m),
     eye: m(up(ell(CX - 52, 190, 9, 5, 0, 360, 16))),
     head: h,
   };
 }
+
+// ── 主要角色的「光的個性」（第 7.6 章鉤子表那一欄；設計師 10-09：不照搬陪審團的左側主光）
+// rim：輪廓光畫在哪些區域；key：受光區是剪影減去往 key 方向平移的自己；k：那盞燈的色溫權杖。陪審員沒有 light，走原本的左側主光。
+interface Rect {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+const R = (x: number, y: number, w: number, h: number): Rect => ({ x, y, w, h });
+interface Light {
+  k: string;
+  key?: [number, number];
+  side: 'left' | 'right' | 'both';
+  rim: Rect[];
+  flat?: boolean;
+  extra?: { k: string; rim: Rect[] };
+}
+export const LIGHT: Record<string, Light> = {
+  window: {
+    k: '--k-window,#ffe2c0',
+    key: [40, 0],
+    side: 'left',
+    rim: [R(0, 90, 215, 252), R(0, 0, 262, 114), R(0, 372, 160, 60)],
+  }, // 西窗 4800K 標準（瑞秋、蘇菲）
+  back: {
+    k: '--k-daylight,#fff4ea',
+    key: [-30, 0],
+    side: 'right',
+    rim: [R(CX, 0, 400 - CX, 330), R(0, 0, 400, 96), R(290, 372, 110, 60)],
+  }, // 海爾：永遠逆光，輪廓沿後腦與頭頂，臉比髮線暗
+  backrim: {
+    k: '--k-window,#ffe2c0',
+    key: [-24, 0],
+    side: 'right',
+    rim: [
+      R(0, 0, 400, 100),
+      R(CX + 20, 0, 400 - CX - 20, 340),
+      R(0, 60, 140, 200),
+      R(290, 372, 110, 60),
+    ],
+  }, // 盧卡斯：背影與輪廓光，瀏海邊緣亮起
+  right: {
+    k: '--k-overcast,#c9d3e2',
+    key: [-40, 0],
+    side: 'right',
+    rim: [R(200, 0, 200, 342), R(280, 372, 120, 60)],
+  }, // 莫羅：側光從背面（右）來，高馬尾亮出來
+  side: {
+    k: '--k-overcast,#c9d3e2',
+    key: [52, 0],
+    side: 'left',
+    rim: [R(0, 0, 230, 342), R(0, 372, 170, 70)],
+  }, // 蘿莎：窗邊側光、反差最高
+  top: {
+    k: '--k-fluoro,#e4efe2',
+    key: [0, 40],
+    side: 'both',
+    rim: [R(0, 0, 400, 150), R(0, 360, 400, 34)],
+  }, // 頂光（普萊斯、柯瓦斯基）
+  bench: {
+    k: '--k-fluoro,#e4efe2',
+    key: [0, 40],
+    side: 'both',
+    rim: [R(0, 0, 400, 150), R(0, 360, 400, 34)], // 雷耶斯：頂光＋綠罩桌燈從紙面反射到下巴的暖光
+    extra: { k: '--k-tungsten,#ffb46b', rim: [R(110, 316, 108, 34)] },
+  },
+  // 平光：受光區不平移，整顆頭臉均勻染色；輪廓光左右等寬（設計師 10-09）
+  flat: {
+    k: '--k-fluoro,#e4efe2',
+    flat: true,
+    side: 'both',
+    rim: [R(0, 112, 400, 230), R(0, 372, 400, 60)],
+  }, // 伊森：看守所平光下最沒地方躲的人
+  front: {
+    k: '--k-dusk,#ffc387',
+    flat: true,
+    side: 'both',
+    rim: [R(0, 0, 400, 342), R(0, 372, 400, 60)],
+  }, // 惠特洛克：全劇唯一永遠正面全亮，頭頂一整圈也亮
+  lamp: {
+    k: '--k-tungsten,#ffb46b',
+    flat: true,
+    side: 'both',
+    rim: [R(0, 112, 400, 230), R(0, 372, 400, 60)],
+  }, // 戴文：檯燈，全劇最平最暖
+  neutral: {
+    k: '--k-neutral,#f5f3ee',
+    flat: true,
+    side: 'both',
+    rim: [R(0, 112, 400, 230), R(0, 372, 400, 60)],
+  }, // 布魯克斯：中性平光（誠實）
+};
 
 const d = (poly: Poly, close = true) =>
   'M' + poly.map(([x, y]) => `${x.toFixed(1)} ${y.toFixed(1)}`).join('L') + (close ? 'Z' : '');
@@ -542,28 +841,57 @@ export function svg(
   const s = shapes(p, pose),
     vb = band(v),
     tt = Math.min(1, Math.max(0, (vb - 35) / 50));
+  const L = p.light ? LIGHT[p.light] : undefined,
+    K = L ? L.k : '--k-window,#ffe2c0', // 色溫只染一次：眼神光、前臂、配件都跟這盞燈
+    hex = (k: string) => k.split(',')[1];
   const key = 10 + 46 * tt,
     rimTop = 225 - 135 * tt; // 第 8.4 章 keyWidth、rimTop
   const sil = s.fill.map((q) => `<path d="${d(q)}"/>`).join(''); // 每塊各自一條 path：合成一條會因繞向相反挖出洞
+  const rects = (rs: Rect[]) =>
+    rs.map((r) => `<rect x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}"/>`).join('');
+  // 受光區：剪影減去往光的方向平移的自己；平光不平移，整顆頭臉均勻染色（頭以下不染）。
+  const unlit = L?.flat
+    ? '<rect y="345" width="400" height="155" fill="#000"/>'
+    : `<g fill="#000" transform="translate(${L?.key ? L.key.join(' ') : key.toFixed(1) + ' 0'})">${sil}</g>`;
+  const rimClip = L
+    ? rects(L.rim)
+    : `<rect x="0" y="${rimTop.toFixed(1)}" width="215" height="${(342 - rimTop).toFixed(1)}"/>${rimTop < CY ? `<rect x="0" y="0" width="262" height="${(rimTop + 24).toFixed(1)}"/>` : ''}<rect x="0" y="372" width="160" height="60"/>`;
+  const side = L?.side ?? 'left';
+  const armClip =
+    side === 'left'
+      ? '<rect x="0" y="380" width="215" height="120"/>'
+      : side === 'right'
+        ? '<rect x="185" y="380" width="215" height="120"/>'
+        : '<rect x="0" y="380" width="400" height="120"/>';
+  const rimFilter = (id: string, color: string, dx: number) =>
+    `<filter id="${id}" x="-5%" y="-5%" width="110%" height="110%"><feMorphology in="SourceAlpha" operator="erode" radius="8" result="er"/><feComposite in="SourceAlpha" in2="er" operator="out" result="edge"/><feOffset in="edge" dx="${dx}" result="sh"/><feComposite in="sh" in2="SourceAlpha" operator="in" result="band"/><feFlood flood-color="${color}"/><feComposite in2="band" operator="in"/></filter>`;
+  const extra = L?.extra;
   const notes =
-    pose === 'J4'
-      ? `<path d="M150 470h140v30h-140z" fill="var(--k-window,#ffe2c0)" opacity=".4"/>`
-      : '';
+    pose === 'J4' ? `<path d="M150 470h140v30h-140z" fill="var(${K})" opacity=".4"/>` : '';
+  // 配件自己接光（珍珠、口袋巾上緣）：只在那盞燈照得到的一側；不進 32px 測試。
+  const acc =
+    s.lit.map((q) => `<path d="${d(q)}" fill="var(${K})" opacity=".8"/>`).join('') +
+    s.edge
+      .map(
+        (q) =>
+          `<path d="${d(q, false)}" fill="none" stroke="var(${K})" stroke-width="7" opacity=".5"/>`,
+      )
+      .join('');
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 500" class="juror-svg" data-pose="${pose}" aria-hidden="true" focusable="false">
 <defs>
- <mask id="lit-${uid}"><rect width="400" height="500" fill="#000"/><g fill="#fff">${sil}</g><g fill="#000" transform="translate(${key.toFixed(1)} 0)">${sil}</g></mask>
- <filter id="rim-${uid}" x="-5%" y="-5%" width="110%" height="110%"><feMorphology in="SourceAlpha" operator="erode" radius="8" result="er"/><feComposite in="SourceAlpha" in2="er" operator="out" result="edge"/><feOffset in="edge" dx="-2" result="sh"/><feComposite in="sh" in2="SourceAlpha" operator="in" result="band"/><feFlood flood-color="#ffe2c0"/><feComposite in2="band" operator="in"/></filter>
- <clipPath id="rimclip-${uid}"><rect x="0" y="${rimTop.toFixed(1)}" width="215" height="${(342 - rimTop).toFixed(1)}"/>${rimTop < CY ? `<rect x="0" y="0" width="262" height="${(rimTop + 24).toFixed(1)}"/>` : ''}<rect x="0" y="372" width="160" height="60"/></clipPath>
- <clipPath id="armclip-${uid}"><rect x="0" y="380" width="215" height="120"/></clipPath>
+ <mask id="lit-${uid}"><rect width="400" height="500" fill="#000"/><g fill="#fff">${sil}</g>${unlit}</mask>
+ ${rimFilter(`rim-${uid}`, hex(K), side === 'left' ? -2 : side === 'right' ? 2 : 0)}
+ <clipPath id="rimclip-${uid}">${rimClip}</clipPath>
+ <clipPath id="armclip-${uid}">${armClip}</clipPath>${extra ? `<clipPath id="xclip-${uid}">${rects(extra.rim)}</clipPath>${rimFilter(`xrim-${uid}`, hex(extra.k), 0)}` : ''}
 </defs>
 <rect width="400" height="500" fill="var(--cine-bg,#06080b)"/>
 <g class="silhouette" fill="#07090c">${sil}</g>
-<rect width="400" height="500" fill="var(--k-window,#ffe2c0)" opacity=".10" mask="url(#lit-${uid})"/>
-<g clip-path="url(#rimclip-${uid})"><g filter="url(#rim-${uid})" opacity=".9">${sil}</g></g>
-${s.glasses.map((q) => `<path d="${d(q, false)}" fill="none" stroke="#c9ced6" stroke-width="5.7" opacity=".5"/>`).join('')}
-${pose === 'J4' || shadowPct(v) >= 90 ? '' : `<path d="${d(s.eye)}" fill="#1a1f26"/><rect x="${(s.eye[0][0] - 12).toFixed(1)}" y="${(s.eye[0][1] - 4).toFixed(1)}" width="5" height="5" fill="var(--k-window,#ffe2c0)" opacity=".9"/>`}
+<rect width="400" height="500" fill="var(${K})" opacity="${L?.flat ? '.06' : '.10'}" mask="url(#lit-${uid})"/>
+<g clip-path="url(#rimclip-${uid})"><g filter="url(#rim-${uid})" opacity=".9">${sil}</g></g>${extra ? `<g clip-path="url(#xclip-${uid})"><g filter="url(#xrim-${uid})" opacity=".9">${sil}</g></g>` : ''}
+${acc}${s.glasses.map((q) => `<path d="${d(q, false)}" fill="none" stroke="#c9ced6" stroke-width="5.7" opacity=".5"/>`).join('')}
+${pose === 'J4' || shadowPct(v) >= 90 ? '' : `<path d="${d(s.eye)}" fill="#1a1f26"/><rect x="${(s.eye[0][0] - 12).toFixed(1)}" y="${(s.eye[0][1] - 4).toFixed(1)}" width="5" height="5" fill="var(${K})" opacity=".9"/>`}
 ${notes}
-${pose === 'J3' ? `<path clip-path="url(#armclip-${uid})" d="${d([morph([N[0] - 120, 436], 'J3'), morph([N[0] + 120, 436], 'J3')], false)}" stroke="var(--k-window,#ffe2c0)" stroke-width="9.3" opacity=".85" fill="none"/>` : ''}
+${pose === 'J3' ? `<path clip-path="url(#armclip-${uid})" d="${d([morph([N[0] - 120, 436], 'J3'), morph([N[0] + 120, 436], 'J3')], false)}" stroke="var(${K})" stroke-width="9.3" opacity=".85" fill="none"/>` : ''}
 ${label ? `<rect x="14" y="14" width="372" height="472" fill="none" stroke="var(--cine-line,#2a323d)" stroke-dasharray="14 14" stroke-width="3"/><text x="28" y="470" font-family="JetBrains Mono, monospace" font-size="34" fill="var(--cine-muted,#8b95a3)">${label}</text>` : ''}
 </svg>`;
 }

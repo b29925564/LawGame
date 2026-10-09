@@ -8,12 +8,22 @@ import { useScope } from './lang';
 import { MarkLines } from './Marks';
 import { Speech } from './Portrait';
 import { batesOf, CourtRecord, useCourtEntries } from './Record';
+import { CourtCast } from './jury/CourtFace';
 
 /**
  * 辯方證人（企劃書 6.9.6）：先準備，再直接詰問。
  * 外觀是最小版，版面交給介面串。
  */
-export function Defense({ scene: raw }: { scene: DefenseScene }) {
+/** 法庭畫面：說話者頭像是剪影替身（P4-2）。 */
+export function Defense({ scene }: { scene: DefenseScene }) {
+  return (
+    <CourtCast>
+      <DefenseScreen scene={scene} />
+    </CourtCast>
+  );
+}
+
+function DefenseScreen({ scene: raw }: { scene: DefenseScene }) {
   const { progress, prepareWitness, askWitness, finishWitness, advance } = useEpisode();
   // 條件不符的題目（例如證人更正過筆錄）不出現。
   const scene = witnessScene(progress, raw);
