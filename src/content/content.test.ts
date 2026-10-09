@@ -97,3 +97,37 @@ describe('卷宗元件資料（P2-6）', () => {
     });
   }
 });
+
+describe('Bates（P2-1）', () => {
+  it('內容裡寫的 Bates 跨兩集都不重複', () => {
+    // 同一張卡會出現在好幾個桌面場（共用牌庫），以「集＋卡」為單位收一次。
+    const owner = new Map<string, string>();
+    const dup: string[] = [];
+    const add = (b: string | undefined, who: string) => {
+      if (!b) return;
+      const prev = owner.get(b);
+      if (prev && prev !== who) dup.push(`${b}: ${prev} / ${who}`);
+      owner.set(b, who);
+    };
+    for (const [name, e] of Object.entries(episodes))
+      for (const s of e.scenes) {
+        if (s.type === 'desk')
+          for (const c of s.cards) {
+            add(c.bates, `${name}:${c.id}`);
+            add(c.photo?.bates, `${name}:${c.id}`);
+          }
+        if (s.type === 'phone')
+          for (const p of s.photos ?? []) add(p.photo.bates, `${name}:${p.id}`);
+        if (s.type === 'deposition') add(s.video?.bates, `${name}:${s.id}`);
+      }
+    expect(owner.size).toBeGreaterThan(20);
+    expect(dup).toEqual([]);
+  });
+
+  it('勘誤表引用的第 42 頁第 7 行有錨點', () => {
+    const lines = Object.values(episodes).flatMap((e) =>
+      e.scenes.flatMap((s) => (s.type === 'deposition' ? s.script : [])),
+    );
+    expect(lines.filter((l) => l.cite === '42:7').map((l) => l.id)).toEqual(['p-always']);
+  });
+});

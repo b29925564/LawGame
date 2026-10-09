@@ -199,9 +199,19 @@ const docLine = z.object({ text: z.string(), fact: id.optional() });
 const stamp = z.string().regex(/^\d\d\/\d\d \d\d:\d\d$/, '紀錄時間格式是 MM/DD HH:MM');
 
 /** 照片紀錄表的四欄。案號是拍照機關自己的號碼，不是法院案號。 */
+/** 文件交出方的 Bates（設定集第 9 章 :11）：前綴是交出的一方，錄影加 -V-，後接六位數。 */
+const batesNo = z
+  .string()
+  .regex(
+    /^(CALDER|CPD|DA|ME|WH|OKF)(-V)?-\d{6}$/,
+    'Bates 格式是 CALDER／CPD／DA／ME／WH／OKF 加六位數',
+  );
+
 const photoLog = z
   .object({
     caseNo: z.string().min(1),
+    /** 沖印本的 Bates（法醫 ME-、警方 CPD-）。 */
+    bates: batesNo.optional(),
     no: z.number().int().min(1),
     of: z.number().int().min(1),
     at: stamp,
@@ -217,6 +227,10 @@ const bag = z
     acquiredBy: z.string().min(1),
     from: z.string().min(1),
     desc: z.string().min(1),
+    /**
+     * 每經手一次一行。寫了 when 的那一行要等條件成立（例如做了那件工作、拿到那張卡）才算發生；
+     * 還沒發生的那一行和之後的每一行都畫成「尚未發生」（見 custody.ts）。
+     */
     custody: z
       .array(
         z.object({
@@ -224,6 +238,7 @@ const bag = z
           from: z.string().min(1),
           to: z.string().min(1),
           purpose: z.string().min(1),
+          when: when.optional(),
         }),
       )
       .min(1),
@@ -253,6 +268,8 @@ const card = z.object({
   /** 一開始就在手上（起訴資料附的）。 */
   held: z.boolean().default(false),
   admitted: z.boolean().default(false),
+  /** 這份文件或物品紀錄交出時蓋的 Bates（首頁）。照片卡寫在 photo.bates；陳述、筆錄、法院裁定不蓋。 */
+  bates: batesNo.optional(),
   /** 照片類卡片的照片紀錄表。 */
   photo: photoLog.optional(),
   /** 扣押物或傳票調閱回來的實物，裝在證物袋裡。 */
@@ -381,6 +398,8 @@ const deskScene = z.object({
                   then: z.array(line).min(1),
                   gives: z.array(id).default([]),
                   flags: z.array(z.string()).default([]),
+                  /** 選了就記進倫理帳本（例如為了客戶撤回傳票），第一季懲戒聽證會讀得到（企劃書 6.12）。 */
+                  ethics: z.array(z.string()).default([]),
                 }),
               )
               .length(2),
@@ -571,7 +590,7 @@ const depositionScene = z.object({
   /** 錄影畫面疊在介面層的出處：錄影那一方的 Bates 與時間碼（HH:MM:SS;FF）。 */
   video: z
     .object({
-      bates: z.string().regex(/^[A-Z]+-V-\d{6}$/, '錄影 Bates 格式是 前綴-V-六位數'),
+      bates: batesNo.refine((b) => b.includes('-V-'), '錄影 Bates 要有 -V-'),
       timecode: z.string().regex(/^\d\d:\d\d:\d\d;\d\d$/, '時間碼格式是 HH:MM:SS;FF'),
     })
     .optional(),
@@ -598,6 +617,11 @@ const depositionScene = z.object({
         gives: z.array(id).default([]),
         /** 答了就把這個說法鎖成宣誓陳述（假話是對方問出來的，但是我們的證人說的）。 */
         anchors: id.optional(),
+        /** 劇本別處引用這一句的筆錄頁行（頁:行），例如勘誤表的「第 42 頁第 7 行」。 */
+        cite: z
+          .string()
+          .regex(/^\d+:\d+$/, '筆錄頁行格式是 頁:行')
+          .optional(),
         /** 這題有毛病、玩家卻沒用對異議時才生效：對方多拿到的卡片與留下的旗標。 */
         missed: z
           .object({ gives: z.array(id).default([]), flags: z.array(z.string()).default([]) })
