@@ -5,7 +5,7 @@
  * 輸入是「同一個畫面」的亮度（這裡由板子的版面直接算：軟木 × 吊燈光圈，卡片是紙），
  * 輸出是一張鋼灰紙上的炭筆＋粉彩：
  *   1. 亮度 5%–98.5% 拉到 0–1、gamma 1.7、模糊 3px
- *   2. 分階：< .12 炭、< .24 炭紙混、< .48 紙、< .70 淺粉彩（帶 15–35% 原色）、以上粉筆白
+ *   2. 分階：< .12 炭、< .24 炭紙混、< .48 紙、< .70 淺粉彩（帶 15% 軟木原色）、以上粉筆白；卡片是一張乾淨的紙
  *   3. 紙紋：模糊後拉對比的雜訊＋沿筆觸方向的條紋；覆蓋率依階，紙色從粉彩之間透出來
  *   4. 筆觸：順著光圈切線與卡片邊走；長度依亮度三級，起筆粗收筆細，30% 疊一筆反向細筆
  *   5. 邊界用斜向短筆觸抖開；最暗處加稀疏 45° 排線
@@ -15,6 +15,8 @@
  * 固定種子：同一個版面每次畫出來都一樣。
  * buildSketch 不碰 DOM，可以放在 Worker 裡算（sketch.worker.ts）；字要用頁面載入的字型，回主執行緒寫。
  */
+
+import { proseUnits } from '../lineUnits';
 
 export type RGB = [number, number, number];
 
@@ -681,12 +683,8 @@ export function drawSketchText(
 const NO_START = /^[，。、；：？！）」』〉》．,.;:!?)\]}…—]/;
 const NO_END = /[（「『〈《([{]$/;
 
-/**
- * 斷行：英文只在空白斷，中文逐字但守避頭避尾（line-break: strict 的規則）。
- * 單一個字比一行還寬才在字中間斷（等同 overflow-wrap: anywhere）。
- */
-export function breakLines(measure: (s: string) => number, s: string, maxW: number): string[] {
-  // 切成不可再分的單位：拉丁字連同後面的空白一組，中日韓一字一組，標點黏在前一組後面。
+/** 字級單位：拉丁字連同後面的空白一組，中日韓一字一組，標點黏在前一組後面，開括號黏在後一組前面。 */
+function charUnits(s: string) {
   const units: string[] = [];
   for (const m of s.matchAll(/[\p{Script=Latin}\p{N}'’\-/:.@]+\s*|\s+|./gsu)) {
     const u = m[0];
@@ -694,6 +692,11 @@ export function breakLines(measure: (s: string) => number, s: string, maxW: numb
       units[units.length - 1] += u;
     else units.push(u);
   }
+  return units;
+}
+
+/** 依序把單位放進一行，放不下就換行；行頭行尾的空白不留。 */
+function pack(measure: (s: string) => number, units: string[], maxW: number) {
   const lines: string[] = [];
   let line = '';
   for (const u of units) {
@@ -705,18 +708,33 @@ export function breakLines(measure: (s: string) => number, s: string, maxW: numb
     line = u.trimStart();
   }
   if (line.trim()) lines.push(line.trimEnd());
-  // 一個單位比一行還寬：只有這時候在字中間斷。
-  return lines.flatMap((l) => {
+  return lines;
+}
+
+/**
+ * 斷行：英文只在空白斷；中文以詞為單位，守避頭避尾（line-break: strict 的規則），末行至少四個漢字。
+ * 單一個字比一行還寬才在字中間斷（等同 overflow-wrap: anywhere）。
+ */
+export function breakLines(measure: (s: string) => number, s: string, maxW: number): string[] {
+  // 有中文：照紙面內文的規則切詞（詞、譯名、數字和量詞不拆，標點黏前、開括號黏後，末行至少四個漢字；
+  // 設計師 r2 點名的「刷／卡」「閘／門。」）。沒有中文：字級單位，英文只在空白斷。
+  const units = /\p{Script=Han}/u.test(s) ? proseUnits(s) : charUnits(s);
+  return pack(measure, units, maxW).flatMap((l) => {
     if (measure(l) <= maxW) return [l];
-    const out: string[] = [];
-    let cur = '';
-    for (const ch of l) {
-      if (cur && measure(cur + ch) > maxW) {
-        out.push(cur);
-        cur = ch;
-      } else cur += ch;
-    }
-    return cur ? [...out, cur] : out;
+    // 一個詞比一行還寬：這一行退回字級單位重排，行首行尾禁則照守；
+    // 字級單位還是太寬（很長的英文字）才在字中間斷。
+    return pack(measure, charUnits(l), maxW).flatMap((m) => {
+      if (measure(m) <= maxW) return [m];
+      const out: string[] = [];
+      let cur = '';
+      for (const ch of m) {
+        if (cur && measure(cur + ch) > maxW) {
+          out.push(cur);
+          cur = ch;
+        } else cur += ch;
+      }
+      return cur ? [...out, cur] : out;
+    });
   });
 }
 

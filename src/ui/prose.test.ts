@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { proseUnits } from './prose';
+import { proseUnits } from './lineUnits';
 
 describe('紙面內文的換行單位（設計師 P2-6 r2 第 12 條）', () => {
   it('詞與譯名不拆開：律師事務所、智慧手錶、惠特洛克・海爾', () => {

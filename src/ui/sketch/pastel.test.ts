@@ -24,6 +24,16 @@ describe('陪審團速寫卡的斷行（設計師 P2-6 r2）', () => {
     }
   });
 
+  it('中文以詞為單位：「刷卡」「31 樓」不拆，末行不只剩「門。」', () => {
+    const s = '被告 22:47 刷卡進入 31 樓，23:01 刷卡離開大廳閘門。';
+    for (const w of [96, 112, 128, 144]) {
+      const lines = breakLines(width, s, w);
+      const joined = lines.join('|');
+      expect(joined).not.toMatch(/刷\|卡|31\|\s*樓|閘\|門/);
+      expect(lines.at(-1)!.replace(/[^\p{Script=Han}]/gu, '').length).toBeGreaterThanOrEqual(2);
+    }
+  });
+
   it('一個字比一行還寬，才在字中間斷', () => {
     expect(breakLines(width, 'police-annotated', 64)).toEqual(['police-a', 'nnotated']);
   });
