@@ -73,6 +73,29 @@ _cards: &cards
     kind: 物品
     text: 被告入所時扣押物品：手機 1 支、皮夾 1 個、智慧手錶 1 支。
     source: 看守所財物清單
+    bag:
+      caseNo: CH-2026-1147
+      item: 財物清單　項 3
+      acquiredBy: 入所扣押　財物清單 No. 26-0315-088
+      from: 卡爾德港看守所　入所處
+      desc: 智慧手錶一支（被告配戴）
+      custody:
+        - at: '03/15 16:10'
+          from: 伊森・蕭　被告
+          to: R. Delgado　看守所財物管理員
+          purpose: 扣押（入所財物）
+        - at: '03/20 09:30'
+          from: R. Delgado　看守所財物管理員
+          to: 戴文・艾許　惠特洛克・海爾 助理
+          purpose: 調閱（依 03/19 檢視令）
+        - at: '03/20 13:00'
+          from: 戴文・艾許　惠特洛克・海爾 助理
+          to: 普莉亞・奈爾　數位鑑識專家
+          purpose: 送鑑
+        - at: '03/23 10:00'
+          from: 普莉亞・奈爾　數位鑑識專家
+          to: 戴文・艾許　惠特洛克・海爾 助理
+          purpose: 收存（鑑識完畢返還）
   - id: access-partial
     name: 門禁紀錄（警方標註）
     kind: 文件
@@ -99,6 +122,7 @@ _cards: &cards
     kind: 物品
     text: 死者左腕配戴智慧手錶，錶帶完好，仍扣在腕上；背面有心率感測器，貼著皮膚。
     source: 布魯克斯法醫
+    photo: { caseNo: ME-26-0311, no: 14, of: 46, at: '03/14 09:40', by: T. Nguyen　法醫調查員 }
   - id: sophie-home
     name: 蘇菲對警方的說法：我直接回家了
     kind: 陳述
@@ -145,6 +169,25 @@ _cards: &cards
     time: '22:24'
     text: 心率在 22:24 急遽升高後歸零，之後再無讀數。
     source: 手錶廠商（傳票）
+    bag:
+      caseNo: 26-CR-0417　辯方傳票 D-1
+      item: 傳票回覆　1 之 1
+      acquiredBy: 傳票 D-1（03/24 雷耶斯法官當庭核發）
+      from: 手錶廠商　紀錄保管人
+      desc: 心率資料光碟一片，附紀錄保管人證明書
+      custody:
+        - at: '03/27 11:20'
+          from: L. Ferris　紀錄保管人（手錶廠商）
+          to: 戴文・艾許　惠特洛克・海爾 助理
+          purpose: 調閱（傳票回覆）
+        - at: '03/27 14:00'
+          from: 戴文・艾許　惠特洛克・海爾 助理
+          to: 普莉亞・奈爾　數位鑑識專家
+          purpose: 送鑑
+        - at: '03/30 10:30'
+          from: 普莉亞・奈爾　數位鑑識專家
+          to: 戴文・艾許　惠特洛克・海爾 助理
+          purpose: 收存（鑑識完畢返還）
   - id: chat-audit
     name: 聊天系統稽核紀錄
     kind: 文件
@@ -152,6 +195,25 @@ _cards: &cards
     time: '23:14'
     text: 沃斯於 21:55 傳訊給瑞秋；22:31 由沃斯桌機發出一則訊息給伊森（伊森的手錶 22:33 才收到推播）；23:14 由同一台桌機收回。
     source: 卡爾德物流（傳票）
+    bag:
+      caseNo: 26-CR-0417　辯方傳票 D-2
+      item: 傳票回覆　1 之 1
+      acquiredBy: 傳票 D-2（03/25 核發；03/31 撤銷聲請駁回）
+      from: 卡爾德物流　紀錄保管人
+      desc: 稽核紀錄光碟一片，附紀錄保管人證明書
+      custody:
+        - at: '04/02 16:45'
+          from: S. Pruitt　卡爾德物流 資訊部紀錄保管人
+          to: 戴文・艾許　惠特洛克・海爾 助理
+          purpose: 調閱（傳票回覆）
+        - at: '04/02 18:10'
+          from: 戴文・艾許　惠特洛克・海爾 助理
+          to: 普莉亞・奈爾　數位鑑識專家
+          purpose: 送鑑
+        - at: '04/03 08:30'
+          from: 普莉亞・奈爾　數位鑑識專家
+          to: 戴文・艾許　惠特洛克・海爾 助理
+          purpose: 收存（鑑識完畢返還）
   - id: watch-notice
     name: 手錶通知紀錄
     kind: 文件
@@ -273,6 +335,25 @@ scenes:
       - do: caption
         time: '23:14'
         text: 公車進站，又開走了。伊森沒有上車。
+    # 設定集 05-05：冷開場最後切到警方的閃光照片（週六凌晨，屍體 23:58 被發現之後）。
+    # 只拍物件與證物牌，遺體只以黑條出現；只有獎盃那張的證物牌是黃。
+    photos:
+      - id: scene-overall
+        subject: 全景：財務長辦公室，自門口拍攝
+        redacted: true
+        photo:
+          { caseNo: CH-2026-1147, no: 1, of: 48, at: '03/14 01:12', by: M. Duarte　卡港警局 鑑識組 }
+      - id: scene-blood
+        subject: 證物牌 1：辦公桌旁地毯上的血跡
+        placard: 1
+        photo:
+          { caseNo: CH-2026-1147, no: 2, of: 48, at: '03/14 01:16', by: M. Duarte　卡港警局 鑑識組 }
+      - id: scene-trophy
+        subject: 證物牌 2：水晶獎盃，附比例尺
+        placard: 2
+        highlight: true
+        photo:
+          { caseNo: CH-2026-1147, no: 3, of: 48, at: '03/14 01:19', by: M. Duarte　卡港警局 鑑識組 }
 
   - type: card
     id: title
@@ -280,6 +361,9 @@ scenes:
     title: 合理懷疑
     lines:
       - 第一集　已收回的訊息
+    docket:
+      date: 03/16/2026
+      entry: 起訴書提出：二級謀殺一罪。被告在押；惠特洛克・海爾律師事務所具狀為被告辯護人。
 
   # 第一幕：接案（企劃書 10.7）
   # 銅牌上「海爾」底下的新漆是第一季的伏筆（企劃書 7.2：那裡原本寫著「高」），只拍不說。
@@ -553,6 +637,9 @@ scenes:
     lines:
       - 二十四工時。讀文件、擺卡片、和自己人講話都不花錢。
       - 查不完是這一行的常態。
+    docket:
+      date: 03/17/2026
+      entry: 檢方第一批證據開示送達：起訴書、逮捕報告、警方報告及附件、驗屍報告。
 
   # 第二幕前半（企劃書 10.7 教學順序：標記事實 → 推理鏈 Q1 → 委託 → 傳票）
   - type: desk
@@ -931,7 +1018,10 @@ scenes:
     act: 第三幕
     title: 第三幕　審前
     lines:
-      - 十六工時。開庭前能做的事，都在這三個星期裡。
+      - 十六工時。開庭前能做的事，都在這三天裡。
+    docket:
+      date: 04/03/2026
+      entry: 預審：本院認定有相當理由，被告應受審判。定 04/06/2026 陪審團審理。
 
   # 第三幕之一：米蘭達動議（教學：排除證據）
   - type: desk
@@ -1307,6 +1397,9 @@ scenes:
     lines:
       - 卡爾德郡高等法院　第三法庭
       - 先選出十二位陪審員，接著是開場陳述，然後檢方傳喚第一位證人。
+    docket:
+      date: 04/06/2026
+      entry: 陪審團審理第一日：陪審團遴選，十二名陪審員宣誓；雙方開場陳述；檢方傳喚證人雷・柯瓦斯基警探。
 
   # 第四幕第一天之前：陪審團遴選（企劃書 6.9.1）
   - type: voirdire
@@ -1751,6 +1844,9 @@ scenes:
       - 緩刑五年。伊森在看守所聽完莫羅的條件，只說了一句：「我沒有做。」
       - 檢方先傳喚死者的執行助理蘇菲・馬丁內斯，用她建立動機。
       - 最後一位證人是瑞秋・艾德勒：她是唯一聽見聲音的人，也是全案最無懈可擊的證人。
+    docket:
+      date: 04/07/2026
+      entry: 陪審團審理第二日：檢方傳喚證人蘇菲・馬丁內斯、瑞秋・艾德勒。
 
   - type: trial
     id: court-sophie
@@ -2093,6 +2189,9 @@ scenes:
     lines:
       - 檢方舉證完畢。盧卡斯站起來：「辯方聲請無罪判決。」法官：「駁回。辯方傳喚證人。」
       - 今天輪到辯方傳喚證人，然後是結辯。
+    docket:
+      date: 04/08/2026
+      entry: 陪審團審理第三日：檢方舉證終結；辯方聲請無罪判決，駁回；辯方舉證。
 
   # 辯方證人：布魯克斯法醫（企劃書 6.9.6）
   - type: defense
@@ -2582,28 +2681,6 @@ scenes:
 
   # E5 有罪（企劃書 10.9）：兩週後，監獄寄來的手寫信。
   - type: dialogue
-    id: epilogue-letter
-    act: 尾聲
-    when:
-      verdict: [有罪]
-    place: 盧卡斯的辦公室　兩週後 09:10
-    steps:
-      - do: say
-        who: 旁白
-        text: 兩週後。郵件堆裡有一封從州立監獄寄來的信，信封上的字寫得很用力。
-      - do: say
-        who: 伊森・蕭
-        text: （信）盧卡斯，這裡晚上十點就熄燈。我每天晚上都在想那則訊息。它真的存在過，對吧？
-        mood: 緊
-      - do: say
-        who: 伊森・蕭
-        text: （信）我姊說你還在找上訴的理由。如果找不到，也不是你的錯。
-        mood: 緊
-      - do: say
-        who: 旁白
-        text: 盧卡斯把信夾進伊森的卷宗，在卷宗的標籤上用鉛筆加了兩個字：上訴。
-
-  - type: dialogue
     id: epilogue-review
     act: 尾聲
     epilogue: true
@@ -2830,6 +2907,28 @@ scenes:
         who: 盧卡斯
         text: 我知道她為什麼說謊。
         voice: 'off'
+
+  - type: dialogue
+    id: epilogue-letter
+    act: 尾聲
+    when:
+      verdict: [有罪]
+    place: 盧卡斯的辦公室　兩週後 09:10
+    steps:
+      - do: say
+        who: 旁白
+        text: 兩週後。郵件堆裡有一封從州立監獄寄來的信，信封上的字寫得很用力。
+      - do: say
+        who: 伊森・蕭
+        text: （信）盧卡斯，這裡晚上十點就熄燈。我每天晚上都在想那則訊息。它真的存在過，對吧？
+        mood: 緊
+      - do: say
+        who: 伊森・蕭
+        text: （信）我姊說你還在找上訴的理由。如果找不到，也不是你的錯。
+        mood: 緊
+      - do: say
+        who: 旁白
+        text: 盧卡斯把信夾進伊森的卷宗，在卷宗的標籤上用鉛筆加了兩個字：上訴。
 
   - type: dialogue
     id: epilogue-call

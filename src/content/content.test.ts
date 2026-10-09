@@ -37,3 +37,16 @@ describe('心聲的新寫法', () => {
     expect(errs({ who: '盧卡斯', text: 'a', voice: 'off', beats: [{ text: 'a' }] })).toEqual([]);
   });
 });
+
+describe('卷宗元件資料（P2-6）', () => {
+  for (const [name, e] of Object.entries(episodes)) {
+    it(`${name} 案卷登錄表的日期照卡的順序遞增`, () => {
+      const iso = (d: string) => d.replace(/^(\d\d)\/(\d\d)\/(\d{4})$/, '$3-$1-$2');
+      const dates = e.scenes.flatMap((s) =>
+        s.type === 'card' && s.docket ? [iso(s.docket.date)] : [],
+      );
+      expect(dates.length).toBeGreaterThan(0);
+      expect([...dates].sort()).toEqual(dates);
+    });
+  }
+});
