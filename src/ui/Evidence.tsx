@@ -292,7 +292,13 @@ export function EvidenceCard({
             {sealed && <Stamp text={sealed} sm />}
             {out && <p className="mini-out">{t('這張卡現在用不上，只能看內容。')}</p>}
             {photo && <PhotoLog photo={photo} image={item.image} />}
-            {bag ? <EvidenceBag bag={bag}>{body}</EvidenceBag> : body}
+            {bag ? (
+              <EvidenceBag bag={bag} progress={progress}>
+                {body}
+              </EvidenceBag>
+            ) : (
+              body
+            )}
             {(photo || bag) && (
               <button type="button" className="link zoom-open" onClick={() => setZoom(true)}>
                 {t('放大')}

@@ -528,6 +528,14 @@
 .bag-chain .bag-chain-cols {
   display: none;
 }
+/* 還沒發生的那一手：整行黑條（不寫時間和經手人，免得先暴露劇情）。 */
+.bag-chain li.bag-pending {
+  display: block;
+  padding: 4px 0;
+}
+.bag-chain .bag-pending .redact {
+  min-height: 26px;
+}
 @container (min-width: 560px) {
   .bag-head div {
     grid-template-columns: 7.5em minmax(0, 1fr);

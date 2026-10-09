@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
-import { episodeOf } from '../engine/game';
+import { custodyOf, episodeOf } from '../engine/game';
 import type { Card, Episode } from '../engine/episode/schema';
 import type { Progress } from '../engine/save';
 import { useLang, useT } from '../i18n';
@@ -259,9 +259,18 @@ function Printed({ text, code }: { text: string; code: boolean }) {
 /**
  * 透明袋：兩道 CSS 漸層高光＋1px 白邊（設定集第 9 章，定案做法）。袋裡看得到卡片本身。
  * 袋上的標籤是看守所系統印出來的（紙本字族），保管鏈每經手一次多一行手寫（LXGW）：兩種聲音分開。
+ * 保管鏈照劇情進度：還沒發生的那一手畫黑條「尚未發生」，和案卷登錄表一樣（custodyOf）。
  * 欄位空著畫黑條。窄的時候欄名疊在值上面，保管鏈留小字欄名。
  */
-export function EvidenceBag({ bag, children }: { bag: BagRecord; children?: ReactNode }) {
+export function EvidenceBag({
+  bag,
+  progress,
+  children,
+}: {
+  bag: BagRecord;
+  progress: Progress;
+  children?: ReactNode;
+}) {
   const t = useT();
   const zh = useLang((s) => s.lang) !== 'en';
   const blank = <Redaction label={t('未填', 'dossier')} />;
@@ -302,26 +311,32 @@ export function EvidenceBag({ bag, children }: { bag: BagRecord; children?: Reac
             <span>{t('收受', 'dossier')}</span>
             <span>{t('目的', 'dossier')}</span>
           </li>
-          {bag.custody.map((c) => (
-            <li key={c.at + c.from}>
-              <span className="at">
-                <span className="sr-only">{t('日期時間', 'dossier')}</span>
-                {c.at}
-              </span>
-              <span className="from">
-                <span className="ck">{t('交出', 'dossier')}</span>
-                {c.from ? <Who text={c.from} /> : blank}
-              </span>
-              <span className="to">
-                <span className="ck">{t('收受', 'dossier')}</span>
-                {c.to ? <Who text={c.to} /> : blank}
-              </span>
-              <span className="why">
-                <span className="sr-only">{t('目的', 'dossier')}</span>
-                {c.purpose ? t(c.purpose) : blank}
-              </span>
-            </li>
-          ))}
+          {custodyOf(progress, bag).map(({ row: c, done }) =>
+            !done ? (
+              <li key={c.at + c.from} className="bag-pending">
+                <Redaction label={t('尚未發生')} />
+              </li>
+            ) : (
+              <li key={c.at + c.from}>
+                <span className="at">
+                  <span className="sr-only">{t('日期時間', 'dossier')}</span>
+                  {c.at}
+                </span>
+                <span className="from">
+                  <span className="ck">{t('交出', 'dossier')}</span>
+                  {c.from ? <Who text={c.from} /> : blank}
+                </span>
+                <span className="to">
+                  <span className="ck">{t('收受', 'dossier')}</span>
+                  {c.to ? <Who text={c.to} /> : blank}
+                </span>
+                <span className="why">
+                  <span className="sr-only">{t('目的', 'dossier')}</span>
+                  {c.purpose ? t(c.purpose) : blank}
+                </span>
+              </li>
+            ),
+          )}
         </ol>
       </div>
     </figure>
@@ -406,7 +421,13 @@ export function EvidenceZoom({
           {t('關閉')}
         </button>
       </header>
-      {bag ? <EvidenceBag bag={bag}>{body}</EvidenceBag> : body}
+      {bag ? (
+        <EvidenceBag bag={bag} progress={progress}>
+          {body}
+        </EvidenceBag>
+      ) : (
+        body
+      )}
       {photo && <Sheet item={item} hl={hl} />}
     </dialog>
   );

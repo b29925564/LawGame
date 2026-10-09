@@ -61,6 +61,8 @@ test('證物袋與照片紀錄表：證據欄展開看得到，放大檢視是�
   const bag = page.locator('.card.mini').filter({ hasText: '財物清單' }).first();
   await bag.locator('.mini-btn').click();
   await expect(bag.locator('.bag-chain li:not(.bag-chain-cols)')).toHaveCount(4);
+  // 還沒做手錶鑑識（沒有 watch-notice）：入所扣押那一手之後都還沒發生，畫成黑條。
+  await expect(bag.locator('.bag-chain .bag-pending')).toHaveCount(3);
   await expect(bag.locator('.bag-head')).toContainText('CH-2026-1147');
   await bag.getByRole('button', { name: '放大', exact: true }).click();
   const zoom = page.getByRole('dialog', { name: /放大檢視/ });
