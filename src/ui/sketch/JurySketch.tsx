@@ -221,6 +221,12 @@ export function JurySketch({
           c.cy += (need - c.h) / 2;
           c.h = need;
         }
+        // 撐高後整張卡還要留在板子裡，下緣不壓到出處小字（基線在 h − 14，留 34px）。
+        const ext =
+          (c.h / 2) * Math.abs(Math.cos(c.angle)) + (c.w / 2) * Math.abs(Math.sin(c.angle));
+        const lo = ext + 8;
+        const hi = h - 34 - ext;
+        c.cy = hi >= lo ? Math.min(hi, Math.max(lo, c.cy)) : lo;
       }
       const paper = cssColor('var(--sketch-paper)');
       const ink = cssColor('var(--sketch-ink)');
