@@ -25,7 +25,7 @@ import { useT } from '../i18n';
 import { SceneScope, useDocumentLang } from './lang';
 
 export function App() {
-  const { mode, progress, advance, toTitle, nextEpisode } = useEpisode();
+  const { mode, progress, loadId, advance, toTitle, nextEpisode } = useEpisode();
   const textScale = useSettings((s) => s.textScale);
   const t = useT();
   useDocumentLang();
@@ -49,6 +49,8 @@ export function App() {
   // 集尾卡（這一集最後一場是卡）：跑完進場、停 2.5 秒後不切場，選項出現在卡下。
   const last = scene?.type === 'card' && progress.scene === ep.scenes.length - 1;
   const next = scene && !last ? null : followingEpisode(progress);
+  // 讀同一場的存檔也要重新掛載，元件裡的狀態（例如訪談的「結束會見」）才會重置。
+  const sceneKey = `${loadId}:${scene?.id}`;
   // 幕卡（設定集 11.3）：片頭卡的集名寫在第一行；同一幕的第二張卡是日卡；集尾也是同一個版型。
   const card = scene?.type === 'card' ? scene : null;
   const opening = card?.act === '片頭';
@@ -85,20 +87,20 @@ export function App() {
       <Announcer />
       <GameMenu />
       <PlaceSlate id={scene?.id} place={moved ? { raw: here, text: t(here, scene?.id) } : null} />
-      {scene?.type === 'phone' && <Phone key={scene.id} scene={scene} />}
-      {scene?.type === 'dialogue' && <Dialogue key={scene.id} scene={scene} />}
-      {scene?.type === 'interview' && <Interview key={scene.id} scene={scene} />}
-      {scene?.type === 'desk' && <Desk key={scene.id} scene={scene} />}
-      {scene?.type === 'trial' && <Courtroom key={scene.id} scene={scene} />}
-      {scene?.type === 'deposition' && <Deposition key={scene.id} scene={scene} />}
-      {scene?.type === 'negotiation' && <Negotiation key={scene.id} scene={scene} />}
-      {scene?.type === 'voirdire' && <VoirDire key={scene.id} scene={scene} />}
-      {scene?.type === 'defense' && <Defense key={scene.id} scene={scene} />}
-      {scene?.type === 'theory' && <Theory key={scene.id} scene={scene} />}
-      {scene?.type === 'opening' && <Opening key={scene.id} scene={scene} />}
-      {scene?.type === 'closing' && <Closing key={scene.id} scene={scene} />}
+      {scene?.type === 'phone' && <Phone key={sceneKey} scene={scene} />}
+      {scene?.type === 'dialogue' && <Dialogue key={sceneKey} scene={scene} />}
+      {scene?.type === 'interview' && <Interview key={sceneKey} scene={scene} />}
+      {scene?.type === 'desk' && <Desk key={sceneKey} scene={scene} />}
+      {scene?.type === 'trial' && <Courtroom key={sceneKey} scene={scene} />}
+      {scene?.type === 'deposition' && <Deposition key={sceneKey} scene={scene} />}
+      {scene?.type === 'negotiation' && <Negotiation key={sceneKey} scene={scene} />}
+      {scene?.type === 'voirdire' && <VoirDire key={sceneKey} scene={scene} />}
+      {scene?.type === 'defense' && <Defense key={sceneKey} scene={scene} />}
+      {scene?.type === 'theory' && <Theory key={sceneKey} scene={scene} />}
+      {scene?.type === 'opening' && <Opening key={sceneKey} scene={scene} />}
+      {scene?.type === 'closing' && <Closing key={sceneKey} scene={scene} />}
       {scene?.type === 'card' && !last && (
-        <ActCard key={scene.id} headline={headline} place={slate} bates={bates} onDone={advance} />
+        <ActCard key={sceneKey} headline={headline} place={slate} bates={bates} onDone={advance} />
       )}
       {(!scene || last) && (
         <ActCard
