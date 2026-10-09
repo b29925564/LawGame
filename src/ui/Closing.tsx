@@ -135,7 +135,7 @@ function ClosingScreen({ scene }: { scene: ClosingScene }) {
             {t('・ 基調 {state}', { state: st.tone ? t('已選') : t('未選') })}
           </p>
           {need < scene.picks && (
-            <p className="bad-text small">
+            <p className="court-warn small">
               {t('手上的論點不夠，結辯會空 {n} 格，{other}的說法沒人反駁。', {
                 n: scene.picks - need,
                 other: t(terms.other, scope),
@@ -143,7 +143,7 @@ function ClosingScreen({ scene }: { scene: ClosingScene }) {
             </p>
           )}
           {!promisesOf(progress).theory && (
-            <p className="bad-text small">{t('沒有案件理論，論點說服力打七折。')}</p>
+            <p className="court-warn small">{t('沒有案件理論，論點說服力打七折。')}</p>
           )}
           {/* 你帶進評議室的東西：理論的代價是選擇，不是失誤，用中性色（UX 規格 decision-cost §二）。 */}
           {th && (
@@ -179,7 +179,7 @@ function ClosingScreen({ scene }: { scene: ClosingScene }) {
             </div>
           )}
           {(st.broken ?? []).length > 0 && (
-            <p className="bad-text small">
+            <p className="court-warn small">
               {t('開場許下的 {n} 個承諾沒有兌現，陪審員記得你說過的話。', { n: st.broken.length })}
             </p>
           )}
@@ -243,7 +243,7 @@ function ClosingScreen({ scene }: { scene: ClosingScene }) {
                   <span className="num">{i + 1}.</span>{' '}
                   {t(args.find((a) => a.id === id)?.name ?? '', scope)}
                   {i === st.picked.length - 1 && st.picked.length === need && (
-                    <span className="good"> {t('・最後講，×1.3')}</span>
+                    <span className="last"> {t('・最後講，×1.3')}</span>
                   )}
                 </li>
               ))}
@@ -621,7 +621,8 @@ function Verdict({
                   look={lookOf(episode, fore.id)}
                   v={st.jury[fore.id] ?? 0}
                   seat={t(fore.label, scope)}
-                  name={foreParts.length > 1 ? foreParts[foreParts.length - 2] : foreParts[0]}
+                  // 標籤寫全名（「海倫・杜根」，不是只有姓）：label 是「名・姓・職業」，去掉最後的職業。
+                  name={foreParts.length > 1 ? foreParts.slice(0, -1).join('・') : foreParts[0]}
                 />
               ) : (
                 <span />

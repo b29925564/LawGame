@@ -334,7 +334,7 @@ function VoirDireScreen({ scene }: { scene: VoirDireScene }) {
   const seatButton = (
     <button className="commit" disabled={!vd.canSeat(scene, st)} onClick={seatJury}>
       {/* 單色鎖（設計師第二輪：表情符號換成 currentColor 的 SVG）。 */}
-      <svg className="lock" viewBox="0 0 12 14" aria-hidden focusable="false">
+      <svg className="vd-lock" viewBox="0 0 12 14" aria-hidden focusable="false">
         <path
           d="M3.5 6.5V4.25a2.5 2.5 0 0 1 5 0V6.5"
           fill="none"

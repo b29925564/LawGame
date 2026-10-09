@@ -123,8 +123,7 @@ function DefenseScreen({ scene: raw }: { scene: DefenseScene }) {
                   </button>
                   {/* 明知答案是假的還問（ethicsIf 條件成立）：問之前就要看得到風險。 */}
                   {q.ethicsIf && q.ethicsIf.has.every((c) => progress.cards.includes(c)) && (
-                    <p className="bad-text small ethics-risk">
-                      <span aria-hidden>⚠ </span>
+                    <p className="court-warn small ethics-risk">
                       {t('你手上的證據說這個回答不是真的。照問，是讓證人在庭上說假話。')}
                     </p>
                   )}
