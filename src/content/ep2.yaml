@@ -283,6 +283,7 @@ scenes:
     id: assign
     act: 第一幕
     place: 惠特洛克的辦公室　週一 09:00
+    rig: ep2-whitlock-office-mon
     steps:
       - do: say
         who: 旁白
@@ -337,6 +338,7 @@ scenes:
     id: hale-civil
     act: 第一幕
     place: 走廊　週一 09:40
+    rig: ep2-firm-corridor-mon
     steps:
       - do: say
         who: 馬庫斯・海爾
@@ -745,6 +747,7 @@ scenes:
     id: depo-trevor
     act: 第三幕
     place: 惠特洛克・海爾　會議室 C　週二 10:00
+    rig: ep2-conf-c-tue
     video: { bates: OKF-V-000118, timecode: '01:38:21;16' }
     side: theirs
     examiner: 丹尼爾・奧卡福
@@ -806,6 +809,7 @@ scenes:
     id: depo-engineer
     act: 第三幕
     place: 奧卡福勞工法律事務所　會議室　週三 14:00
+    rig: ep2-okafor-wed
     video: { bates: OKF-V-000131, timecode: '00:41:07;22' }
     side: theirs
     examiner: 丹尼爾・奧卡福
@@ -1003,6 +1007,7 @@ scenes:
     id: mediation
     act: 第四幕
     place: 卡爾德郡高等法院　調解室 2　週四 10:00
+    rig: ep2-mediation-thu
     opponent:
       name: 丹尼爾・奧卡福
       role: 原告律師
@@ -1127,6 +1132,7 @@ scenes:
     id: theory
     act: 第五幕
     place: 惠特洛克・海爾　會議室 A　週一 15:00
+    rig: ep2-conf-a-mon
     intro:
       - who: 馬庫斯・海爾
         text: 民事案沒有無罪，只有責任多少。你要告訴陪審團，這筆帳該怎麼算。
@@ -1191,6 +1197,7 @@ scenes:
     id: voir-dire
     act: 第五幕
     place: 卡爾德郡高等法院　第五法庭
+    rig: court-d1-am
     questions: 4
     peremptories: 2
     seats: 6
@@ -1348,6 +1355,7 @@ scenes:
     id: opening
     act: 第五幕
     place: 卡爾德郡高等法院　第五法庭
+    rig: court-d1-am
     picks: 2
     intro:
       - who: 旁白
@@ -1832,6 +1840,7 @@ scenes:
     id: closing
     act: 第五幕
     place: 卡爾德郡高等法院　第五法庭
+    rig: court-d1-am
     picks: 2
     threshold: 50
     # 判有責時的判決表：損害總額扣掉死者過失比例（理論的 fault）。
@@ -1979,6 +1988,7 @@ scenes:
       outcome: [deal]
       deal: [o-full, o-high, o-mid]
     place: 卡爾德郡高等法院　調解室外的走廊　週四 12:40
+    rig: ep2-mediation-corridor-thu
     steps:
       - do: say
         who: 旁白
@@ -1998,6 +2008,7 @@ scenes:
       outcome: [deal]
       deal: [o-low]
     place: 卡爾德郡高等法院　調解室外的走廊　週四 12:40
+    rig: ep2-mediation-corridor-thu
     steps:
       - do: say
         who: 旁白
@@ -2019,6 +2030,7 @@ scenes:
       flags: [trevor-corrected]
       verdict: [有責]
     place: 卡爾德郡高等法院　五樓走廊　週四 17:05
+    rig: ep2-court-5f-corridor-thu
     steps:
       - do: say
         who: 旁白
@@ -2046,6 +2058,7 @@ scenes:
     when:
       flags: [memo-produced]
     place: 惠特洛克・海爾　四十二樓　週四 21:30
+    rig: ep2-whitlock-42f-night
     steps:
       - do: say
         who: 旁白
@@ -2081,6 +2094,7 @@ scenes:
     when:
       ethics: [offered-perjury]
     place: 惠特洛克・海爾　影印室　週四 22:10
+    rig: ep2-copy-room-night
     steps:
       - do: say
         who: 戴文
@@ -2100,6 +2114,7 @@ scenes:
       ethics: [coached-witness]
       notEthics: [offered-perjury]
     place: 惠特洛克・海爾　影印室　週四 22:10
+    rig: ep2-copy-room-night
     steps:
       - do: say
         who: 戴文
@@ -2117,6 +2132,7 @@ scenes:
     when:
       notEthics: [offered-perjury, coached-witness]
     place: 惠特洛克・海爾　影印室　週四 22:10
+    rig: ep2-copy-room-night
     steps:
       - do: say
         who: 戴文
@@ -2131,6 +2147,7 @@ scenes:
     act: 尾聲
     epilogue: true
     place: 惠特洛克・海爾　影印室　週四 22:10
+    rig: ep2-copy-room-night
     steps:
       - do: say
         who: 旁白
@@ -2159,6 +2176,7 @@ scenes:
     owner: 盧卡斯
     # 設計師 p225 裁定 (3)：盧卡斯還在事務所，不在家；場記讀這一場的地點（燈組由場景光影給）。
     place: 惠特洛克・海爾　盧卡斯的辦公室　週四 23:40
+    rig: ep2-lucas-office-night
     steps:
       - do: caption
         time: '23:40'

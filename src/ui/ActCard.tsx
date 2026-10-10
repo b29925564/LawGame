@@ -4,7 +4,7 @@ import { useLang, useT } from '../i18n';
 import { prose } from './prose';
 import { reducedMotion } from './a11y';
 import { claimHand } from './hand';
-import { kelvinOf, rigOf } from './rigs';
+import { rigOf } from './rigs';
 import { useCaseTerms } from './terms';
 import './actcard.css';
 
@@ -53,18 +53,23 @@ export function splitSlate(place: string): [string, string] {
   return [place, ''];
 }
 
-/** 場記的地點：raw 是中文原文（判斷燈組與色溫用），text 是畫面語言的寫法。 */
-export type Place = { raw: string; text: string };
+/** 場記的地點：raw 是中文原文，text 是畫面語言的寫法，rig 是這場戲的燈組（rigs.yaml 的鍵）。 */
+export type Place = { raw: string; text: string; rig?: string };
 
-/** 場記一行：左欄地點，右欄「日、時刻、色溫」。法庭讀燈組（11.3），其他地點讀地點自帶的日子時刻。 */
-function useSlate(place: Place | undefined, day?: string): [string, string] {
+/**
+ * 場記一行：左欄地點，右欄「日、時刻、色溫」。色溫讀燈組（11.3）；日子時刻用地點自帶的寫法（已經是畫面語言），
+ * 地點沒寫的（法庭）才讀燈組的 label、time。兩邊的時刻由 rigs.test.ts 對過，不會不一樣。
+ */
+function useSlate(place: Place | undefined): [string, string] {
   const t = useT();
   const en = useLang((s) => s.lang) === 'en';
   if (!place) return ['', ''];
   const [where, when] = splitSlate(place.text);
-  const rig = rigOf(place.raw, day);
-  const k = rig?.kelvin ?? kelvinOf(place.raw);
-  const right = [rig ? `${t(rig.label)} ${rig.time}` : when, `${k}K`]
+  const rig = rigOf(place);
+  const right = [
+    when || (rig?.label ? `${t(rig.label)} ${rig.time}` : ''),
+    rig ? `${rig.kelvin}K` : '',
+  ]
     .filter(Boolean)
     .join(en ? '  ' : '\u3000');
   return [where, right];
@@ -159,7 +164,7 @@ export function ActCard({
   const t = useT();
   const en = useLang((s) => s.lang) === 'en';
   const { plaintiff, defendant, caseNo } = useCaseTerms();
-  const [where, right] = useSlate(place, headline.day ?? headline.title);
+  const [where, right] = useSlate(place);
   const d = (n: number) => ({ '--d': n }) as CSSProperties;
   const [comma, stop] = en ? [',', '.'] : ['，', '。'];
   // 案件標題欄五行：當事人、身分（縮排）、「訴」；黑條前三行一起抽、後兩行一起抽。
