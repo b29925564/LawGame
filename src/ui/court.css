@@ -10,6 +10,10 @@
   /* 紙上的墨水：紙永遠是淺色，兩個主題同值。
      章一律 --stamp 靛藍印泥、雙線框、±3°（設定集第 9 章：不用紅章，紅只代表有罪傾向）；准駁靠章上的字分。 */
   --ink-fill: #1f3a68;
+  /* 陪審長的筆（設定集第 9 章 <VerdictForm>、10.5 ①）：每字 600ms；裁決書出現 1.3 秒後落第一筆；兩筆之間提筆一次。 */
+  --dur-hand: 600ms;
+  --dur-hand-lead: 1300ms;
+  --dur-pen-lift: 300ms;
 }
 .court-desk {
   display: grid;
@@ -1563,6 +1567,91 @@ button.cand[aria-pressed='true'],
 }
 .vform.short {
   flex: none;
+}
+/* 印好的勾選框：紙上的墨框；勾是陪審長的筆，比框大一點、超出框的右上角。 */
+.fboxes {
+  display: inline-flex;
+  gap: 18px;
+  align-self: center;
+  white-space: nowrap;
+}
+.fbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: 400 15px/1.5 var(--font-doc);
+}
+.fbox .sq {
+  position: relative;
+  width: 15px;
+  height: 15px;
+  border: 1.5px solid var(--paper-ink);
+}
+.fbox svg {
+  position: absolute;
+  left: -2px;
+  bottom: -2px;
+  width: 22px;
+  height: 22px;
+  overflow: visible;
+  fill: none;
+  stroke: var(--ink-fill);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.fbox svg path {
+  stroke-dasharray: 1;
+}
+/* 僵局：兩格都不勾，陪審長在題目下面手寫一行。 */
+.vform .fnote {
+  margin: 0;
+  padding: 8px 0 10px 36px;
+  border-bottom: 1px solid var(--paper-rule);
+  font:
+    400 21px/1.2 'LXGW WenKai TC',
+    var(--font-hand);
+  color: var(--ink-fill);
+}
+.hw {
+  display: inline-block;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .vform:not([data-written]) .hw {
+    animation: hand-write calc(var(--u) * var(--dur-hand)) linear
+      calc(var(--dur-hand-lead) + var(--at) * var(--dur-hand) + var(--k) * var(--dur-pen-lift)) both;
+  }
+  .vform:not([data-written]) .hw-chk path {
+    animation: pen-stroke calc(var(--u) * var(--dur-hand)) linear
+      calc(var(--dur-hand-lead) + var(--at) * var(--dur-hand) + var(--k) * var(--dur-pen-lift)) both;
+  }
+}
+/* 減少動態：手寫直接在紙上，只有整張紙 120ms 淡入。 */
+@media (prefers-reduced-motion: reduce) {
+  .vform {
+    animation: hand-fade var(--dur-rm) linear both;
+  }
+}
+@keyframes hand-write {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+@keyframes pen-stroke {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes hand-fade {
+  from {
+    opacity: 0;
+  }
 }
 .lcol .ledger-tip {
   margin: 0;

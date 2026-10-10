@@ -24,7 +24,8 @@ import { Tally } from './Marks';
 import { Speech } from './Portrait';
 import { prose } from './prose';
 import { Shell, Tabs } from './Shell';
-import { useState } from 'react';
+import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
+import { inkUnits, pen } from './court/hand';
 import { CourtCast, CourtFace } from './jury/CourtFace';
 import { castLook } from './jury/cast';
 
@@ -399,6 +400,16 @@ function Verdict({
   const formTitle = civil ? '特別判決表' : '判決書';
   const formEn = civil ? 'SPECIAL VERDICT FORM' : 'VERDICT FORM';
 
+  // 陪審長的筆：判決書上每一筆手寫照畫面順序接下去（設定集第 9 章 <VerdictForm>）。
+  const ink = pen();
+  const [written, setWritten] = useState(false);
+  useEffect(() => {
+    if (written) return;
+    const done = () => setWritten(true);
+    window.addEventListener('keydown', done, { once: true });
+    return () => window.removeEventListener('keydown', done);
+  }, [written]);
+
   const steps = [
     trial && { label: t('庭審結束'), j: trial },
     st.spoken && { label: t('結辯後'), j: st.spoken },
@@ -450,7 +461,13 @@ function Verdict({
 
       <div className="vcols">
         <div className="lcol">
-          <section className={award ? 'vform' : 'vform short'} aria-labelledby="verdict-form-title">
+          {/* 點一下紙或按任一鍵，手寫直接寫完。 */}
+          <section
+            className={award ? 'vform' : 'vform short'}
+            aria-labelledby="verdict-form-title"
+            data-written={written || undefined}
+            onClick={() => setWritten(true)}
+          >
             <div className="fh">
               <p className="c">{t('卡爾德郡高等法院')}</p>
               <h2 id="verdict-form-title">{t(formTitle)}</h2>
@@ -462,8 +479,9 @@ function Verdict({
                 <div className="fq">
                   <span className="qn">1.</span>
                   <span className="ql">{t('被告是否有過失？')}</span>
-                  <span className="qv">
-                    {v === '有責' ? t('是') : v === '無責' ? t('否') : '—'}
+                  <span className="fboxes">
+                    <Box on={v === '有責'} label={t('是')} s={v === '有責' ? ink(1) : undefined} />
+                    <Box on={v === '無責'} label={t('否')} s={v === '無責' ? ink(1) : undefined} />
                   </span>
                 </div>
                 {award && (
@@ -471,14 +489,16 @@ function Verdict({
                     <div className="fq">
                       <span className="qn">2.</span>
                       <span className="ql">{t('損害總額')}</span>
-                      <Money v={money(award.total)} />
+                      <Money v={money(award.total)} s={ink(inkUnits(money(award.total)))} />
                     </div>
                     <div className="fq">
                       <span className="qn">3.</span>
                       <span className="ql">{t('死者過失比例')}</span>
                       <span className="qv">
-                        {award.fault}
-                        <i>%</i>
+                        <Hand s={ink(inkUnits(`${award.fault}%`))}>
+                          {award.fault}
+                          <i>%</i>
+                        </Hand>
                       </span>
                     </div>
                     <div className="fq">
@@ -487,7 +507,7 @@ function Verdict({
                         {t('判賠金額')}
                         <small>{t('損害總額扣掉死者過失的部分')}</small>
                       </span>
-                      <Money v={money(award.amount)} />
+                      <Money v={money(award.amount)} s={ink(inkUnits(money(award.amount)))} />
                     </div>
                     {p && (
                       <div className="fq">
@@ -504,31 +524,54 @@ function Verdict({
                           )}
                         </span>
                         {p.found ? (
-                          <Money v={money(p.amount)} />
+                          <Money v={money(p.amount)} s={ink(inkUnits(money(p.amount)))} />
                         ) : (
-                          <span className="qv">{t('否')}</span>
+                          <span className="qv">
+                            <Hand s={ink(inkUnits(t('否')))}>{t('否')}</Hand>
+                          </span>
                         )}
                       </div>
                     )}
                     <div className="fq total">
                       <span className="qn" />
                       <span className="ql">{t('被告應付')}</span>
-                      <Money v={money(owed ?? 0)} />
+                      <Money v={money(owed ?? 0)} s={ink(inkUnits(money(owed ?? 0)))} />
                     </div>
                   </>
                 )}
               </>
             ) : (
-              <div className="fq total">
-                <span className="qn">1.</span>
-                <span className="ql">{t('就第一項罪名，被告')}</span>
-                <span className="qv">{v === '陪審團僵局' ? t('未達一致') : t(v)}</span>
-              </div>
+              <>
+                <div className="fq total">
+                  <span className="qn">1.</span>
+                  <span className="ql">{t('就第一項罪名，被告')}</span>
+                  {/* 印好的兩個勾選框，陪審長勾一個；僵局兩個都不勾，在下一行手寫（設定集 10.5 ①）。 */}
+                  <span className="fboxes">
+                    <Box
+                      on={v === '無罪'}
+                      label={t('無罪')}
+                      s={v === '無罪' ? ink(1) : undefined}
+                    />
+                    <Box
+                      on={v === '有罪'}
+                      label={t('有罪')}
+                      s={v === '有罪' ? ink(1) : undefined}
+                    />
+                  </span>
+                </div>
+                {v === '陪審團僵局' && (
+                  <p className="fnote">
+                    <Hand s={ink(inkUnits(t('未達一致')))}>{t('未達一致')}</Hand>
+                  </p>
+                )}
+              </>
             )}
             <div className="signs">
               <span>
                 {t('陪審長')}
-                <b>{foreName}</b>
+                <b>
+                  <Hand s={ink(inkUnits(foreName))}>{foreName}</Hand>
+                </b>
               </span>
               {n > 0 && <span>{votes}</span>}
             </div>
@@ -699,12 +742,41 @@ function Verdict({
 
 const CHANNEL = /^[（(](訊息|電話|信|便條|Text|Phone|On the phone|Letter|Note)[）)]\s*/;
 
-function Money({ v }: { v: string }) {
+function Money({ v, s }: { v: string; s: CSSProperties }) {
   const { n, unit } = splitMoney(v);
   return (
     <span className="qv">
-      {n}
-      {unit && <i>{unit}</i>}
+      <Hand s={s}>
+        {n}
+        {unit && <i>{unit}</i>}
+      </Hand>
+    </span>
+  );
+}
+
+/** 一筆手寫：由左而右寫進去（時間由 pen() 排好的 CSS 變數決定）。 */
+function Hand({ s, children }: { s: CSSProperties; children: ReactNode }) {
+  return (
+    <span className="hw" style={s}>
+      {children}
+    </span>
+  );
+}
+
+/** 判決書上印好的勾選框；勾是陪審長的筆。 */
+function Box({ on, label, s }: { on: boolean; label: string; s?: CSSProperties }) {
+  const t = useT();
+  return (
+    <span className="fbox">
+      <span className="sq" aria-hidden>
+        {on && (
+          <svg viewBox="0 0 20 20" className="hw-chk" style={s}>
+            <path pathLength={1} d="M3.5 10.5 8 15.5 17.5 2.5" />
+          </svg>
+        )}
+      </span>
+      {label}
+      {on && <span className="sr-only">{t('（已勾選）')}</span>}
     </span>
   );
 }
