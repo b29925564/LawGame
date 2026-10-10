@@ -64,8 +64,13 @@ for (const lang of ['zh', 'en'])
     await expect(q).toHaveAttribute('data-no', '5');
     await expect(a).toHaveAttribute('data-no', '7');
     await expect(a).toContainText(/從系統上線就是提醒|reminder/);
+    // 節錄以外的行（1–4、10–25）是黑條、不寫字；節錄裡的行沒有黑條。
+    await expect(rec.locator('.rec-row.empty .rec-bar')).toHaveCount(20);
+    await expect(rec.locator('.rec-row:not(.empty) .rec-bar')).toHaveCount(0);
     // 每一句仍是按鈕：點答句標記成卡（螢光筆畫在字上，不畫在整行）。
     const sentence = rec.locator('.rec-entry.a .sentence');
     await sentence.click();
     await expect(sentence).toHaveAttribute('aria-pressed', 'true');
+    // 成卡的按鈕有報讀用的字（畫面上不蓋小章）。
+    await expect(sentence.locator('.sr-only')).toHaveText(/已成卡|Made into a card/);
   });

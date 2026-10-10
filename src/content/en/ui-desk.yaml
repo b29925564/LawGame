@@ -248,3 +248,7 @@
 筆錄第 {page} 頁第 {line} 行: 'Tr. {page}:{line}'
 '{at}　記錄：{by}': '{at}  Taken by {by}'
 收文: FILED
+
+# 卷宗：成卡的句子；逐字稿節錄以外的行（黑條，報讀用的說明）
+已成卡: Made into a card
+'本節錄只附第 {a}–{b} 行': 'This excerpt includes lines {a}–{b} only'

@@ -66,6 +66,12 @@ export function TranscriptDoc({
   const out = [];
   for (let p = firstPage; p <= lastPage; p++) {
     out.push(
+      <span key={`s${p}`} className="sr-only">
+        {t('本節錄只附第 {a}–{b} 行', {
+          a: Math.max(1, base - (p - 1) * ROWS_PER_PAGE + 1),
+          b: Math.min(ROWS_PER_PAGE, base + rows.length - (p - 1) * ROWS_PER_PAGE),
+        })}
+      </span>,
       <span
         key={`h${p}`}
         className="rec-head"
@@ -78,7 +84,13 @@ export function TranscriptDoc({
     while (n <= ROWS_PER_PAGE) {
       const r = rows[(p - 1) * ROWS_PER_PAGE + n - 1 - base];
       if (!r) {
-        out.push(<span key={`${p}.${n}`} className="rec-row empty" aria-hidden data-no={n} />);
+        // 節錄以外的行有字、只是玩家還沒拿到：黑條，長短固定地錯開，不寫字。
+        const w = (measureFor(zh) * (0.6 + (0.4 * ((n * 7 + p * 3) % 10)) / 9)).toFixed(1);
+        out.push(
+          <span key={`${p}.${n}`} className="rec-row empty" aria-hidden data-no={n}>
+            <span className="rec-bar" style={{ '--w': `${w}em` } as CSSProperties} />
+          </span>,
+        );
         n++;
         continue;
       }
@@ -95,6 +107,7 @@ export function TranscriptDoc({
             aria-pressed={made(e) || noted(e)}
             onClick={() => onPick(e)}
           >
+            {made(e) && <span className="sr-only">{t('已成卡')}</span>}
             {run.map((x, k) => (
               <span key={x.index} className="rec-line">
                 <span

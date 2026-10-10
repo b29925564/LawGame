@@ -449,6 +449,7 @@ function Docs({ scene }: { scene: DeskScene }) {
                       made ? 'sentence made' : notes.includes(key) ? 'sentence noted' : 'sentence'
                     }
                     aria-pressed={!!made || notes.includes(key)}
+                    data-made={made ? t('已成卡') : undefined}
                     onClick={() => pick(doc.id, i, l.fact)}
                   >
                     <DocLine text={t(l.text, scope)} />
