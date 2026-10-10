@@ -27,7 +27,8 @@
   color-scheme: light;
 }
 .cork.compact {
-  aspect-ratio: 4 / 3;
+  /* 手機：板子加高成 4:5，下半部是牌架（設計師 #2 M1）；卡片太高時 Cork.tsx 的 min-height 會再撐高。 */
+  aspect-ratio: 4 / 5;
 }
 
 /* 吊燈：multiply 徑向光圈（亮度曲線照 RD-ART-0903 實測），中心在板中央。 */
@@ -63,12 +64,13 @@
 }
 
 /*
- * 手機的光圈：板子只放比對中的兩張，光圈跟著版面放大到蓋住兩張卡（設計師 P2-6 r5 更正：屬於解讀，不是偏離）。
- * 亮度曲線不變，半徑至少放大 1.9 倍；小手機上卡比較高，Cork 再放大（--pool），讓兩張照片的影像中心落在光圈半徑 58% 以內。
+ * 手機的光圈（設計師 #2 M1：吊燈中心放在 A／B 中間，牌架落在光圈外的暗處）：亮度曲線不變，
+ * 形狀是橢圓：橫向半徑 1.25 板寬、蓋住兩張卡；縱向半徑讓牌架上緣落在 72% 停點之外（Cork.tsx 量了再給）。
+ * 中心高 --lamp-y、半徑 --lamp-rx／--lamp-ry 都是 Cork.tsx 照板子實際大小算的 px，不寫死。
  */
 .cork.compact .cork-lamp {
   background: radial-gradient(
-    circle calc(50cqw * var(--pool, 1.9)) at 50% 50%,
+    ellipse var(--lamp-rx, 100cqw) var(--lamp-ry, 100cqw) at 50% var(--lamp-y, 30%),
     #fff 0,
     #f4f2f0 34%,
     #d9d4cf 46%,
@@ -80,7 +82,8 @@
 }
 .cork.compact .cork-warm {
   background: radial-gradient(
-    circle calc(37cqw * var(--pool, 1.9)) at 50% 50%,
+    ellipse calc(var(--lamp-rx, 100cqw) * 0.74) calc(var(--lamp-ry, 100cqw) * 0.74) at 50%
+      var(--lamp-y, 30%),
     rgb(255 180 107 / 55%),
     rgb(255 180 107 / 0%) 100%
   );
@@ -218,6 +221,31 @@
 /* 比對位要先量卡高才定得下來：量好以前（板子還沒有 .settled）不跑轉場，不然一進來兩張卡會滑一下。 */
 .cork:not(.settled) .cork-focus {
   transition: none;
+}
+
+/* 全站按鈕的 hover 會換底色：板上的卡是紙，滑過去紙色不變（和 :active 的縮放）。 */
+.cork-card:is(:hover, :active):not(:disabled),
+.cork-pick:is(:hover, :active):not(:disabled) {
+  border-color: transparent;
+  background: var(--copy-paper);
+}
+.cork-card:is(:hover, :active):not(:disabled) {
+  transform: rotate(var(--tilt, 0deg));
+}
+.cork-pick:is(:hover, :active):not(:disabled) {
+  transform: none;
+}
+.cork-card.index:is(:hover, :active):not(:disabled),
+.cork-focus.index .cork-pick:is(:hover, :active):not(:disabled) {
+  background: var(--note);
+}
+.cork-card.note:is(:hover, :active):not(:disabled),
+.cork-focus.note .cork-pick:is(:hover, :active):not(:disabled) {
+  background: linear-gradient(168deg, transparent 72%, rgb(0 0 0 / 8%)), var(--note);
+}
+.cork-card.photo:is(:hover, :active):not(:disabled),
+.cork-focus.photo .cork-pick:is(:hover, :active):not(:disabled) {
+  background: #f4f4f1;
 }
 
 /* 影印紙：卡名、時間、內文前三行。 */
@@ -480,6 +508,134 @@ body:has(.cork) .card .mini-btn[aria-pressed='true'] {
   box-shadow: none;
 }
 
+/*
+ * 手機牌架：3 欄 × 2 列，每格 4:3，一頁 6 張。格子是 grid 的固定位置（卡在 A／B 時原位空著，不補位）。
+ * 字只放標題、最多兩整行，放不下的整行拿掉；不加刪節號、不淡出。
+ */
+.cork-rack {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-auto-rows: var(--cell-h);
+  gap: 6px;
+}
+.cork-rack.marks {
+  z-index: 7;
+  pointer-events: none;
+}
+.cork-card.rack {
+  position: relative;
+  width: auto;
+  height: 100%;
+  min-height: 0;
+  padding: 14px 8px 4px;
+  overflow: hidden;
+  gap: 2px;
+  box-shadow: 0 5px 12px -3px rgb(0 0 0 / 72%);
+}
+.cork-card.rack .cork-doc-name,
+.cork-card.rack .cork-index-head b {
+  font-size: 12px;
+  line-height: 16px;
+  max-height: 32px;
+  overflow: hidden;
+}
+.cork-card.rack .cork-index-head {
+  padding-bottom: 0;
+  border-bottom: none;
+}
+.cork-card.rack b.cork-hand {
+  --lines: 2;
+  --lh: 17px;
+  font-size: 13px;
+  line-height: 17px;
+  max-height: 34px;
+  background: none;
+}
+.cork-card.rack.photo {
+  padding: 4px 4px 0;
+}
+.cork-card.rack.photo::before {
+  display: none;
+}
+.cork-card.rack .cork-print {
+  aspect-ratio: auto;
+  flex: 1 1 0;
+  min-height: 0;
+}
+.cork-card.rack .cork-strip {
+  padding: 3px 0 4px;
+}
+.cork-card.rack .cork-strip b {
+  font-size: 11px;
+  line-height: 14px;
+  max-height: 28px;
+}
+.cork-rack .cork-redact {
+  position: relative;
+  min-height: 0;
+  height: 100%;
+  gap: 2px;
+  padding: 6px 8px;
+  overflow: hidden;
+}
+.cork-rack .cork-redact b {
+  flex: none;
+  font-size: 12px;
+  line-height: 16px;
+  max-height: 32px;
+  overflow: hidden;
+}
+.cork-rack .cork-redact span {
+  flex: none;
+  font-size: 11px;
+  line-height: 14px;
+  max-height: 28px;
+  overflow: hidden;
+}
+/* 頁碼點：不用黃，白（目前這頁）和板上標記的灰（其他頁）。一次換一整頁。 */
+.cork-dots {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 7;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.cork-dots button {
+  all: unset;
+  box-sizing: border-box;
+  position: relative;
+  width: 36px;
+  height: 28px;
+  cursor: pointer;
+}
+.cork-dots button:hover:not(:disabled),
+.cork-dots button:active:not(:disabled) {
+  background: none;
+  border: none;
+  box-shadow: none;
+}
+.cork-dots button::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  margin: -4px 0 0 -4px;
+  border-radius: 50%;
+  background: #8e99a7;
+}
+.cork-dots button[aria-current='true']::after {
+  background: #e7eaee;
+}
+
 /* 手機：只有光圈裡的兩張，字不小於 12px。 */
 .cork.compact .cork-pick,
 .cork.compact .cork-empty {
@@ -564,4 +720,9 @@ body:has(.cork) .card .mini-btn[aria-pressed='true'] {
 /* 陪審團視角：連線操作留著位置但看不見、點不到。 */
 .bench-ops.off {
   visibility: hidden;
+}
+
+/* 牌架的格子窄（320 寬的手機約 74px 內寬）：詞組放不下一行時照字換行，不把字擠出格外。 */
+.cork-rack .kw {
+  white-space: normal;
 }

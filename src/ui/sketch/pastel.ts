@@ -58,6 +58,8 @@ export type SketchInput = {
   strings: SketchString[];
   /** 吊燈光圈的停點：離中心的距離（以半寬為 1）→ 亮度倍率。 */
   lamp: [number, number][];
+  /** 光圈是橢圓時（手機牌架）：中心的高（板高的比例）和橫向半徑 ÷ 縱向半徑。沒給就是板子正中的圓。 */
+  lampAt?: { y: number; sy: number };
   base: { lum: number; rgb: RGB };
   paper: RGB;
   ink: RGB;
@@ -209,7 +211,7 @@ export function buildSketch(inp: SketchInput): Sketch {
     for (let x = 0; x < W; x++) {
       const i = y * W + x;
       const dx = x - W / 2;
-      const dy = y - H / 2;
+      const dy = inp.lampAt ? (y - inp.lampAt.y * H) * inp.lampAt.sy : y - H / 2;
       const d = Math.sqrt(dx * dx + dy * dy) / half;
       const k = cardAt[i];
       raw[i] = (k ? cards[k - 1].lum : inp.base.lum) * lamp[Math.min(1023, Math.round(d * 512))];

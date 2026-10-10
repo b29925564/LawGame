@@ -13,6 +13,7 @@ import {
   KindFilter,
   timeGroups,
   useKindFilter,
+  useDock,
   useWide,
 } from './Evidence';
 import { CommitBar } from './Commit';
@@ -63,6 +64,16 @@ export function Desk({ scene }: { scene: DeskScene }) {
   // 卷宗也掛未讀數：新進來的文件（例如法官的裁定）不會被跳過（體驗評測、劇本與內容）。
   const unreadDocs = scene.docs.filter((d) => !st.readDocs.includes(d.id)).length;
   const finished = desk.done(scene, st);
+  // 1024–1180：證據欄收成「證據 n」鈕，版面讓出右欄（styles.css 的 data-dock）。
+  const docked = useDock();
+  useEffect(() => {
+    if (docked) return;
+    const root = document.documentElement;
+    root.dataset.dock = 'off';
+    return () => {
+      delete root.dataset.dock;
+    };
+  }, [docked]);
 
   if (st.report.length) {
     // 聲請的結果印成裁定單（設計稿 inner-voice 2e）：旁白那句是法官的話，章蓋在紙上。
@@ -208,7 +219,7 @@ export function Desk({ scene }: { scene: DeskScene }) {
       tabs={<Tabs label={t('應用程式')} value={app} onPick={pickApp} items={apps} />}
       foot={
         <>
-          <EvidenceDrawer noTimeline={app === 'board'} />
+          <EvidenceDrawer noTimeline={app === 'board'} collapse />
           {desk.canWrap(scene, st, progress.cards) ? (
             <WrapButton
               hours={st.hours}
@@ -533,6 +544,7 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
   const questions = desk.openQuestions(scene, st, progress.cards);
   const firstOpen = questions.find((q) => !st.confirmed.includes(q.id));
   const wide = useWide();
+  const docked = useDock();
   // 電腦版一打開就停在第一題還沒確認的疑問；手機版先看清單。
   const [view, setView] = useState<string | null>(() =>
     wide ? (firstOpen?.id ?? 'timeline') : null,
@@ -544,7 +556,7 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
   }, [shown, wide]);
   const q = questions.find((x) => x.id === shown);
   // 電腦版：右邊證據欄的卡片直接點就放上連線台（先 A 再 B）。
-  const linking = wide && !!q;
+  const linking = docked && !!q;
   const poolIds = pool.map((c) => c.id).join();
   const picked = st.link.cards.join();
   useEffect(() => {
@@ -684,16 +696,16 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
           {face}
         </button>
       );
-    return wide ? (
+    return docked ? (
       <span className="cork-empty">{t('點右邊的卡片放上來')}</span>
     ) : (
-      // 手機：空格就是挑卡片的入口，挑完回到這裡看得到 A、B（UX 規格 P1-11）。
+      // 手機和 1180 以下：空格就是挑卡片的入口，挑完回到這裡看得到 A、B（UX 規格 P1-11）。
       <button
         className="cork-empty"
         disabled={i > st.link.cards.length}
         onClick={() => setPicking(true)}
       >
-        {t('放一張卡')}
+        {t('點板上的卡，或從證據裡挑')}
       </button>
     );
   };
@@ -823,7 +835,7 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
           </div>
         </div>
       </div>
-      {!wide && picking && (
+      {!docked && picking && (
         <CardSheet
           title={t('放到 {slot}', { slot: st.link.cards.length === 0 ? 'A' : 'B' })}
           onClose={() => setPicking(false)}
@@ -1067,6 +1079,7 @@ function Motions({
   const t = useT();
   const scope = useScope();
   const wide = useWide();
+  const docked = useDock();
   const st = deskState(progress, scene);
   // 一打開就停在還沒裁定的那一份上。
   const open = scene.motions.find((m) => desk.motionAttempt(st, m.id).ruling !== 'granted');
@@ -1095,7 +1108,7 @@ function Motions({
   const mid = m?.id;
   const exhibit = t('證物');
   useEffect(() => {
-    if (!wide || !editable || !mid) return;
+    if (!docked || !editable || !mid) return;
     useCardPick.setState({
       pool: poolIds.split(','),
       on: on ? on.split(',') : [],
@@ -1111,7 +1124,7 @@ function Motions({
         tags: undefined,
         exhibits: undefined,
       });
-  }, [wide, editable, mid, poolIds, on, slots, exhibit, toggleSupport]);
+  }, [docked, editable, mid, poolIds, on, slots, exhibit, toggleSupport]);
   // 小選單：按 Esc 或點別的地方就收起來。
   useEffect(() => {
     if (!menu || !wide) return;
@@ -1190,7 +1203,7 @@ function Motions({
     );
   };
 
-  const pickHint = wide ? t('從右邊拿一張證物') : t('點這裡出示證物');
+  const pickHint = docked ? t('從右邊拿一張證物') : t('點這裡出示證物');
   const support = Array.from({ length: m.support.length }, (_, i) => {
     const id = a.support[i];
     const c = id ? nameOf(id) : undefined;
@@ -1211,7 +1224,7 @@ function Motions({
           className={c ? 'blank exhibit filled' : 'blank exhibit'}
           aria-label={c ? `${exhibit} ${exhibitNo(i)}：${t(c.name, scope)}` : pickHint}
           // 電腦版點空格不必做什麼：卡從右邊證據欄來。手機打開挑卡片抽屜。
-          onClick={() => !wide && setMenu('support')}
+          onClick={() => !docked && setMenu('support')}
         >
           {tag ?? <span className="hint">{pickHint}</span>}
           {c && ex}
@@ -1313,7 +1326,7 @@ function Motions({
           foot={foot}
         />
       )}
-      {menu === 'support' && !wide && (
+      {menu === 'support' && !docked && (
         <CardSheet title={t('出示證物')} onClose={() => setMenu(null)}>
           <div className="stack">
             {cards.map((c) => (

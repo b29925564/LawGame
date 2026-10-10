@@ -6754,6 +6754,18 @@ button.found:hover:not(:disabled) {
     --drawer-gutter: 340px;
   }
 }
+/*
+ * 1024–1180：書桌的證據欄收成「證據 n」鈕（設計師 #2 裁定，斷點和陪審團刻痕條同為 1180），
+ * 右欄的位置還給工作台；應用程式列、頂列都拉到內容右緣。
+ */
+@media (min-width: 1024px) and (max-width: 1180px) {
+  :root[data-dock='off'] .shell {
+    padding-right: 24px;
+  }
+  :root[data-dock='off'] .shell:has(> .shell-head > .taskbar) {
+    --drawer-gutter: 0px;
+  }
+}
 /* 縮圖太小放不下「照片已遮蔽」整行：縮圖只留黑條，字在點開的完整紀錄表上。 */
 .photo-thumbs .photolog-redact span {
   display: none;
