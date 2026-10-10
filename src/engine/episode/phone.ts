@@ -116,14 +116,5 @@ export function phoneView(
 /** 目前這一步能不能直接往下（choose 要先選）。 */
 export function canAdvance(scene: PhoneScene, step: number, choices: Record<number, number>) {
   const s = scene.steps[step];
-  return !s || s.do !== 'choose' || choices[step] !== undefined;
+  return s.do !== 'choose' || choices[step] !== undefined;
 }
-
-/**
- * 演完最後一步之後的警方現場照片（設定集 05-05）是這一場多出來的最後一頁，步數接在劇本後面。
- * 沒有照片的手機場景照舊在最後一步結束。
- */
-export const photosStep = (scene: PhoneScene) =>
-  scene.photos?.length ? scene.steps.length : undefined;
-
-export const lastStep = (scene: PhoneScene) => photosStep(scene) ?? scene.steps.length - 1;

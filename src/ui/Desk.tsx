@@ -1446,8 +1446,10 @@ function FoundNote({
           {used && <span className="found-used-tag">{t('已放進答案')}</span>}
         </span>
         <strong className="found-pair">{prose(pair)}</strong>
-        <span ref={body} className={'found-body' + (long ? ' long' : '') + (open ? ' open' : '')}>
-          <span className="found-text">{prose(text)}</span>
+        <span className={'found-body' + (long ? ' long' : '') + (open ? ' open' : '')}>
+          <span ref={body} className="found-text">
+            {prose(text)}
+          </span>
           {note && <span className="found-note">{prose(note)}</span>}
         </span>
       </button>

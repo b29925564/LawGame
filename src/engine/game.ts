@@ -10,7 +10,7 @@ import * as discovery from './episode/discovery';
 import * as desk from './episode/desk';
 import * as interview from './episode/interview';
 import * as nego from './episode/negotiation';
-import { canAdvance, lastStep } from './episode/phone';
+import { canAdvance } from './episode/phone';
 import type {
   DefenseScene,
   DepositionScene,
@@ -739,9 +739,11 @@ export const useEpisode = create<GameState>()((set, get) => {
           const step = s.steps[p.step];
           if (step?.do === 'choose' && sceneChoices(p)[p.step] === undefined) return;
         }
-        const last = s.type === 'phone' ? lastStep(s) : s.steps.length - 1;
-        if (p.step < last) return set({ progress: { ...p, step: p.step + 1 } });
+        if (p.step + 1 < s.steps.length) return set({ progress: { ...p, step: p.step + 1 } });
       }
+      // 片頭卡之後多一頁警方現場照片（設定集 11.5：冷開場不放血和黃）。
+      if (s.type === 'card' && s.photos?.length && p.step === 0)
+        return set({ progress: { ...p, step: 1 } });
       set({ progress: nextScene(p) });
     },
     choose: (option) => {

@@ -2,7 +2,8 @@
 import { expect, test, type Page } from '@playwright/test';
 
 // 分頁列放不下（第一道關卡 N2）：手機英文第 2 集審前，原本最右邊只露出「Dis」，看不出還有一格。
-// 現在一列、不換行、不半露：放不下的收進「更多」，選中的那格一定在列上。
+// 現在一列、不換行、不半露：放不下的收進「更多」。列上的順序不跟著選的那頁變（設計師 r8），
+// 選了選單裡的一頁，「更多」那一格就寫那一頁的名字。
 async function pretrial(page: Page, lang: 'zh' | 'en') {
   await page.goto('/');
   await page.evaluate((lang) => {
@@ -58,16 +59,24 @@ for (const [lang, width] of [
     const more = nav.getByRole('button', { name: /^(更多|More)/ });
     await expect(more).toBeVisible();
     expect(await cut(page)).toEqual([]);
+    const row = () => nav.locator(':scope > button[data-key]').allInnerTexts();
+    const before = await row();
+    const slot = await more.evaluate((b) => b.getBoundingClientRect().width);
     await more.click();
     await expect(more).toHaveAttribute('aria-expanded', 'true');
     await nav.getByRole('button', { name: /^(開示|Discovery)/ }).click();
-    // 選了收起來的那格：它回到列上、是選中的那格，選單收起來。
-    await expect(nav.getByRole('button', { name: /^(開示|Discovery)/ })).toHaveAttribute(
-      'aria-current',
-      'true',
-    );
+    // 選了收起來的那格：「更多」那一格寫它的名字、畫底線，列上其他分頁不動，這一格也不變寬。
+    await expect(more).toHaveAttribute('aria-current', 'true');
+    await expect(more).toHaveText(/^(開示|Discovery)/);
+    await expect(more).toHaveAccessibleName(/^(更多：開示|More: Discovery)/);
     await expect(nav.locator('.apps-menu')).toHaveCount(0);
+    expect(await row()).toEqual(before);
+    expect(await more.evaluate((b) => b.getBoundingClientRect().width)).toBeCloseTo(slot, 0);
     expect(await cut(page)).toEqual([]);
+    // 選回列上的分頁，「更多」又寫回「更多」。
+    await nav.locator(':scope > button[data-key]').first().click();
+    await expect(more).toHaveText(/^(更多|More)/);
+    expect(await row()).toEqual(before);
     // Esc 收起選單，焦點回到「更多」。
     await more.click();
     await page.keyboard.press('Escape');

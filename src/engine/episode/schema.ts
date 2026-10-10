@@ -981,6 +981,26 @@ const closingScene = z.object({
     .optional(),
 });
 
+/**
+ * 警方現場照片（設定集第 9 章 PhotoLog、第 5 章 0505），照順序排在照片紀錄表裡。
+ * 設定集 11.5：冷開場三格沒有血、沒有黃，所以掛在片頭卡上，片頭之後才出現。
+ */
+const scenePhotos = z
+  .array(
+    z.object({
+      id,
+      subject: z.string(),
+      /** 照片裡的證物牌號碼；沒有證物牌的全景照不填。 */
+      placard: z.number().int().optional(),
+      /** 一格一黃：只有這一張的證物牌是黃。 */
+      highlight: z.boolean().default(false),
+      /** 照片拍到遺體：以「照片已遮蔽」黑條呈現。 */
+      redacted: z.boolean().default(false),
+      photo: photoLog,
+    }),
+  )
+  .optional();
+
 const scene = z.discriminatedUnion('type', [
   z.object({
     type: z.literal('phone'),
@@ -992,22 +1012,6 @@ const scene = z.discriminatedUnion('type', [
     epilogue: z.boolean().default(false),
     owner: z.string(),
     steps: z.array(phoneStep).min(1),
-    /** 演完最後一步之後的警方現場照片（設定集 05-05），照順序排在照片紀錄表裡。 */
-    photos: z
-      .array(
-        z.object({
-          id,
-          subject: z.string(),
-          /** 照片裡的證物牌號碼；沒有證物牌的全景照不填。 */
-          placard: z.number().int().optional(),
-          /** 一格一黃：只有這一張的證物牌是黃。 */
-          highlight: z.boolean().default(false),
-          /** 照片拍到遺體：以「照片已遮蔽」黑條呈現。 */
-          redacted: z.boolean().default(false),
-          photo: photoLog,
-        }),
-      )
-      .optional(),
   }),
   z.object({
     type: z.literal('dialogue'),
@@ -1053,6 +1057,8 @@ const scene = z.discriminatedUnion('type', [
      * 排在本卡 docket 那一行前面。寫了 when 的只在那條分支列出。
      */
     filings: z.array(docketRow.extend({ when: when.optional() })).optional(),
+    /** 卡之後多一頁警方現場照片（片頭卡用）。 */
+    photos: scenePhotos,
   }),
 ]);
 

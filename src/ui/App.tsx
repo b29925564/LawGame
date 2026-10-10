@@ -17,6 +17,7 @@ import { bates, pageAt } from './bates';
 import { Announcer } from './Marks';
 import { Negotiation } from './Negotiation';
 import { Phone } from './Phone';
+import { ScenePhotos } from './ScenePhotos';
 import { Intro, VerdictScreen } from './Scenes';
 import { Title } from './Title';
 import { Defense } from './Defense';
@@ -98,8 +99,11 @@ export function App() {
       {scene?.type === 'theory' && <Theory key={scene.id} scene={scene} />}
       {scene?.type === 'opening' && <Opening key={scene.id} scene={scene} />}
       {scene?.type === 'closing' && <Closing key={scene.id} scene={scene} />}
-      {scene?.type === 'card' && !last && (
+      {scene?.type === 'card' && !last && progress.step === 0 && (
         <ActCard key={scene.id} headline={headline} place={slate} bates={page} onDone={advance} />
+      )}
+      {scene?.type === 'card' && !last && progress.step === 1 && scene.photos && (
+        <ScenePhotos photos={scene.photos} onNext={advance} />
       )}
       {(!scene || last) && (
         <ActCard

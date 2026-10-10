@@ -3671,6 +3671,13 @@ fieldset.relations.compact {
   color: var(--text);
   border: 1px solid var(--border-strong);
 }
+/* 字卡開始淡出時黃還給主按鈕：按鈕本來就有 --dur-ui（180ms，和字卡淡出一樣長）的顏色轉場，黃跟著淡進來；
+   減少動態時直接換（設計師 r8）。 */
+@media (prefers-reduced-motion: reduce) {
+  button.primary {
+    transition: none;
+  }
+}
 [data-hand] .apps [aria-current='true']::after,
 [data-hand] .sheet-tabs [aria-current='true']::after {
   background: var(--text);
@@ -5353,13 +5360,11 @@ button.found:hover:not(:disabled) {
   flex-direction: column;
   gap: 6px;
 }
-/* 內容預設兩行，超過的點「展開」看全文。 */
-.found-body:not(.open) {
+/* 收合時：連線內容最多兩整行，超過的點「展開」看全文；盧卡斯的結論那一行永遠整行看得到（設計師 #246 r8：
+   不在結論上留半行字，截斷切在整行的邊界）。 */
+.found-body:not(.open) > .found-text {
   max-height: calc(2 * (var(--fs-hand) - 2px) * 1.5);
   overflow: hidden;
-}
-.found-body.long:not(.open) {
-  mask-image: linear-gradient(#000 55%, transparent);
 }
 .found-used > summary {
   cursor: pointer;
