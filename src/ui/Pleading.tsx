@@ -8,8 +8,17 @@ import { useScope } from './lang';
 import { prose } from './prose';
 import { useCaseTerms } from './terms';
 
-/** 證物格的編號：①②③。 */
-export const exhibitNo = (i: number) => String.fromCharCode(0x2460 + i);
+/** 證物格的編號：1、2、3（圈起來的數字是字型裡的機器符號，第 9 章：圓只給機器與機構）。 */
+export const exhibitNo = (i: number) => String(i + 1);
+
+/** 狀紙內文裡用打字引用貼在紙上的證物貼紙：「（辯方證物 1）」。 */
+export function ExhibitRef({ no }: { no: string }) {
+  const t = useT();
+  const scope = useScope();
+  return (
+    <span className="xref">{t('（{topic}）', { topic: `${t('辯方證物', scope)} ${no}` })}</span>
+  );
+}
 
 /** 一張證物在狀紙上的樣子：列內證物標籤，論點前面放 ◆。 */
 export function ExhibitTag({ name, arg }: { name: string; arg: boolean }) {
@@ -67,6 +76,7 @@ export function Pleading({
   request,
   basis,
   support,
+  stickers,
   received,
   ruling,
   foot,
@@ -76,6 +86,8 @@ export function Pleading({
   request: ReactNode;
   basis: ReactNode;
   support: ReactNode[];
+  /** 貼在狀紙右邊空白處的證物貼紙（實物）；句子裡只用打字引用「（辯方證物 1）」。 */
+  stickers?: ReactNode;
   received?: boolean;
   ruling?: { ok: boolean; quote?: string } | null;
   foot?: ReactNode;
@@ -161,15 +173,18 @@ export function Pleading({
             {t('，')}
           </span>
         </p>
-        <p>
-          {t('並提出')}
-          {support.map((s, i) => (
-            <span key={i}>
-              {i > 0 && t('、')}
-              {s}
-            </span>
-          ))}
-          <span className="nw">{t('為證。')}</span>
+        <p className="offers">
+          {stickers && <span className="stk">{stickers}</span>}
+          <span className="offer-text">
+            {t('並提出')}
+            {support.map((s, i) => (
+              <span key={i}>
+                {i > 0 && t('、')}
+                {s}
+              </span>
+            ))}
+            <span className="nw">{t('為證。')}</span>
+          </span>
         </p>
       </div>
       {ruling && (

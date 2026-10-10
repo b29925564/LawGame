@@ -18,7 +18,9 @@ import { hasPrint, Print } from './prints';
 import { reducedMotion } from './a11y';
 import { useScope } from './lang';
 import { prose } from './prose';
+import { ExhibitSticker } from './ExhibitSticker';
 import { cardHighlights, cardStamps, Hl, Stamp } from './Marks';
+import { exhibitNo } from './Pleading';
 import { useCardPick } from './pick';
 import { TimelineView } from './Timeline';
 
@@ -204,7 +206,7 @@ export function EvidenceCard({
 }) {
   const t = useT();
   const scope = useScope();
-  const { pool, on, pick, tags } = useCardPick();
+  const { pool, on, pick, tags, exhibits } = useCardPick();
   const { progress } = useEpisode();
   const hl = cardHighlights(episodeOf(progress))[item.id];
   const sealed = cardStamps(progress)[item.id];
@@ -301,7 +303,8 @@ export function EvidenceCard({
           {(stamp(item, scope) || item.kind !== '論點') && (
             <span className="mini-meta">{stamp(item, scope) || t(item.kind)}</span>
           )}
-          {slot && (
+          {slot && exhibits && <ExhibitSticker chip no={exhibitNo(on.indexOf(item.id))} />}
+          {slot && !exhibits && (
             <span className="slot-tag" aria-label={tags ? slot : t('連線台 {slot}', { slot })}>
               {slot}
             </span>

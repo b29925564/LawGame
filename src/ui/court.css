@@ -380,21 +380,6 @@
   color: var(--paper-ink);
   padding-block: 4px 2px;
 }
-.blank .ex {
-  /* 小籤跟在證物標籤後面，不往上浮：浮起來會壓到上一行的字（體驗評測 v88）。 */
-  display: inline-block;
-  margin-left: 6px;
-  vertical-align: middle;
-  padding: 2px 5px;
-  border: 1.5px solid var(--gold-paper);
-  border-radius: 3px;
-  color: var(--gold-paper);
-  background: var(--paper);
-  font: 700 10px/1 var(--font-court);
-  letter-spacing: 0.08em;
-  transform: rotate(-6deg);
-  white-space: nowrap;
-}
 /* 列內證物標籤（視覺規格 §16 .etag.row）：紙色、左邊一個孔。 */
 .etag.row {
   display: inline-flex;
@@ -3636,4 +3621,211 @@ html[lang='en'] .stamp.rec-stamp b {
   from {
     clip-path: inset(0 100% 0 0);
   }
+}
+
+/* ── 證物貼紙（設定集第 9 章 <ExhibitSticker>；視覺規格 v2.0 §16）──
+   一張 1.6:1 的標籤（128×80），四個欄位：類別（印刷）、編號（鉛筆寫在印好的線上）、案號（印刷）、日期（印好的空線，章蓋上去才填）。
+   辯方 --exhibit-def（＝--hl）；檢方 --exhibit-state 藍，左上斜切 6px；3px 圓角。最小字級 11px（和章同）。 */
+.xs-set {
+  position: relative;
+  display: inline-block;
+  vertical-align: top;
+}
+.xs {
+  position: relative;
+  display: grid;
+  grid-template-rows: 13px 21px 13px 15px;
+  align-content: space-between;
+  box-sizing: border-box;
+  width: 128px;
+  height: 80px;
+  padding: 5px 8px 4px;
+  border-radius: 3px;
+  rotate: -1.5deg;
+  color: var(--exhibit-def-ink);
+  background: var(--exhibit-def);
+  box-shadow:
+    inset 0 0 0 1px rgb(0 0 0 / 14%),
+    0 1px 0 rgb(0 0 0 / 18%);
+  font: 400 11px/13px var(--font-mono);
+  white-space: nowrap;
+}
+.xs.state {
+  color: var(--exhibit-state-ink);
+  background: var(--exhibit-state);
+  clip-path: polygon(6px 0, 100% 0, 100% 100%, 0 100%, 0 6px);
+}
+.xs-cat {
+  font: 700 11px/13px var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.xs-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+.xs-row > i {
+  font-style: normal;
+}
+.xs-no {
+  min-width: 24px;
+  padding: 0 2px;
+  text-align: center;
+  border-bottom: 1px solid currentcolor;
+  font: 400 19px/21px var(--font-hand);
+  color: var(--pencil);
+}
+.xs-st {
+  font: 400 13px/1 var(--font-hand);
+  color: var(--pencil);
+}
+/* 准了：只劃一條鉛筆線，章不蓋到這一行。 */
+.xs-st[data-admitted] {
+  text-decoration: line-through;
+  text-decoration-thickness: 1.5px;
+}
+.xs-case {
+  font: 400 11px/13px var(--font-court);
+  letter-spacing: 0.02em;
+}
+.xs-date {
+  align-items: flex-end;
+}
+.xs.admitted .xs-date > * {
+  visibility: hidden; /* 日期由章帶出來，章蓋在這一欄上 */
+}
+.xs-dv {
+  flex: 1;
+  height: 12px;
+  border-bottom: 1px solid currentcolor;
+}
+/* 章蓋在標籤下半部（日期欄），中心在標籤上，下緣最多超出 20%；--stamp 對 --hl 在兩個主題都過大字 3:1（字 ≥ 14px）。 */
+.xs-set > .stamp {
+  --ink: var(--stamp);
+  --rot: -3deg;
+  --stamp-gap: 1px;
+  position: absolute;
+  left: 50%;
+  top: 94%;
+  translate: -50% -50%;
+  gap: 1px;
+  padding: 3px 9px;
+  white-space: nowrap;
+  mix-blend-mode: multiply;
+}
+.xs-set > .stamp b {
+  font-size: 15px;
+  letter-spacing: 0.2em;
+  margin-right: -0.2em;
+}
+.xs-set > .stamp i {
+  font-size: 11px;
+}
+/* 貼上去：--dur-sticker，1.04 → 1，陰影收緊；減少動態時直接出現。 */
+@media (prefers-reduced-motion: no-preference) {
+  .xs.enter,
+  .xs-chip.enter {
+    animation: xs-stick var(--dur-sticker) var(--ease) both;
+  }
+  @keyframes xs-stick {
+    from {
+      scale: 1.04;
+      box-shadow:
+        inset 0 0 0 1px rgb(0 0 0 / 14%),
+        0 4px 8px rgb(0 0 0 / 28%);
+    }
+  }
+}
+
+/* 狀紙：貼紙貼在「並提出」那一行右邊的空白處，跨大約兩條半格線；句子裡只用打字引用「（辯方證物 1）」。
+   body 用 flow-root 把浮動包進來，高度補到 3 條格線（96px），後面的字還坐在格線上。 */
+.plead .body {
+  display: flow-root;
+}
+.plead .offers .stk {
+  float: right;
+  margin: -4px 0 20px 14px;
+}
+.plead .xref {
+  margin-left: 6px;
+  font: 400 15px/1 var(--font-doc);
+  color: var(--paper-muted);
+  white-space: nowrap;
+}
+/* 手機：貼紙放在這句下面，靠右，同樣大小。 */
+@media (max-width: 640px) {
+  .plead .offers {
+    display: flex;
+    flex-direction: column;
+  }
+  .plead .offers .stk {
+    float: none;
+    order: 2;
+    align-self: flex-end;
+    margin: 8px 0;
+  }
+}
+
+/* 證據欄的索引：編號＋狀態，1px 實線外框，不填黃（一格只有一張貼紙是黃）。 */
+.xs-chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 3px 8px;
+  border: 1px solid var(--border-strong);
+  border-radius: 3px;
+  color: var(--text);
+  background: var(--surface);
+}
+.xs-chip .xs-no {
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  font: 400 16px/1 var(--font-hand);
+  color: var(--text);
+}
+.xs-chip .xs-st {
+  font: 400 12px/1 var(--font-hand);
+  color: var(--text);
+}
+.card.mini > .mini-btn .xs-chip {
+  position: absolute;
+  top: -13px;
+  right: 8px;
+}
+
+/* 一格一黃：畫面上有完整貼紙時，其他黃退成鉛筆；主按鈕降級成白框（hand.ts 'sticker'）。 */
+[data-hand='sticker'] button.primary {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border-strong);
+}
+[data-hand='sticker'] .gap-mark b {
+  color: var(--pencil-ui);
+}
+[data-hand='sticker'] .gap-mark::before {
+  border-color: var(--pencil-ui);
+}
+[data-hand='sticker'] .card.mini.on {
+  border-color: var(--border-strong);
+  background: var(--surface-3);
+}
+[data-hand='sticker'] .blank.hot {
+  border-bottom-color: var(--border-strong);
+  background: none;
+  box-shadow: 0 0 0 1px var(--border-strong);
+}
+[data-hand='sticker'] .gap-note {
+  border-left-color: var(--pencil-ui);
+}
+/* 案卷登錄表目前那一行的螢光也退成鉛筆（同一格已經有貼紙的黃）。 */
+[data-hand='sticker'] .docket .dk-cur {
+  background-image: none;
+  color: inherit;
+  animation: none;
+}
+[data-hand='sticker'] .docket .dk-cur td:first-child,
+[data-hand='sticker'] .docket tr.dk-cur {
+  box-shadow: inset 2px 0 0 var(--pencil-ui);
 }

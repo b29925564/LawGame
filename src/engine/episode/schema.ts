@@ -407,6 +407,11 @@ const deskScene = z.object({
         lures: z.array(id).default([]),
         requests: z.array(z.string()).min(2),
         request: z.string(),
+        /** 法官裁定的日期（MM/DD/YYYY，同一幕 filings 裡這件聲請的日期）；證物貼紙准了以後蓋在章上。沒填就不印。 */
+        ruledOn: z
+          .string()
+          .regex(/^\d\d\/\d\d\/\d{4}$/, '裁定日期格式是 MM/DD/YYYY')
+          .optional(),
         granted: z.array(line).min(1),
         denied: z.array(line).min(1),
         gives: z.array(id).default([]),

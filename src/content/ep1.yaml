@@ -1041,6 +1041,7 @@ scenes:
         lures: [watch-listed, autopsy, arg-a, arg-h]
         requests: [核發傳票給手錶廠商, 排除該項證據, 限制證人作證範圍]
         request: 核發傳票給手錶廠商
+        ruledOn: 03/24/2026
         gives: [heart-rate]
         granted:
           - who: 旁白
@@ -1067,6 +1068,7 @@ scenes:
         lures: [ride-receipt, access-partial, arg-watch, arg-b]
         requests: [核發傳票給卡爾德物流, 排除該項證據, 撤銷對方的傳票]
         request: 核發傳票給卡爾德物流
+        ruledOn: 03/25/2026
         granted:
           - who: 旁白
             text: 傳票核發。當天下午，卡爾德物流委任另一家事務所聲請撤銷。
@@ -1178,6 +1180,7 @@ scenes:
         lures: [arrest-report, car-statement, arg-a, arg-d]
         requests: [排除該項供述, 核發傳票給警局, 限制證人作證範圍]
         request: 排除該項供述
+        ruledOn: 04/03/2026
         granted:
           - who: 旁白
             text: 雷耶斯法官看完錄影，只說了一句：「本庭排除該項供述。」

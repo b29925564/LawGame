@@ -10,4 +10,6 @@ export const useCardPick = create<{
   pick?: (id: string) => void;
   /** 選中的卡在證據欄上顯示的標記；沒給就是連線台的 A、B。 */
   tags?: string[];
+  /** 證物貼紙：聲請狀的證物格（tags 是「證物 ①」）。 */
+  exhibits?: boolean;
 }>(() => ({ pool: [], on: [] }));

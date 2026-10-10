@@ -17,8 +17,9 @@ import {
 } from './Evidence';
 import { CommitBar } from './Commit';
 import { EffectLines, effectsIf } from './Effects';
+import { ExhibitSticker } from './ExhibitSticker';
 import { MarkLines } from './Marks';
-import { ExhibitTag, exhibitNo, FilingThumb, Pleading, Written } from './Pleading';
+import { ExhibitRef, ExhibitTag, exhibitNo, FilingThumb, Pleading, Written } from './Pleading';
 import { useScope } from './lang';
 import { prose } from './prose';
 import { useCardPick } from './pick';
@@ -109,12 +110,19 @@ export function Desk({ scene }: { scene: DeskScene }) {
                       ) : (
                         id
                       )}
-                      <span className="ex" aria-hidden>
-                        {t('證物')} {exhibitNo(i)}
-                      </span>
+                      {c && <ExhibitRef no={exhibitNo(i)} />}
                     </span>
                   );
                 })}
+                stickers={a.support.map((id, i) => (
+                  <ExhibitSticker
+                    key={id}
+                    no={exhibitNo(i)}
+                    admitted={ok}
+                    date={ok ? m.ruledOn : undefined}
+                    still
+                  />
+                ))}
                 received
                 ruling={{
                   ok,
@@ -1084,8 +1092,16 @@ function Motions({
       on: on ? on.split(',') : [],
       pick: (id) => toggleSupport(mid, id),
       tags: Array.from({ length: slots }, (_, i) => `${exhibit} ${exhibitNo(i)}`),
+      exhibits: true,
     });
-    return () => useCardPick.setState({ pool: [], on: [], pick: undefined, tags: undefined });
+    return () =>
+      useCardPick.setState({
+        pool: [],
+        on: [],
+        pick: undefined,
+        tags: undefined,
+        exhibits: undefined,
+      });
   }, [wide, editable, mid, poolIds, on, slots, exhibit, toggleSupport]);
   // 小選單：按 Esc 或點別的地方就收起來。
   useEffect(() => {
@@ -1172,11 +1188,7 @@ function Motions({
     const tag = c && (
       <ExhibitTag name={t(c.name, scope)} arg={!('kind' in c) || c.kind === '論點'} />
     );
-    const ex = (
-      <span className="ex" aria-hidden>
-        {exhibit} {exhibitNo(i)}
-      </span>
-    );
+    const ex = <ExhibitRef no={exhibitNo(i)} />;
     if (!editable)
       return (
         <span className="blank filled exhibit">
@@ -1278,6 +1290,15 @@ function Motions({
           request={words('request', m.requests, a.request)}
           basis={words('basis', m.bases, a.basis)}
           support={support}
+          stickers={a.support.map((id, i) => (
+            <ExhibitSticker
+              key={id}
+              no={exhibitNo(i)}
+              admitted={a.ruling === 'granted'}
+              date={a.ruling === 'granted' ? m.ruledOn : undefined}
+              still={!!a.ruling}
+            />
+          ))}
           received={!!a.ruling}
           ruling={ruling}
           foot={foot}
