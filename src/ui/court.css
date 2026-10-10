@@ -2199,6 +2199,17 @@ html[lang='en'] .record {
   color: var(--redact-label);
   white-space: nowrap;
 }
+/* 刪除證詞那一刻：黑條疊在原句上面蓋過去，蓋完原句就看不到了（條是不透明的）。 */
+.rec-under {
+  position: relative;
+  display: inline-block;
+}
+.rec-under > .rec-bar {
+  position: absolute;
+  left: 0;
+  top: calc(50% - 0.65em);
+  min-width: 100%;
+}
 /* 駁回：證人照答，蓋在那句上的黑條抽走（scaleX 1 → 0，從右收；只在動態開著時有）。 */
 .rec-unbar {
   display: none;
@@ -2300,7 +2311,21 @@ html[lang='en'] .stamp.rec-stamp b {
   }
   .rec-row.striking .rec-bar {
     animation: rec-redact var(--dur-redact-in) steps(4) both;
-    animation-delay: calc(var(--k) * var(--dur-redact-in));
+    animation-delay: calc(
+      var(--kr0) * var(--dur-ui) + var(--dur-rm) + var(--kr) * var(--dur-redact-in)
+    );
+  }
+  /* 蓋完之後原句收掉，選字、搜尋都只剩條上的字。 */
+  .rec-row.striking .rec-under > .rec-tx {
+    animation: rec-gone 0s both;
+    animation-delay: calc(
+      var(--kr0) * var(--dur-ui) + var(--dur-rm) + (var(--kr) + 1) * var(--dur-redact-in)
+    );
+  }
+  @keyframes rec-gone {
+    to {
+      visibility: hidden;
+    }
   }
   /* 法官那一句出現之後，章才落下（墨色 60% → 100%）；落下之前看不到。 */
   .rec-stamp.new {

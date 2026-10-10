@@ -297,7 +297,15 @@ export function CourtRecord({
   const [skipped, setSkipped] = useState(-1);
   const animate = live && !instant && skipped !== batch;
   const firstNew = rows.find((r) => r.entry >= batch)?.index ?? rows.length;
-  const redactFrom = rows.find((r) => snap.striking.includes(r.entry))?.index ?? 0;
+  // 刪除證詞的黑條：法官那句裁定打完才開始，照這一頁由上往下一行接一行蓋上（設定集 7-3）。
+  // 只數這一頁上被蓋的行，前面幾頁看不到、直接蓋好；一頁蓋滿最多六拍，不讓最後幾行等好幾秒
+  // （第一道關卡重跑 Q1：第 2 頁的「答」整整空白了五、六秒，看起來像沒蓋上黑條）。
+  const lastPage = rows[rows.length - 1]?.page;
+  const strikingHere = rows.filter(
+    (r) => r.page === lastPage && (r.text || r.first) && snap.striking.includes(r.entry),
+  );
+  const strikeStep = Math.min(1, 6 / Math.max(1, strikingHere.length));
+  const strikeAfter = rows.length - firstNew;
   const lastRowOf = (entry: number) => {
     let last = -1;
     for (const r of rows) if (r.entry === entry) last = r.index;
@@ -416,10 +424,12 @@ export function CourtRecord({
                 {e.redact && <span className="sr-only">{t('（{text}）', { text: label })}</span>}
                 {g.map((r) => {
                   const isNew = fresh(r.index);
-                  const bar = !!e.redact && snap.striking.includes(r.entry);
+                  const bar = animate && !!e.redact && snap.striking.includes(r.entry);
                   const style = {
                     '--indent': `${r.indent}em`,
-                    '--k': isNew ? r.index - firstNew : bar ? r.index - redactFrom : 0,
+                    '--k': isNew ? r.index - firstNew : 0,
+                    '--kr': bar ? Math.max(0, strikingHere.indexOf(r)) * strikeStep : 0,
+                    '--kr0': strikeAfter,
                     '--w': `${Math.max(r.width, r.first && label ? labelW(e.redact!) : 0)}em`,
                     '--ks': stampK,
                     '--ku': unbarK,
@@ -438,7 +448,13 @@ export function CourtRecord({
                         style={style}
                       >
                         {r.first && e.tag && <b className="rec-tag">{e.tag} </b>}
-                        {e.redact ? (
+                        {e.redact && bar && (r.text || r.first) ? (
+                          // 正在蓋的這一行：話先留在紙上，黑條從左邊蓋過去（看得到被刪的是哪一句）。
+                          <span className="rec-under" aria-hidden>
+                            <span className="rec-tx">{zh ? punct(r.text) : r.text}</span>
+                            <span className="rec-bar">{r.first && <small>{label}</small>}</span>
+                          </span>
+                        ) : e.redact ? (
                           (r.text || r.first) && (
                             <span className="rec-bar" aria-hidden>
                               {r.first && <small>{label}</small>}
