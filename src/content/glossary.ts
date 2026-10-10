@@ -209,7 +209,7 @@ export const glossary: Term[] = [
   },
   {
     term: '起訴書',
-    en: 'Indictment / information',
+    en: 'Indictment',
     text: '檢方正式指控被告犯了什麼罪的文件，也決定了審判要證明的範圍。',
   },
   {

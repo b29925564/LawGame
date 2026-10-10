@@ -36,7 +36,7 @@
 已確認: Confirmed
 進行中: In progress
 尚未開始: Not started
-'還有 {n} 題，查到線索後出現': '{n} more questions appear as you find leads'
+'還有 {n} 題，查到線索後出現': '{n} more {n:question appears|questions appear} as you find leads'
 時間線: Timeline
 把事件排在時間軸上: Put the events in order on the timeline
 '已排 {n} / {m}': 'Placed {n} / {m}'
@@ -54,7 +54,7 @@
 '已在 {slot}': 'In {slot}'
 答案: Answer
 '從答案拿下 {name}': 'Remove {name} from the answer'
-'交錯 {n} 次': '{n} wrong answers'
+'交錯 {n} 次': '{n} wrong answer{n:s}'
 提交: Submit
 '−1 時': '−1 h'
 發現: Findings
@@ -155,7 +155,7 @@
 '陪審員往辯方 {n}': 'Jurors toward defense {n}'
 逾期: If broken
 '全體往{yes} {n}': 'All jurors toward {yes} {n}'
-葛雷: Gray
+葛雷: Grey
 債權人・陪審團: 'Creditor: the jury'
 已兌現: Kept
 逾期未兌現: Broken
@@ -163,11 +163,11 @@
 未達一致: No unanimity
 '陪審團僵局，第{round}輪，{no} {ng}，{yes} {g}，{why}': 'Jury deadlocked, round {round}: {no} {ng}, {yes} {g}, {why:lower}'
 兩邊都未達法定票數: Neither side has the votes it needs
-'盧卡斯標記了 {n} 處：{items}': 'Lucas marked {n} places: {items}'
+'盧卡斯標記了 {n} 處：{items}': 'Lucas marked {n} place{n:s}: {items}'
 '盧卡斯沒有說出口：{text}': "Lucas didn't say it aloud: {text}"
 '、': ', '
 定案: Final decision
-選了就不能改: You can’t undo this
+選了就不能改: You can't undo this
 '對方拿到這 {n} 份文件': 'Documents the other side gets: {n}'
 法官可能不認；沒有正當理由硬藏，之後被揭穿會很重: The judge may reject it. Hiding something without good grounds hurts badly if it comes out later.
 證人在錄取時已經說出這份意見的內容，特權視同放棄；法官多半會命令交出: The witness already disclosed the substance of this opinion at deposition, so the privilege is treated as waived; the judge will most likely order it produced.
@@ -178,8 +178,8 @@
 '陪審團起點往我方偏 {bars}': 'Jury starts tilted toward you {bars}'
 調解時對方開價更硬: A harder offer at mediation
 調解時對方開價更軟: A softer offer at mediation
-'客戶信任掉 {n} 格': 'Client trust drops {n} notch(es)'
-'客戶信任多 {n} 格': 'Client trust rises {n} notch(es)'
+'客戶信任掉 {n} 格': 'Client trust drops {n} {n:notch|notches}'
+'客戶信任多 {n} 格': 'Client trust rises {n} {n:notch|notches}'
 這件事會記到下一集: This carries into the next episode
 由法官決定範圍: The judge decides the scope
 交出這份文件: Hand over this document
@@ -231,7 +231,7 @@
 我知道的案情: What I know
 陪審團知道的案情: What the jury knows
 法庭速寫: Courtroom sketch
-預審: Pretrial
+預審: Pretrial hearing
 陪審團只看過法庭採納的證據：{list}。你的連線和推理他們都還沒聽過。: "The jury has only seen evidence the court admitted: {list}. They haven't heard any of your links or reasoning."
 陪審團還沒看過任何證據。你查到的一切，要在法庭上被採納，他們才會知道。: The jury hasn't seen any evidence yet. Nothing you find reaches them until the court admits it.
 # 分頁列放不下時收起來的那幾格（第一道關卡 N2）
