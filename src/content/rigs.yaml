@@ -18,18 +18,18 @@ court-verdict:
   kelvin: 3600
 # 法庭以外：每場戲用 rig: 指到這裡（設定集第 10 章 :108、第 11 章 :74；設計師 2026-10-10）。值照日照表、第 5 章場景光表與 P4-8 各場景的審查檔，
 # 和算圖 manifest 的 card_kelvin 同一個值。label、time 要等於地點裡寫的日子與時刻（rigs.test.ts 會擋）。
-# 盧卡斯的辦公室白天三處（ep1-lucas-office-mon、-week1、-week2）先維持 6500：設計師說 6500 是螢幕和手機的色溫，不對；
-# 正確值要等使用者定辦公室有沒有窗（有窗＝--k-daylight 5600，沒有窗＝燈管 4100）。定了再改這三個值。
+# 盧卡斯的辦公室有窗（使用者 2026-10-10 定：港灣側朝西南 225°），白天三處是窗外天光 --k-daylight 5600（日照表第 21、30、31 行：
+# 西南窗上午沒有直射，只有天光）。6500 是螢幕和手機的色溫，不用在房間。
 # 大廳晨光（第 5 章場景光表）。
 ep1-firm-lobby-mon:
   label: 週一
   time: '08:00'
   kelvin: 5600
-# 待使用者裁定窗，見上面。
+# 盧卡斯的辦公室上午，西南窗只有天光（見上面）。
 ep1-lucas-office-mon:
   label: 週一
   time: '09:40'
-  kelvin: 6500
+  kelvin: 5600
 # 海爾的辦公室窗光。
 ep1-hale-office-mon:
   label: 週一
@@ -90,16 +90,16 @@ ep1-lucas-office-thu-night:
   label: 週四
   time: '20:40'
   kelvin: 2700
-# 待使用者裁定窗，見上面。
+# 盧卡斯的辦公室上午，西南窗只有天光（見上面）。
 ep1-lucas-office-week1:
   label: 一週後
   time: '08:15'
-  kelvin: 6500
-# 待使用者裁定窗，見上面。
+  kelvin: 5600
+# 盧卡斯的辦公室上午，西南窗只有天光（見上面）。
 ep1-lucas-office-week2:
   label: 兩週後
   time: '09:10'
-  kelvin: 6500
+  kelvin: 5600
 # 盧卡斯的公寓，入夜檯燈。
 ep1-lucas-apartment-night:
   label: ''
