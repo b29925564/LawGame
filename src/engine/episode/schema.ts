@@ -350,6 +350,13 @@ const deskScene = z.object({
         title: z.string(),
         from: z.string(),
         lines: z.array(docLine).min(1),
+        /**
+         * 錄取逐字稿的節錄：頁碼和第一句的行號（一頁 25 行）。行號從這裡接著數，
+         * 證據卡的 cite（頁:行）才指得到卷宗裡同一句話；逐字稿不蓋 Bates（上面 card.bates）。
+         */
+        transcript: z
+          .object({ page: z.number().int().min(1), line: z.number().int().min(1).max(25) })
+          .optional(),
         /** 文件附的照片：同一集某一場 photos.shots 裡的 id（照片頁那一份，卷宗不另存一份）。 */
         photos: z.array(id).optional(),
       }),

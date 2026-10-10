@@ -412,7 +412,16 @@ function Docs({ scene }: { scene: DeskScene }) {
         </button>
         <h2>{t(doc.title, scope)}</h2>
         <p className="muted">{t(doc.from, scope)}</p>
-        <ol className="doc-lines">
+        {doc.transcript && (
+          <p className="doc-cite">
+            Tr. {doc.transcript.page}:{doc.transcript.line}
+            {doc.lines.length > 1 && `–${doc.transcript.line + doc.lines.length - 1}`}
+          </p>
+        )}
+        <ol
+          className="doc-lines"
+          style={doc.transcript ? { counterReset: `line ${doc.transcript.line - 1}` } : undefined}
+        >
           {doc.lines.map((l, i) => {
             const key = `${doc.id}:${i}`;
             const made = l.fact && st.marked.includes(l.fact);

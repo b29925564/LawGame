@@ -1418,6 +1418,14 @@ details summary {
   flex-direction: column;
   gap: 2px;
 }
+/* 錄取逐字稿的頁:行（Courier Prime 等寬小字，和證據卡的 Tr. 42:7 同一寫法）。 */
+.doc-cite {
+  margin: 0 0 6px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: var(--paper-muted);
+}
 .doc-lines li {
   counter-increment: line;
   position: relative;

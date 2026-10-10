@@ -174,12 +174,22 @@ function deskErrors(s: DeskScene, available: Set<string>, args: Set<string>, err
     ...available,
     ...s.cards.filter((c) => c.held).map((c) => c.id),
   ]);
-  for (const d of s.docs)
-    for (const l of d.lines)
-      if (l.fact) {
-        if (!cards.has(l.fact)) errors.push(`卷宗 ${d.id} 標記了不存在的卡片 ${l.fact}`);
-        reachable.add(l.fact);
-      }
+  for (const d of s.docs) {
+    const tr = d.transcript;
+    if (tr && tr.line + d.lines.length - 1 > 25)
+      errors.push(`卷宗 ${d.id} 的逐字稿節錄超出一頁 25 行`);
+    d.lines.forEach((l, i) => {
+      if (!l.fact) return;
+      if (!cards.has(l.fact)) errors.push(`卷宗 ${d.id} 標記了不存在的卡片 ${l.fact}`);
+      reachable.add(l.fact);
+      // 逐字稿裡那句話的頁:行，要和證據卡引的 cite 一樣。
+      const cite = s.cards.find((c) => c.id === l.fact)?.cite;
+      if (tr && cite && cite !== `${tr.page}:${tr.line + i}`)
+        errors.push(
+          `卷宗 ${d.id} 第 ${i + 1} 句是 ${tr.page}:${tr.line + i}，卡片 ${l.fact} 引的是 ${cite}`,
+        );
+    });
+  }
   for (const m of s.mail)
     for (const g of m.gives) {
       if (!cards.has(g)) errors.push(`郵件 ${m.id} 附了不存在的卡片 ${g}`);
