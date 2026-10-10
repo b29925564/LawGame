@@ -65,15 +65,23 @@ const FOCUS_SCALE = 1.15;
 const ROOMY = 600;
 /**
  * 比對位（設計師 P2-6 r5、設定集第 9 章 :74「正在比對的兩張推進光圈」）：兩張對光圈中心左右對稱，
- * 中間只留關係結的寬度（板寬 5.5%）；上下把兩張裡較高的那張置中在光圈中心（RD-ART-0903 (700, 430)／1400×875）。
+ * 中間只留關係結的寬度：直條最寬是英文的 28px，兩側各 4px（POOL_GAP）。
+ * 上下把兩張裡較高的那張置中在光圈中心（RD-ART-0903 (700, 430)／1400×875）。
  * 卡高隨字數、語言、字型載入而變，所以量實際的卡高再算上緣（見 Cork 的 cardH）；還沒量到時用下面的預設。
  * 光圈半徑 360/1400 板寬，兩張 1.15 倍的卡放不進半徑的 85%（量過：最外角約 115%），設計師改成影像中心在 60% 以內（impl/p2-6/r5/designer-review.md 更正段）。
  */
-const POOL_X = 50;
-const POOL_GAP = 5.5;
-const FOCUS_X = [-1, 1].map(
-  (side) => POOL_X + side * (POOL_GAP / 2 + (FOCUS_W * FOCUS_SCALE) / 2) - FOCUS_W / 2,
-);
+const POOL_GAP = 36;
+/** 光圈半徑（板寬的比例，RD-ART-0903 360/1400）。 */
+const POOL_R = 360 / 1400;
+/** 影像中心離光圈中心最多半徑的幾成（設計師 60%；留 2% 給卡片傾角和取整）。 */
+const IMG_IN = 0.58;
+const focusX = (w: number) =>
+  [-1, 1].map(
+    (side) =>
+      50 +
+      side * ((w ? (POOL_GAP / 2 / w) * 100 : 2.75) + (FOCUS_W * FOCUS_SCALE) / 2) -
+      FOCUS_W / 2,
+  );
 const FOCUS_TOP = 27;
 /** 手機：兩張卡佔滿光圈（寬 44%，左右各留 4%）。 */
 const COMPACT_X = [4, 52];
@@ -392,6 +400,8 @@ export function Cork({
   // 比對位的卡高（兩張取高的；在原位的不算）：卡高變了（換卡、換語言、字型載入）就重量。
   const focusEls = useRef<(HTMLDivElement | null)[]>([]);
   const [cardH, setCardH] = useState(0);
+  // 照片卡的影像中心離卡片上緣多遠（沒放大前）：用來檢查「影像中心在光圈半徑 60% 以內」。
+  const [imgMid, setImgMid] = useState(0);
   // 第一次量好位置以前不跑轉場：不然一進來兩張卡會從預設位置滑到量好的位置。
   const [settled, setSettled] = useState(false);
   useEffect(() => {
@@ -451,13 +461,27 @@ export function Cork({
 
   // 比對位上下置中在光圈中心（板高 50%）：卡以（中線, 圖釘）為軸放大，放大後的中心＝上緣＋PIN＋(卡高/2−PIN)×倍率。
   const scale = compact ? 1 : FOCUS_SCALE;
-  const top = cardH
-    ? ((h / 2 - PIN - (cardH / 2 - PIN) * scale) / Math.max(h, 1)) * 100
-    : compact
-      ? COMPACT_TOP
-      : FOCUS_TOP;
-  const focusAt = (compact ? COMPACT_X : FOCUS_X).map((x) => [x, top]) as [number, number][];
   const focusW = compact ? 44 : FOCUS_W;
+  const xs = compact ? COMPACT_X : focusX(w);
+  // 照片的影像中心離光圈中心多遠（px）：左右是卡中線到板中線，上下是影像中心到板高一半。
+  const imgDx = Math.abs(xs[0] + focusW / 2 - 50) * (w / 100);
+  const imgDy = (topPx: number) => h / 2 - (topPx + PIN + (imgMid - PIN) * scale);
+  let topPx = cardH ? h / 2 - PIN - (cardH / 2 - PIN) * scale : 0;
+  // 桌機：光圈是設定集的 360/1400，不動。字多、板子小的時候卡比較高，整組置中會讓影像中心超出 60%，
+  // 這時卡往下讓到影像中心剛好在 IMG_IN 為止（上下就不完全置中了）。
+  if (!compact && cardH && imgMid && w) {
+    const dyMax = Math.sqrt(Math.max(0, (IMG_IN * POOL_R * w) ** 2 - imgDx ** 2));
+    if (imgDy(topPx) > dyMax) topPx += imgDy(topPx) - dyMax;
+  }
+  const top = cardH ? (topPx / Math.max(h, 1)) * 100 : compact ? COMPACT_TOP : FOCUS_TOP;
+  const focusAt = xs.map((x) => [x, top]) as [number, number][];
+  // 手機：光圈本來就是為這個版面另設的（設計師 P2-6 r5 更正），小手機上卡比較高，光圈放大到影像中心落在 IMG_IN 以內。
+  const pool =
+    compact && cardH && imgMid && w
+      ? Math.max(1.9, Math.hypot(imgDx, imgDy(topPx)) / (IMG_IN * POOL_R * w))
+      : compact
+        ? 1.9
+        : 1;
   const abFrom = pinOf(focusAt[0], focusW);
   const abTo = pinOf(focusAt[1], focusW);
   // 關係結掛在 A–B 線的最低點。
@@ -533,6 +557,13 @@ export function Cork({
         .map((el) => el.offsetHeight);
       const next = hs.length ? Math.max(...hs) : 0;
       setCardH((prev) => (prev === next ? prev : next));
+      const mids = focusEls.current
+        .filter((el): el is HTMLDivElement => !!el && !el.classList.contains('away'))
+        .map((el) => el.querySelector<HTMLElement>('.cork-print'))
+        .filter((p): p is HTMLElement => !!p)
+        .map((p) => p.offsetTop + p.offsetHeight / 2);
+      const mid = mids.length ? Math.min(...mids) : 0;
+      setImgMid((prev) => (prev === mid ? prev : mid));
     };
     measure();
     if (typeof ResizeObserver === 'undefined') return;
@@ -591,6 +622,7 @@ export function Cork({
           '--cork-tile': tile ? `url(${tile})` : 'none',
           // 小手機上卡比 4:3 的板子高：板子跟著長，上下各留 BOARD_PAD（含 10px 木框）。
           minHeight: cardH ? cardH * scale + 2 * (BOARD_PAD + 10) : undefined,
+          '--pool': pool,
         } as CSSProperties
       }
     >
@@ -731,7 +763,7 @@ export function Cork({
           })}
           look={look}
           provenance={jury.provenance}
-          pool={compact ? 1.9 : 1}
+          pool={pool}
         />
       )}
       {/* 手機上兩張卡之間沒有空隙，關係看下面選中的那顆。 */}

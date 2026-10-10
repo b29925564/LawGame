@@ -64,11 +64,11 @@
 
 /*
  * 手機的光圈：板子只放比對中的兩張，光圈跟著版面放大到蓋住兩張卡（設計師 P2-6 r5 更正：屬於解讀，不是偏離）。
- * 亮度曲線不變，半徑放大 1.9 倍：兩張照片的影像中心落在光圈半徑 60% 以內。
+ * 亮度曲線不變，半徑至少放大 1.9 倍；小手機上卡比較高，Cork 再放大（--pool），讓兩張照片的影像中心落在光圈半徑 58% 以內。
  */
 .cork.compact .cork-lamp {
   background: radial-gradient(
-    circle 95cqw at 50% 50%,
+    circle calc(50cqw * var(--pool, 1.9)) at 50% 50%,
     #fff 0,
     #f4f2f0 34%,
     #d9d4cf 46%,
@@ -80,7 +80,7 @@
 }
 .cork.compact .cork-warm {
   background: radial-gradient(
-    circle 70cqw at 50% 50%,
+    circle calc(37cqw * var(--pool, 1.9)) at 50% 50%,
     rgb(255 180 107 / 55%),
     rgb(255 180 107 / 0%) 100%
   );
