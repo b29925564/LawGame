@@ -58,6 +58,9 @@ for (const lang of ['zh-TW', 'en']) {
         close.y < r.y + r.height;
       expect(overlap).toBe(false);
     }
+    // 「關閉」的觸控區至少 44px。
+    expect(close.height).toBeGreaterThanOrEqual(44);
+    expect(close.width).toBeGreaterThanOrEqual(44);
     // 點得到「法典」。
     await buttons[2].click();
     await expect(buttons[2]).toHaveAttribute('aria-current', 'true');

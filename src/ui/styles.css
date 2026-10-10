@@ -1652,6 +1652,9 @@ details summary {
 }
 .sheet > .panel-head > .link {
   margin-left: auto;
+  min-height: 44px;
+  min-width: 44px;
+  text-align: right;
 }
 /* 證據欄 352 寬放三個分頁（英文 Evidence 28 / Timeline / Legal terms）要一行放得下。 */
 .sheet-tabs button {
