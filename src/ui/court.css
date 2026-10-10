@@ -2043,6 +2043,21 @@ html[lang='en'] .record {
 .rec-scroll {
   min-width: 0;
 }
+/* 手機插入鏡頭打開時，紙在最後一整行的底邊收起來，用 1px 紙邊封口（Record.tsx 算 --rec-cut）。 */
+.record[data-cut] {
+  position: relative;
+  clip-path: inset(0 0 var(--rec-cut) 0);
+}
+.record[data-cut]::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: var(--rec-cut);
+  height: 1px;
+  background: var(--border);
+  pointer-events: none;
+}
 /* 筆錄的寬只聽外框的，不讓紙的最小寬回頭撐開外框（休庭頁、陪審團長頁也一樣）；字級再照這個寬算。 */
 .record {
   contain: inline-size;
@@ -2199,6 +2214,17 @@ html[lang='en'] .record {
   color: var(--redact-label);
   white-space: nowrap;
 }
+/* 刪除證詞那一刻：黑條疊在原句上面蓋過去，蓋完原句就看不到了（條是不透明的）。 */
+.rec-under {
+  position: relative;
+  display: inline-block;
+}
+.rec-under > .rec-bar {
+  position: absolute;
+  left: 0;
+  top: calc(50% - 0.65em);
+  min-width: 100%;
+}
 /* 駁回：證人照答，蓋在那句上的黑條抽走（scaleX 1 → 0，從右收；只在動態開著時有）。 */
 .rec-unbar {
   display: none;
@@ -2290,28 +2316,71 @@ html[lang='en'] .stamp.rec-stamp b {
 
 @media (prefers-reduced-motion: no-preference) {
   /* 逐行出現（不是逐字）；黑條斷奏蓋上。 */
-  .rec-row.new {
+  /* --at0：這一段從哪個時間點開始（異議那一拍裡，法官的話等章落下；見 court/beat.ts）。 */
+  /* 淡入的是這一行的字，不是整行：行號是紙上印好的，異議那一拍停在法官席時，後面的行號照樣在。 */
+  .rec-row.new > :not(.rec-stamp),
+  .rec-row.new.cur::after {
     animation: iv-fade var(--dur-rm) linear both;
-    animation-delay: calc(var(--k) * var(--dur-ui));
+    animation-delay: calc(var(--at0, 0s) + var(--k) * var(--dur-ui));
   }
   .rec-row.new .rec-bar {
     animation: rec-redact var(--dur-redact-in) steps(4) both;
-    animation-delay: calc(var(--k) * var(--dur-ui) + var(--dur-rm));
+    animation-delay: calc(var(--at0, 0s) + var(--k) * var(--dur-ui) + var(--dur-rm));
+  }
+  /*
+   * 被異議的問題（第 10.3 章）：「異議」打完時黑條從左邊蓋上（--atb）。
+   * 成立：條留著，原句蓋完就收掉，條上的「異議成立」等章落下（--atl）才出現。
+   * 駁回：法官說完，條從右邊抽走（--atu，--dur-redact-out steps(12)），問題留在紀錄上。
+   */
+  .rec-row.objected .rec-bar {
+    animation: rec-redact var(--dur-redact-in) steps(4) both;
+    animation-delay: var(--atb);
+  }
+  .rec-row.objected .rec-under > .rec-tx {
+    animation: rec-gone 0s both;
+    animation-delay: calc(var(--atb) + var(--dur-redact-in));
+  }
+  .rec-row.objected .rec-bar small {
+    animation: rec-wait 0s var(--atl) backwards;
+  }
+  .rec-row.objected .rec-unbar {
+    display: block;
+    animation:
+      rec-redact-l var(--dur-redact-in) steps(4) var(--atb) backwards,
+      rec-unbar var(--dur-redact-out) steps(12) var(--atu) forwards;
+  }
+  @keyframes rec-redact-l {
+    from {
+      scale: 0 1;
+      transform-origin: left;
+    }
+    to {
+      transform-origin: left;
+    }
   }
   .rec-row.striking .rec-bar {
     animation: rec-redact var(--dur-redact-in) steps(4) both;
-    animation-delay: calc(var(--k) * var(--dur-redact-in));
+    animation-delay: calc(
+      var(--kr0) * var(--dur-ui) + var(--dur-rm) + var(--kr) * var(--dur-redact-in)
+    );
+  }
+  /* 蓋完之後原句收掉，選字、搜尋都只剩條上的字。 */
+  .rec-row.striking .rec-under > .rec-tx {
+    animation: rec-gone 0s both;
+    animation-delay: calc(
+      var(--kr0) * var(--dur-ui) + var(--dur-rm) + (var(--kr) + 1) * var(--dur-redact-in)
+    );
+  }
+  @keyframes rec-gone {
+    to {
+      visibility: hidden;
+    }
   }
   /* 法官那一句出現之後，章才落下（墨色 60% → 100%）；落下之前看不到。 */
   .rec-stamp.new {
     animation:
-      rec-wait 0s calc(var(--ks) * var(--dur-ui)) backwards,
-      rec-stamp var(--dur-stamp) ease-in calc(var(--ks) * var(--dur-ui)) both;
-  }
-  .rec-unbar {
-    display: block;
-    animation: rec-unbar var(--dur-redact-out) steps(12) both;
-    animation-delay: calc(var(--ku) * var(--dur-ui) + var(--dur-stamp));
+      rec-wait 0s var(--ats) backwards,
+      rec-stamp var(--dur-stamp) ease-in var(--ats) both;
   }
   @keyframes rec-redact {
     from {
@@ -2626,11 +2695,18 @@ html[lang='en'] .stamp.rec-stamp b {
   justify-content: stretch;
   max-width: 358px;
 }
-.jurybox > .toggle {
-  justify-self: start;
+.jb-tools {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px 16px;
+}
+.jb-tools > .toggle {
+  font-size: var(--fs-ui-label);
 }
 /* 畫面上的黃留給主按鈕（一格一黃）：勾選框用內文色。 */
-.jurybox > .toggle input {
+.jb-tools > .toggle input {
   accent-color: var(--text);
 }
 /* 手機收合刻痕條：整條一個熱區（高 44），段數跟陪審團人數走。 */
@@ -2812,36 +2888,36 @@ html[lang='en'] .stamp.rec-stamp b {
  * 引線垂直接到框頂；名字不准斷開（設計師 #225 第三輪：「AI art TBD / Omar / Hassan」斷成三行，
  * 標籤被鎖在 72px 框寬裡）。Tbd 在這裡拆開（display: contents），標籤自己佔第一列。
  */
-:is(.speech, .epi .msg, .panel.fore):has(> .tbd) {
+:is(.speech, .epi .msg, .panel.fore, .court-now):has(> .tbd) {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   align-items: start;
 }
-.speech:has(> .tbd) {
+:is(.speech, .court-now):has(> .tbd) {
   column-gap: 12px;
   row-gap: 0;
 }
 :is(.epi .msg, .panel.fore):has(> .tbd) {
   row-gap: 0;
 }
-:is(.speech, .epi .msg, .panel.fore) > .tbd {
+:is(.speech, .epi .msg, .panel.fore, .court-now) > .tbd {
   display: contents;
 }
-:is(.speech, .epi .msg, .panel.fore) > .tbd > .tbd-label {
+:is(.speech, .epi .msg, .panel.fore, .court-now) > .tbd > .tbd-label {
   grid-column: 1 / -1;
   justify-self: start;
   flex-wrap: nowrap;
   white-space: nowrap;
   max-width: 100%;
 }
-:is(.speech, .epi .msg, .panel.fore) > .tbd > .tbd-label > span + span {
+:is(.speech, .epi .msg, .panel.fore, .court-now) > .tbd > .tbd-label > span + span {
   overflow-wrap: normal;
 }
-:is(.speech, .epi .msg, .panel.fore) > .tbd > :not(.tbd-label) {
+:is(.speech, .epi .msg, .panel.fore, .court-now) > .tbd > :not(.tbd-label) {
   grid-column: 1;
   grid-row: 2;
 }
-:is(.speech, .epi .msg, .panel.fore):has(> .tbd) > :not(.tbd) {
+:is(.speech, .epi .msg, .panel.fore, .court-now):has(> .tbd) > :not(.tbd) {
   grid-column: 2;
   grid-row: 2;
 }
@@ -2857,4 +2933,306 @@ html[lang='en'] .stamp.rec-stamp b {
   height: 0.92em;
   margin-right: 0.4em;
   vertical-align: -0.08em;
+}
+
+/*
+ * ══ 法庭鏡頭（設定集第 7 章 3D 立牌與 :21–22 裁切；設計師 P3 裁定 1-3、5） ══
+ * 桌機：中欄一條 2.39:1 的鏡頭條，夾在提示句／證詞卡和陪審團之間。剪接一律發生在這裡，不管法庭光層開不開。
+ * 手機：平常不出現（說話者用 56×70 頭像），招牌時刻在筆錄下方插一張 16:9，蓋住陪審團刻痕條與提示句，
+ * 不把版面往下推；那一拍裡輸入鎖住，那塊本來就用不到。框沒有邊：一刀黑要整塊都是黑。
+ */
+.shell:has(> .shell-tabs > .record) {
+  /* 法官的沉默（第 10.3 章「打字聲 → 一刀黑 → 法官的沉默 → 小章」）。全域權杖沒有這一項，先在法庭畫面命名，同 --dur-nod。 */
+  --dur-bench-hold: 700ms;
+}
+.court-cam {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  pointer-events: none;
+}
+.court-cam > .tbd-label {
+  align-self: flex-start;
+}
+.cam-frame {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 2.39;
+  background: #000;
+}
+.court-cam.insert .cam-frame {
+  aspect-ratio: 16 / 9;
+}
+.cam-stage {
+  position: absolute;
+  left: calc(var(--cx) / var(--cw) * -100%);
+  top: calc(var(--cy) / var(--ch) * -100%);
+  width: calc(100% / var(--cw));
+  height: calc(100% / var(--ch));
+  visibility: hidden;
+}
+.cam-stage[data-on] {
+  visibility: visible;
+}
+.cam-plate,
+.cam-front {
+  position: absolute;
+  inset: 0;
+}
+.cam-plate img,
+.cam-front img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.cam-standee {
+  position: absolute;
+  aspect-ratio: 4 / 5;
+}
+.cam-standee > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.cam-light {
+  position: absolute;
+  inset: 0;
+}
+/* 正面和轉頭兩張立牌疊著，換的時候交叉淡化 --dur-turn 1500ms（第 7 章 :75）；減少動態用 --dur-rm。 */
+.cam-pose {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity var(--dur-turn) var(--ease);
+}
+.cam-pose[data-on] {
+  opacity: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .cam-pose {
+    transition-duration: var(--dur-rm);
+  }
+}
+/* 受光圖：輪廓光乘上它（灰階＝受光多少），影子落在立牌上的地方就沒有輪廓光。 */
+.cam-light[data-rim] {
+  mask: var(--rim) 0 0 / 100% 100% no-repeat luminance;
+}
+.cam-black {
+  position: absolute;
+  inset: 0;
+  background: #000;
+  visibility: hidden;
+}
+.cam-frame[data-shot='black'] > .cam-black {
+  visibility: visible;
+}
+/* 減少動態：不切黑，換機位用 --dur-rm 淡入（第 10.2 章）。 */
+@media (prefers-reduced-motion: reduce) {
+  .cam-stage {
+    visibility: visible;
+    opacity: 0;
+    transition: opacity var(--dur-rm) linear;
+  }
+  .cam-stage[data-on] {
+    opacity: 1;
+  }
+}
+@media (min-width: 1024px) {
+  .shell:has(> .shell-tabs > .record) {
+    grid-template-rows: auto auto minmax(0, 1fr) auto auto auto;
+  }
+  /*
+   * 主詰問（提示和異議窗共用一格）：那一格照內容高，中欄剩下的高度給陪審團——框撐到筆錄紙的底線，
+   * 空白留在剪影下面，不留在提示和鏡頭條之間（設計師 #247 第二輪）。交互詰問的內容長，照舊由中間那列吃剩下的高度、自己捲。
+   */
+  .shell:has(> .shell-tabs > .record):has(> .shell-body > .court-slot) {
+    grid-template-rows: auto auto max-content auto auto minmax(min-content, 1fr);
+  }
+  .shell:has(> .shell-tabs > .record) > .shell-tabs > .record {
+    grid-row: 2 / 7;
+  }
+  /*
+   * 按鈕列放在鏡頭條上方：提示＋主按鈕和異議窗共用鏡頭條上面那一格（設計師 #247 第一輪）。
+   * 異議窗打開時按鈕列沒有按鈕、收成 0，窗長進它空出來的高度；1fr 的那一列加上按鈕列永遠一樣高，
+   * 鏡頭條的位置在窗開、一刀黑、法官席、落章、證人回答各個時間點都不動。
+   */
+  .shell:has(> .shell-tabs > .record) > .shell-foot {
+    grid-row: 4;
+    border-top: none;
+    background: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+  .shell:has(> .shell-tabs > .record) > .shell-tabs > .court-cam {
+    grid-column: 2;
+    grid-row: 5;
+  }
+  .shell:has(> .shell-tabs > .record) > .shell-tabs > .jurybox {
+    grid-row: 6;
+  }
+  /* 筆錄紙跨好幾列：不讓它 25 行的內容高度撐大陪審團那一列（紙的高度由格子給，內容自己捲）。 */
+  .shell:has(> .shell-body > .court-slot) > .shell-tabs > .record {
+    contain: size;
+  }
+  /* 那一格本身就是框，不用再留捲動用的底距；1366×768 要一分一毫都放得下。 */
+  .shell:has(> .shell-body > .court-slot) > .shell-body {
+    padding-bottom: 0;
+  }
+  .shell:has(> .shell-body > .court-slot) > .shell-tabs > .jurybox {
+    grid-template-rows: auto minmax(0, 1fr);
+    margin-bottom: 12px;
+  }
+  .shell:has(> .shell-body > .court-slot) > .shell-tabs > .jurybox > .tbd.row > .jb-grid {
+    flex: 1;
+    align-content: start;
+  }
+  .court-cam.insert {
+    display: none;
+  }
+}
+@media (max-width: 1023px) {
+  .shell-tabs > .court-cam.strip {
+    display: none;
+  }
+  /* 插入的鏡頭貼在按鈕列上緣，往上蓋住陪審團刻痕條和提示句。 */
+  .shell:has(> .shell-tabs > .record) > .shell-foot {
+    position: relative;
+  }
+  .court-cam.insert {
+    position: absolute;
+    /* 和筆錄紙同寬（紙在螢幕兩側各留 8px）。 */
+    left: 8px;
+    right: 8px;
+    bottom: 100%;
+    z-index: 3;
+    /* 收起來用 opacity，不用 visibility（裡面的機位會自己設 visible）；位置留著，筆錄才量得到它蓋住多少。 */
+    opacity: 0;
+  }
+  .court-cam.insert[data-open] {
+    opacity: 1;
+  }
+  /* 標籤那一列算在插入鏡頭自己的範圍裡：整列不透明，不壓在筆錄行號上；筆錄量的是整個插入區塊，最新一行捲到標籤上面（設計師 #247 第一輪）。 */
+  .court-cam.insert > .tbd-label {
+    align-self: stretch;
+    margin-bottom: 0;
+    padding: 4px 0 4px 7px;
+    background: var(--bg);
+  }
+}
+@media (max-width: 1023px) and (prefers-reduced-motion: reduce) {
+  .court-cam.insert {
+    transition: opacity var(--dur-rm) linear;
+  }
+}
+/* 異議那一拍裡輸入鎖住：主按鈕藏起來，位置留著（版面不跳）。 */
+.shell-foot > .locked {
+  visibility: hidden;
+}
+/* 手機：說話者頭像（56×70）接在提示句或證詞前面；標籤「待放 AI 立繪　{全名}」在框上方。 */
+.court-now {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.court-now > :last-child {
+  flex: 1 1 auto;
+  min-width: 0;
+  align-self: center;
+  margin: 0;
+}
+/* 法庭裡的異議窗：標題列放「不異議」，八個理由兩排四個，整個面板在中欄一屏內（鏡頭條、陪審團都在下面）。 */
+.objection .panel-head > .pass {
+  margin-left: auto;
+  min-width: 7em;
+}
+.objection .row {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.objection .row button {
+  padding-inline: 4px;
+}
+/* 異議窗的框：淺色底上 --hl 只有約 1.4:1，黃色線條改用 --hl-edge（設計師 #247 第一輪）；--hl-wash 底色照舊。 */
+.objection {
+  border-color: light-dark(var(--hl-edge), var(--hl));
+}
+/*
+ * 「生效中」：平常在理由下面一行；桌機矮螢幕搬進標題列（在「要異議嗎？」和「不異議」之間），窗從 211 壓到約 181。
+ * 用高度判斷（設計師 #247 第二輪）：中欄要放 頂列 74 + 異議窗 211 + 間距 30 + 鏡頭條 + 陪審團 268。
+ * 鏡頭條 ≈ 標籤 20 + 中欄寬 / 2.39，1366 寬 207、1440 寬約 228、1530 寬 255、1600 寬約 275，
+ * 所以需要的高度約 790（1366）、838（1530）、858（1600），門檻取 850（英文窗 207，比中文矮）。
+ * 結果：1366×768、1600×850 壓矮；1440×900、1530×860 照舊放下面。
+ * 斷行只斷在「：」後面；裁定那段用 balance，不讓最後一個字單獨掛一行。
+ */
+.objection .in-effect.head {
+  display: none;
+}
+@media (min-width: 1024px) and (max-height: 850px) {
+  .objection .panel-head > h2 {
+    white-space: nowrap;
+  }
+  .objection .in-effect.head {
+    display: flex;
+    flex-wrap: wrap;
+    min-width: 0;
+    flex: 1 1 0;
+    font-size: var(--fs-ui-meta);
+    line-height: 1.3;
+  }
+  .objection .in-effect.head > :last-child {
+    text-wrap: balance;
+  }
+  .objection .panel-head > .pass {
+    min-width: 0;
+  }
+  .objection .in-effect.foot {
+    display: none;
+  }
+}
+/*
+ * 理由按鈕中英文同一個字級 --fs-ui-row 15px、44px 高：行高 1.2，英文最長的（Lack of foundation、Violates the ruling）兩行剛好塞進 44px
+ * （設計師 #247 第三輪；「Violates the court's ruling」改短以後 1366 也在兩行內）。
+ */
+@media (min-width: 1024px) {
+  .objection .row button {
+    padding-block: 3px;
+    line-height: 1.2;
+  }
+}
+/* 桌機主詰問：提示框和異議窗疊在同一格，這一格的高度是兩者裡比較高的那個；沒開的那個藏起來（還撐著高度）。 */
+.court-slot {
+  display: grid;
+  flex: none;
+}
+.court-slot > * {
+  grid-area: 1 / 1;
+  margin: 0;
+}
+.court-slot > [data-off] {
+  visibility: hidden;
+}
+.court-prompt > p {
+  margin: 0;
+}
+.court-prompt-act {
+  display: flex;
+  gap: 8px;
+  margin-top: auto;
+}
+.court-prompt-act > .wide {
+  flex: 1;
+}
+.court-prompt-act > .locked {
+  visibility: hidden;
+}
+@media (max-width: 380px) {
+  .objection .row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (min-width: 1024px) {
+  /* 筆錄紙從第 2 列接到陪審團那一列（最後一列）的底（比 styles.css 那條「沒有 .jury 時 2 / 5」更具體）。 */
+  .shell:has(> .shell-tabs > .record):has(> .shell-tabs > .court-cam) > .shell-tabs > .record {
+    grid-row: 2 / 7;
+  }
 }

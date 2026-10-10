@@ -63,21 +63,97 @@ interface Head {
   pts: Poly;
   rx: number;
   ry: number;
+  /** 轉頭（turn）：頭心移到頸根右邊。 */
+  cx: number;
+  turn?: boolean;
 }
 
+/**
+ * 轉頭（援引緘默權那一格；設定集第 3 章 :54「證人轉進暗部……只剩一隻眼睛有眼神光」、第 7 章 :57、:73）：
+ * 臉從朝畫面左 20° 轉向離窗那側（畫面右），四分之三側臉，臉的平面和鏡頭軸約 60°，肩不動。
+ * 頭心移到頸根右邊 TURN_DX；鼻子、嘴、下巴的線落在剪影右緣；近窗那隻眼睛留在畫面裡，眼神光是整格最亮的一點。
+ * 珍珠照解剖位置（同一隻耳朵轉向鏡頭，頭的中間偏下），跟著臉進暗部、不畫受光點（設計師轉頭審查）。
+ */
+const TURN_DX = 30;
+/**
+ * 四分之三側臉的右緣（卡面 y → 往外推多少）：眉骨、鼻根、鼻尖、人中、上唇、唇縫、下唇、頦唇溝、下巴，再收進下顎。
+ * 線性內插，頭的輪廓在這一段加密取點，每個起伏都有好幾個點（設計師 #247 第三輪：不能只有一個尖鼻子）。
+ */
+const PROFILE: [number, number][] = [
+  [150, 0],
+  [172, 3], // 眉骨
+  [186, 3],
+  [197, -1], // 鼻根
+  [212, 5],
+  [228, 13], // 鼻尖
+  [234, 12],
+  [240, 7], // 鼻下
+  [248, 7], // 人中
+  [255, 11], // 上唇
+  [261, 8], // 唇縫
+  [268, 11], // 下唇
+  [278, 7], // 頦唇溝
+  [292, 13], // 下巴（下臉往前補，不然橢圓收得太快，下巴會往後縮）
+  [304, 12],
+  [318, 5],
+  [338, 0],
+];
+const profile = (y: number) => {
+  if (y <= PROFILE[0][0] || y >= PROFILE[PROFILE.length - 1][0]) return 0;
+  const i = PROFILE.findIndex(([py]) => py > y);
+  const [y0, d0] = PROFILE[i - 1],
+    [y1, d1] = PROFILE[i];
+  const t = (y - y0) / (y1 - y0);
+  return d0 + (d1 - d0) * (t * t * (3 - 2 * t));
+};
+
 // ── 頭：上半橢圓，下半往下巴收（jaw 0.82 圓、0.9 方、0.8 長）
-function head(p: JurorLook): Head {
+function head(p: JurorLook, turn = false): Head {
   const rx = HEAD[p.head || 'medium'],
     jaw = p.jaw === 'square' ? 0.9 : p.jaw === 'long' ? 0.8 : 0.82;
   const ry = p.jaw === 'long' ? RY + 8 : RY;
+  const cx = turn ? CX + TURN_DX : CX;
   const pts: Poly = [];
-  for (let i = 0; i < 96; i++) {
-    const a = (i / 96) * 2 * Math.PI,
-      s = Math.sin(a);
-    const k = s > 0 ? 1 - (1 - jaw) * Math.pow(s, 1.6) : 1; // 下半收窄
-    pts.push([CX + rx * Math.cos(a) * k, CY + ry * s]);
+  const n = turn ? 360 : 96; // 轉頭時側臉在右緣，取點要密才畫得出唇和下巴
+  for (let i = 0; i < n; i++) {
+    const a = (i / n) * 2 * Math.PI,
+      s = Math.sin(a),
+      c = Math.cos(a);
+    // 下半收窄；轉頭時下巴在右下，左下是後頸，只收一點。
+    const side = turn ? (c > 0 ? 1 : 0.3) : 1;
+    const k = s > 0 ? 1 - (1 - jaw) * Math.pow(s, 1.6) * side : 1;
+    const y = CY + ry * s;
+    pts.push([cx + rx * c * k + (turn && c > 0 ? profile(y) : 0), y]);
   }
-  return { pts, rx, ry };
+  return { pts, rx, ry, cx, turn };
+}
+
+/** 轉頭時的頭髮。目前只有瑞秋的不對稱鮑伯照轉過的樣子重畫；其他髮型先整組跟著頭心平移。 */
+function turnedHair(p: JurorLook, h: Head): Poly[] {
+  const { rx, ry, cx } = h;
+  if (p.hair !== 'bob')
+    return hair(p, { ...h, cx: CX, turn: false }).map((q) =>
+      q.map(([x, y]): Pt => [x + TURN_DX, y]),
+    );
+  const arc = (th: (deg: number) => number, a0: number, a1: number, n = 64) => {
+    const o: Poly = [];
+    for (let i = 0; i <= n; i++) {
+      const deg = a0 + ((a1 - a0) * i) / n,
+        t = th(deg);
+      o.push([cx + (rx + t) * Math.cos(rad(deg)), CY + (ry + t) * Math.sin(rad(deg))]);
+    }
+    return o;
+  };
+  // 一片鮑伯：蓋住後腦和頭頂，前緣停在額頭上方；髮尾是一刀乾淨的斜線，從耳下（前側長）斜到後頸（後側短）。
+  const cap = arc((deg) => 14 * (1 - ss(296, 334, deg)), 152, 334);
+  return [
+    cap.concat([
+      [cx + rx * 0.55, CY - 60],
+      [cx + rx * 0.08, CY - 10],
+      [cx + rx * 0.06, 300],
+      [cx - rx * 0.12, 324],
+    ]),
+  ];
 }
 
 interface Torso {
@@ -160,6 +236,7 @@ function torso(p: JurorLook): Torso {
 
 // ── 髮型（外輪廓；內側點落在頭裡，和頭同色，聯集就是剪影）
 function hair(p: JurorLook, h: Head): Poly[] {
+  if (h.turn) return turnedHair(p, h);
   const rx = h.rx,
     ry = h.ry,
     top = CY - ry;
@@ -562,8 +639,12 @@ function extras(p: JurorLook, h: Head, t: Torso) {
         [CX + 28, top - 24],
       ]); // 髮髻上的鉛筆
     if (a === 'pearl') {
-      H.push(ell(CX - rx + 22, 336, 9, 9, 0, 360, 16));
-      LIT.push(ell(CX - rx + 20, 334, 4, 4, 0, 360, 12));
+      // 轉頭時照解剖位置（同一隻耳朵轉向鏡頭），跟著臉進暗部，不畫受光點。
+      if (h.turn) H.push(ell(h.cx - rx * 0.32, 334, 9, 9, 0, 360, 16));
+      else {
+        H.push(ell(CX - rx + 22, 336, 9, 9, 0, 360, 16));
+        LIT.push(ell(CX - rx + 20, 334, 4, 4, 0, 360, 12));
+      }
     } // 珍珠垂在鮑伯前緣髮尾下；它是彈劾時最後一個還亮著的高光                                               // 瑞秋的珍珠：垂在鮑伯下緣、下顎外側（只此一人）
     if (a === 'highcollar')
       S.push(
@@ -734,8 +815,8 @@ export function shadowWidth(p: JurorLook, v: number) {
 /** 刻痕只有五格（0／25／50／75／100），不讓玩家用像素反推數值（第 8.4 章）。 */
 export const tick = (v: number) => Math.round(v / 25) * 25;
 
-export function shapes(p: JurorLook, pose: Pose = 'J1') {
-  const h = head(p),
+export function shapes(p: JurorLook, pose: Pose = 'J1', turn = false) {
+  const h = head(p, turn),
     t = torso(p);
   const up = (poly: Poly): Poly => poly.map(([x, y]): Pt => [x, y - (p.lift || 0)]); // lift：坐高（頸長），頭部整組上下移
   const ex = extras(p, h, t);
@@ -763,8 +844,13 @@ export function shapes(p: JurorLook, pose: Pose = 'J1') {
     edge: ex.edge.map(m),
     lit: lit.map(m),
     fill: fill.map(m),
-    glasses: glasses(p).map(up).map(m),
-    eye: m(up(ell(CX - 52, 190, 9, 5, 0, 360, 16))),
+    glasses: turn ? [] : glasses(p).map(up).map(m),
+    // 轉頭時是近窗那隻眼睛（臉轉到右邊，眼睛跟著到頭心右側）。
+    eye: m(
+      up(
+        turn ? ell(h.cx + h.rx * 0.42, 192, 8, 5, 0, 360, 16) : ell(CX - 52, 190, 9, 5, 0, 360, 16),
+      ),
+    ),
     head: h,
   };
 }
@@ -919,6 +1005,13 @@ const d = (poly: Poly, close = true) =>
  * 一張卡面的 SVG（viewBox 400×500）。影子不在這裡：影子要能 300ms 移動（--dur-shadow），
  * 由元件疊一層 HTML 遮罩（參考實作把影子畫在 SVG 裡，形狀與羽化照抄到 CSS）。
  * frame：畫「待放 AI 立繪」的虛線框。標籤的字不畫在框裡，由 Tbd 放在框外上方（設定集第 7 章 :9、第 5 章 0502）。
+ * bg：卡面底色；法庭鏡頭裡的立牌疊在機位底圖上，不畫底。
+ * rim：輪廓光的寬（卡面單位，400 寬）。卡面 56–72px 時 8 剛好；鏡頭裡照顯示寬度換算，讓畫面上是 1–1.5px（設計師 P3 裁定）。
+ * part：法庭鏡頭把立牌拆兩層——body 是剪影本體，light 是它接到的光（受光染色、輪廓光、配件、眼神光），
+ * light 那層再乘上算圖給的受光圖，被百葉窗、盧卡斯的影子擋掉的地方就沒有輪廓光（第 7 章 :166）。
+ * turn：轉頭（援引緘默權）。stretch：給算圖用的立牌貼圖，照「轉過以後的投影寬度」先橫向拉寬
+ * （1 / cos 立牌轉角），立牌在 3D 裡轉過去以後畫面上才不會變扁（機位審查 review-v1 第 2 條）。
+ * 這是貼圖的預先變形，不是姿勢：姿勢照舊用頂點 morph。輪廓光也一起拉寬，轉過去以後剛好回到原本的寬。
  */
 export function svg(
   p: JurorLook,
@@ -927,10 +1020,28 @@ export function svg(
     pose,
     frame = false,
     uid = p.id,
-  }: { v?: number; pose?: Pose; frame?: boolean; uid?: string } = {},
+    bg = true,
+    rim = 8,
+    part = 'all',
+    turn = false,
+    stretch = 1,
+    catchSize = 5,
+  }: {
+    v?: number;
+    pose?: Pose;
+    frame?: boolean;
+    uid?: string;
+    bg?: boolean;
+    rim?: number;
+    part?: 'all' | 'body' | 'light';
+    turn?: boolean;
+    stretch?: number;
+    /** 眼神光那一點的邊長（卡面單位）。鏡頭條裡照顯示寬度換算，畫面上至少 2×2 px（設計師轉頭審查）。 */
+    catchSize?: number;
+  } = {},
 ) {
   pose = pose || poseFor(v);
-  const s = shapes(p, pose),
+  const s = shapes(p, pose, turn),
     vb = band(v),
     tt = Math.min(1, Math.max(0, (vb - 35) / 50));
   const L = p.light ? LIGHT[p.light] : undefined,
@@ -956,7 +1067,7 @@ export function svg(
         ? '<rect x="185" y="380" width="215" height="120"/>'
         : '<rect x="0" y="380" width="400" height="120"/>';
   const rimFilter = (id: string, color: string, dx: number) =>
-    `<filter id="${id}" x="-5%" y="-5%" width="110%" height="110%"><feMorphology in="SourceAlpha" operator="erode" radius="8" result="er"/><feComposite in="SourceAlpha" in2="er" operator="out" result="edge"/><feOffset in="edge" dx="${dx}" result="sh"/><feComposite in="sh" in2="SourceAlpha" operator="in" result="band"/><feFlood flood-color="${color}"/><feComposite in2="band" operator="in"/></filter>`;
+    `<filter id="${id}" x="-5%" y="-5%" width="110%" height="110%"><feMorphology in="SourceAlpha" operator="erode" radius="${+rim.toFixed(2)}" result="er"/><feComposite in="SourceAlpha" in2="er" operator="out" result="edge"/><feOffset in="edge" dx="${+((dx * rim) / 8).toFixed(2)}" result="sh"/><feComposite in="sh" in2="SourceAlpha" operator="in" result="band"/><feFlood flood-color="${color}"/><feComposite in2="band" operator="in"/></filter>`;
   const extra = L?.extra;
   const notes =
     pose === 'J4' ? `<path d="M150 470h140v30h-140z" fill="var(${K})" opacity=".4"/>` : '';
@@ -971,21 +1082,26 @@ export function svg(
           `<path d="${d(q, false)}" fill="none" stroke="var(${K})" stroke-width="7" opacity=".5"/>`,
       )
       .join('');
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 500" class="juror-svg" data-pose="${pose}" aria-hidden="true" focusable="false">
+  const wide = stretch !== 1;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${+(400 * stretch).toFixed(2)} 500" class="juror-svg" data-pose="${pose}"${turn ? ' data-turn=""' : ''} aria-hidden="true" focusable="false">${wide ? `<g transform="scale(${+stretch.toFixed(4)} 1)">` : ''}
 <defs>
  <mask id="lit-${uid}"><rect width="400" height="500" fill="#000"/><g fill="#fff">${sil}</g>${unlit}</mask>
  ${rimFilter(`rim-${uid}`, hex(K), side === 'left' ? -2 : side === 'right' ? 2 : 0)}
  <clipPath id="rimclip-${uid}">${rimClip}</clipPath>
  <clipPath id="armclip-${uid}">${armClip}</clipPath>${extra ? `<clipPath id="xclip-${uid}">${rects(extra.rim)}</clipPath>${rimFilter(`xrim-${uid}`, hex(extra.k), 0)}` : ''}
 </defs>
-<rect width="400" height="500" fill="var(--cine-bg,#06080b)"/>
-<g class="silhouette" fill="${SIL}">${sil}</g>
-<rect width="400" height="500" fill="var(${K})" opacity="${L?.flat ? '.06' : '.10'}" mask="url(#lit-${uid})"/>
+${bg ? '<rect width="400" height="500" fill="var(--cine-bg,#06080b)"/>' : ''}
+${part !== 'light' ? `<g class="silhouette" fill="${SIL}">${sil}</g>` : ''}
+${
+  part !== 'body'
+    ? `<rect width="400" height="500" fill="var(${K})" opacity="${L?.flat ? '.06' : '.10'}" mask="url(#lit-${uid})"/>
 <g clip-path="url(#rimclip-${uid})"><g filter="url(#rim-${uid})" opacity="${inkOpacity(K, 0.9)}">${sil}</g></g>${extra ? `<g clip-path="url(#xclip-${uid})"><g filter="url(#xrim-${uid})" opacity="${inkOpacity(extra.k, 0.9)}">${sil}</g></g>` : ''}
 ${acc}${s.glasses.map((q) => `<path d="${d(q, false)}" fill="none" stroke="#c9ced6" stroke-width="5.7" opacity=".5"/>`).join('')}
-${pose === 'J4' || shadowPct(v) >= 90 ? '' : `<path d="${d(s.eye)}" fill="#1a1f26"/><rect x="${(s.eye[0][0] - 12).toFixed(1)}" y="${(s.eye[0][1] - 4).toFixed(1)}" width="5" height="5" fill="var(${K})" opacity="${inkOpacity(K, 0.9)}"/>`}
+${pose === 'J4' || shadowPct(v) >= 90 ? '' : `<path d="${d(s.eye)}" fill="#1a1f26"/><rect x="${(s.eye[0][0] - 12).toFixed(1)}" y="${(s.eye[0][1] - 4).toFixed(1)}" width="${+catchSize.toFixed(1)}" height="${+catchSize.toFixed(1)}" fill="var(${K})" opacity="${inkOpacity(K, 0.9)}"/>`}
 ${notes}
-${pose === 'J3' ? `<path clip-path="url(#armclip-${uid})" d="${d([morph([N[0] - 120, 436], 'J3'), morph([N[0] + 120, 436], 'J3')], false)}" stroke="var(${K})" stroke-width="9.3" opacity="${inkOpacity(K, 0.85)}" fill="none"/>` : ''}
+${pose === 'J3' ? `<path clip-path="url(#armclip-${uid})" d="${d([morph([N[0] - 120, 436], 'J3'), morph([N[0] + 120, 436], 'J3')], false)}" stroke="var(${K})" stroke-width="9.3" opacity="${inkOpacity(K, 0.85)}" fill="none"/>` : ''}`
+    : ''
+}
 ${frame ? '<rect x="14" y="14" width="372" height="472" fill="none" stroke="var(--cine-line,#2a323d)" stroke-dasharray="14 14" stroke-width="3"/>' : ''}
-</svg>`;
+${wide ? '</g>' : ''}</svg>`;
 }

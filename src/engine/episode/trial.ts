@@ -204,16 +204,20 @@ export function letPass(s: TrialScene, st: TrialState): TrialState {
   );
 }
 
-/** 異議：理由對了那句證詞從陪審團視角刪除；錯了法官耐心 −1（企劃書 6.9.5）。 */
+/**
+ * 異議：理由對了那句證詞從陪審團視角刪除；錯了法官耐心 −1（企劃書 6.9.5）。
+ * 成立時證人不回答，被異議的那個問題記成 struck（筆錄上蓋黑條，設定集 10.3）；判定照舊。
+ */
 export function object(s: TrialScene, st: TrialState, reason: Objection): TrialState {
   if (!st.window) return st;
   const q = s.witness.direct[st.i];
   if (q.objection === reason) {
+    const asked = st.log.at(-1);
+    const log = asked ? [...st.log.slice(0, -1), { ...asked, struck: true }] : st.log;
     return say(
-      { ...st, window: false, i: st.i + 1, struck: st.struck + 1, deltas: {} },
+      { ...st, log, window: false, i: st.i + 1, struck: st.struck + 1, deltas: {} },
       { who: YOU, text: `異議，${reason}。` },
       { who: JUDGE, text: q.sustained ?? '異議成立。陪審團請不要理會這個問題。' },
-      { who: s.witness.name, text: q.a, struck: true },
     );
   }
   const next = losePatience(

@@ -12,8 +12,8 @@
 要異議嗎？: Object?
 休庭: Recess
 成功彈劾: Successful impeachments
-刪除的證詞: Testimony stricken
-'{n} 句': '{n} line{n:s}'
+筆錄上的黑條: Blacked out in the transcript
+'{n} 處': '{n} passage{n:s}'
 剩餘法官耐心: Judge’s patience left
 調查花掉的工時: Hours spent investigating
 '法官耐心 {a} / {b}': 'Judge’s patience {a} / {b}'
@@ -126,6 +126,7 @@
 理論靠的論點: The theory rests on
 點一張卡比較，再按下面的「以這個理論開庭」定案。: Pick a card to compare, then press “Go to trial on this theory” below to commit.
 '生效中：{rulings}': 'In effect: {rulings}'
+'生效中：': 'In effect: '
 下次可以試: Next time
 完整帳目: Full ledger
 '（{where}）': ' ({where})'
@@ -237,6 +238,9 @@
 'record::法官': The Court
 'record::葛雷律師': Mr. Grey
 待放 AI 立繪: AI art TBD
+待放 3D 機位: 3D camera TBD
+證人席: Witness stand
+法官席: Bench
 陪審員: Jurors
 影子＝懷疑: Shadow = doubt
 陪審團（收合）: Jury (collapsed)

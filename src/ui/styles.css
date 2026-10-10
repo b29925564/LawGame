@@ -3959,6 +3959,8 @@ mark.hl::after {
   font: 900 22px/1 var(--font-doc);
   letter-spacing: 0.32em;
   margin-right: -0.32em;
+  /* 英文章面全大寫（GRANTED／DENIED／FILED），中文不受影響。 */
+  text-transform: uppercase;
 }
 .stamp i {
   font: 700 12px/1 var(--font-court);

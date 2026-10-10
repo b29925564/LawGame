@@ -1,0 +1,305 @@
+{
+  "ep1": {
+    "episode": "ep1",
+    "scene": 17,
+    "step": 0,
+    "choices": {
+      "cold-open:3": 0,
+      "cold-open:6": 1,
+      "jail-call:4": 0,
+      "take-case:11": 0,
+      "ethan-testify:2": 1
+    },
+    "cards": [
+      "ethan-accused",
+      "ethan-ride",
+      "ethan-message",
+      "indictment",
+      "watch-listed",
+      "access-full",
+      "sophie-home",
+      "ride-receipt",
+      "watch-notice",
+      "blood-report",
+      "arg-a",
+      "autopsy",
+      "watch-photo",
+      "sophie-health-app",
+      "arg-watch",
+      "heart-rate",
+      "chat-audit",
+      "arg-b",
+      "arg-c",
+      "arg-d",
+      "arrest-report",
+      "no-warning",
+      "arg-miranda",
+      "statement-excluded"
+    ],
+    "flags": ["ethan-silent"],
+    "ethics": [],
+    "scenes": {
+      "meet-ethan": {
+        "guard": 2,
+        "calms": 2,
+        "asked": ["t-friday", "t-ride", "t-message"],
+        "pressed": [],
+        "shown": [],
+        "log": [
+          {
+            "who": "伊森",
+            "text": "他們說我逃了兩天。我不是逃，我只是……不知道還能去哪。",
+            "mood": "緊",
+            "thought": false
+          },
+          {
+            "who": "盧卡斯",
+            "text": "先讓他講。",
+            "mood": "平",
+            "thought": false,
+            "mark": { "kind": "sticky", "on": "meter" }
+          },
+          {
+            "who": "盧卡斯",
+            "text": "星期五下午，沃斯找你做什麼？",
+            "mood": "平",
+            "thought": false
+          },
+          {
+            "who": "伊森",
+            "text": "他說帳上少了錢，是我拿的。星期一要叫保全把我請出去，然後報警。",
+            "mood": "緊",
+            "thought": false
+          },
+          {
+            "who": "伊森",
+            "text": "我出門的時候回頭吼了一句：「等稽核報告出來，你會後悔的。」門外有人聽到。",
+            "mood": "平",
+            "thought": false
+          },
+          { "who": "盧卡斯", "text": "那天晚上你怎麼去公司的？", "mood": "平", "thought": false },
+          {
+            "who": "伊森",
+            "text": "叫車。我沒車。司機是個中年大叔，一路上都在跟我聊天。",
+            "mood": "平",
+            "thought": false
+          },
+          { "who": "盧卡斯", "text": "幾點上車？", "mood": "平", "thought": false },
+          {
+            "who": "伊森",
+            "text": "十點半過一點……三十四？三十五？我不確定。手機被收走了，沒辦法查。",
+            "mood": "緊",
+            "thought": false
+          },
+          { "who": "盧卡斯", "text": "他傳給你的訊息，還在嗎？", "mood": "平", "thought": false },
+          {
+            "who": "伊森",
+            "text": "不見了。我在公車亭想再看一次，只剩一行「此訊息已被收回」。",
+            "mood": "緊",
+            "thought": false
+          },
+          {
+            "who": "伊森",
+            "text": "我知道，聽起來像我編的。可是那時候手錶有震，我低頭看了，那句話就在錶面上。",
+            "mood": "平",
+            "thought": false
+          }
+        ],
+        "gained": ["ethan-accused", "ethan-ride", "ethan-message"],
+        "over": false
+      },
+      "investigate": {
+        "hours": 10,
+        "timeline": [],
+        "spent": 14,
+        "marked": ["watch-listed", "access-full", "sophie-home", "autopsy", "watch-photo"],
+        "readDocs": ["doc-property", "doc-police", "doc-autopsy"],
+        "jobs": ["job-ride", "job-watch", "job-sophie"],
+        "mail": ["mail-morrow", "mail-blood", "mail-devon"],
+        "openMail": [],
+        "link": { "cards": [], "relation": null },
+        "found": ["l-called-msg", "l-watch", "l-time", "l-dead-sender", "l-alone"],
+        "badLinks": 0,
+        "linkNote": "連起來了：23:14 有人在 31 樓的桌機上收回訊息；門禁紀錄顯示那時 31 樓只剩一個人。",
+        "attempts": {
+          "q1": { "cards": ["l-called-msg"] },
+          "q2a": { "cards": ["l-watch"] },
+          "q2": { "cards": ["l-time"] },
+          "q3": { "cards": ["l-dead-sender"] },
+          "q4": { "cards": ["l-alone"] }
+        },
+        "confirmed": ["q1", "q2a", "q2", "q3", "q4"],
+        "submissions": 5,
+        "wrong": 0,
+        "report": [],
+        "feedback": {
+          "q1": "案情會議通過：這條推理成立，產生論點卡。",
+          "q2a": "案情會議通過：這條推理成立，產生論點卡。",
+          "q2": "案情會議通過：這條推理成立，產生論點卡。",
+          "q3": "案情會議通過：這條推理成立，產生論點卡。",
+          "q4": "案情會議通過：這條推理成立，產生論點卡。"
+        },
+        "motions": {
+          "m-watch": {
+            "basis": "相關性",
+            "support": ["arg-watch"],
+            "request": "核發傳票給手錶廠商",
+            "ruling": "granted",
+            "twist": null
+          },
+          "m-chat": {
+            "basis": "相關性",
+            "support": ["arg-a"],
+            "request": "核發傳票給卡爾德物流",
+            "ruling": "granted",
+            "twist": 1
+          }
+        },
+        "flags": ["whitlock-down", "hale-up"],
+        "wrapped": true,
+        "linkMiss": null
+      },
+      "pretrial": {
+        "hours": 12,
+        "timeline": [],
+        "spent": 4,
+        "marked": ["arrest-report", "no-warning"],
+        "readDocs": ["doc-arrest"],
+        "jobs": [],
+        "mail": [],
+        "openMail": [],
+        "link": { "cards": [], "relation": null },
+        "found": ["l-no-warning"],
+        "badLinks": 0,
+        "linkNote": "連起來了：報告寫「自願陳述」，錄影裡卻是警員先開口問話，從頭到尾沒有權利告知。",
+        "attempts": { "q-miranda": { "cards": ["l-no-warning"] } },
+        "confirmed": ["q-miranda"],
+        "submissions": 1,
+        "wrong": 0,
+        "report": [],
+        "feedback": { "q-miranda": "案情會議通過：這條推理成立，產生論點卡。" },
+        "motions": {
+          "m-miranda": {
+            "basis": "米蘭達警告",
+            "support": ["arg-miranda"],
+            "request": "排除該項供述",
+            "ruling": "granted",
+            "twist": null
+          }
+        },
+        "flags": [],
+        "wrapped": true,
+        "linkMiss": null
+      },
+      "depo-rachel": {
+        "left": 10,
+        "asked": ["d-heard", "d-online"],
+        "anchored": ["rachel-2250", "rachel-meeting"],
+        "gained": [],
+        "exposed": [],
+        "log": [
+          {
+            "who": "盧卡斯",
+            "text": "妳說妳聽見隔壁有人倒地。那是幾點？",
+            "mood": "平",
+            "thought": false
+          },
+          {
+            "who": "瑞秋・艾德勒",
+            "text": "十點五十分。我看了螢幕右下角的時間。",
+            "mood": "平",
+            "thought": false
+          },
+          {
+            "who": "盧卡斯",
+            "text": "妳說妳整晚都在線上會議裡，中間有離開過嗎？",
+            "mood": "平",
+            "thought": false
+          },
+          {
+            "who": "瑞秋・艾德勒",
+            "text": "沒有。二十一點到二十三點半，我一直在座位上。",
+            "mood": "平",
+            "thought": false
+          }
+        ],
+        "over": true,
+        "i": 0,
+        "wrong": 0,
+        "flags": [],
+        "slipped": []
+      },
+      "plea-morrow": {
+        "confidence": 85,
+        "rounds": 4,
+        "credit": 1,
+        "played": [],
+        "bluffed": ["b-witness"],
+        "exposed": [],
+        "trust": 2,
+        "log": [
+          {
+            "who": "凱瑟琳・莫羅",
+            "text": "我有一位目擊證人、一件帶血的外套，還有他自己跑了兩天。你有什麼？",
+            "mood": "硬",
+            "thought": false
+          },
+          {
+            "who": "盧卡斯",
+            "text": "我有人可以證明你的證人整晚不在座位上。",
+            "mood": "平",
+            "thought": false
+          },
+          {
+            "who": "凱瑟琳・莫羅",
+            "text": "清單上沒有這個人。你在虛張聲勢，而且我記住了。",
+            "mood": "硬",
+            "thought": false
+          },
+          {
+            "who": "伊森・蕭",
+            "text": "十五年。我出來的時候……你覺得我該接受嗎？",
+            "mood": "緊",
+            "thought": false
+          },
+          {
+            "who": "凱瑟琳・莫羅",
+            "text": "那就法庭見。我的條件在開庭前會回到原點。",
+            "mood": "硬",
+            "thought": false
+          }
+        ],
+        "outcome": "walk",
+        "deal": null,
+        "calls": 0,
+        "termsOk": false,
+        "flags": []
+      },
+      "theory": { "chosen": "doubt", "skipped": false },
+      "voir-dire": {
+        "left": 6,
+        "asked": [],
+        "struck": [],
+        "theirs": [],
+        "excused": [],
+        "wrong": 0,
+        "seated": [
+          "c-cop",
+          "c-dev",
+          "c-mom",
+          "c-cpa",
+          "c-student",
+          "c-nurse",
+          "c-driver",
+          "c-teacher",
+          "c-barista",
+          "c-broker",
+          "c-chef",
+          "c-clerk"
+        ],
+        "theirCause": ["c-fired"]
+      },
+      "opening": { "promises": ["doubt-called", "doubt-time"], "delivered": true }
+    }
+  }
+}

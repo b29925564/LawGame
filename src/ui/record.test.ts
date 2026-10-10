@@ -97,15 +97,26 @@ describe('筆錄排版', () => {
     expect(wrap('一'.repeat(25), measureFor(true))).toEqual(['一'.repeat(24), '一']);
   });
 
-  it('異議：回答被刪＝成立；法官駁回、證人照答＝駁回，那句黑條抽走', () => {
+  it('異議：問題蓋黑條、證人不答＝成立；法官駁回、證人照答＝駁回，問題上的黑條抽走', () => {
     const who = { lawyer: '盧卡斯', judge: '法官', witness: '瑞秋' };
+    const judge = { judge: '法官', narrator: '旁白' };
     const sustained = [
-      { who: '莫羅', text: '問' },
+      { who: '莫羅', text: '問', struck: true },
       { who: '盧卡斯', text: '異議，誘導。' },
       { who: '法官', text: '異議成立。' },
-      { who: '瑞秋', text: '答', struck: true },
     ];
     expect(rulingsOf(sustained, who)[1]).toEqual({ ruling: '成立' });
+    expect(rulingsOf(sustained, who)[0]).toEqual({});
+    // 被異議打斷的還是「問」。
+    expect(kindsOf(sustained, '瑞秋', judge)).toEqual(['q', 'say', 'say']);
+    // 舊存檔：回答印出再蓋黑。
+    const old = [
+      ...sustained.slice(0, 1).map((l) => ({ ...l, struck: false })),
+      ...sustained.slice(1),
+    ];
+    expect(rulingsOf([...old, { who: '瑞秋', text: '答', struck: true }], who)[1]).toEqual({
+      ruling: '成立',
+    });
     const overruled = [
       { who: '莫羅', text: '問' },
       { who: '盧卡斯', text: '異議，傳聞。' },
@@ -114,7 +125,9 @@ describe('筆錄排版', () => {
     ];
     const r = rulingsOf(overruled, who);
     expect(r[1]).toEqual({ ruling: '駁回' });
-    expect(r[3]).toEqual({ unbar: true });
+    expect(r[0]).toEqual({ unbar: true });
+    expect(r[3]).toEqual({});
+    expect(kindsOf(overruled, '瑞秋', judge)).toEqual(['q', 'say', 'say', 'a']);
     // 法官叫停（耐心用完）：沒有回答，只有章。
     expect(rulingsOf(overruled.slice(0, 3), who)[1]).toEqual({ ruling: '駁回' });
   });
