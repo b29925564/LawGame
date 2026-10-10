@@ -104,3 +104,49 @@ for (const lang of ['zh', 'en'] as const)
       );
       expect(heights).toEqual(Array(8).fill(44));
     });
+
+/**
+ * 關卡 2（第 13 條）：主詰問結束後，手機英文底列的三顆按鈕都在畫面裡。
+ */
+test('主詰問結束：手機英文底列不溢出', async ({ page }, info) => {
+  test.skip(info.project.name === 'desktop', '只量手機');
+  await page.addInitScript(
+    (s) => {
+      if (sessionStorage.getItem('seeded')) return;
+      sessionStorage.setItem('seeded', '1');
+      localStorage.clear();
+      localStorage.setItem('lawgame-ep-auto', s);
+      localStorage.setItem('lawgame-lang', 'en');
+      localStorage.setItem('lawgame-record-instant', '1');
+    },
+    JSON.stringify({ version: 5, savedAt: Date.now(), label: 'x', progress: save.ep1 }),
+  );
+  await page.goto('/');
+  await page
+    .getByRole('button', { name: /^Continue/ })
+    .first()
+    .click();
+  const open = page.getByRole('button', { name: /^Go to court/ });
+  await open.or(page.locator('.record')).first().waitFor();
+  if (await open.isVisible()) await open.click();
+  const cross = page.getByRole('button', { name: 'Begin cross-examination' });
+  for (let i = 0; i < 40 && !(await cross.isVisible()); i++) {
+    const none = page.getByRole('button', { name: 'No objection' });
+    if (await none.isVisible().catch(() => false)) {
+      await none.click();
+      continue;
+    }
+    await page
+      .locator('button.primary.wide')
+      .first()
+      .click({ timeout: 2000 })
+      .catch(() => {});
+    await page.waitForTimeout(400);
+  }
+  await expect(cross).toBeVisible();
+  const vw = page.viewportSize()!.width;
+  const box = (await cross.boundingBox())!;
+  expect(box.x + box.width).toBeLessThanOrEqual(vw);
+  const primary = (await page.locator('.shell-foot button.primary.wide').boundingBox())!;
+  expect(primary.height).toBeLessThan(80);
+});

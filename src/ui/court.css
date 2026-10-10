@@ -1200,6 +1200,25 @@ button.cand[aria-pressed='true'],
   outline-offset: 2px;
 }
 
+/* 席位卡不超過格子寬：1100 寬時陪審席只有 380px，6 張 72px 的卡會互相疊 7px（關卡 2 第 17 條）。 */
+.box:not(.mini) .seatc {
+  width: 100%;
+  max-width: 72px;
+  min-width: 0;
+}
+.box:not(.mini) .seatc .silcard,
+.box:not(.mini) .seatc .idphoto {
+  --w: 100%;
+}
+.box:not(.mini) .seatc .slot0 {
+  width: 100%;
+}
+.box:not(.mini) .seatc .nm2 {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: clip;
+}
+
 /* 人物卡：檔案照、名字、問過的題目；按鈕貼在卡片底部。 */
 .panel.prof {
   display: grid;
@@ -3318,6 +3337,25 @@ html[lang='en'] .stamp.rec-stamp b {
 @media (max-width: 1023px) and (prefers-reduced-motion: reduce) {
   .court-cam.insert {
     transition: opacity var(--dur-rm) linear;
+  }
+}
+/*
+ * 手機庭上底列有三顆按鈕時（證據、主按鈕、開始交互詰問）一排放不下：英文「Begin cross-examination」被切到畫面外、
+ * 黃鈕擠成四行（關卡 2 第 13 條）。改兩排：主按鈕整排在上，證據和次要按鈕各半在下。
+ */
+@media (max-width: 1023px) {
+  .shell:has(> .shell-tabs > .record) > .shell-foot:has(> button:nth-of-type(3)) {
+    flex-wrap: wrap;
+  }
+  .shell:has(> .shell-tabs > .record) > .shell-foot:has(> button:nth-of-type(3)) > .wide {
+    flex: 1 1 100%;
+    order: -1;
+  }
+  .shell:has(> .shell-tabs > .record)
+    > .shell-foot:has(> button:nth-of-type(3))
+    > button:not(.wide) {
+    flex: 1 1 0;
+    min-width: 0;
   }
 }
 /* 異議那一拍裡輸入鎖住：主按鈕藏起來，位置留著（版面不跳）。 */

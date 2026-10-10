@@ -303,8 +303,10 @@ export function kindsOf(
     const next = log[i + 1];
     if (
       l.who !== judge &&
+      !l.text?.startsWith('異議') &&
       next &&
       next.who !== l.who &&
+      next.who !== judge &&
       next.text?.startsWith('異議') &&
       log[i + 2]?.who === judge
     )

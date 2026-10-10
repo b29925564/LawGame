@@ -109,6 +109,9 @@ describe('筆錄排版', () => {
     expect(rulingsOf(sustained, who)[0]).toEqual({});
     // 被異議打斷的還是「問」。
     expect(kindsOf(sustained, '瑞秋', judge)).toEqual(['q', 'say', 'say']);
+    // 法官裁定後又說了一句：辯方的異議仍然是異議，不是「問」。
+    const twoLines = [...sustained, { who: '法官', text: '請換個問法。' }];
+    expect(kindsOf(twoLines, '瑞秋', judge)).toEqual(['q', 'say', 'say', 'say']);
     // 舊存檔：回答印出再蓋黑。
     const old = [
       ...sustained.slice(0, 1).map((l) => ({ ...l, struck: false })),
