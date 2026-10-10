@@ -13,6 +13,7 @@ import {
 import { cardIn, provenanceOf } from '../engine/bates';
 import { play } from '../engine/sound';
 import { t as tr, useT } from '../i18n';
+import { straight } from '../i18n/curly';
 import { dossierOf, EvidenceBag, EvidenceZoom, PhotoLog, PrintPlate } from './Dossier';
 import { hasPrint, Print } from './prints';
 import { reducedMotion } from './a11y';
@@ -83,11 +84,14 @@ export function EvidenceDrawer({ note, noTimeline }: { note?: string; noTimeline
   const placed = scene ? deskState(progress, scene).timeline : [];
   const rows = placed.map((id) => items.find((i) => i.id === id)).filter((i) => !!i);
   // 搜尋同時比對原文和目前語言的顯示字，英文模式下打英文也找得到。
+  // 畫面上的英文是彎引號：兩邊都換回直引號再比，玩家打直的或彎的都找得到（#265 審查）。
+  const ql = straight(q).toLowerCase();
   const has = (s: string | undefined) =>
-    !!s && (s.includes(q) || t(s, scope).toLowerCase().includes(q.toLowerCase()));
+    !!s && (s.includes(q) || straight(t(s, scope)).toLowerCase().includes(ql));
   const hit = items.filter((i) => showKind(i) && (!q || has(i.name) || has(i.text) || has(i.kind)));
   const terms = glossary.filter(
-    (g) => !q || has(g.term) || has(g.text) || g.en?.toLowerCase().includes(q.toLowerCase()),
+    (g) =>
+      !q || has(g.term) || has(g.text) || (!!g.en && straight(g.en).toLowerCase().includes(ql)),
   );
   return (
     <>

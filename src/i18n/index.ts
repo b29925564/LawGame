@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { curly } from './curly';
 
 /**
  * 雙語：中文是原文，也是引擎和存檔裡唯一的字串；英文只在顯示時查表。
@@ -166,8 +167,9 @@ export function tIn(lang: Lang, zh: string, arg?: string | Vars): string {
 }
 
 function show(lang: Lang, zh: string, arg?: string | Vars): string {
-  if (typeof arg === 'object') return fill(lang === 'en' ? (catalog[zh] ?? zh) : zh, arg);
-  return lang === 'en' ? translate(zh, arg) : zh;
+  if (lang !== 'en') return typeof arg === 'object' ? fill(zh, arg) : zh;
+  // 英文原始檔是直引號，顯示時換成彎引號（curly.ts）；等寬字體的地方自己用 straight() 換回來。
+  return curly(typeof arg === 'object' ? fill(catalog[zh] ?? zh, arg) : translate(zh, arg));
 }
 
 export function useT() {

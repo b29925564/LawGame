@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { episodeOf, useEpisode } from '../engine/game';
 import { useLang, useT } from '../i18n';
+import { straight } from '../i18n/curly';
 import { prose } from './prose';
 import { reducedMotion } from './a11y';
 import { claimHand } from './hand';
@@ -72,7 +73,8 @@ function useSlate(place: Place | undefined): [string, string] {
   ]
     .filter(Boolean)
     .join(en ? '  ' : '\u3000');
-  return [where, right];
+  // 場記是等寬字體（JetBrains Mono）的打字稿：引號與撇號維持直的（i18n/curly.ts）。
+  return [straight(where), straight(right)];
 }
 
 /**

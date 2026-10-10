@@ -2,6 +2,7 @@ import * as branch from '../engine/episode/branch';
 import { branchContext, episodeOf } from '../engine/game';
 import type { Progress } from '../engine/save';
 import { useT } from '../i18n';
+import { straight } from '../i18n/curly';
 import { useScope } from './lang';
 
 /**
@@ -42,7 +43,7 @@ export function EffectLines({ items }: { items: ReturnType<typeof effectsIf> }) 
       {items.flatMap((e, i) => {
         const pre = e.theoryNames.length
           ? t('若以「{names}」開庭：', {
-              names: e.theoryNames.map((n) => t(n, scope)).join(t('」或「')),
+              names: e.theoryNames.map((n) => t(n, scope)).join(straight(t('」或「'))),
             })
           : '';
         const lines: string[] = [];

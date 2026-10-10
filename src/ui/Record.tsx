@@ -13,6 +13,7 @@ import { batesAt } from '../engine/bates';
 import { episodeOf } from '../engine/game';
 import type { Progress } from '../engine/save';
 import { preload, tIn, useCatalog, useLang, useT, type Lang } from '../i18n';
+import { curly, straight } from '../i18n/curly';
 import { useScope } from './lang';
 import {
   CJK_PUNCT,
@@ -65,10 +66,11 @@ export function useCourtEntries(
                 ? `${name.toUpperCase()}:`
                 : `${name}：`
               : '';
-      const text = t(l.text, scope);
+      // 筆錄是等寬字體（Courier Prime）的打字稿：引號維持直的（i18n/curly.ts）。
+      const text = straight(t(l.text, scope));
       // 旁白寫進筆錄是括號裡的說明；本來就有括號的不再包一層。
       const note = kind === 'note' && !/^[（(]/.test(text);
-      return { tag, text: note ? t('（{text}）', { text }) : text };
+      return { tag, text: note ? straight(t('（{text}）', { text })) : text };
     };
     const other: Lang = lang === 'zh' ? 'en' : 'zh';
     return log.map((l, i) => {
@@ -398,7 +400,8 @@ export function CourtRecord({
     const cue = (e: RecordEntry, i: number): Cue => ({
       key: `${i}`,
       who: e.who ?? '',
-      text: e.text,
+      // 字幕是比例字體（UI 字），引號換回彎的；筆錄本身是打字稿，維持直的。
+      text: zh ? e.text : curly(e.text),
       redact: e.redact,
       at: at(i),
     });
