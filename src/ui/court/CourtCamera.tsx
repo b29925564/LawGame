@@ -1,5 +1,7 @@
 import { useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type Ref } from 'react';
 import { useT } from '../../i18n';
+import { useScope } from '../lang';
+import type { Cue } from '../record';
 import { castLook } from '../jury/cast';
 import { svg } from '../jury/silhouette';
 
@@ -159,6 +161,7 @@ export function CourtCamera({
   scene,
   mode,
   open = true,
+  cues = [],
   ref,
 }: {
   shot: Shot;
@@ -171,6 +174,8 @@ export function CourtCamera({
   mode: 'strip' | 'insert';
   /** 手機插入的鏡頭只在招牌時刻打開。 */
   open?: boolean;
+  /** 字幕列（設定集 10.1）：鏡頭裡的人說的話，由筆錄交出來。 */
+  cues?: Cue[];
   /** 手機：筆錄要知道鏡頭蓋住它多少（最新那一行捲到鏡頭上面）。 */
   ref?: Ref<HTMLDivElement>;
 }) {
@@ -229,7 +234,41 @@ export function CourtCamera({
           frameW={width}
         />
         <div className="cam-black" />
+        <Subtitles cues={cues} />
       </div>
+    </div>
+  );
+}
+
+/**
+ * 字幕列（設定集 10.1、RD-ART-1001）：鏡頭層上的介面，永遠不被調色、不被一刀黑蓋掉。
+ * 說話者名 --cine-muted、台詞 Noto Sans TC 500；底框 rgb(6 8 11 / 72%)、6px 圓角、雙層文字陰影。
+ * 一批裡的每句疊在同一格：各自在 --at 出現、在下一句的 --at 收掉，時間跟筆錄同一張節拍表，不另開計時器。
+ * 被蓋掉的話（異議成立、自紀錄刪除）只剩一條黑條，條裡寫原因（第 1 章「默」：黑條只在字幕列與筆錄）。
+ */
+function Subtitles({ cues }: { cues: Cue[] }) {
+  const t = useT();
+  const scope = useScope();
+  if (!cues.length) return null;
+  return (
+    <div className="cam-subs">
+      {cues.map((c, i) => (
+        <p
+          key={c.key}
+          className="cam-sub"
+          style={{ '--at': c.at, '--next': cues[i + 1]?.at } as CSSProperties}
+          data-last={i === cues.length - 1 || undefined}
+        >
+          <span className="who">{t(c.who, scope)}</span>
+          {c.redact ? (
+            <span className="sub-bar">
+              <small>{t(c.redact)}</small>
+            </span>
+          ) : (
+            <span className="tx">{c.text}</span>
+          )}
+        </p>
+      ))}
     </div>
   );
 }

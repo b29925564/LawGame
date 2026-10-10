@@ -27,6 +27,8 @@ export type Ruling = '成立' | '駁回';
 
 export interface RecordEntry {
   kind: RecordKind;
+  /** 說話的人（劇本裡的名字，未翻譯）。 */
+  who?: string;
   /** 第一行前面的標記：「問」「答」或「法官：」，已經翻譯好。 */
   tag: string;
   text: string;
@@ -40,6 +42,18 @@ export interface RecordEntry {
    * 劇本兩種語言都說「第 42 頁第 7 行」），所以每句佔的行數取兩版比較多的那一版，短的那版後面留空行。
    */
   twin?: { tag: string; text: string };
+}
+
+/**
+ * 字幕列的一句（設定集 10.1）：鏡頭裡的人說的話，跟筆錄同一個時間點出現。
+ * at 是 CSS 時間（權杖算式），從這一批話開始播算起。
+ */
+export interface Cue {
+  key: string;
+  who: string;
+  text: string;
+  redact?: Redaction;
+  at: string;
 }
 
 export interface RecordRow {
