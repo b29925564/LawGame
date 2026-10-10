@@ -28,18 +28,21 @@ export function SettingsPanel() {
   return (
     <div className="stack settings">
       <LangSwitch />
-      <label>
+      <label className="scale">
         {t('字級')}
-        <input
-          type="range"
-          min="0.9"
-          max="1.5"
-          step="0.1"
-          value={textScale}
-          aria-valuetext={`${Math.round(textScale * 100)}%`}
-          style={fill(textScale, 0.9, 1.5)}
-          onChange={(e) => set({ textScale: Number(e.target.value) })}
-        />
+        <span className="scale-row">
+          <input
+            type="range"
+            min="0.9"
+            max="1.5"
+            step="0.1"
+            value={textScale}
+            aria-valuetext={`${Math.round(textScale * 100)}%`}
+            style={fill(textScale, 0.9, 1.5)}
+            onChange={(e) => set({ textScale: Number(e.target.value) })}
+          />
+          <output>{Math.round(textScale * 100)}%</output>
+        </span>
       </label>
       <label>
         {t('異議窗')}

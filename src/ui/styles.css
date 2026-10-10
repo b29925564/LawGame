@@ -975,6 +975,18 @@ details summary {
 .settings input[type='range'] {
   min-height: 44px;
 }
+/* 字級：滑桿右邊看得見現在的值，和音量那幾條同一種數字（設計師 #275）。 */
+.settings .scale-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 3.5em;
+  column-gap: 10px;
+  align-items: center;
+}
+.settings .scale-row output {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
 /* 四個音量：名稱、滑桿、數字排一列，數字對齊。 */
 .settings .volumes {
   border: 0;
@@ -6104,23 +6116,26 @@ button.found:hover:not(:disabled) {
 .depo-tag {
   text-align: center;
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 14px;
   letter-spacing: 0.04em;
   padding: 2px 6px;
   border-radius: 3px;
   border: 1px solid var(--border-strong);
-  color: var(--muted);
+  color: var(--text);
   white-space: nowrap;
 }
-.depo-tag.blocked {
-  color: var(--good);
-  border-color: color-mix(in srgb, var(--good) 50%, var(--border));
-}
+/* 答錯不用紅、答對不用綠（紅綠只給成立和有罪傾向）：出了錯的標籤是鉛筆寫在便條紙上，
+   和證據板連錯時的鉛筆註記同一套（.board-note）。 */
 .depo-tag.waived,
 .depo-tag.baseless,
 .depo-tag.wrong {
-  color: var(--bad);
-  border-color: color-mix(in srgb, var(--bad) 50%, var(--border));
+  border: 1px solid var(--paper-rule);
+  border-radius: 0;
+  background: var(--note);
+  color: var(--pencil);
+  font-family: var(--font-hand);
+  font-weight: 400;
+  letter-spacing: 0;
 }
 @media (max-width: 520px) {
   .commit-bar {

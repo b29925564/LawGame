@@ -56,6 +56,8 @@ for (const lang of ['zh', 'en'] as const)
     const tab0 = await px(page, '.menu-panel [role=tab]');
     await slider.fill('1.5');
     await expect(slider).toHaveAttribute('aria-valuetext', '150%');
+    // 滑桿右邊看得見現在的值，和音量那幾條一樣。
+    await expect(page.locator('.settings .scale-row output')).toHaveText('150%');
     // 開關的字比下面那行說明大。
     const toggle = await px(page, '.settings .toggle:has(small)');
     const small = await px(page, '.settings .toggle small');
