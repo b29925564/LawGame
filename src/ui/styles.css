@@ -3286,6 +3286,10 @@ fieldset.relations.compact {
 .subtitles li.own strong {
   color: var(--hl);
 }
+/* 冷開場零黃（設定集 11.5）：自己那句的說話人改用亮字，仍和對方的灰字分得開。 */
+[data-hand='coldopen'] .subtitles li.own strong {
+  color: var(--cine-text);
+}
 .talk .replies button,
 .talk .phone-next {
   background: transparent;
@@ -3847,10 +3851,19 @@ fieldset.relations.compact {
   background: none;
 }
 [data-hand='slate'] button.primary,
+[data-hand='coldopen'] button.primary,
 [data-hand='sync'] button.primary {
   background: transparent;
   color: var(--text);
   border: 1px solid var(--border-strong);
+}
+/* 滑鼠停在按鈕上（剛按完上一頁，游標還在原處）也不能把黃叫回來。 */
+[data-hand='slate'] button.primary:hover:not(:disabled),
+[data-hand='coldopen'] button.primary:hover:not(:disabled),
+[data-hand='sync'] button.primary:hover:not(:disabled) {
+  background: var(--surface-2);
+  filter: none;
+  border-color: var(--border-strong);
 }
 /* 字卡開始淡出時黃還給主按鈕：按鈕本來就有 --dur-ui（180ms，和字卡淡出一樣長）的顏色轉場，黃跟著淡進來；
    曲線也和字卡淡出一樣用線性，兩邊對著交換，黃不會先跳出來。減少動態時直接換（設計師 r8）。 */

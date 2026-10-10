@@ -34,8 +34,8 @@ async function load(page: Page, scene: number, step: number, scheme: 'dark' | 'l
     .click();
 }
 
-// 第二道關卡第 4 條：冷開場刷員工證那一頁，黃只有「感應員工證」一顆；感應器是場景裡的東西，不是玩家的手。
-test('冷開場刷員工證：感應器不是黃的，主按鈕才是', async ({ page }) => {
+// 第二道關卡第 4 條：冷開場刷員工證那一頁，感應器是場景裡的東西，不是黃的；主按鈕也退成框線（整段零黃見下一條）。
+test('冷開場刷員工證：感應器不是黃的', async ({ page }) => {
   await load(page, 0, 8);
   const reader = page.locator('.reader');
   await expect(reader).toBeVisible();
@@ -46,6 +46,45 @@ test('冷開場刷員工證：感應器不是黃的，主按鈕才是', async ({
   // 光暈也不是黃的。
   const halo = await reader.evaluate((e) => getComputedStyle(e).boxShadow);
   expect(halo).not.toContain(yellow);
+});
+
+// 設定集 11.5：冷開場三格不出現黃，第一道黃留給片頭。從第一格走到冷開場結束，每一格都量。
+test('冷開場：叫車、感應員工證、31 樓門口，整段沒有黃', async ({ page }) => {
+  await load(page, 0, 0);
+  const seen = new Set<string>();
+  for (let i = 0; i < 60; i++) {
+    const beat = page.locator('.place-beat');
+    if (await beat.count()) await beat.click();
+    if (!(await page.locator('.phone-stage, .cine').count())) break;
+    // 游標停在主按鈕上（滑鼠剛按完上一頁）也要量。
+    const primary = page.locator('.phone-stage button.primary');
+    if (await primary.count()) await primary.hover();
+    const hit = await page.evaluate(() => {
+      const probe = document.createElement('i');
+      probe.style.color = 'var(--hl)';
+      document.body.append(probe);
+      const hl = getComputedStyle(probe).color;
+      probe.remove();
+      const out: string[] = [];
+      for (const e of document.querySelectorAll('.phone-stage *, .cine *')) {
+        const c = getComputedStyle(e);
+        if ([c.backgroundColor, c.color, c.borderTopColor].includes(hl))
+          out.push(`${e.tagName}.${(e as HTMLElement).className}`);
+      }
+      return out;
+    });
+    expect(hit).toEqual([]);
+    for (const k of ['ride', 'badge', 'door'])
+      if (await page.locator(`.phone-body.${k}`).count()) seen.add(k);
+    const next = page
+      .locator('.phone-stage button, .cine button')
+      .filter({ hasNotText: /^$/ })
+      .last();
+    if (!(await next.count()) || !(await next.isVisible())) break;
+    await next.click();
+    await page.waitForTimeout(120);
+  }
+  expect([...seen].sort()).toEqual(['badge', 'door', 'ride']);
 });
 
 // 第二道關卡第 5 條：法典每一條的「遊戲裡」不是黃的（一頁有好幾條）。
