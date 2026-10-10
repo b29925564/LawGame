@@ -9,6 +9,7 @@ import {
 import { excerpt, type Excerpt } from '../engine/episode/defense';
 import type { DefenseScene, Episode } from '../engine/episode/schema';
 import { preload, tIn, useCatalog, useLang, useT, type Lang } from '../i18n';
+import { straight } from '../i18n/curly';
 import { reducedMotion } from './a11y';
 import { IdPhoto } from './IdPhoto';
 import { useScope } from './lang';
@@ -49,7 +50,8 @@ function useStrip(ex: Excerpt | null) {
     const other: Lang = zh ? 'en' : 'zh';
     const say = (who: 'q' | 'a', text: string, in_: Lang) => ({
       tag: tIn(in_, who === 'q' ? '問' : '答', 'record'),
-      text: tIn(in_, text, scope),
+      // 筆錄元件是 Courier Prime 的打字稿：引號維持直的。
+      text: straight(tIn(in_, text, scope)),
     });
     const entries: RecordEntry[] = ex.segs.map((g) => ({
       kind: g.who,
