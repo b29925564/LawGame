@@ -21,6 +21,10 @@
 
 # Dialogue
 選擇: Choose
+來電: Incoming call
+本通話將被錄音: This call will be recorded
+通話中: In call
+通話結束: Call ended
 
 # Interview
 提問: Ask
@@ -61,6 +65,7 @@
 （已亮出）: (revealed)
 
 # Deposition
+證詞錄取錄影: Deposition video
 開始錄取: Begin deposition
 錄取結束: Deposition over
 每一題的結果: Result of each question
