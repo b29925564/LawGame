@@ -426,6 +426,7 @@ scenes:
     id: firm-morning
     act: 第一幕
     place: 惠特洛克・海爾　大廳　週一 08:00
+    rig: ep1-firm-lobby-mon
     steps:
       - do: say
         who: 旁白
@@ -478,6 +479,7 @@ scenes:
     id: jail-call
     act: 第一幕
     place: 盧卡斯的辦公室　週一 09:40
+    rig: ep1-lucas-office-mon
     steps:
       - do: say
         who: 語音
@@ -627,6 +629,7 @@ scenes:
     id: take-case
     act: 第一幕
     place: 海爾的辦公室　週一 15:20
+    rig: ep1-hale-office-mon
     steps:
       - do: say
         who: 盧卡斯
@@ -1096,6 +1099,7 @@ scenes:
                   voice: 'off'
             - text: 我出庭答辯。
               place: 惠特洛克・海爾　走廊　週二 19:00
+              rig: ep1-firm-corridor-tue
               gives: [chat-audit]
               flags: [whitlock-down, hale-up]
               then:
@@ -1224,6 +1228,7 @@ scenes:
     id: depo-rachel
     act: 第三幕
     place: 惠特洛克・海爾　會議室 B　週五 10:00
+    rig: ep1-conf-b-fri
     video: { bates: WH-V-000412, timecode: '00:47:12;08' }
     budget: 12
     witness:
@@ -1323,6 +1328,7 @@ scenes:
     id: plea-morrow
     act: 第三幕
     place: 地方檢察官辦公室　四樓　週五 15:30
+    rig: ep1-da-office-fri
     opponent:
       name: 凱瑟琳・莫羅
       role: 地方助理檢察官
@@ -1431,6 +1437,7 @@ scenes:
     id: ethan-testify
     act: 第三幕
     place: 看守所　會見室　週日 16:30
+    rig: ep1-jail-visit-sun
     steps:
       - do: say
         who: 伊森・蕭
@@ -1459,6 +1466,7 @@ scenes:
     id: theory
     act: 第三幕
     place: 惠特洛克・海爾　會議室 A　週日 22:40
+    rig: ep1-conf-a-sun-night
     intro:
       - who: 馬庫斯・海爾
         text: 明天開庭。你要告訴陪審團一個故事，一個就好。故事要靠你手上的論點撐起來。
@@ -1512,6 +1520,7 @@ scenes:
     id: act4
     act: 第四幕
     title: 第四幕　庭審　第一天
+    rig: court-d1-am
     lines:
       - 卡爾德郡高等法院　第三法庭
       - 先選出十二位陪審員，接著是開場陳述，然後檢方傳喚第一位證人。
@@ -1528,6 +1537,7 @@ scenes:
     id: voir-dire
     act: 第四幕
     place: 卡爾德郡高等法院　第三法庭
+    rig: court-d1-am
     questions: 6
     peremptories: 3
     seats: 12
@@ -1799,6 +1809,7 @@ scenes:
     id: opening
     act: 第四幕
     place: 卡爾德郡高等法院　第三法庭
+    rig: court-d1-am
     picks: 3
     intro:
       - who: 旁白
@@ -1962,6 +1973,7 @@ scenes:
     id: day2
     act: 第四幕
     title: 第四幕　庭審　第二天
+    rig: court-d2-pm
     lines:
       - 緩刑五年。伊森在看守所聽完莫羅的條件，只說了一句：「我沒有做。」
       - 檢方先傳喚死者的執行助理蘇菲・馬丁內斯，用她建立動機。
@@ -2308,6 +2320,7 @@ scenes:
     id: day3
     act: 第四幕
     title: 第四幕　庭審　第三天
+    rig: court-d3-ov
     lines:
       - 檢方舉證完畢。盧卡斯站起來：「辯方聲請無罪判決。」法官：「駁回。辯方傳喚證人。」
       - 今天輪到辯方傳喚證人，然後是結辯。
@@ -2602,6 +2615,7 @@ scenes:
     id: closing
     act: 第四幕
     place: 卡爾德郡高等法院　第三法庭
+    rig: court-d3-ov
     picks: 3
     threshold: 70
     intro:
@@ -2698,6 +2712,7 @@ scenes:
     when:
       outcome: [dismissed]
     place: 卡爾德郡高等法院　第三法庭外走廊　隔天 09:20
+    rig: ep1-court3-corridor-next
     steps:
       - do: say
         who: 旁白
@@ -2735,6 +2750,7 @@ scenes:
       outcome: [deal]
       deal: [o-murder2]
     place: 卡爾德郡高等法院　量刑庭　週一 10:00
+    rig: ep1-sentencing-mon
     steps:
       - do: say
         who: 旁白
@@ -2748,6 +2764,7 @@ scenes:
       outcome: [deal]
       deal: [o-manslaughter]
     place: 卡爾德郡高等法院　量刑庭　週一 10:00
+    rig: ep1-sentencing-mon
     steps:
       - do: say
         who: 旁白
@@ -2761,6 +2778,7 @@ scenes:
       outcome: [deal]
       deal: [o-negligent]
     place: 卡爾德郡高等法院　量刑庭　週一 10:00
+    rig: ep1-sentencing-mon
     steps:
       - do: say
         who: 旁白
@@ -2774,6 +2792,7 @@ scenes:
       outcome: [deal]
       deal: [o-probation]
     place: 卡爾德郡高等法院　量刑庭　週一 10:00
+    rig: ep1-sentencing-mon
     steps:
       - do: say
         who: 旁白
@@ -2788,6 +2807,7 @@ scenes:
       outcome: [deal]
       deal: [o-murder2, o-manslaughter, o-negligent]
     place: 卡爾德郡高等法院　羈押室門口　週一 10:20
+    rig: ep1-holding-door-mon
     steps:
       - do: say
         who: 旁白
@@ -2812,6 +2832,7 @@ scenes:
       outcome: [deal]
       deal: [o-probation]
     place: 卡爾德郡高等法院　台階　週一 11:20
+    rig: ep1-court-steps-mon
     steps:
       - do: say
         who: 旁白
@@ -2836,6 +2857,7 @@ scenes:
       verdict: [無罪, 有罪, 陪審團僵局]
       notFlags: [whitlock-up]
     place: 惠特洛克・海爾　會議室　週四 15:00
+    rig: ep1-conf-a-thu
     steps:
       - do: say
         who: 馬庫斯・海爾
@@ -2862,6 +2884,7 @@ scenes:
       outcome: [dismissed]
       notFlags: [whitlock-up]
     place: 惠特洛克・海爾　會議室　週四 15:00
+    rig: ep1-conf-a-thu
     steps:
       - do: say
         who: 馬庫斯・海爾
@@ -2887,6 +2910,7 @@ scenes:
     when:
       flags: [whitlock-up]
     place: 惠特洛克・海爾　會議室　週四 15:00
+    rig: ep1-conf-a-thu
     steps:
       - do: say
         who: 馬庫斯・海爾
@@ -2913,6 +2937,7 @@ scenes:
       outcome: [deal]
       notFlags: [whitlock-up]
     place: 惠特洛克・海爾　會議室　週四 15:00
+    rig: ep1-conf-a-thu
     steps:
       - do: say
         who: 馬庫斯・海爾
@@ -2938,6 +2963,7 @@ scenes:
     when:
       theory: [sophie]
     place: 盧卡斯的辦公室　影印機旁邊　週四 20:40
+    rig: ep1-lucas-office-thu-night
     steps:
       - do: say
         who: 潔德
@@ -2949,6 +2975,7 @@ scenes:
     act: 尾聲
     epilogue: true
     place: 盧卡斯的辦公室　影印機旁邊　週四 20:40
+    rig: ep1-lucas-office-thu-night
     steps:
       - do: say
         who: 旁白
@@ -2999,6 +3026,7 @@ scenes:
       theory: [sophie]
       verdict: [無罪]
     place: 盧卡斯的辦公室　一週後 08:15
+    rig: ep1-lucas-office-week1
     steps:
       - do: say
         who: 旁白
@@ -3022,6 +3050,7 @@ scenes:
       theory: [sophie]
       verdict: [有罪, 陪審團僵局]
     place: 盧卡斯的辦公室　一週後 08:15
+    rig: ep1-lucas-office-week1
     steps:
       - do: say
         who: 旁白
@@ -3045,6 +3074,7 @@ scenes:
       theory: [sophie]
       cards: [arg-i]
     place: 盧卡斯的辦公室　一週後 08:15
+    rig: ep1-lucas-office-week1
     steps:
       - do: say
         who: 潔德
@@ -3061,6 +3091,7 @@ scenes:
     when:
       verdict: [有罪]
     place: 盧卡斯的辦公室　兩週後 09:10
+    rig: ep1-lucas-office-week2
     steps:
       - do: say
         who: 旁白
@@ -3082,6 +3113,7 @@ scenes:
     act: 尾聲
     epilogue: true
     place: 盧卡斯的公寓　23:52
+    rig: ep1-lucas-apartment-night
     call: { caller: 州立監獄　受刑人付費電話, duration: '00:47' }
     steps:
       - do: say

@@ -16,3 +16,147 @@ court-verdict:
   label: 判決
   time: '16:40'
   kelvin: 3600
+# 法庭以外：每場戲用 rig: 指到這裡（設定集第 10 章 :108、第 11 章 :74；設計師 2026-10-10）。值照日照表、第 5 章場景光表與 P4-8 各場景的審查檔，
+# 和算圖 manifest 的 card_kelvin 同一個值。label、time 要等於地點裡寫的日子與時刻（rigs.test.ts 會擋）。
+# 盧卡斯的辦公室有窗（使用者 2026-10-10 定：港灣側朝西南 225°），白天三處是窗外天光 --k-daylight 5600（日照表第 21、30、31 行：
+# 西南窗上午沒有直射，只有天光）。6500 是螢幕和手機的色溫，不用在房間。
+# 大廳晨光（第 5 章場景光表）。
+ep1-firm-lobby-mon:
+  label: 週一
+  time: '08:00'
+  kelvin: 5600
+# 盧卡斯的辦公室上午，西南窗只有天光（見上面）。
+ep1-lucas-office-mon:
+  label: 週一
+  time: '09:40'
+  kelvin: 5600
+# 海爾的辦公室窗光。
+ep1-hale-office-mon:
+  label: 週一
+  time: '15:20'
+  kelvin: 5600
+# 答辯庭當晚的事務所走廊（第 3 章第 12 格）：燈管，S2 第 12 格字卡。
+ep1-firm-corridor-tue:
+  label: 週二
+  time: '19:00'
+  kelvin: 4100
+# 會議室 B 錄取：柔光框（S1 B 字卡）。
+ep1-conf-b-fri:
+  label: 週五
+  time: '10:00'
+  kelvin: 5000
+# 檢察署窗光（第 5 章場景光表）。
+ep1-da-office-fri:
+  label: 週五
+  time: '15:30'
+  kelvin: 7000
+# 看守所螢光燈。
+ep1-jail-visit-sun:
+  label: 週日
+  time: '16:30'
+  kelvin: 4100
+# 第 3 章第 16 格「選擇案件理論」：深夜，頂燈全關，只剩一盞檯燈 --k-tungsten，主補 8:1（設計師 10-10 裁定；日照表第 24 行的「待定」就此解決）。
+ep1-conf-a-sun-night:
+  label: 週日
+  time: '22:40'
+  kelvin: 2700
+# 法院走廊燈管。
+ep1-court3-corridor-next:
+  label: 隔天
+  time: '09:20'
+  kelvin: 4100
+# 量刑庭：同一間法庭的 court-d1-am 值（第 4 章 :135），時刻照劇本。
+ep1-sentencing-mon:
+  label: 週一
+  time: '10:00'
+  kelvin: 4100
+# 羈押室門口：燈管為主（第 3 章 :311；羈押室門口計畫 v1.1）。
+ep1-holding-door-mon:
+  label: 週一
+  time: '10:20'
+  kelvin: 4100
+# 法院台階上午太陽（日照表第 25 行）。
+ep1-court-steps-mon:
+  label: 週一
+  time: '11:20'
+  kelvin: 5600
+# 沒寫字母＝會議室 A：下午主光是頂上的燈管（S1 審查 v1 第 1 件）。
+ep1-conf-a-thu:
+  label: 週四
+  time: '15:00'
+  kelvin: 4100
+# 第 3 章第 27 格「尾聲：牛皮紙信封」：夜，檯燈 --k-tungsten，8:1。「影印機旁邊」是辦公室的位置（ep1 羅根「影印機旁邊那間」），不是影印區（設計師 10-10 裁定）。
+ep1-lucas-office-thu-night:
+  label: 週四
+  time: '20:40'
+  kelvin: 2700
+# 盧卡斯的辦公室上午，西南窗只有天光（見上面）。
+ep1-lucas-office-week1:
+  label: 一週後
+  time: '08:15'
+  kelvin: 5600
+# 盧卡斯的辦公室上午，西南窗只有天光（見上面）。
+ep1-lucas-office-week2:
+  label: 兩週後
+  time: '09:10'
+  kelvin: 5600
+# 盧卡斯的公寓，入夜檯燈。
+ep1-lucas-apartment-night:
+  label: ''
+  time: '23:52'
+  kelvin: 2700
+# 惠特洛克 09:00 日光（日照表、工作單 3.5）。
+ep2-whitlock-office-mon:
+  label: 週一
+  time: '09:00'
+  kelvin: 5600
+# 事務所走廊燈管（S2）。
+ep2-firm-corridor-mon:
+  label: 週一
+  time: '09:40'
+  kelvin: 4100
+# 會議室 C 上午側面天光（S1 C 字卡）。
+ep2-conf-c-tue:
+  label: 週二
+  time: '10:00'
+  kelvin: 5600
+# 奧卡福事務所 14:00 天光，4800K 表示下午（S5 字卡）。
+ep2-okafor-wed:
+  label: 週三
+  time: '14:00'
+  kelvin: 4800
+# 調解室陰天高窗（S4 字卡）。
+ep2-mediation-thu:
+  label: 週四
+  time: '10:00'
+  kelvin: 6500
+# 會議室 A 下午燈管（S1 A）。
+ep2-conf-a-mon:
+  label: 週一
+  time: '15:00'
+  kelvin: 4100
+# 法院走廊燈管。
+ep2-mediation-corridor-thu:
+  label: 週四
+  time: '12:40'
+  kelvin: 4100
+# 法院走廊燈管。
+ep2-court-5f-corridor-thu:
+  label: 週四
+  time: '17:05'
+  kelvin: 4100
+# 四十二樓是惠特洛克辦公室的夜景，桌燈（日照表第 39 行）。
+ep2-whitlock-42f-night:
+  label: 週四
+  time: '21:30'
+  kelvin: 2700
+# 影印室沒有窗，下班後也是燈管（日照表第 40 行、S2）。
+ep2-copy-room-night:
+  label: 週四
+  time: '22:10'
+  kelvin: 4100
+# 第 2 集尾聲：林肯來電（#259）。入夜，主光是桌上檯燈 --k-tungsten（第 3 章第 29 格），窗外沒有日光。
+ep2-lucas-office-night:
+  label: 週四
+  time: '23:40'
+  kelvin: 2700

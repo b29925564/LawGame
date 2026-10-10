@@ -82,7 +82,11 @@ export function Desk({ scene }: { scene: DeskScene }) {
         {/* 場記放在 .scene 外面：.scene 的子元素有進場淡入，會蓋掉場記自己的動畫。 */}
         <PlaceSlate
           id={`${scene.id}:twist`}
-          place={chosen?.place ? { raw: chosen.place, text: t(chosen.place, scope) } : null}
+          place={
+            chosen?.place
+              ? { raw: chosen.place, text: t(chosen.place, scope), rig: chosen.rig }
+              : null
+          }
         />
         <main className="scene report">
           <p className="eyebrow">{m ? t('回報・法院系統') : t('回報')}</p>

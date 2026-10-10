@@ -424,6 +424,8 @@ const deskScene = z.object({
                   text: z.string(),
                   /** 後續換了時間地點就寫，例如答辯庭當晚在事務所走廊（設定集第 3 章第 12 格）。 */
                   place: z.string().optional(),
+                  /** 有 place 就要有：那一段的燈組（src/content/rigs.yaml 的鍵）。 */
+                  rig: z.string().optional(),
                   then: z.array(line).min(1),
                   gives: z.array(id).default([]),
                   flags: z.array(z.string()).default([]),
@@ -612,6 +614,8 @@ const depositionScene = z.object({
   id,
   act: z.string(),
   place: z.string(),
+  /** 這場戲的燈組（src/content/rigs.yaml 的鍵）。場記右欄的色溫直接讀它（設定集第 10 章 :108、第 11 章 :74）。 */
+  rig: z.string(),
   /** ours：我方發問（預設）。theirs：對方主導，玩家只能替自己的證人異議。 */
   side: z.enum(['ours', 'theirs']).default('ours'),
   budget: z.number().int().min(1).default(1),
@@ -694,6 +698,8 @@ const negotiationScene = z.object({
   id,
   act: z.string(),
   place: z.string(),
+  /** 這場戲的燈組（src/content/rigs.yaml 的鍵）。場記右欄的色溫直接讀它（設定集第 10 章 :108、第 11 章 :74）。 */
+  rig: z.string(),
   opponent: z.object({ name: z.string(), role: z.string() }),
   client: z.object({ name: z.string(), trust: z.number().int().min(0).max(5) }),
   confidence: z.number().int().min(0).max(100),
@@ -854,6 +860,8 @@ const theoryScene = z.object({
   id,
   act: z.string(),
   place: z.string(),
+  /** 這場戲的燈組（src/content/rigs.yaml 的鍵）。場記右欄的色溫直接讀它（設定集第 10 章 :108、第 11 章 :74）。 */
+  rig: z.string(),
   intro: z.array(line).default([]),
   theories: z
     .array(
@@ -905,6 +913,8 @@ const openingScene = z.object({
   id,
   act: z.string(),
   place: z.string(),
+  /** 這場戲的燈組（src/content/rigs.yaml 的鍵）。場記右欄的色溫直接讀它（設定集第 10 章 :108、第 11 章 :74）。 */
+  rig: z.string(),
   picks: z.number().int().min(1).default(3),
   intro: z.array(line).default([]),
   /** 承諾兌現：全體陪審員往辯方；結辯時還沒兌現：全體往有罪方向。 */
@@ -921,6 +931,8 @@ const voirDireScene = z.object({
   id,
   act: z.string(),
   place: z.string(),
+  /** 這場戲的燈組（src/content/rigs.yaml 的鍵）。場記右欄的色溫直接讀它（設定集第 10 章 :108、第 11 章 :74）。 */
+  rig: z.string(),
   /** 可以提問的次數。 */
   questions: z.number().int().min(1),
   /** 玩家的無因迴避次數；檢方同樣有這麼多次。 */
@@ -959,6 +971,8 @@ const closingScene = z.object({
   id,
   act: z.string(),
   place: z.string(),
+  /** 這場戲的燈組（src/content/rigs.yaml 的鍵）。場記右欄的色溫直接讀它（設定集第 10 章 :108、第 11 章 :74）。 */
+  rig: z.string(),
   /** 要挑幾個論點。 */
   picks: z.number().int().min(1),
   threshold: z.number().int().min(1).max(100),
@@ -1027,6 +1041,8 @@ const scene = z.discriminatedUnion('type', [
     owner: z.string(),
     /** 選填：場記讀的地點與時刻（設計師 p225 裁定 (3)：手機場景也要對上場記）。格式同 dialogue 的 place。 */
     place: z.string().optional(),
+    /** 有 place 就要有：這場戲的燈組（src/content/rigs.yaml 的鍵）。 */
+    rig: z.string().optional(),
     steps: z.array(phoneStep).min(1),
   }),
   z.object({
@@ -1038,6 +1054,8 @@ const scene = z.discriminatedUnion('type', [
     /** 尾聲：協商成交或撤回起訴提前收場時，只演標了 epilogue 的場景。 */
     epilogue: z.boolean().default(false),
     place: z.string(),
+    /** 這場戲的燈組（src/content/rigs.yaml 的鍵）。 */
+    rig: z.string(),
     steps: z.array(dialogueStep).min(1),
     /**
      * 最後一步之後多一頁文件照片（第 1 集：週一 16:05 開示送到的警方報告附件二）。
@@ -1070,6 +1088,8 @@ const scene = z.discriminatedUnion('type', [
     when: when.optional(),
     epilogue: z.boolean().default(false),
     title: z.string(),
+    /** 選填：法庭的日卡寫當天的燈組（court-d2-pm 等），場記讀它，不讀下一場的（下一場可能是另一天）。 */
+    rig: z.string().optional(),
     lines: z.array(z.string()).default([]),
     /** 案卷登錄表的一行：案件行事曆上的日期（MM/DD/YYYY）與法院紀錄口吻的事項。序號依卡的順序產生。 */
     docket: docketRow.optional(),

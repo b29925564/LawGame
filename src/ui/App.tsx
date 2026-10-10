@@ -77,7 +77,7 @@ export function App() {
       : { kicker: '', title: '' };
   // 場記：這張卡之後第一個有地點的場景；後面沒有就用前面最後一個。
   const placed = (list: typeof ep.scenes) =>
-    list.find((x): x is typeof x & { place: string } => 'place' in x && !!x.place);
+    list.find((x): x is typeof x & { place: string; rig?: string } => 'place' in x && !!x.place);
   const at = progress.scene;
   const where = card
     ? (placed(ep.scenes.slice(at + 1)) ?? placed(ep.scenes.slice(0, at).reverse()))
@@ -85,9 +85,15 @@ export function App() {
       ? // 集尾：場記只讀最後一場自己的地點與時間；最後一場沒寫地點就空著，不去借前一場的（錯的時間比沒有更糟）。
         placed(ep.scenes.slice(-1))
       : placed(ep.scenes.slice().reverse());
-  const slate = where && { raw: where.place, text: t(where.place, where.id) };
+  // 燈組：法庭的日卡寫了當天那一組就讀卡的（下一場可能是另一天），否則讀那一場自己的。
+  const slate = where && {
+    raw: where.place,
+    text: t(where.place, where.id),
+    rig: card?.rig ?? where.rig,
+  };
   // 地點字卡：換了地點、前一場又不是幕卡（幕卡自己有場記）時，左下一行場記。
   const here = scene && 'place' in scene && scene.place ? scene.place : '';
+  const hereRig = scene && 'rig' in scene ? scene.rig : undefined;
   const before = ep.scenes[at - 1];
   const moved =
     !!here && before?.type !== 'card' && placed(ep.scenes.slice(0, at).reverse())?.place !== here;
@@ -103,7 +109,7 @@ export function App() {
         <PlaceBeat
           key={scene.id}
           id={scene.id}
-          place={{ raw: here, text: t(here, scene.id) }}
+          place={{ raw: here, text: t(here, scene.id), rig: hereRig }}
           onDone={() => setFramed(scene.id)}
         />
       )}
