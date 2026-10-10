@@ -41,12 +41,19 @@ test('尾聲的監獄來電：黑底來電畫面，頭像位置是黑條，講�
   await expect(screen.locator('.call-bar')).toHaveText('本通話將被錄音');
   await expect(screen.getByText('通話中')).toBeVisible();
   await expect(screen.locator('.call-dur')).toHaveCount(0);
-  // 黑條黑底白字；液晶字是 --k-lcd #9fe6b4。
+  // 液晶是亮綠底（--k-lcd #9fe6b4）、深墨綠字；黑條黑底白字；中文標籤不小於 14px。
   const colors = await page.evaluate(() => ({
+    lcd: getComputedStyle(document.querySelector('.call-lcd')!).backgroundColor,
+    ink: getComputedStyle(document.querySelector('.call-from')!).color,
     bar: getComputedStyle(document.querySelector('.call-bar')!).backgroundColor,
-    lcd: getComputedStyle(document.querySelector('.call-from')!).color,
+    label: parseFloat(getComputedStyle(document.querySelector('.call-label')!).fontSize),
   }));
-  expect(colors).toEqual({ bar: 'rgb(0, 0, 0)', lcd: 'rgb(159, 230, 180)' });
+  expect(colors).toEqual({
+    lcd: 'rgb(159, 230, 180)',
+    ink: 'rgb(15, 42, 26)',
+    bar: 'rgb(0, 0, 0)',
+    label: 14,
+  });
   // 一路按到最後一句：通話結束，時間停在 00:47；繼續不是黃的。
   for (let i = 0; i < 4; i++) await screen.getByRole('button', { name: '繼續' }).click();
   await expect(screen.getByText('通話結束')).toBeVisible();
@@ -55,6 +62,12 @@ test('尾聲的監獄來電：黑底來電畫面，頭像位置是黑條，講�
   // 父親沒有臉：台詞前面是黑條，不是暫代的剪影。
   await expect(screen.locator('.call-speech .call-mug').first()).toBeVisible();
   await expect(screen.locator('.speech svg.portrait')).toHaveCount(0);
+  // 黑條和盧卡斯的頭像同寬。
+  const w = await page.evaluate(() => [
+    document.querySelector('.call-mug')!.getBoundingClientRect().width,
+    document.querySelector('.speech .portrait')!.getBoundingClientRect().width,
+  ]);
+  expect(w[0]).toBe(w[1]);
 });
 
 test('證詞錄取：錄影的出處小字寫 Bates 和時間碼', async ({ page }) => {

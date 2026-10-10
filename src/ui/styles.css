@@ -6659,25 +6659,24 @@ button.found:hover:not(:disabled) {
   display: none;
 }
 
-/* 監獄來電（Dialogue.tsx，設定集第 3 章第 29 格）：鏡頭層的黑，液晶綠 --k-lcd，頭像的位置是一條黑條。 */
+/* 監獄來電（Dialogue.tsx，設定集第 3 章第 29 格）：房間是鏡頭層的黑（不跟主題），只有電話的液晶亮著——
+   --k-lcd 是液晶背光，所以底是亮綠、字是深墨綠（設計師 #255：≥ 7:1）。頭像的位置是一條黑條，是來電照片的位置。
+   下面的對白框是面板，跟著主題換。 */
 .cine.call-screen {
-  --text: var(--cine-text);
-  --muted: var(--cine-muted);
-  --border: var(--cine-line);
-  /* 鏡頭層不跟主題：淺色主題下對白框也是深色（--surface 在淺色主題是白紙）。 */
-  --surface: #0d1218;
-  --surface-2: #131a22;
   justify-content: flex-start;
   padding-top: 72px;
 }
+.call-screen .transcript {
+  color: var(--text);
+}
 .call-lcd {
+  --lcd-ink: #0f2a1a;
   display: grid;
   gap: 14px;
   padding: 16px 18px;
-  border: 1px solid var(--cine-line);
-  border-radius: 3px;
-  background: var(--cine-bg);
-  color: var(--k-lcd);
+  border-radius: 2px;
+  background: var(--k-lcd);
+  color: var(--lcd-ink);
   font-family: var(--font-mono);
 }
 .call-lcd p {
@@ -6687,18 +6686,20 @@ button.found:hover:not(:disabled) {
   display: grid;
   gap: 2px;
   font-size: 16px;
+  font-weight: 700;
   line-height: 1.5;
 }
+/* 中文標籤用介面字、不小於 14（Mono 只用在數字和英文，規格 §1）。 */
 .call-label {
-  font-size: 13px;
-  letter-spacing: 0.12em;
-  color: color-mix(in srgb, var(--k-lcd) 70%, var(--cine-bg));
+  font: 500 var(--fs-ui-cap) / 1.4 var(--font);
+  letter-spacing: 0.08em;
 }
 /* 頭像位置的黑條：條內 JetBrains Mono「本通話將被錄音」，黑底白字，對比 21:1。 */
 .call-bar {
   display: grid;
   place-items: center;
   min-height: 72px;
+  border-radius: 0;
   background: #000;
   color: #fff;
   font-size: 14px;
@@ -6713,17 +6714,24 @@ button.found:hover:not(:disabled) {
 }
 .call-dur {
   font-size: 20px;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.12em;
 }
-/* 對話裡的父親：沒有臉，頭像的位置同樣是一條黑條（不放暫代的剪影）。 */
+/* 對話裡的父親：沒有臉，頭像的位置是一條和頭像同寬的黑條（56／72，跟 .portrait 一樣），和說話者名同一行。 */
 .call-speech .call-mug {
   flex: 0 0 56px;
   width: 56px;
   height: 14px;
   margin-top: 6px;
+  border-radius: 0;
   background: #000;
-  border-top: 1px solid var(--cine-line);
+}
+@media (min-width: 768px) {
+  .call-speech .call-mug {
+    flex-basis: 72px;
+    width: 72px;
+  }
 }
 
 /* 證詞錄取錄影的出處小字：Courier Prime 14px，誰（錄影）、哪一卷（Bates）、時間碼；中文不小於 14。 */
