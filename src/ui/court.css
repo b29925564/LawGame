@@ -1912,17 +1912,17 @@ html[lang='en'] .trend-steps li {
 html[lang='en'] .trend-steps .arrow {
   display: none;
 }
-/* 右欄（走勢、三輪、判詞）比裁決書長時，裁決書跟著捲，不在左欄底下留一大塊空白（體驗評測 3A 備註）。 */
+/* 右欄（走勢、三輪、判詞）比裁決書長時，裁決書維持自然大小，在可視範圍裡垂直置中、跟著捲（紙是實物，不隨視窗拉長）。 */
 @media (min-width: 1024px) and (max-width: 1179px) {
   .vdict[data-stage='done'] .lcol {
     position: sticky;
-    top: var(--s4);
+    top: 0;
     align-self: start;
+    justify-content: center;
+    min-height: calc(100dvh - 162px);
   }
   .vdict[data-stage='done'] .vform {
-    justify-content: center;
-    gap: var(--s4);
-    min-height: min(520px, calc(100dvh - 300px));
+    flex: none;
   }
 }
 /* 英文抬頭不拉字距：拉開的拉丁字母讀起來像斷字。 */
