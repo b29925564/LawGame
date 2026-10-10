@@ -95,7 +95,7 @@ test('法典：「遊戲裡」標籤不是黃的', async ({ page }) => {
   if (await beat.count()) await beat.click();
   const tab = page.locator('.evidence-tab');
   if (await tab.count()) await tab.click();
-  await page.locator('.sheet-tabs button').last().click();
+  await page.locator('.sheet-tabs button:not(.measure)').last().click();
   const labels = page.locator('.in-game-label');
   await expect(labels.first()).toBeVisible();
   const text = await page

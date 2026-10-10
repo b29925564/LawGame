@@ -28,6 +28,8 @@ import { RelationPicker } from './RelationPicker';
 import { Cork, type CorkItem } from './Cork';
 import { Docket, EvidenceZoom } from './Dossier';
 import { Redaction } from './Redaction';
+import { TranscriptDoc } from './TranscriptDoc';
+import { batesAt } from '../engine/bates';
 import { DocPhotos, shotsById } from './ScenePhotos';
 import { Shell, Tabs } from './Shell';
 import { Timeline } from './Timeline';
@@ -404,6 +406,15 @@ function Docs({ scene }: { scene: DeskScene }) {
   const [open, setOpen] = useState<string | null>(null);
   const [notes, setNotes] = useState<string[]>([]);
   const doc = scene.docs.find((d) => d.id === open);
+  const pick = (docId: string, i: number, fact?: string) => {
+    if (fact) {
+      mark(fact);
+      play('mark');
+    } else {
+      const key = `${docId}:${i}`;
+      setNotes((n) => (n.includes(key) ? n.filter((x) => x !== key) : [...n, key]));
+    }
+  };
   if (doc)
     return (
       <article className="panel doc">
@@ -412,40 +423,41 @@ function Docs({ scene }: { scene: DeskScene }) {
         </button>
         <h2>{t(doc.title, scope)}</h2>
         <p className="muted">{t(doc.from, scope)}</p>
-        {doc.transcript && (
-          <p className="doc-cite">
-            Tr. {doc.transcript.page}:{doc.transcript.line}
-            {doc.lines.length > 1 && `–${doc.transcript.line + doc.lines.length - 1}`}
-          </p>
+        {doc.transcript ? (
+          <TranscriptDoc
+            lines={doc.lines}
+            page={doc.transcript.page}
+            line={doc.transcript.line}
+            bates={batesAt(
+              episodeOf(progress),
+              episodeOf(progress).scenes.findIndex((x) => x.id === scene.id),
+              scene.docs.indexOf(doc) + 1,
+            )}
+            made={(i) => !!doc.lines[i].fact && st.marked.includes(doc.lines[i].fact!)}
+            noted={(i) => notes.includes(`${doc.id}:${i}`)}
+            onPick={(i) => pick(doc.id, i, doc.lines[i].fact)}
+          />
+        ) : (
+          <ol className="doc-lines">
+            {doc.lines.map((l, i) => {
+              const key = `${doc.id}:${i}`;
+              const made = l.fact && st.marked.includes(l.fact);
+              return (
+                <li key={key}>
+                  <button
+                    className={
+                      made ? 'sentence made' : notes.includes(key) ? 'sentence noted' : 'sentence'
+                    }
+                    aria-pressed={!!made || notes.includes(key)}
+                    onClick={() => pick(doc.id, i, l.fact)}
+                  >
+                    <DocLine text={t(l.text, scope)} />
+                  </button>
+                </li>
+              );
+            })}
+          </ol>
         )}
-        <ol
-          className="doc-lines"
-          style={doc.transcript ? { counterReset: `line ${doc.transcript.line - 1}` } : undefined}
-        >
-          {doc.lines.map((l, i) => {
-            const key = `${doc.id}:${i}`;
-            const made = l.fact && st.marked.includes(l.fact);
-            return (
-              <li key={key}>
-                <button
-                  className={
-                    made ? 'sentence made' : notes.includes(key) ? 'sentence noted' : 'sentence'
-                  }
-                  aria-pressed={!!made || notes.includes(key)}
-                  onClick={() => {
-                    if (l.fact) {
-                      mark(l.fact);
-                      play('mark');
-                    } else
-                      setNotes((n) => (n.includes(key) ? n.filter((x) => x !== key) : [...n, key]));
-                  }}
-                >
-                  <DocLine text={t(l.text, scope)} />
-                </button>
-              </li>
-            );
-          })}
-        </ol>
         {/* 文件附的照片（第 9 章 PhotoLog）：警方報告附件二和 16:05 照片頁是同一份。 */}
         {doc.photos && <DocPhotos shots={shotsById(episodeOf(progress), doc.photos)} />}
       </article>
