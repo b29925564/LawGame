@@ -5505,11 +5505,14 @@ button.found:hover:not(:disabled) {
 .found-item.long > .found {
   padding-bottom: 30px;
 }
-.found-more {
+.found-item > button.found-more {
   position: absolute;
   right: 12px;
   bottom: 8px;
   font-size: 13px;
+  /* 便條是紙：「展開」用便條的鉛筆色，不用介面的 --text（深色主題是淺字，印在淺紙上只有 1.5:1；設計師 #252）。 */
+  color: var(--pencil);
+  text-decoration-color: var(--pencil);
 }
 .slot-open {
   width: 100%;

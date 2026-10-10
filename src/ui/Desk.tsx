@@ -1455,7 +1455,12 @@ function FoundNote({
     check();
     const ro = new ResizeObserver(check);
     ro.observe(el);
-    return () => ro.disconnect();
+    // 兩行的框高不變，字型載完文字變多行時 ResizeObserver 不會叫：字型載完再量一次。
+    document.fonts?.addEventListener('loadingdone', check);
+    return () => {
+      ro.disconnect();
+      document.fonts?.removeEventListener('loadingdone', check);
+    };
   }, [open, text, note]);
   return (
     <li className={long || open ? 'found-item long' : 'found-item'}>
