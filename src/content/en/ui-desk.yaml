@@ -235,5 +235,5 @@
 
 # 卡片出處（Bates、筆錄頁行、收文、製作人）
 筆錄第 {page} 頁第 {line} 行: 'Tr. {page}:{line}'
-'{caseNo}　收文 {date}': '{caseNo}  FILED {date}'
-'{at}　製作：{by}': '{at}  Taken by {by}'
+'{at}　記錄：{by}': '{at}  Taken by {by}'
+收文: FILED

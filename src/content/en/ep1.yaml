@@ -1009,3 +1009,6 @@
 '雷・柯瓦斯基警探　卡港警局': 'Det. Ray Kowalski, Calder Harbor Police'
 '盧卡斯・葛雷　電話紀錄': 'Lucas Grey, call notes'
 '辯方聲請排除被告於巡邏車上之陳述：准許。': "Defense motion to suppress defendant's patrol-car statement. Granted."
+# 陳述卡出處只印記錄人（taken.by 全形空白前那段）。
+卡港警局 巡邏組: Calder Harbor Police Patrol
+雷・柯瓦斯基警探: Detective Ray Kowalski

@@ -162,15 +162,37 @@ export function IndexCard({
 }
 
 /** 章。sm＝介面上的小章（只有中文）；大章帶法院紙本的英文副標。 */
-export function Stamp({ text, sub, sm }: { text: string; sub?: string; sm?: boolean }) {
+/**
+ * date：章面上跟著字的日期（收文章「收文 03/16/2026」），大小章都印。
+ * rot：角度（°，±3 以內）。同一張紙每次要一樣，由呼叫的人用 id 算；不給就用樣式表的預設。
+ */
+export function Stamp({
+  text,
+  sub,
+  sm,
+  date,
+  rot,
+}: {
+  text: string;
+  sub?: string;
+  sm?: boolean;
+  date?: string;
+  rot?: number;
+}) {
   const t = useT();
   const scope = useScope();
   const shown = t(text, scope);
   return (
-    <span className={sm ? 'stamp sm enter' : 'stamp enter'} role="img" aria-label={shown}>
+    <span
+      className={sm ? 'stamp sm enter' : 'stamp enter'}
+      role="img"
+      aria-label={date ? `${shown} ${date}` : shown}
+      style={rot === undefined ? undefined : ({ '--rot': `${rot}deg` } as CSSProperties)}
+    >
       <b>{shown}</b>
       {/* 英文模式章面本來就是英文，副標會重複。 */}
       {!sm && sub && shown.toUpperCase() !== sub && <i>{sub}</i>}
+      {date && <i className="date">{date}</i>}
     </span>
   );
 }

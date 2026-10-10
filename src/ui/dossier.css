@@ -793,3 +793,26 @@
 .card.mini .mini-body .bag-window .mini-prov {
   color: var(--paper-muted);
 }
+/* 陳述的記錄人：不是法院紙本，用上一行（種類・出處）的字與顏色（設計師 p2-1 review1 第 2 項）。 */
+.card.mini .mini-body .mini-prov.taken {
+  font: 400 12px/18px var(--font);
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+.bag-window .mini-prov.taken {
+  color: var(--paper-muted);
+}
+/* 裁定與訴狀：收文章在左、案號在右，整組靠右下（第 9 章 :13；第 2 章 :115 印泥）。 */
+.card.mini .mini-body .mini-prov.filed {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+  margin-top: 6px;
+}
+/* 小章平常不帶副標（styles.css「意見 5」），收文章的日期是章面的一部分，要印出來。 */
+.stamp.sm i.date {
+  display: inline;
+  font: 700 11px/1 var(--font-court);
+  letter-spacing: 0.06em;
+}

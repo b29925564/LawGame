@@ -415,26 +415,48 @@ export function CardPick({
 }
 
 /**
- * 這張紙的出處，右下一行 Courier（設定集第 9 章 :71、:117；設計師 bates-review.md）：
- * 開示交出的文件印 Bates（跟著分支換交出方），筆錄與勘誤表印頁行，裁定與訴狀印案號與收文日，
- * 陳述印時間與製作人。只有照片的卡，號碼印在沖印本上。
+ * 這張紙的出處，右下一行（設定集第 9 章 :4、:11、:44、:71、:117；設計師 p2-1 review1）：
+ * - 開示交出的文件印 Bates（跟著分支換交出方）、筆錄與勘誤表印頁行：Courier 700。
+ * - 裁定與訴狀蓋收文章（「收文」／FILED 加日期），案號一行 Courier 留在章外。
+ * - 陳述印記錄的時間與記錄人，用上一行（種類・出處）的字，不用 Courier：陳述不是法院紙本。
+ * 只有照片的卡，號碼印在沖印本上。
  */
 function Provenance({ id }: { id: string }) {
   const t = useT();
   const scope = useScope();
   const { progress } = useEpisode();
   const card = cardIn(episodeOf(progress), id);
-  const p = card && provenanceOf(card, branchContext(progress));
-  if (!p) return null;
-  const text =
-    p.kind === 'bates'
-      ? p.bates
-      : p.kind === 'cite'
-        ? t('筆錄第 {page} 頁第 {line} 行', { page: p.page, line: p.line })
-        : p.kind === 'filed'
-          ? t('{caseNo}　收文 {date}', { caseNo: p.caseNo, date: p.date })
-          : t('{at}　製作：{by}', { at: p.at, by: t(p.by, scope) });
-  return <p className="mini-prov">{text}</p>;
+  const all = card ? provenanceOf(card, branchContext(progress)) : [];
+  return (
+    <>
+      {all.map((p) =>
+        p.kind === 'filed' ? (
+          <p key={p.kind} className="mini-prov filed">
+            <Stamp text="收文" date={p.date} rot={tilt(id)} sm />
+            <span className="no">{p.caseNo}</span>
+          </p>
+        ) : p.kind === 'taken' ? (
+          <p key={p.kind} className="mini-prov taken">
+            {/* taken.by 是「記錄人＋全形空白＋文件」：上一行已經寫了出處（看守所會見），只留記錄人。 */}
+            {t('{at}　記錄：{by}', { at: p.at, by: t(p.by.split('\u3000')[0], scope) })}
+          </p>
+        ) : (
+          <p key={p.kind} className="mini-prov">
+            {p.kind === 'bates'
+              ? p.bates
+              : t('筆錄第 {page} 頁第 {line} 行', { page: p.page, line: p.line })}
+          </p>
+        ),
+      )}
+    </>
+  );
+}
+
+/** 章的角度（±3°）：照卡片 id 算，同一張紙每次重畫都一樣。 */
+function tilt(id: string) {
+  let h = 0;
+  for (const ch of id) h = (h * 31 + ch.charCodeAt(0)) | 0;
+  return (Math.abs(h) % 7) - 3;
 }
 
 /** 卡片上的日期與時間，例如「週五 22:34」。 */

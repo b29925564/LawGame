@@ -57,9 +57,10 @@ export function cardBates(c: Card, ctx: branch.BranchContext): string | undefine
 }
 
 /**
- * 每張紙的出處（設計師 bates-review.md 補充第 2 點）：開示交出的文件印 Bates；
- * 筆錄、勘誤表印頁行；法院裁定、訴狀印案號與收文日期；陳述印時間與製作人。
- * 有 Bates 的優先。只有照片的卡（沒寫 bates），號碼印在沖印本上（photo.bates），這裡不再印一次；
+ * 每張紙的出處（設計師 bates-review.md 補充第 2 點、p2-1 review1）：開示交出的文件印 Bates；
+ * 筆錄、勘誤表印頁行；法院裁定、訴狀蓋收文章（案號在章外）；陳述印記錄的時間與記錄人。
+ * 一張紙可以有兩項：起訴書是收過文的訴狀，又是檢方開示交出來的，收文章和 Bates 都在。
+ * 只有照片的卡（沒寫 bates），號碼印在沖印本上（photo.bates），這裡不再印一次；
  * 財物清單這種本身是一份紀錄、又附照片的卡，兩個號碼各印各的（清單 CPD-000021、照片 CPD-000024）。
  */
 export type Provenance =
@@ -75,14 +76,15 @@ export function cardIn(ep: Episode, id: string): Card | undefined {
   return undefined;
 }
 
-export function provenanceOf(c: Card, ctx: branch.BranchContext): Provenance | null {
+export function provenanceOf(c: Card, ctx: branch.BranchContext): Provenance[] {
+  const out: Provenance[] = [];
+  if (c.filed) out.push({ kind: 'filed', ...c.filed });
   const bates = cardBates(c, ctx);
-  if (bates) return { kind: 'bates', bates };
+  if (bates) out.push({ kind: 'bates', bates });
   if (c.cite) {
     const [page, line] = c.cite.split(':').map(Number);
-    return { kind: 'cite', page, line };
+    out.push({ kind: 'cite', page, line });
   }
-  if (c.filed) return { kind: 'filed', ...c.filed };
-  if (c.taken) return { kind: 'taken', ...c.taken };
-  return null;
+  if (!out.length && c.taken) out.push({ kind: 'taken', ...c.taken });
+  return out;
 }

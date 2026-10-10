@@ -64,16 +64,16 @@ describe('文件 Bates 與出處', () => {
     const p = (ep: keyof typeof episodes, id: string) =>
       provenanceOf(cardIn(episodes[ep], id)!, ctx());
     // 財物清單本身印清單的號碼；照片的號碼印在沖印本上。
-    expect(p('ep1', 'watch-listed')).toEqual({ kind: 'bates', bates: 'CPD-000021' });
+    expect(p('ep1', 'watch-listed')).toEqual([{ kind: 'bates', bates: 'CPD-000021' }]);
     expect(cardIn(episodes.ep1, 'watch-listed')!.photo?.bates).toBe('CPD-000024');
-    expect(p('ep1', 'watch-photo')).toBeNull();
-    expect(p('ep2', 'errata')).toEqual({ kind: 'cite', page: 42, line: 7 });
-    expect(p('ep2', 'complaint')?.kind).toBe('filed');
-    expect(p('ep1', 'ethan-accused')).toEqual({
-      kind: 'taken',
-      at: '03/16 10:30',
-      by: '盧卡斯・葛雷　會見筆記',
-    });
+    expect(p('ep1', 'watch-photo')).toEqual([]);
+    expect(p('ep2', 'errata')).toEqual([{ kind: 'cite', page: 42, line: 7 }]);
+    expect(p('ep2', 'complaint').map((x) => x.kind)).toEqual(['filed']);
+    // 起訴書收過文、又是檢方開示交出的：章和 Bates 都印。
+    expect(p('ep1', 'indictment').map((x) => x.kind)).toEqual(['filed', 'bates']);
+    expect(p('ep1', 'ethan-accused')).toEqual([
+      { kind: 'taken', at: '03/16 10:30', by: '盧卡斯・葛雷　會見筆記' },
+    ]);
   });
 });
 
