@@ -255,6 +255,25 @@ html[lang='en'] .prep-strip.record {
     margin-top: 24px;
   }
 }
+/* 768–1179：左欄 280 把卡擠成一欄、右邊空一大塊；人物資料改成上面一列，卡片兩張一排（卡仍是 400×240）。 */
+@media (min-width: 768px) and (max-width: 1179px) {
+  .prep-desk {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .prep-who {
+    flex-direction: row;
+    align-items: center;
+    gap: 16px;
+  }
+  /* 兩張卡加間距約 824 寬：放在視窗中間，不貼左邊把右邊空出去。 */
+  .prep-main {
+    width: fit-content;
+    max-width: 100%;
+    margin-inline: auto;
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   .card-paper::after,
   .prep-card.out {
