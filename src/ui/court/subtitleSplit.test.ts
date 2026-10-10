@@ -27,6 +27,14 @@ describe('字幕拆卡', () => {
     expect(lineBreaks(cards[0].text, 20).length).toBeLessThanOrEqual(2);
     expect(cards[0].text).toContain('傷。');
   });
+  it('最後一行不留孤字', () => {
+    const lines = lineBreaks(
+      'A crystal award from the desk was on the carpet. It had blood on it.',
+      22,
+    );
+    expect(lines.length).toBeGreaterThan(1);
+    expect(lines[lines.length - 1].length).toBeGreaterThan(6);
+  });
   it('英文只在空白斷，拼回來等於原文', () => {
     const s =
       'I was in the copy room on the thirty-first floor when I heard something heavy fall next door.';

@@ -6,7 +6,7 @@ const NO_LINE_START = /[，。、；：！？）」』”’…—,.;:!?)\]]/;
 
 const w = (ch: string) => (/[\p{Script=Han}\u3000-ヿ＀-￯]/u.test(ch) ? 1 : 0.6);
 
-export function lineBreaks(text: string, em: number): string[] {
+function greedy(text: string, em: number): string[] {
   const lines: string[] = [];
   let line = '';
   let width = 0;
@@ -29,6 +29,19 @@ export function lineBreaks(text: string, em: number): string[] {
   return lines;
 }
 
+/** 貪婪斷行後最後一行只剩幾個字（孤字）：把行寬一格一格縮，行數不變就用比較勻的那一版。 */
+export function lineBreaks(text: string, em: number): string[] {
+  let lines = greedy(text, em);
+  const n = lines.length;
+  for (let k = 1; n > 1 && k <= 8 && lineWidth(lines[n - 1]) < 0.3 * em; k++) {
+    const next = greedy(text, em - k);
+    if (next.length !== n) break;
+    lines = next;
+  }
+  return lines;
+}
+
+const lineWidth = (t: string) => [...t].reduce((n, ch) => n + w(ch), 0);
 const width = (t: string) => [...t].reduce((n, ch) => n + w(ch), 0);
 
 /** 兩行的一張裡有句號：兩半各自放得進一行才在句號後換行，不然照原本的斷法。 */
