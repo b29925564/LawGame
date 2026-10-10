@@ -397,9 +397,10 @@ export function Cork({
   const [ref, h, w] = useSize();
   // 板子窄到光圈卡上放不下圖釘兩側的小籤（1350px 以下的桌機視窗），也改用手機的板面。
   const compact = phone || (w > 0 && w < ROOMY);
-  // 比對位的卡高（兩張取高的；在原位的不算）：卡高變了（換卡、換語言、字型載入）就重量。
+  // 比對位兩格的卡高（在原位的不算）：卡高變了（換卡、換語言、字型載入）就重量。兩格上緣對齊，取高的那張置中。
   const focusEls = useRef<(HTMLDivElement | null)[]>([]);
-  const [cardH, setCardH] = useState(0);
+  const [slotH, setSlotH] = useState([0, 0]);
+  const cardH = Math.max(...slotH);
   // 照片卡的影像中心離卡片上緣多遠（沒放大前）：用來檢查「影像中心在光圈半徑 60% 以內」。
   const [imgMid, setImgMid] = useState(0);
   // 第一次量好位置以前不跑轉場：不然一進來兩張卡會從預設位置滑到量好的位置。
@@ -482,6 +483,12 @@ export function Cork({
       : compact
         ? 1.9
         : 1;
+  // 兩格卡片（放大、歪之前）的中心：速寫版的卡對準這裡（設計師 P2-6 r6 第 1 條）。卡以（中線, 圖釘）為軸放大。
+  // 這一格空著就用另一格的卡高；兩格都空就是光圈中心。
+  const cellCenter = xs.map((x, i): [number, number] => [
+    x + focusW / 2,
+    cardH ? ((topPx + PIN + ((slotH[i] || cardH) / 2 - PIN) * scale) / Math.max(h, 1)) * 100 : 50,
+  ]);
   const abFrom = pinOf(focusAt[0], focusW);
   const abTo = pinOf(focusAt[1], focusW);
   // 關係結掛在 A–B 線的最低點。
@@ -552,14 +559,14 @@ export function Cork({
 
   useLayoutEffect(() => {
     const measure = () => {
-      const hs = focusEls.current
-        .filter((el): el is HTMLDivElement => !!el && !el.classList.contains('away'))
-        .map((el) => el.offsetHeight);
-      const next = hs.length ? Math.max(...hs) : 0;
-      setCardH((prev) => (prev === next ? prev : next));
-      const mids = focusEls.current
-        .filter((el): el is HTMLDivElement => !!el && !el.classList.contains('away'))
-        .map((el) => el.querySelector<HTMLElement>('.cork-print'))
+      const live = [0, 1].map((i) => {
+        const el = focusEls.current[i];
+        return el && !el.classList.contains('away') ? el : null;
+      });
+      const hs = live.map((el) => el?.offsetHeight ?? 0);
+      setSlotH((prev) => (prev.join() === hs.join() ? prev : hs));
+      const mids = live
+        .map((el) => el?.querySelector<HTMLElement>('.cork-print'))
         .filter((p): p is HTMLElement => !!p)
         .map((p) => p.offsetTop + p.offsetHeight / 2);
       const mid = mids.length ? Math.min(...mids) : 0;
@@ -759,6 +766,12 @@ export function Cork({
               at,
               w: inPool ? focusW : CARD_W,
               tilt: tilt(c.id, inPool ? 1.2 : 2.5),
+              // 光圈裡的兩格：中心對準吊燈版同一格的卡。兩格都有卡時最寬到吊燈版放大後的卡寬（空隙只留給關係結）；
+              // 手機照內容檔的寬度，不加寬。
+              ...(inPool && {
+                center: cellCenter[i],
+                maxW: compact || jury.cards.length > 1 ? focusW * scale : undefined,
+              }),
             };
           })}
           look={look}

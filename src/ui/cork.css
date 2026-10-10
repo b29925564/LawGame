@@ -369,10 +369,15 @@ button.cork-empty:focus-visible {
  * A／B：貼在卡片上緣，一半在卡外、一半壓在 10px 白邊上（高 18px），不進入照片（設計師 P2-6 r5）。
  * 籤中線比上緣高 1px：手機白邊 10px、籤半高 9px，卡歪 1° 時籤兩端差將近 1px，留這 1px 才不碰影像。
  */
+/* 板子是世界裡的軟木板，不跟主題變：籤和「放大」同一組固定色，框 1px、總高一樣 18px（設計師 P2-6 r6 第 3 條）。 */
 .cork .cork-tag {
   z-index: 7;
   translate: 0 calc(-50% - 1px);
   margin: 0 0 0 8px;
+  border: 1px solid #3a4757;
+  background: #19202a;
+  color: #e7eaee;
+  line-height: 16px;
 }
 .cork-knot {
   position: absolute;
@@ -444,6 +449,11 @@ button.cork-empty:focus-visible {
 .cork-card .cork-doc-text,
 .cork-card .cork-hand {
   --lines: 2;
+}
+/* 光圈裡的比對卡是玩家拉進來要讀的：字全部放完、不淡出，卡跟著內容長高（設計師 P2-6 r6 第 2 條）。 */
+.cork-focus:not(.away) :is(.cork-doc-text, .cork-hand) {
+  max-height: none;
+  mask-image: none;
 }
 
 /* 一格一黃：板子開著時，證據欄裡放上 A、B 的卡改白框，黃只留給「連起來」。 */

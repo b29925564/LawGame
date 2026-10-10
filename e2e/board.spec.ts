@@ -82,8 +82,53 @@ for (const reduced of [false, true])
 // 小手機和窄桌機也量：卡窄的時候「放大」往卡角靠；桌機板子窄於 600px 改用手機板面。
 for (const lang of ['zh', 'en'] as const)
   test(`光圈標記不壓照片、小籤不蓋圖釘（${lang}）`, async ({ page, isMobile }) => {
-    await page.goto('/');
-    await page.evaluate((lang) => {
+    await openBoard(
+      page,
+      lang,
+      ['watch-listed', 'watch-photo'],
+      [/驗屍照片|Autopsy photo/, /財物清單|Property inventory/],
+    );
+    await expect(page.locator('.cork-focus.filled .cork-print')).toHaveCount(2);
+    await expect(page.locator('.cork .cork-zoom')).toHaveCount(2);
+    if (!isMobile) {
+      await page
+        .locator('section.links')
+        .getByRole('radio', { name: /^(說明機會|Shows opportunity)/ })
+        .click();
+      await expect(page.locator('.cork-knot')).toHaveText(/說明機會|Shows opportunity/);
+    }
+    await eachWidth(page, isMobile, async (width) =>
+      expect(await markerProblems(page), `${width}px`).toEqual([]),
+    );
+  });
+
+// 光圈裡的比對卡是玩家拉進來要讀的（設計師 P2-6 r6 第 2 條）：每一種寬度都沒有被截斷的行，卡跟著內容長高。
+// 心率紀錄那張的最後一句「再無讀數。」原本在手機上被淡出。
+for (const lang of ['zh', 'en'] as const)
+  test(`比對卡的字全部放完（${lang}）`, async ({ page, isMobile }) => {
+    await openBoard(
+      page,
+      lang,
+      ['heart-rate', 'watch-photo', 'access-partial'],
+      [/驗屍照片|Autopsy photo/, /心率紀錄|heart-rate/i],
+    );
+    const text = page.locator('.cork-focus.filled :is(.cork-doc-text, .cork-hand)');
+    await expect(text.first()).toBeVisible();
+    await eachWidth(page, isMobile, async (width) => {
+      const cut = await text.evaluateAll((els) =>
+        els
+          .filter((e) => e.scrollHeight > e.clientHeight + 1)
+          .map((e) => e.textContent?.slice(0, 20)),
+      );
+      expect(cut, `${width}px`).toEqual([]);
+    });
+  });
+
+/** 存一個第 7 場的檔、打開證據板，把兩張卡放上光圈（手機先點第一題）。 */
+async function openBoard(page: Page, lang: 'zh' | 'en', cards: string[], picks: RegExp[]) {
+  await page.goto('/');
+  await page.evaluate(
+    ([lang, cards]) => {
       localStorage.setItem(
         'lawgame-ep-auto',
         JSON.stringify({
@@ -95,7 +140,7 @@ for (const lang of ['zh', 'en'] as const)
             scene: 7,
             step: 0,
             choices: {},
-            cards: ['watch-listed', 'watch-photo'],
+            cards,
             flags: [],
             ethics: [],
             scenes: {},
@@ -103,53 +148,50 @@ for (const lang of ['zh', 'en'] as const)
         }),
       );
       if (lang === 'en') localStorage.setItem('lawgame-lang', 'en');
-    }, lang);
-    await page.reload();
-    await page
-      .getByRole('button', { name: /^(繼續|Continue)/ })
-      .first()
-      .click();
-    await page
-      .getByRole('button', { name: /^(證據板|Board)/ })
-      .first()
-      .click();
-    const first = page.getByRole('button', { name: /^01 / });
-    if (await first.isVisible()) await first.click();
-    for (const name of [/驗屍照片|Autopsy photo/, /財物清單|Property inventory/]) {
-      const side = page.locator('.card.mini').filter({ hasText: name }).first();
-      if (await side.isVisible()) await side.locator('.mini-btn').click();
-      else {
-        await page
-          .getByRole('button', { name: /放一張卡|Add a card/ })
-          .first()
-          .click();
-        await page.locator('.card-sheet button').filter({ hasText: name }).first().click();
-      }
-    }
-    await expect(page.locator('.cork-focus.filled .cork-print')).toHaveCount(2);
-    await expect(page.locator('.cork .cork-zoom')).toHaveCount(2);
-    if (!isMobile) {
+    },
+    [lang, cards] as const,
+  );
+  await page.reload();
+  await page
+    .getByRole('button', { name: /^(繼續|Continue)/ })
+    .first()
+    .click();
+  await page
+    .getByRole('button', { name: /^(證據板|Board)/ })
+    .first()
+    .click();
+  const first = page.getByRole('button', { name: /^01 / });
+  if (await first.isVisible()) await first.click();
+  for (const name of picks) {
+    const side = page.locator('.card.mini').filter({ hasText: name }).first();
+    if (await side.isVisible()) await side.locator('.mini-btn').click();
+    else {
       await page
-        .locator('section.links')
-        .getByRole('radio', { name: /^(說明機會|Shows opportunity)/ })
+        .getByRole('button', { name: /放一張卡|Add a card/ })
+        .first()
         .click();
-      await expect(page.locator('.cork-knot')).toHaveText(/說明機會|Shows opportunity/);
+      await page.locator('.card-sheet button').filter({ hasText: name }).first().click();
     }
-    const height = page.viewportSize()!.height;
-    for (const width of isMobile ? [412, 360, 320] : [1440, 1366, 1280, 1024]) {
-      await page.setViewportSize({ width, height });
-      // 等推進光圈的轉場跑完。
-      await page.waitForTimeout(50);
-      await page.waitForFunction(() =>
-        document
-          .getAnimations()
-          .every(
-            (a) => a.playState !== 'running' || a.effect?.getComputedTiming().endTime === Infinity,
-          ),
-      );
-      expect(await markerProblems(page), `${width}px`).toEqual([]);
-    }
-  });
+  }
+  await expect(page.locator('.cork-focus.filled')).toHaveCount(2);
+}
+
+/** 手機量 412／360／320，桌機量 1440／1366／1280／1024；每換一次寬度，等推進光圈的轉場跑完再量。 */
+async function eachWidth(page: Page, isMobile: boolean, check: (width: number) => Promise<void>) {
+  const height = page.viewportSize()!.height;
+  for (const width of isMobile ? [412, 360, 320] : [1440, 1366, 1280, 1024]) {
+    await page.setViewportSize({ width, height });
+    await page.waitForTimeout(50);
+    await page.waitForFunction(() =>
+      document
+        .getAnimations()
+        .every(
+          (a) => a.playState !== 'running' || a.effect?.getComputedTiming().endTime === Infinity,
+        ),
+    );
+    await check(width);
+  }
+}
 
 async function markerProblems(page: Page) {
   return page.evaluate(() => {
