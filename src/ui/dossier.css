@@ -22,7 +22,7 @@
   color: var(--paper-ink);
   /* 設定集的紙沒有圓角；紙疊在紙層：1px 紙邊，不投影（規格 v2.0 §3）。 */
   border-radius: 0;
-  box-shadow: 0 0 0 1px rgb(0 0 0 / 14%);
+  box-shadow: 0 0 0 1px var(--paper-edge-c);
   font-family: var(--font-court);
 }
 .docket-cap {
@@ -409,7 +409,7 @@
   padding: 10px;
   /* 淺色主題也讀得出塑膠：白邊外面再一道深色細線（和登錄表的紙邊同一條）。 */
   border: 1px solid rgb(255 255 255 / 72%);
-  box-shadow: 0 0 0 1px rgb(0 0 0 / 14%);
+  box-shadow: 0 0 0 1px var(--paper-edge-c);
   background: light-dark(rgb(190 200 212 / 30%), rgb(214 220 228 / 12%));
   /* 袋裡的 z-index（高光、字在高光上面）只在袋子裡排，不蓋到抽屜的黏頂分組小標（設計師 r3 第 3 條）。 */
   isolation: isolate;

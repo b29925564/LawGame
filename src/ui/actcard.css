@@ -320,7 +320,8 @@
 @container act-wrap (max-width: 899px) {
   .act-card {
     aspect-ratio: 9 / 16;
-    width: min(100%, 420px);
+    /* 直排卡的高度要讓出集尾的兩顆按鈕（上下留白 88、間距 20、按鈕 96 再加餘裕）：Pixel 7 一屏放得下，不用捲。 */
+    width: min(100%, 420px, max(240px, calc((100dvh - 260px) * 9 / 16)));
   }
   .act-card > * {
     --u: calc(100cqw / 420);

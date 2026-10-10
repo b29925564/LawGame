@@ -69,12 +69,8 @@
   --cine-muted: #8b95a3;
   --cine-line: #2a323d;
 
-  /* 介面住在光裡：半透明、讓光透過、不投自己的影子（設定集第 10 章）。陰影權杖留著名字，值歸零。 */
-  --shadow-color: transparent;
-  --shadow-deep: transparent;
+  /* 介面住在光裡：半透明、讓光透過、不投自己的影子（設定集第 10 章）。沒有陰影權杖；紙的 1px 邊用 --paper-edge。 */
   --hi-color: light-dark(rgb(255 255 255 / 75%), rgb(255 255 255 / 8%));
-  --shadow-1: 0 0 0 transparent;
-  --shadow-2: 0 0 0 transparent;
   --inset-hi: inset 0 1px 0 var(--hi-color);
   /* 疊在鏡頭層上的 HUD 用：半透明＋模糊（設定集第 10 章）。 */
   --panel-glass: light-dark(rgb(247 248 250 / 86%), rgb(19 25 32 / 82%));
@@ -922,7 +918,7 @@ details summary {
   width: min(calc(360px * var(--text-scale)), calc(100vw - 16px));
   max-height: calc(100dvh - 72px);
   overflow-y: auto;
-  box-shadow: var(--shadow-2);
+  box-shadow: none;
 }
 .menu-panel .row {
   display: grid;
@@ -1317,7 +1313,7 @@ details summary {
   border-radius: var(--radius);
   background: var(--surface);
   overflow: hidden;
-  box-shadow: var(--shadow-1);
+  box-shadow: none;
 }
 .stack.list > li + li {
   border-top: 1px solid var(--border);
@@ -1381,9 +1377,7 @@ details summary {
   border-radius: 3px;
   padding: 18px 18px 28px 58px;
   font-family: var(--font-doc);
-  box-shadow:
-    0 1px 1px var(--shadow-color),
-    0 14px 30px -18px var(--shadow-deep);
+  box-shadow: none;
 }
 .doc h2 {
   font-size: 1.22em;
@@ -1540,7 +1534,7 @@ details summary {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  box-shadow: var(--inset-hi), var(--shadow-1);
+  box-shadow: var(--inset-hi);
 }
 .card p,
 .argument p {
@@ -1840,7 +1834,7 @@ button.relation.on,
   gap: 8px;
   border-block: 1px solid var(--border);
   background: var(--surface-2);
-  box-shadow: 0 8px 16px -12px var(--shadow-color);
+  box-shadow: none;
 }
 .link-bench .slots-row {
   display: grid;
@@ -2114,7 +2108,7 @@ fieldset.relations.compact {
   border-bottom: 1px solid var(--border);
   border-radius: var(--radius) var(--radius) 0 0;
   background: var(--surface-2);
-  box-shadow: 0 8px 16px -12px var(--shadow-color);
+  box-shadow: none;
 }
 .timeline-tray h2 {
   display: flex;
@@ -2185,7 +2179,7 @@ fieldset.relations.compact {
   background: linear-gradient(var(--hl-wash), var(--hl-wash)), var(--surface);
   outline: 1px solid var(--hl);
   outline-offset: 4px;
-  box-shadow: var(--shadow-2);
+  box-shadow: none;
   z-index: 1;
 }
 .timeline li::before {
@@ -2384,7 +2378,7 @@ fieldset.relations.compact {
   border: 1px solid var(--border);
   border-bottom: none;
   border-radius: 14px 14px 0 0;
-  box-shadow: var(--shadow-2);
+  box-shadow: none;
 }
 /* 拉把。 */
 .sheet::before {
@@ -2521,7 +2515,7 @@ fieldset.relations.compact {
   gap: 10px;
   /* 舊的證詞往上淡出，新的在底下。淡出只佔上內距那 16px：捲到頂時第一行不能被壓到（體驗評測：尾聲對話框）。 */
   mask-image: linear-gradient(to bottom, transparent 0, #000 16px);
-  box-shadow: var(--inset-hi), var(--shadow-1);
+  box-shadow: var(--inset-hi);
 }
 .transcript p {
   margin: 0;
@@ -2927,9 +2921,7 @@ fieldset.relations.compact {
   background: var(--paper);
   border-radius: 3px;
   padding: 22px 24px 28px;
-  box-shadow:
-    0 1px 1px var(--shadow-color),
-    0 14px 30px -18px var(--shadow-deep);
+  box-shadow: none;
 }
 /* 頁首：附件封面上印的那一行（法院紙面字族，第 9 章 --fs-doc 15px、700），不是場記。
    下面一條紙上的分隔線；到第一排照片的距離是卷宗標題下的 10px，再加「放大」籤露在卡外的那半格。 */
@@ -3920,9 +3912,7 @@ button.primary {
   color: var(--pencil);
   font: 400 calc(var(--fs-hand) * var(--text-scale)) / 1.5 var(--font-hand);
   rotate: var(--tilt);
-  box-shadow:
-    0 1px 1px rgb(0 0 0 / 14%),
-    6px 14px 16px -12px var(--shadow-deep);
+  box-shadow: 0 1px 1px var(--paper-edge-c);
 }
 .sticky p {
   margin: 0;
@@ -4325,9 +4315,7 @@ mark.hl::after {
     var(--paper);
   color: var(--paper-ink);
   font: 400 15px/1.9 var(--font-doc);
-  box-shadow:
-    var(--shadow-1),
-    0 14px 30px -18px var(--shadow-deep);
+  box-shadow: none;
 }
 .ruling header {
   display: flex;
@@ -4417,9 +4405,7 @@ mark.hl::after {
   border-radius: 3px;
   background: var(--paper);
   color: var(--paper-ink);
-  box-shadow:
-    var(--shadow-1),
-    0 14px 28px -18px var(--shadow-deep);
+  box-shadow: none;
   text-align: left;
 }
 .iou-stub {
@@ -4534,9 +4520,7 @@ button.iou[aria-pressed='true'] {
   background: var(--paper) !important;
   outline: 2px solid var(--hl);
   outline-offset: 3px;
-  box-shadow:
-    var(--shadow-1),
-    0 14px 28px -18px var(--shadow-deep) !important;
+  box-shadow: none !important;
 }
 /* 法庭標頭的借據夾：三張小票 */
 .iou-chips {
@@ -5882,7 +5866,7 @@ button.found:hover:not(:disabled) {
   border-radius: var(--radius);
   background: var(--surface-2);
   border: 1px solid var(--border-strong);
-  box-shadow: var(--shadow-1);
+  box-shadow: none;
   font-family: var(--font-doc);
   line-height: 1.6;
   color: var(--text);
@@ -6763,10 +6747,7 @@ button.found:hover:not(:disabled) {
   /* 答案面板照順序排在發現下面，不疊在上面（視覺設計師、體驗評測）；中欄自己捲。 */
   .board3 .answer-bar {
     position: static;
-    box-shadow:
-      var(--inset-hi),
-      var(--shadow-1),
-      0 24px 48px -24px var(--shadow-deep);
+    box-shadow: var(--inset-hi);
   }
 }
 @media (min-width: 1024px) and (max-width: 1279px) {
