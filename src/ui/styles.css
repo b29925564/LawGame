@@ -6068,18 +6068,18 @@ button.found:hover:not(:disabled) {
   }
 }
 /* 窄於 340px：分頁左右內距和「更多」的 ⌄ 間距收小，讓「證據板」在每種寬度都留在列上
-   （設計師 #246 r9：英文 320 原本差 32px）。觸控高度、字級、標籤文字都不動。 */
+   （設計師 #246 r9：英文 320 原本差 32px；CI 的字比本機寬約 3%，再多留 10px）。觸控高度、字級、標籤文字都不動。 */
 @media (max-width: 339px) {
   /* 和上面英文那條同樣的權重，放在後面才蓋得過。 */
   :root:is(:lang(en), :not(:lang(en))) .apps button {
-    padding-inline: 3px;
+    padding-inline: 2px;
   }
   :root:is(:lang(en), :not(:lang(en))) .apps button::after {
-    left: 2px;
-    right: 2px;
+    left: 1px;
+    right: 1px;
   }
   .apps .apps-more .caret {
-    margin-left: 5px;
+    margin-left: 4px;
   }
   /* 分頁之間不留縫，底線各自內縮 2px 還是分得開。 */
   .apps {
