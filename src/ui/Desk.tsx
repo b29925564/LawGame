@@ -30,7 +30,7 @@ import { Redaction } from './Redaction';
 import { DocPhotos, shotsById } from './ScenePhotos';
 import { Shell, Tabs } from './Shell';
 import { Timeline } from './Timeline';
-import { Recap } from './ActCard';
+import { PlaceSlate, Recap } from './ActCard';
 import { durUi, reducedMotion } from './a11y';
 
 // 證據庫和左下的證據抽屜內容一模一樣，所以只留抽屜：它在每個畫面都叫得出來。
@@ -74,49 +74,58 @@ export function Desk({ scene }: { scene: DeskScene }) {
           (l) => l !== quote && !(l.mark?.kind === 'stamp' && !l.text.includes('｜')),
         )
       : st.report;
+    // 撤銷聲請之後的抉擇，選項帶地點時（第 12 格：答辯庭當晚在走廊）左下一行場記。
+    const chosen = scene.motions.flatMap((x) => x.twist?.options ?? []).find((o) => same(o.then));
     return (
-      <main className="scene report">
-        <p className="eyebrow">{m ? t('回報・法院系統') : t('回報')}</p>
-        {m && a && (
-          <div className="ruling-wrap">
-            <Pleading
-              m={m}
-              n={scene.motions.indexOf(m) + 1}
-              request={<Written text={a.request && t(a.request, scope)} />}
-              basis={<Written text={a.basis && t(a.basis, scope)} />}
-              support={a.support.map((id, i) => {
-                const c = [...heldArgs(progress), ...scene.cards].find((x) => x.id === id);
-                return (
-                  <span key={id} className="blank filled exhibit">
-                    {c ? (
-                      <ExhibitTag
-                        name={t(c.name, scope)}
-                        arg={!('kind' in c) || c.kind === '論點'}
-                      />
-                    ) : (
-                      id
-                    )}
-                    <span className="ex" aria-hidden>
-                      {t('證物')} {exhibitNo(i)}
+      <>
+        {/* 場記放在 .scene 外面：.scene 的子元素有進場淡入，會蓋掉場記自己的動畫。 */}
+        <PlaceSlate
+          id={`${scene.id}:twist`}
+          place={chosen?.place ? { raw: chosen.place, text: t(chosen.place, scope) } : null}
+        />
+        <main className="scene report">
+          <p className="eyebrow">{m ? t('回報・法院系統') : t('回報')}</p>
+          {m && a && (
+            <div className="ruling-wrap">
+              <Pleading
+                m={m}
+                n={scene.motions.indexOf(m) + 1}
+                request={<Written text={a.request && t(a.request, scope)} />}
+                basis={<Written text={a.basis && t(a.basis, scope)} />}
+                support={a.support.map((id, i) => {
+                  const c = [...heldArgs(progress), ...scene.cards].find((x) => x.id === id);
+                  return (
+                    <span key={id} className="blank filled exhibit">
+                      {c ? (
+                        <ExhibitTag
+                          name={t(c.name, scope)}
+                          arg={!('kind' in c) || c.kind === '論點'}
+                        />
+                      ) : (
+                        id
+                      )}
+                      <span className="ex" aria-hidden>
+                        {t('證物')} {exhibitNo(i)}
+                      </span>
                     </span>
-                  </span>
-                );
-              })}
-              received
-              ruling={{
-                ok,
-                quote: quote ? t(quote.text, scope).replace(/^「|」$/g, '') : undefined,
-              }}
-            />
+                  );
+                })}
+                received
+                ruling={{
+                  ok,
+                  quote: quote ? t(quote.text, scope).replace(/^「|」$/g, '') : undefined,
+                }}
+              />
+            </div>
+          )}
+          <div className="lines">
+            <MarkLines lines={rest} />
           </div>
-        )}
-        <div className="lines">
-          <MarkLines lines={rest} />
-        </div>
-        <button className="primary next" onClick={clearReport}>
-          {t('回到桌面')}
-        </button>
-      </main>
+          <button className="primary next" onClick={clearReport}>
+            {t('回到桌面')}
+          </button>
+        </main>
+      </>
     );
   }
 

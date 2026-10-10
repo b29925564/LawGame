@@ -17,6 +17,21 @@ const REVIEW = {
   wrong: '擋錯了',
 } as const;
 
+/**
+ * 錄影的出處小字（設定集第 6 章：誰、什麼時候、存在哪裡）：錄影那一方的 Bates 和時間碼，
+ * 疊在介面層、不烘進畫面（第 5 章 0504）。Courier Prime 14px，淡字。
+ */
+function VideoSource({ video }: { video: NonNullable<DepositionScene['video']> }) {
+  const t = useT();
+  return (
+    <p className="video-source">
+      <span>{t('證詞錄取錄影')}</span>
+      <span>{video.bates}</span>
+      <span>{video.timecode}</span>
+    </p>
+  );
+}
+
 /** 證詞錄取（企劃書 6.7）：12 個提問額度，定錨與探路互相衝突。 */
 export function Deposition({ scene }: { scene: DepositionScene }) {
   const { progress, askDepo, defendDepo, finishDepo, advance } = useEpisode();
@@ -45,6 +60,7 @@ export function Deposition({ scene }: { scene: DepositionScene }) {
         <p className="eyebrow">
           {t('{a}・{b}', { a: t(scene.act, scope), b: t(scene.place, scope) })}
         </p>
+        {scene.video && <VideoSource video={scene.video} />}
         <div className="lines">
           <Recap />
           {scene.intro.map((l, i) => (
@@ -164,6 +180,7 @@ export function Deposition({ scene }: { scene: DepositionScene }) {
               {t('剩餘提問')} <strong>{st.left}</strong>
             </p>
           )}
+          {scene.video && <VideoSource video={scene.video} />}
         </header>
       }
       tabs={

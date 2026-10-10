@@ -3705,6 +3705,7 @@ fieldset.relations.compact {
   --grade-floor: light-dark(#4a525c, #0b0e13);
   --k-window: #ffe2c0;
   --k-fluoro: #e4efe2;
+  --k-lcd: #9fe6b4; /* 電話液晶：監獄來電、舊手機（設定集第 2 章） */
 
   /* 字族（核心 6.1） */
   --font-hand: 'LXGW WenKai TC', 'Noto Serif TC', serif;
@@ -6656,4 +6657,86 @@ button.found:hover:not(:disabled) {
 /* 縮圖太小放不下「照片已遮蔽」整行：縮圖只留黑條，字在點開的完整紀錄表上。 */
 .photo-thumbs .photolog-redact span {
   display: none;
+}
+
+/* 監獄來電（Dialogue.tsx，設定集第 3 章第 29 格）：鏡頭層的黑，液晶綠 --k-lcd，頭像的位置是一條黑條。 */
+.cine.call-screen {
+  --text: var(--cine-text);
+  --muted: var(--cine-muted);
+  --border: var(--cine-line);
+  /* 鏡頭層不跟主題：淺色主題下對白框也是深色（--surface 在淺色主題是白紙）。 */
+  --surface: #0d1218;
+  --surface-2: #131a22;
+  justify-content: flex-start;
+  padding-top: 72px;
+}
+.call-lcd {
+  display: grid;
+  gap: 14px;
+  padding: 16px 18px;
+  border: 1px solid var(--cine-line);
+  border-radius: 3px;
+  background: var(--cine-bg);
+  color: var(--k-lcd);
+  font-family: var(--font-mono);
+}
+.call-lcd p {
+  margin: 0;
+}
+.call-from {
+  display: grid;
+  gap: 2px;
+  font-size: 16px;
+  line-height: 1.5;
+}
+.call-label {
+  font-size: 13px;
+  letter-spacing: 0.12em;
+  color: color-mix(in srgb, var(--k-lcd) 70%, var(--cine-bg));
+}
+/* 頭像位置的黑條：條內 JetBrains Mono「本通話將被錄音」，黑底白字，對比 21:1。 */
+.call-bar {
+  display: grid;
+  place-items: center;
+  min-height: 72px;
+  background: #000;
+  color: #fff;
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  text-align: center;
+}
+.call-timer {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+.call-dur {
+  font-size: 20px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.12em;
+}
+/* 對話裡的父親：沒有臉，頭像的位置同樣是一條黑條（不放暫代的剪影）。 */
+.call-speech .call-mug {
+  flex: 0 0 56px;
+  width: 56px;
+  height: 14px;
+  margin-top: 6px;
+  background: #000;
+  border-top: 1px solid var(--cine-line);
+}
+
+/* 證詞錄取錄影的出處小字：Courier Prime 14px，誰（錄影）、哪一卷（Bates）、時間碼；中文不小於 14。 */
+.video-source {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 14px;
+  margin: 0;
+  font: 400 14px/1.5 var(--font-court);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+.video-source span {
+  white-space: nowrap;
 }
