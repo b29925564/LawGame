@@ -11,6 +11,7 @@ import { useT } from '../i18n';
 import { durUi, reducedMotion } from './a11y';
 import { PhotoLogLine, type PhotoRecord } from './Dossier';
 import { useScope } from './lang';
+import { prose } from './prose';
 import './cork.css';
 import { JurySketch, type JuryCard } from './sketch/JurySketch';
 import { hasPrint, Print } from './prints';
@@ -42,23 +43,54 @@ export type CorkLink = { a: CorkItem; b: CorkItem; relation: Relation };
 /** 還沒到手、但已經提得出聲請的卡：黑條佔位。 */
 export type CorkPending = { id: string; name: string; why: string };
 
-// 邊緣的位置（板寬、板高的百分比）。左右各一條直線、上下中間各一格，比對中的兩張在光圈裡。
+/**
+ * 邊緣的位置（板寬、板高的百分比）：左右兩欄、每欄三格，比對中的兩張在中間的光圈裡。
+ * 原本上下中間各有一格，比對位置中以後卡會被那兩張壓住半張（設定集第 9 章 :74「其他卡退到邊緣」），改成兩欄。
+ */
 const EDGE: [number, number][] = [
-  [3, 5], // 左上
-  [3, 58], // 左下（和左上一條線）
-  [80, 4], // 右上
-  [80, 58], // 右下（和右上一條線）
-  [41.5, 64], // 下中（黑條佔位優先）
-  [41.5, 3], // 上中
-];
-const FOCUS: [number, number][] = [
-  [21, 37],
-  [60, 37],
+  [3, 3], // 左上
+  [3, 35], // 左中（和左上一條線）
+  [80, 3], // 右上
+  [80, 35], // 右中（和右上一條線）
+  [3, 67], // 左下（黑條佔位優先）
+  [80, 67], // 右下
 ];
 const CARD_W = 17; // 邊緣卡寬（%）
 const FOCUS_W = 19; // 光圈卡寬（%），再放大 1.15 倍
+const FOCUS_SCALE = 1.15;
+/**
+ * 板子內寬（px）小於這個就用手機的板面（設計師 P2-6 r5：小籤不壓照片、不蓋圖釘）。
+ * 光圈卡半寬 19% × 1.15 ÷ 2 ＝ 板寬 10.9%，要放得下：邊距 8＋最寬的籤（英文「Zoom」約 49）＋2＋圖釘半徑 6.3 ≈ 65px。
+ */
+const ROOMY = 600;
+/**
+ * 比對位（設計師 P2-6 r5、設定集第 9 章 :74「正在比對的兩張推進光圈」）：兩張對光圈中心左右對稱，
+ * 中間只留關係結的寬度：直條最寬是英文的 28px，兩側各 4px（POOL_GAP）。
+ * 上下把兩張裡較高的那張置中在光圈中心（RD-ART-0903 (700, 430)／1400×875）。
+ * 卡高隨字數、語言、字型載入而變，所以量實際的卡高再算上緣（見 Cork 的 cardH）；還沒量到時用下面的預設。
+ * 光圈半徑 360/1400 板寬，兩張 1.15 倍的卡放不進半徑的 85%（量過：最外角約 115%），設計師改成影像中心在 60% 以內（impl/p2-6/r5/designer-review.md 更正段）。
+ */
+const POOL_GAP = 36;
+/** 光圈半徑（板寬的比例，RD-ART-0903 360/1400）。 */
+const POOL_R = 360 / 1400;
+/** 影像中心離光圈中心最多半徑的幾成（設計師 60%；留 2% 給卡片傾角和取整）。 */
+const IMG_IN = 0.58;
+const focusX = (w: number) =>
+  [-1, 1].map(
+    (side) =>
+      50 +
+      side * ((w ? (POOL_GAP / 2 / w) * 100 : 2.75) + (FOCUS_W * FOCUS_SCALE) / 2) -
+      FOCUS_W / 2,
+  );
+const FOCUS_TOP = 27;
+/** 手機：兩張卡佔滿光圈（寬 44%，左右各留 4%）。 */
+const COMPACT_X = [4, 52];
+const COMPACT_TOP = 14.5;
+/** 板子上下至少留這麼多（px）：小籤伸出卡片上緣 10px，再留一點軟木。 */
+const BOARD_PAD = 24;
 const SAG = 34; // 下垂（px）
 const PIN = 7; // 圖釘離卡片上緣（px）
+const PIN_R = 5.5; // 圖釘半徑（cork.css .cork-pick::before 11px）
 
 /** 同一張卡每次都歪同一個角度（±2.5°），不隨機跳動。 */
 function tilt(id: string, max = 2.5) {
@@ -79,7 +111,9 @@ function Face({ item }: { item: CorkItem }) {
   const t = useT();
   const scope = useScope();
   const when = [item.date && t(item.date, scope), item.time].filter(Boolean).join(' ');
-  const name = t(item.name, scope);
+  // 板上的中文也以詞換行（「卡爾德州」「證明」不拆，設計師 P2-6 r3 留給證據板這一輪）。
+  const name = prose(t(item.name, scope));
+  const text = item.text ? prose(t(item.text, scope)) : null;
   switch (look(item.kind)) {
     case 'photo':
       return (
@@ -109,14 +143,14 @@ function Face({ item }: { item: CorkItem }) {
             <b>{name}</b>
             {item.source && <small>{t(item.source, scope)}</small>}
           </span>
-          {item.text && <span className="cork-hand">{t(item.text, scope)}</span>}
+          {text && <span className="cork-hand">{text}</span>}
         </>
       );
     case 'note':
       return (
         <>
           <b className="cork-hand">{name}</b>
-          {item.text && <span className="cork-hand small">{t(item.text, scope)}</span>}
+          {text && <span className="cork-hand small">{text}</span>}
         </>
       );
     default:
@@ -124,7 +158,7 @@ function Face({ item }: { item: CorkItem }) {
         <>
           <b className="cork-doc-name">{name}</b>
           {when && <time>{when}</time>}
-          {item.text && <span className="cork-doc-text">{t(item.text, scope)}</span>}
+          {text && <span className="cork-doc-text">{text}</span>}
         </>
       );
   }
@@ -299,19 +333,24 @@ function corkTile(): string | null {
   return tileUrl;
 }
 
-function useHeight() {
+function useSize() {
   const ref = useRef<HTMLDivElement>(null);
   const [h, setH] = useState(460);
+  const [w, setW] = useState(0);
   useLayoutEffect(() => {
     const el = ref.current;
     if (!el) return;
-    setH(el.clientHeight || 460);
+    const read = () => {
+      setH(el.clientHeight || 460);
+      setW(el.clientWidth);
+    };
+    read();
     if (typeof ResizeObserver === 'undefined') return;
-    const ro = new ResizeObserver(() => setH(el.clientHeight || 460));
+    const ro = new ResizeObserver(read);
     ro.observe(el);
     return () => ro.disconnect();
   }, []);
-  return [ref, h] as const;
+  return [ref, h, w] as const;
 }
 
 export function Cork({
@@ -322,7 +361,7 @@ export function Cork({
   links,
   loose,
   pending,
-  compact,
+  compact: phone,
   onPick,
   slot,
   jury,
@@ -339,7 +378,7 @@ export function Cork({
   /** 其他已經到手的卡，釘在邊緣空著的位置。 */
   loose: CorkItem[];
   pending: CorkPending[];
-  /** 手機：只有光圈裡的兩張。 */
+  /** 手機：只有光圈裡的兩張（板子太窄時也一樣，見 ROOMY）。 */
   compact: boolean;
   /** 點邊緣的卡＝放上連線台。 */
   onPick: (id: string) => void;
@@ -355,11 +394,26 @@ export function Cork({
 }) {
   const t = useT();
   const scope = useScope();
-  const [ref, h] = useHeight();
+  const [ref, h, w] = useSize();
+  // 板子窄到光圈卡上放不下圖釘兩側的小籤（1350px 以下的桌機視窗），也改用手機的板面。
+  const compact = phone || (w > 0 && w < ROOMY);
+  // 比對位兩格的卡高（在原位的不算）：卡高變了（換卡、換語言、字型載入）就重量。兩格上緣對齊，取高的那張置中。
+  const focusEls = useRef<(HTMLDivElement | null)[]>([]);
+  const [slotH, setSlotH] = useState([0, 0]);
+  const cardH = Math.max(...slotH);
+  // 照片卡的影像中心離卡片上緣多遠（沒放大前）：用來檢查「影像中心在光圈半徑 60% 以內」。
+  const [imgMid, setImgMid] = useState(0);
+  // 第一次量好位置以前不跑轉場：不然一進來兩張卡會從預設位置滑到量好的位置。
+  const [settled, setSettled] = useState(false);
+  useEffect(() => {
+    if (settled || !w || !cardH) return;
+    const id = requestAnimationFrame(() => setSettled(true));
+    return () => cancelAnimationFrame(id);
+  }, [settled, w, cardH]);
   const [tile] = useState(corkTile);
   const pinY = (PIN / Math.max(h, 1)) * 100;
 
-  // 邊緣位置分配：先給連線（兩兩一組），再給黑條佔位（下中、上中），剩下的放其他卡。
+  // 邊緣位置分配：先給連線（兩兩一組），再給黑條佔位（兩欄最下面那格優先），剩下的放其他卡。
   type Placed = { item: CorkItem; at: [number, number] };
   const placed: Placed[] = [];
   const strings: {
@@ -387,7 +441,17 @@ export function Cork({
       });
     });
   }
-  const bars = compact ? [] : pending.slice(0, 2).map((p) => ({ p, at: EDGE[free.shift()!] }));
+  const take = () =>
+    free.splice(
+      Math.max(
+        0,
+        free.findIndex((k) => k >= 4),
+      ),
+      1,
+    )[0];
+  const bars = compact
+    ? []
+    : pending.slice(0, Math.min(2, free.length)).map((p) => ({ p, at: EDGE[take()] }));
   if (!compact) {
     const used = new Set(placed.map((x) => x.item.id));
     loose
@@ -396,13 +460,35 @@ export function Cork({
       .forEach((c, i) => placed.push({ item: c, at: EDGE[free[i]] }));
   }
 
-  const focusAt = compact
-    ? ([
-        [4, 20],
-        [52, 20],
-      ] as [number, number][])
-    : FOCUS;
+  // 比對位上下置中在光圈中心（板高 50%）：卡以（中線, 圖釘）為軸放大，放大後的中心＝上緣＋PIN＋(卡高/2−PIN)×倍率。
+  const scale = compact ? 1 : FOCUS_SCALE;
   const focusW = compact ? 44 : FOCUS_W;
+  const xs = compact ? COMPACT_X : focusX(w);
+  // 照片的影像中心離光圈中心多遠（px）：左右是卡中線到板中線，上下是影像中心到板高一半。
+  const imgDx = Math.abs(xs[0] + focusW / 2 - 50) * (w / 100);
+  const imgDy = (topPx: number) => h / 2 - (topPx + PIN + (imgMid - PIN) * scale);
+  let topPx = cardH ? h / 2 - PIN - (cardH / 2 - PIN) * scale : 0;
+  // 桌機：光圈是設定集的 360/1400，不動。字多、板子小的時候卡比較高，整組置中會讓影像中心超出 60%，
+  // 這時卡往下讓到影像中心剛好在 IMG_IN 為止（上下就不完全置中了）。
+  if (!compact && cardH && imgMid && w) {
+    const dyMax = Math.sqrt(Math.max(0, (IMG_IN * POOL_R * w) ** 2 - imgDx ** 2));
+    if (imgDy(topPx) > dyMax) topPx += imgDy(topPx) - dyMax;
+  }
+  const top = cardH ? (topPx / Math.max(h, 1)) * 100 : compact ? COMPACT_TOP : FOCUS_TOP;
+  const focusAt = xs.map((x) => [x, top]) as [number, number][];
+  // 手機：光圈本來就是為這個版面另設的（設計師 P2-6 r5 更正），小手機上卡比較高，光圈放大到影像中心落在 IMG_IN 以內。
+  const pool =
+    compact && cardH && imgMid && w
+      ? Math.max(1.9, Math.hypot(imgDx, imgDy(topPx)) / (IMG_IN * POOL_R * w))
+      : compact
+        ? 1.9
+        : 1;
+  // 兩格卡片（放大、歪之前）的中心：速寫版的卡對準這裡（設計師 P2-6 r6 第 1 條）。卡以（中線, 圖釘）為軸放大。
+  // 這一格空著就用另一格的卡高；兩格都空就是光圈中心。
+  const cellCenter = xs.map((x, i): [number, number] => [
+    x + focusW / 2,
+    cardH ? ((topPx + PIN + ((slotH[i] || cardH) / 2 - PIN) * scale) / Math.max(h, 1)) * 100 : 50,
+  ]);
   const abFrom = pinOf(focusAt[0], focusW);
   const abTo = pinOf(focusAt[1], focusW);
   // 關係結掛在 A–B 線的最低點。
@@ -471,6 +557,56 @@ export function Cork({
     return () => cancelAnimationFrame(raf);
   }, [arriving]);
 
+  useLayoutEffect(() => {
+    const measure = () => {
+      const live = [0, 1].map((i) => {
+        const el = focusEls.current[i];
+        return el && !el.classList.contains('away') ? el : null;
+      });
+      const hs = live.map((el) => el?.offsetHeight ?? 0);
+      setSlotH((prev) => (prev.join() === hs.join() ? prev : hs));
+      const mids = live
+        .map((el) => el?.querySelector<HTMLElement>('.cork-print'))
+        .filter((p): p is HTMLElement => !!p)
+        .map((p) => p.offsetTop + p.offsetHeight / 2);
+      const mid = mids.length ? Math.min(...mids) : 0;
+      setImgMid((prev) => (prev === mid ? prev : mid));
+    };
+    measure();
+    if (typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver(measure);
+    focusEls.current.forEach((el) => el && ro.observe(el));
+    return () => ro.disconnect();
+  }, [ids, compact, arriving, miss?.phase]);
+  // 「放大」和 A／B 小籤貼在卡片上緣（一半在卡外、一半壓在白邊上），不進入照片的影像範圍（設計師 P2-6 r5）。
+  // 用比對位的目標框算，不量 DOM：卡推進光圈時 left／top 在轉場，量到的是半路的位置。
+  // 卡以（中線, 圖釘 7px）為軸放大 1.15、歪 --tilt；籤不歪，所以取籤中線那一點的上緣高度。
+  // 「放大」離卡角 8px；卡窄（小手機）放不下時往卡角靠、再不夠就伸出卡角，總之不蓋圖釘。籤寬中英文不同，量實際的。
+  const zoomEls = useRef<(HTMLButtonElement | null)[]>([]);
+  const [zoomW, setZoomW] = useState<number[]>([]);
+  useLayoutEffect(() => {
+    const next = [0, 1].map((i) => zoomEls.current[i]?.offsetWidth ?? 0);
+    setZoomW((prev) => (prev.join() === next.join() ? prev : next));
+  }, [w, t, ids]);
+  const tabs = focusAt.map(([x, y], i) => {
+    const c = focus[i];
+    const s = c && !compact ? FOCUS_SCALE : 1;
+    const a = ((c ? tilt(c.id, 1.2) : 0) * Math.PI) / 180;
+    const half = (focusW / 100) * w * s * 0.5;
+    const ox = (x / 100) * w + ((focusW / 100) * w) / 2;
+    const oy = (y / 100) * h + PIN;
+    const corner = (side: -1 | 1) => ({
+      x: ox + side * half * Math.cos(a) + PIN * s * Math.sin(a),
+      y: oy + side * half * Math.sin(a) - PIN * s * Math.cos(a),
+    });
+    const l = corner(-1);
+    const r = corner(1);
+    const zw = zoomW[i] ?? 0;
+    const m = Math.min(8, half - PIN_R * s - 2 - zw);
+    // 籤中線離卡角：A／B 是邊距 8＋半個籤寬（約 10），「放大」是 m＋半個籤寬。
+    return { x: l.x, y: l.y + Math.tan(a) * 18, r: r.x - m, ry: r.y - Math.tan(a) * (m + zw / 2) };
+  });
+
   // 影子沿離燈方向拉長（燈在板中央）。
   const away = (at: [number, number], w: number) => {
     const dx = at[0] + w / 2 - 50;
@@ -485,8 +621,17 @@ export function Cork({
   return (
     <div
       ref={ref}
-      className={['cork', compact && 'compact', miss && 'missing'].filter(Boolean).join(' ')}
-      style={{ '--cork-tile': tile ? `url(${tile})` : 'none' } as CSSProperties}
+      className={['cork', compact && 'compact', miss && 'missing', settled && 'settled']
+        .filter(Boolean)
+        .join(' ')}
+      style={
+        {
+          '--cork-tile': tile ? `url(${tile})` : 'none',
+          // 小手機上卡比 4:3 的板子高：板子跟著長，上下各留 BOARD_PAD（含 10px 木框）。
+          minHeight: cardH ? cardH * scale + 2 * (BOARD_PAD + 10) : undefined,
+          '--pool': pool,
+        } as CSSProperties
+      }
     >
       <svg className="cork-strings" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden>
         {strings.map((s) => (
@@ -536,6 +681,9 @@ export function Cork({
         return (
           <div
             key={c ? c.id : `empty-${i}`}
+            ref={(el) => {
+              focusEls.current[i] = el;
+            }}
             className={[
               'cork-focus',
               c && `filled ${look(c.kind)}`,
@@ -575,7 +723,7 @@ export function Cork({
           key={i}
           className="slot-tag cork-tag"
           aria-hidden
-          style={{ left: `${focusAt[i][0]}%`, top: `${focusAt[i][1]}%` }}
+          style={w ? { left: tabs[i].x, top: tabs[i].y } : { visibility: 'hidden' }}
         >
           {i === 0 ? 'A' : 'B'}
         </span>
@@ -588,11 +736,14 @@ export function Cork({
               <button
                 key={c.id}
                 type="button"
+                ref={(el) => {
+                  zoomEls.current[i] = el;
+                }}
                 className="cork-zoom"
                 // 陪審團視角看的是速寫，不是卷宗：停用。
                 disabled={jury?.on}
                 aria-label={t('放大檢視 {name}', { name: t(c.name, scope) })}
-                style={{ left: `${focusAt[i][0] + focusW}%`, top: `${focusAt[i][1]}%` }}
+                style={w ? { left: tabs[i].r, top: tabs[i].ry } : { visibility: 'hidden' }}
                 onClick={() => onZoom(c.id)}
               >
                 {t('放大')}
@@ -615,10 +766,17 @@ export function Cork({
               at,
               w: inPool ? focusW : CARD_W,
               tilt: tilt(c.id, inPool ? 1.2 : 2.5),
+              // 光圈裡的兩格：中心對準吊燈版同一格的卡。兩格都有卡時最寬到吊燈版放大後的卡寬（空隙只留給關係結）；
+              // 手機照內容檔的寬度，不加寬。
+              ...(inPool && {
+                center: cellCenter[i],
+                maxW: compact || jury.cards.length > 1 ? focusW * scale : undefined,
+              }),
             };
           })}
           look={look}
           provenance={jury.provenance}
+          pool={pool}
         />
       )}
       {/* 手機上兩張卡之間沒有空隙，關係看下面選中的那顆。 */}

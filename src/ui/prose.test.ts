@@ -43,6 +43,8 @@ describe('紙面內文的換行單位（設計師 P2-6 r2 第 12 條）', () => 
     expect(wrist.some((x) => x.includes('腕上'))).toBe(true);
     const court = proseUnits('辯方聲請對手錶廠商核發文書傳票；本院當庭核發傳票 D-1。');
     expect(court.some((x) => x.includes('當庭'))).toBe(true);
+    const pros = proseUnits('沒有警告就問話，問出來的話不能用。不提出的話，檢方開庭時會用它。');
+    expect(pros.some((x) => x.includes('檢方'))).toBe(true);
   });
 
   it('沒有漢字的英文原樣不動', () => {

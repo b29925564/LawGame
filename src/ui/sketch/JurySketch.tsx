@@ -24,6 +24,10 @@ export type JuryCard = {
   at: [number, number];
   w: number;
   tilt: number;
+  /** 光圈裡的比對卡：卡的中心（%）對準吊燈版同一格，加寬、撐高都從中心往兩邊長。 */
+  center?: [number, number];
+  /** 最寬多少（%）：兩格都有卡、會疊到時就不再加寬，改成加高。手機不加寬。 */
+  maxW?: number;
 };
 
 /** 吊燈光圈的亮度倍率（和 cork.css 的 .cork-lamp 同一組停點；d 以半寬為 1）。 */
@@ -108,12 +112,15 @@ export function JurySketch({
   cards,
   look,
   provenance,
+  pool = 1,
 }: {
   on: boolean;
   cards: JuryCard[];
   look: (kind: string) => string;
   /** 出處小字：「法庭速寫 M. Osei 預審」或「…庭審第一日」。 */
   provenance: string;
+  /** 光圈半徑的倍率：手機的板子光圈放大，蓋住兩張比對卡（和 cork.css 的 .cork.compact .cork-lamp 一致）。 */
+  pool?: number;
 }) {
   const t = useT();
   const scope = useScope();
@@ -147,7 +154,7 @@ export function JurySketch({
     };
   }, []);
   const lang = useLang((s) => s.lang);
-  const key = `${cards.map((c) => `${c.id}@${c.at.join(',')}`).join()}|${lang}|${scheme}|${provenance}|${size}`;
+  const key = `${cards.map((c) => `${c.id}@${(c.center ?? c.at).map((x) => x.toFixed(1)).join(',')}`).join()}|${lang}|${scheme}|${provenance}|${size}|${pool}`;
 
   // 第一次成形要等玩家真的切過來才開始畫；筆觸先在 Worker 算好放著。
   const onRef = useRef(on);
@@ -184,15 +191,24 @@ export function JurySketch({
       const sc: SketchCard[] = cards.map((c) => {
         const p = PAPER[look(c.kind)] ?? PAPER.copy;
         // 桌機的卡寬拉到場景寬的 30% 左右（220–240px），英文不拆成一欄窄字；手機維持內容檔的寬度
-        // （設計師 P2-6 r3 第 10 條）。紙的高度照原本的比例，字放不下下面再撐高。
+        // （設計師 P2-6 r3 第 10 條）。光圈裡的卡在板子窄於 640 的桌機也加寬，但兩格都有卡時不寬過吊燈版
+        // 放大後的卡（r6）。紙的高度照原本的比例，字放不下再撐高。
         const cw0 = (c.w / 100) * w;
-        const cw = w >= 640 ? Math.max(cw0, Math.min(240, Math.max(220, w * 0.3))) : cw0;
+        const wide =
+          w >= 640 || c.center ? Math.max(cw0, Math.min(240, Math.max(220, w * 0.3))) : cw0;
+        const cw = c.maxW ? Math.max(cw0, Math.min(wide, (c.maxW / 100) * w)) : wide;
         const ch = cw0 * p.ratio;
         const x = (c.at[0] / 100) * w;
         const y = (c.at[1] / 100) * h;
+        // 邊緣的卡加寬時往板子外側長（靠中線那一邊不動）。
+        const inner = x + cw0 / 2 < w / 2 ? x + cw0 : x;
         return {
-          cx: x + cw / 2,
-          cy: y + ch / 2,
+          cx: c.center
+            ? (c.center[0] / 100) * w
+            : x + cw0 / 2 < w / 2
+              ? inner - cw / 2
+              : inner + cw / 2,
+          cy: c.center ? (c.center[1] / 100) * h : y + ch / 2,
           w: cw,
           h: ch,
           angle: (c.tilt * Math.PI) / 180,
@@ -213,15 +229,23 @@ export function JurySketch({
       const size = parseFloat(css.getPropertyValue('--fs-hand')) || 18;
       await document.fonts?.load(`${size}px ${hand}`, words + provenance).catch(() => undefined);
       if (cancelled) return;
-      // 字放不下就把卡撐高（往下長），不切字（設計師 P2-6 r2）。要在算筆觸之前量，輪廓才會跟著卡。
+      // 字放不下就把卡撐高，不切字（設計師 P2-6 r2）：邊緣的卡往下長，光圈裡的卡上下平均長、中心不動（r6）。
+      // 要在算筆觸之前量，輪廓才會跟著卡。
       const measure = (font: string, x: string) => {
         ctx.font = font;
         return ctx.measureText(x).width;
       };
-      for (const c of sc) {
+      for (const [i, c] of sc.entries()) {
+        // 光圈裡的卡中心不動時最多能多高（不出板子、不壓下緣的出處小字）；放不下就把內容的字縮小，最小 14px。
+        const room = cards[i].center ? 2 * Math.min(c.cy - 8, h - 34 - c.cy) : Infinity;
+        const fit = (px: number) =>
+          cardTextLayout(measure, { ...c, size: px }, { hand, size }).need;
+        let px = size;
+        while (px > 14 && fit(px) > Math.max(room, c.h)) px--;
+        if (px < size) c.size = px;
         const { need } = cardTextLayout(measure, c, { hand, size });
         if (need > c.h) {
-          c.cy += (need - c.h) / 2;
+          if (!cards[i].center) c.cy += (need - c.h) / 2;
           c.h = need;
         }
         // 撐高、拉寬後整張卡還要留在板子裡，下緣不壓到出處小字（基線在 h − 14，留 34px）。
@@ -243,7 +267,7 @@ export function JurySketch({
         scale,
         cards: sc,
         strings: [],
-        lamp: STOPS,
+        lamp: STOPS.map(([d, v]) => [d * pool, v]),
         base: { lum: 0.43, rgb: [0x8a, 0x6a, 0x48] },
         paper,
         ink,
@@ -258,7 +282,7 @@ export function JurySketch({
       cv.width = Math.round(w * scale);
       cv.height = Math.round(h * scale);
       const finish = () => {
-        drawSketchText(ctx, {
+        const lines = drawSketchText(ctx, {
           w,
           h,
           scale,
@@ -269,6 +293,10 @@ export function JurySketch({
           light: got.light,
           provenance,
           fonts: { hand, size },
+        });
+        // 版面（卡的中心、大小、角度和每行字的框）記在效能時間軸上，驗收截圖照這個量。
+        performance.mark?.('jury-sketch-layout', {
+          detail: { cards: sc.map(({ cx, cy, w, h, angle }) => ({ cx, cy, w, h, angle })), lines },
         });
         // 畫完存一份：證據、語言、主題、尺寸都沒變，下次直接貼上。
         const snap = document.createElement('canvas');

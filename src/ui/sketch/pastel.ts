@@ -35,6 +35,8 @@ export type SketchCard = {
   /** 卡上的內容（手寫）與時刻。 */
   body?: string;
   time?: string;
+  /** 內容的字級（px）：光圈裡的卡放不下時縮小，沒寫就是 --fs-hand。 */
+  size?: number;
   /** 卡上畫什麼：字（文件、陳述）、照片、心率線（在 22:24 斷掉）。 */
   motif?: 'lines' | 'photo' | 'pulse';
 };
@@ -633,6 +635,12 @@ export function drawSketchText(
   },
 ) {
   const S = o.scale;
+  // 每一行字在卡上的框（卡的左上角為原點、沒歪之前）：量驗收時用（字乘上吊燈後的對比）。
+  const boxes: { card: number; x: number; y: number; w: number; h: number }[] = [];
+  const write = (card: number, x: string, px: number, left: number, top: number) => {
+    ctx.fillText(x, left, top);
+    boxes.push({ card, x: left, y: top, w: ctx.measureText(x).width, h: px });
+  };
   ctx.save();
   ctx.scale(S, S);
   ctx.textBaseline = 'top';
@@ -655,17 +663,18 @@ export function drawSketchText(
     );
     ctx.font = `400 ${L.ls}px ${o.fonts.hand}`;
     L.label.forEach((x, k) =>
-      ctx.fillText(x, L.pad, c.h - L.pad - (L.label.length - k) * (L.ls + 2)),
+      write(i, x, L.ls, L.pad, c.h - L.pad - (L.label.length - k) * (L.ls + 2)),
     );
     if (c.motif === 'pulse') {
       // 斷點旁寫時刻。
       if (c.time) {
         ctx.font = `400 14px ${o.fonts.hand}`;
-        ctx.fillText(c.time, L.pad, c.h * 0.3 + 15);
+        write(i, c.time, 14, L.pad, c.h * 0.3 + 15);
       }
     } else if (L.body.length) {
-      ctx.font = `400 ${o.fonts.size}px ${o.fonts.hand}`;
-      L.body.forEach((x, k) => ctx.fillText(x, L.pad, L.pad - 1 + k * L.lh));
+      const px = c.size ?? o.fonts.size;
+      ctx.font = `400 ${px}px ${o.fonts.hand}`;
+      L.body.forEach((x, k) => write(i, x, px, L.pad, L.pad - 1 + k * L.lh));
     }
     ctx.restore();
   });
@@ -677,6 +686,7 @@ export function drawSketchText(
   ctx.textBaseline = 'alphabetic';
   ctx.fillText(o.provenance, o.w - 16, o.h - 14);
   ctx.restore();
+  return boxes;
 }
 
 /** 不能放在行首的標點（中文避頭）、不能放在行尾的開括號（避尾）。 */
@@ -749,9 +759,10 @@ export function firstSentence(s: string) {
 /** 速寫卡的字要佔多高：卡名在下緣（14px，寫不下縮到 12px，再不下分兩行），內容在上面。 */
 export function cardTextLayout(
   measure: (font: string, s: string) => number,
-  c: Pick<SketchCard, 'w' | 'label' | 'body' | 'motif'>,
+  c: Pick<SketchCard, 'w' | 'label' | 'body' | 'motif' | 'size'>,
   fonts: { hand: string; size: number },
 ) {
+  const size = c.size ?? fonts.size;
   const pad = 9;
   const inner = c.w - 2 * pad;
   const at = (px: number) => `400 ${px}px ${fonts.hand}`;
@@ -759,10 +770,10 @@ export function cardTextLayout(
   const lw = measure(at(ls), c.label);
   if (lw > inner) ls = Math.max(12, Math.floor((14 * inner) / lw));
   const label = breakLines((x) => measure(at(ls), x), c.label, inner);
-  const lh = Math.round(fonts.size * 1.25);
+  const lh = Math.round(size * 1.25);
   const body =
     c.motif === 'lines' && c.body
-      ? breakLines((x) => measure(at(fonts.size), x), firstSentence(c.body), inner)
+      ? breakLines((x) => measure(at(size), x), firstSentence(c.body), inner)
       : [];
   // 內容在上、卡名在下，中間留 8px；照片和心率線另有圖，至少保留原本的高度。
   const need = pad + body.length * lh + (body.length ? 8 : 0) + label.length * (ls + 2) + pad;
