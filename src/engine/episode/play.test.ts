@@ -119,6 +119,12 @@ describe('桌面調查', () => {
     expect(st.linkMiss).toBeNull();
     st = linkUp(st, ['ride-receipt', 'sophie-health-app'], '支持');
     expect(st.linkMiss).toBe('cards');
+    // 線沒釘住：卡和關係都清掉，說明留著給玩家讀（設計師 P1-8a）。
+    const note = st.linkNote;
+    st = desk.releaseLink(st);
+    expect(st.link).toEqual({ cards: [], relation: null });
+    expect(st.linkNote).toBe(note);
+    expect(st.linkMiss).toBe('cards');
   });
 
   it('疑問要拿發現回答，全對才確認，錯了照樣扣工時而且不說哪裡錯', () => {

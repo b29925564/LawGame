@@ -167,6 +167,10 @@ h2,
 h3 {
   text-wrap: balance;
 }
+/* 紙面內文的一個詞（prose.tsx）：詞裡不換行，詞與詞之間照常。 */
+.kw {
+  white-space: nowrap;
+}
 * {
   scrollbar-width: thin;
   scrollbar-color: var(--border-strong) transparent;
@@ -615,6 +619,9 @@ details summary {
   font-family: var(--font-doc);
   color: var(--muted);
   line-height: 1.9;
+  /* 每一頁開頭的旁白：不留一兩個字的末行，標點不放行首（設計師 P2-6 r2 第 12 條）。 */
+  text-wrap: pretty;
+  line-break: strict;
   border-left: 2px solid var(--border-strong);
 }
 /* 盧卡斯的內心獨白：提示的主要載體，用螢光筆底色和一般台詞分開。 */
@@ -697,6 +704,14 @@ details summary {
   --hl: #f4c53d;
   --hl-wash: rgb(244 197 61 / 13%);
   --inset-hi: inset 0 1px 0 rgb(255 255 255 / 4%);
+  /* 字的權杖也一樣：頁尾淡字、焦點框、定案鈕、成立／不成立都用深色那一邊（規格 v2.0 :312；設計師 P2-6 r3 第 8 條）。 */
+  --faint: #8a95a2;
+  --focus: #f4c53d;
+  --good: #4cc38a;
+  --bad: #ef6a62;
+  --commit-bg: #161c25;
+  --commit-bg-hover: #1f2731;
+  --commit-edge: #e7eaee;
   color-scheme: dark;
 }
 
@@ -876,6 +891,8 @@ details summary {
 .slots .slot,
 .slot {
   width: 100%;
+  /* 焦點框 2px＋外移 2px：捲進畫面時連框一起留出來（設計師 P2-6 r3 第 4 條）。 */
+  scroll-margin: 8px;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -966,6 +983,8 @@ details summary {
   padding: max(8px, env(safe-area-inset-top)) 14px 0;
   display: grid;
   grid-template-rows: auto auto minmax(0, 1fr) auto;
+  /* 欄寬不跟著內容撐開：分頁列一行不換、放不下自己橫捲，不能把整欄撐得比視窗寬（設計師 P2-6 r2 第 8 條）。 */
+  grid-template-columns: minmax(0, 1fr);
   gap: 10px;
   overflow: hidden;
 }
@@ -1088,12 +1107,9 @@ details summary {
   display: none;
 }
 .apps button {
-  /*
-   * 擠不下時先縮、再在字間換行，不讓最後一個分頁被分頁列切掉（版面檢查：英文 Legal terms、Court system）。
-   * 中文詞不拆開：「證據/板」「法院系/統」一字一行（體驗評測 v88 重驗，第 2 集手機六個分頁）。
-   */
-  flex: 0 1 auto;
-  word-break: keep-all;
+  /* 分頁列一律一行：不換行、不縮，數字跟在字的右邊；放不下整列左右捲動（設計師 P2-6 r2）。 */
+  flex: none;
+  white-space: nowrap;
   line-height: var(--lh-tight);
   position: relative;
   min-height: 42px;
@@ -1839,21 +1855,20 @@ fieldset.relations.compact {
   color: var(--faint);
 }
 
-/* 連線與案情會議的結果：成立用綠邊，站不住用紅邊。 */
+/*
+ * 連線台的說明：盧卡斯寫在便條上的一句鉛筆字（設計師 P1-8a）。便條是紙：--note 底、1px --paper-rule、零圓角、不加投影；
+ * 鉛筆兩個主題同一色 --pencil（對 --note 淺色 8.6:1、深色 5.9:1）。不用紅，紅只代表矛盾。
+ */
 .board-note {
+  flex: 0 1 auto;
   margin: 0;
-  padding: 8px 12px;
-  border: 1px solid color-mix(in srgb, var(--good) 35%, var(--border));
-  border-left: 3px solid var(--good);
-  border-radius: var(--radius);
-  background: color-mix(in srgb, var(--good) 9%, var(--surface));
-  font-size: 0.9em;
-  line-height: 1.6;
-}
-.board-note.bad {
-  border-color: color-mix(in srgb, var(--bad) 35%, var(--border));
-  border-left-color: var(--bad);
-  background: color-mix(in srgb, var(--bad) 9%, var(--surface));
+  padding: 4px 12px;
+  border: 1px solid var(--paper-rule);
+  border-radius: 0;
+  background: var(--note);
+  color: var(--pencil);
+  font: 400 calc(var(--fs-hand) * var(--text-scale)) / 1.5 var(--font-hand);
+  letter-spacing: 0;
 }
 
 /* 發現：像釘在板上的一張便條，編號用打字機字，內容用文件字。 */
@@ -3125,7 +3140,7 @@ fieldset.relations.compact {
     animation: fade var(--dur-ui) var(--ease) both;
   }
   .board-note {
-    animation: drop 0.28s var(--ease) both;
+    animation: fade var(--dur-ui) var(--ease) both;
   }
   .findings li:last-child {
     animation: ink-in 0.5s var(--ease) both;
@@ -4737,7 +4752,6 @@ button.iou[aria-pressed='true'] {
 @media (max-width: 520px) {
   :root {
     --fs-vo: 19px;
-    --fs-hand: 17px;
   }
   .vo-frame {
     width: calc(100% - 32px);
@@ -5106,6 +5120,10 @@ button.iou[aria-pressed='true'] {
   align-items: center;
   gap: 12px;
 }
+/* 「連起來」永遠靠右；左邊的空位給連錯的便條。 */
+.bench-foot > button {
+  margin-left: auto;
+}
 .answer-foot .board-note {
   margin: 0;
   flex: 1;
@@ -5317,46 +5335,34 @@ button.iou[aria-pressed='true'] {
   font-family: var(--font-mono, monospace);
   font-size: 0.8em;
 }
-/* 回饋教學（設計稿 board-redesign 修訂）：連錯、交錯抖一下；工時掉一格閃紅。 */
-@keyframes shake {
-  0%,
-  100% {
-    transform: none;
+/*
+ * 工時換值：數字留在原地，舊值淡出、新值淡入，--dur-ui --ease；不變色、不位移（設計師 P1-8a，設定集 10.2 不抖動）。
+ * 減少動態時元件直接換值，不畫舊值。
+ */
+.swap {
+  display: inline-grid;
+}
+.swap > span {
+  grid-area: 1 / 1;
+}
+.swap-old {
+  opacity: 0;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .swap-old {
+    animation: swap-out var(--dur-ui) var(--ease) both;
   }
-  20%,
-  60% {
-    transform: translateX(-5px);
-  }
-  40%,
-  80% {
-    transform: translateX(5px);
+  .swap-new {
+    animation: fade var(--dur-ui) var(--ease) both;
   }
 }
-.shake .slot-card,
-.shake.answer-slots,
-.shake-rel .link-knot span,
-.shake-rel .relations [aria-checked='true'] {
-  animation: shake 0.4s ease;
-}
-/* 卡對了、關係錯：只有關係在抖，而且變紅；卡片不動。 */
-.shake-rel .link-knot span,
-.shake-rel .relations [aria-checked='true'] {
-  background: var(--bad) !important;
-  border-color: var(--bad);
-  color: #fff;
-}
-@keyframes hours-drop {
-  0% {
-    color: var(--bad);
-    transform: translateY(-4px);
+@keyframes swap-out {
+  from {
+    opacity: 1;
   }
-  100% {
-    transform: none;
+  to {
+    opacity: 0;
   }
-}
-.hours.drop strong {
-  display: inline-block;
-  animation: hours-drop 0.6s ease;
 }
 .tries {
   display: inline-flex;
@@ -5368,16 +5374,10 @@ button.iou[aria-pressed='true'] {
   border-radius: 50%;
   border: 1px solid var(--border-strong);
 }
+/* 交錯過的那幾顆塗實（墨色），不用紅：紅只代表矛盾（設計師 P1-8a）。 */
 .tries i.miss {
-  border-color: var(--bad);
-  background: var(--bad);
-}
-@media (prefers-reduced-motion: reduce) {
-  .shake .slot-card,
-  .shake.answer-slots,
-  .hours.drop strong {
-    animation: none;
-  }
+  border-color: var(--text);
+  background: var(--text);
 }
 /*
  * 證據欄小卡（UX 規格 P1-12）：一行一張，高 40。名稱靠左、時間或種類靠右；
@@ -5422,6 +5422,10 @@ button.iou[aria-pressed='true'] {
   line-height: 1.35;
   font-weight: 600;
   overflow-wrap: anywhere;
+}
+/* 捲到卡片時停在黏頂的分組小標（約 30px）下面。 */
+.card.mini {
+  scroll-margin-top: 36px;
 }
 /* 不能放上連線台的畫面：點開才看內容。 */
 .card.mini .mini-body {
@@ -5822,11 +5826,10 @@ button.iou[aria-pressed='true'] {
   font-weight: 700;
 }
 
-/* 英文模式：視覺設計師定的字體配對；行距收到 1.5，數字等寬 */
+/* 英文模式：視覺設計師定的字體配對；行距收到 1.5，數字等寬。手寫在英文也用 LXGW WenKai TC（它有拉丁字母；設計師 #225 審查），所以不覆寫 --font-hand。 */
 :root:lang(en) {
   --font: 'IBM Plex Sans', 'Noto Sans TC', system-ui, sans-serif;
   --font-doc: 'Source Serif 4', 'Noto Serif TC', serif;
-  --font-hand: 'Source Serif 4', serif;
   font-variant-numeric: tabular-nums;
 }
 :root:lang(en) body,
@@ -5834,11 +5837,6 @@ button.iou[aria-pressed='true'] {
 :root:lang(en) .speech,
 :root:lang(en) .doc {
   line-height: 1.5;
-}
-
-:root:lang(en) .sticky,
-:root:lang(en) .iou .sig {
-  font-style: italic;
 }
 
 /* 法庭光層試做（場景光影規格）：四張關鍵格疊在畫面最底，只改 opacity。 */

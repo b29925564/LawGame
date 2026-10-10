@@ -219,7 +219,8 @@
 遞狀: File
 '−{n} 工時': '−{n} h'
 還不能寫: not ready
-'還缺前提：先把 {names} 確認起來': 'Missing a premise: confirm {names} first'
+先確認這個論點，才能寫這份聲請：: 'Confirm this argument before you draft this motion:'
+先確認這些論點，才能寫這份聲請：: 'Confirm these arguments before you draft this motion:'
 出示證物: Show an exhibit
 
 # 證據板的陪審團視角

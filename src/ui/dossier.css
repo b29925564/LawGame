@@ -1,0 +1,776 @@
+/*
+ * 卷宗的三個標記元件（設定集第 9 章；設計師 P2-6 裁定與 r1 更正）：案卷登錄表、照片紀錄表、證物袋，和放大檢視。
+ * main.tsx 在 styles.css 之後載入，同權重時蓋得過通用樣式。
+ * 字族照紙本：紙上印的用 --font-court（Courier Prime 印拉丁字母和數字，中文退回 Noto Serif TC）；
+ * 手寫一律 --font-hand（LXGW WenKai TC，數字、時間、英文都一樣）。一張紙最多三套字族。
+ */
+
+/* 紙面內文的換行：中文標點不放行首（strict），避開只剩一兩個字的末行（pretty）（設計師 r2 第 12 條）。
+   兩個屬性都會繼承，掛在每一種紙的最外層。 */
+:is(.docket, .photolog, .bag, .zoom-sheet, .mini-body) {
+  text-wrap: pretty;
+  line-break: strict;
+}
+
+/* ── <Docket> 案卷登錄表：法院系統分頁頂端的一張紙。整張是印的：--font-court，中文退回 Noto Serif TC ── */
+.docket {
+  width: min(720px, 100%);
+  margin: 0 auto var(--s4);
+  padding: 22px 28px 18px;
+  background-color: var(--paper);
+  background-image: var(--grain);
+  color: var(--paper-ink);
+  /* 設定集的紙沒有圓角；紙疊在紙層：1px 紙邊，不投影（規格 v2.0 §3）。 */
+  border-radius: 0;
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 14%);
+  font-family: var(--font-court);
+}
+.docket-cap {
+  display: grid;
+  gap: 2px;
+  margin-bottom: 14px;
+  text-align: center;
+}
+.docket-cap .ct {
+  font: 400 13px/1.6 var(--font-court);
+  letter-spacing: 0.22em;
+  color: var(--paper-muted);
+}
+.docket-cap .vs {
+  font: 400 14px/1.6 var(--font-court);
+  letter-spacing: 0.1em;
+}
+.docket-cap .no {
+  font: 700 13px/1.6 var(--font-court);
+  letter-spacing: 0.06em;
+  color: var(--paper-muted);
+}
+.docket-cap h3 {
+  margin: 6px 0 0;
+  font: 700 19px/1.3 var(--font-court);
+  letter-spacing: 0.3em;
+  text-indent: 0.3em;
+}
+:root:lang(en) .docket-cap h3 {
+  letter-spacing: 0.08em;
+  text-indent: 0.08em;
+}
+.docket table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.docket th {
+  padding: 0 8px 6px;
+  border-bottom: 1px solid var(--paper-ink);
+  font: 700 13px/1.3 var(--font-court);
+  letter-spacing: 0.12em;
+  color: var(--paper-muted);
+  text-align: left;
+  white-space: nowrap;
+}
+.docket td {
+  padding: 8px;
+  border-bottom: 1px solid var(--paper-rule);
+  vertical-align: baseline;
+}
+.docket .dk-no,
+.docket .dk-date {
+  font: 700 13px/1.6 var(--font-court);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.docket .dk-no {
+  width: 2.5em;
+  text-align: right;
+}
+.docket .dk-date {
+  width: 7.5em;
+}
+.docket .dk-entry {
+  font: 400 14px/1.65 var(--font-court);
+}
+/* 還沒發生的行：整行黑條，條內小字也是紙上印的字。 */
+.docket .dk-future td {
+  padding: 5px 0;
+}
+.docket .redact {
+  min-height: 30px;
+  font: 400 13px/1.3 var(--font-court);
+}
+/*
+ * 目前那一行：螢光筆從左劃到右（--dur-hl 330ms steps(8)）。紙是淺色表面：加 --hl-edge 2px 左線、字重 700
+ * （設定集第 2 章「淺色表面上的螢光」；載入的字重沒有 600）。整張紙只有這一道。
+ * 存檔欄的迷你版只有選中的那一欄上螢光（JS 記的 .sel，滑鼠滑過不算）：存檔畫面只准一道黃（設計師 P2-6 r1）。
+ */
+.docket .dk-cur,
+.slot.sel .dk-mini .dk-cur {
+  background-image: linear-gradient(var(--hl), var(--hl));
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  color: var(--hl-ink);
+  font-weight: 700;
+}
+.docket .dk-cur td:first-child {
+  box-shadow: inset 2px 0 0 var(--hl-edge);
+}
+.slot.sel .dk-mini .dk-cur {
+  box-shadow: inset 2px 0 0 light-dark(var(--hl-edge), transparent);
+}
+.docket .dk-cur .dk-entry {
+  font-weight: 700;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .docket .dk-cur,
+  .slot.sel .dk-mini .dk-cur {
+    animation: dk-swipe var(--dur-hl) steps(8) both;
+  }
+}
+@keyframes dk-swipe {
+  from {
+    background-size: 0% 100%;
+  }
+}
+/* 「展開全部」只在手機出現。 */
+.docket .dk-all {
+  display: none;
+}
+@media (max-width: 640px) {
+  .docket {
+    padding: 14px 14px 12px;
+  }
+  .docket-cap {
+    margin-bottom: 8px;
+  }
+  /*
+   * 窄版：序號和日期一行，事項在下面佔滿整行（英文的 Courier 擠在第三欄會一行四個字）；
+   * 欄名只留給螢幕閱讀器。螢光的 --hl-edge 左線改畫在整行上。
+   */
+  .docket thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  .docket tbody tr:not(.dk-future) {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    column-gap: 12px;
+    padding: 6px;
+    border-bottom: 1px solid var(--paper-rule);
+  }
+  .docket tbody tr:not(.dk-future) td {
+    width: auto;
+    padding: 0;
+    border-bottom: 0;
+    text-align: left;
+  }
+  .docket .dk-entry {
+    grid-column: 1 / -1;
+    font-size: 13px;
+    line-height: 1.55;
+  }
+  .docket tr.dk-cur {
+    box-shadow: inset 2px 0 0 var(--hl-edge);
+  }
+  .docket .dk-cur td:first-child {
+    box-shadow: none;
+  }
+  .docket .dk-future {
+    display: block;
+  }
+  .docket .dk-future td {
+    display: block;
+  }
+  /* 只留目前那一行和前一行，加一條黑條，聲請卡留在第一屏（設計師 P2-6 r1、r2 第 1 條）。 */
+  .docket:not(.all) .dk-old {
+    display: none;
+  }
+  .docket .dk-all {
+    display: block;
+    margin: 10px auto 0;
+    font-family: var(--font);
+  }
+}
+
+/* ── 存檔欄：選中的那一欄是墨框（玩家的手是那一行螢光，不是框）；Bates 區間；縮小版登錄表 ── */
+.slots .slot:focus-visible,
+.slots .slot.sel {
+  outline: 2px solid var(--text);
+  outline-offset: 2px;
+}
+.slot .when {
+  white-space: nowrap;
+}
+.slot .dk-bates {
+  margin-top: 1px;
+  font: 700 12px/1.5 var(--font-court);
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+  color: var(--faint);
+}
+/* 縮小版登錄表：還沒發生的行合成一條黑條。 */
+.dk-mini {
+  display: grid;
+  gap: 2px;
+  width: 100%;
+  margin-top: 6px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+.dk-mini .dk-row {
+  display: grid;
+  grid-template-columns: 1.6em 3.6em minmax(0, 1fr);
+  gap: 6px;
+  align-items: baseline;
+  padding: 0 4px;
+}
+.dk-mini b,
+.dk-mini time {
+  font: 700 12px/1.5 var(--font-court);
+  font-variant-numeric: tabular-nums;
+}
+.dk-mini b {
+  text-align: right;
+}
+/* 事項只放第一個分句；放不下就換行，不用漸隱、不用省略號（設計師 P2-6 r2）。 */
+.dk-mini .dk-row > span {
+  min-width: 0;
+  text-wrap: pretty;
+  line-break: strict;
+}
+/* 其他存檔欄的目前行只加粗、不上色。 */
+.dk-mini .dk-cur {
+  color: var(--text);
+  font-weight: 700;
+}
+.dk-mini .dk-future {
+  grid-template-columns: 1fr;
+}
+/* 深色存檔欄上的黑條要看得出來：1px --border-strong 外框。 */
+.dk-mini .dk-bar {
+  display: block;
+  height: 10px;
+  margin: 3px 0;
+  background: var(--redact);
+  border: 1px solid var(--border-strong);
+}
+
+/* ── <PhotoLog> 照片紀錄表：沖印本（零圓角）＋底邊四欄。沖印本用紙的權杖，1px --paper-rule 邊，不投影 ── */
+.photolog {
+  container-type: inline-size;
+  margin: 0 0 10px;
+  padding: 10px 10px 0;
+  background: var(--paper);
+  border: 1px solid var(--paper-rule);
+  border-radius: 0;
+  color: var(--paper-ink);
+}
+/* 4×6 照片 1:1.5。沒有實物照片時是警方閃光燈的版式：中心過曝、四角快速變暗、背景死黑。 */
+.photolog-print {
+  position: relative;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 3 / 2;
+  overflow: hidden;
+  background: radial-gradient(
+    120% 95% at 48% 46%,
+    #d6d6d1 0,
+    #8d8d88 20%,
+    #2b2c2e 52%,
+    #070708 84%
+  );
+}
+.photolog-print img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.photolog-print .redact {
+  flex: none;
+  width: 70%;
+}
+.photolog-strip {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px 12px;
+  margin: 0;
+  padding: 8px 0 6px;
+}
+.photolog-strip div {
+  min-width: 0;
+}
+/* 攝影者的職稱整組不斷開，欄寬不夠時攝影者自己佔滿一整行（設計師 P2-6 r2）。 */
+.photolog-strip .pg {
+  grid-column: 1 / -1;
+}
+.photolog-strip dt {
+  font: 400 calc(12px * var(--text-scale)) / 1.3 var(--font-court);
+  letter-spacing: 0.04em;
+  color: var(--paper-muted);
+}
+.photolog-strip dd {
+  margin: 0;
+  font: 700 calc(var(--fs-record) * var(--text-scale)) / 1.45 var(--font-court);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+/* 攝影者：姓名和職稱之間換行，各自整組不斷開。 */
+.photolog-strip .who-name,
+.photolog-strip .who-role {
+  display: block;
+}
+@container (min-width: 360px) {
+  .photolog-strip {
+    grid-template-columns: auto auto minmax(0, 1fr);
+    gap: 6px 22px;
+  }
+}
+@container (min-width: 640px) {
+  .photolog-strip {
+    grid-template-columns: auto auto auto minmax(0, 1fr);
+  }
+  .photolog-strip .pg {
+    grid-column: auto;
+  }
+}
+@media (max-width: 520px) {
+  .photolog-strip dd {
+    font-size: calc(12px * var(--text-scale));
+  }
+}
+/* 右下角的 Bates：Courier 700 12px；還沒有號碼就只是一條黑條。 */
+.photolog-bates {
+  display: flex;
+  justify-content: flex-end;
+  min-height: 18px;
+  padding: 0 0 8px;
+}
+.photolog-bates b {
+  font: 700 12px/18px var(--font-court);
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+}
+.photolog-bates .bates-bar {
+  display: block;
+  width: 11em;
+  height: 14px;
+  margin-top: 2px;
+  background: var(--redact);
+  border-top: 1px solid var(--cine-line);
+}
+/* 證據板照片卡：卡名留在底欄，紀錄列一行小字：案號、序號、時間，兩個半形空格分開；放不下整段換行，不漸隱。
+   字最小 12px（設計師 r2 第 11 條），手機也一樣。 */
+.cork-strip:has(.photolog-line) {
+  flex-wrap: wrap;
+}
+.photolog-line {
+  display: flex;
+  flex-wrap: wrap;
+  flex-basis: 100%;
+  column-gap: 2ch;
+  font: 700 12px/16px var(--font-court);
+  /* 不加字距：手機的卡寬 126px 剛好放得下「案號＋兩格＋序號」一行，時間第二行。 */
+  color: var(--paper-muted);
+}
+.photolog-line span {
+  white-space: nowrap;
+}
+
+/* ── <EvidenceBag> 證物袋：透明袋，兩道 CSS 漸層高光＋1px 白邊（定案做法） ── */
+.bag {
+  /* 填進空格的字：藍黑墨水（規格 v2.0 --ink-fill）。 */
+  --ink-fill: #1f3a68;
+  container-type: inline-size;
+  position: relative;
+  margin: 0 0 10px;
+  padding: 10px;
+  /* 淺色主題也讀得出塑膠：白邊外面再一道深色細線（和登錄表的紙邊同一條）。 */
+  border: 1px solid rgb(255 255 255 / 72%);
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 14%);
+  background: light-dark(rgb(190 200 212 / 30%), rgb(214 220 228 / 12%));
+  /* 袋裡的 z-index（高光、字在高光上面）只在袋子裡排，不蓋到抽屜的黏頂分組小標（設計師 r3 第 3 條）。 */
+  isolation: isolate;
+}
+/* 塑膠在東西上面：高光蓋在袋裡的紙和印刷上，點擊穿過去。淺色主題的袋身和高光調亮一點，但不洗掉字。 */
+.bag::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      112deg,
+      transparent 16%,
+      light-dark(rgb(255 255 255 / 30%), rgb(255 255 255 / 16%)) 22%,
+      transparent 29%
+    ),
+    linear-gradient(
+      112deg,
+      transparent 60%,
+      light-dark(rgb(255 255 255 / 22%), rgb(255 255 255 / 10%)) 64%,
+      transparent 70%
+    );
+}
+/* 玩家在抽屜裡劃的螢光（一張紙一道）在塑膠高光上面，不被洗白。 */
+.bag mark.hl {
+  z-index: 2;
+}
+/* 有字的那幾行在高光上面：高光只照亮字後面的紙和照片，不洗字。
+   量過：灰字（--paper-muted）在紙上本來只有 5.09:1（淺色）、4.71:1（深色），
+   壓 30% 的白會掉到 2.8:1；字放在高光上面，最低就是原本的 4.71:1（設計師 r2「不用改」第 3 條的條件）。 */
+.bag :is(.bag-label > *, .bag-window > p, .photolog-strip, .photolog-bates, .zoom-sheet > p) {
+  position: relative;
+  z-index: 2;
+}
+.bag-window {
+  padding: 10px 12px;
+  background-color: var(--paper);
+  background-image: var(--grain);
+  color: var(--paper-ink);
+  font: 400 14px/1.6 var(--font-doc);
+}
+.bag-window .photolog {
+  margin: -10px -12px 0;
+}
+.bag-window p {
+  margin: 0;
+}
+/* 抽屜的卡片樣式（.card.mini .mini-body .mini-src）是深色介面的淡字，在袋裡的紙上要換回紙的權杖（設計師 r3 第 2 條）。 */
+.bag-window .mini-src,
+.card.mini .mini-body .bag-window .mini-src,
+.bag-window .zoom-src {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--paper-rule);
+  font: 400 12px/1.5 var(--font);
+  color: var(--paper-muted);
+}
+/* 袋上的標籤：看守所系統印出來的（紙的權杖）。案號、項次、單號 Courier 700；方式、地點、說明 Noto Serif TC；保管鏈手寫。 */
+.bag-label {
+  margin-top: 10px;
+  padding: 10px 12px 6px;
+  background: var(--copy-paper);
+  color: var(--paper-ink);
+  font-size: calc(var(--fs-record) * var(--text-scale));
+}
+.bag-title,
+.bag-chain-title {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0;
+  font: 700 calc(var(--fs-record) * var(--text-scale)) / 1.4 var(--font-court);
+  letter-spacing: 0.18em;
+}
+.bag-title {
+  padding-bottom: 4px;
+  border-bottom: 2px solid currentColor;
+}
+.bag-chain-title {
+  margin-top: 10px;
+  padding-bottom: 2px;
+  border-bottom: 1px solid currentColor;
+}
+.bag-title span,
+.bag-chain-title span {
+  font-size: calc(11px * var(--text-scale));
+  letter-spacing: 0.14em;
+}
+.bag-head {
+  display: grid;
+  margin: 0;
+}
+/* 窄版：欄名疊在值的上面，佔滿整行。 */
+.bag-head div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0 8px;
+  align-items: baseline;
+  padding: 3px 0;
+  border-bottom: 1px solid var(--paper-rule);
+}
+.bag-head dt,
+.bag-chain .ck {
+  font: 400 calc(12px * var(--text-scale)) / 1.4 var(--font-court);
+  color: var(--paper-muted);
+}
+.bag-head dd {
+  margin: 0;
+  font: 400 calc(var(--fs-record) * var(--text-scale)) / 1.5 var(--font-court);
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+.bag-head dd.code,
+.bag-head .ref {
+  font-weight: 700;
+}
+/* 單號、人名、職稱整組不斷開。 */
+.bag-head .seg,
+.bag-head .ref,
+.bag-chain :is(.who-name, .who-role) {
+  white-space: nowrap;
+}
+.bag-head .seg + .seg {
+  margin-left: 1ch;
+}
+.bag-head .redact,
+.bag-chain .redact {
+  min-height: 20px;
+  font: 400 calc(12px * var(--text-scale)) / 1 var(--font-court);
+}
+.bag-chain li:not(.bag-chain-cols) {
+  font: 400 calc(var(--fs-hand) * var(--text-scale)) / 1.35 var(--font-hand);
+  color: var(--ink-fill);
+}
+/* 保管鏈：每一手一行。窄的時候：時間＋目的一行，交出、收受各一行，留小字欄名。 */
+.bag-chain {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.bag-chain li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas:
+    'at why'
+    'from from'
+    'to to';
+  column-gap: 10px;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--paper-rule);
+}
+.bag-chain .at {
+  grid-area: at;
+  white-space: nowrap;
+}
+.bag-chain .why {
+  grid-area: why;
+  text-align: right;
+  word-break: keep-all;
+}
+.bag-chain .from {
+  grid-area: from;
+}
+.bag-chain .to {
+  grid-area: to;
+}
+.bag-chain :is(.from, .to) {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 1ch;
+}
+.bag-chain .ck {
+  flex-basis: 100%;
+}
+.bag-chain .bag-chain-cols {
+  display: none;
+}
+/* 還沒發生的那一手：整行黑條（不寫時間和經手人，免得先暴露劇情）。 */
+.bag-chain li.bag-pending {
+  display: block;
+  padding: 4px 0;
+}
+.bag-chain .bag-pending .redact {
+  min-height: 26px;
+}
+@container (min-width: 560px) {
+  .bag-head div {
+    grid-template-columns: 7.5em minmax(0, 1fr);
+  }
+  /* 欄寬用手寫字級算：表頭小字和手寫列對得齊。 */
+  .bag-chain li {
+    grid-template-columns:
+      calc(var(--fs-hand) * 6.4) minmax(0, 1fr) minmax(0, 1fr)
+      calc(var(--fs-hand) * 8.5);
+    grid-template-areas: 'at from to why';
+    align-items: baseline;
+    /* 欄與欄至少 16px，職稱不和下一欄讀成同一句（設計師 P2-6 r3 第 7 條）。 */
+    column-gap: 16px;
+  }
+  .bag-chain .why {
+    text-align: left;
+  }
+  /* 寬版有表頭小字，交出、收受的欄名只留給螢幕閱讀器；姓名和職稱各一行。 */
+  .bag-chain .ck {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .bag-chain :is(.from, .to) {
+    display: block;
+  }
+  .bag-chain :is(.who-name, .who-role) {
+    display: block;
+  }
+  .bag-chain .who-role {
+    white-space: normal;
+  }
+  .bag-chain .bag-chain-cols {
+    display: grid;
+    padding: 4px 0 2px;
+    font: 400 calc(12px * var(--text-scale)) / 1.3 var(--font-court);
+    letter-spacing: 0.04em;
+    color: var(--paper-muted);
+  }
+  .bag-chain-cols span:nth-child(1) {
+    grid-area: at;
+  }
+  .bag-chain-cols span:nth-child(2) {
+    grid-area: from;
+  }
+  .bag-chain-cols span:nth-child(3) {
+    grid-area: to;
+  }
+  .bag-chain-cols span:nth-child(4) {
+    grid-area: why;
+  }
+}
+
+/* ── 證據欄展開 ── */
+.card.mini .mini-body .photolog,
+.card.mini .mini-body .bag {
+  margin-top: 4px;
+}
+.card.mini .mini-body .zoom-open {
+  min-height: max(32px, var(--hit));
+  padding: 4px 0;
+  font-size: 13px;
+}
+
+/* 證據板的卡名不斷出孤字（劇本與內容建議，設計師 P2-6 r1）。 */
+.cork :is(.cork-doc-name, .cork-index-head b, .cork-strip b) {
+  text-wrap: balance;
+}
+
+/* ── 證據板光圈裡的「放大」：標記層，不被吊燈調光、不歪 ── */
+.cork .cork-zoom {
+  position: absolute;
+  z-index: 7;
+  translate: -100% -50%;
+  margin-left: -6px;
+  min-height: 26px;
+  padding: 2px 10px;
+  border: 1px solid #3a4757;
+  border-radius: 3px;
+  background: #19202a;
+  box-shadow: none;
+  color: #e7eaee;
+  font: 500 12px/20px var(--font);
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+/* 點擊範圍 ≥ --hit：看得到的按鈕 26px，透明的一圈撐大（設計師 P2-6 r1）。 */
+.cork .cork-zoom::after {
+  content: '';
+  position: absolute;
+  inset: -6px -4px;
+}
+.cork .cork-zoom:hover:not(:disabled) {
+  border-color: #8e99a7;
+  background: #19202a;
+}
+/* 陪審團視角停用：實線框、--ink-muted 字，不用透明度。 */
+.cork .cork-zoom:disabled {
+  opacity: 1;
+  border-color: #3a4757;
+  color: var(--ink-muted);
+}
+/* 英文「Close-up」比較寬，會蓋到圖釘：往下移到圖釘下面。 */
+:root:lang(en) .cork .cork-zoom {
+  translate: -100% 0;
+  margin-top: 18px;
+}
+
+/* ── 放大檢視 ──
+   框的高度最多是視窗高減上下各 16px；標題列不動，下面的內容在框裡捲（設計師 r2 第 5 條）。 */
+.zoom {
+  width: min(880px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  padding: 18px 22px 22px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+}
+.zoom[open] {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.zoom-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+/* 照片不比視窗高：留出標題列、紀錄列和第一段說明的高度，說明卡的上緣在第一屏裡。 */
+.zoom-body > .photolog,
+.zoom-body > .bag {
+  max-width: max(320px, calc((100dvh - 420px) * 1.5));
+  margin-inline: auto;
+}
+.zoom::backdrop {
+  background: rgb(6 8 11 / 72%);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .zoom[open] {
+    animation: iv-fade var(--dur-ui) var(--ease) both;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .zoom[open] {
+    animation: iv-fade var(--dur-rm) linear both;
+  }
+}
+.zoom-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--s3);
+  margin-bottom: 12px;
+}
+.zoom-head h2 {
+  margin: 0;
+  font: 700 18px/1.4 var(--font-doc);
+}
+.zoom-body > .photolog,
+.zoom-body > .bag {
+  margin-bottom: 12px;
+}
+.zoom-sheet {
+  padding: 14px 16px;
+  background-color: var(--paper);
+  background-image: var(--grain);
+  color: var(--paper-ink);
+  font: 400 15px/1.8 var(--font-doc);
+}
+.bag-window .zoom-sheet {
+  padding: 0;
+  background: none;
+}
+.zoom-sheet p {
+  margin: 0;
+}
+.zoom-src {
+  margin-top: 8px;
+  padding-top: 6px;
+  border-top: 1px solid var(--paper-rule);
+  font: 400 12px/1.5 var(--font);
+  color: var(--paper-muted);
+}
+@media (max-width: 640px) {
+  .zoom {
+    padding: 14px;
+  }
+  .bag {
+    padding: 8px;
+  }
+}

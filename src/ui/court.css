@@ -35,7 +35,8 @@
   height: 96px;
   min-height: 0;
   border: 0;
-  border-radius: 2px;
+  /* 紙沒有圓角；選中的墨框也跟著是直角（設計師 P2-6 r2）。 */
+  border-radius: 0;
   background: var(--paper);
   box-shadow:
     0 1px 0 rgb(0 0 0 / 15%),
@@ -48,7 +49,8 @@
 }
 .fthumb:hover,
 .fthumb[aria-pressed='true'] {
-  background: var(--paper);
+  /* 選中的縮圖還是紙：蓋掉全域「按下」的深底（!important），選中只靠下面的墨框（設計師 P2-6 r2 第 9 條）。 */
+  background: var(--paper) !important;
 }
 .fthumb::before {
   content: '';
@@ -64,7 +66,7 @@
   display: block;
   width: 50px;
   height: 3px;
-  border-radius: 1px;
+  border-radius: 0;
   background: var(--paper-rule);
 }
 .fthumb i:nth-child(2) {
@@ -74,8 +76,9 @@
   width: 28px;
 }
 .fthumb i.open {
+  /* 還沒填的欄：一條實線空格（虛線只給借據存根的撕線）。 */
   background: transparent;
-  border-bottom: 1px solid var(--paper-muted);
+  border-bottom: 1px solid var(--paper-rule);
   height: 4px;
   border-radius: 0;
 }
@@ -101,7 +104,8 @@
   width: 26px;
   height: 14px;
   border: 1px solid var(--stamp);
-  border-radius: 2px;
+  /* 直角（#233）；收文 3°、--stamp 雙線框（設計師 #225 第二輪）。 */
+  border-radius: 0;
   opacity: 0.72;
   rotate: 3deg;
   mix-blend-mode: multiply;
@@ -112,7 +116,7 @@
   position: absolute;
   inset: 1px;
   border: 1px solid var(--stamp);
-  border-radius: 1px;
+  border-radius: 0;
 }
 .fthumb .mini {
   position: absolute;
@@ -138,6 +142,44 @@
 .fthumb .mini.no,
 .stamp-big.no {
   --rot: 3deg;
+}
+
+/* 手機：縮圖縮成一排紙籤（字在紙上、選中是墨框），聲請卡的標題和第一行留在 412×915 的第一屏（設計師 P2-6 r2 第 1 條）。 */
+@media (max-width: 640px) {
+  .filings {
+    flex-wrap: wrap;
+    gap: 8px;
+    /* 左側 2px：選中那一張的墨框不被紙籤列的左緣切掉（設計師 P2-6 r3 第 9 條）。 */
+    padding: 0 0 0 2px;
+  }
+  .fthumb {
+    width: auto;
+    height: 44px;
+    padding: 0 12px 0 20px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .fthumb i,
+  .fthumb .rcv {
+    display: none;
+  }
+  .fthumb .k {
+    position: static;
+    font-size: 12px;
+    color: var(--paper-ink);
+  }
+  .fthumb .mini {
+    position: static;
+    width: 22px;
+    height: 22px;
+  }
+}
+
+/* 這一幕沒有聲請：那一行和上面案卷登錄表的紙張左緣對齊（設計師 P2-6 r3 第 11 條）。 */
+.motion-none {
+  width: min(720px, 100%);
+  margin-inline: auto;
 }
 
 /* 聲請狀：訴狀紙，32px 橫格線，左邊雙直線與行號。 */
@@ -569,6 +611,24 @@
 }
 .prereq-note strong {
   font-size: 16px;
+}
+/* 缺的論點一行一個：◆（紙上用 --paper-ink，規格 v2.0 :225）＋論點名稱，名稱換行時對齊名稱的左緣。 */
+.prereq-args {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 16px;
+  line-height: 1.5;
+}
+.prereq-args li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 0.5em;
+}
+.prereq-args li > span:first-child {
+  color: var(--paper-ink);
 }
 @media (max-width: 760px) {
   .plead {

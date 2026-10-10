@@ -223,6 +223,14 @@ export function connect(s: DeskScene, st: DeskState): DeskState {
   };
 }
 
+/**
+ * 連錯之後線沒釘住（設計師 P1-8a）：兩張卡退出光圈回原位，關係也一起清掉；
+ * 連錯的說明（linkNote、linkMiss）留著，玩家還要讀。
+ */
+export function releaseLink(st: DeskState): DeskState {
+  return { ...st, link: { cards: [], relation: null } };
+}
+
 /** 已經連成的發現，照連出來的先後。 */
 export function findings(s: DeskScene, st: DeskState) {
   return st.found.flatMap((id) => s.links.filter((l) => l.id === id));

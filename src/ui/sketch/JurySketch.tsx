@@ -4,6 +4,7 @@ import { reducedMotion } from '../a11y';
 import { useScope } from '../lang';
 import {
   buildSketch,
+  cardTextLayout,
   drawSketchText,
   drawStrokes,
   type RGB,
@@ -182,8 +183,11 @@ export function JurySketch({
       const hand = css.getPropertyValue('--font-hand') || 'cursive';
       const sc: SketchCard[] = cards.map((c) => {
         const p = PAPER[look(c.kind)] ?? PAPER.copy;
-        const cw = (c.w / 100) * w;
-        const ch = cw * p.ratio;
+        // 桌機的卡寬拉到場景寬的 30% 左右（220–240px），英文不拆成一欄窄字；手機維持內容檔的寬度
+        // （設計師 P2-6 r3 第 10 條）。紙的高度照原本的比例，字放不下下面再撐高。
+        const cw0 = (c.w / 100) * w;
+        const cw = w >= 640 ? Math.max(cw0, Math.min(240, Math.max(220, w * 0.3))) : cw0;
+        const ch = cw0 * p.ratio;
         const x = (c.at[0] / 100) * w;
         const y = (c.at[1] / 100) * h;
         return {
@@ -209,6 +213,27 @@ export function JurySketch({
       const size = parseFloat(css.getPropertyValue('--fs-hand')) || 18;
       await document.fonts?.load(`${size}px ${hand}`, words + provenance).catch(() => undefined);
       if (cancelled) return;
+      // 字放不下就把卡撐高（往下長），不切字（設計師 P2-6 r2）。要在算筆觸之前量，輪廓才會跟著卡。
+      const measure = (font: string, x: string) => {
+        ctx.font = font;
+        return ctx.measureText(x).width;
+      };
+      for (const c of sc) {
+        const { need } = cardTextLayout(measure, c, { hand, size });
+        if (need > c.h) {
+          c.cy += (need - c.h) / 2;
+          c.h = need;
+        }
+        // 撐高、拉寬後整張卡還要留在板子裡，下緣不壓到出處小字（基線在 h − 14，留 34px）。
+        const ext =
+          (c.h / 2) * Math.abs(Math.cos(c.angle)) + (c.w / 2) * Math.abs(Math.sin(c.angle));
+        const lo = ext + 8;
+        const hi = h - 34 - ext;
+        c.cy = hi >= lo ? Math.min(hi, Math.max(lo, c.cy)) : lo;
+        const half =
+          (c.w / 2) * Math.abs(Math.cos(c.angle)) + (c.h / 2) * Math.abs(Math.sin(c.angle));
+        c.cx = Math.min(w - half - 8, Math.max(half + 8, c.cx));
+      }
       const paper = cssColor('var(--sketch-paper)');
       const ink = cssColor('var(--sketch-ink)');
       const chalk = cssColor('var(--chalk)');

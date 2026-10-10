@@ -76,8 +76,18 @@ export function Tabs<T extends string>({
   items: { id: T; label: string; badge?: ReactNode; done?: boolean }[];
 }) {
   const t = useT();
+  // 分頁列放不下時左右捲動：選中的分頁捲進看得到的地方。
+  const ref = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const nav = ref.current;
+    const on = nav?.querySelector('[aria-current="true"]');
+    if (!nav || !on) return;
+    const [n, b] = [nav.getBoundingClientRect(), on.getBoundingClientRect()];
+    if (b.left < n.left) nav.scrollLeft -= n.left - b.left;
+    else if (b.right > n.right) nav.scrollLeft += b.right - n.right;
+  }, [value]);
   return (
-    <nav className="apps" aria-label={t(label)}>
+    <nav ref={ref} className="apps" aria-label={t(label)}>
       {items.map((it) => (
         <button key={it.id} aria-current={value === it.id} onClick={() => onPick(it.id)}>
           {it.done && (
