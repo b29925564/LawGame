@@ -84,10 +84,7 @@ describe('尾聲跳場', () => {
     );
     expect(at).toBeGreaterThanOrEqual(0);
     const next = scenes[at + 1] as { when?: object };
-    // 片頭卡後面還有一頁警方照片：從那一頁往下換場。
-    const card = scenes[at];
-    const step = card.type === 'card' && card.photos?.length ? 1 : 0;
-    const base = { episode: 'ep1', step, choices: {}, cards: [], scenes: {}, ethics: [] };
+    const base = { episode: 'ep1', step: 0, choices: {}, cards: [], scenes: {}, ethics: [] };
     try {
       next.when = { flags: ['secret'] };
       useEpisode.setState({ progress: { ...base, scene: at, flags: [] } });

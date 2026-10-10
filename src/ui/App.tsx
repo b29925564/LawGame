@@ -88,7 +88,12 @@ export function App() {
       <GameMenu />
       <PlaceSlate id={scene?.id} place={moved ? { raw: here, text: t(here, scene?.id) } : null} />
       {scene?.type === 'phone' && <Phone key={scene.id} scene={scene} />}
-      {scene?.type === 'dialogue' && <Dialogue key={scene.id} scene={scene} />}
+      {scene?.type === 'dialogue' &&
+        (scene.photos && progress.step >= scene.steps.length ? (
+          <ScenePhotos key={scene.id} photos={scene.photos} onNext={advance} />
+        ) : (
+          <Dialogue key={scene.id} scene={scene} />
+        ))}
       {scene?.type === 'interview' && <Interview key={scene.id} scene={scene} />}
       {scene?.type === 'desk' && <Desk key={scene.id} scene={scene} />}
       {scene?.type === 'trial' && <Courtroom key={scene.id} scene={scene} />}
@@ -101,9 +106,6 @@ export function App() {
       {scene?.type === 'closing' && <Closing key={scene.id} scene={scene} />}
       {scene?.type === 'card' && !last && progress.step === 0 && (
         <ActCard key={scene.id} headline={headline} place={slate} bates={page} onDone={advance} />
-      )}
-      {scene?.type === 'card' && !last && progress.step === 1 && scene.photos && (
-        <ScenePhotos photos={scene.photos} onNext={advance} />
       )}
       {(!scene || last) && (
         <ActCard

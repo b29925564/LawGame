@@ -2820,16 +2820,31 @@ fieldset.relations.compact {
   border-color: #5a6574;
 }
 
-/* 冷開場最後一頁：警方現場照片的沖印本攤在黑底上（Phone.tsx ScenePhotos）。桌機三張並排，手機一張一列。
-   手機上整頁會捲：上緣讓開右上角的「選單」。時間線和照片同寬、置中。 */
+/* 開示送到的警方照片（ScenePhotos.tsx）：沖印本攤在黑底上。桌機三張並排，手機一張一列。
+   手機上整頁會捲：上緣讓開右上角的「選單」。頁首標籤和照片同寬、置中。 */
 .cine.cine-photos {
   padding-top: 72px;
 }
 .cine.cine-photos > * {
   max-width: 1240px;
 }
-.cine.cine-photos > .cine-time {
-  margin-inline: auto;
+/* 頁首：附件封面上印的那一行（法院紙面字族，設定集第 9 章字族分工），不是場記，所以沒有黃線也沒有色溫。 */
+.cine.cine-photos > .photos-label {
+  margin: 0 auto;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--cine-line);
+  color: var(--cine-text);
+  /* 文件內文字級（第 9 章：15px，手機 14） */
+  font: 700 15px/1.6 var(--font-court);
+  letter-spacing: 0.04em;
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 1em;
+}
+@media (max-width: 600px) {
+  .cine.cine-photos > .photos-label {
+    font-size: 14px;
+  }
 }
 .cine.cine-photos .cine-next {
   margin-right: max(0px, calc((100% - 1240px) / 2));
@@ -2848,6 +2863,16 @@ fieldset.relations.compact {
 }
 .scene-photo .photolog {
   margin: 0;
+}
+/* 卷宗裡的附件照片（警方報告附件二）：接在文件最後一行之下，三張一列，窄了就換行。 */
+.doc-photos {
+  margin-top: 22px;
+  padding-top: 16px;
+  border-top: 1px solid var(--paper-rule);
+}
+.doc-photos .scene-photos {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr));
+  gap: 22px 16px;
 }
 
 .phone-stage {

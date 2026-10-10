@@ -740,10 +740,10 @@ export const useEpisode = create<GameState>()((set, get) => {
           if (step?.do === 'choose' && sceneChoices(p)[p.step] === undefined) return;
         }
         if (p.step + 1 < s.steps.length) return set({ progress: { ...p, step: p.step + 1 } });
+        // 對話演完之後多一頁文件照片：step 停在 steps.length（第 1 集 16:05 開示的警方報告附件二）。
+        if (s.type === 'dialogue' && s.photos && p.step + 1 === s.steps.length)
+          return set({ progress: { ...p, step: p.step + 1 } });
       }
-      // 片頭卡之後多一頁警方現場照片（設定集 11.5：冷開場不放血和黃）。
-      if (s.type === 'card' && s.photos?.length && p.step === 0)
-        return set({ progress: { ...p, step: 1 } });
       set({ progress: nextScene(p) });
     },
     choose: (option) => {

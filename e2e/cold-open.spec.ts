@@ -41,22 +41,8 @@ test('冷開場：看過的訊息被收回，換場自動存檔，可從標題�
   await page.getByRole('button', { name: '讀取存檔 1' }).click();
   await expect(page.getByRole('heading', { name: '已收回的訊息' })).toBeVisible();
 
-  // 片頭卡切走之後，才是週六凌晨的警方現場照片（P2-6b）：三張沖印照順序排，遺體那一塊是「照片已遮蔽」黑條。
-  const photos = page.getByRole('list', { name: '現場照片' });
-  await expect(photos.getByRole('img')).toHaveCount(3, { timeout: 15000 });
-  await expect(photos.getByRole('img').first()).toHaveAccessibleName(/全景/);
-  await expect(photos.locator('.photolog-redact')).toHaveText('照片已遮蔽');
-  await expect(photos.locator('.photolog-bates')).toHaveText([
-    'CPD-000301',
-    'CPD-000302',
-    'CPD-000303',
-  ]);
-  await photos.getByRole('button', { name: /放大檢視 全景/ }).click();
-  await expect(page.getByRole('dialog', { name: /放大檢視 全景/ })).toBeVisible();
-  await page.getByRole('button', { name: '關閉' }).click();
-  await expect(page.getByRole('dialog')).toHaveCount(0);
-  // 「繼續」不是黃的：這一頁的黃是獎盃照片裡的證物牌（一格一黃）。
-  await expect(page.getByRole('button', { name: '繼續' })).not.toHaveClass(/primary/);
+  // 片頭卡之後直接是週一早上：警方照片要等 16:05 開示送到（police-photos.spec.ts）。
+  await expect(page.getByRole('list', { name: '現場照片' })).toHaveCount(0);
   await next();
   await expect(page.getByText('港灣大道一號，頂樓', { exact: false })).toBeVisible();
 });

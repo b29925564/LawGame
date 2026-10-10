@@ -4,7 +4,7 @@ import * as desk from '../engine/episode/desk';
 import * as discovery from '../engine/episode/discovery';
 import type { DeskScene } from '../engine/episode/schema';
 import * as branch from '../engine/episode/branch';
-import { branchContext, deskState, heldArgs, useEpisode } from '../engine/game';
+import { branchContext, deskState, episodeOf, heldArgs, useEpisode } from '../engine/game';
 import { play } from '../engine/sound';
 import { useT } from '../i18n';
 import {
@@ -27,6 +27,7 @@ import { RelationPicker } from './RelationPicker';
 import { Cork, type CorkItem } from './Cork';
 import { Docket, EvidenceZoom } from './Dossier';
 import { Redaction } from './Redaction';
+import { ShotList, shotsById } from './ScenePhotos';
 import { Shell, Tabs } from './Shell';
 import { Timeline } from './Timeline';
 import { Recap } from './ActCard';
@@ -414,6 +415,12 @@ function Docs({ scene }: { scene: DeskScene }) {
             );
           })}
         </ol>
+        {/* 文件附的照片（第 9 章 PhotoLog）：警方報告附件二和 16:05 照片頁是同一份。 */}
+        {doc.photos && (
+          <div className="doc-photos">
+            <ShotList shots={shotsById(episodeOf(progress), doc.photos)} use="drawer" />
+          </div>
+        )}
       </article>
     );
   return (
