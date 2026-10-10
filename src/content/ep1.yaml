@@ -935,6 +935,8 @@ scenes:
         text: 沃斯 22:24 已經死了，22:31 他的帳號卻還在傳訊息。
       - id: l-alone
         cards: [chat-audit, access-full]
+        accept:
+          chat-audit: [arg-c]
         relation: 說明機會
         text: 23:14 有人在 31 樓的桌機上收回訊息；門禁紀錄顯示那時 31 樓只剩一個人。
       - id: l-sophie-lie
@@ -2777,12 +2779,38 @@ scenes:
         who: 旁白
         text: 法官接受認罪協商：過失致死，緩刑五年。他今天就能回家。
 
+  # 還押的三種協商：伊森不會走下台階，改在量刑庭側門的羈押室門口道別（10-10 使用者「照你的判斷做」）。
+  - type: dialogue
+    id: epilogue-deal-custody
+    act: 尾聲
+    epilogue: true
+    when:
+      outcome: [deal]
+      deal: [o-murder2, o-manslaughter, o-negligent]
+    place: 卡爾德郡高等法院　羈押室門口　週一 10:20
+    steps:
+      - do: say
+        who: 旁白
+        text: 量刑庭的側門通往羈押室。法警在門口停了一下，讓伊森回頭。
+      - do: say
+        who: 伊森・蕭
+        text: 謝謝你。
+      - do: say
+        who: 旁白
+        text: 手銬扣在他身前，他沒辦法伸手。盧卡斯點了點頭。門在他們之間關上。
+      - do: say
+        who: 盧卡斯
+        text: 認罪書上寫的是他做過的事。｜我到現在都不知道，那是不是真的。
+        voice: 'off'
+
+  # 台階只留給緩刑：他今天就能回家。
   - type: dialogue
     id: epilogue-deal
     act: 尾聲
     epilogue: true
     when:
       outcome: [deal]
+      deal: [o-probation]
     place: 卡爾德郡高等法院　台階　週一 11:20
     steps:
       - do: say
