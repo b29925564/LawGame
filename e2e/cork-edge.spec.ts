@@ -99,4 +99,32 @@ for (const lang of ['zh-TW', 'en'])
           const y = Math.min(boxes[i].b, boxes[j].b) - Math.max(boxes[i].t, boxes[j].t);
           expect(x > 0 && y > 8, `卡 ${i} 和卡 ${j} 重疊 ${Math.round(y)}px`).toBe(false);
         }
+      // 邊緣卡的正文只放整行：被截斷時 clientHeight 是行高的整數倍（±1px），而且沒有淡出遮罩。
+      const bodies = await page
+        .locator('.cork-card > span:is(.cork-doc-text, .cork-hand)')
+        .evaluateAll((els) =>
+          els.map((e) => {
+            const cs = getComputedStyle(e);
+            const lh = parseFloat(cs.lineHeight);
+            return {
+              cut: e.scrollHeight > e.clientHeight + 1,
+              rows: e.clientHeight / lh,
+              mask: cs.maskImage,
+            };
+          }),
+        );
+      for (const b of bodies) {
+        expect(b.mask).toBe('none');
+        if (b.cut) expect(Math.abs(b.rows - Math.round(b.rows)) * 17).toBeLessThanOrEqual(1);
+      }
+      // 照片在邊緣和光圈裡都是 4:3（±1px）：同一張相片不因為位置不同而換裁切。
+      const prints = await page.locator('.cork .cork-print').evaluateAll((els) =>
+        els.map((e) => ({
+          width: (e as HTMLElement).offsetWidth,
+          height: (e as HTMLElement).offsetHeight,
+        })),
+      );
+      expect(prints.length).toBeGreaterThan(0);
+      for (const r of prints)
+        expect(Math.abs((r.width * 3) / 4 - r.height)).toBeLessThanOrEqual(1.5);
     });

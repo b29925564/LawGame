@@ -230,19 +230,15 @@
   color: var(--paper-muted);
   font-variant-numeric: tabular-nums;
 }
-/* 放不下的正文不收刪節號（設定集 9-2：正文只在放大時讀）：
-   留滿 --lines 行，下一行只露上半、淡進紙裡，看得出還有字。剛好放得下的不會被淡掉。 */
+/* 放不下的正文不收刪節號（設定集 9-2：正文只在放大時讀）：只放整行（--lines），放不下的整行拿掉，
+   不留半行字、不淡出（紙上的字不會淡進紙裡；和收合的便條同一條規則，設計師 #270）。 */
 .cork-doc-text,
 .cork-hand {
   --lines: 3;
   --lh: 22px;
   display: block;
-  max-height: calc(var(--lh) * (var(--lines) + 0.5));
+  max-height: calc(var(--lh) * var(--lines));
   overflow: hidden;
-  mask-image: linear-gradient(
-    #000 calc(var(--lh) * var(--lines)),
-    transparent calc(var(--lh) * (var(--lines) + 0.5))
-  );
 }
 .cork-doc-text {
   --lh: 1.45em;
@@ -335,10 +331,11 @@
 .cork-strip b {
   font: 700 12px/1.3 var(--font-doc);
 }
-/* 邊緣的照片卡退在暗處、只認得出是哪張：照片扁一點，只留卡名；時間和紀錄列放大時才讀（本來就是）。
-   一格只有板高的三成，整張照片卡（照片＋三行卡名＋紀錄列）會長到兩倍，往上擠、蓋住上一格的字（第二道關卡 2）。 */
-.cork-card.photo .cork-print {
-  aspect-ratio: 2 / 1;
+/* 邊緣的照片卡退在暗處、只認得出是哪張：照片維持 4:3（和光圈裡同一個裁切，Cork.tsx 把卡做窄來放進一格），
+   只留卡名、最多兩整行（不留半行）；時間和紀錄列放大時才讀（第二道關卡 2）。 */
+.cork-card.photo .cork-strip b {
+  max-height: calc(2 * 1.3em);
+  overflow: hidden;
 }
 .cork-card.photo .cork-strip :is(time, .photolog-line) {
   display: none;
