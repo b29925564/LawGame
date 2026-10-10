@@ -303,7 +303,7 @@ export function EvidenceCard({
           {(stamp(item, scope) || item.kind !== '論點') && (
             <span className="mini-meta">{stamp(item, scope) || t(item.kind)}</span>
           )}
-          {slot && exhibits && <ExhibitSticker no={exhibitNo(on.indexOf(item.id))} />}
+          {slot && exhibits && <ExhibitSticker chip no={exhibitNo(on.indexOf(item.id))} />}
           {slot && !exhibits && (
             <span className="slot-tag" aria-label={tags ? slot : t('連線台 {slot}', { slot })}>
               {slot}

@@ -5,10 +5,22 @@ import { create } from 'zustand';
  * 元件出現時認領自己的種類，優先序最高的寫到畫面根節點的 data-hand，
  * 其他手的記號由 CSS 退成鉛筆。
  *
+
+ * sticker：畫面上有一張完整的辯方證物貼紙（--exhibit-def＝--hl），它就是這一格唯一的黃（設定集第 9 章、第 10 章 :71），
+ * 同一格的主按鈕降級成白框，其他黃退成鉛筆。證據欄的外框小貼紙不算。
+ *
  * slate 不是手：地點字卡停在畫面上那 2.5 秒，它的短黃線是那一格唯一的黃（設定集 11.3），
  * 優先於所有手的記號；主按鈕這時也先退成白框，字卡開始淡出時把黃還回來（第一道關卡 N3）。
  */
-export const handOrder = ['slate', 'sync', 'gap', 'conclusion', 'highlight', 'confirm'] as const;
+export const handOrder = [
+  'slate',
+  'sync',
+  'sticker',
+  'gap',
+  'conclusion',
+  'highlight',
+  'confirm',
+] as const;
 export type Hand = (typeof handOrder)[number];
 
 type State = { claims: Partial<Record<Hand, number>> };

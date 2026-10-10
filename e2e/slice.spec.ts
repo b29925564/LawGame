@@ -20,6 +20,38 @@ async function next(page: Page, name: string | RegExp = '繼續') {
  * 按鈕上還印著卡片內容（就是為了不必切分頁去對照），
  * 那段文字裡可能剛好出現別張卡的名字，所以不能整顆按鈕一起比。
  */
+/** 畫面上 --hl／--hl-edge 的區塊（背景、左右下邊線、陰影）：一格一黃，必須 ≤ 1。 */
+async function yellowBlocks(page: Page) {
+  return page.evaluate(() => {
+    const probe = (v: string) => {
+      const d = document.createElement('div');
+      d.style.color = `var(${v})`;
+      document.body.appendChild(d);
+      const c = getComputedStyle(d).color;
+      d.remove();
+      return c;
+    };
+    const nums = (c: string) => (c.match(/[\d.]+/g) ?? []).slice(0, 3).map(Number);
+    const targets = [probe('--hl'), probe('--hl-edge')].map(nums);
+    const near = (c: string) =>
+      /^rgb/.test(c) && targets.some((t) => t.every((v, i) => Math.abs(v - nums(c)[i]) < 3));
+    const hits: string[] = [];
+    for (const el of Array.from(document.querySelectorAll('body *'))) {
+      const r = el.getBoundingClientRect();
+      if (r.width < 4 || r.height < 4) continue;
+      const cs = getComputedStyle(el);
+      if (cs.visibility === 'hidden' || cs.display === 'none' || Number(cs.opacity) === 0) continue;
+      const parentBg = el.parentElement ? getComputedStyle(el.parentElement).backgroundColor : '';
+      const bg = near(cs.backgroundColor) && !near(parentBg);
+      const bl = parseFloat(cs.borderLeftWidth) > 0 && near(cs.borderLeftColor);
+      const bb = parseFloat(cs.borderBottomWidth) > 0 && near(cs.borderBottomColor);
+      const sh = (cs.boxShadow.match(/rgba?\([^)]*\)/g) ?? []).some(near);
+      if (bg || bl || bb || sh) hits.push(`${el.tagName.toLowerCase()}.${el.className}`);
+    }
+    return hits;
+  });
+}
+
 const card = (root: Page | ReturnType<Page['locator']>, name: string | RegExp) =>
   root.locator('.pick-name', { hasText: name });
 
@@ -198,6 +230,9 @@ async function playToRachelLast(page: Page) {
   await fileMotion(page, '核發傳票給手錶廠商', '相關性', /手錶資料與本案相關/);
   // 法官准了：證物貼紙的「供辨識」劃掉，蓋「已採納」章。
   await expect(page.locator('.xs.admitted')).toHaveCount(1);
+  // 貼紙就是這一格的黃：主按鈕降級、其他黃退成鉛筆。
+  await page.waitForTimeout(400);
+  expect(await yellowBlocks(page)).toHaveLength(1);
   await expect(page.getByText(/22:24，心率歸零。|23 分鐘/).first()).toBeVisible();
   await page.getByRole('button', { name: '回到桌面' }).click();
 

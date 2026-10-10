@@ -911,6 +911,7 @@ scenes:
         lures: [fisher-report, med-record, arg-a, arg-b]
         requests: [排除該專家證詞, 限制證人作證範圍, 核發傳票給研究機構]
         request: 排除該專家證詞
+        ruledOn: 05/26/2026
         flags: [daubert-fisher]
         jury: 8
         granted:
