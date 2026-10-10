@@ -11,7 +11,8 @@ import {
 } from '../engine/game';
 import { play } from '../engine/sound';
 import { t as tr, useT } from '../i18n';
-import { dossierOf, EvidenceBag, EvidenceZoom, PhotoLog } from './Dossier';
+import { dossierOf, EvidenceBag, EvidenceZoom, PhotoLog, PrintPlate } from './Dossier';
+import { hasPrint, Print } from './prints';
 import { reducedMotion } from './a11y';
 import { useScope } from './lang';
 import { prose } from './prose';
@@ -285,7 +286,11 @@ export function EvidenceCard({
         >
           {item.kind === '物品' && (
             <span className="thumb" aria-hidden>
-              {typeof item.image === 'string' && <img src={item.image} alt="" />}
+              {hasPrint(item.id) ? (
+                <Print id={item.id} use="thumb" />
+              ) : (
+                typeof item.image === 'string' && <img src={item.image} alt="" />
+              )}
             </span>
           )}
           <strong>{t(item.name, scope)}</strong>
@@ -303,7 +308,11 @@ export function EvidenceCard({
           <div className="mini-body">
             {sealed && <Stamp text={sealed} sm />}
             {out && <p className="mini-out">{t('這張卡現在用不上，只能看內容。')}</p>}
-            {photo && <PhotoLog photo={photo} image={item.image} />}
+            {photo ? (
+              <PhotoLog photo={photo} id={item.id} image={item.image} use="drawer" />
+            ) : (
+              <PrintPlate id={item.id} use="drawer" />
+            )}
             {bag ? (
               <EvidenceBag bag={bag} progress={progress}>
                 {body}

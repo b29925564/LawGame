@@ -210,7 +210,7 @@ export function Desk({ scene }: { scene: DeskScene }) {
       {app === 'jobs' && <Jobs scene={scene} held={held} />}
       {/* 法院系統分頁頂端是案卷登錄表的主要位置（設計師 P2-6）：真的登錄表就住在法院系統裡。 */}
       {app === 'court' && <Docket progress={progress} />}
-      {app === 'court' && <Motions scene={scene} held={held} />}
+      {app === 'court' && <Motions scene={scene} held={held} onBoard={() => pickApp('board')} />}
       {app === 'discovery' && <Discovery scene={scene} />}
     </Shell>
   );
@@ -992,7 +992,15 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
  * 每份聲請是一張聲請狀（UX board-spec §10）：請求、依據兩格點開小選單，證物格從證據欄出示，
  * 三格填好才出現遞狀；裁定回到同一張紙上蓋章。上面一排是桌上的狀紙縮圖。
  */
-function Motions({ scene, held }: { scene: DeskScene; held: string[] }) {
+function Motions({
+  scene,
+  held,
+  onBoard,
+}: {
+  scene: DeskScene;
+  held: string[];
+  onBoard: () => void;
+}) {
   const { progress, pickBasis, pickRequest, toggleSupport, fileMotion } = useEpisode();
   const t = useT();
   const scope = useScope();
@@ -1183,7 +1191,8 @@ function Motions({ scene, held }: { scene: DeskScene; held: string[] }) {
         </nav>
       )}
       {missing.length > 0 && a.ruling !== 'granted' ? (
-        // 前提沒到：不給狀紙，給一張便條（UX 10.3）。
+        // 前提沒到：不給狀紙，給一張便條（UX 10.3）。便條是盧卡斯寫給自己的提醒：標籤一行打字機字，
+        // 其餘是他的鉛筆手寫（設定集第 9 章 :45；設計師 P2-6 r4 裁定 1）；最後是介面字的「去證據板 →」。
         <aside className="prereq-note">
           <small>
             {t('聲請 {n}', { n })}
@@ -1212,7 +1221,10 @@ function Motions({ scene, held }: { scene: DeskScene; held: string[] }) {
               );
             })}
           </ul>
-          <span>{prose(t(m.detail, scope))}</span>
+          <p className="prereq-why">{prose(t(m.detail, scope))}</p>
+          <button type="button" className="link prereq-go" onClick={onBoard}>
+            {t('去證據板 →')}
+          </button>
         </aside>
       ) : (
         <Pleading

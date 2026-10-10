@@ -13,6 +13,7 @@ import { PhotoLogLine, type PhotoRecord } from './Dossier';
 import { useScope } from './lang';
 import './cork.css';
 import { JurySketch, type JuryCard } from './sketch/JurySketch';
+import { hasPrint, Print } from './prints';
 
 /**
  * 證據板（設定集第 9 章 RD-ART-0903）：一塊軟木板，一盞 2700K 吊燈打在中央。
@@ -85,7 +86,9 @@ function Face({ item }: { item: CorkItem }) {
         <>
           {/* 警方照片的閃光燈：中心過曝、四角快速變暗；證物立牌灰白。有照片紀錄表的（驗屍照片）不畫立牌：放大後會把錯的道具放大（設計師 P2-6 r1）。 */}
           <span className="cork-print">
-            {item.image ? (
+            {hasPrint(item.id) ? (
+              <Print id={item.id} use="board" />
+            ) : item.image ? (
               <img src={item.image} alt="" />
             ) : (
               !item.photo && <i className="cork-tent" />

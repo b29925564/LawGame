@@ -508,42 +508,67 @@ button.blank:hover,
   font-weight: 400;
   letter-spacing: 0.2em;
 }
-/* 前提沒到：一張便條，不給狀紙。 */
+/*
+ * 前提沒到：一張便條，不給狀紙。設定集第 9 章：便條 --note、0 圓角、翹角用陰影。
+ * 第一行是標籤（Mono 11 --paper-muted，和發現、回報便條一樣）；其餘是盧卡斯的鉛筆手寫：LXGW 只有 400，
+ * 不加粗，用字級分層——標題和 ◆ 行 --fs-hand（18，手機 16），說明小 2px，行高 1.5（設計師 P2-6 r4 裁定 1）。
+ */
 .prereq-note {
   max-width: 720px;
   display: grid;
-  gap: 6px;
+  justify-items: start;
+  gap: 0;
   padding: 14px 18px;
   background: var(--note);
-  color: var(--paper-ink);
-  border-radius: 2px;
+  color: var(--pencil);
+  border-radius: 0;
   box-shadow: var(--shadow-1);
 }
 .prereq-note small {
-  font: 500 12px/1.4 var(--font-mono);
-  color: var(--gold-paper);
+  margin-bottom: 4px;
+  font: 400 11px/1.4 var(--font-mono);
+  color: var(--paper-muted);
   letter-spacing: 0.06em;
 }
-.prereq-note strong {
-  font-size: 16px;
+.prereq-note strong,
+.prereq-args,
+.prereq-why {
+  justify-self: stretch;
+  font: 400 calc(var(--fs-hand) * var(--text-scale)) / 1.5 var(--font-hand);
+  letter-spacing: 0;
 }
-/* 缺的論點一行一個：◆（紙上用 --paper-ink，規格 v2.0 :225）＋論點名稱，名稱換行時對齊名稱的左緣。 */
+.prereq-note strong {
+  margin-bottom: 6px;
+  text-wrap: balance;
+}
+/* 缺的論點一行一個：◆＋論點名稱，同一隻手寫的，◆ 也是鉛筆色；名稱換行時對齊名稱的左緣。 */
 .prereq-args {
   display: grid;
-  gap: 2px;
   margin: 0;
   padding: 0;
   list-style: none;
-  font-size: 16px;
-  line-height: 1.5;
 }
 .prereq-args li {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   column-gap: 0.5em;
+  text-wrap: pretty;
 }
-.prereq-args li > span:first-child {
+.prereq-why {
+  margin: 6px 0 0;
+  font-size: calc((var(--fs-hand) - 2px) * var(--text-scale));
+  /* 英文不留單字末行（設計師 r4：「case.」單獨一行）。 */
+  text-wrap: pretty;
+}
+/* 「去證據板 →」是介面的按鈕，不是手寫：介面字，墨色在便條紙上。 */
+.prereq-note .prereq-go {
+  margin-top: 4px;
   color: var(--paper-ink);
+  font: 500 14px/1.4 var(--font);
+  text-decoration-color: var(--paper-rule);
+}
+.prereq-note .prereq-go:hover:not(:disabled) {
+  text-decoration-color: var(--paper-ink);
 }
 @media (max-width: 760px) {
   .plead {
