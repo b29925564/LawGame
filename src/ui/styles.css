@@ -6081,6 +6081,13 @@ button.found:hover:not(:disabled) {
   .apps .apps-more .caret {
     margin-left: 5px;
   }
+  /* 分頁之間不留縫，底線各自內縮 2px 還是分得開。 */
+  .apps {
+    gap: 0;
+  }
+  .apps .dot {
+    margin-left: 2px;
+  }
 }
 
 /*

@@ -97,8 +97,22 @@ for (const lang of ['zh', 'en'] as const)
     test.skip(!isMobile, '手機才放不下');
     await page.setViewportSize({ width: 320, height: 800 });
     const nav = await pretrial(page, lang);
+    // 網路字型（Noto Sans TC 的粗體子集）載完分頁會重量一次：等字型都到了再看。
+    await page.evaluate(() => document.fonts.ready);
+    await page.waitForTimeout(300);
+    // 失敗時把每一格的寬印出來（CI 的字型和本機可能差幾 px）。
+    const widths = await nav.evaluate(
+      (n) =>
+        [...n.querySelectorAll<HTMLElement>(':scope > button:not(.measure)')]
+          .map(
+            (b) =>
+              `${b.innerText.replace(/\s+/g, ' ')}=${b.getBoundingClientRect().width.toFixed(1)}`,
+          )
+          .join(' | ') + ` / ${n.clientWidth}`,
+    );
     await expect(
       nav.locator(':scope > button[data-key]', { hasText: /^(證據板|Board)$/ }),
+      widths,
     ).toBeVisible();
     expect(await cut(page)).toEqual([]);
   });
