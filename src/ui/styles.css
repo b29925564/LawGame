@@ -593,6 +593,10 @@ details summary {
   border-radius: 0;
   display: block;
 }
+.portrait.faceless {
+  background: none;
+  box-shadow: none;
+}
 .idphoto.fill {
   --w: 56px;
   width: 100%;

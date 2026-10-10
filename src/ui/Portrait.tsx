@@ -14,7 +14,7 @@ import { VoLine } from './VoiceOver';
  * 在桌上和卷宗旁是檔案照（IdPhoto 模板 B；視覺規格 §16，使用者 10-09）。程式畫的卡通臉已下架。
  */
 
-/** 不是人的說話者：電話語音、派單 App。沒有臉，不放頭像（名字照常印在台詞上）。 */
+/** 不是人的說話者：電話語音、派單 App。 */
 const faceless = new Set(['語音', '卡爾德快遞']);
 
 export function Portrait({
@@ -32,7 +32,9 @@ export function Portrait({
   const a11y = decorative
     ? ({ 'aria-hidden': true } as const)
     : ({ role: 'img', 'aria-label': t(who) } as const);
-  if (who === '旁白' || faceless.has(who)) return null;
+  if (who === '旁白') return null;
+  // 不是人的說話者：不放頭像也不放黑條（黑條留給林肯），頭像那一格留空，台詞左緣才和別人對齊（設計師 #258）。
+  if (faceless.has(who)) return <span className="portrait faceless" aria-hidden />;
   // 法庭裡的配角是剪影替身（P4-2）；盧卡斯照舊放立繪。
   if (inCourt && who !== LUCAS) return <CourtFace who={who} />;
   const src = who === LUCAS ? lucas(mood, 144) : undefined;

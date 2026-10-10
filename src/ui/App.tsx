@@ -81,7 +81,10 @@ export function App() {
   const at = progress.scene;
   const where = card
     ? (placed(ep.scenes.slice(at + 1)) ?? placed(ep.scenes.slice(0, at).reverse()))
-    : placed(ep.scenes.slice().reverse());
+    : !scene
+      ? // 集尾：場記只讀最後一場自己的地點與時間；最後一場沒寫地點就空著，不去借前一場的（錯的時間比沒有更糟）。
+        placed(ep.scenes.slice(-1))
+      : placed(ep.scenes.slice().reverse());
   const slate = where && { raw: where.place, text: t(where.place, where.id) };
   // 地點字卡：換了地點、前一場又不是幕卡（幕卡自己有場記）時，左下一行場記。
   const here = scene && 'place' in scene && scene.place ? scene.place : '';

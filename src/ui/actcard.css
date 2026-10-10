@@ -159,7 +159,7 @@
 .act-foot {
   position: absolute;
   left: calc(70 * var(--u));
-  right: calc(26 * var(--u));
+  right: calc(70 * var(--u));
   bottom: calc(16 * var(--u));
   display: flex;
   flex-wrap: wrap;
@@ -376,6 +376,7 @@
   }
   .act-foot {
     left: calc(26 * var(--u));
+    right: calc(26 * var(--u));
   }
   /* 集尾卡的底部多一行（頁數）：場記往上讓。 */
   .act-stage .act-card.ending .act-slate {
@@ -429,9 +430,29 @@
   white-space: nowrap;
 }
 .place-slate .ps-where {
+  display: flex;
+  min-width: 0;
+  overflow: hidden;
+}
+/* 先省略前面的場所名（事務所名），房間最後才縮。 */
+.place-slate .ps-lead {
+  flex: 0 1 auto;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: pre;
+}
+.place-slate .ps-room {
+  flex: none;
+}
+/* 定場那一格還沒有鏡頭：左上標占位（和法庭鏡頭條同一種標法），鏡頭進來就拿掉。 */
+.place-tbd {
+  position: absolute;
+  top: max(16px, env(safe-area-inset-top));
+  left: max(16px, env(safe-area-inset-left));
+  font: 400 12px / 1.4 var(--font-court);
+  letter-spacing: 0.08em;
+  color: var(--cine-muted);
 }
 .place-slate .ps-when {
   flex: none;

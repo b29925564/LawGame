@@ -275,6 +275,10 @@ const SLATE_HOLD = 2500;
 export function PlaceSlate({ id, place }: { id?: string; place: Place | null }) {
   const en = useLang((s) => s.lang) === 'en';
   const [where, right] = useSlate(place ?? undefined);
+  // 窄的時候先省略事務所名、場所名，留住房間（房間才是這一場的資訊）。
+  const cut = where.lastIndexOf(en ? ', ' : '\u3000');
+  const lead = cut > 0 ? where.slice(0, cut + (en ? 2 : 1)) : '';
+  const room = cut > 0 ? where.slice(cut + (en ? 2 : 1)) : where;
   const [done, setDone] = useState<string>();
   const live = !!place && done !== id;
   useEffect(() => {
@@ -292,7 +296,10 @@ export function PlaceSlate({ id, place }: { id?: string; place: Place | null }) 
   if (!place || !live) return null;
   return (
     <p key={id} className="place-slate" role="status">
-      <span className="ps-where">{where}</span>
+      <span className="ps-where">
+        {lead && <span className="ps-lead">{lead}</span>}
+        <span className="ps-room">{room}</span>
+      </span>
       {right && (
         <span className="ps-when">
           {en ? '  ' : '\u3000'}
@@ -310,6 +317,7 @@ export function PlaceSlate({ id, place }: { id?: string; place: Place | null }) 
  * 之後場景有定場鏡頭（3D 或場景圖）時，這一格改成場記疊在鏡頭上，同一個元件。
  */
 export function PlaceBeat({ id, place, onDone }: { id: string; place: Place; onDone: () => void }) {
+  const t = useT();
   const wait = reducedMotion() ? SLATE_HOLD : 2 * SLATE_FADE + SLATE_HOLD;
   const cut = useCut(onDone, wait);
   return (
@@ -318,6 +326,9 @@ export function PlaceBeat({ id, place, onDone }: { id: string; place: Place; onD
       onClick={cut.skip}
       data-auto=""
     >
+      <span className="place-tbd">
+        {t('待放 3D 機位')}　{t('定場')}
+      </span>
       <PlaceSlate id={id} place={place} />
     </main>
   );

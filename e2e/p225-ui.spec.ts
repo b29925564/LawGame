@@ -42,6 +42,8 @@ test('換地點：先放一格場記（一行），演完才掛介面', async ({
   // 場記還在的時候，這一場的介面一個都還沒掛。
   await expect(page.locator('.speech')).toHaveCount(0);
   await expect(page.locator('.place-slate')).toBeVisible();
+  // 定場還沒有鏡頭：左上標占位。
+  await expect(page.locator('.place-tbd')).toContainText('待放 3D 機位');
   const h = await page.locator('.place-slate').evaluate((e) => e.getBoundingClientRect().height);
   expect(h).toBeLessThan(40);
   await beat.click();
@@ -87,4 +89,17 @@ test('集尾卡：第 2 集和第 1 集同版型，「本集共製作 N 頁」�
     await expect(page.locator('.act-title')).toHaveText('待續');
     await expect(page.locator('.act-kick')).toContainText('第');
   }
+});
+
+test('第 2 集結束卡：標題欄寫原告全名；最後一場沒寫地點，場記空著', async ({ page }) => {
+  await open(page, 'ep2', 999);
+  await expect(page.locator('.act-caption')).toContainText('瑪莉索・維加，');
+  await expect(page.locator('.act-slate')).toHaveCount(0);
+  // Bates 的右緣和場記的右緣是同一條（70u）。
+  await open(page, 'ep1', 45);
+  const [a, b] = await page.evaluate(() => [
+    document.querySelector('.act-slate')!.getBoundingClientRect().right,
+    document.querySelector('.act-bates')!.getBoundingClientRect().right,
+  ]);
+  expect(Math.abs(a - b)).toBeLessThan(2);
 });
