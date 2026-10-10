@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { episodes } from '../../content';
 import { migrate, readSave, writeSave, SAVE_VERSION } from '../save';
 import type * as desk from './desk';
-import { canAdvance, phoneView } from './phone';
+import { canAdvance, lastStep, phoneView, photosStep } from './phone';
 import { lineSchema, type Episode, type PhoneScene } from './schema';
 import { validateEpisode } from './validate';
 
@@ -31,6 +31,20 @@ describe('冷開場的手機畫面', () => {
     expect(v.thread).toBe('葛蘭特・沃斯');
     expect(v.threads['葛蘭特・沃斯'][0]).toMatchObject({ id: 'summons', retracted: true });
     expect(v.threads['葛蘭特・沃斯'][1]).toMatchObject({ mine: true, retracted: false });
+  });
+
+  it('演完最後一步還有一頁警方現場照片（P2-6b），之後才換場', () => {
+    expect(photosStep(cold)).toBe(cold.steps.length);
+    expect(lastStep(cold)).toBe(cold.steps.length);
+    expect(canAdvance(cold, cold.steps.length, {})).toBe(true);
+    expect(cold.photos?.map((p) => p.photo.bates)).toEqual([
+      'CPD-000301',
+      'CPD-000302',
+      'CPD-000303',
+    ]);
+    const bare = { ...cold, photos: undefined };
+    expect(photosStep(bare)).toBeUndefined();
+    expect(lastStep(bare)).toBe(cold.steps.length - 1);
   });
 
   it('不管怎麼回司機，伊森都說出了奧瑪之後會作證的那句話', () => {

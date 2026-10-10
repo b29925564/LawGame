@@ -10,7 +10,7 @@ import * as discovery from './episode/discovery';
 import * as desk from './episode/desk';
 import * as interview from './episode/interview';
 import * as nego from './episode/negotiation';
-import { canAdvance } from './episode/phone';
+import { canAdvance, lastStep } from './episode/phone';
 import type {
   DefenseScene,
   DepositionScene,
@@ -739,7 +739,8 @@ export const useEpisode = create<GameState>()((set, get) => {
           const step = s.steps[p.step];
           if (step?.do === 'choose' && sceneChoices(p)[p.step] === undefined) return;
         }
-        if (p.step + 1 < s.steps.length) return set({ progress: { ...p, step: p.step + 1 } });
+        const last = s.type === 'phone' ? lastStep(s) : s.steps.length - 1;
+        if (p.step < last) return set({ progress: { ...p, step: p.step + 1 } });
       }
       set({ progress: nextScene(p) });
     },

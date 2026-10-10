@@ -140,8 +140,20 @@
 * {
   box-sizing: border-box;
 }
+/*
+ * 面板永遠是桌上最亮的東西：桌面有燈、有暗角，介面住在光裡（視覺規格 §4）。
+ * 畫在 html 上、跟著整頁走（設計師 #225 第四輪）：原本畫在 body 上、固定在視窗，整頁截圖到一個視窗高就斷成平的 --bg，
+ * 看得到一條橫向接縫。現在漸層的範圍就是整頁；遊戲畫面大多一個視窗高，看起來和原本一樣。
+ */
 html {
-  background: var(--bg);
+  min-height: 100%;
+  background:
+    var(--grain), radial-gradient(140% 110% at 50% 40%, transparent 50%, var(--vignette) 100%),
+    radial-gradient(900px 520px at 18% -8%, var(--lamp), transparent 70%),
+    radial-gradient(120% 70% at 50% -10%, var(--sky), transparent 60%), var(--bg);
+  background-repeat: repeat, no-repeat, no-repeat, no-repeat;
+  /* 紙紋零均值（設定集第 2 章顆粒）：overlay 在暗部自動減弱，不再把桌面整片抬亮、吃掉面板和桌面的亮度差。 */
+  background-blend-mode: overlay, normal, normal, normal;
 }
 body {
   margin: 0;
@@ -149,14 +161,6 @@ body {
   color: var(--text);
   font: var(--fs-ui-body) / var(--lh-body) var(--font);
   -webkit-font-smoothing: antialiased;
-  /* 面板永遠是桌上最亮的東西：桌面有燈、有暗角，介面住在光裡（視覺規格 §4）。 */
-  background:
-    var(--grain), radial-gradient(140% 110% at 50% 40%, transparent 50%, var(--vignette) 100%),
-    radial-gradient(900px 520px at 18% -8%, var(--lamp), transparent 70%),
-    radial-gradient(120% 70% at 50% -10%, var(--sky), transparent 60%), var(--bg);
-  /* 紙紋零均值（設定集第 2 章顆粒）：overlay 在暗部自動減弱，不再把桌面整片抬亮、吃掉面板和桌面的亮度差。 */
-  background-blend-mode: overlay, normal, normal, normal;
-  background-attachment: fixed;
 }
 ::selection {
   background: var(--hl);
@@ -1149,6 +1153,65 @@ details summary {
   .apps .dot {
     margin-left: 3px;
   }
+}
+/* 放不下的分頁收進「更多」（Shell.tsx Tabs；第一道關卡 N2）。量寬用的那顆看不見、不佔位。
+   --tabs-fold 是 1 的分頁列才收：寬度跟著版面、放不下會捲的那種。 */
+.apps {
+  --tabs-fold: 1;
+  position: relative;
+}
+.apps.has-more {
+  overflow: visible;
+}
+.apps .apps-more.measure {
+  position: absolute;
+  left: 0;
+  top: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+.apps .apps-more .caret {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin: 0 2px 3px 8px;
+  border: solid currentColor;
+  border-width: 0 1.5px 1.5px 0;
+  rotate: 45deg;
+}
+.apps-menu {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 4px);
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  min-width: 200px;
+  padding: 4px 0;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+}
+.apps-menu button {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 14px;
+  border: none;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  color: var(--text);
+  font-weight: 500;
+  text-align: left;
+  white-space: nowrap;
+}
+.apps-menu button:hover:not(:disabled) {
+  background: var(--surface-2);
+}
+.apps-menu button[aria-current='true'] {
+  font-weight: 700;
+  box-shadow: inset 2px 0 0 var(--text);
 }
 .apps [aria-current='true'] {
   color: var(--text);
@@ -2160,8 +2223,9 @@ fieldset.relations.compact {
   border: 1px solid var(--border);
 }
 .needs .have {
-  color: var(--good);
-  border-color: color-mix(in srgb, var(--good) 40%, var(--border));
+  /* 綠只用來表示「成立」：拿到前提不是成立，打勾用墨色（設計師 P2-6 r6 第 3 條）。 */
+  color: var(--text);
+  border-color: var(--border-strong);
 }
 /* 還沒拿到的前提是「沒有資訊」：黑條，不用虛線紅框（設定集第 9 章）。 */
 .needs .lack {
@@ -2754,6 +2818,36 @@ fieldset.relations.compact {
 .cine .cine-next:hover:not(:disabled) {
   background: rgb(255 255 255 / 6%);
   border-color: #5a6574;
+}
+
+/* 冷開場最後一頁：警方現場照片的沖印本攤在黑底上（Phone.tsx ScenePhotos）。桌機三張並排，手機一張一列。
+   手機上整頁會捲：上緣讓開右上角的「選單」。時間線和照片同寬、置中。 */
+.cine.cine-photos {
+  padding-top: 72px;
+}
+.cine.cine-photos > * {
+  max-width: 1240px;
+}
+.cine.cine-photos > .cine-time {
+  margin-inline: auto;
+}
+.cine.cine-photos .cine-next {
+  margin-right: max(0px, calc((100% - 1240px) / 2));
+}
+.scene-photos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+  align-items: start;
+  gap: 28px 24px;
+  margin: 0 auto;
+  padding: 0;
+  list-style: none;
+}
+.scene-photo {
+  position: relative;
+}
+.scene-photo .photolog {
+  margin: 0;
 }
 
 .phone-stage {
@@ -3371,7 +3465,8 @@ fieldset.relations.compact {
 .card.mini .mini-out {
   margin: 0;
   font-size: var(--fs-ui-meta);
-  color: var(--accent);
+  /* 不是玩家的手，不用黃：淡字（設計師 #244 審查說的 --text-muted，這裡的權杖叫 --muted）。 */
+  color: var(--muted);
 }
 .card.mini.out:hover,
 .card.mini.out:focus-within,
@@ -3570,6 +3665,7 @@ fieldset.relations.compact {
 [data-hand] mark.hl:not(.live)::before {
   background: none;
 }
+[data-hand='slate'] button.primary,
 [data-hand='sync'] button.primary {
   background: transparent;
   color: var(--text);
@@ -5177,7 +5273,11 @@ button.iou[aria-pressed='true'] {
   background: none;
   box-shadow: none;
 }
-/* 發現：一條一張便條。編號與關係用打字機字，連線內容用文件字，盧卡斯的結論畫螢光筆。 */
+/*
+ * 發現：一條一張便條（規格 v2.0 §9；設計師 P2-6 r6 採用手寫試拍）。--note 紙、零圓角、右上 14px 折角。
+ * 小標 Mono 11 --paper-muted；標題和內文是盧卡斯的鉛筆字（LXGW、--pencil、不加粗，兩個主題同一色），
+ * 結論前面一條淡鉛筆線。折角用背景裁，不用 clip-path：clip-path 會把鍵盤焦點框一起裁掉。
+ */
 .found-list {
   list-style: none;
   margin: 0;
@@ -5187,44 +5287,75 @@ button.iou[aria-pressed='true'] {
   gap: 8px;
 }
 .found {
+  --fold: 14px;
+  position: relative;
   width: 100%;
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: 4px;
-  padding: 10px 14px 12px;
+  gap: 2px;
+  padding: 10px 18px 12px 14px;
+  border: 0;
+  border-radius: 0;
+  /* 右上角裁掉一個 14px 的直角三角形（45° 漸層從右上角量起，斜邊離角 14/√2）。 */
+  background: linear-gradient(225deg, transparent calc(var(--fold) * 0.7071), var(--note) 0);
+  color: var(--pencil);
+  box-shadow: none;
   text-align: left;
   font-weight: 400;
 }
+/* 折下來的那一角：紙色壓暗一點。 */
+.found::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: var(--fold);
+  height: var(--fold);
+  background: linear-gradient(
+    to bottom left,
+    transparent 50%,
+    color-mix(in srgb, var(--note), #000 16%) 50%
+  );
+}
+button.found:hover:not(:disabled) {
+  background: linear-gradient(
+    225deg,
+    transparent calc(var(--fold) * 0.7071),
+    color-mix(in srgb, var(--note), #000 5%) 0
+  );
+}
 .found-head {
   display: flex;
-  gap: 10px;
-  font-family: var(--font-mono);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  color: var(--accent);
+  align-items: baseline;
+  gap: 8px;
+  font: 400 11px/1.5 var(--font-mono);
+  letter-spacing: 0.04em;
+  color: var(--paper-muted);
 }
-.found-head > span {
-  color: var(--muted);
-  font-weight: 500;
+/* 「新」是盧卡斯用鉛筆寫上去的，不做成籤、不用黃（規格 v2.0 §9）。 */
+.found-head > .found-new {
+  font: 400 calc(var(--fs-hand) - 2px) / 1 var(--font-hand);
+  letter-spacing: 0;
+  color: var(--pencil);
 }
-.found-head > .good {
+.found-head > .found-used-tag {
   margin-left: auto;
-  color: var(--good);
 }
 .found-pair {
-  font-size: 0.95em;
-  line-height: 1.5;
+  margin-top: 2px;
+  font: 400 var(--fs-hand) / 1.5 var(--font-hand);
+  color: var(--pencil);
+  text-wrap: balance;
 }
 .found-body {
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
-/* 內容預設兩行（14px × 1.65），超過的點「展開」看全文。 */
+/* 內容預設兩行，超過的點「展開」看全文。 */
 .found-body:not(.open) {
-  max-height: calc(2 * 14px * 1.65);
+  max-height: calc(2 * (var(--fs-hand) - 2px) * 1.5);
   overflow: hidden;
 }
 .found-body.long:not(.open) {
@@ -5294,43 +5425,63 @@ button.iou[aria-pressed='true'] {
 }
 .found-text,
 .found-note {
-  font-family: var(--font-doc);
-  font-size: 14px;
-  line-height: 1.65;
-  color: var(--text);
+  font: 400 calc(var(--fs-hand) - 2px) / 1.5 var(--font-hand);
+  color: var(--pencil);
+  text-wrap: pretty;
 }
-/* 盧卡斯的結論：手寫感的斜體，跟連線內容分開。 */
+/* 盧卡斯的結論：前面一條淡鉛筆線，跟連線內容分開。 */
 .found-note {
   padding-left: 10px;
-  border-left: 2px solid var(--border-strong);
-  font-style: italic;
+  border-left: 2px solid color-mix(in srgb, var(--pencil), transparent 55%);
 }
 /* 疑問已確認時便條不能再點，但不要看起來像作廢。 */
 .found:disabled {
   opacity: 1;
   cursor: default;
 }
+/* 剛連出來的那條淡入（--dur-ui），不閃黃框。 */
 @keyframes found-in {
-  0% {
-    box-shadow: 0 0 0 3px var(--hl);
-    transform: translateY(-4px);
-  }
-  100% {
-    box-shadow: 0 0 0 0 transparent;
-    transform: none;
+  from {
+    opacity: 0;
   }
 }
 .found.fresh {
-  animation: found-in 0.9s var(--ease);
+  animation: found-in var(--dur-ui) var(--ease);
 }
 @media (prefers-reduced-motion: reduce) {
   .found.fresh {
     animation: none;
   }
 }
+/*
+ * 放進答案的那張：2px 墨框畫在紙的裡面（往內縮 2px），沿著折角走；兩種主題都是墨線壓在淺色紙上
+ * （設計師 P2-6 r6 第 1 條：畫在外面的框在深色主題和面板分不出來）。
+ * 框的斜邊離紙的斜邊也是 2px：框裁掉 13px 的角，再用一條 2px 的漸層補上斜邊。
+ */
+/* 蓋過全域的「選取＝螢光筆」（[aria-pressed='true']）：便條還是那張紙，框畫在下面的 ::after。 */
 .found[aria-pressed='true'] {
-  border-color: var(--hl);
-  background: linear-gradient(var(--hl-wash), var(--hl-wash)), var(--surface);
+  border-color: transparent !important;
+  background: linear-gradient(
+    225deg,
+    transparent calc(var(--fold) * 0.7071),
+    var(--note) 0
+  ) !important;
+  box-shadow: none;
+}
+.found[aria-pressed='true']::after {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  border: 2px solid var(--paper-ink);
+  clip-path: polygon(0 0, calc(100% - 13px) 0, 100% 13px, 100% 100%, 0 100%);
+  background: linear-gradient(
+      225deg,
+      transparent 9.2px,
+      var(--paper-ink) 9.2px 11.2px,
+      transparent 11.2px
+    )
+    top right / 16px 16px no-repeat border-box;
+  pointer-events: none;
 }
 .bench-cards summary {
   cursor: pointer;
@@ -5892,8 +6043,9 @@ button.iou[aria-pressed='true'] {
     background: linear-gradient(transparent, #0b0e13);
   }
 }
-body:has(.court-light) {
-  background: transparent;
+/* 法庭底下是光層：桌面的燈和暗角不畫。 */
+:root:has(.court-light) {
+  background: var(--bg);
 }
 /* 光層是暗的房間：法庭裡一律用深色介面，字才壓得住底圖。 */
 :root:has(.court-light) {
@@ -6288,6 +6440,7 @@ body:has(.court-light) {
     min-width: 96px;
   }
   .shell:has(> .shell-head > .taskbar) > .shell-tabs > .apps {
+    --tabs-fold: 0;
     height: 100%;
     border-bottom: none;
     overflow: visible;

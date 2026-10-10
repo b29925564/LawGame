@@ -92,6 +92,23 @@ const SAG = 34; // 下垂（px）
 const PIN = 7; // 圖釘離卡片上緣（px）
 const PIN_R = 5.5; // 圖釘半徑（cork.css .cork-pick::before 11px）
 
+/** 邊緣同一欄上下兩張卡之間至少留的軟木（px）；卡和內文之間的 flex gap（cork.css）。 */
+const EDGE_GAP = 6;
+const BODY_GAP = 4;
+
+type EdgeSize = { h: number; head: number; lh: number };
+/** 邊緣卡的內文（影印紙正文、索引卡和便條的手寫）：放不下時少放幾行的那一段。 */
+const BODY = ':scope > span:is(.cork-doc-text, .cork-hand)';
+function edgeSize(el: HTMLElement): EdgeSize {
+  const body = el.querySelector<HTMLElement>(BODY);
+  const shown = body?.offsetHeight ?? 0;
+  return {
+    h: el.offsetHeight,
+    head: el.offsetHeight - (shown ? shown + BODY_GAP : 0),
+    lh: body ? parseFloat(getComputedStyle(body).lineHeight) || 0 : 0,
+  };
+}
+
 /** 同一張卡每次都歪同一個角度（±2.5°），不隨機跳動。 */
 function tilt(id: string, max = 2.5) {
   let h = 0;
@@ -401,6 +418,10 @@ export function Cork({
   const focusEls = useRef<(HTMLDivElement | null)[]>([]);
   const [slotH, setSlotH] = useState([0, 0]);
   const cardH = Math.max(...slotH);
+  // 邊緣每張卡量到的高度（沒放大、沒歪之前）：整張、不算內文的部分、內文行高。
+  // 卡在光圈裡時留著上次量的，退回原位時用。
+  const edgeEls = useRef(new Map<string, HTMLElement>());
+  const [edgeM, setEdgeM] = useState<Record<string, EdgeSize>>({});
   // 照片卡的影像中心離卡片上緣多遠（沒放大前）：用來檢查「影像中心在光圈半徑 60% 以內」。
   const [imgMid, setImgMid] = useState(0);
   // 第一次量好位置以前不跑轉場：不然一進來兩張卡會從預設位置滑到量好的位置。
@@ -427,6 +448,24 @@ export function Cork({
     at[0] + w / 2,
     at[1] + pinY,
   ];
+  // 邊緣的卡不超出板子、不蓋到下一格的卡（第一道關卡 N1）：英文卡名三行、板子矮的時候，
+  // 內文先少放幾行（兩行 → 一行 → 不放；正文本來就只在放大時讀），卡名和出處照放。
+  const linesOf = (id: string, at: [number, number]) => {
+    const m = edgeM[id];
+    if (!m?.lh) return 2;
+    const next = EDGE.map(([, y]) => y).find((y) => y > at[1]) ?? 100 - EDGE[0][1];
+    const room = ((next - at[1]) / 100) * h - (next < 100 - EDGE[0][1] ? EDGE_GAP : 0);
+    return Math.max(0, Math.min(2, Math.floor((room - m.head - BODY_GAP) / m.lh - 0.5)));
+  };
+  // 還是放不下（照片卡、卡名本身就很長）：往上挪，下緣（含歪斜後低下去的那個角）留和上排一樣的 3%。
+  const fit = (id: string, at: [number, number]): [number, number] => {
+    const H = edgeM[id]?.h;
+    if (!H || !w) return at;
+    const a = (Math.abs(tilt(id)) * Math.PI) / 180;
+    const drop = H * Math.cos(a) + ((CARD_W / 100) * w * Math.sin(a)) / 2;
+    const lowest = 100 - EDGE[0][1] - (drop / Math.max(h, 1)) * 100;
+    return [at[0], Math.max(EDGE[0][1], Math.min(at[1], lowest))];
+  };
   if (!compact) {
     links.slice(0, 2).forEach((l, i) => {
       const [p, q] = i === 0 ? [0, 1] : [2, 3];
@@ -434,8 +473,8 @@ export function Cork({
       free.splice(free.indexOf(q), 1);
       placed.push({ item: l.a, at: EDGE[p] }, { item: l.b, at: EDGE[q] });
       strings.push({
-        from: pinOf(EDGE[p], CARD_W),
-        to: pinOf(EDGE[q], CARD_W),
+        from: pinOf(fit(l.a.id, EDGE[p]), CARD_W),
+        to: pinOf(fit(l.b.id, EDGE[q]), CARD_W),
         relation: l.relation,
         key: `${l.a.id}-${l.b.id}`,
       });
@@ -495,7 +534,10 @@ export function Cork({
   const knot = { left: (abFrom[0] + abTo[0]) / 2, top: abFrom[1] + (SAG / Math.max(h, 1)) * 100 };
 
   // 卡的原位：邊緣分到的位置。放進光圈時原位空著（不重複畫），退出時回到這裡。
-  const originOf = (id: string) => placed.find((p) => p.item.id === id)?.at;
+  const originOf = (id: string) => {
+    const at = placed.find((p) => p.item.id === id)?.at;
+    return at && fit(id, at);
+  };
   const focusIds = focus.map((c) => c?.id ?? '');
 
   // 連錯（設計師 P1-8a，取代抖動）：線沒釘住、鬆脫淡出 → 兩張卡退出光圈回原位 → 清掉連線台。
@@ -556,6 +598,27 @@ export function Cork({
     });
     return () => cancelAnimationFrame(raf);
   }, [arriving]);
+
+  const edgeIds = placed.map((p) => p.item.id).join(',');
+  useLayoutEffect(() => {
+    const measure = () =>
+      setEdgeM((prev) => {
+        let next = prev;
+        edgeEls.current.forEach((el, id) => {
+          const m = edgeSize(el);
+          const was = prev[id];
+          if (was && was.h === m.h && was.head === m.head && was.lh === m.lh) return;
+          if (next === prev) next = { ...prev };
+          next[id] = m;
+        });
+        return next;
+      });
+    measure();
+    if (typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver(measure);
+    edgeEls.current.forEach((el) => ro.observe(el));
+    return () => ro.disconnect();
+  }, [edgeIds, ids, compact]);
 
   useLayoutEffect(() => {
     const measure = () => {
@@ -653,27 +716,36 @@ export function Cork({
       </svg>
       {placed
         .filter(({ item }) => !focusIds.includes(item.id))
-        .map(({ item, at }) => (
-          <button
-            key={item.id}
-            type="button"
-            tabIndex={-1}
-            aria-hidden
-            className={`cork-card ${look(item.kind)}`}
-            style={
-              {
-                left: `${at[0]}%`,
-                top: `${at[1]}%`,
-                width: `${CARD_W}%`,
-                '--tilt': `${tilt(item.id)}deg`,
-                ...away(at, CARD_W),
-              } as CSSProperties
-            }
-            onClick={() => onPick(item.id)}
-          >
-            <Face item={item} />
-          </button>
-        ))}
+        .map(({ item, at: cell }) => {
+          const at = fit(item.id, cell);
+          const lines = linesOf(item.id, cell);
+          return (
+            <button
+              key={item.id}
+              ref={(el) => {
+                if (el) edgeEls.current.set(item.id, el);
+                else edgeEls.current.delete(item.id);
+              }}
+              type="button"
+              tabIndex={-1}
+              aria-hidden
+              className={`cork-card ${look(item.kind)}${lines ? '' : ' bare'}`}
+              style={
+                {
+                  left: `${at[0]}%`,
+                  top: `${at[1]}%`,
+                  width: `${CARD_W}%`,
+                  '--tilt': `${tilt(item.id)}deg`,
+                  '--edge-lines': lines,
+                  ...away(at, CARD_W),
+                } as CSSProperties
+              }
+              onClick={() => onPick(item.id)}
+            >
+              <Face item={item} />
+            </button>
+          );
+        })}
       {focus.map((c, i) => {
         // 退回原位（連錯）或剛放上（還在原位那一格）：畫在原位、原尺寸；手機上沒有原位，就地淡出。
         const back = !!c && (miss?.phase === 'return' || arriving.includes(c.id));

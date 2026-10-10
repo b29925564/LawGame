@@ -27,6 +27,21 @@ test('冷開場：看過的訊息被收回，換場自動存檔，可從標題�
   await expect(page.getByText('我們私下解決')).toHaveCount(0);
   await next();
   await next();
+  // 最後一頁是週六凌晨的警方現場照片（P2-6b）：三張沖印照順序排，遺體那一塊是「照片已遮蔽」黑條。
+  const photos = page.getByRole('list', { name: '現場照片' });
+  await expect(photos.getByRole('img')).toHaveCount(3);
+  await expect(photos.getByRole('img').first()).toHaveAccessibleName(/全景/);
+  await expect(photos.locator('.photolog-redact')).toHaveText('照片已遮蔽');
+  await expect(photos.locator('.photolog-bates')).toHaveText([
+    'CPD-000301',
+    'CPD-000302',
+    'CPD-000303',
+  ]);
+  await photos.getByRole('button', { name: /放大檢視 全景/ }).click();
+  await expect(page.getByRole('dialog', { name: /放大檢視 全景/ })).toBeVisible();
+  await page.getByRole('button', { name: '關閉' }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await next();
   await expect(page.getByRole('heading', { name: '已收回的訊息' })).toBeVisible();
 
   await page.getByRole('button', { name: '選單' }).click();

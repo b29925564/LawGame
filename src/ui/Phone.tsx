@@ -1,8 +1,11 @@
-import { phoneView, type PhoneView } from '../engine/episode/phone';
+import { useState } from 'react';
+import { phoneView, photosStep, type PhoneView } from '../engine/episode/phone';
 import type { PhoneScene } from '../engine/episode/schema';
 import { sceneChoices, useEpisode } from '../engine/game';
 import { useT } from '../i18n';
+import { PhotoLog, ZoomDialog } from './Dossier';
 import { useScope } from './lang';
+import { hasPrint } from './prints';
 import { Redaction } from './Redaction';
 
 /** 冷開場：伊森的手機畫面。 */
@@ -10,6 +13,7 @@ export function Phone({ scene }: { scene: PhoneScene }) {
   const { progress, advance, choose } = useEpisode();
   const t = useT();
   const scope = useScope();
+  if (progress.step === photosStep(scene)) return <ScenePhotos scene={scene} onNext={advance} />;
   const v = phoneView(scene, progress.step, sceneChoices(progress));
 
   if (v.screen === 'caption' && v.step.do === 'caption')
@@ -183,5 +187,58 @@ function Next({ onClick }: { onClick: () => void }) {
     <button className="phone-next" onClick={onClick}>
       {t('繼續')}
     </button>
+  );
+}
+
+/**
+ * 冷開場最後一頁：週六凌晨，同一個房間的警方閃光照片（設定集 05-05、第 9 章 :66）。
+ * 閃燈直打、背景掉黑，只拍物件和證物牌；遺體只以「照片已遮蔽」黑條出現。照片紀錄表照順序排，
+ * 時間是第一張的拍攝時間。硬切進來，不閃白；黃只有獎盃那張照片裡的證物牌（已降到 --photo-yellow）。
+ * 只放有實物照片的（場景光影還在算的那張先不放，交圖後同檔名覆蓋就出現）。
+ */
+function ScenePhotos({ scene, onNext }: { scene: PhoneScene; onNext: () => void }) {
+  const t = useT();
+  const scope = useScope();
+  const [zoom, setZoom] = useState<string | null>(null);
+  const shots = (scene.photos ?? []).filter((p) => hasPrint(p.id));
+  const open = shots.find((p) => p.id === zoom);
+  return (
+    <main className="cine cine-photos">
+      {shots[0] && <p className="cine-time">{shots[0].photo.at}</p>}
+      <ul className="scene-photos" aria-label={t('現場照片')}>
+        {shots.map((p) => (
+          <li key={p.id} className="scene-photo">
+            <PhotoLog
+              photo={p.photo}
+              id={p.id}
+              use="scene"
+              redacted={p.redacted}
+              alt={t(p.subject, scope)}
+            />
+            <button
+              className="cork-zoom"
+              aria-label={t('放大檢視 {name}', { name: t(p.subject, scope) })}
+              onClick={() => setZoom(p.id)}
+            >
+              {t('放大')}
+            </button>
+          </li>
+        ))}
+      </ul>
+      <button className="cine-next" onClick={onNext}>
+        {t('繼續')}
+      </button>
+      {open && (
+        <ZoomDialog title={t(open.subject, scope)} onClose={() => setZoom(null)}>
+          <PhotoLog
+            photo={open.photo}
+            id={open.id}
+            use="zoom"
+            redacted={open.redacted}
+            alt={t(open.subject, scope)}
+          />
+        </ZoomDialog>
+      )}
+    </main>
   );
 }
