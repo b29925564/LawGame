@@ -100,7 +100,7 @@
 手上沒有確認過的論點。: You have no confirmed arguments.
 '・最後講，×1.3': '· Delivered last, ×1.3'
 '「{text}」': '“{text}”'
-特別判決表: Special verdict form
+特別裁決表: Special verdict form
 損害總額扣掉死者過失的部分: Total damages less the decedent's share
 被告應付: Defendant owes
 開庭若判有責: If the jury finds liability at trial
@@ -211,7 +211,7 @@
 庭審結束時，已經有 {a} 位陪審員站你這邊。: 'By the end of testimony, {a} {a:juror was|jurors were} already on your side.'
 結辯把站你這邊的陪審員從 {a} 位拉到 {b} 位。: Your closing brought the jurors on your side from {a} to {b}.
 評議時又說服了 {k} 位陪審員。: Deliberation won over {k} more juror{k:s}.
-判決書: Verdict form
+裁決書: Verdict form
 被告是否有過失？: Was the defendant negligent?
 是: 'Yes'
 否: 'No'
@@ -251,3 +251,4 @@
 前傾: leaning forward
 後靠抱胸: leaning back, arms crossed
 低頭寫筆記: head down, taking notes
+（已勾選）: ' (checked)'
