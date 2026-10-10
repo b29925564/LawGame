@@ -70,6 +70,7 @@ function Stage({
   on,
   mode,
   frameW,
+  turn = false,
 }: {
   cam: Cam;
   who: string;
@@ -77,6 +78,8 @@ function Stage({
   on: boolean;
   mode: 'strip' | 'insert';
   frameW: number;
+  /** 援引緘默權：立牌換成轉頭的剪影（機位審查 review-v1 第 2 條）。 */
+  turn?: boolean;
 }) {
   const m = MANIFESTS[`./cam/${cam}.json`];
   // 16:9 的機位圖放進框裡：照裁切框把整張圖往上、往左推（2.39:1 只露出 crop239 那一段，眼線仍在 1/3）。
@@ -96,10 +99,11 @@ function Stage({
       pose: 'J1' as const,
       bg: false,
       rim: rimUnits,
+      turn,
       uid: `cam-${cam}-${look.id}`,
     };
     return [svg(look, { ...o, part: 'body' }), svg(look, { ...o, part: 'light' })];
-  }, [look, rimUnits, cam]);
+  }, [look, rimUnits, cam, turn]);
   if (!m || !plate) return null;
   const box = {
     left: `${m.standee.x * 100}%`,
@@ -200,6 +204,7 @@ export function CourtCamera({
           on={shot === 'witness'}
           mode={mode}
           frameW={width}
+          turn={state === 'fifth'}
         />
         <Stage
           cam="bench"
