@@ -591,7 +591,7 @@ App 日誌我整理好了（有點多）: App log sorted (it's a lot)
 陪審長站起來。「我們認定被告無責。」: The foreperson stands. "We find the defendant not liable."
 （訊息）漂亮。下一件也交給你。: (Text) Nicely done. The next one's yours too.
 法院台階上，瑪莉索・維加站在最下面一階，看著盧卡斯走出來。她什麼都沒有說。: On the courthouse steps, Marisol Vega stands on the bottom step and watches Lucas come out. She says nothing.
-陪審長站起來。「我們認定被告有責。死者本人就其損害，與有過失，比例如判決表所載。」: The foreperson stands. "We find the defendant liable. The deceased bears a share of the fault for his own harm, in the proportion set out on the verdict form."
+陪審長站起來。「我們認定被告有責。死者本人就其損害，與有過失，比例如特別裁決表所載。」: The foreperson stands. "We find the defendant liable. The deceased bears a share of the fault for his own harm, in the proportion set out on the verdict form."
 你打得很公平，盧卡斯。我是說真的。: You played it fair, Lucas. I mean that.
 他們承認了。判決書上寫的，他們承認了。: They admitted it. It's on the verdict form. They admitted it.
 （訊息）謝謝。我就知道這案子很單純。: (Text) Thank you. I knew this one was simple.
@@ -722,11 +722,11 @@ App 日誌我整理好了（有點多）: App log sorted (it's a lot)
 '被告陳報：對非當事人藥局發出文書傳票 D-1，並通知原告。': 'Notice of records subpoena D-1 to nonparty pharmacy. Served on plaintiff by defendant.'
 '調解成立：雙方簽署和解書，含被告恢復派單系統強制下線功能之條款。原告撤回起訴，本案終結。': "Settled at mediation. Settlement agreement includes defendant's undertaking to restore mandatory logout in the dispatch system. Plaintiff dismisses; case closed."
 '調解成立：雙方簽署和解書，被告不承認責任。原告撤回起訴，本案終結。': 'Settled at mediation, without admission of liability. Plaintiff dismisses; case closed.'
-'陪審團評決：被告有責；死者與有過失，比例與賠償金額如判決表所載；懲罰性賠償成立。': 'Jury verdict for plaintiff. Comparative fault of decedent and damages as stated on the verdict form. Punitive damages found.'
-'陪審團評決：被告有責，賠償金額如判決表所載；懲罰性賠償成立。': 'Jury verdict for plaintiff. Damages as stated on the verdict form. Punitive damages found.'
-'陪審團評決：被告有責；死者與有過失，比例與賠償金額如判決表所載。': 'Jury verdict for plaintiff. Comparative fault of decedent and damages as stated on the verdict form.'
-'陪審團評決：被告有責，賠償金額如判決表所載。': 'Jury verdict for plaintiff. Damages as stated on the verdict form.'
-'陪審團評決：被告無責。': 'Jury verdict for defendant.'
+'陪審團裁決：被告有責；死者與有過失，比例與賠償金額如特別裁決表所載；懲罰性賠償成立。': 'Jury verdict for plaintiff. Comparative fault of decedent and damages as stated on the verdict form. Punitive damages found.'
+'陪審團裁決：被告有責，賠償金額如特別裁決表所載；懲罰性賠償成立。': 'Jury verdict for plaintiff. Damages as stated on the verdict form. Punitive damages found.'
+'陪審團裁決：被告有責；死者與有過失，比例與賠償金額如特別裁決表所載。': 'Jury verdict for plaintiff. Comparative fault of decedent and damages as stated on the verdict form.'
+'陪審團裁決：被告有責，賠償金額如特別裁決表所載。': 'Jury verdict for plaintiff. Damages as stated on the verdict form.'
+'陪審團裁決：被告無責。': 'Jury verdict for defendant.'
 陪審團僵局: Hung jury
 '陪審團未達法定票數，本院宣告審判無效。': 'Jury unable to reach the required number of votes. Mistrial declared.'
 '盧卡斯・葛雷　會議紀錄': 'Lucas Grey, meeting notes'
