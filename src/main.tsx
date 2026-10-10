@@ -5,6 +5,7 @@ import { App } from './ui/App';
 import { restoreA11y } from './ui/a11y';
 import './ui/styles.css';
 import './ui/court.css';
+import './ui/dossier.css';
 
 restoreLang();
 restoreA11y();

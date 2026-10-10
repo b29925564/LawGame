@@ -26,8 +26,13 @@ export function burdenOf(scenes: readonly { burden?: Burden }[]): Burden {
   return scenes.find((s) => s.burden)?.burden ?? 'criminal';
 }
 
+/** 某一集的案號與當事人（存檔欄看的是存檔裡那一集，不一定是現在這一集）。 */
+export function caseTermsOf(scenes: readonly { burden?: Burden }[]) {
+  const burden = burdenOf(scenes);
+  return { burden, ...termsOf({ burden }), ...UI[burden] };
+}
+
 export function useCaseTerms() {
   const progress = useEpisode((s) => s.progress);
-  const burden = burdenOf(episodeOf(progress).scenes as { burden?: Burden }[]);
-  return { burden, ...termsOf({ burden }), ...UI[burden] };
+  return caseTermsOf(episodeOf(progress).scenes as { burden?: Burden }[]);
 }

@@ -239,6 +239,9 @@ export function closingArgs(p: Progress) {
     .map((q) => q.argument);
 }
 
+/** 提前收場的方式、協商的那一種，和收場的那一場（場景序）。 */
+export type Closed = { outcome: branch.Outcome; deal: string | null; at: number };
+
 /** 分支條件看得到的事：判決、選定的理論、旗標、倫理帳本。 */
 /**
  * 這一集是不是提前收場（企劃書 10.9）：接受認罪協商（E4），
@@ -246,17 +249,17 @@ export function closingArgs(p: Progress) {
  * 劇本要寫了對應的尾聲（epilogue 且 when.outcome 含這種收場）才會提前結束，
  * 否則照常走到判決，免得玩家看到一集沒頭沒尾地結束。
  */
-export function caseClosed(p: Progress): { outcome: branch.Outcome; deal: string | null } | null {
+export function caseClosed(p: Progress): Closed | null {
   const scenes = episodeOf(p).scenes;
   const written = (o: branch.Outcome) =>
     scenes.some((s) => 'epilogue' in s && s.epilogue && s.when?.outcome?.includes(o));
-  for (const s of scenes) {
+  for (const [at, s] of scenes.entries()) {
     const st = p.scenes[s.id];
     if (!st) continue;
     if (s.type === 'negotiation' && (st as nego.NegoState).outcome === 'deal' && written('deal'))
-      return { outcome: 'deal', deal: (st as nego.NegoState).dealId ?? null };
+      return { outcome: 'deal', deal: (st as nego.NegoState).dealId ?? null, at };
     if (s.type === 'trial' && (st as trial.TrialState).pleaded && written('dismissed'))
-      return { outcome: 'dismissed', deal: null };
+      return { outcome: 'dismissed', deal: null, at };
   }
   return null;
 }

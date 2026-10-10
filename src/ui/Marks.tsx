@@ -10,6 +10,7 @@ import { Speech } from './Portrait';
 import { AnnounceQueue, type Announcement } from './announce';
 import { claimHand, topHand, useHandStore, type Hand } from './hand';
 import { useScope } from './lang';
+import { prose } from './prose';
 
 /**
  * 盧卡斯的手留在畫面上的記號（設計稿 inner-voice）。
@@ -53,23 +54,28 @@ export function Hl({
   text,
   words,
   live = true,
+  wrap = false,
 }: {
   text: string;
   words: string[];
   live?: boolean;
+  /** 紙面內文：詞不斷開、末行不留一兩個字（prose.tsx）。 */
+  wrap?: boolean;
 }) {
   const t = useT();
   const scope = useScope();
   const shown = t(text, scope);
   const w = words.map((x) => t(x, scope)).find((x) => x && shown.includes(x));
-  if (!w) return <>{shown}</>;
+  const p = (s: string, tail = false) => (wrap ? prose(s, tail) : s);
+  if (!w) return <>{p(shown, true)}</>;
   const i = shown.indexOf(w);
+  const rest = shown.slice(i + w.length);
   return (
     <>
-      {shown.slice(0, i)}
-      <mark className={live ? 'hl enter live' : 'hl'}>{w}</mark>
+      {p(shown.slice(0, i))}
+      <mark className={live ? 'hl enter live' : 'hl'}>{p(w, !rest)}</mark>
       <span className="sr-only">{t('（盧卡斯標記）')}</span>
-      {shown.slice(i + w.length)}
+      {p(rest, true)}
     </>
   );
 }

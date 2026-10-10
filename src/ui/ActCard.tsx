@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { episodeOf, useEpisode } from '../engine/game';
 import { useLang, useT } from '../i18n';
+import { prose } from './prose';
 import { reducedMotion } from './a11y';
 import { kelvinOf, rigOf } from './rigs';
 import { useCaseTerms } from './terms';
@@ -279,7 +280,7 @@ export function Recap() {
     <div className="recap">
       {lines.map((l) => (
         <p key={l} className="narration">
-          {t(l, card.id)}
+          {prose(t(l, card.id))}
         </p>
       ))}
     </div>

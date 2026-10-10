@@ -6,6 +6,7 @@ import { LangSwitch } from './lang';
 import { readSave, SLOTS, type Slot } from '../engine/save';
 import { unlockAudio } from '../engine/sound';
 import { Credits } from './Credits';
+import { DocketMini, SaveBates } from './Dossier';
 
 const when = (t: number, lang: string) =>
   new Date(t).toLocaleString(lang === 'en' ? 'en-US' : 'zh-TW', {
@@ -27,6 +28,8 @@ export function SlotList({
 }) {
   const t = useT();
   const lang = useLang((s) => s.lang);
+  // 存檔畫面只准一道黃（設計師 P2-6 r1）：選中的那一欄用 JS 記，滑鼠滑過不算；只有它的目前行上螢光，焦點框改用墨色。
+  const [sel, setSel] = useState<Slot | null>(null);
   return (
     <ul className="stack slots">
       {slots.map((slot) => {
@@ -35,15 +38,32 @@ export function SlotList({
         return (
           <li key={slot}>
             <button
-              className="slot"
+              className={sel === slot ? 'slot sel' : 'slot'}
               disabled={verb === '讀取' && !f}
+              onFocus={(e) => {
+                setSel(slot);
+                // 鍵盤移到這一欄：整張卡連同墨色焦點框捲進看得見的範圍（scroll-margin 留給焦點框；設計師 P2-6 r3 第 4 條）。
+                e.currentTarget.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+              }}
               onClick={() => onPick(slot)}
               aria-label={lang === 'en' ? `${t(verb)} ${name}` : `${verb}${name}`}
             >
               <strong>{name}</strong>
               <span className="muted">
-                {f ? `${t(f.label)}・${when(f.savedAt, lang)}` : t('空')}
+                {f ? (
+                  <>
+                    {t(f.label)}
+                    {t('・')}
+                    {/* 時間整組不斷開（「10:20 AM」的 AM 不單獨一行）。 */}
+                    <span className="when">{when(f.savedAt, lang)}</span>
+                  </>
+                ) : (
+                  t('空')
+                )}
               </span>
+              {/* Bates 區間在章節那一行下面，再下面是縮小的案卷登錄表（設計師 P2-6；設定集第 10 章）。 */}
+              {f && <SaveBates progress={f.progress} />}
+              {f && <DocketMini progress={f.progress} />}
             </button>
           </li>
         );
@@ -91,13 +111,14 @@ export function Title() {
       <div className="title-foot">
         <div className="stack">
           <LangSwitch />
+          {/* 讀檔清單打開時，黃留給選中的存檔欄那一道（存檔畫面只准一道黃；設計師 P2-6 r1）。 */}
           {auto && (
-            <button className="primary" onClick={() => load('auto')}>
-              {t('繼續（{label}）', { label: auto.label })}
+            <button className={loading ? '' : 'primary'} onClick={() => load('auto')}>
+              {t('繼續（{label}）', { label: t(auto.label) })}
             </button>
           )}
           <button
-            className={auto ? '' : 'primary'}
+            className={auto || loading ? '' : 'primary'}
             onClick={() => setPicking(!picking)}
             aria-expanded={picking}
           >

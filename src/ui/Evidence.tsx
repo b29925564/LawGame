@@ -11,7 +11,10 @@ import {
 } from '../engine/game';
 import { play } from '../engine/sound';
 import { t as tr, useT } from '../i18n';
+import { dossierOf, EvidenceBag, EvidenceZoom, PhotoLog } from './Dossier';
+import { reducedMotion } from './a11y';
 import { useScope } from './lang';
+import { prose } from './prose';
 import { cardHighlights, cardStamps, Hl, Stamp } from './Marks';
 import { useCardPick } from './pick';
 import { TimelineView } from './Timeline';
@@ -211,6 +214,9 @@ export function EvidenceCard({
   const [tip, setTip] = useState<{ top: number; right: number } | null>(null);
   // 不能放上連線台的畫面（卷宗、法院系統、庭上）點一下展開全文，再點收起。
   const [open, setOpen] = useState(false);
+  // 卷宗資料（設計師 P2-6）：照片紀錄表、證物袋。展開時顯示，完整版在放大檢視。
+  const { photo, bag } = dossierOf(episodeOf(progress), item.id);
+  const [zoom, setZoom] = useState(false);
   if (pickable || mini) {
     // 證據欄的小卡（UX 規格 P1-12）：一行一張，名稱靠左、時間或種類靠右；內容與出處在浮出卡。
     // 每個桌面分頁長得一樣，不會只有證據板是乾淨的（試玩回報）。
@@ -226,11 +232,31 @@ export function EvidenceCard({
         });
     };
     const hide = () => setTip(null);
+    const body = (
+      <>
+        <p>
+          {hl ? <Hl text={item.text} words={hl} live={false} wrap /> : prose(t(item.text, scope))}
+        </p>
+        <p className="mini-src">
+          {t(item.kind)}
+          {t('・')}
+          {t(item.source, scope)}
+        </p>
+      </>
+    );
     const press = () => {
       if (can) pick!(item.id);
       else {
         setOpen(!open);
         hide();
+        // 展開後把卡捲進來，停在黏頂的分組小標下面（scroll-margin-top），不讓卡名藏在小標後面（設計師 P2-6 r2 第 14 條）。
+        if (!open)
+          requestAnimationFrame(() =>
+            ref.current?.scrollIntoView({
+              block: 'nearest',
+              behavior: reducedMotion() ? 'auto' : 'smooth',
+            }),
+          );
       }
     };
     return (
@@ -277,14 +303,22 @@ export function EvidenceCard({
           <div className="mini-body">
             {sealed && <Stamp text={sealed} sm />}
             {out && <p className="mini-out">{t('這張卡現在用不上，只能看內容。')}</p>}
-            <p>{hl ? <Hl text={item.text} words={hl} live={false} /> : t(item.text, scope)}</p>
-            <p className="mini-src">
-              {t(item.kind)}
-              {t('・')}
-              {t(item.source, scope)}
-            </p>
+            {photo && <PhotoLog photo={photo} image={item.image} />}
+            {bag ? (
+              <EvidenceBag bag={bag} progress={progress}>
+                {body}
+              </EvidenceBag>
+            ) : (
+              body
+            )}
+            {(photo || bag) && (
+              <button type="button" className="link zoom-open" onClick={() => setZoom(true)}>
+                {t('放大')}
+              </button>
+            )}
           </div>
         )}
+        {zoom && <EvidenceZoom item={item} progress={progress} onClose={() => setZoom(false)} />}
         {tip &&
           createPortal(
             <div

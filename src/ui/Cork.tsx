@@ -1,6 +1,7 @@
 import { useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import type { Relation } from '../engine/constants';
 import { useT } from '../i18n';
+import { PhotoLogLine, type PhotoRecord } from './Dossier';
 import { useScope } from './lang';
 import './cork.css';
 import { JurySketch, type JuryCard } from './sketch/JurySketch';
@@ -20,6 +21,10 @@ export type CorkItem = {
   date?: string;
   time?: string;
   image?: string;
+  /** 照片紀錄表（設計師 P2-6）：照片卡的卡名下面一行。 */
+  photo?: PhotoRecord;
+  /** 有證物袋的卡，光圈裡可以放大檢視。 */
+  bag?: unknown;
 };
 
 /** 板上連過的線：兩張卡加一種關係。 */
@@ -70,13 +75,19 @@ function Face({ item }: { item: CorkItem }) {
     case 'photo':
       return (
         <>
-          {/* 警方照片的閃光燈：中心過曝、四角快速變暗；證物立牌灰白。 */}
+          {/* 警方照片的閃光燈：中心過曝、四角快速變暗；證物立牌灰白。有照片紀錄表的（驗屍照片）不畫立牌：放大後會把錯的道具放大（設計師 P2-6 r1）。 */}
           <span className="cork-print">
-            {item.image ? <img src={item.image} alt="" /> : <i className="cork-tent" />}
+            {item.image ? (
+              <img src={item.image} alt="" />
+            ) : (
+              !item.photo && <i className="cork-tent" />
+            )}
           </span>
           <span className="cork-strip">
             <b>{name}</b>
             {when && <time>{when}</time>}
+            {/* 照片紀錄表的四欄：卡名留在底欄（玩法要讀），紀錄列一行小字，放大時才讀。 */}
+            {item.photo && <PhotoLogLine photo={item.photo} />}
           </span>
         </>
       );
@@ -230,6 +241,7 @@ export function Cork({
   onPick,
   slot,
   jury,
+  onZoom,
 }: {
   /** A、B 槽裡的卡（沒放就是 undefined）。 */
   focus: [CorkItem | undefined, CorkItem | undefined];
@@ -248,6 +260,8 @@ export function Cork({
   slot: (i: 0 | 1, face: ReactNode) => ReactNode;
   /** 陪審團視角：只畫被採納的卡（設定集 8.6）。 */
   jury?: { on: boolean; cards: CorkItem[]; provenance: string };
+  /** 光圈裡有照片紀錄表或證物袋的卡：標記層一顆「放大檢視」（設計師 P2-6）。 */
+  onZoom?: (id: string) => void;
 }) {
   const t = useT();
   const scope = useScope();
@@ -387,6 +401,25 @@ export function Cork({
           {i === 0 ? 'A' : 'B'}
         </span>
       ))}
+      {onZoom &&
+        focus.map(
+          (c, i) =>
+            c &&
+            (c.photo || c.bag !== undefined) && (
+              <button
+                key={c.id}
+                type="button"
+                className="cork-zoom"
+                // 陪審團視角看的是速寫，不是卷宗：停用。
+                disabled={jury?.on}
+                aria-label={t('放大檢視 {name}', { name: t(c.name, scope) })}
+                style={{ left: `${focusAt[i][0] + focusW}%`, top: `${focusAt[i][1]}%` }}
+                onClick={() => onZoom(c.id)}
+              >
+                {t('放大')}
+              </button>
+            ),
+        )}
       {/* 速寫一直掛著（看不見），在 Worker 裡先畫好：切過去時不用等，也才能交叉淡化。 */}
       {jury && (
         <JurySketch

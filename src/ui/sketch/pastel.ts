@@ -5,7 +5,7 @@
  * 輸入是「同一個畫面」的亮度（這裡由板子的版面直接算：軟木 × 吊燈光圈，卡片是紙），
  * 輸出是一張鋼灰紙上的炭筆＋粉彩：
  *   1. 亮度 5%–98.5% 拉到 0–1、gamma 1.7、模糊 3px
- *   2. 分階：< .12 炭、< .24 炭紙混、< .48 紙、< .70 淺粉彩（帶 15–35% 原色）、以上粉筆白
+ *   2. 分階：< .12 炭、< .24 炭紙混、< .48 紙、< .70 淺粉彩（帶 15% 軟木原色）、以上粉筆白；卡片是一張乾淨的紙
  *   3. 紙紋：模糊後拉對比的雜訊＋沿筆觸方向的條紋；覆蓋率依階，紙色從粉彩之間透出來
  *   4. 筆觸：順著光圈切線與卡片邊走；長度依亮度三級，起筆粗收筆細，30% 疊一筆反向細筆
  *   5. 邊界用斜向短筆觸抖開；最暗處加稀疏 45° 排線
@@ -15,6 +15,8 @@
  * 固定種子：同一個版面每次畫出來都一樣。
  * buildSketch 不碰 DOM，可以放在 Worker 裡算（sketch.worker.ts）；字要用頁面載入的字型，回主執行緒寫。
  */
+
+import { proseUnits } from '../lineUnits';
 
 export type RGB = [number, number, number];
 
@@ -277,6 +279,15 @@ export function buildSketch(inp: SketchInput): Sketch {
 
   // 卡片裡面是乾淨的紙：背景排線不畫進卡裡（輪廓另外勾）。
   const onCard = (x: number, y: number) => cardAt[idx(x, y)] > 0;
+  /** 一筆有沒有碰到卡紙：每一點和每一段的中點都查（抖開的短筆只有兩點）。 */
+  const crossesCard = (pts: number[]) => {
+    for (let k = 0; k < pts.length; k += 2) {
+      if (onCard(pts[k], pts[k + 1])) return true;
+      if (k + 3 < pts.length && onCard((pts[k] + pts[k + 2]) / 2, (pts[k + 1] + pts[k + 3]) / 2))
+        return true;
+    }
+    return false;
+  };
 
   // ── 2–3. 分階上色，紙紋決定哪裡吃到粉彩。
   const ink = inp.ink;
@@ -299,6 +310,9 @@ export function buildSketch(inp: SketchInput): Sketch {
     d[o + 2] = b;
     d[o + 3] = 255;
   };
+  // 卡紙是乾淨的一張紙：不畫粉彩斑，只留一點紙紋，字寫在上面（設計師 P2-6 r2 第 4 條）。
+  // 亮處的卡是粉筆白帶一點證據的色，暗處的卡是炭色（字用粉筆寫）。
+  const cardPaper = cards.map((c) => (at(L, c.cx, c.cy) >= 0.48 ? mix(chalk, c.rgb, 0.12) : c0));
   for (let y = 0; y < H; y++)
     for (let x = 0; x < W; x++) {
       const i = y * W + x;
@@ -307,15 +321,25 @@ export function buildSketch(inp: SketchInput): Sketch {
       const t = tierOf(v);
       const f = Math.min(1, Math.max(0, (stopLine[x] - y) / dry));
       const k = cardAt[i];
-      // 卡紙吃粉筆比較滿，字才讀得出來。
-      const c = t === 4 && k ? 0.8 : cover[t];
+      if (k) {
+        const cp = cardPaper[k - 1];
+        const m = (0.5 - tooth[i]) * 0.04;
+        put(
+          o,
+          cp[0] + (ink[0] - cp[0]) * m,
+          cp[1] + (ink[1] - cp[1]) * m,
+          cp[2] + (ink[2] - cp[2]) * m,
+        );
+        continue;
+      }
+      const c = cover[t];
       if (t !== 2 && f > 0 && tooth[i] < c * f) {
         if (t === 0) put(o, c0[0], c0[1], c0[2]);
         else if (t === 1) put(o, c1[0], c1[1], c1[2]);
         else if (t === 3) {
-          // 淺粉彩帶 15–35% 原色（軟木或卡片紙）。
-          const hue = k ? cards[k - 1].rgb : inp.base.rgb;
-          const m = 0.15 + 0.2 * ((v - 0.48) / 0.22) * (k ? 1 : 0);
+          // 淺粉彩帶 15% 軟木原色。
+          const hue = inp.base.rgb;
+          const m = 0.15;
           put(
             o,
             c3[0] + (hue[0] - c3[0]) * m,
@@ -432,11 +456,13 @@ export function buildSketch(inp: SketchInput): Sketch {
     const l = (10 + rand() * 12) * S * u;
     strokes.push({ pts: [x, y, x + l * 0.71, y + l * 0.71], w: 0.9 * S, rgb: ink, a: 0.5 });
   }
+  // 卡紙上不留背景筆觸：從卡外起筆、拖進卡裡的那幾筆整筆拿掉，字寫在乾淨的紙上（設計師 P2-6 r2）。
+  const kept = strokes.filter((st) => !crossesCard(st.pts));
   // 依畫的順序：先背景排線（由外往內），卡片輪廓和連線最後。
   // 依離中心的距離分桶（由遠到近），比逐一比較的排序快得多。
   const reach = Math.hypot(W, H) / 2;
   const buckets: Stroke[][] = Array.from({ length: 1024 }, () => []);
-  for (const st of strokes) {
+  for (const st of kept) {
     const r = Math.hypot(st.pts[0] - W / 2, st.pts[1] - H / 2) / reach;
     buckets[1023 - Math.min(1023, Math.floor(r * 1024))].push(st);
   }
@@ -546,7 +572,7 @@ export function buildSketch(inp: SketchInput): Sketch {
     const pts: number[] = [];
     for (let x = x0; x < Math.min(W - 2, x0 + len); x += 3 * S)
       pts.push(x, stopAt(x) - lift + (rand() - 0.5) * 1.2 * S);
-    if (pts.length < 6) continue;
+    if (pts.length < 6 || crossesCard(pts)) continue;
     // 收尾線是炭筆與紙之間的中灰，一筆比一筆淡、細。
     strokes.push({
       pts,
@@ -617,31 +643,29 @@ export function drawSketchText(
     ctx.translate(-c.w / 2, -c.h / 2);
     const tone = o.light[i] ? o.ink : o.chalk;
     ctx.fillStyle = `rgb(${tone.join(' ')} / 0.92)`;
-    const pad = 9;
-    const inner = c.w - 2 * pad;
-    // 下緣：卡名（圖版的「F3 沃斯的心率」），小一號。
-    // 卡名寫不下就寫小一點（最小 12px），還是不下才分兩行往上寫。
-    let ls = 14;
-    ctx.font = `400 ${ls}px ${o.fonts.hand}`;
-    const lw = ctx.measureText(c.label).width;
-    if (lw > inner) {
-      ls = Math.max(12, Math.floor((14 * inner) / lw));
-      ctx.font = `400 ${ls}px ${o.fonts.hand}`;
-    }
-    const two = ctx.measureText(c.label).width > inner;
-    wrap(ctx, c.label, pad, c.h - pad - (two ? 2 : 1) * (ls + 2), inner, ls + 2, 2);
-    ctx.font = `400 ${o.fonts.size}px ${o.fonts.hand}`;
+    // 下緣：卡名（圖版的「F3 沃斯的心率」），小一號；內容是畫家照著卡抄的第一句。
+    // 卡的高度已經照 cardTextLayout 撐開（JurySketch），字不會被切掉。
+    const L = cardTextLayout(
+      (font, x) => {
+        ctx.font = font;
+        return ctx.measureText(x).width;
+      },
+      c,
+      o.fonts,
+    );
+    ctx.font = `400 ${L.ls}px ${o.fonts.hand}`;
+    L.label.forEach((x, k) =>
+      ctx.fillText(x, L.pad, c.h - L.pad - (L.label.length - k) * (L.ls + 2)),
+    );
     if (c.motif === 'pulse') {
       // 斷點旁寫時刻。
       if (c.time) {
         ctx.font = `400 14px ${o.fonts.hand}`;
-        ctx.fillText(c.time, pad, c.h * 0.3 + 15);
+        ctx.fillText(c.time, L.pad, c.h * 0.3 + 15);
       }
-    } else if (c.motif !== 'photo' && c.body) {
-      // 卡上的內容：畫家照著卡抄下來的幾行字。
-      const lh = Math.round(o.fonts.size * 1.25);
-      const rows = Math.max(1, Math.floor((c.h - 2 * pad - 18) / lh));
-      wrap(ctx, c.body, pad, pad - 1, inner, lh, rows);
+    } else if (L.body.length) {
+      ctx.font = `400 ${o.fonts.size}px ${o.fonts.hand}`;
+      L.body.forEach((x, k) => ctx.fillText(x, L.pad, L.pad - 1 + k * L.lh));
     }
     ctx.restore();
   });
@@ -655,30 +679,94 @@ export function drawSketchText(
   ctx.restore();
 }
 
-function wrap(
-  ctx: CanvasRenderingContext2D,
-  s: string,
-  x: number,
-  y: number,
-  maxW: number,
-  lh: number,
-  lines: number,
-) {
-  let line = '';
-  let n = 0;
-  for (const ch of s) {
-    if (ctx.measureText(line + ch).width > maxW && line) {
-      // 寫不下就停筆：畫家只抄得下這麼多，不加刪節號。
-      if (n === lines - 1) {
-        ctx.fillText(line, x, y + n * lh);
-        return;
-      }
-      ctx.fillText(line, x, y + n * lh);
-      n++;
-      line = ch;
-    } else line += ch;
+/** 不能放在行首的標點（中文避頭）、不能放在行尾的開括號（避尾）。 */
+const NO_START = /^[，。、；：？！）」』〉》．,.;:!?)\]}…—]/;
+const NO_END = /[（「『〈《([{]$/;
+
+/** 字級單位：拉丁字連同後面的空白一組，中日韓一字一組，標點黏在前一組後面，開括號黏在後一組前面。 */
+function charUnits(s: string) {
+  const units: string[] = [];
+  for (const m of s.matchAll(/[\p{Script=Latin}\p{N}'’\-/:.@]+\s*|\s+|./gsu)) {
+    const u = m[0];
+    if (units.length && (NO_START.test(u) || NO_END.test(units[units.length - 1])))
+      units[units.length - 1] += u;
+    else units.push(u);
   }
-  if (line) ctx.fillText(line, x, y + n * lh);
+  return units;
+}
+
+/** 依序把單位放進一行，放不下就換行；行頭行尾的空白不留。 */
+function pack(measure: (s: string) => number, units: string[], maxW: number) {
+  const lines: string[] = [];
+  let line = '';
+  for (const u of units) {
+    if (!line || measure((line + u).trimEnd()) <= maxW) {
+      line += u;
+      continue;
+    }
+    lines.push(line.trimEnd());
+    line = u.trimStart();
+  }
+  if (line.trim()) lines.push(line.trimEnd());
+  return lines;
+}
+
+/**
+ * 斷行：英文只在空白斷；中文以詞為單位，守避頭避尾（line-break: strict 的規則），末行至少四個漢字。
+ * 單一個字比一行還寬才在字中間斷（等同 overflow-wrap: anywhere）。
+ */
+export function breakLines(measure: (s: string) => number, s: string, maxW: number): string[] {
+  // 有中文：照紙面內文的規則切詞（詞、譯名、數字和量詞不拆，標點黏前、開括號黏後，末行至少四個漢字；
+  // 設計師 r2 點名的「刷／卡」「閘／門。」）。沒有中文：字級單位，英文只在空白斷。
+  const units = /\p{Script=Han}/u.test(s) ? proseUnits(s) : charUnits(s);
+  return pack(measure, units, maxW).flatMap((l) => {
+    if (measure(l) <= maxW) return [l];
+    // 一個詞比一行還寬：這一行退回字級單位重排，行首行尾禁則照守；
+    // 字級單位還是太寬（很長的英文字）才在字中間斷。
+    return pack(measure, charUnits(l), maxW).flatMap((m) => {
+      if (measure(m) <= maxW) return [m];
+      const out: string[] = [];
+      let cur = '';
+      for (const ch of m) {
+        if (cur && measure(cur + ch) > maxW) {
+          out.push(cur);
+          cur = ch;
+        } else cur += ch;
+      }
+      return cur ? [...out, cur] : out;
+    });
+  });
+}
+
+/** 速寫卡上抄的內容：畫家只抄第一句（切在第一個「。」或「. 」），不抄到一半停筆。 */
+export function firstSentence(s: string) {
+  const zh = s.indexOf('。');
+  const en = s.search(/[.!?] /);
+  const at = [zh, en].filter((x) => x >= 0).sort((a, b) => a - b)[0];
+  return at === undefined ? s : s.slice(0, at + 1);
+}
+
+/** 速寫卡的字要佔多高：卡名在下緣（14px，寫不下縮到 12px，再不下分兩行），內容在上面。 */
+export function cardTextLayout(
+  measure: (font: string, s: string) => number,
+  c: Pick<SketchCard, 'w' | 'label' | 'body' | 'motif'>,
+  fonts: { hand: string; size: number },
+) {
+  const pad = 9;
+  const inner = c.w - 2 * pad;
+  const at = (px: number) => `400 ${px}px ${fonts.hand}`;
+  let ls = 14;
+  const lw = measure(at(ls), c.label);
+  if (lw > inner) ls = Math.max(12, Math.floor((14 * inner) / lw));
+  const label = breakLines((x) => measure(at(ls), x), c.label, inner);
+  const lh = Math.round(fonts.size * 1.25);
+  const body =
+    c.motif === 'lines' && c.body
+      ? breakLines((x) => measure(at(fonts.size), x), firstSentence(c.body), inner)
+      : [];
+  // 內容在上、卡名在下，中間留 8px；照片和心率線另有圖，至少保留原本的高度。
+  const need = pad + body.length * lh + (body.length ? 8 : 0) + label.length * (ls + 2) + pad;
+  return { pad, inner, ls, label, lh, body, need };
 }
 
 /**

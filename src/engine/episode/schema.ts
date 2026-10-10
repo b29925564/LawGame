@@ -209,24 +209,24 @@ const batesNo = z
 
 const photoLog = z
   .object({
-    caseNo: z.string(),
+    caseNo: z.string().min(1),
     /** 沖印本的 Bates（法醫 ME-、警方 CPD-）。 */
     bates: batesNo.optional(),
     no: z.number().int().min(1),
     of: z.number().int().min(1),
     at: stamp,
-    by: z.string(),
+    by: z.string().min(1),
   })
   .refine((p) => p.no <= p.of, '照片序號不能大於總張數');
 
 /** 證物袋：袋上印的表頭，加上手寫的保管鏈（每經手一次一行，不斷手、時間遞增）。 */
 const bag = z
   .object({
-    caseNo: z.string(),
-    item: z.string(),
-    acquiredBy: z.string(),
-    from: z.string(),
-    desc: z.string(),
+    caseNo: z.string().min(1),
+    item: z.string().min(1),
+    acquiredBy: z.string().min(1),
+    from: z.string().min(1),
+    desc: z.string().min(1),
     /**
      * 每經手一次一行。寫了 when 的那一行要等條件成立（例如做了那件工作、拿到那張卡）才算發生；
      * 還沒發生的那一行和之後的每一行都畫成「尚未發生」（見 custody.ts）。
@@ -235,9 +235,9 @@ const bag = z
       .array(
         z.object({
           at: stamp,
-          from: z.string(),
-          to: z.string(),
-          purpose: z.string(),
+          from: z.string().min(1),
+          to: z.string().min(1),
+          purpose: z.string().min(1),
           when: when.optional(),
         }),
       )

@@ -13,6 +13,7 @@ import { Dialogue } from './Dialogue';
 import { GameMenu } from './GameMenu';
 import { Interview } from './Interview';
 import { ActCard, PlaceSlate, Recap, splitHeadline } from './ActCard';
+import { bates, pageAt } from './bates';
 import { Announcer } from './Marks';
 import { Negotiation } from './Negotiation';
 import { Phone } from './Phone';
@@ -23,6 +24,7 @@ import { Opening, Theory } from './Theory';
 import { VoirDire } from './VoirDire';
 import { useT } from '../i18n';
 import { SceneScope, useDocumentLang } from './lang';
+import { prose } from './prose';
 
 export function App() {
   const { mode, progress, advance, toTitle, nextEpisode } = useEpisode();
@@ -78,8 +80,7 @@ export function App() {
   const before = ep.scenes[at - 1];
   const moved =
     !!here && before?.type !== 'card' && placed(ep.scenes.slice(0, at).reverse())?.place !== here;
-  // Bates 是裝飾性的出處數字：集數＋場景序。
-  const bates = `WH-E${String(ep.number).padStart(2, '0')}-${String(57 + at * 13).padStart(6, '0')}`;
+  const page = bates(ep.number, pageAt(at));
   return (
     <SceneScope.Provider value={scene?.id}>
       <Announcer />
@@ -98,21 +99,21 @@ export function App() {
       {scene?.type === 'opening' && <Opening key={scene.id} scene={scene} />}
       {scene?.type === 'closing' && <Closing key={scene.id} scene={scene} />}
       {scene?.type === 'card' && !last && (
-        <ActCard key={scene.id} headline={headline} place={slate} bates={bates} onDone={advance} />
+        <ActCard key={scene.id} headline={headline} place={slate} bates={page} onDone={advance} />
       )}
       {(!scene || last) && (
         <ActCard
           key={scene?.id ?? 'end'}
           headline={headline}
           place={slate}
-          bates={bates}
+          bates={page}
           lines={!last && <Recap />}
         >
           {/* 集尾卡的那一句（「第 1 集到此結束。」）沒有下一場可以放，和選項一起出現在卡下。 */}
           {last &&
             card?.lines.map((l) => (
               <p key={l} className="narration">
-                {t(l, card?.id)}
+                {prose(t(l, card?.id))}
               </p>
             ))}
           <div className="stack">

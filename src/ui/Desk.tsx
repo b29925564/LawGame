@@ -20,10 +20,12 @@ import { EffectLines, effectsIf } from './Effects';
 import { MarkLines } from './Marks';
 import { ExhibitTag, exhibitNo, FilingThumb, Pleading, Written } from './Pleading';
 import { useScope } from './lang';
+import { prose } from './prose';
 import { useCardPick } from './pick';
 import { Speech } from './Portrait';
 import { RelationPicker } from './RelationPicker';
 import { Cork, type CorkItem } from './Cork';
+import { Docket, EvidenceZoom } from './Dossier';
 import { Redaction } from './Redaction';
 import { Shell, Tabs } from './Shell';
 import { Timeline } from './Timeline';
@@ -209,6 +211,8 @@ export function Desk({ scene }: { scene: DeskScene }) {
       {app === 'docs' && <Docs scene={scene} />}
       {app === 'board' && <Board scene={scene} held={held} />}
       {app === 'jobs' && <Jobs scene={scene} held={held} />}
+      {/* 法院系統分頁頂端是案卷登錄表的主要位置（設計師 P2-6）：真的登錄表就住在法院系統裡。 */}
+      {app === 'court' && <Docket progress={progress} />}
       {app === 'court' && <Motions scene={scene} held={held} />}
       {app === 'discovery' && <Discovery scene={scene} />}
     </Shell>
@@ -470,6 +474,9 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
     }));
   const pool = [...args, ...scene.cards.filter((c) => held.includes(c.id))];
   const nameOf = (id: string) => pool.find((c) => c.id === id)?.name ?? id;
+  // 光圈裡的照片或證物袋按「放大」：完整的照片紀錄表與保管鏈（設計師 P2-6）。
+  const [zoomed, setZoomed] = useState<string | null>(null);
+  const zoomCard = scene.cards.find((c) => c.id === zoomed);
   const found = desk.findings(scene, st).map((l, i) => ({
     id: l.id,
     name: `發現 ${i + 1}`,
@@ -710,7 +717,11 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
           onPick={toggleLinkCard}
           slot={corkSlot}
           jury={{ on: juryView, cards: juryCards, provenance: sketchSource }}
+          onZoom={setZoomed}
         />
+        {zoomCard && (
+          <EvidenceZoom item={zoomCard} progress={progress} onClose={() => setZoomed(null)} />
+        )}
         {/* 陪審團視角只看不動：連線操作收起來，畫面上不留黃（一格一黃給的是下一步，這裡沒有下一步）。
             位置照留，切換時版面不跳（捲軸出現或消失會讓板子變寬，速寫也得重畫）。 */}
         <div className="bench-ops-wrap">
@@ -1049,7 +1060,7 @@ function Motions({ scene, held }: { scene: DeskScene; held: string[] }) {
       window.removeEventListener('pointerdown', away);
     };
   }, [menu, wide]);
-  if (!m || !a) return <p className="muted">{t('目前沒有可以提出的聲請。')}</p>;
+  if (!m || !a) return <p className="muted motion-none">{t('目前沒有可以提出的聲請。')}</p>;
   const n = scene.motions.indexOf(m) + 1;
   const nameOf = (id: string) => cards.find((c) => c.id === id);
   const quoteOf = (lines: { who: string; text: string }[]) => {
@@ -1192,14 +1203,29 @@ function Motions({ scene, held }: { scene: DeskScene; held: string[] }) {
             {t('・')}
             {t('還不能寫')}
           </small>
+          {/* 標題一句話講完，缺的論點一行一個，名字不塞進句子中間（劇本與內容）。 */}
           <strong>
-            {t('還缺前提：先把 {names} 確認起來', {
-              names: missing
-                .map((id) => `◆ ${t(nameOf(id)?.name ?? argName(scene, id), scope)}`)
-                .join('、'),
-            })}
+            {prose(
+              missing.length > 1
+                ? t('先確認這些論點，才能寫這份聲請：')
+                : t('先確認這個論點，才能寫這份聲請：'),
+            )}
           </strong>
-          <span>{t(m.detail, scope)}</span>
+          <ul className="prereq-args">
+            {missing.map((id) => {
+              const full = t(nameOf(id)?.name ?? argName(scene, id), scope);
+              const name = splitArg(full)[1] ?? full;
+              return (
+                <li key={id}>
+                  {/* ◆ 就是「論點」：名稱不再加「論點：」前綴（規格 v2.0 :225，和狀紙上的論點標籤同一個寫法）。 */}
+                  <span aria-hidden>◆</span>
+                  {/* 自己一行，英文句首大寫（「the watch data…」→「The watch data…」）。 */}
+                  <span>{prose(name.charAt(0).toUpperCase() + name.slice(1))}</span>
+                </li>
+              );
+            })}
+          </ul>
+          <span>{prose(t(m.detail, scope))}</span>
         </aside>
       ) : (
         <Pleading

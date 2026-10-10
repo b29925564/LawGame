@@ -167,6 +167,10 @@ h2,
 h3 {
   text-wrap: balance;
 }
+/* 紙面內文的一個詞（prose.tsx）：詞裡不換行，詞與詞之間照常。 */
+.kw {
+  white-space: nowrap;
+}
 * {
   scrollbar-width: thin;
   scrollbar-color: var(--border-strong) transparent;
@@ -614,6 +618,9 @@ details summary {
   font-family: var(--font-doc);
   color: var(--muted);
   line-height: 1.9;
+  /* 每一頁開頭的旁白：不留一兩個字的末行，標點不放行首（設計師 P2-6 r2 第 12 條）。 */
+  text-wrap: pretty;
+  line-break: strict;
   border-left: 2px solid var(--border-strong);
 }
 /* 盧卡斯的內心獨白：提示的主要載體，用螢光筆底色和一般台詞分開。 */
@@ -696,6 +703,14 @@ details summary {
   --hl: #f4c53d;
   --hl-wash: rgb(244 197 61 / 13%);
   --inset-hi: inset 0 1px 0 rgb(255 255 255 / 4%);
+  /* 字的權杖也一樣：頁尾淡字、焦點框、定案鈕、成立／不成立都用深色那一邊（規格 v2.0 :312；設計師 P2-6 r3 第 8 條）。 */
+  --faint: #8a95a2;
+  --focus: #f4c53d;
+  --good: #4cc38a;
+  --bad: #ef6a62;
+  --commit-bg: #161c25;
+  --commit-bg-hover: #1f2731;
+  --commit-edge: #e7eaee;
   color-scheme: dark;
 }
 
@@ -875,6 +890,8 @@ details summary {
 .slots .slot,
 .slot {
   width: 100%;
+  /* 焦點框 2px＋外移 2px：捲進畫面時連框一起留出來（設計師 P2-6 r3 第 4 條）。 */
+  scroll-margin: 8px;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -965,6 +982,8 @@ details summary {
   padding: max(8px, env(safe-area-inset-top)) 14px 0;
   display: grid;
   grid-template-rows: auto auto minmax(0, 1fr) auto;
+  /* 欄寬不跟著內容撐開：分頁列一行不換、放不下自己橫捲，不能把整欄撐得比視窗寬（設計師 P2-6 r2 第 8 條）。 */
+  grid-template-columns: minmax(0, 1fr);
   gap: 10px;
   overflow: hidden;
 }
@@ -1087,12 +1106,9 @@ details summary {
   display: none;
 }
 .apps button {
-  /*
-   * 擠不下時先縮、再在字間換行，不讓最後一個分頁被分頁列切掉（版面檢查：英文 Legal terms、Court system）。
-   * 中文詞不拆開：「證據/板」「法院系/統」一字一行（體驗評測 v88 重驗，第 2 集手機六個分頁）。
-   */
-  flex: 0 1 auto;
-  word-break: keep-all;
+  /* 分頁列一律一行：不換行、不縮，數字跟在字的右邊；放不下整列左右捲動（設計師 P2-6 r2）。 */
+  flex: none;
+  white-space: nowrap;
   line-height: var(--lh-tight);
   position: relative;
   min-height: 42px;
@@ -4753,7 +4769,6 @@ button.iou[aria-pressed='true'] {
 @media (max-width: 520px) {
   :root {
     --fs-vo: 19px;
-    --fs-hand: 17px;
   }
   .vo-frame {
     width: calc(100% - 32px);
@@ -5439,6 +5454,10 @@ button.iou[aria-pressed='true'] {
   font-weight: 600;
   overflow-wrap: anywhere;
 }
+/* 捲到卡片時停在黏頂的分組小標（約 30px）下面。 */
+.card.mini {
+  scroll-margin-top: 36px;
+}
 /* 不能放上連線台的畫面：點開才看內容。 */
 .card.mini .mini-body {
   padding: 0 12px 10px;
@@ -5838,11 +5857,10 @@ button.iou[aria-pressed='true'] {
   font-weight: 700;
 }
 
-/* 英文模式：視覺設計師定的字體配對；行距收到 1.5，數字等寬 */
+/* 英文模式：視覺設計師定的字體配對；行距收到 1.5，數字等寬。手寫在英文也用 LXGW WenKai TC（它有拉丁字母；設計師 #225 審查），所以不覆寫 --font-hand。 */
 :root:lang(en) {
   --font: 'IBM Plex Sans', 'Noto Sans TC', system-ui, sans-serif;
   --font-doc: 'Source Serif 4', 'Noto Serif TC', serif;
-  --font-hand: 'Source Serif 4', serif;
   font-variant-numeric: tabular-nums;
 }
 :root:lang(en) body,
@@ -5850,11 +5868,6 @@ button.iou[aria-pressed='true'] {
 :root:lang(en) .speech,
 :root:lang(en) .doc {
   line-height: 1.5;
-}
-
-:root:lang(en) .sticky,
-:root:lang(en) .iou .sig {
-  font-style: italic;
 }
 
 /* 法庭光層試做（場景光影規格）：四張關鍵格疊在畫面最底，只改 opacity。 */
