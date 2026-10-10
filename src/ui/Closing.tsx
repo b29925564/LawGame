@@ -560,12 +560,13 @@ function Verdict({
                     />
                   </span>
                 </div>
-                {v === '陪審團僵局' && (
-                  <p className="fnote">
-                    <Hand s={ink(inkUnits(t(hungWord)))}>{t(hungWord)}</Hand>
-                  </p>
-                )}
               </>
+            )}
+            {/* 僵局兩個框都不勾，刑事民事一樣在下一行手寫（設定集 10.5 ①）。 */}
+            {v === '陪審團僵局' && (
+              <p className="fnote">
+                <Hand s={ink(inkUnits(t(hungWord)))}>{t(hungWord)}</Hand>
+              </p>
             )}
             <div className="signs">
               <span>
