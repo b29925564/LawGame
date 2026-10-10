@@ -22,10 +22,16 @@ export function inkUnits(s: string): number {
 export function pen() {
   let at = 0;
   let k = 0;
-  return (units: number): CSSProperties => {
+  const next = (units: number): CSSProperties => {
     const style = { '--u': units, '--at': at, '--k': k } as CSSProperties;
     at += units;
     k += 1;
     return style;
   };
+  /**
+   * 最後一筆寫完的時間點（字數、提筆次數）：時間 = --dur-hand-lead + u × --dur-hand + lifts × --dur-pen-lift。
+   * 下一拍在這之後再停 500ms 才切（設計師 #249 第 2 條）；一筆都沒寫就是 0。
+   */
+  next.end = () => ({ u: at, lifts: Math.max(0, k - 1), any: k > 0 });
+  return next;
 }

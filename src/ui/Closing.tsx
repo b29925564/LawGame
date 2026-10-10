@@ -14,7 +14,7 @@ import {
 } from '../engine/game';
 import { ledger, type LedgerItem } from '../engine/ledger';
 import { useSettings } from '../engine/settings';
-import { useMoney, useT } from '../i18n';
+import { useLang, useMoney, useT } from '../i18n';
 import { CardPick, EvidenceDrawer } from './Evidence';
 import { useScope } from './lang';
 import { IdPhoto } from './IdPhoto';
@@ -285,12 +285,6 @@ const splitMoney = (m: string) => {
   const [n, ...unit] = m.split(' ');
   return { n, unit: unit.join(' ') };
 };
-/** 「茱蒂絲・柯恩」→「柯恩」；英文取最後一個字。 */
-const surname = (name: string) =>
-  name
-    .split(/[・·\s]+/)
-    .filter(Boolean)
-    .pop() ?? name;
 
 /** 票格：站在你這邊的票實心墨色，另一邊空心。看的是對你有沒有利，不看有責或無罪。 */
 function Pips({ ours }: { ours: boolean[] }) {
@@ -333,6 +327,7 @@ function Verdict({
   const scope = useScope();
   const money = useMoney();
   const episode = useEpisode((s) => s.progress.episode);
+  const lang = useLang((s) => s.lang);
   const v = st.verdict!;
   const award = st.award;
   // 理論起點對陪審團寫下的過失比例：是遊戲讀數，只在「顯示數值」打開時出現（設計師第二輪）。
@@ -353,9 +348,11 @@ function Verdict({
 
   const fore = jurors.find((j) => j.foreperson);
   const foreParts = fore ? t(fore.label, scope).split(/\s*[・·]\s*/) : [];
-  const foreName = surname(
-    foreParts.length > 1 ? foreParts[foreParts.length - 2] : (foreParts[0] ?? ''),
-  );
+  // 簽名欄是陪審長自己簽的全名（「海倫・杜根」／「Helen Dugan」），不是只有姓。
+  const foreSign =
+    foreParts.length > 1
+      ? foreParts.slice(0, -1).join(lang === 'zh' ? '・' : ' ')
+      : (foreParts[0] ?? '');
 
   const headline =
     v === '陪審團僵局'
@@ -397,10 +394,11 @@ function Verdict({
         : t('評議時又說服了 {k} 位陪審員。', { k: now - atClose });
 
   const civil = !!award || rules?.burden === 'civil';
-  const formTitle = civil ? '特別判決表' : '判決書';
+  const formTitle = civil ? '特別裁決表' : '裁決書';
   const formEn = civil ? 'SPECIAL VERDICT FORM' : 'VERDICT FORM';
 
-  // 陪審長的筆：判決書上每一筆手寫照畫面順序接下去（設定集第 9 章 <VerdictForm>）。
+  // 陪審長的筆：裁決書上現場寫的每一筆照畫面順序接下去（設定集第 9 章 <VerdictForm>）。
+  // 簽名在評議室就簽好了，帶進法庭時已經在紙上；現場只寫勾（刑事），民事再加金額與比例（設計師 #249）。
   const ink = pen();
   const [written, setWritten] = useState(false);
   useEffect(() => {
@@ -569,9 +567,7 @@ function Verdict({
             <div className="signs">
               <span>
                 {t('陪審長')}
-                <b>
-                  <Hand s={ink(inkUnits(foreName))}>{foreName}</Hand>
-                </b>
+                <b>{foreSign}</b>
               </span>
               {n > 0 && <span>{votes}</span>}
             </div>
@@ -586,7 +582,7 @@ function Verdict({
               <summary>
                 {t('完整帳目')} <span className="faint">{t('每一筆怎麼算出來的')}</span>
               </summary>
-              {/* 判決書是世界裡的文件，不印遊戲的設計文字：理論怎麼算過失、起點和陪審團寫下的差多少，都收在帳目裡（設計師第二輪）。 */}
+              {/* 裁決書是世界裡的文件，不印遊戲的設計文字：理論怎麼算過失、起點和陪審團寫下的差多少，都收在帳目裡（設計師第二輪）。 */}
               {award?.why && <p className="ledger-why">{t(award.why, scope)}</p>}
               {claimed && (
                 <p className="ledger-claim">
@@ -763,7 +759,7 @@ function Hand({ s, children }: { s: CSSProperties; children: ReactNode }) {
   );
 }
 
-/** 判決書上印好的勾選框；勾是陪審長的筆。 */
+/** 裁決書上印好的勾選框；勾是陪審長的筆。 */
 function Box({ on, label, s }: { on: boolean; label: string; s?: CSSProperties }) {
   const t = useT();
   return (

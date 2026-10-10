@@ -15,5 +15,13 @@ describe('陪審長的手寫', () => {
     expect(p(1)).toEqual({ '--u': 1, '--at': 0, '--k': 0 });
     expect(p(2)).toEqual({ '--u': 2, '--at': 1, '--k': 1 });
     expect(p(0.5)).toEqual({ '--u': 0.5, '--at': 3, '--k': 2 });
+    expect(p.end()).toEqual({ u: 3.5, lifts: 2, any: true });
+  });
+
+  it('只寫一個勾：最後一筆在 1.3 + 0.6 秒寫完', () => {
+    const p = pen();
+    expect(p.end()).toEqual({ u: 0, lifts: 0, any: false });
+    p(1);
+    expect(p.end()).toEqual({ u: 1, lifts: 0, any: true });
   });
 });
