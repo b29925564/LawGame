@@ -6115,6 +6115,7 @@ button.found:hover:not(:disabled) {
   border-color: color-mix(in srgb, var(--good) 50%, var(--border));
 }
 .depo-tag.waived,
+.depo-tag.baseless,
 .depo-tag.wrong {
   color: var(--bad);
   border-color: color-mix(in srgb, var(--bad) 50%, var(--border));

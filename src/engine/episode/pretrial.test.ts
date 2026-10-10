@@ -196,8 +196,10 @@ describe('對方主導的證詞錄取', () => {
     expect(depo.current(s, st)?.id).toBe('t-name');
     st = depo.defend(s, st, '無關');
     expect(st.wrong).toBe(1);
+    // 沒有毛病的問題被擋：站不住的異議，回顧標「不用擋」，不是「照答」。
+    expect(st.flags).toEqual([`depo:${s.id}:t-name:baseless`]);
     st = depo.defend(s, st, null);
-    expect(st.flags).toEqual([`depo:${s.id}:t-lead:waived`]);
+    expect(st.flags).toEqual([`depo:${s.id}:t-name:baseless`, `depo:${s.id}:t-lead:waived`]);
     st = depo.defend(s, st, '特權');
     expect(st.flags).toContain(`depo:${s.id}:t-memo:preserved`);
     expect(st.gained).not.toContain('memo');
