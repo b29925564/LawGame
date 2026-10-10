@@ -324,8 +324,9 @@ function CourtroomScreen({ scene: raw }: { scene: TrialScene }) {
             <dd>
               {st.impeachments} / {scene.witness.claims.length}
             </dd>
-            <dt>{t('刪除的證詞')}</dt>
-            <dd>{t('{n} 句', { n: st.struck })}</dd>
+            {/* 成立的異議（問題塗黑、證人沒答）和整段刪除的證詞都算：數的是筆錄上的黑條。 */}
+            <dt>{t('筆錄上的黑條')}</dt>
+            <dd>{t('{n} 處', { n: st.struck })}</dd>
             <dt>{t('剩餘法官耐心')}</dt>
             <dd>
               {Math.max(0, st.patience)} / {scene.patience}
