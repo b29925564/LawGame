@@ -38,7 +38,7 @@ const CARDS = [
   'car-statement',
   'watch-photo',
 ];
-const SLOT = /點板上的卡，或從證據裡挑|Tap a card on the board, or pick from the evidence/;
+const SLOT = /點板上的卡，或從證據裡挑|Tap a card on the board, or pick one from Evidence./;
 
 // confirmed：q2a 已確認，論點 arg-watch 上板，聲請「死者手錶的健康資料」還沒裁定，牌架第一頁排一條黑條。
 async function open(page: Page, lang: string, confirmed: string[] = []) {
