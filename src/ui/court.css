@@ -1200,6 +1200,25 @@ button.cand[aria-pressed='true'],
   outline-offset: 2px;
 }
 
+/* 席位卡不超過格子寬：1100 寬時陪審席只有 380px，6 張 72px 的卡會互相疊 7px（關卡 2 第 17 條）。 */
+.box:not(.mini) .seatc {
+  width: 100%;
+  max-width: 72px;
+  min-width: 0;
+}
+.box:not(.mini) .seatc .silcard,
+.box:not(.mini) .seatc .idphoto {
+  --w: 100%;
+}
+.box:not(.mini) .seatc .slot0 {
+  width: 100%;
+}
+.box:not(.mini) .seatc .nm2 {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: clip;
+}
+
 /* 人物卡：檔案照、名字、問過的題目；按鈕貼在卡片底部。 */
 .panel.prof {
   display: grid;
