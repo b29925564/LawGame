@@ -1,4 +1,5 @@
 import { Fragment, useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { batesAt } from '../engine/bates';
 import { branchContext, caseClosed, custodyOf, episodeOf } from '../engine/game';
 import { matches } from '../engine/episode/branch';
@@ -554,7 +555,8 @@ export function ZoomDialog({
     const d = ref.current;
     if (d && !d.open) d.showModal();
   }, []);
-  return (
+  // 放到 body 底下：留在卷宗裡的話，會繼承 .panel.doc 的紙面權杖（--text 是墨色），深色主題標題就是暗字壓暗底（第二道關卡 6）。
+  return createPortal(
     <dialog
       ref={ref}
       className="zoom"
@@ -578,6 +580,7 @@ export function ZoomDialog({
       </header>
       {/* 標題列固定，內容在框裡捲：框永遠留在視窗內，上下留白不被吃掉（設計師 r2 第 5 條）。 */}
       <div className="zoom-body">{children}</div>
-    </dialog>
+    </dialog>,
+    document.body,
   );
 }

@@ -3,6 +3,7 @@ import type { PhoneScene } from '../engine/episode/schema';
 import { sceneChoices, useEpisode } from '../engine/game';
 import { useT } from '../i18n';
 import { useScope } from './lang';
+import { useHand } from './Marks';
 import { Redaction } from './Redaction';
 
 /** 冷開場：伊森的手機畫面。 */
@@ -11,6 +12,7 @@ export function Phone({ scene }: { scene: PhoneScene }) {
   const t = useT();
   const scope = useScope();
   const v = phoneView(scene, progress.step, sceneChoices(progress));
+  useHand('coldopen', !scene.epilogue);
 
   if (v.screen === 'caption' && v.step.do === 'caption')
     return (

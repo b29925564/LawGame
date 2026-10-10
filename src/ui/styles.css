@@ -1713,7 +1713,8 @@ details summary {
 }
 .term .in-game-label {
   margin-right: 1em;
-  color: var(--accent);
+  /* 黃只給玩家的手；一頁有好幾條，不能每條都黃（第二道關卡 5）。 */
+  color: var(--text);
   font-weight: 700;
 }
 .sheet-list {
@@ -1960,13 +1961,16 @@ fieldset.relations.compact {
 /* 清單裡的分組小標：有時間的事件、其他資料。捲動時黏在頂端，才知道在哪一組。 */
 .group-head {
   position: sticky;
-  top: 0;
+  /* 往上多蓋 2px（--stick-top）：手機的小數像素會在黏頂的小標上緣留一條縫，捲過去的字從縫裡透出來（第二道關卡 7）；
+     字照原位，所以上內距補回這 2px。 */
+  top: var(--stick-top);
   z-index: 1;
   background: var(--surface);
   display: flex;
   align-items: center;
   gap: 8px;
   margin-top: 6px;
+  padding-top: 2px;
   padding-bottom: 4px;
   border-bottom: 1px solid var(--border);
   color: var(--muted);
@@ -3223,11 +3227,12 @@ fieldset.relations.compact {
   display: grid;
   place-items: center;
   font-size: 52px;
-  color: var(--accent);
+  /* 感應器是場景裡的東西，不是玩家的手：黃只留給「感應員工證」那一顆（第二道關卡 4）。 */
+  color: var(--muted);
   border: 2px solid var(--border);
   box-shadow:
-    0 0 0 10px color-mix(in srgb, var(--hl) 8%, transparent),
-    0 0 0 22px color-mix(in srgb, var(--hl) 4%, transparent);
+    0 0 0 10px color-mix(in srgb, var(--text) 6%, transparent),
+    0 0 0 22px color-mix(in srgb, var(--text) 3%, transparent);
 }
 .badge .primary {
   align-self: stretch;
@@ -3280,6 +3285,10 @@ fieldset.relations.compact {
 }
 .subtitles li.own strong {
   color: var(--hl);
+}
+/* 冷開場零黃（設定集 11.5）：自己那句的說話人改用亮字，仍和對方的灰字分得開。 */
+[data-hand='coldopen'] .subtitles li.own strong {
+  color: var(--cine-text);
 }
 .talk .replies button,
 .talk .phone-next {
@@ -3842,10 +3851,19 @@ fieldset.relations.compact {
   background: none;
 }
 [data-hand='slate'] button.primary,
+[data-hand='coldopen'] button.primary,
 [data-hand='sync'] button.primary {
   background: transparent;
   color: var(--text);
   border: 1px solid var(--border-strong);
+}
+/* 滑鼠停在按鈕上（剛按完上一頁，游標還在原處）也不能把黃叫回來。 */
+[data-hand='slate'] button.primary:hover:not(:disabled),
+[data-hand='coldopen'] button.primary:hover:not(:disabled),
+[data-hand='sync'] button.primary:hover:not(:disabled) {
+  background: var(--surface-2);
+  filter: none;
+  border-color: var(--border-strong);
 }
 /* 字卡開始淡出時黃還給主按鈕：按鈕本來就有 --dur-ui（180ms，和字卡淡出一樣長）的顏色轉場，黃跟著淡進來；
    曲線也和字卡淡出一樣用線性，兩邊對著交換，黃不會先跳出來。減少動態時直接換（設計師 r8）。 */
