@@ -529,6 +529,29 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
   const [picking, setPicking] = useState(false);
   // 剛連出來的那條發現亮一下；畫面一打開就有的不亮。
   const fresh = useBump(st.found.length) ? st.found[st.found.length - 1] : null;
+  // 手機的答案列釘在底部，蓋住下面的發現和便條（手機「答案」面板壓住板子，介面與操作待辦 2）：
+  // 把它的高度量出來給 scroll-padding-bottom，鍵盤焦點和新發現捲進來時會停在答案列上方。
+  const qId = q?.id;
+  useLayoutEffect(() => {
+    const bar = document.querySelector<HTMLElement>('.answer-bar');
+    const root = document.documentElement;
+    if (!bar || getComputedStyle(bar).position !== 'sticky') return;
+    const set = () => root.style.setProperty('--answer-bar-h', `${bar.offsetHeight}px`);
+    set();
+    const ro = new ResizeObserver(set);
+    ro.observe(bar);
+    return () => {
+      ro.disconnect();
+      root.style.removeProperty('--answer-bar-h');
+    };
+  }, [qId, wide]);
+  // 剛連出來的發現在答案列後面看不到：捲進答案列上方（動畫跟著減少動態）。
+  useEffect(() => {
+    if (!fresh) return;
+    document
+      .querySelector('.found.fresh')
+      ?.scrollIntoView({ block: 'nearest', behavior: reducedMotion() ? 'auto' : 'smooth' });
+  }, [fresh]);
   const status = (id: string) =>
     st.confirmed.includes(id)
       ? 'done'

@@ -6227,6 +6227,10 @@ button.found:hover:not(:disabled) {
   .shell:has(.board-one) > .shell-foot {
     display: none;
   }
+  /* 答案列釘在底部：鍵盤焦點、scrollIntoView 都停在它上面，不被它蓋住（Desk.tsx 量高度）。 */
+  html {
+    scroll-padding-bottom: var(--answer-bar-h, 0px);
+  }
   .board-one .answer-bar {
     margin-inline: -2px;
     padding-bottom: max(12px, env(safe-area-inset-bottom));
