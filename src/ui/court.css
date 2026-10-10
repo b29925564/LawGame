@@ -508,11 +508,13 @@
   font: 700 12px/1 var(--font-court);
   opacity: 0.8;
 }
+/* Bates 一律在右下角（設定集第 9 章 :11），落在紙底的內距裡，不壓內文、也不進捲動區底緣的淡出。 */
 .plead .bates2 {
   position: absolute;
-  left: 76px;
-  bottom: 12px;
+  right: 48px;
+  bottom: 14px;
   font: 700 11px/1 var(--font-court);
+  letter-spacing: 0.04em;
   color: var(--paper-muted);
 }
 /*
@@ -686,7 +688,7 @@
     letter-spacing: 0.2em;
   }
   .plead .bates2 {
-    left: 44px;
+    right: 20px;
   }
   .plead .judge {
     padding-right: 84px;

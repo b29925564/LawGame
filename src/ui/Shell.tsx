@@ -149,7 +149,18 @@ export function Tabs<T extends string>({
     if (!nav || typeof ResizeObserver === 'undefined') return;
     const ro = new ResizeObserver(() => refit.current());
     ro.observe(nav);
-    return () => ro.disconnect();
+    // 字型載完分頁會變寬，列本身的寬不變、ResizeObserver 不會叫：量過的寬全部作廢，攤開重量。
+    const fonts = typeof document !== 'undefined' ? document.fonts : undefined;
+    const reset = () => {
+      widths.current.clear();
+      setCut(-1);
+      refit.current();
+    };
+    fonts?.addEventListener('loadingdone', reset);
+    return () => {
+      ro.disconnect();
+      fonts?.removeEventListener('loadingdone', reset);
+    };
   }, []);
   // 分頁列放不下時左右捲動（舊版面的保險）：選中的分頁捲進看得到的地方。
   useEffect(() => {

@@ -274,11 +274,15 @@ const card = z.object({
   batesIf: z.array(z.object({ when, bates: batesNo })).optional(),
   /** 陳述的出處：記錄的時間與製作人。 */
   taken: z.object({ at: stamp, by: z.string() }).optional(),
-  /** 法院裁定與訴狀的出處：案號與收文章日期（MM/DD/YYYY）。 */
+  /**
+   * 法院裁定與訴狀的出處：案號與章上的日期（MM/DD/YYYY）。
+   * 訴狀是遞給法院的，蓋收文章；裁定是法院自己發的，寫 ruling，蓋法官的准予／駁回章（設定集第 9 章 :13）。
+   */
   filed: z
     .object({
       caseNo: z.string(),
-      date: z.string().regex(/^\d\d\/\d\d\/\d{4}$/, '收文章日期格式是 MM/DD/YYYY'),
+      date: z.string().regex(/^\d\d\/\d\d\/\d{4}$/, '章上的日期格式是 MM/DD/YYYY'),
+      ruling: z.enum(['granted', 'denied']).optional(),
     })
     .optional(),
   /** 筆錄與勘誤表的出處：頁:行。 */

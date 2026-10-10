@@ -31,6 +31,8 @@ function stored(): Lang {
 }
 
 export const useLang = create<{ lang: Lang }>(() => ({ lang: 'zh' }));
+/** 對照表裝過幾次：中文模式也要英文行數的地方（筆錄的頁行），載完英文表後跟著重排。 */
+export const useCatalog = create<{ n: number }>(() => ({ n: 0 }));
 
 const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -55,6 +57,7 @@ export function install(entries: Catalog) {
         .join('');
       return { re: new RegExp(`^${body}$`, 's'), names, out };
     });
+  useCatalog.setState((s) => ({ n: s.n + 1 }));
 }
 
 /** 清空（測試用）。 */
@@ -69,6 +72,13 @@ async function load() {
     for (const m of mods) install(m.default);
   });
   return loading;
+}
+
+/** 先把英文表載進來（不切語言）：筆錄在中文模式也要量英文佔幾行。載不到就照中文排。 */
+export function preload() {
+  load().catch(() => {
+    loading = null;
+  });
 }
 
 export async function setLang(lang: Lang) {
@@ -148,6 +158,11 @@ const fill = (s: string, vars: Vars) =>
  */
 export function t(zh: string, arg?: string | Vars): string {
   return show(useLang.getState().lang, zh, arg);
+}
+
+/** 指定語言顯示一句（不看目前的語言）。 */
+export function tIn(lang: Lang, zh: string, arg?: string | Vars): string {
+  return show(lang, zh, arg);
 }
 
 function show(lang: Lang, zh: string, arg?: string | Vars): string {

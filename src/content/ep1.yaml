@@ -285,7 +285,7 @@ _cards: &cards
     kind: 文件
     text: 法院裁定排除巡邏車上的供述，檢方不得在陪審團面前提起。
     source: 法院裁定
-    filed: { caseNo: 26-CR-0417, date: 04/03/2026 }
+    filed: { caseNo: 26-CR-0417, date: 04/03/2026, ruling: granted }
   - id: rachel-2250
     name: 瑞秋的宣誓陳述：隔壁的聲音
     kind: 宣誓陳述

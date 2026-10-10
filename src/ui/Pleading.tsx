@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { batesAt } from '../engine/bates';
 import type { MotionAttempt } from '../engine/episode/desk';
 import type { Motion } from '../engine/episode/schema';
+import { episodeOf, useEpisode } from '../engine/game';
 import { useT } from '../i18n';
 import { useScope } from './lang';
 import { prose } from './prose';
@@ -81,6 +83,13 @@ export function Pleading({
   const t = useT();
   const scope = useScope();
   const { caseNo, parties } = useCaseTerms();
+  // 本所自己的狀紙：Bates 是這一場頁段的第 n 張（engine/bates.ts），不再是 MOT-0001。
+  const ep = episodeOf(useEpisode((s) => s.progress));
+  const bates = batesAt(
+    ep,
+    ep.scenes.findIndex((s) => s.id === scope),
+    n,
+  );
   // 題目是「聲請傳票：死者手錶的健康資料」，抬頭只放冒號後面那段。
   const label = t(m.label, scope);
   // 行號只寫整行：紙多高就寫幾行，最後一個號碼不要被切一半。
@@ -178,7 +187,7 @@ export function Pleading({
         </span>
       </div>
       {foot && <div className="commit-row">{foot}</div>}
-      <span className="bates2">MOT-{String(n).padStart(4, '0')}</span>
+      <span className="bates2">{bates}</span>
     </article>
   );
 }

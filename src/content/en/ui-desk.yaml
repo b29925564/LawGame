@@ -237,3 +237,8 @@
 # 分頁列放不下時收起來的那幾格（第一道關卡 N2）
 更多: More
 更多：{tab}: 'More: {tab}'
+
+# 卡片出處（Bates、筆錄頁行、收文、製作人）
+筆錄第 {page} 頁第 {line} 行: 'Tr. {page}:{line}'
+'{at}　記錄：{by}': '{at}  Taken by {by}'
+收文: FILED
