@@ -12,7 +12,6 @@ const K: Tokens = {
   turn: 1500,
   lightMove: 400,
   frame: 1000 / 24,
-  lightHold: 1600,
 };
 const tick = { u: 1, lifts: 0, any: true };
 

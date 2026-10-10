@@ -16,10 +16,9 @@
   --dur-hand: 600ms;
   --dur-hand-lead: 1300ms;
   --dur-pen-lift: 300ms;
-  /* 判決四拍（10.5）：手寫最後一筆後停一拍才切；24fps 一格；窗光落定後停多久才出現結論帶（設定集沒訂，取 1.6 秒）。 */
+  /* 判決四拍（10.5）：手寫最後一筆後停一拍才切；24fps 一格；窗光落定後停 --dur-turn 才出結論帶（設計師 #253）。 */
   --dur-verdict-settle: 500ms;
   --dur-frame: 41.667ms;
-  --dur-verdict-light-hold: 1600ms;
 }
 .court-desk {
   display: grid;

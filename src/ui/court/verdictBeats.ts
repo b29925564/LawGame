@@ -18,7 +18,6 @@ export interface Tokens {
   /** --dur-turn */ turn: number;
   /** --dur-lightmove */ lightMove: number;
   /** --dur-frame */ frame: number;
-  /** --dur-verdict-light-hold */ lightHold: number;
 }
 
 /** 設定集 10.5 時間碼表裡，相對於「② 切黑條頁」的偏移（ms）：黑條何時開始動之後的各個點。 */
@@ -80,7 +79,7 @@ export function beatsOf(
     card: [cardAt, cardEnd],
     light,
     lightLanded,
-    done: lightLanded + k.lightHold,
+    done: lightLanded + k.turn,
   };
 }
 
@@ -113,6 +112,5 @@ export function readTokens(el: Element = document.documentElement): Tokens {
     turn: ms('--dur-turn'),
     lightMove: ms('--dur-lightmove'),
     frame: ms('--dur-frame'),
-    lightHold: ms('--dur-verdict-light-hold'),
   };
 }

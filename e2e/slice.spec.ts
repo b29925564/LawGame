@@ -441,10 +441,10 @@ test('第 1 集可以一路從冷開場玩到判決', async ({ page }) => {
   await page.getByRole('button', { name: '開始結辯' }).click();
   // 判決先走四拍（裁決書、黑條、字卡、窗光），結論帶這時還不出現；按 Esc 直接跳到最後。
   await expect(page.getByRole('button', { name: '略過' })).toBeVisible();
-  await expect(page.getByRole('heading', { name: /無罪|有罪|無法達成判決/ })).toBeHidden();
+  await expect(page.getByRole('heading', { name: /無罪|有罪|無法達成裁決/ })).toBeHidden();
   await page.keyboard.press('Escape');
   await expect(page.getByText('第 1 輪', { exact: true })).toBeVisible();
-  await expect(page.getByRole('heading', { name: /無罪|有罪|無法達成判決/ })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /無罪|有罪|無法達成裁決/ })).toBeVisible();
 });
 
 test('瑞秋援引緘默權後，檢方撤回起訴，直接進尾聲（E1）', async ({ page }) => {

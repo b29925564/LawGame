@@ -358,7 +358,7 @@ function Verdict({
 
   const headline =
     v === '陪審團僵局'
-      ? t('陪審團無法達成判決。')
+      ? t('陪審團無法達成裁決。')
       : p?.found
         ? t('陪審團認定被告有責，懲罰性賠償成立。')
         : t('陪審團認定被告{v}。', { v: t(v).toLowerCase() });
