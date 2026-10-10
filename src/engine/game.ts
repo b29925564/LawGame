@@ -99,10 +99,16 @@ export function sceneChoices(p: Progress): Record<number, number> {
 /** 對話選項記下的旗標。 */
 export const hasFlag = (p: Progress, flag: string) => (p.flags ?? []).includes(flag);
 
+/** 集尾畫面的標題：集尾卡寫了就用卡上的，沒有（演完最後一場）就是這個字。 */
+export const END_TITLE = '待續';
+
 export function saveLabel(p: Progress): string {
   const e = episodeOf(p);
   const s = sceneOf(p);
-  return `第 ${e.number} 集・${s ? s.act : '本集完'}`;
+  // 集尾卡的幕名就是「第 N 集」，標題是集尾畫面上同一個字（App.tsx 的 headline），存檔標籤跟它一致。
+  const ending = !s || (s.type === 'card' && s.act === `第 ${e.number} 集`);
+  const act = ending ? (s?.type === 'card' ? s.title : END_TITLE) : s.act;
+  return `第 ${e.number} 集・${act}`;
 }
 
 /** 場景狀態存在 progress.scenes 裡，沒有就用該場景的起始狀態。 */
