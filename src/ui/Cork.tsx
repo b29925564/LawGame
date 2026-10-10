@@ -94,6 +94,10 @@ const PIN_R = 5.5; // 圖釘半徑（cork.css .cork-pick::before 11px）
 
 /** 邊緣同一欄上下兩張卡之間至少留的軟木（px）；卡和內文之間的 flex gap（cork.css）。 */
 const EDGE_GAP = 6;
+/** 邊緣照片卡除了照片以外的高度（px）：白邊 10＋底欄白邊 14＋卡名兩行 31。 */
+const PHOTO_CHROME = 55;
+/** 邊緣照片卡最窄寬度（板寬的 %）：再窄就不認得是哪張相片。 */
+const PHOTO_MIN_W = 9;
 const BODY_GAP = 4;
 
 type EdgeSize = { h: number; head: number; lh: number };
@@ -450,12 +454,24 @@ export function Cork({
   ];
   // 邊緣的卡不超出板子、不蓋到下一格的卡（第一道關卡 N1）：英文卡名三行、板子矮的時候，
   // 內文先少放幾行（兩行 → 一行 → 不放；正文本來就只在放大時讀），卡名和出處照放。
+  // 這一格往下到下一格（或板子下緣）之間的高度（px）。
+  const roomOf = (at: [number, number]) => {
+    const next = EDGE.map(([, y]) => y).find((y) => y > at[1]) ?? 100 - EDGE[0][1];
+    return ((next - at[1]) / 100) * h - (next < 100 - EDGE[0][1] ? EDGE_GAP : 0);
+  };
+  // 內文只放整行（不留半行字、不淡出，設計師 #270）：放不下的整行拿掉。
   const linesOf = (id: string, at: [number, number]) => {
     const m = edgeM[id];
     if (!m?.lh) return 2;
-    const next = EDGE.map(([, y]) => y).find((y) => y > at[1]) ?? 100 - EDGE[0][1];
-    const room = ((next - at[1]) / 100) * h - (next < 100 - EDGE[0][1] ? EDGE_GAP : 0);
-    return Math.max(0, Math.min(2, Math.floor((room - m.head - BODY_GAP) / m.lh - 0.5)));
+    return Math.max(0, Math.min(2, Math.floor((roomOf(at) - m.head - BODY_GAP) / m.lh)));
+  };
+  // 邊緣的照片卡維持 4:3（同一張相片在邊緣和光圈裡裁切一樣，設計師 #270）：放不下就把卡做窄，
+  // 高 ＝ 白邊 10＋照片 3/4×(寬−20)＋底欄（白邊 14＋卡名最多兩整行 31）。靠右那一欄的卡右緣不動。
+  const boxOf = (item: CorkItem, cell: [number, number]): { x: number; w: number } => {
+    if (look(item.kind) !== 'photo' || !w || !h) return { x: cell[0], w: CARD_W };
+    const px = (roomOf(cell) - PHOTO_CHROME) / 0.75 + 20;
+    const pct = Math.min(CARD_W, Math.max(PHOTO_MIN_W, (px / w) * 100));
+    return { x: cell[0] > 50 ? cell[0] + CARD_W - pct : cell[0], w: pct };
   };
   // 還是放不下（照片卡、卡名本身就很長）：往上挪，下緣（含歪斜後低下去的那個角）留和上排一樣的 3%。
   const fit = (id: string, at: [number, number]): [number, number] => {
@@ -466,6 +482,10 @@ export function Cork({
     const lowest = 100 - EDGE[0][1] - (drop / Math.max(h, 1)) * 100;
     return [at[0], Math.max(EDGE[0][1], Math.min(at[1], lowest))];
   };
+  const pinAt = (item: CorkItem, cell: [number, number]): [[number, number], number] => {
+    const { x, w: bw } = boxOf(item, cell);
+    return [[x, fit(item.id, cell)[1]], bw];
+  };
   if (!compact) {
     links.slice(0, 2).forEach((l, i) => {
       const [p, q] = i === 0 ? [0, 1] : [2, 3];
@@ -473,8 +493,8 @@ export function Cork({
       free.splice(free.indexOf(q), 1);
       placed.push({ item: l.a, at: EDGE[p] }, { item: l.b, at: EDGE[q] });
       strings.push({
-        from: pinOf(fit(l.a.id, EDGE[p]), CARD_W),
-        to: pinOf(fit(l.b.id, EDGE[q]), CARD_W),
+        from: pinOf(...pinAt(l.a, EDGE[p])),
+        to: pinOf(...pinAt(l.b, EDGE[q])),
         relation: l.relation,
         key: `${l.a.id}-${l.b.id}`,
       });
@@ -534,9 +554,11 @@ export function Cork({
   const knot = { left: (abFrom[0] + abTo[0]) / 2, top: abFrom[1] + (SAG / Math.max(h, 1)) * 100 };
 
   // 卡的原位：邊緣分到的位置。放進光圈時原位空著（不重複畫），退出時回到這裡。
-  const originOf = (id: string) => {
-    const at = placed.find((p) => p.item.id === id)?.at;
-    return at && fit(id, at);
+  const originOf = (id: string): { at: [number, number]; w: number } | undefined => {
+    const p = placed.find((q) => q.item.id === id);
+    if (!p) return undefined;
+    const { x, w: bw } = boxOf(p.item, p.at);
+    return { at: [x, fit(id, p.at)[1]], w: bw };
   };
   const focusIds = focus.map((c) => c?.id ?? '');
 
@@ -717,7 +739,8 @@ export function Cork({
       {placed
         .filter(({ item }) => !focusIds.includes(item.id))
         .map(({ item, at: cell }) => {
-          const at = fit(item.id, cell);
+          const box = boxOf(item, cell);
+          const at: [number, number] = [box.x, fit(item.id, cell)[1]];
           const lines = linesOf(item.id, cell);
           return (
             <button
@@ -734,10 +757,10 @@ export function Cork({
                 {
                   left: `${at[0]}%`,
                   top: `${at[1]}%`,
-                  width: `${CARD_W}%`,
+                  width: `${box.w}%`,
                   '--tilt': `${tilt(item.id)}deg`,
                   '--edge-lines': lines,
-                  ...away(at, CARD_W),
+                  ...away(at, box.w),
                 } as CSSProperties
               }
               onClick={() => onPick(item.id)}
@@ -749,7 +772,8 @@ export function Cork({
       {focus.map((c, i) => {
         // 退回原位（連錯）或剛放上（還在原位那一格）：畫在原位、原尺寸；手機上沒有原位，就地淡出。
         const back = !!c && (miss?.phase === 'return' || arriving.includes(c.id));
-        const at = back && c ? originOf(c.id) : undefined;
+        const origin = back && c ? originOf(c.id) : undefined;
+        const at = origin?.at;
         return (
           <div
             key={c ? c.id : `empty-${i}`}
@@ -768,7 +792,7 @@ export function Cork({
               {
                 left: `${(at ?? focusAt[i])[0]}%`,
                 top: `${(at ?? focusAt[i])[1]}%`,
-                width: `${at ? CARD_W : focusW}%`,
+                width: `${origin ? origin.w : focusW}%`,
                 '--tilt': c ? `${at ? tilt(c.id) : tilt(c.id, 1.2)}deg` : '0deg',
               } as CSSProperties
             }
