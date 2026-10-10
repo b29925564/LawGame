@@ -56,6 +56,8 @@ export interface Cue {
   at: string;
   /** 這句話在筆錄上佔幾行：長句拆成幾張字幕時，照行數對出現的時間。 */
   span: number;
+  /** 沒有字幕：鏡頭外的人開口（或旁白），上一句字幕收掉。 */
+  blank?: boolean;
 }
 
 export interface RecordRow {

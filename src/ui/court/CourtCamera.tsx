@@ -262,7 +262,8 @@ function Subtitles({ cues }: { cues: Cue[] }) {
     const el = box.current;
     if (!el) return;
     const measure = () => {
-      const px = parseFloat(getComputedStyle(el).fontSize) || 19;
+      // 字幕字級：桌機 19px、手機特寫 17px，再乘設定裡的倍率（court.css 同一組數字）。
+      const px = (el.closest('.court-cam.insert') ? 17 : 19) * voScale;
       const inner = Math.min(el.clientWidth - 32, 36 * px) - 24;
       setEm(Math.max(8, Math.floor((inner / px) * 0.92)));
     };
@@ -272,9 +273,20 @@ function Subtitles({ cues }: { cues: Cue[] }) {
     return () => ro.disconnect();
   }, [shown, voScale]);
   const cards = useMemo(() => {
-    const flat: { key: string; who: string; text?: string; redact?: Cue['redact']; at: string }[] =
-      [];
+    const flat: {
+      key: string;
+      who: string;
+      text?: string;
+      lines?: string[];
+      blank?: boolean;
+      redact?: Cue['redact'];
+      at: string;
+    }[] = [];
     for (const c of cues) {
+      if (c.blank) {
+        flat.push({ key: c.key, who: '', blank: true, at: c.at });
+        continue;
+      }
       if (c.redact) {
         flat.push({ key: c.key, who: c.who, redact: c.redact, at: c.at });
         continue;
@@ -287,6 +299,7 @@ function Subtitles({ cues }: { cues: Cue[] }) {
           key: `${c.key}.${k}`,
           who: c.who,
           text: p.text,
+          lines: p.lines,
           at: k > 0 && row > 0 ? `calc(${c.at} + ${row} * var(--dur-ui))` : c.at,
         });
       });
@@ -301,23 +314,33 @@ function Subtitles({ cues }: { cues: Cue[] }) {
       data-subbox={voBox ? 'on' : undefined}
       style={{ '--sub-scale': voScale } as CSSProperties}
     >
-      {cards.map((c, i) => (
-        <p
-          key={c.key}
-          className="cam-sub"
-          style={{ '--at': c.at, '--next': cards[i + 1]?.at } as CSSProperties}
-          data-last={i === cards.length - 1 || undefined}
-        >
-          <span className="who">{t(c.who, scope)}</span>
-          {c.redact ? (
-            <span className="sub-bar">
-              <small>{t(c.redact)}</small>
-            </span>
-          ) : (
-            <span className="tx">{c.text}</span>
-          )}
-        </p>
-      ))}
+      {cards.map((c, i) =>
+        c.blank ? null : (
+          <p
+            key={c.key}
+            className="cam-sub"
+            style={{ '--at': c.at, '--next': cards[i + 1]?.at } as CSSProperties}
+            data-last={i === cards.length - 1 || undefined}
+          >
+            <span className="who">{t(c.who, scope)}</span>
+            {c.redact ? (
+              <span className="sub-bar">
+                <small>{t(c.redact)}</small>
+              </span>
+            ) : (
+              <span className="tx">
+                {c.lines
+                  ? c.lines.map((l) => (
+                      <span key={l} className="ln">
+                        {l}
+                      </span>
+                    ))
+                  : c.text}
+              </span>
+            )}
+          </p>
+        ),
+      )}
     </div>
   );
 }

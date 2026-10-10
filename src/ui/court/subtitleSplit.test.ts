@@ -18,6 +18,15 @@ describe('字幕拆卡', () => {
     const lines = lineBreaks('一二三四五六七八九十。', 10);
     expect(lines.every((l) => !/^[。，]/.test(l))).toBe(true);
   });
+  it('一張裡有句號，兩半放得進一行就在句號後換行', () => {
+    const cards = splitCards(
+      '死者倒在辦公桌旁，頭部有重擊傷。桌上的水晶獎盃掉在地毯上，上面有血。',
+      20,
+    );
+    expect(cards.length).toBe(1);
+    expect(lineBreaks(cards[0].text, 20).length).toBeLessThanOrEqual(2);
+    expect(cards[0].text).toContain('傷。');
+  });
   it('英文只在空白斷，拼回來等於原文', () => {
     const s =
       'I was in the copy room on the thirty-first floor when I heard something heavy fall next door.';

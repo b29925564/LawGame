@@ -403,10 +403,15 @@ export function CourtRecord({
       at: at(i),
       span: rows.filter((r) => r.entry === i).length,
     });
-    const fresh = entries.flatMap((e, i) => (i >= batch && inShot(e) ? [cue(e, i)] : []));
+    // 字幕留到下一句開始為止：下一句是鏡頭外的人（律師的問句、旁白）就收成空，不讓上一句看起來像在答新問題（設計師 #257）。
+    const fresh = entries.flatMap((e, i) =>
+      i < batch
+        ? []
+        : [inShot(e) ? cue(e, i) : { ...cue(e, i), text: '', redact: undefined, blank: true }],
+    );
     if (fresh.length) return fresh;
-    const last = entries.map(inShot).lastIndexOf(true);
-    return last < 0 ? [] : [{ ...cue(entries[last], last), at: '0s' }];
+    const last = entries.length - 1;
+    return last >= 0 && inShot(entries[last]) ? [{ ...cue(entries[last], last), at: '0s' }] : [];
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [live, entries, batch, rows, animate, beat]);
   const cueKey = cues.map((c) => `${c.key}|${c.at}|${c.redact ?? ''}|${c.text}`).join('\n');

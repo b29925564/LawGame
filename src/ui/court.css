@@ -3143,22 +3143,37 @@ html[lang='en'] .stamp.rec-stamp b {
   margin: 0;
   padding: 4px 12px 6px;
   border-radius: 6px;
-  background: rgb(6 8 11 / 72%);
-  color: var(--cine-text);
+  background: var(--sub-bg);
+  color: var(--sub-text);
   font: 500 calc(19px * var(--sub-scale, 1)) / 1.5 var(--font);
   text-align: center;
   text-wrap: balance;
   text-shadow:
-    0 1px 2px rgb(0 0 0 / 90%),
-    0 0 8px rgb(0 0 0 / 60%);
+    0 1px 2px var(--sub-shadow-1),
+    0 0 8px var(--sub-shadow-2);
+}
+/* 一張裡兩半各自放得進一行時，在句號後硬換行（subtitleSplit）。 */
+.cam-sub .ln {
+  display: block;
+}
+/*
+ * 鏡頭層不跟主題，字幕底框跟（設定集 10 RD-ART-1001-L）：淺色主題是 HUD 淺色面板的表面、--text、--muted，
+ * 不加文字陰影；深色主題維持黑底 72%、--cine-text。底框疊在最亮的一格上，字對比要 ≥ 4.5:1。
+ */
+.cam-subs {
+  --sub-bg: light-dark(rgb(247 248 250 / 96%), rgb(6 8 11 / 72%));
+  --sub-text: light-dark(#111720, var(--cine-text));
+  --sub-who: light-dark(#536071, var(--cine-muted));
+  --sub-shadow-1: light-dark(transparent, rgb(0 0 0 / 90%));
+  --sub-shadow-2: light-dark(transparent, rgb(0 0 0 / 60%));
 }
 .cam-subs[data-subbox='on'] .cam-sub {
-  background: rgb(6 8 11 / 94%);
+  background: light-dark(rgb(247 248 250), rgb(6 8 11 / 94%));
 }
 .cam-sub .who {
   display: block;
   font: 400 calc(14px * var(--sub-scale, 1)) / 1.4 var(--font);
-  color: var(--cine-muted);
+  color: var(--sub-who);
 }
 /* 被蓋掉的話只剩黑條（藏、刪、默）：零圓角、上緣 1px --cine-line，條裡的小字 --redact-label。 */
 .cam-sub .sub-bar {
@@ -3194,6 +3209,17 @@ html[lang='en'] .stamp.rec-stamp b {
     opacity: 0;
   }
 }
+@keyframes sub-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes sub-fade-out {
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
 @keyframes sub-hide {
   to {
     visibility: hidden;
@@ -3201,6 +3227,15 @@ html[lang='en'] .stamp.rec-stamp b {
 }
 /* 減少動態：不切黑，換機位用 --dur-rm 淡入（第 10.2 章）。 */
 @media (prefers-reduced-motion: reduce) {
+  /* 字幕換句不硬切，淡入淡出 --dur-rm（設計師 #257）。 */
+  .cam-sub {
+    animation:
+      sub-fade-in var(--dur-rm) linear var(--at) both,
+      sub-fade-out var(--dur-rm) linear var(--next) forwards;
+  }
+  .cam-sub[data-last] {
+    animation: sub-fade-in var(--dur-rm) linear var(--at) both;
+  }
   .cam-stage {
     visibility: visible;
     opacity: 0;
