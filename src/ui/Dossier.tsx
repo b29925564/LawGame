@@ -225,7 +225,7 @@ export function PhotoLogLine({ photo }: { photo: PhotoRecord }) {
  * 人名加職稱（姓名、全形空格、職稱；英文是逗號）：姓名和職稱分兩段，各自整組不斷開；要不要換行由 CSS 決定。
  * 保管鏈寬版的職稱欄放不下時以詞換行（英文在空白、中文在詞與詞之間），不壓進下一欄。
  */
-function Who({ text }: { text: string }) {
+export function Who({ text }: { text: string }) {
   const t = useT();
   const shown = t(text);
   const at = shown.search(/\u3000|, /);
@@ -250,9 +250,15 @@ export function PhotoLog({
   use = 'drawer',
   redacted,
   alt,
+  thumb,
   children,
 }: {
   photo: PhotoRecord;
+  /**
+   * 縮圖條（窄卷宗）：案號與攝影者由縮圖條上方共用一行寫一次，這裡只留序號、時間、Bates 三行
+   * （設計師 #250 r1 ⚑(b)）。點開的放大檢視仍是四欄完整版。
+   */
+  thumb?: boolean;
   /** 卡片 id：有實物照片（prints.tsx）就印那張。 */
   id?: string;
   image?: string;
@@ -292,30 +298,44 @@ export function PhotoLog({
         )}
         {children}
       </span>
-      <dl className="photolog-strip">
-        <div>
-          <dt>{t('案號', 'dossier')}</dt>
-          <dd>{photo.caseNo}</dd>
-        </div>
-        <div>
-          <dt>{t('照片序號', 'dossier')}</dt>
-          <dd>{serial(photo)}</dd>
-        </div>
-        <div>
-          <dt>{t('時間', 'dossier')}</dt>
-          <dd>{photo.at}</dd>
-        </div>
-        <div className="pg">
-          <dt>{t('攝影者', 'dossier')}</dt>
-          <dd>
-            <Who text={photo.by} />
-          </dd>
-        </div>
-      </dl>
-      {/* 右下角的 Bates（#237 的 photo.bates）；還沒有號碼的照片只畫黑條，不印字。 */}
-      <span className="photolog-bates">
-        {photo.bates ? <b>{photo.bates}</b> : <i className="bates-bar" aria-hidden />}
-      </span>
+      {thumb ? (
+        <span className="photolog-thumb">
+          <span>{serial(photo)}</span>
+          <span>{photo.at}</span>
+          {photo.bates ? (
+            <span className="photolog-thumb-bates">{photo.bates}</span>
+          ) : (
+            <i className="bates-bar" aria-hidden />
+          )}
+        </span>
+      ) : (
+        <>
+          <dl className="photolog-strip">
+            <div>
+              <dt>{t('案號', 'dossier')}</dt>
+              <dd>{photo.caseNo}</dd>
+            </div>
+            <div>
+              <dt>{t('照片序號', 'dossier')}</dt>
+              <dd>{serial(photo)}</dd>
+            </div>
+            <div>
+              <dt>{t('時間', 'dossier')}</dt>
+              <dd>{photo.at}</dd>
+            </div>
+            <div className="pg">
+              <dt>{t('攝影者', 'dossier')}</dt>
+              <dd>
+                <Who text={photo.by} />
+              </dd>
+            </div>
+          </dl>
+          {/* 右下角的 Bates（#237 的 photo.bates）；還沒有號碼的照片只畫黑條，不印字。 */}
+          <span className="photolog-bates">
+            {photo.bates ? <b>{photo.bates}</b> : <i className="bates-bar" aria-hidden />}
+          </span>
+        </>
+      )}
     </figure>
   );
 }

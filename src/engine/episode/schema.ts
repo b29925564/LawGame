@@ -344,7 +344,16 @@ const deskScene = z.object({
   deadline: z.string(),
   cards: z.array(card),
   docs: z
-    .array(z.object({ id, title: z.string(), from: z.string(), lines: z.array(docLine).min(1) }))
+    .array(
+      z.object({
+        id,
+        title: z.string(),
+        from: z.string(),
+        lines: z.array(docLine).min(1),
+        /** 文件附的照片：同一集某一場 photos.shots 裡的 id（照片頁那一份，卷宗不另存一份）。 */
+        photos: z.array(id).optional(),
+      }),
+    )
     .default([]),
   mail: z
     .array(
@@ -987,7 +996,8 @@ const closingScene = z.object({
 
 /**
  * 警方現場照片（設定集第 9 章 PhotoLog、第 5 章 0505），照順序排在照片紀錄表裡。
- * 設定集 11.5：冷開場三格沒有血、沒有黃，所以掛在片頭卡上，片頭之後才出現。
+ * 這一頁是辯方收到的開示影本（有 Bates），所以掛在收到開示的那一場對話後面，不在片頭
+ * （content/slates/2026-10-10-police-photos-timing.md）。
  */
 const scenePhotos = z
   .array(
@@ -1003,7 +1013,7 @@ const scenePhotos = z
       photo: photoLog,
     }),
   )
-  .optional();
+  .min(1);
 
 const scene = z.discriminatedUnion('type', [
   z.object({
@@ -1027,6 +1037,11 @@ const scene = z.discriminatedUnion('type', [
     epilogue: z.boolean().default(false),
     place: z.string(),
     steps: z.array(dialogueStep).min(1),
+    /**
+     * 最後一步之後多一頁文件照片（第 1 集：週一 16:05 開示送到的警方報告附件二）。
+     * title 是印在附件封面上的那一行。
+     */
+    photos: z.object({ title: z.string(), shots: scenePhotos }).optional(),
     /** 這一場畫成手機來電畫面（設定集第 3 章第 29 格）：來電顯示與通話結束時的時間。 */
     call: z
       .object({
@@ -1061,8 +1076,6 @@ const scene = z.discriminatedUnion('type', [
      * 排在本卡 docket 那一行前面。寫了 when 的只在那條分支列出。
      */
     filings: z.array(docketRow.extend({ when: when.optional() })).optional(),
-    /** 卡之後多一頁警方現場照片（片頭卡用）。 */
-    photos: scenePhotos,
   }),
 ]);
 

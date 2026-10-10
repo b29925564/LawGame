@@ -419,41 +419,6 @@ scenes:
     docket:
       date: 03/16/2026
       entry: 起訴書提出：二級謀殺一罪。被告在押；惠特洛克・海爾律師事務所具狀為被告辯護人。
-    # 片頭之後第一個畫面：週六凌晨的警方現場照片（屍體 23:58 被發現之後）。
-    # 設定集 11.5：冷開場三格沒有血、沒有黃，所以不放在冷開場；照片紀錄表照第 9 章、第 5 章 0505 的圖版。
-    # 只拍物件與證物牌，遺體只以黑條出現；只有獎盃那張的證物牌是黃。
-    photos:
-      - id: scene-overall
-        subject: 全景：財務長辦公室，自門口拍攝
-        redacted: true
-        photo:
-          caseNo: CH-2026-1147
-          bates: CPD-000301
-          no: 1
-          of: 48
-          at: '03/14 01:12'
-          by: M. Duarte　卡港警局 鑑識組
-      - id: scene-blood
-        subject: 證物牌 1：辦公桌旁地毯上的血跡
-        placard: 1
-        photo:
-          caseNo: CH-2026-1147
-          bates: CPD-000302
-          no: 2
-          of: 48
-          at: '03/14 01:16'
-          by: M. Duarte　卡港警局 鑑識組
-      - id: scene-trophy
-        subject: 證物牌 2：水晶獎盃，附比例尺
-        placard: 2
-        highlight: true
-        photo:
-          caseNo: CH-2026-1147
-          bates: CPD-000303
-          no: 3
-          of: 48
-          at: '03/14 01:19'
-          by: M. Duarte　卡港警局 鑑識組
 
   # 第一幕：接案（企劃書 10.7）
   # 銅牌上「海爾」底下的新漆是第一季的伏筆（企劃書 7.2：那裡原本寫著「高」），只拍不說。
@@ -722,6 +687,44 @@ scenes:
       - do: say
         who: 旁白
         text: 最上面是警方報告。附件二，現場照片，四十八張。
+    # 16:05 開示送到，盧卡斯打開第一箱：最上面是警方報告附件二的照片（週六凌晨拍，週一才到辯方手上）。
+    # 照片上有 Bates，是辯方收到的影本，所以不能放在片頭之後（時間會倒流）；照片頁不放場記，每張照片紀錄表的時間自己說「週六拍、週一收」。
+    # 定案：/mnt/project-files/content/slates/2026-10-10-police-photos-timing.md（設計師 #246 r9 ⚑(b) 的選項 2）。
+    # 照片紀錄表照設定集第 9 章 PhotoLog、第 5 章 0505：只拍物件與證物牌，遺體只以黑條出現；只有獎盃那張的證物牌是黃。
+    photos:
+      title: 警方報告　附件二：現場照片（共 48 張）　檢方開示第一批
+      shots:
+        - id: scene-overall
+          subject: 全景：財務長辦公室，自門口拍攝
+          redacted: true
+          photo:
+            caseNo: CH-2026-1147
+            bates: CPD-000301
+            no: 1
+            of: 48
+            at: '03/14 01:12'
+            by: M. Duarte　卡港警局 鑑識組
+        - id: scene-blood
+          subject: 證物牌 1：辦公桌旁地毯上的血跡
+          placard: 1
+          photo:
+            caseNo: CH-2026-1147
+            bates: CPD-000302
+            no: 2
+            of: 48
+            at: '03/14 01:16'
+            by: M. Duarte　卡港警局 鑑識組
+        - id: scene-trophy
+          subject: 證物牌 2：水晶獎盃，附比例尺
+          placard: 2
+          highlight: true
+          photo:
+            caseNo: CH-2026-1147
+            bates: CPD-000303
+            no: 3
+            of: 48
+            at: '03/14 01:19'
+            by: M. Duarte　卡港警局 鑑識組
 
   - type: card
     id: act2
@@ -770,6 +773,8 @@ scenes:
           - text: 附件三為門禁系統原始檔，本報告僅標註與被告有關之紀錄。
           - text: 附件三第 14 行：另有一組員工證於 23:26 刷卡離開大廳。
             fact: access-full
+        # 附件二的三張照片（第 9 章 :16 PhotoLog），和 16:05 那一頁是同一份。
+        photos: [scene-overall, scene-blood, scene-trophy]
       - id: doc-autopsy
         title: 驗屍報告
         from: 艾倫・布魯克斯　法醫

@@ -2820,19 +2820,47 @@ fieldset.relations.compact {
   border-color: #5a6574;
 }
 
-/* 冷開場最後一頁：警方現場照片的沖印本攤在黑底上（Phone.tsx ScenePhotos）。桌機三張並排，手機一張一列。
-   手機上整頁會捲：上緣讓開右上角的「選單」。時間線和照片同寬、置中。 */
-.cine.cine-photos {
-  padding-top: 72px;
+/* 開示送到的警方照片（ScenePhotos.tsx）：攤在桌上的附件封面紙（設計師 #250 r1 ⚑(a)）。
+   紙面和卷宗同一組紙的權杖、跟著主題換；紙外就是 html 的桌面底，不另做光。桌機三張並排，手機一張一列。
+   上緣讓開右上角的「選單」。 */
+.scene.photo-page {
+  max-width: 1272px;
+  padding-top: 64px;
 }
-.cine.cine-photos > * {
-  max-width: 1240px;
+.photo-sheet {
+  --text: var(--paper-ink);
+  --muted: var(--paper-muted);
+  --border: var(--paper-rule);
+  color: var(--paper-ink);
+  background: var(--paper);
+  border-radius: 3px;
+  padding: 22px 24px 28px;
+  box-shadow:
+    0 1px 1px var(--shadow-color),
+    0 14px 30px -18px var(--shadow-deep);
 }
-.cine.cine-photos > .cine-time {
-  margin-inline: auto;
+/* 頁首：附件封面上印的那一行（法院紙面字族，第 9 章 --fs-doc 15px、700），不是場記。
+   下面一條紙上的分隔線；到第一排照片的距離是卷宗標題下的 10px，再加「放大」籤露在卡外的那半格。 */
+.photo-sheet > .photos-label {
+  margin: 0 0 20px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--paper-rule);
+  font: 700 15px/1.6 var(--font-court);
+  letter-spacing: 0.04em;
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 1em;
 }
-.cine.cine-photos .cine-next {
-  margin-right: max(0px, calc((100% - 1240px) / 2));
+@media (max-width: 600px) {
+  .photo-sheet {
+    padding: 18px 14px 22px;
+  }
+  .photo-sheet > .photos-label {
+    font-size: 14px;
+  }
+}
+.scene.photo-page > .next {
+  align-self: flex-end;
 }
 .scene-photos {
   display: grid;
@@ -2848,6 +2876,87 @@ fieldset.relations.compact {
 }
 .scene-photo .photolog {
   margin: 0;
+}
+/* 卷宗裡的附件照片（警方報告附件二）：接在文件最後一行之下，三張一列，窄了就換行。 */
+.doc-photos {
+  margin-top: 22px;
+  padding-top: 16px;
+  border-top: 1px solid var(--paper-rule);
+}
+.doc-photos .scene-photos {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr));
+  gap: 22px 16px;
+}
+/* 窄卷宗（紙欄 < 480px）的縮圖條：案號、攝影者寫一次（Mono 12，中文單位 14），下面一列三張。 */
+.photo-thumbs-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+  margin: 0 0 18px;
+}
+.photo-thumbs-head dt {
+  font: 400 var(--fs-ui-label) / 1.3 var(--font);
+  color: var(--paper-muted);
+}
+.photo-thumbs-head dd {
+  margin: 0;
+  font: 500 var(--fs-ui-label) / 1.5 var(--font-mono);
+}
+.photo-thumbs-head .who-name,
+.photo-thumbs-head .who-role {
+  display: block;
+  white-space: nowrap;
+}
+.photo-thumbs-head :lang(zh) .who-role,
+:lang(zh) .photo-thumbs-head .who-role {
+  font: 400 var(--fs-ui-cap) / 1.5 var(--font);
+}
+.doc-photos .scene-photos.photo-thumbs {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.photo-thumbs .photolog {
+  margin: 0;
+  padding: 4px 4px 0;
+}
+.photolog-thumb {
+  display: flex;
+  flex-direction: column;
+  padding: 5px 0 6px;
+  font: 700 12px/16px var(--font-court);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+/* Bates：spec 是 --faint，但 --faint 在深色主題的紙上只有約 2.4:1，改用紙上的淡字 --paper-muted（≥4.7:1）。 */
+.photolog-thumb-bates {
+  color: var(--paper-muted);
+}
+.photolog-thumb .bates-bar {
+  display: block;
+  width: 100%;
+  height: 12px;
+  margin-top: 2px;
+  background: var(--redact);
+}
+/* 整張卡是一顆按鈕：透明、蓋滿卡片，焦點框框住整張。 */
+.photo-thumb-hit {
+  position: absolute;
+  inset: 0;
+  min-height: 44px;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.photo-thumb-hit:hover:not(:disabled) {
+  background: transparent;
+}
+.photo-thumbs .scene-photo .cork-zoom {
+  right: 4px;
+}
+.photo-thumb-hit:hover .cork-zoom {
+  border-color: #8e99a7;
 }
 
 .phone-stage {
@@ -6536,4 +6645,8 @@ button.found:hover:not(:disabled) {
   .shell:has(> .shell-head > .taskbar) {
     --drawer-gutter: 340px;
   }
+}
+/* 縮圖太小放不下「照片已遮蔽」整行：縮圖只留黑條，字在點開的完整紀錄表上。 */
+.photo-thumbs .photolog-redact span {
+  display: none;
 }

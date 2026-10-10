@@ -119,8 +119,8 @@ describe('Bates（P2-1）', () => {
             add(c.photo?.bates, `${name}:${c.id}`);
             for (const b of c.batesIf ?? []) add(b.bates, `${name}:${c.id}`);
           }
-        if (s.type === 'card')
-          for (const p of s.photos ?? []) add(p.photo.bates, `${name}:${p.id}`);
+        if (s.type === 'dialogue')
+          for (const p of s.photos?.shots ?? []) add(p.photo.bates, `${name}:${p.id}`);
         if (s.type === 'deposition') add(s.video?.bates, `${name}:${s.id}`);
       }
     expect(owner.size).toBeGreaterThan(20);

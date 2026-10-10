@@ -34,31 +34,67 @@ describe('冷開場的手機畫面', () => {
     expect(v.threads['葛蘭特・沃斯'][1]).toMatchObject({ mine: true, retracted: false });
   });
 
-  it('警方現場照片在片頭卡之後才出現（設定集 11.5：冷開場沒有血、沒有黃）', () => {
+  it('警方現場照片在週一 16:05 開示送到之後才出現（content/slates/2026-10-10-police-photos-timing.md）', () => {
     expect('photos' in cold).toBe(false);
-    const at = episodes.ep1.scenes.findIndex((s) => s.type === 'card' && s.act === '片頭');
-    const title = episodes.ep1.scenes[at];
-    expect(at).toBe(1);
-    expect(title.type === 'card' && title.photos?.map((p) => p.photo.bates)).toEqual([
+    const scenes = episodes.ep1.scenes;
+    // 片頭卡之後直接是週一早上，不再插照片頁（照片上有 Bates，是辯方的開示影本）。
+    const title = scenes.findIndex((s) => s.type === 'card' && s.act === '片頭');
+    expect(
+      scenes
+        .slice(
+          0,
+          scenes.findIndex((s) => s.id === 'take-case'),
+        )
+        .some((s) => 'photos' in s && s.photos),
+    ).toBe(false);
+    const at = scenes.findIndex((s) => s.id === 'take-case');
+    const take = scenes[at];
+    expect(at).toBeGreaterThan(title);
+    expect(scenes[at + 1]).toMatchObject({ type: 'card', act: '第二幕' });
+    if (take.type !== 'dialogue') throw new Error('take-case 應該是對話場景');
+    const last = take.steps.at(-1);
+    expect(last?.do === 'say' && last.text).toMatch(/附件二/);
+    expect(take.photos?.title).toMatch(/^警方報告\u3000附件二/);
+    expect(take.photos?.shots.map((p) => p.photo.bates)).toEqual([
       'CPD-000301',
       'CPD-000302',
       'CPD-000303',
     ]);
+    const n = take.steps.length;
     const base = {
       episode: 'ep1',
       scene: at,
-      step: 0,
+      step: n - 1,
       choices: {},
       cards: [],
       flags: [],
       ethics: [],
       scenes: {},
     };
+    // 最後一句之後是照片頁（step = steps.length），再按一次才進第二幕。
     useEpisode.setState({ progress: base });
     useEpisode.getState().advance();
-    expect(useEpisode.getState().progress).toMatchObject({ scene: at, step: 1 });
+    expect(useEpisode.getState().progress).toMatchObject({ scene: at, step: n });
     useEpisode.getState().advance();
     expect(useEpisode.getState().progress).toMatchObject({ scene: at + 1, step: 0 });
+  });
+
+  it('卷宗的警方報告附上同一份附件二照片', () => {
+    const desk = episodes.ep1.scenes.find((s) => s.type === 'desk');
+    const doc = desk?.type === 'desk' ? desk.docs.find((d) => d.id === 'doc-police') : undefined;
+    expect(doc?.photos).toEqual(['scene-overall', 'scene-blood', 'scene-trophy']);
+  });
+
+  it('卷宗文件附的照片都指得到某一場照片頁裡的照片', () => {
+    for (const ep of Object.values(episodes)) {
+      const shots = new Set(
+        ep.scenes.flatMap((s) => (s.type === 'dialogue' && s.photos?.shots.map((p) => p.id)) || []),
+      );
+      for (const s of ep.scenes)
+        if (s.type === 'desk')
+          for (const d of s.docs)
+            for (const id of d.photos ?? []) expect(shots, `${ep.id}:${d.id}`).toContain(id);
+    }
   });
 
   it('不管怎麼回司機，伊森都說出了奧瑪之後會作證的那句話', () => {
