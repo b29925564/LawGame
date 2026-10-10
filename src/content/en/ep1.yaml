@@ -978,7 +978,7 @@
 '收存（鑑識完畢返還）': 'Stored (returned after examination)'
 '普莉亞・奈爾　數位鑑識專家': 'Priya Nair, digital forensics expert'
 '智慧手錶一支（被告配戴）': 'One smartwatch (worn by defendant)'
-'檢方第一批證據開示送達：起訴書、逮捕報告、警方報告及附件、驗屍報告。': "State's first discovery production served: indictment, arrest report, police report with attachments, autopsy report."
+'檢方第一批證據開示送達：起訴書、逮捕報告、警方報告及附件、驗屍報告。': "State's first discovery production served. Includes the indictment, arrest report, police report with attachments and autopsy report."
 '稽核紀錄光碟一片，附紀錄保管人證明書': 'One disc of audit logs, with custodian of records certificate'
 '調閱（依 03/19 檢視令）': 'Obtained (per inspection order of 03/19)'
 '證物牌 1：辦公桌旁地毯上的血跡': 'Marker 1: blood on the carpet beside the desk'
@@ -991,16 +991,16 @@
 '陪審團審理第三日：檢方舉證終結；辯方聲請無罪判決，駁回；辯方舉證。': 'Jury trial, day 3. State rests. Defense motion for judgment of acquittal denied. Defense case begins.'
 '預審：本院認定有相當理由，被告應受審判。定 04/06/2026 陪審團審理。': 'Preliminary hearing. Probable cause found; defendant held to answer. Jury trial set for 04/06/2026.'
 '州立監獄　受刑人付費電話': 'State Prison, inmate collect call'
-'本院核發檢視令：准辯方檢視並鑑識被告入所扣押之智慧手錶（財物清單 No. 26-0315-088 項 3）。': "Order granting defense inspection and forensic examination of defendant's booked smartwatch (property inventory No. 26-0315-088, item 3)."
+'本院核發檢視令：准辯方檢視並鑑識被告入所扣押之智慧手錶（財物清單 No. 26-0315-088 項 3）。': 'Order granting defense inspection of the booked smartwatch. Forensic examination permitted (property inventory No. 26-0315-088, item 3).'
 '辯方聲請對手錶廠商核發文書傳票；本院當庭核發傳票 D-1。': 'Defense motion for subpoena duces tecum to watch manufacturer. Granted from the bench; subpoena D-1 issued.'
 '辯方聲請對卡爾德物流核發文書傳票；本院核發傳票 D-2。同日，卡爾德物流聲請撤銷該傳票。': 'Defense motion for subpoena duces tecum to Calder Logistics. Granted; subpoena D-2 issued. Same day, Calder Logistics moves to quash.'
 '辯方撤回傳票 D-2；卡爾德物流之撤銷聲請毋庸審酌。': 'Defense withdraws subpoena D-2. Calder Logistics motion to quash moot.'
 '撤銷傳票聲請言詞辯論：聲請駁回，傳票 D-2 維持。': 'Hearing on motion to quash. Motion denied; subpoena D-2 stands.'
 '檢方撤回起訴，本院駁回本案。被告當庭釋放。': 'State moves to dismiss. Case dismissed. Defendant released.'
-'被告依認罪協商就二級謀殺一罪認罪。本院接受協商，判處有期徒刑十五年。被告還押，候移監。': 'Plea agreement: defendant pleads guilty to murder in the second degree. Plea accepted; sentenced to 15 years. Defendant remanded pending transfer.'
-'被告依認罪協商改就非預謀殺人一罪認罪。本院接受協商，判處有期徒刑八年。被告還押，候移監。': 'Plea agreement: defendant pleads guilty to voluntary manslaughter. Plea accepted; sentenced to 8 years. Defendant remanded pending transfer.'
-'被告依認罪協商改就過失致死一罪認罪。本院接受協商，判處有期徒刑三年。被告還押，候移監。': 'Plea agreement: defendant pleads guilty to involuntary manslaughter. Plea accepted; sentenced to 3 years. Defendant remanded pending transfer.'
-'被告依認罪協商改就過失致死一罪認罪。本院接受協商，判處緩刑五年。被告當庭釋放。': 'Plea agreement: defendant pleads guilty to involuntary manslaughter. Plea accepted; sentenced to 5 years probation. Defendant released.'
+'被告依認罪協商就二級謀殺一罪認罪。本院接受協商，判處有期徒刑十五年。被告還押，候移監。': 'Plea agreement accepted: guilty to murder in the second degree. Sentenced to 15 years. Defendant remanded pending transfer.'
+'被告依認罪協商改就非預謀殺人一罪認罪。本院接受協商，判處有期徒刑八年。被告還押，候移監。': 'Plea agreement accepted: guilty to voluntary manslaughter. Sentenced to 8 years. Defendant remanded pending transfer.'
+'被告依認罪協商改就過失致死一罪認罪。本院接受協商，判處有期徒刑三年。被告還押，候移監。': 'Plea agreement accepted: guilty to involuntary manslaughter. Sentenced to 3 years. Defendant remanded pending transfer.'
+'被告依認罪協商改就過失致死一罪認罪。本院接受協商，判處緩刑五年。被告當庭釋放。': 'Plea agreement accepted: guilty to involuntary manslaughter. Sentenced to 5 years probation. Defendant released.'
 '陪審團評決：被告二級謀殺罪不成立。被告當庭釋放。': 'Jury verdict: not guilty of murder in the second degree. Defendant released.'
 '陪審團評決：被告二級謀殺罪成立。被告還押，候量刑。': 'Jury verdict: guilty of murder in the second degree. Defendant remanded pending sentencing.'
 '陪審團未能達成一致評決，本院宣告審判無效。': 'Jury unable to reach a unanimous verdict. Mistrial declared.'
@@ -1008,4 +1008,4 @@
 '卡港警局 巡邏組　逮捕報告': 'Calder Harbor Police Patrol, arrest report'
 '雷・柯瓦斯基警探　卡港警局': 'Det. Ray Kowalski, Calder Harbor Police'
 '盧卡斯・葛雷　電話紀錄': 'Lucas Grey, call notes'
-'辯方聲請排除被告於巡邏車上之陳述：准許。': "Defense motion to suppress defendant's statement in the patrol car. Granted."
+'辯方聲請排除被告於巡邏車上之陳述：准許。': "Defense motion to suppress defendant's patrol-car statement. Granted."
