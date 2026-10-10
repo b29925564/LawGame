@@ -1025,6 +1025,8 @@ const scene = z.discriminatedUnion('type', [
     /** 尾聲：協商成交或撤回起訴提前收場時，只演標了 epilogue 的場景。 */
     epilogue: z.boolean().default(false),
     owner: z.string(),
+    /** 選填：場記讀的地點與時刻（設計師 p225 裁定 (3)：手機場景也要對上場記）。格式同 dialogue 的 place。 */
+    place: z.string().optional(),
     steps: z.array(phoneStep).min(1),
   }),
   z.object({
