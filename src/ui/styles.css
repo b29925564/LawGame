@@ -281,7 +281,7 @@ button.link:hover:not(:disabled) {
 /* 選取、按下、勾選：一律是螢光筆的邊與淡淡的底。 */
 [aria-selected='true'],
 [aria-pressed='true'],
-[aria-checked='true'] {
+[aria-checked='true']:not(.ink-select) {
   border-color: var(--hl) !important;
   background: color-mix(in srgb, var(--hl) 7%, var(--surface)) !important;
   box-shadow: inset 3px 0 0 var(--hl);

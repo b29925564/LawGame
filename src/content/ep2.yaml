@@ -1758,6 +1758,7 @@ scenes:
           ethics: [coached-witness]
           flags: [coached-trevor]
           when: { notFlags: [trevor-corrected] }
+          transcript: { scene: depo-trevor, q: p-always }
     asks: 3
     questions:
       - id: tq-contract

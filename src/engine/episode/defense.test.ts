@@ -187,3 +187,29 @@ describe('對話旗標與倫理紀錄', () => {
     expect(f?.progress.ethics).toEqual([]);
   });
 });
+
+describe('筆錄影本（P2-9）', () => {
+  const e = episodes.ep2;
+  it('崔佛「替他寫好答案」夾的那頁：頁行是錄取的 cite，問在前、下一題的問在後', () => {
+    const s = e.scenes.find((x) => x.id === 'defense-trevor');
+    if (s?.type !== 'defense') throw new Error('沒有 defense-trevor');
+    const o = s.prep.options.find((x) => x.coached)!;
+    expect(o.transcript).toEqual({ scene: 'depo-trevor', q: 'p-always' });
+    const ex = defense.excerpt(e, o.transcript!)!;
+    expect(ex.page).toBe(42);
+    expect(ex.line).toBe(7);
+    expect(ex.segs.map((r) => r.who)).toEqual(['q', 'a', 'q']);
+    const d = e.scenes.find((x) => x.id === 'depo-trevor');
+    if (d?.type !== 'deposition') throw new Error('沒有 depo-trevor');
+    const i = d.script.findIndex((x) => x.id === 'p-always');
+    expect(ex.segs[0].text).toBe(d.script[i].q);
+    expect(ex.segs[1].text).toBe(d.script[i].a);
+    expect(ex.segs[2].text).toBe(d.script[i + 1].q);
+    // 劇本裡別處引的是同一個頁行（卡片 trevor-sworn、勘誤表）。
+    expect(d.script[i].cite).toBe('42:7');
+  });
+  it('找不到那一題就沒有影本', () => {
+    expect(defense.excerpt(e, { scene: 'depo-trevor', q: 'nope' })).toBeNull();
+    expect(defense.excerpt(e, { scene: 'nope', q: 'p-always' })).toBeNull();
+  });
+});
