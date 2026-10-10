@@ -74,6 +74,10 @@ test('鎖住的理論卡：不透明、不用紅；沒有 🔒 表情符號', as
   expect(parseInt(weight)).toBeGreaterThanOrEqual(700);
   expect(color).toBe(text);
   expect(await page.locator('body').innerText()).not.toContain('🔒');
+  // 缺什麼只講一次：需要那一列已標 ✗，鎖只是一個圖示，「還缺…」只給讀屏（第二道關卡 10）。
+  const box = (await missing.boundingBox())!;
+  expect(box.width).toBeLessThan(40);
+  await expect(missing.locator('.sr-only')).toHaveCount(1);
 });
 
 test('集尾卡：第 2 集和第 1 集同版型，「本集共製作 N 頁」等於最後一頁', async ({ page }) => {
