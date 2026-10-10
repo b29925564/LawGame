@@ -31,6 +31,8 @@ for (const ep of ['ep1', 'ep2'] as const)
         .getByRole('button', { name: lang === 'en' ? /^Continue/ : /^繼續（/ })
         .first()
         .click();
+      // 判決先走四拍，票數卡在最後；按 Esc 直接跳到最後。
+      await page.getByRole('button', { name: lang === 'en' ? 'Skip' : '略過' }).press('Escape');
       const head = page.locator('.tally-head');
       await expect(head).toBeVisible();
       const parts = await head.evaluate((h) =>

@@ -11,9 +11,14 @@
      章一律 --stamp 靛藍印泥、雙線框、±3°（設定集第 9 章：不用紅章，紅只代表有罪傾向）；准駁靠章上的字分。 */
   --ink-fill: #1f3a68;
   /* 陪審長的筆（設定集第 9 章 <VerdictForm>、10.5 ①）：每字 600ms；裁決書出現 1.3 秒後落第一筆；兩筆之間提筆一次。 */
+  /* 設定集第 2 章：低角度夕照 3600–3800K（判決的窗光）。 */
+  --k-lowsun: #ffd2a1;
   --dur-hand: 600ms;
   --dur-hand-lead: 1300ms;
   --dur-pen-lift: 300ms;
+  /* 判決四拍（10.5）：手寫最後一筆後停一拍才切；24fps 一格；窗光落定後停 --dur-turn 才出結論帶（設計師 #253）。 */
+  --dur-verdict-settle: 500ms;
+  --dur-frame: 41.667ms;
 }
 .court-desk {
   display: grid;
@@ -3323,5 +3328,196 @@ html[lang='en'] .stamp.rec-stamp b {
   /* 筆錄紙從第 2 列接到陪審團那一列（最後一列）的底（比 styles.css 那條「沒有 .jury 時 2 / 5」更具體）。 */
   .shell:has(> .shell-tabs > .record):has(> .shell-tabs > .court-cam) > .shell-tabs > .record {
     grid-row: 2 / 7;
+  }
+}
+
+/* ══ 判決四拍（設定集 10.5）：黑底鏡頭蓋住整個畫面；進行時結論帶與評議欄不出現，裁決書置中。 ══ */
+.vdict:not([data-stage='done']) {
+  justify-content: center;
+  /* 選單鈕在右上角，裁決書不要壓到它。 */
+  padding-top: 64px;
+}
+.vdict:not([data-stage='done']) .hero,
+.vdict:not([data-stage='done']) .delib,
+.vdict:not([data-stage='done']) .lcol > :not(.vform) {
+  display: none;
+}
+.vdict:not([data-stage='done']) .vcols {
+  grid-template-columns: minmax(0, 560px);
+  justify-content: center;
+}
+.vstage {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  background: var(--cine-bg);
+  color: var(--cine-text);
+}
+.vstage-skip {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 41;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid var(--cine-line);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--cine-muted);
+  font: 400 14px/1 var(--font);
+}
+/* 筆錄頁：紙（兩個主題同色）、Courier 13、行號在左；黑條上緣 1px --cine-line、零圓角。 */
+.vs-page {
+  width: min(560px, calc(100vw - 32px));
+  padding: 20px 24px 28px;
+  background: var(--paper);
+  background-image: var(--grain);
+  color: var(--paper-ink);
+  font: 400 15px/2 var(--font-court);
+}
+.vs-head {
+  display: flex;
+  justify-content: space-between;
+  margin: 0 0 6px;
+  font: 400 12px/1.6 var(--font-court);
+  letter-spacing: 0.12em;
+  color: var(--paper-muted);
+}
+.vs-row {
+  position: relative;
+  margin: 0;
+  padding-left: 44px;
+  min-height: 2em;
+}
+.vs-row::before {
+  content: attr(data-n);
+  position: absolute;
+  left: 0;
+  width: 26px;
+  text-align: right;
+  font: 400 12px/2.5 var(--font-court);
+  color: var(--paper-muted);
+}
+.vs-res,
+.vs-name {
+  position: relative;
+  display: inline-block;
+  margin-left: 0.5em;
+}
+.vs-res {
+  min-width: 7em;
+}
+.vs-bar {
+  clip-path: inset(0 0 0 0);
+  position: absolute;
+  inset: 0.2em -3px 0.2em -3px;
+  background: var(--redact);
+  border-top: 1px solid var(--cine-line);
+}
+.vs-name .vs-bar {
+  visibility: hidden;
+}
+.vs-name[data-cover] .vs-bar {
+  visibility: visible;
+}
+.vs-res[data-pull] .vs-bar {
+  clip-path: inset(0 0 0 calc(var(--stop-n, 12) / 12 * 100%));
+}
+.vs-res[data-stop='6'] {
+  --stop-n: 6;
+}
+/* 字卡：三種結果同字級、同停留，不配音效。 */
+.vs-card {
+  margin: 0;
+  font: 700 clamp(32px, 6vw, 56px) / 1.3 var(--font-doc);
+  letter-spacing: 0.3em;
+  text-indent: 0.3em;
+  text-align: center;
+}
+/* 窗光：一道硬邊窄光柱（光罩寬 13%），落點在被告席、桌角、走道。 */
+.vs-light {
+  display: grid;
+  gap: 10px;
+  width: min(900px, calc(100vw - 32px));
+}
+.vs-tbd {
+  font: 400 12px/1.4 var(--font-court);
+  letter-spacing: 0.08em;
+  color: var(--cine-muted);
+}
+.vs-frame {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 2.39;
+  background: linear-gradient(#19202a, #0b0e13 55%, #06080b);
+}
+.vs-table {
+  position: absolute;
+  bottom: 18%;
+  height: 22%;
+  background: #1d1711;
+  border-top: 2px solid #3a2e22;
+}
+.vs-table[data-side='defense'] {
+  left: 0;
+  width: calc(2.1 / 5.2 * 100%);
+}
+.vs-table[data-side='state'] {
+  left: calc(3.1 / 5.2 * 100%);
+  width: calc(2.1 / 5.2 * 100%);
+}
+.vs-shaft {
+  position: absolute;
+  inset: 0 auto 0 calc(var(--x) * 100% - 6.5%);
+  width: 13%;
+  background: color-mix(in srgb, var(--k-lowsun) 62%, transparent);
+  mix-blend-mode: screen;
+}
+/* 格底 32px 俯視小地圖：用一點標出光落在哪裡，300px 寬也分得出來。 */
+.vs-map {
+  position: relative;
+  height: 32px;
+  border: 1px solid var(--cine-line);
+}
+.vs-map .vs-table {
+  bottom: 6px;
+  height: 12px;
+  background: var(--cine-line);
+  border: 0;
+}
+.vs-dot {
+  position: absolute;
+  top: 50%;
+  left: calc(var(--x) * 100%);
+  width: 10px;
+  height: 10px;
+  margin: -5px 0 0 -5px;
+  border-radius: 50%;
+  background: var(--k-lowsun);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .vs-res[data-pull] .vs-bar {
+    transition: clip-path var(--dur-redact-out) steps(12);
+  }
+  .vs-res[data-stop='6'][data-pull] .vs-bar {
+    transition-duration: calc(6 * var(--dur-frame));
+    transition-timing-function: steps(6);
+  }
+  .vs-name[data-cover] .vs-bar {
+    animation: v-cover var(--dur-redact-in) steps(4) both;
+  }
+  .vs-shaft,
+  .vs-dot {
+    transition: left var(--dur-lightmove) var(--ease-light);
+  }
+  .vdict[data-stage='done'] > :not(.vstage) {
+    animation: hand-fade var(--dur-theme) linear both;
+  }
+}
+@keyframes v-cover {
+  from {
+    clip-path: inset(0 100% 0 0);
   }
 }
