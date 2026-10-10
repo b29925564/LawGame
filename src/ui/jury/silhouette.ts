@@ -919,6 +919,10 @@ const d = (poly: Poly, close = true) =>
  * 一張卡面的 SVG（viewBox 400×500）。影子不在這裡：影子要能 300ms 移動（--dur-shadow），
  * 由元件疊一層 HTML 遮罩（參考實作把影子畫在 SVG 裡，形狀與羽化照抄到 CSS）。
  * frame：畫「待放 AI 立繪」的虛線框。標籤的字不畫在框裡，由 Tbd 放在框外上方（設定集第 7 章 :9、第 5 章 0502）。
+ * bg：卡面底色；法庭鏡頭裡的立牌疊在機位底圖上，不畫底。
+ * rim：輪廓光的寬（卡面單位，400 寬）。卡面 56–72px 時 8 剛好；鏡頭裡照顯示寬度換算，讓畫面上是 1–1.5px（設計師 P3 裁定）。
+ * part：法庭鏡頭把立牌拆兩層——body 是剪影本體，light 是它接到的光（受光染色、輪廓光、配件、眼神光），
+ * light 那層再乘上算圖給的受光圖，被百葉窗、盧卡斯的影子擋掉的地方就沒有輪廓光（第 7 章 :166）。
  */
 export function svg(
   p: JurorLook,
@@ -927,7 +931,18 @@ export function svg(
     pose,
     frame = false,
     uid = p.id,
-  }: { v?: number; pose?: Pose; frame?: boolean; uid?: string } = {},
+    bg = true,
+    rim = 8,
+    part = 'all',
+  }: {
+    v?: number;
+    pose?: Pose;
+    frame?: boolean;
+    uid?: string;
+    bg?: boolean;
+    rim?: number;
+    part?: 'all' | 'body' | 'light';
+  } = {},
 ) {
   pose = pose || poseFor(v);
   const s = shapes(p, pose),
@@ -956,7 +971,7 @@ export function svg(
         ? '<rect x="185" y="380" width="215" height="120"/>'
         : '<rect x="0" y="380" width="400" height="120"/>';
   const rimFilter = (id: string, color: string, dx: number) =>
-    `<filter id="${id}" x="-5%" y="-5%" width="110%" height="110%"><feMorphology in="SourceAlpha" operator="erode" radius="8" result="er"/><feComposite in="SourceAlpha" in2="er" operator="out" result="edge"/><feOffset in="edge" dx="${dx}" result="sh"/><feComposite in="sh" in2="SourceAlpha" operator="in" result="band"/><feFlood flood-color="${color}"/><feComposite in2="band" operator="in"/></filter>`;
+    `<filter id="${id}" x="-5%" y="-5%" width="110%" height="110%"><feMorphology in="SourceAlpha" operator="erode" radius="${+rim.toFixed(2)}" result="er"/><feComposite in="SourceAlpha" in2="er" operator="out" result="edge"/><feOffset in="edge" dx="${+((dx * rim) / 8).toFixed(2)}" result="sh"/><feComposite in="sh" in2="SourceAlpha" operator="in" result="band"/><feFlood flood-color="${color}"/><feComposite in2="band" operator="in"/></filter>`;
   const extra = L?.extra;
   const notes =
     pose === 'J4' ? `<path d="M150 470h140v30h-140z" fill="var(${K})" opacity=".4"/>` : '';
@@ -978,14 +993,18 @@ export function svg(
  <clipPath id="rimclip-${uid}">${rimClip}</clipPath>
  <clipPath id="armclip-${uid}">${armClip}</clipPath>${extra ? `<clipPath id="xclip-${uid}">${rects(extra.rim)}</clipPath>${rimFilter(`xrim-${uid}`, hex(extra.k), 0)}` : ''}
 </defs>
-<rect width="400" height="500" fill="var(--cine-bg,#06080b)"/>
-<g class="silhouette" fill="${SIL}">${sil}</g>
-<rect width="400" height="500" fill="var(${K})" opacity="${L?.flat ? '.06' : '.10'}" mask="url(#lit-${uid})"/>
+${bg ? '<rect width="400" height="500" fill="var(--cine-bg,#06080b)"/>' : ''}
+${part !== 'light' ? `<g class="silhouette" fill="${SIL}">${sil}</g>` : ''}
+${
+  part !== 'body'
+    ? `<rect width="400" height="500" fill="var(${K})" opacity="${L?.flat ? '.06' : '.10'}" mask="url(#lit-${uid})"/>
 <g clip-path="url(#rimclip-${uid})"><g filter="url(#rim-${uid})" opacity="${inkOpacity(K, 0.9)}">${sil}</g></g>${extra ? `<g clip-path="url(#xclip-${uid})"><g filter="url(#xrim-${uid})" opacity="${inkOpacity(extra.k, 0.9)}">${sil}</g></g>` : ''}
 ${acc}${s.glasses.map((q) => `<path d="${d(q, false)}" fill="none" stroke="#c9ced6" stroke-width="5.7" opacity=".5"/>`).join('')}
 ${pose === 'J4' || shadowPct(v) >= 90 ? '' : `<path d="${d(s.eye)}" fill="#1a1f26"/><rect x="${(s.eye[0][0] - 12).toFixed(1)}" y="${(s.eye[0][1] - 4).toFixed(1)}" width="5" height="5" fill="var(${K})" opacity="${inkOpacity(K, 0.9)}"/>`}
 ${notes}
-${pose === 'J3' ? `<path clip-path="url(#armclip-${uid})" d="${d([morph([N[0] - 120, 436], 'J3'), morph([N[0] + 120, 436], 'J3')], false)}" stroke="var(${K})" stroke-width="9.3" opacity="${inkOpacity(K, 0.85)}" fill="none"/>` : ''}
+${pose === 'J3' ? `<path clip-path="url(#armclip-${uid})" d="${d([morph([N[0] - 120, 436], 'J3'), morph([N[0] + 120, 436], 'J3')], false)}" stroke="var(${K})" stroke-width="9.3" opacity="${inkOpacity(K, 0.85)}" fill="none"/>` : ''}`
+    : ''
+}
 ${frame ? '<rect x="14" y="14" width="372" height="472" fill="none" stroke="var(--cine-line,#2a323d)" stroke-dasharray="14 14" stroke-width="3"/>' : ''}
 </svg>`;
 }

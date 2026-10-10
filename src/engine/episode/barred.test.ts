@@ -42,8 +42,10 @@ describe('主詰問題目的條件與排除裁定', () => {
     const before = st.jury;
     st = trial.object(ruled, st, '違反裁定');
     expect(st.jury).toEqual(before);
-    expect(st.log.at(-2)?.text).toBe(trial.BARRED);
-    expect(st.log.at(-1)?.struck).toBe(true);
+    expect(st.log.at(-1)?.text).toBe(trial.BARRED);
+    // 證人不回答；被異議的那個問題蓋上黑條（設定集 10.3）。
+    expect(st.log.at(-3)?.struck).toBe(true);
+    expect(st.log.at(-3)?.who).toBe(ruled.examiner ?? trial.DA);
   });
 
   it('手上有生效的裁定時，每一場的異議清單都有「違反裁定」，並寫出依據的裁定', () => {

@@ -1,5 +1,5 @@
 import { useCaseTerms } from './terms';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import type { TrialScene } from '../engine/episode/schema';
 import * as trial from '../engine/episode/trial';
 import {
@@ -30,6 +30,10 @@ import { batesOf, CourtRecord, useCourtEntries } from './Record';
 import { Shell, Tabs } from './Shell';
 import { CourtCast } from './jury/CourtFace';
 import { Recap } from './ActCard';
+import { reducedMotion } from './a11y';
+import { msOf, type ObjectionBeat, type Tok } from './court/beat';
+import { CourtCamera, type Shot, type WitnessState } from './court/CourtCamera';
+import { Portrait } from './Portrait';
 
 /**
  * 法庭裡的陪審團（設定集第 8.4、10.1 章）：剪影替身與四階影子。桌機放在中間欄（HUD 的位置），
@@ -113,9 +117,13 @@ function ObjectionWindow({
   }, [seconds, onPass]);
   return (
     <section className="panel objection" aria-label={t('異議')}>
+      {/* 「不異議」放在標題列：法庭中欄還有鏡頭條和陪審團，整個面板要在一屏內，不捲動（設計師 P3 裁定 5）。 */}
       <div className="panel-head">
         <h2>{t('要異議嗎？')}</h2>
         {seconds > 0 && <span className="muted">{t('{n} 秒', { n: Math.max(0, left) })}</span>}
+        <button className="pass" onClick={onPass}>
+          {t('不異議')}
+        </button>
       </div>
       <div className="row">
         {trial.objectionsFor(rulings).map((r) => (
@@ -137,9 +145,6 @@ function ObjectionWindow({
           })}
         </p>
       )}
-      <button className="wide" onClick={onPass}>
-        {t('不異議')}
-      </button>
     </section>
   );
 }
@@ -163,6 +168,45 @@ function Tubes({ n, max }: { n: number; max: number }) {
       ))}
     </span>
   );
+}
+
+/** 異議那一拍走到哪了（court/beat.ts 的節拍表）：type 打字、black 一刀黑、bench 法官席、back 切回、answer 證人照答。 */
+type Phase = 'type' | 'black' | 'bench' | 'back' | 'answer';
+
+/**
+ * 招牌時刻的鏡頭與輸入鎖：筆錄交出節拍表（照樣式表上的權杖換算），這裡照表切機位；
+ * 整拍走完才把主按鈕還給玩家（設定集 10.3：這一拍裡輸入鎖住）。
+ */
+function useObjectionBeat() {
+  const [beat, setBeat] = useState<{ t: ObjectionBeat; phase: Phase } | null>(null);
+  const timers = useRef<number[]>([]);
+  const clear = () => {
+    timers.current.forEach((id) => clearTimeout(id));
+    timers.current = [];
+  };
+  useEffect(() => clear, []);
+  const start = useCallback((t: ObjectionBeat, read: (tok: Tok) => number) => {
+    clear();
+    setBeat({ t, phase: 'type' });
+    const at = (when: typeof t.black, f: () => void) =>
+      timers.current.push(window.setTimeout(f, msOf(when, read)));
+    const go = (phase: Phase) => () => setBeat((b) => (b ? { ...b, phase } : b));
+    at(t.black, go('black'));
+    at(t.bench, go('bench'));
+    at(t.back, go('back'));
+    at(t.rest, go('answer'));
+    at(t.end, () => setBeat(null));
+  }, []);
+  return [beat, start] as const;
+}
+
+/** 這一刻的鏡頭：減少動態時不切黑，直接（淡入）換到下一個機位。 */
+function shotOf(phase: Phase | undefined): Shot {
+  const rm = reducedMotion();
+  if (phase === 'black') return rm ? 'bench' : 'black';
+  if (phase === 'bench') return 'bench';
+  if (phase === 'back') return rm ? 'witness' : 'black';
+  return 'witness';
 }
 
 export function Courtroom({ scene }: { scene: TrialScene }) {
@@ -202,6 +246,8 @@ function CourtroomScreen({ scene: raw }: { scene: TrialScene }) {
   const record = useCourtEntries(st.log, scene.witness.name, st.stricken);
   const bates = batesOf(progress, raw.id);
   const narrow = useNarrow();
+  const [beat, startBeat] = useObjectionBeat();
+  const [insert, setInsert] = useState<HTMLDivElement | null>(null);
 
   // 手上確認過的論點，用來對質。論點的強度與標籤定義在調查那一幕的疑問裡。
   const deskScene = deskSceneOf(progress);
@@ -305,6 +351,43 @@ function CourtroomScreen({ scene: raw }: { scene: TrialScene }) {
   const promised = promisesOf(progress).promises;
   const kept = keptPromises(progress);
   const cs = st.claims[claim.id];
+  // 鏡頭：證人席的光照目前這項證詞走到哪一步（第 10.4 章：鎖定、鋪陳；對質那一刻歸出示對質那一拍）。
+  const shot = shotOf(beat?.phase);
+  const witnessState: WitnessState = st.pleaded
+    ? 'fifth'
+    : st.stage === 'cross' && cs
+      ? cs.setup
+        ? 'build'
+        : cs.lock !== 'none'
+          ? 'lock'
+          : 'default'
+      : 'default';
+  // 手機插入的鏡頭：一刀黑起打開；成立時法官說完就收，駁回時留到證人答完。
+  const insertOpen =
+    !!beat &&
+    (beat.phase === 'black' ||
+      beat.phase === 'bench' ||
+      (!beat.t.sustained && (beat.phase === 'back' || beat.phase === 'answer')));
+  const camera = {
+    shot,
+    witness: scene.witness.name,
+    state: witnessState,
+    patience: st.patience,
+    scene: raw.id,
+  };
+  // 手機常駐的說話者頭像（第 10.1 章「對話頭像：法庭＝立繪」，56×70）：最後開口的人；盧卡斯用立繪。
+  const speaker = [...st.log].reverse().find((l) => l.who !== '旁白')?.who ?? scene.witness.name;
+  const now = (body: ReactNode) =>
+    narrow ? (
+      <div className="court-now">
+        <Portrait who={speaker} decorative />
+        {body}
+      </div>
+    ) : (
+      body
+    );
+  // 異議那一拍裡輸入鎖住：主按鈕藏起來（位置留著，版面不跳）。
+  const locked = beat ? { className: 'locked', inert: true } : {};
 
   return (
     <>
@@ -346,7 +429,16 @@ function CourtroomScreen({ scene: raw }: { scene: TrialScene }) {
         }
         tabs={
           <>
-            <CourtRecord entries={record} live fit bates={bates} />
+            <CourtRecord
+              entries={record}
+              live
+              fit
+              bates={bates}
+              onBeat={startBeat}
+              beat={!!beat}
+              cover={narrow && beat ? insert : null}
+            />
+            {!narrow && <CourtCamera mode="strip" {...camera} />}
             <CourtJury
               scene={scene}
               jury={st.jury}
@@ -370,8 +462,13 @@ function CourtroomScreen({ scene: raw }: { scene: TrialScene }) {
         }
         foot={
           <>
+            {narrow && <CourtCamera ref={setInsert} mode="insert" open={insertOpen} {...camera} />}
             {st.stage === 'done' && (
-              <button className="primary wide next" onClick={() => setRecess(true)}>
+              <button
+                className={`primary wide next${beat ? ' locked' : ''}`}
+                inert={!!beat}
+                onClick={() => setRecess(true)}
+              >
                 {t('休庭')}
               </button>
             )}
@@ -390,13 +487,19 @@ function CourtroomScreen({ scene: raw }: { scene: TrialScene }) {
             )}
             {st.stage === 'direct' && !st.window && (
               <>
-                <button className="primary wide" onClick={nextQuestion}>
+                <button
+                  className={`primary wide${beat ? ' locked' : ''}`}
+                  inert={!!beat}
+                  onClick={nextQuestion}
+                >
                   {st.i < scene.witness.direct.length
                     ? t('聽下一個問題')
                     : t('{who}詰問完畢', { who: t(scene.examiner ?? terms.other, scope) })}
                 </button>
                 {st.i >= scene.witness.direct.length && (
-                  <button onClick={toCross}>{t('開始交互詰問')}</button>
+                  <button {...locked} onClick={toCross}>
+                    {t('開始交互詰問')}
+                  </button>
                 )}
               </>
             )}
@@ -435,18 +538,20 @@ function CourtroomScreen({ scene: raw }: { scene: TrialScene }) {
         {st.stage === 'direct' && st.window && (
           <ObjectionWindow rulings={rulingsIn(progress)} onPass={letPass} onObject={object} />
         )}
-        {st.stage === 'direct' && !st.window && (
-          <p className="muted">
-            {t('聽{who}問下去。有問題的地方就在問完的那一刻提異議。', {
-              who: t(scene.examiner ?? terms.other, scope),
-            })}
-          </p>
-        )}
+        {st.stage === 'direct' &&
+          !st.window &&
+          now(
+            <p className="muted">
+              {t('聽{who}問下去。有問題的地方就在問完的那一刻提異議。', {
+                who: t(scene.examiner ?? terms.other, scope),
+              })}
+            </p>,
+          )}
 
         {st.stage === 'cross' && (
           <section className="panel">
             <article className="claim">
-              <p className="claim-text">{t('「{text}」', { text: t(claim.text, scope) })}</p>
+              {now(<p className="claim-text">{t('「{text}」', { text: t(claim.text, scope) })}</p>)}
               <ol className="steps">
                 {claim.anchor && anchored.includes(claim.anchor) ? (
                   <li className="done anchored">

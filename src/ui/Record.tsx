@@ -8,6 +8,7 @@ import {
   type RefObject,
 } from 'react';
 import { JUDGE, YOU } from '../engine/episode/trial';
+import { cssOf, objectionBeat, tokensFrom, type ObjectionBeat, type Tok } from './court/beat';
 import { batesAt } from '../engine/bates';
 import { episodeOf } from '../engine/game';
 import type { Progress } from '../engine/save';
@@ -226,6 +227,9 @@ function punct(text: string) {
  * live：庭上一邊進行一邊長的那份（逐行出現、翻到目前這一頁、紙張補滿 25 行）。
  * fit：框的高度由版面決定，行距收到一頁 25 行一次放得下（法庭左欄）。
  * bates：卷號與每頁的 Bates（batesOf）；不給就不印。
+ * onBeat：新進來的這一批有律師的異議時，交出這一拍的節拍表（鏡頭和輸入鎖照它走，第 10.3 章）。
+ * beat：這一拍還在進行（頁邊的目前行記號換成黃，這時畫面上沒有主按鈕）。
+ * cover：手機上鏡頭插進來蓋住筆錄底部多少 px：最新那一行要捲到它上面（設計師 P3 裁定）。
  */
 export function CourtRecord({
   entries,
@@ -235,6 +239,9 @@ export function CourtRecord({
   fit = false,
   bates,
   className = '',
+  onBeat,
+  beat: beatOn = false,
+  cover = null,
 }: {
   entries: readonly RecordEntry[];
   from?: number;
@@ -243,6 +250,9 @@ export function CourtRecord({
   fit?: boolean;
   bates?: Volume;
   className?: string;
+  onBeat?: (beat: ObjectionBeat, read: (tok: Tok) => number) => void;
+  beat?: boolean;
+  cover?: HTMLElement | null;
 }) {
   const t = useT();
   const zh = useLang((s) => s.lang) === 'zh';
@@ -297,20 +307,48 @@ export function CourtRecord({
   const [skipped, setSkipped] = useState(-1);
   const animate = live && !instant && skipped !== batch;
   const firstNew = rows.find((r) => r.entry >= batch)?.index ?? rows.length;
+  // 這一批有律師的異議：整批照異議那一拍排（打字 → 黑條蓋上問題 → 一刀黑 → 法官的沉默 → 小章）。
+  // 被異議的是前一句，早就在紙上；成立時它蓋上黑條留著，駁回時蓋上再抽走。
+  const beat = useMemo(() => {
+    if (!live) return null;
+    const o = entries.findIndex((e, i) => i >= batch && e.ruling);
+    if (o < 0) return null;
+    const count = (f: (entry: number) => boolean) =>
+      rows.filter((r) => r.entry >= batch && f(r.entry)).length;
+    const t = objectionBeat(entries[o].ruling === '成立', {
+      objection: count((x) => x <= o),
+      judge: count((x) => x === o + 1),
+      rest: count((x) => x > o + 1),
+    });
+    return { o, asked: o - 1, t };
+  }, [live, entries, batch, rows]);
+  // 一批只交一次（英文表載好重排時不重來）。
+  const told = useRef(batch);
+  useEffect(() => {
+    if (!beat || told.current === batch) return;
+    told.current = batch;
+    onBeat?.(beat.t, tokensFrom(box.current ?? document.documentElement));
+  });
+  // 每一行從哪個時間點開始逐行出現：異議那一拍裡，法官的話等章落下、駁回後的回答等切回證人。
+  const blockOf = (entry: number) =>
+    !beat || entry <= beat.o
+      ? { at: '0s', from: firstNew }
+      : entry === beat.o + 1
+        ? { at: cssOf(beat.t.judge), from: rows.find((r) => r.entry === entry)?.index ?? firstNew }
+        : {
+            at: cssOf(beat.t.rest),
+            from: rows.find((r) => r.entry > beat.o + 1)?.index ?? firstNew,
+          };
   // 刪除證詞的黑條：法官那句裁定打完才開始，照這一頁由上往下一行接一行蓋上（設定集 7-3）。
   // 只數這一頁上被蓋的行，前面幾頁看不到、直接蓋好；一頁蓋滿最多六拍，不讓最後幾行等好幾秒
   // （第一道關卡重跑 Q1：第 2 頁的「答」整整空白了五、六秒，看起來像沒蓋上黑條）。
   const lastPage = rows[rows.length - 1]?.page;
+  const striking = snap.striking.filter((i) => i !== beat?.asked);
   const strikingHere = rows.filter(
-    (r) => r.page === lastPage && (r.text || r.first) && snap.striking.includes(r.entry),
+    (r) => r.page === lastPage && (r.text || r.first) && striking.includes(r.entry),
   );
   const strikeStep = Math.min(1, 6 / Math.max(1, strikingHere.length));
   const strikeAfter = rows.length - firstNew;
-  const lastRowOf = (entry: number) => {
-    let last = -1;
-    for (const r of rows) if (r.entry === entry) last = r.index;
-    return last;
-  };
 
   // 新的一批進來：翻到最後一句所在的那一頁，從那頁的頁首放起；放不下就讓最後一行剛好在框底。
   // 頁首正好一行高、在第 1 行正上方，所以用第 1 行的位置往上推一行（手機的頁首是黏住的，量它會量到黏住的位置）。
@@ -328,13 +366,18 @@ export function CourtRecord({
     const lastEl = el.querySelector(`[data-row="${last.index}"]`);
     let target = headEl ? y(headEl) - size.row - padT : 0;
     if (lastEl) {
+      // 鏡頭插進來時，框底被蓋住的那段不算看得到。
       const bottom = y(lastEl) + size.row;
-      if (bottom > target + el.clientHeight - padB) target = bottom - el.clientHeight + padB;
+      const hidden = cover
+        ? Math.max(0, el.getBoundingClientRect().bottom - cover.getBoundingClientRect().top)
+        : 0;
+      const seen = el.clientHeight - padB - hidden;
+      if (bottom > target + seen) target = bottom - seen;
     }
     el.scrollTop = Math.max(0, target);
-    // 只在句數或框變了的時候翻頁，不搶使用者往回翻的捲動位置。
+    // 只在句數、框或鏡頭變了的時候翻頁，不搶使用者往回翻的捲動位置。
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [entries.length, live, size?.row, size?.h]);
+  }, [entries.length, live, size?.row, size?.h, cover]);
 
   // 頁首、行號、Bates 是紙上印好的東西：用屬性交給 CSS 畫，不進文字內容，報讀與搜尋都只讀到證詞本身。
   // 每張頁首都帶卷、頁、Bates；手機上每張都黏在框頂，下一頁的頁首捲上來時蓋掉上一張，
@@ -370,12 +413,19 @@ export function CourtRecord({
   const labelW = (label: string) => textWidth(t(label), zh) * 0.75 + 1.2;
   // 目前行：庭上那份的最後一行，跟著那一行一起出現。
   // 句尾為了對齊另一種語言補的空行不算（見 useCourtEntries）。
-  const current = live ? ([...shown].reverse().find((r) => r.text) ?? last)?.index : undefined;
+  // 異議那一拍裡記號停在異議那一行（第 10.3 章：這一格唯一的黃），整拍走完才移到最後一行。
+  const lastText = (rs: RecordRow[]) => [...rs].reverse().find((r) => r.text) ?? rs[rs.length - 1];
+  const current = !live
+    ? undefined
+    : beatOn && beat
+      ? lastText(shown.filter((r) => r.entry === beat.o))?.index
+      : lastText(shown)?.index;
   const fresh = (i: number) => animate && i >= firstNew;
 
   return (
     <div
       className={`lines transcript record${live ? ' live' : ''} ${className}`}
+      data-beat={beatOn || undefined}
       style={
         size
           ? ({
@@ -412,27 +462,32 @@ export function CourtRecord({
           {groups.map((g) => {
             const e = entries[g[0].entry];
             const label = e.redact ? t(e.redact) : '';
-            const endRow = g[g.length - 1].index;
             // 裁定章蓋在有字的最後一行，不蓋在句尾補的空行上。
             const textEnd = ([...g].reverse().find((r) => r.text) ?? g[g.length - 1]).index;
-            // 章在法官那一句出現之後落下（打字 → 一刀黑 → 法官的沉默 → 小章）；黑條在章落下後抽走。
-            const benchEnd = lastRowOf(g[0].entry + 1);
-            const stampK = (benchEnd >= 0 ? benchEnd : endRow) - firstNew + 1;
-            const unbarK = lastRowOf(g[0].entry - 1) - firstNew + 1;
+            const block = blockOf(g[0].entry);
+            // 異議那一拍裡被異議的問題：成立時蓋上黑條留著，駁回時蓋上再抽走（只在剛發生的那一刻）。
+            const objected = animate && beat?.asked === g[0].entry ? beat.t : null;
             return (
               <p key={g[0].entry} className={`rec-entry ${e.kind}`}>
                 {e.redact && <span className="sr-only">{t('（{text}）', { text: label })}</span>}
                 {g.map((r) => {
                   const isNew = fresh(r.index);
-                  const bar = animate && !!e.redact && snap.striking.includes(r.entry);
+                  const bar = animate && !!e.redact && striking.includes(r.entry);
                   const style = {
                     '--indent': `${r.indent}em`,
-                    '--k': isNew ? r.index - firstNew : 0,
+                    '--at0': isNew ? block.at : undefined,
+                    '--k': isNew ? r.index - block.from : 0,
                     '--kr': bar ? Math.max(0, strikingHere.indexOf(r)) * strikeStep : 0,
                     '--kr0': strikeAfter,
                     '--w': `${Math.max(r.width, r.first && label ? labelW(e.redact!) : 0)}em`,
-                    '--ks': stampK,
-                    '--ku': unbarK,
+                    // 章：照節拍表落在法官的沉默之後；不在異議那一拍裡（不會發生）就等前面的行出完。
+                    '--ats':
+                      e.ruling && isNew
+                        ? cssOf(beat?.o === r.entry ? beat.t.stamp : { ui: r.index - firstNew + 1 })
+                        : undefined,
+                    '--atb': objected ? cssOf(objected.bar) : undefined,
+                    '--atl': objected ? cssOf(objected.stamp) : undefined,
+                    '--atu': objected?.unbar ? cssOf(objected.unbar) : undefined,
                   } as CSSProperties;
                   return (
                     <span key={r.index} className="rec-line">
@@ -442,14 +497,15 @@ export function CourtRecord({
                         </span>
                       )}
                       <span
-                        className={`rec-row${isNew ? ' new' : ''}${e.redact ? ' redacted' : ''}${bar ? ' striking' : ''}${r.index === current ? ' cur' : ''}`}
+                        className={`rec-row${isNew ? ' new' : ''}${e.redact ? ' redacted' : ''}${bar ? ' striking' : ''}${objected ? ' objected' : ''}${r.index === current ? ' cur' : ''}`}
                         data-row={r.index}
                         data-no={r.line}
                         style={style}
                       >
                         {r.first && e.tag && <b className="rec-tag">{e.tag} </b>}
-                        {e.redact && bar && (r.text || r.first) ? (
+                        {e.redact && (bar || objected) && (r.text || r.first) ? (
                           // 正在蓋的這一行：話先留在紙上，黑條從左邊蓋過去（看得到被刪的是哪一句）。
+                          // 異議成立時條上的「異議成立」等章落下才出現。
                           <span className="rec-under" aria-hidden>
                             <span className="rec-tx">{zh ? punct(r.text) : r.text}</span>
                             <span className="rec-bar">{r.first && <small>{label}</small>}</span>
@@ -463,8 +519,10 @@ export function CourtRecord({
                         ) : (
                           <span className="rec-tx">
                             {zh ? punct(r.text) : r.text}
-                            {/* 駁回：證人照答，蓋在這句上的黑條在章落下後抽走（只在剛發生的那一刻）。 */}
-                            {e.unbar && isNew && <span className="rec-unbar" aria-hidden />}
+                            {/* 駁回：「異議」打完時蓋上這個問題的黑條，在法官說完後從右邊抽走。 */}
+                            {e.unbar && objected && r.text && (
+                              <span className="rec-unbar" aria-hidden />
+                            )}
                           </span>
                         )}
                         {r.space && ' '}

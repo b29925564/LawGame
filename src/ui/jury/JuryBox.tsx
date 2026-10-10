@@ -221,7 +221,11 @@ export function JuryBox({
           )}
           {showNumbers && summary && <span className="muted"> {summary}</span>}
         </h2>
-        <Legend />
+        {/* 「顯示數值」跟圖例同一列：法庭中欄還要放鏡頭條，陪審團面板不多佔一列（設計師 P3 裁定 5）。 */}
+        <span className="jb-tools">
+          <Legend />
+          {toggle}
+        </span>
       </div>
       <Tbd row>
         <ul className="jb-grid">
@@ -263,7 +267,6 @@ export function JuryBox({
           })}
         </ul>
       </Tbd>
-      {toggle}
     </section>
   );
 }

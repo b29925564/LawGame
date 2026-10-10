@@ -275,7 +275,7 @@ export function layout(
  * 法官與其他發言（異議、裁定）列名字；旁白是括號裡的紀錄說明。
  */
 export function kindsOf(
-  log: readonly { who: string }[],
+  log: readonly { who: string; text?: string }[],
   witness: string,
   { judge, narrator }: { judge: string; narrator: string },
 ): RecordKind[] {
@@ -283,14 +283,25 @@ export function kindsOf(
     if (l.who === narrator) return 'note';
     if (l.who === witness) return 'a';
     if (l.who !== judge && log[i + 1]?.who === witness) return 'q';
+    // 被異議打斷的問題還是「問」：真的筆錄是問句、律師的異議、法官的裁定（成立時證人不答）。
+    const next = log[i + 1];
+    if (
+      l.who !== judge &&
+      next &&
+      next.who !== l.who &&
+      next.text?.startsWith('異議') &&
+      log[i + 2]?.who === judge
+    )
+      return 'q';
     return 'say';
   });
 }
 
 /**
  * 庭上的異議與裁定（設定集 10.3）：律師說「異議，…」、下一句是法官，就是一次異議。
- * 法官說「異議駁回」或證人的回答沒被刪＝駁回；回答被刪＝成立。
- * 駁回後證人照樣回答的那句記成 unbar：黑條抽走，證詞留在紀錄裡。
+ * 法官說「異議駁回」或證人的回答沒被刪＝駁回；其餘＝成立（被異議的問題蓋黑條、證人不答）。
+ * 駁回時被異議的那個問題記成 unbar：異議打完時黑條先蓋上，章落下後抽走，問題留在紀錄裡。
+ * 舊存檔的成立是「回答印出再蓋黑」（struck 在回答那一行），裁定照樣讀得出來。
  */
 export function rulingsOf(
   log: readonly { who: string; text: string; struck?: boolean }[],
@@ -303,7 +314,9 @@ export function rulingsOf(
     const answer = log[i + 2]?.who === witness ? log[i + 2] : undefined;
     const overruled = bench.text.startsWith('異議駁回') || (answer && !answer.struck);
     out[i].ruling = overruled ? '駁回' : '成立';
-    if (overruled && answer) out[i + 2].unbar = true;
+    const asked = log[i - 1];
+    if (overruled && asked && ![lawyer, judge, witness].includes(asked.who))
+      out[i - 1].unbar = true;
   });
   return out;
 }
