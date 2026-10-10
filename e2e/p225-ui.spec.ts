@@ -91,10 +91,14 @@ test('集尾卡：第 2 集和第 1 集同版型，「本集共製作 N 頁」�
   }
 });
 
-test('第 2 集結束卡：標題欄寫原告全名；最後一場沒寫地點，場記空著', async ({ page }) => {
+test('第 2 集結束卡：標題欄寫原告全名；場記讀最後一場（尾聲的電話）自己的地點與時間', async ({
+  page,
+}) => {
   await open(page, 'ep2', 999);
   await expect(page.locator('.act-caption')).toContainText('瑪莉索・維加，');
-  await expect(page.locator('.act-slate')).toHaveCount(0);
+  await expect(page.locator('.act-slate')).toContainText('盧卡斯的辦公室');
+  await expect(page.locator('.act-slate')).toContainText('23:40');
+  await expect(page.locator('.act-slate')).not.toContainText('影印室');
   // Bates 的右緣和場記的右緣是同一條（70u）。
   await open(page, 'ep1', 45);
   const [a, b] = await page.evaluate(() => [

@@ -327,7 +327,9 @@ export function PlaceBeat({ id, place, onDone }: { id: string; place: Place; onD
       data-auto=""
     >
       <span className="place-tbd">
-        {t('待放 3D 機位')}　{t('定場')}
+        {t('待放 3D 機位')}
+        {'\u3000'}
+        {t('定場')}
       </span>
       <PlaceSlate id={id} place={place} />
     </main>
