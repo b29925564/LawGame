@@ -1641,9 +1641,20 @@ details summary {
   flex-shrink: 0;
 }
 .sheet-tabs {
-  flex: 1 1 auto;
+  /* 分頁照內容寬，不被「關閉」擠扁；放不下時「關閉」換到下一行靠右（字級 140% 時法典分頁被擋住）。 */
+  flex: 1 0 auto;
+  max-width: 100%;
   min-width: 0;
   border-bottom: none;
+}
+.sheet > .panel-head {
+  flex-wrap: wrap;
+}
+.sheet > .panel-head > .link {
+  margin-left: auto;
+  min-height: 44px;
+  min-width: 44px;
+  text-align: right;
 }
 /* 證據欄 352 寬放三個分頁（英文 Evidence 28 / Timeline / Legal terms）要一行放得下。 */
 .sheet-tabs button {
