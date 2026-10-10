@@ -1,5 +1,9 @@
 import { useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type Ref } from 'react';
 import { useT } from '../../i18n';
+import { useSettings } from '../../engine/settings';
+import { useScope } from '../lang';
+import type { Cue } from '../record';
+import { readUnits, splitCards, subEm, SUB_MIN_UNITS } from './subtitleSplit';
 import { castLook } from '../jury/cast';
 import { svg } from '../jury/silhouette';
 
@@ -159,6 +163,7 @@ export function CourtCamera({
   scene,
   mode,
   open = true,
+  cues = [],
   ref,
 }: {
   shot: Shot;
@@ -171,6 +176,8 @@ export function CourtCamera({
   mode: 'strip' | 'insert';
   /** 手機插入的鏡頭只在招牌時刻打開。 */
   open?: boolean;
+  /** 字幕列（設定集 10.1）：鏡頭裡的人說的話，由筆錄交出來。 */
+  cues?: Cue[];
   /** 手機：筆錄要知道鏡頭蓋住它多少（最新那一行捲到鏡頭上面）。 */
   ref?: Ref<HTMLDivElement>;
 }) {
@@ -229,7 +236,130 @@ export function CourtCamera({
           frameW={width}
         />
         <div className="cam-black" />
+        <Subtitles cues={cues} />
       </div>
+    </div>
+  );
+}
+
+/**
+ * 字幕列（設定集 10.1、RD-ART-1001）：鏡頭層上的介面，永遠不被調色、不被一刀黑蓋掉。
+ * 說話者名 --cine-muted、台詞 Noto Sans TC 500；底框 rgb(6 8 11 / 72%)、6px 圓角、雙層文字陰影。
+ * 一批裡的每句疊在同一格：各自在 --at 出現、在下一句的 --at 收掉，時間跟筆錄同一張節拍表，不另開計時器。
+ * 被蓋掉的話（異議成立、自紀錄刪除）只剩一條黑條，條裡寫原因（第 1 章「默」：黑條只在字幕列與筆錄）。
+ */
+function Subtitles({ cues }: { cues: Cue[] }) {
+  const t = useT();
+  const scope = useScope();
+  const box = useRef<HTMLDivElement>(null);
+  // 設定裡的「字幕」字級（1／1.25／1.5）與底框，跟畫外字幕同一組。
+  const voScale = useSettings((s) => s.voScale);
+  const voBox = useSettings((s) => s.voBox);
+  // 一行放得下幾 em、一張放得下幾行：量框寬與實際字級；行數看「下巴線到框底」放得下幾行（最少 1、最多 2，設計師 #257）。
+  const [fit, setFit] = useState({ em: 30, lines: 2 });
+  const shown = cues.length > 0;
+  useLayoutEffect(() => {
+    const el = box.current;
+    if (!el) return;
+    const frame = el.offsetParent as HTMLElement | null;
+    const measure = () => {
+      const insert = !!el.closest('.court-cam.insert');
+      // 字幕字級：桌機 19px、手機特寫 17px，說話者名 14／13px，再乘設定裡的倍率（court.css 同一組數字）。
+      const px = (insert ? 17 : 19) * voScale;
+      const who = (insert ? 13 : 14) * 1.4 * voScale;
+      // 下巴線約在鏡頭條高度的 47%（手機特寫 50%），框底留 10px；機位 manifest 來了改讀它。
+      const h = frame?.clientHeight ?? 0;
+      const room = h - 10 - h * (insert ? 0.5 : 0.47) - who - 10;
+      const lines = h ? Math.max(1, Math.min(2, Math.floor(room / (px * 1.5)))) : 2;
+      setFit({ em: subEm(el.clientWidth, px), lines });
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    if (frame) ro.observe(frame);
+    return () => ro.disconnect();
+  }, [shown, voScale]);
+  const cards = useMemo(() => {
+    const flat: {
+      key: string;
+      who: string;
+      text?: string;
+      lines?: string[];
+      blank?: boolean;
+      redact?: Cue['redact'];
+      at: string;
+      cue: string;
+      next?: string;
+    }[] = [];
+    for (const c of cues) {
+      if (c.blank) {
+        flat.push({ key: c.key, who: '', blank: true, at: c.at, cue: c.key });
+        continue;
+      }
+      if (c.redact) {
+        flat.push({ key: c.key, who: c.who, redact: c.redact, at: c.at, cue: c.key });
+        continue;
+      }
+      const parts = splitCards(c.text, fit.em, fit.lines);
+      // 每張讀得完才換下一張：漢字 1 單位、其他 0.35，至少 10 單位；從這句出現的時間累計（字幕比筆錄慢，不閃過）。
+      let read = 0;
+      parts.forEach((p, k) => {
+        flat.push({
+          key: `${c.key}.${k}`,
+          who: c.who,
+          text: p.text,
+          lines: p.lines,
+          cue: c.key,
+          at: read > 0 ? `calc(${c.at} + ${read} * var(--dur-sub-unit))` : c.at,
+        });
+        read += Math.max(SUB_MIN_UNITS, readUnits(p.text));
+      });
+    }
+    // 每張收在下一張出現時；下一句（別的人）先到，就在那一刻收，不讓長句的後幾張壓在新的一句上。
+    flat.forEach((c, i) => {
+      const nextCard = flat[i + 1];
+      if (!nextCard) return;
+      const nextCue = flat.slice(i + 1).find((x) => x.cue !== c.cue);
+      c.next =
+        nextCard.cue === c.cue && nextCue ? `min(${nextCard.at}, ${nextCue.at})` : nextCard.at;
+    });
+    return flat;
+  }, [cues, fit]);
+  if (!cues.length) return null;
+  return (
+    <div
+      className="cam-subs"
+      ref={box}
+      data-subbox={voBox ? 'on' : undefined}
+      style={{ '--sub-scale': voScale } as CSSProperties}
+    >
+      {cards.map((c, i) =>
+        c.blank ? null : (
+          <p
+            key={c.key}
+            className="cam-sub"
+            style={{ '--at': c.at, '--next': c.next } as CSSProperties}
+            data-last={i === cards.length - 1 || undefined}
+          >
+            <span className="who">{t(c.who, scope)}</span>
+            {c.redact ? (
+              <span className="sub-bar">
+                <small>{t(c.redact)}</small>
+              </span>
+            ) : (
+              <span className="tx">
+                {c.lines
+                  ? c.lines.map((l) => (
+                      <span key={l} className="ln">
+                        {l}
+                      </span>
+                    ))
+                  : c.text}
+              </span>
+            )}
+          </p>
+        ),
+      )}
     </div>
   );
 }

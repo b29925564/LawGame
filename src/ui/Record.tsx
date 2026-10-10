@@ -25,6 +25,7 @@ import {
   type RecordEntry,
   type RecordRow,
   type Redaction,
+  type Cue,
 } from './record';
 
 const NARRATOR = '旁白';
@@ -76,7 +77,14 @@ export function useCourtEntries(
         : stricken && l.who === witness
           ? '已自紀錄刪除'
           : undefined;
-      return { kind: kinds[i], ...say(l, i, lang), redact, ...rulings[i], twin: say(l, i, other) };
+      return {
+        kind: kinds[i],
+        who: l.who,
+        ...say(l, i, lang),
+        redact,
+        ...rulings[i],
+        twin: say(l, i, other),
+      };
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key, witness, stricken, scope, lang, catalog]);
@@ -230,6 +238,7 @@ function punct(text: string) {
  * onBeat：新進來的這一批有律師的異議時，交出這一拍的節拍表（鏡頭和輸入鎖照它走，第 10.3 章）。
  * beat：這一拍還在進行（頁邊的目前行記號換成黃，這時畫面上沒有主按鈕）。
  * cover：手機上鏡頭插進來蓋住筆錄底部多少 px：最新那一行要捲到它上面（設計師 P3 裁定）。
+ * onCues：字幕列要放的句子與出現時間（鏡頭裡的人：證人與法官；設定集 10.1）。
  */
 export function CourtRecord({
   entries,
@@ -242,6 +251,7 @@ export function CourtRecord({
   onBeat,
   beat: beatOn = false,
   cover = null,
+  onCues,
 }: {
   entries: readonly RecordEntry[];
   from?: number;
@@ -253,6 +263,7 @@ export function CourtRecord({
   onBeat?: (beat: ObjectionBeat, read: (tok: Tok) => number) => void;
   beat?: boolean;
   cover?: HTMLElement | null;
+  onCues?: (cues: Cue[]) => void;
 }) {
   const t = useT();
   const zh = useLang((s) => s.lang) === 'zh';
@@ -372,6 +383,41 @@ export function CourtRecord({
   );
   const strikeStep = Math.min(1, 6 / Math.max(1, strikingHere.length));
   const strikeAfter = rows.length - firstNew;
+
+  // 字幕列：這一批裡鏡頭拍得到的人說的話（證人、法官），在它第一行打出來的那一刻出現，留到下一句。
+  // 律師在鏡頭外，問句只在筆錄上（玩家剛選的問題不再閃一次）。這一批沒有就留最後一句，不重播。
+  const inShot = (e: RecordEntry) => e.kind === 'a' || e.who === JUDGE;
+  const cues = useMemo<Cue[]>(() => {
+    if (!live || !onCues) return [];
+    const at = (i: number) => {
+      const first = rows.find((r) => r.entry === i);
+      if (!animate || !first || i < batch) return '0s';
+      const b = blockOf(i);
+      return `calc(${b.at} + ${first.index - b.from} * var(--dur-ui))`;
+    };
+    const cue = (e: RecordEntry, i: number): Cue => ({
+      key: `${i}`,
+      who: e.who ?? '',
+      text: e.text,
+      redact: e.redact,
+      at: at(i),
+    });
+    // 字幕留到下一句開始為止：下一句是鏡頭外的人（律師的問句、旁白）就收成空，不讓上一句看起來像在答新問題（設計師 #257）。
+    const fresh = entries.flatMap((e, i) =>
+      i < batch
+        ? []
+        : [inShot(e) ? cue(e, i) : { ...cue(e, i), text: '', redact: undefined, blank: true }],
+    );
+    if (fresh.length) return fresh;
+    const last = entries.length - 1;
+    return last >= 0 && inShot(entries[last]) ? [{ ...cue(entries[last], last), at: '0s' }] : [];
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [live, entries, batch, rows, animate, beat]);
+  const cueKey = cues.map((c) => `${c.key}|${c.at}|${c.redact ?? ''}|${c.text}`).join('\n');
+  useEffect(() => {
+    onCues?.(cues);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cueKey]);
 
   // 新的一批進來：翻到最後一句所在的那一頁，從那頁的頁首放起；放不下就讓最後一行剛好在框底。
   // 頁首正好一行高、在第 1 行正上方，所以用第 1 行的位置往上推一行（手機的頁首是黏住的，量它會量到黏住的位置）。
