@@ -2157,6 +2157,8 @@ scenes:
     act: 尾聲
     epilogue: true
     owner: 盧卡斯
+    # 設計師 p225 裁定 (3)：盧卡斯還在事務所，不在家；場記讀這一場的地點（燈組由場景光影給）。
+    place: 惠特洛克・海爾　盧卡斯的辦公室　週四 23:40
     steps:
       - do: caption
         time: '23:40'
