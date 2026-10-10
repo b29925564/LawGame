@@ -101,7 +101,10 @@ const key = (slot: Slot) => `lawgame-ep-${slot}`;
 export function readSave(slot: Slot, storage: Storage | undefined = globalThis.localStorage) {
   try {
     const raw = storage?.getItem(key(slot));
-    return raw ? migrate(JSON.parse(raw)) : null;
+    const file = raw ? migrate(JSON.parse(raw)) : null;
+    // 舊版集尾存檔的標籤是「第 1 集・第 1 集」。
+    if (file) file.label = file.label.replace(/^(第 (\d+) 集)・第 \2 集$/, '$1・本集完');
+    return file;
   } catch {
     return null;
   }

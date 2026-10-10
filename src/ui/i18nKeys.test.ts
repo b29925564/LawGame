@@ -3,6 +3,7 @@ import { afterAll, describe, expect, it } from 'vitest';
 import { parse } from 'yaml';
 import { episodes } from '../content';
 import { saveLabel } from '../engine/game';
+import { readSave } from '../engine/save';
 import { install, reset, translate } from '../i18n';
 
 const dir = new URL('../content/en/', import.meta.url);
@@ -38,5 +39,40 @@ describe('英文對照表的樣板', () => {
       }),
     );
     expect([...new Set(left.filter((x) => /[\u3400-\u9fff]/.test(x)))]).toEqual([]);
+  });
+
+  it('集尾卡的存檔標籤不重複集數；舊存檔讀回來也修好', () => {
+    for (const [episode, ep] of Object.entries(episodes)) {
+      const last = ep.scenes.length - 1;
+      for (let scene = 0; scene <= ep.scenes.length; scene++) {
+        const label = saveLabel({ episode, scene, step: 0, choices: {}, cards: [], scenes: {} });
+        const n = `第 ${ep.number} 集`;
+        expect(label.split('・')[1]).not.toBe(n);
+        if (scene >= last && ep.scenes[last].type === 'card' && ep.scenes[last].act === n)
+          expect(label).toBe(`${n}・本集完`);
+      }
+    }
+    const store = new Map<string, string>([
+      [
+        'lawgame-ep-auto',
+        JSON.stringify({
+          version: 5,
+          savedAt: 1,
+          label: '第 1 集・第 1 集',
+          progress: {
+            episode: 'ep1',
+            scene: 45,
+            step: 0,
+            choices: {},
+            cards: [],
+            flags: [],
+            ethics: [],
+            scenes: {},
+          },
+        }),
+      ],
+    ]);
+    const storage = { getItem: (k: string) => store.get(k) ?? null } as Storage;
+    expect(readSave('auto', storage)?.label).toBe('第 1 集・本集完');
   });
 });

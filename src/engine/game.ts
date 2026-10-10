@@ -102,7 +102,9 @@ export const hasFlag = (p: Progress, flag: string) => (p.flags ?? []).includes(f
 export function saveLabel(p: Progress): string {
   const e = episodeOf(p);
   const s = sceneOf(p);
-  return `第 ${e.number} 集・${s ? s.act : '本集完'}`;
+  // 集尾卡的幕名就是「第 N 集」，接在集數後面會變成「第 1 集・第 1 集」。
+  const act = s && s.act !== `第 ${e.number} 集` ? s.act : '本集完';
+  return `第 ${e.number} 集・${act}`;
 }
 
 /** 場景狀態存在 progress.scenes 裡，沒有就用該場景的起始狀態。 */
