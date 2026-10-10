@@ -8,6 +8,9 @@ describe('陪審長的手寫', () => {
     expect(inkUnits('Dugan')).toBe(1.67);
     expect(inkUnits('Not guilty')).toBe(3);
     expect(inkUnits('$7,930,000')).toBe(3.33);
+    // 僵局手寫字：刑事 4 字、民事 6 字（第 2 集：寫完在 1.3 + 6×0.6 = 4.9 秒，再停 500ms 才切）。
+    expect(inkUnits('未達一致')).toBe(4);
+    expect(inkUnits('未達法定票數')).toBe(6);
   });
 
   it('筆照呼叫順序接下去', () => {

@@ -368,7 +368,7 @@ function Verdict({
     有罪: t('還押，擇期量刑'),
     無責: t('被告不必賠償'),
     有責: t('被告應負賠償責任'),
-    陪審團僵局: t('審判無效，另定期日'),
+    陪審團僵局: t('審判無效'),
   };
 
   // 第一句「陪審長站起來。「……」」拆成宣讀卡；其餘照順序當後續（訊息、旁白）。
@@ -394,6 +394,8 @@ function Verdict({
         : t('評議時又說服了 {k} 位陪審員。', { k: now - atClose });
 
   const civil = !!award || rules?.burden === 'civil';
+  // 民事看票數夠不夠，不是一致與否；字數 4→6，手寫時間由 inkUnits 重算。
+  const hungWord = civil ? '未達法定票數' : '未達一致';
   const formTitle = civil ? '特別裁決表' : '裁決書';
   const formEn = civil ? 'SPECIAL VERDICT FORM' : 'VERDICT FORM';
 
@@ -424,7 +426,7 @@ function Verdict({
       )}
       <VerdictStage
         v={kind}
-        word={v === '陪審團僵局' ? t('未達一致') : t(v)}
+        word={v === '陪審團僵局' ? t(hungWord) : t(v)}
         run={run}
         line={civil ? t('被告是否有過失？') : t('就第一項罪名，被告')}
         defendant={t(caption.defendant)}
@@ -558,12 +560,13 @@ function Verdict({
                     />
                   </span>
                 </div>
-                {v === '陪審團僵局' && (
-                  <p className="fnote">
-                    <Hand s={ink(inkUnits(t('未達一致')))}>{t('未達一致')}</Hand>
-                  </p>
-                )}
               </>
+            )}
+            {/* 僵局兩個框都不勾，刑事民事一樣在下一行手寫（設定集 10.5 ①）。 */}
+            {v === '陪審團僵局' && (
+              <p className="fnote">
+                <Hand s={ink(inkUnits(t(hungWord)))}>{t(hungWord)}</Hand>
+              </p>
             )}
             <div className="signs">
               <span>
