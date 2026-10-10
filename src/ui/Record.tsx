@@ -77,7 +77,14 @@ export function useCourtEntries(
         : stricken && l.who === witness
           ? '已自紀錄刪除'
           : undefined;
-      return { kind: kinds[i], who: l.who, ...say(l, i, lang), redact, ...rulings[i], twin: say(l, i, other) };
+      return {
+        kind: kinds[i],
+        who: l.who,
+        ...say(l, i, lang),
+        redact,
+        ...rulings[i],
+        twin: say(l, i, other),
+      };
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key, witness, stricken, scope, lang, catalog]);
@@ -394,6 +401,7 @@ export function CourtRecord({
       text: e.text,
       redact: e.redact,
       at: at(i),
+      span: rows.filter((r) => r.entry === i).length,
     });
     const fresh = entries.flatMap((e, i) => (i >= batch && inShot(e) ? [cue(e, i)] : []));
     if (fresh.length) return fresh;

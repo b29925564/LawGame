@@ -1,7 +1,9 @@
 import { useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type Ref } from 'react';
 import { useT } from '../../i18n';
+import { useSettings } from '../../engine/settings';
 import { useScope } from '../lang';
 import type { Cue } from '../record';
+import { splitCards } from './subtitleSplit';
 import { castLook } from '../jury/cast';
 import { svg } from '../jury/silhouette';
 
@@ -249,15 +251,62 @@ export function CourtCamera({
 function Subtitles({ cues }: { cues: Cue[] }) {
   const t = useT();
   const scope = useScope();
+  const box = useRef<HTMLDivElement>(null);
+  // 設定裡的「字幕」字級（1／1.25／1.5）與底框，跟畫外字幕同一組。
+  const voScale = useSettings((s) => s.voScale);
+  const voBox = useSettings((s) => s.voBox);
+  // 一行放得下幾 em：量框寬與實際字級（含 --text-scale），長句照這個拆成每張兩行。
+  const [em, setEm] = useState(30);
+  const shown = cues.length > 0;
+  useLayoutEffect(() => {
+    const el = box.current;
+    if (!el) return;
+    const measure = () => {
+      const px = parseFloat(getComputedStyle(el).fontSize) || 19;
+      const inner = Math.min(el.clientWidth - 32, 36 * px) - 24;
+      setEm(Math.max(8, Math.floor((inner / px) * 0.92)));
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [shown, voScale]);
+  const cards = useMemo(() => {
+    const flat: { key: string; who: string; text?: string; redact?: Cue['redact']; at: string }[] =
+      [];
+    for (const c of cues) {
+      if (c.redact) {
+        flat.push({ key: c.key, who: c.who, redact: c.redact, at: c.at });
+        continue;
+      }
+      const parts = splitCards(c.text, em);
+      const total = Math.max(1, c.text.length);
+      parts.forEach((p, k) => {
+        const row = Math.min(c.span - 1, Math.floor((p.from / total) * c.span));
+        flat.push({
+          key: `${c.key}.${k}`,
+          who: c.who,
+          text: p.text,
+          at: k > 0 && row > 0 ? `calc(${c.at} + ${row} * var(--dur-ui))` : c.at,
+        });
+      });
+    }
+    return flat;
+  }, [cues, em]);
   if (!cues.length) return null;
   return (
-    <div className="cam-subs">
-      {cues.map((c, i) => (
+    <div
+      className="cam-subs"
+      ref={box}
+      data-subbox={voBox ? 'on' : undefined}
+      style={{ '--sub-scale': voScale } as CSSProperties}
+    >
+      {cards.map((c, i) => (
         <p
           key={c.key}
           className="cam-sub"
-          style={{ '--at': c.at, '--next': cues[i + 1]?.at } as CSSProperties}
-          data-last={i === cues.length - 1 || undefined}
+          style={{ '--at': c.at, '--next': cards[i + 1]?.at } as CSSProperties}
+          data-last={i === cards.length - 1 || undefined}
         >
           <span className="who">{t(c.who, scope)}</span>
           {c.redact ? (

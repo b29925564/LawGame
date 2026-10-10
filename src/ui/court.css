@@ -3145,16 +3145,19 @@ html[lang='en'] .stamp.rec-stamp b {
   border-radius: 6px;
   background: rgb(6 8 11 / 72%);
   color: var(--cine-text);
-  font: 500 19px/1.5 var(--font);
+  font: 500 calc(19px * var(--sub-scale, 1)) / 1.5 var(--font);
   text-align: center;
   text-wrap: balance;
   text-shadow:
     0 1px 2px rgb(0 0 0 / 90%),
     0 0 8px rgb(0 0 0 / 60%);
 }
+.cam-subs[data-subbox='on'] .cam-sub {
+  background: rgb(6 8 11 / 94%);
+}
 .cam-sub .who {
   display: block;
-  font: 400 14px/1.4 var(--font);
+  font: 400 calc(14px * var(--sub-scale, 1)) / 1.4 var(--font);
   color: var(--cine-muted);
 }
 /* 被蓋掉的話只剩黑條（藏、刪、默）：零圓角、上緣 1px --cine-line，條裡的小字 --redact-label。 */
@@ -3168,15 +3171,15 @@ html[lang='en'] .stamp.rec-stamp b {
   text-shadow: none;
 }
 .cam-sub .sub-bar small {
-  font: 400 12px/1.6 var(--font-court);
+  font: 400 calc(12px * var(--sub-scale, 1)) / 1.6 var(--font-court);
   letter-spacing: 0.08em;
   color: var(--redact-label);
 }
 .court-cam.insert .cam-sub {
-  font-size: 17px;
+  font-size: calc(17px * var(--sub-scale, 1));
 }
 .court-cam.insert .cam-sub .who {
-  font-size: 13px;
+  font-size: calc(13px * var(--sub-scale, 1));
 }
 .cam-sub {
   animation:
