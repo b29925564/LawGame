@@ -27,7 +27,7 @@ export function ExhibitTag({ name, arg }: { name: string; arg: boolean }) {
       <span aria-hidden className="etag-hole" />
       {arg && <span aria-hidden>◆</span>}
       {/* 論點只寫名稱：「論點 A：」前綴和 ◆ 重複。 */}
-      {arg ? name.replace(/^[^：:]{1,14}[：:]\s*/, '') : name}
+      <span>{arg ? name.replace(/^[^：:]{1,14}[：:]\s*/, '') : name}</span>
     </span>
   );
 }
