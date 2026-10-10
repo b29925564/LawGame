@@ -159,7 +159,7 @@
 債權人・陪審團: 'Creditor: the jury'
 已兌現: Kept
 逾期未兌現: Broken
-"第 {round} 輪\u3000{no} {ng}\u3000{yes} {g}": 'Round {round} · {no} {ng} · {yes} {g}'
+'第 {round} 輪': Round {round}
 未達一致: No unanimity
 '陪審團僵局，第{round}輪，{no} {ng}，{yes} {g}，{why}': 'Jury deadlocked, round {round}: {no} {ng}, {yes} {g}, {why:lower}'
 兩邊都未達法定票數: Neither side has the votes it needs

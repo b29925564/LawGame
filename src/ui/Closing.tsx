@@ -643,10 +643,8 @@ function Verdict({
                     <span className="rk">{t('第 {n} 輪', { n: i + 1 })}</span>
                     <span>
                       <Pips ours={ours(r.jury)} />
-                      {/* 簽名列照判決表寫「多數 : 少數」；這裡跟簽名列同一個順序（體驗評測 v88）。 */}
-                      <span className="vt" aria-label={t('站你這邊 {a} 位', { a: y })}>
-                        {Math.max(y, n - y)} : {Math.min(y, n - y)}
-                      </span>
+                      {/* 比數只寫在風向列：這裡只留點和理由，三輪一樣的點就是「沒有人換邊」（設計師 關卡 2 第 18 條）。 */}
+                      <span className="sr-only">{t('站你這邊 {a} 位', { a: y })}</span>
                     </span>
                     <p>
                       {r.moves

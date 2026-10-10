@@ -202,10 +202,8 @@ function VoirDireScreen({ scene }: { scene: VoirDireScene }) {
           {t('・')}
           {t(picked.sheet, scope)}
         </p>
-        <p className="sub">
-          {goneBy(picked.id) ??
-            t('你還可以問 {a} 題；無因迴避還剩 {b} 次。', { a: st.left, b: leftStrikes })}
-        </p>
+        {/* 剩幾題、剩幾次只寫在頂列和按鈕上；人物卡只在人已經不在名單上時說明（設計師 關卡 2 第 18 條）。 */}
+        {goneBy(picked.id) && <p className="sub">{goneBy(picked.id)}</p>}
       </div>
       <div className="qa">
         {st.asked.includes(picked.id) ? (
