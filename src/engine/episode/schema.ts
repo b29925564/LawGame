@@ -788,6 +788,11 @@ const defenseScene = z.object({
           flags: z.array(z.string()).default([]),
           /** 條件不符就不出現（例如筆錄更正過，就沒有「再說一遍」可教）。 */
           when: when.optional(),
+          /**
+           * 準備桌上夾在這張卡旁的筆錄影本：這句話在哪一場錄取的哪一題（要有 cite）。
+           * 頁、行取自那一題的 cite，前後各一行照劇本的問答順序，不另外手寫。
+           */
+          transcript: z.object({ scene: id, q: id }).optional(),
         }),
       )
       .min(1),

@@ -395,6 +395,12 @@ test.beforeEach(async ({ page }) => {
   });
 });
 
+/** 證人準備：點第二張索引卡，再按確認。 */
+async function prepare(page: Page) {
+  await page.getByRole('radio').nth(1).click();
+  await page.getByRole('button', { name: /就這樣準備/ }).click();
+}
+
 test('第 1 集可以一路從冷開場玩到判決', async ({ page }) => {
   await playToRachelLast(page);
   // 不出示論點 D：瑞秋不會援引緘默權，照常走到辯方證人和結辯。
@@ -405,7 +411,7 @@ test('第 1 集可以一路從冷開場玩到判決', async ({ page }) => {
 
   // 辯方證人：正常準備，照時間順序問三題，檢方反詰問後收尾。
   await page.getByRole('button', { name: /準備艾倫・布魯克斯出庭/ }).click();
-  await page.getByRole('button', { name: '就這樣準備' }).nth(1).click();
+  await prepare(page);
   for (const q of [/死亡時間是週五晚上/, /智慧手錶，您在驗屍/, /心率歸零，代表什麼/]) {
     await page.getByRole('button', { name: q }).click();
   }
@@ -419,7 +425,7 @@ test('第 1 集可以一路從冷開場玩到判決', async ({ page }) => {
     ['伊森・蕭', [/你收到了什麼/, /看到了什麼/]],
   ] as const) {
     await page.getByRole('button', { name: new RegExp(`準備${who}出庭`) }).click();
-    await page.getByRole('button', { name: '就這樣準備' }).nth(1).click();
+    await prepare(page);
     for (const q of qs) await page.getByRole('button', { name: q }).click();
     await page.getByRole('button', { name: '問完了' }).click();
     await next(page);

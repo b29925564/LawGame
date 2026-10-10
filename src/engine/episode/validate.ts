@@ -479,6 +479,16 @@ function defenseErrors(s: DefenseScene, e: Episode, errors: string[]) {
     if (oids.has(o.id)) errors.push(`辯方證人 ${s.id} 的準備選項 id 重複：${o.id}`);
     oids.add(o.id);
   }
+  for (const o of s.prep.options) {
+    if (!o.transcript) continue;
+    const depo = e.scenes.find((x) => x.id === o.transcript?.scene);
+    const q =
+      depo?.type === 'deposition' ? depo.script.find((x) => x.id === o.transcript?.q) : null;
+    if (!q?.cite)
+      errors.push(
+        `辯方證人 ${s.id} 的準備選項 ${o.id} 夾的筆錄 ${o.transcript.scene}／${o.transcript.q} 找不到，或那一題沒有 cite`,
+      );
+  }
   const known = new Set(
     e.scenes.flatMap((x) =>
       x.type === 'desk'

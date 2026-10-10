@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import * as defense from '../engine/episode/defense';
 import type { DefenseScene } from '../engine/episode/schema';
-import { defenseState, juryAfterTrial, useEpisode, witnessScene } from '../engine/game';
+import { defenseState, episodeOf, juryAfterTrial, useEpisode, witnessScene } from '../engine/game';
 import { useT } from '../i18n';
 import { termsOf } from '../engine/jury';
 import { useScope } from './lang';
@@ -10,6 +10,7 @@ import { Speech } from './Portrait';
 import { batesOf, CourtRecord, useCourtEntries } from './Record';
 import { CourtCast } from './jury/CourtFace';
 import { Recap } from './ActCard';
+import { WitnessPrep } from './Prep';
 
 /**
  * 辯方證人（企劃書 6.9.6）：先準備，再直接詰問。
@@ -56,26 +57,7 @@ function DefenseScreen({ scene: raw }: { scene: DefenseScene }) {
     );
 
   if (st.stage === 'prep')
-    return (
-      <main className="scene">
-        <p className="eyebrow">
-          {t('證人準備・{name}（{role}）・{n} 工時', {
-            name: t(scene.witness.name, scope),
-            role: t(scene.witness.role, scope),
-            n: scene.prep.hours,
-          })}
-        </p>
-        <ul className="stack">
-          {scene.prep.options.map((o) => (
-            <li key={o.id} className="panel">
-              <strong>{t(o.label, scope)}</strong>
-              <p className="muted">{t(o.detail, scope)}</p>
-              <button onClick={() => prepareWitness(o.id)}>{t('就這樣準備')}</button>
-            </li>
-          ))}
-        </ul>
-      </main>
-    );
+    return <WitnessPrep scene={scene} ep={episodeOf(progress)} onPrepare={prepareWitness} />;
 
   const left = scene.asks - st.asked.length;
   const open = [...scene.questions]

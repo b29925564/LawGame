@@ -1,0 +1,272 @@
+/*
+ * 證人準備（P2-9 規格）：事務所的卷宗桌面。紙是 --note 的橫線索引卡，字是盧卡斯的鉛筆（--pencil、LXGW）。
+ * 選取＝外面一圈 2px --text 墨框淡入；不放大、不浮起、不用黃。確認鈕是整個畫面唯一的黃。
+ * 筆錄影本用 --copy-paper，回形針中性灰。
+ */
+.scene.prep {
+  --pitch: calc(32px * var(--text-scale));
+  max-width: 1240px;
+}
+.prep .wide-only {
+  display: none;
+}
+.prep-desk {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.prep-who {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.prep-id {
+  min-width: 0;
+}
+.prep-name {
+  margin: 0;
+  font: 700 calc(20px * var(--text-scale)) / 1.3 var(--font);
+  color: var(--text);
+}
+.prep-role {
+  margin: 2px 0 0;
+  font: 400 var(--fs-ui-cap) / 1.4 var(--font);
+  color: var(--muted);
+}
+.prep-hours {
+  margin: 8px 0 0;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+  font: 400 var(--fs-ui-cap) / 1.4 var(--font);
+  color: var(--text);
+}
+.prep-main {
+  min-width: 0;
+}
+.prep-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  align-items: flex-start;
+}
+
+.prep-card {
+  position: relative;
+  width: 340px;
+  max-width: 100%;
+  cursor: pointer;
+  outline: none;
+}
+/* 索引卡：5:3（寬 340、高 204 起），頂上一條 2px 頭線，橫線 32px 一格；字的基線落在線上。 */
+.card-paper {
+  position: relative;
+  display: flow-root;
+  box-sizing: border-box;
+  min-height: calc(var(--pitch) * 6 + 12px);
+  padding: 12px 16px 0;
+  background-color: var(--note);
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0 calc(var(--pitch) - 1px),
+    var(--paper-rule) calc(var(--pitch) - 1px) var(--pitch)
+  );
+  background-position: 0 12px;
+  background-repeat: repeat-y;
+  background-size: 100% calc(100% - 12px);
+  color: var(--pencil);
+  font: 400 calc(var(--fs-hand) * var(--text-scale)) / var(--pitch) var(--font-hand);
+  letter-spacing: 0;
+}
+.card-paper::before {
+  content: '';
+  position: absolute;
+  inset: 11px 0 auto;
+  height: 2px;
+  background: var(--paper-rule);
+}
+.card-paper .label,
+.card-paper .detail {
+  display: block;
+  position: relative;
+}
+.card-paper .label {
+  font-weight: 700;
+}
+/* 選取不用全站「勾選＝黃邊」的樣式（那是玩家的手）：選取只有墨框。 */
+.prep-card[aria-checked='true'] {
+  border-color: transparent !important;
+  background: none !important;
+  box-shadow: none;
+}
+/* 選取框：卡外 2px 墨框，淡入。 */
+.card-paper::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border: 2px solid var(--text);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-ui) var(--ease);
+}
+.prep-card.picked .card-paper::after {
+  opacity: 1;
+}
+.prep-card:focus-visible .card-paper {
+  outline: 2px solid var(--focus);
+  outline-offset: 6px;
+}
+.prep-card.out {
+  opacity: 0;
+  transition: opacity var(--dur-ui) var(--ease);
+  pointer-events: none;
+}
+/* 夾筆錄影本的卡：影本壓在右下角，遮住最後兩條空白橫線；字留在上面四行（英文長了卡就往下長）。 */
+.prep-card.clipped {
+  display: grid;
+}
+.prep-card.clipped .card-paper {
+  grid-area: 1 / 1;
+  padding-bottom: calc(var(--pitch) * 2);
+}
+
+.prep-copy {
+  position: relative;
+  z-index: 1;
+  grid-row: 2;
+  grid-column: 1;
+  justify-self: end;
+  /* 壓在卡最後兩條橫線上，其餘往下往外露出。 */
+  margin: calc(var(--pitch) * -2 + 6px) -120px 0 0;
+  width: 300px;
+  padding: 10px 12px 10px;
+  box-sizing: border-box;
+  background: var(--copy-paper);
+  border: 1px solid var(--paper-rule);
+  color: var(--toner);
+  font: 400 14px / 1.45 var(--font-court);
+  pointer-events: none;
+}
+:root:lang(en) .prep-copy {
+  font-size: 12px;
+}
+.prep-copy .pclip {
+  position: absolute;
+  top: -17px;
+  left: 22px;
+  width: 11px;
+  height: 26px;
+  border: 2px solid #7d8794;
+  border-radius: 6px;
+}
+.prep-copy figcaption {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0 8px;
+  margin-bottom: 6px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid var(--paper-rule);
+}
+.prep-copy .vol {
+  font-weight: 700;
+}
+.prep-copy .pg {
+  white-space: nowrap;
+}
+.prep-copy .oath {
+  grid-column: 1 / -1;
+}
+.prep-copy ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.prep-copy li {
+  display: grid;
+  grid-template-columns: 1.8em minmax(0, 1fr);
+  gap: 0 8px;
+}
+.prep-copy .ln {
+  text-align: right;
+}
+.prep-copy .tx {
+  overflow-wrap: anywhere;
+}
+
+.prep-bar {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 12px;
+}
+.prep-bar .primary {
+  min-width: 12em;
+}
+
+@media (max-width: 767px) {
+  .scene.prep {
+    --fs-hand: 16px;
+  }
+  .prep .mobile-only {
+    display: contents;
+  }
+  .prep-cards {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 20px;
+  }
+  .prep-card {
+    width: auto;
+  }
+  /* 手機：影本改到卡的下方，整寬三行，不壓在卡上。 */
+  .prep-card.clipped .card-paper {
+    padding-bottom: 0;
+  }
+  .prep-copy {
+    justify-self: stretch;
+    width: auto;
+    margin: 14px 0 0;
+  }
+  /* 確認鈕固定在底部列。 */
+  .prep-bar {
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    margin: 12px -16px -40px;
+    padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px));
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+  }
+  .prep-bar .primary {
+    flex: 1;
+  }
+}
+@media (min-width: 768px) {
+  .prep .mobile-only {
+    display: none;
+  }
+  .prep .wide-only {
+    display: contents;
+  }
+  .prep-desk {
+    display: grid;
+    grid-template-columns: 280px minmax(0, 1fr);
+    gap: 40px;
+    align-items: start;
+  }
+  .prep-who {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+  }
+  .prep-card.clipped {
+    margin-right: 120px;
+  }
+  .prep-bar {
+    margin-top: 24px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .card-paper::after,
+  .prep-card.out {
+    transition: none;
+  }
+}
