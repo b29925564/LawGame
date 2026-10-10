@@ -18,14 +18,37 @@ describe('字幕拆卡', () => {
     const lines = lineBreaks('一二三四五六七八九十。', 10);
     expect(lines.every((l) => !/^[。，]/.test(l))).toBe(true);
   });
-  it('一張裡有句號，兩半放得進一行就在句號後換行', () => {
+  it('兩個短句各一行：整句裝一張，句號後硬換行', () => {
     const cards = splitCards(
       '死者倒在辦公桌旁，頭部有重擊傷。桌上的水晶獎盃掉在地毯上，上面有血。',
       20,
     );
     expect(cards.length).toBe(1);
-    expect(lineBreaks(cards[0].text, 20).length).toBeLessThanOrEqual(2);
-    expect(cards[0].text).toContain('傷。');
+    expect(cards[0].lines).toEqual([
+      '死者倒在辦公桌旁，頭部有重擊傷。',
+      '桌上的水晶獎盃掉在地毯上，上面有血。',
+    ]);
+  });
+  it('切在標點：每張從句首或子句首開始，短句不拆兩張', () => {
+    const s =
+      'The victim was on the floor beside his desk with a blunt-force wound to the head. A crystal award from the desk was on the carpet. It had blood on it.';
+    const cards = splitCards(s, 30);
+    expect(cards.map((c) => c.text).join(' ')).toBe(s);
+    for (const c of cards) expect(/^[A-Z]/.test(c.text)).toBe(true);
+    expect(cards.some((c) => c.text === 'blood on it.')).toBe(false);
+  });
+  it('只放一行時，長句在逗號切子句，不在句中硬切', () => {
+    const s = '死者倒在辦公桌旁，頭部有重擊傷，桌上的水晶獎盃掉在地毯上，上面有血。';
+    const cards = splitCards(s, 12, 1);
+    expect(cards.map((c) => c.text).join('')).toBe(s);
+    for (const c of cards) expect(lineBreaks(c.text, 12).length).toBe(1);
+    expect(cards.every((c) => /[，。]$/.test(c.text))).toBe(true);
+  });
+  it('英文句子之間不會留「counsel.」孤字卡', () => {
+    const s = "Overruled. There's nothing wrong with that question, counsel.";
+    const cards = splitCards(s, 12);
+    expect(cards.map((c) => c.text).join(' ')).toBe(s);
+    expect(cards.some((c) => c.text === 'counsel.')).toBe(false);
   });
   it('最後一行不留孤字', () => {
     const lines = lineBreaks(

@@ -21,6 +21,8 @@
   --dur-frame: 41.667ms;
   /* 字幕換句是硬切：一格（24fps）。 */
   --dur-cut: 42ms;
+  /* 一張字幕的閱讀時間：單位數 × 這個（漢字 1 單位、其他 0.35），至少 10 單位。 */
+  --dur-sub-unit: 140ms;
 }
 .court-desk {
   display: grid;
@@ -3222,6 +3224,7 @@ html[lang='en'] .stamp.rec-stamp b {
 }
 @keyframes sub-hide {
   to {
+    opacity: 0;
     visibility: hidden;
   }
 }

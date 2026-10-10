@@ -42,42 +42,81 @@ export function lineBreaks(text: string, em: number): string[] {
 }
 
 const lineWidth = (t: string) => [...t].reduce((n, ch) => n + w(ch), 0);
-const width = (t: string) => [...t].reduce((n, ch) => n + w(ch), 0);
+const SENTENCE = /[^。！？.!?]+(?:[。！？.!?]+[」』”’)）]*\s*)?/g;
+const CLAUSE = /[^，、；：—,;:]+(?:[，、；：—,;:]+\s*)?/g;
 
-/** 兩行的一張裡有句號：兩半各自放得進一行才在句號後換行，不然照原本的斷法。 */
-function breakAtSentence(text: string, em: number): string[] | null {
-  let best: string[] | null = null;
-  for (const m of text.matchAll(/[。！？.!?]+\s*/g)) {
-    const cut = (m.index ?? 0) + m[0].length;
-    const a = text.slice(0, cut).trim();
-    const b = text.slice(cut).trim();
-    if (!a || !b || width(a) > em || width(b) > em) continue;
-    if (!best || Math.max(width(a), width(b)) < Math.max(width(best[0]), width(best[1])))
-      best = [a, b];
-  }
-  return best;
+const zhOf = (t: string) => /[\p{Script=Han}]/u.test(t);
+const join = (parts: string[]) => parts.join(zhOf(parts[0] ?? '') ? '' : ' ');
+
+export interface Card {
+  text: string;
+  /** 在原句裡的起點（字元數），用來對時間。 */
+  from: number;
+  /** 幾個整句各佔一行時，硬換行用。 */
+  lines?: string[];
 }
 
-/** 拆成每張最多 maxLines 行的幾段；回傳每段的文字與它在原句裡的起點（字元數，用來對時間）。 */
-export function splitCards(
-  text: string,
-  em: number,
-  maxLines = 2,
-): { text: string; from: number; lines?: string[] }[] {
-  const lines = lineBreaks(text, em);
-  const out: { text: string; from: number; lines?: string[] }[] = [];
+/**
+ * 字幕分張（設計師 #257）：切在標點，不是排滿就切。
+ * 1. 先照句號、問號、驚嘆號分句，整句裝進一張（行數 ≤ maxLines）；
+ * 2. 一句放不下，在逗號、分號、冒號、破折號分子句裝張；
+ * 3. 子句還放不下，才在詞界斷（lineBreaks，中文逐字、英文在空白），每 maxLines 行一張。
+ * 一句放得進一張就不拆；每張盡量是完整的句子或子句。
+ */
+export function splitCards(text: string, em: number, maxLines = 2): Card[] {
+  const fits = (t: string) => lineBreaks(t, em).length <= maxLines;
+  const pieces = (t: string, re: RegExp) => (t.match(re) ?? [t]).filter((x) => x.trim());
+  const cards: Card[] = [];
   let at = 0;
-  for (let i = 0; i < lines.length; i += maxLines) {
-    let part = lines.slice(i, i + maxLines);
-    let forced: string[] | undefined;
-    if (part.length === 2) {
-      const zh0 = /[\p{Script=Han}]/u.test(part[0]);
-      forced = breakAtSentence(part.join(zh0 ? '' : ' '), em) ?? undefined;
-      if (forced) part = forced;
+  const push = (parts: string[]) => {
+    const t = join(parts.map((x) => x.trim()));
+    const used = parts.reduce((n, x) => n + x.length, 0);
+    const single = parts.length > 1 && parts.every((x) => lineBreaks(x.trim(), em).length === 1);
+    cards.push({ text: t, from: at, ...(single ? { lines: parts.map((x) => x.trim()) } : {}) });
+    at += used;
+  };
+  // 把一串片段依序裝進張，裝不下就換張；片段本身放不下交給 overflow。
+  const pack = (parts: string[], overflow: (p: string) => void) => {
+    let cur: string[] = [];
+    const flush = () => {
+      if (cur.length) push(cur);
+      cur = [];
+    };
+    for (const p of parts) {
+      if (cur.length && fits(join([...cur, p].map((x) => x.trim())))) {
+        cur.push(p);
+      } else if (fits(p.trim())) {
+        flush();
+        cur.push(p);
+      } else {
+        flush();
+        overflow(p);
+      }
     }
-    const zh = /[\p{Script=Han}]/u.test(part[0]);
-    out.push({ text: part.join(zh ? '' : ' '), from: at, ...(forced ? { lines: forced } : {}) });
-    at += part.reduce((n, l) => n + l.length, 0);
-  }
-  return out;
+    flush();
+  };
+  const hard = (p: string) => {
+    const lines = lineBreaks(p.trim(), em);
+    for (let k = 0; k < lines.length; k += maxLines) {
+      const grp = lines.slice(k, k + maxLines);
+      cards.push({ text: join(grp), from: at });
+      at += grp.reduce((n, x) => n + x.length, 0);
+    }
+  };
+  // 尾巴的子句太短（「counsel.」）就併回前一個，不單獨成一張。
+  const clauses = (p: string) => {
+    const ps = pieces(p, CLAUSE);
+    while (ps.length > 1 && lineWidth(ps[ps.length - 1].trim()) < 0.5 * em) {
+      const last = ps.pop() as string;
+      ps[ps.length - 1] += last;
+    }
+    pack(ps, hard);
+  };
+  pack(pieces(text, SENTENCE), clauses);
+  return cards.length ? cards : [{ text, from: 0 }];
 }
+
+/** 一張字幕要停多久（單位數 × --dur-sub-unit）：漢字 1，其他 0.35；至少 SUB_MIN_UNITS。 */
+export const SUB_MIN_UNITS = 10;
+export const readUnits = (t: string) =>
+  Math.round([...t].reduce((n, ch) => n + (/\s/.test(ch) ? 0 : w(ch) === 1 ? 1 : 0.35), 0));

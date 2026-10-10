@@ -401,7 +401,6 @@ export function CourtRecord({
       text: e.text,
       redact: e.redact,
       at: at(i),
-      span: rows.filter((r) => r.entry === i).length,
     });
     // 字幕留到下一句開始為止：下一句是鏡頭外的人（律師的問句、旁白）就收成空，不讓上一句看起來像在答新問題（設計師 #257）。
     const fresh = entries.flatMap((e, i) =>
