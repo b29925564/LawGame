@@ -24,6 +24,17 @@ const ATTRIBUTIONS = [
 
 const CC_BY = 'https://creativecommons.org/licenses/by/4.0/';
 
+/** 美術的 CC BY 素材（art-bible/scenes/0505-31f/manifest.json 的 attribution）；其餘貼圖與 HDRI 是 CC0 或自製。CC BY 要求註明有修改。 */
+const ART = [
+  {
+    use: '手部模型（經修改）',
+    title: 'Male base mesh (no head)',
+    author: 'Vinrax',
+    url: 'https://opengameart.org/content/male-base-mesh-no-head',
+    license: { name: 'CC BY 3.0', url: 'https://creativecommons.org/licenses/by/3.0/' },
+  },
+] as const;
+
 const FONTS =
   'Noto Sans TC, Noto Serif TC, LXGW WenKai TC, Courier Prime, JetBrains Mono, IBM Plex Sans, Source Serif 4';
 
@@ -51,6 +62,25 @@ export function Credits() {
         ))}
       </ul>
       <p className="muted small">{t('其餘音效與環境音為 CC0 公眾領域素材或本作自製。')}</p>
+      <h2>{t('美術素材')}</h2>
+      <ul className="stack">
+        {ART.map((a) => (
+          <li key={a.url}>
+            <span className="muted">{t(a.use)}</span>
+            <span>
+              <a href={a.url} target="_blank" rel="noreferrer">
+                {a.title}
+              </a>{' '}
+              {t('作者')} {a.author}
+              {t('・')}
+              <a href={a.license.url} target="_blank" rel="noreferrer">
+                {a.license.name}
+              </a>
+            </span>
+          </li>
+        ))}
+      </ul>
+      <p className="muted small">{t('其餘貼圖、材質與環境光為 CC0 公眾領域素材或本作自製。')}</p>
       <h2>{t('字型')}</h2>
       <p className="small">
         {FONTS}
