@@ -30,6 +30,7 @@ import { Redaction } from './Redaction';
 import { DocPhotos, shotsById } from './ScenePhotos';
 import { Shell, Tabs } from './Shell';
 import { Timeline } from './Timeline';
+import { Lock } from './Lock';
 import { PlaceSlate, Recap } from './ActCard';
 import { durUi, reducedMotion } from './a11y';
 
@@ -1205,7 +1206,7 @@ function Motions({
       <>
         {a.ruling === 'denied' && <span className="zh">{t('修正後可重送，工時照扣')}</span>}
         <button className="commit" disabled={!ready} onClick={() => fileMotion(m.id)}>
-          <span aria-hidden>🔒 </span>
+          <Lock />
           {a.ruling === 'denied' ? t('重新遞狀') : t('遞狀')}
           <span className="cost">{t('−{n} 工時', { n: m.cost })}</span>
         </button>
@@ -1513,7 +1514,7 @@ function WrapButton({ hours, open, onWrap }: { hours: number; open: number; onWr
   // 第二下是定案鈕：寫出還剩多少工時、多少疑問沒確認（UX 決策代價規格三）。
   return armed ? (
     <button className="commit wide armed" onClick={onWrap}>
-      <span aria-hidden>🔒 </span>
+      <Lock />
       {t('確定結束')}{' '}
       <span className="cost">
         {open ? t('剩 {n} 時・{m} 題沒確認', { n: hours, m: open }) : t('剩 {n} 時', { n: hours })}

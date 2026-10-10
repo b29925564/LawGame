@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import type { Line } from '../engine/episode/schema';
 import { useT } from '../i18n';
 import { LUCAS, lucas } from './cast';
+import { IdPhoto } from './IdPhoto';
 import { useScope } from './lang';
 import { CourtFace, useInCourt } from './jury/CourtFace';
 import { MarkLine } from './Marks';
@@ -9,42 +10,12 @@ import { prose } from './prose';
 import { VoLine } from './VoiceOver';
 
 /**
- * 角色頭像，4:5。盧卡斯用正式立繪（cast.ts）；其他人在法庭是剪影替身（jury/CourtFace）。
- * 法庭外的五官元件是待下架的舊暫代：使用者 10-09 決定配角在桌上一律用檔案照（IdPhoto 模板 B），換圖排給介面與操作 #2。
+ * 角色頭像，4:5。盧卡斯用正式立繪（cast.ts）；其他人在法庭是剪影替身（jury/CourtFace），
+ * 在桌上和卷宗旁是檔案照（IdPhoto 模板 B；視覺規格 §16，使用者 10-09）。程式畫的卡通臉已下架。
  */
-const palette: Record<string, string> = {
-  盧卡斯: '#1f4e8c',
-  伊森: '#2d6b57',
-  '伊森・蕭': '#2d6b57',
-  '馬庫斯・海爾': '#5b3f86',
-  '維多莉亞・惠特洛克': '#8c2f4d',
-  羅根: '#7a5522',
-  '羅根・普萊斯': '#7a5522',
-  戴文: '#2f6f7a',
-  蘿莎: '#7a3f2f',
-  柯瓦斯基: '#41505f',
-  莫羅: '#8c4b1f',
-  法官: '#3c3c3c',
-  旁白: 'transparent',
-  語音: '#4a5866',
-};
 
-const brows: Record<Line['mood'], string> = {
-  平: '0',
-  緊: '-10',
-  暖: '4',
-  硬: '-4',
-  慌: '-14',
-  默: '-2',
-};
-const mouths: Record<Line['mood'], string> = {
-  平: 'M 22 42 q 10 4 20 0',
-  緊: 'M 22 44 q 10 -3 20 0',
-  暖: 'M 22 41 q 10 8 20 0',
-  硬: 'M 22 43 h 20',
-  慌: 'M 24 45 q 8 -6 16 0',
-  默: 'M 25 43 h 14',
-};
+/** 不是人的說話者：電話語音、派單 App。 */
+const faceless = new Set(['語音', '卡爾德快遞']);
 
 export function Portrait({
   who,
@@ -61,9 +32,10 @@ export function Portrait({
   const a11y = decorative
     ? ({ 'aria-hidden': true } as const)
     : ({ role: 'img', 'aria-label': t(who) } as const);
-  const color = palette[who] ?? '#4a5866';
   if (who === '旁白') return null;
-  // 法庭裡的配角是剪影替身（P4-2），不再用暫代的五官；盧卡斯照舊放立繪。
+  // 不是人的說話者：不放頭像也不放黑條（黑條留給林肯），頭像那一格留空，台詞左緣才和別人對齊（設計師 #258）。
+  if (faceless.has(who)) return <span className="portrait faceless" aria-hidden />;
+  // 法庭裡的配角是剪影替身（P4-2）；盧卡斯照舊放立繪。
   if (inCourt && who !== LUCAS) return <CourtFace who={who} />;
   const src = who === LUCAS ? lucas(mood, 144) : undefined;
   if (src)
@@ -78,22 +50,10 @@ export function Portrait({
         />
       </span>
     );
-  const brow = Number(brows[mood] ?? 0);
   return (
-    <svg className="portrait" viewBox="0 0 64 80" {...a11y} focusable="false">
-      <g transform="translate(0 14)">
-        <circle cx="32" cy="32" r="30" fill={color} opacity="0.16" />
-        <circle cx="32" cy="27" r="17" fill={color} opacity="0.32" />
-        <path d="M 8 62 q 24 -18 48 0 z" fill={color} opacity="0.32" />
-        <g stroke={color} strokeWidth="2.5" strokeLinecap="round" fill="none">
-          <line x1="21" y1={26 + brow / 5} x2="29" y2={24 + brow / 4} />
-          <line x1="35" y1={24 + brow / 4} x2="43" y2={26 + brow / 5} />
-          <circle cx="25" cy="33" r="1.6" fill={color} stroke="none" />
-          <circle cx="39" cy="33" r="1.6" fill={color} stroke="none" />
-          <path d={mouths[mood] ?? mouths['平']} />
-        </g>
-      </g>
-    </svg>
+    <span className="portrait id" {...a11y}>
+      <IdPhoto who={who} size="fill" />
+    </span>
   );
 }
 

@@ -92,7 +92,7 @@ function useHeld(on: boolean) {
 /** 選單開著時，幕卡不切走、按鍵也不跳過。 */
 const menuOpen = () => !!document.querySelector('dialog[open], [role="dialog"]');
 
-function useCut(onDone?: () => void) {
+function useCut(onDone?: () => void, wait?: number) {
   const [black, setBlack] = useState(false);
   const done = useRef(onDone);
   useEffect(() => {
@@ -106,7 +106,7 @@ function useCut(onDone?: () => void) {
       if (menuOpen()) id = window.setTimeout(fire, 500);
       else setBlack(true);
     };
-    id = window.setTimeout(fire, (reducedMotion() ? ENTER_RM : ENTER) + HOLD);
+    id = window.setTimeout(fire, wait ?? (reducedMotion() ? ENTER_RM : ENTER) + HOLD);
     const key = (e: KeyboardEvent) => {
       if (e.key !== 'Enter' && e.key !== ' ') return;
       if (menuOpen()) return;
@@ -121,7 +121,7 @@ function useCut(onDone?: () => void) {
       clearTimeout(id);
       window.removeEventListener('keydown', key);
     };
-  }, [auto]);
+  }, [auto, wait]);
   useEffect(() => {
     if (!black) return;
     const id = window.setTimeout(() => done.current?.(), CUT);
@@ -140,6 +140,7 @@ export function ActCard({
   headline,
   place,
   bates,
+  total,
   lines,
   children,
   onDone,
@@ -148,6 +149,8 @@ export function ActCard({
   /** 場記：下一場戲的地點。 */
   place?: Place;
   bates: string;
+  /** 集尾卡才有：這一集一共製作幾頁（設定集 10.1「本集共製作 N 頁」）。 */
+  total?: number;
   lines?: ReactNode;
   children?: ReactNode;
   /** 有這個就是鏡頭：進場完停 2.5 秒，硬切（83ms 黑）進下一場；點一下、Enter、空白鍵可以跳過。 */
@@ -178,7 +181,13 @@ export function ActCard({
     >
       <div className="act-wrap">
         <section
-          className={CJK.test(headline.title) ? 'act-card' : 'act-card latin'}
+          className={[
+            'act-card',
+            !CJK.test(headline.title) && 'latin',
+            total !== undefined && 'ending',
+          ]
+            .filter(Boolean)
+            .join(' ')}
           aria-label={[headline.kicker, headline.title].join(' ')}
         >
           <span className="act-tube" aria-hidden />
@@ -235,9 +244,16 @@ export function ActCard({
               )}
             </p>
           )}
-          <span className="act-bates" aria-hidden>
-            {bates}
-          </span>
+          <div className="act-foot">
+            {total !== undefined && (
+              <span className="act-total">
+                {t('本集共製作 {n} 頁', { n: total.toLocaleString('en-US') })}
+              </span>
+            )}
+            <span className="act-bates" aria-hidden>
+              {bates}
+            </span>
+          </div>
         </section>
       </div>
       {lines && <div className="act-lines">{lines}</div>}
@@ -259,6 +275,10 @@ const SLATE_HOLD = 2500;
 export function PlaceSlate({ id, place }: { id?: string; place: Place | null }) {
   const en = useLang((s) => s.lang) === 'en';
   const [where, right] = useSlate(place ?? undefined);
+  // 窄的時候先省略事務所名、場所名，留住房間（房間才是這一場的資訊）。
+  const cut = where.lastIndexOf(en ? ', ' : '\u3000');
+  const lead = cut > 0 ? where.slice(0, cut + (en ? 2 : 1)) : '';
+  const room = cut > 0 ? where.slice(cut + (en ? 2 : 1)) : where;
   const [done, setDone] = useState<string>();
   const live = !!place && done !== id;
   useEffect(() => {
@@ -276,8 +296,43 @@ export function PlaceSlate({ id, place }: { id?: string; place: Place | null }) 
   if (!place || !live) return null;
   return (
     <p key={id} className="place-slate" role="status">
-      {[where, right].join(en ? '  ' : '\u3000')}
+      <span className="ps-where">
+        {lead && <span className="ps-lead">{lead}</span>}
+        <span className="ps-room">{room}</span>
+      </span>
+      {right && (
+        <span className="ps-when">
+          {en ? '  ' : '\u3000'}
+          {right}
+        </span>
+      )}
     </p>
+  );
+}
+
+/**
+ * 換地點時的定場（設定集 11.3 地點字卡）：場記不蓋在畫面上，而是在場景的介面掛上之前自己占一格鏡頭——
+ * 黑底、左下一行場記，淡入 180ms、停 2.5 秒、淡出 180ms，硬切進那一場。名單、卡片、按鈕都還沒出現，
+ * 所以字卡不會蓋到任何東西（設計師 #225）。點一下、Enter、空白鍵可以跳過。
+ * 之後場景有定場鏡頭（3D 或場景圖）時，這一格改成場記疊在鏡頭上，同一個元件。
+ */
+export function PlaceBeat({ id, place, onDone }: { id: string; place: Place; onDone: () => void }) {
+  const t = useT();
+  const wait = reducedMotion() ? SLATE_HOLD : 2 * SLATE_FADE + SLATE_HOLD;
+  const cut = useCut(onDone, wait);
+  return (
+    <main
+      className={cut.black ? 'act-stage place-beat cut' : 'act-stage place-beat'}
+      onClick={cut.skip}
+      data-auto=""
+    >
+      <span className="place-tbd">
+        {t('待放 3D 機位')}
+        {'\u3000'}
+        {t('定場')}
+      </span>
+      <PlaceSlate id={id} place={place} />
+    </main>
   );
 }
 

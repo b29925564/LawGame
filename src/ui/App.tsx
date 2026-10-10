@@ -1,6 +1,6 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { episodes } from '../content';
-import { batesAt } from '../engine/bates';
+import { batesAt, ownBates, totalPages } from '../engine/bates';
 import { episodeOf, followingEpisode, sceneOf, useEpisode } from '../engine/game';
 import { useSettings } from '../engine/settings';
 import { useGame } from '../engine/store';
@@ -13,7 +13,7 @@ import { Desk } from './Desk';
 import { Dialogue } from './Dialogue';
 import { GameMenu } from './GameMenu';
 import { Interview } from './Interview';
-import { ActCard, PlaceSlate, Recap, splitHeadline } from './ActCard';
+import { ActCard, PlaceBeat, Recap, splitHeadline } from './ActCard';
 import { Announcer } from './Marks';
 import { Negotiation } from './Negotiation';
 import { Phone } from './Phone';
@@ -31,6 +31,8 @@ export function App() {
   const { mode, progress, advance, toTitle, nextEpisode } = useEpisode();
   const textScale = useSettings((s) => s.textScale);
   const t = useT();
+  // 定場演過的那一場（換地點的場景先放一格場記，再掛介面）。
+  const [framed, setFramed] = useState<string>();
   useDocumentLang();
   useEffect(() => {
     document.documentElement.style.setProperty('--text-scale', String(textScale));
@@ -60,8 +62,13 @@ export function App() {
     .reverse()
     .find((x) => x.type === 'card');
   const day = !!card && prevCard?.type === 'card' && prevCard.act === card.act;
-  const headline = !scene
-    ? { kicker: t('第 {n} 集', { n: ep.number }), title: t('本集完') }
+  // 集尾（最後一場的卡、或是演完最後一場）：幕序＝第 n 集、標題＝待續，兩集同一個版型（設計師 #225）。
+  const ending = !scene || last;
+  const headline = ending
+    ? {
+        kicker: t('第 {n} 集', { n: ep.number }),
+        title: card ? t(card.title, card.id) : t('待續'),
+      }
     : card
       ? splitHeadline(
           opening ? t(card.lines[0], card.id) : t(card.title, card.id),
@@ -74,36 +81,50 @@ export function App() {
   const at = progress.scene;
   const where = card
     ? (placed(ep.scenes.slice(at + 1)) ?? placed(ep.scenes.slice(0, at).reverse()))
-    : placed(ep.scenes.slice().reverse());
+    : !scene
+      ? // 集尾：場記只讀最後一場自己的地點與時間；最後一場沒寫地點就空著，不去借前一場的（錯的時間比沒有更糟）。
+        placed(ep.scenes.slice(-1))
+      : placed(ep.scenes.slice().reverse());
   const slate = where && { raw: where.place, text: t(where.place, where.id) };
   // 地點字卡：換了地點、前一場又不是幕卡（幕卡自己有場記）時，左下一行場記。
   const here = scene && 'place' in scene && scene.place ? scene.place : '';
   const before = ep.scenes[at - 1];
   const moved =
     !!here && before?.type !== 'card' && placed(ep.scenes.slice(0, at).reverse())?.place !== here;
-  const page = batesAt(ep, at);
+  // 集尾那一頁就是這集的最後一頁，「本集共製作 N 頁」讀同一個數字。
+  // 換了地點：場記先占一格鏡頭，演完才掛這一場的介面（只在場景開頭；讀檔回到中途不重演）。
+  const beat = !!scene && moved && progress.step === 0 && framed !== scene.id;
+  const page = ending ? ownBates(ep.number, totalPages(ep)) : batesAt(ep, at);
   return (
     <SceneScope.Provider value={scene?.id}>
       <Announcer />
       <GameMenu />
-      <PlaceSlate id={scene?.id} place={moved ? { raw: here, text: t(here, scene?.id) } : null} />
-      {scene?.type === 'phone' && <Phone key={scene.id} scene={scene} />}
-      {scene?.type === 'dialogue' &&
+      {beat && scene && (
+        <PlaceBeat
+          key={scene.id}
+          id={scene.id}
+          place={{ raw: here, text: t(here, scene.id) }}
+          onDone={() => setFramed(scene.id)}
+        />
+      )}
+      {!beat && scene?.type === 'phone' && <Phone key={scene.id} scene={scene} />}
+      {!beat &&
+        scene?.type === 'dialogue' &&
         (scene.photos && progress.step >= scene.steps.length ? (
           <ScenePhotos key={scene.id} photos={scene.photos} onNext={advance} />
         ) : (
           <Dialogue key={scene.id} scene={scene} />
         ))}
-      {scene?.type === 'interview' && <Interview key={scene.id} scene={scene} />}
-      {scene?.type === 'desk' && <Desk key={scene.id} scene={scene} />}
-      {scene?.type === 'trial' && <Courtroom key={scene.id} scene={scene} />}
-      {scene?.type === 'deposition' && <Deposition key={scene.id} scene={scene} />}
-      {scene?.type === 'negotiation' && <Negotiation key={scene.id} scene={scene} />}
-      {scene?.type === 'voirdire' && <VoirDire key={scene.id} scene={scene} />}
-      {scene?.type === 'defense' && <Defense key={scene.id} scene={scene} />}
-      {scene?.type === 'theory' && <Theory key={scene.id} scene={scene} />}
-      {scene?.type === 'opening' && <Opening key={scene.id} scene={scene} />}
-      {scene?.type === 'closing' && <Closing key={scene.id} scene={scene} />}
+      {!beat && scene?.type === 'interview' && <Interview key={scene.id} scene={scene} />}
+      {!beat && scene?.type === 'desk' && <Desk key={scene.id} scene={scene} />}
+      {!beat && scene?.type === 'trial' && <Courtroom key={scene.id} scene={scene} />}
+      {!beat && scene?.type === 'deposition' && <Deposition key={scene.id} scene={scene} />}
+      {!beat && scene?.type === 'negotiation' && <Negotiation key={scene.id} scene={scene} />}
+      {!beat && scene?.type === 'voirdire' && <VoirDire key={scene.id} scene={scene} />}
+      {!beat && scene?.type === 'defense' && <Defense key={scene.id} scene={scene} />}
+      {!beat && scene?.type === 'theory' && <Theory key={scene.id} scene={scene} />}
+      {!beat && scene?.type === 'opening' && <Opening key={scene.id} scene={scene} />}
+      {!beat && scene?.type === 'closing' && <Closing key={scene.id} scene={scene} />}
       {scene?.type === 'card' && !last && progress.step === 0 && (
         <ActCard key={scene.id} headline={headline} place={slate} bates={page} onDone={advance} />
       )}
@@ -113,6 +134,7 @@ export function App() {
           headline={headline}
           place={slate}
           bates={page}
+          total={totalPages(ep)}
           lines={!last && <Recap />}
         >
           {/* 集尾卡的那一句（「第 1 集到此結束。」）沒有下一場可以放，和選項一起出現在卡下。 */}
