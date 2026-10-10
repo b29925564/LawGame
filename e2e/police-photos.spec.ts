@@ -41,7 +41,8 @@ test('16:05 開示送到：最後一句之後是附件二的照片頁，頁首�
   await expect(
     page.getByRole('heading', { name: '警方報告　附件二：現場照片（共 48 張）　檢方開示第一批' }),
   ).toBeVisible();
-  await expect(page.locator('.cine-photos .cine-time')).toHaveCount(0);
+  // 攤在桌上的附件封面紙，不是鏡頭：不放場記。
+  await expect(page.locator('.photo-sheet .cine-time')).toHaveCount(0);
   const photos = page.getByRole('list', { name: '現場照片' });
   await expect(photos.getByRole('img')).toHaveCount(3, { timeout: 15000 });
   await expect(photos.getByRole('img').first()).toHaveAccessibleName(/全景/);
@@ -67,7 +68,8 @@ test('16:05 開示送到：最後一句之後是附件二的照片頁，頁首�
   await expect(page.getByRole('heading', { name: '調查' })).toBeVisible();
 });
 
-test('卷宗的警方報告：附件二那一行下面是同三張照片紀錄表', async ({ page }) => {
+test('卷宗的警方報告：紙欄寬時附件二那一行下面是同三張照片紀錄表', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
   await load(page, 7, 0);
   await page.getByRole('button', { name: /^卷宗/ }).first().click();
   await page.getByRole('button', { name: /警方報告與附件/ }).click();
@@ -80,4 +82,31 @@ test('卷宗的警方報告：附件二那一行下面是同三張照片紀錄�
     'CPD-000302',
     'CPD-000303',
   ]);
+});
+
+test('手機卷宗：一列三張縮圖，案號和攝影者寫一次，點了放大是完整紀錄表', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await load(page, 7, 0);
+  await page.getByRole('button', { name: /^卷宗/ }).first().click();
+  await page.getByRole('button', { name: /警方報告與附件/ }).click();
+  const box = page.locator('.doc-photos');
+  await expect(box.locator('.photo-thumbs-head')).toContainText('CH-2026-1147');
+  await expect(box.locator('.photo-thumbs-head')).toContainText('M. Duarte');
+  const photos = box.getByRole('list', { name: '現場照片' });
+  await expect(photos.locator('.photolog-strip')).toHaveCount(0);
+  await expect(photos.locator('.photolog-thumb-bates')).toHaveText([
+    'CPD-000301',
+    'CPD-000302',
+    'CPD-000303',
+  ]);
+  const tops = await photos
+    .locator('li')
+    .evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().top)));
+  expect(new Set(tops).size).toBe(1);
+  const hit = photos.getByRole('button', { name: /放大檢視 .*獎盃/ });
+  expect((await hit.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+  await hit.click();
+  const dialog = page.getByRole('dialog', { name: /放大檢視 .*獎盃/ });
+  await expect(dialog.locator('.photolog-strip')).toContainText(['03/14 01:19']);
+  await expect(dialog.locator('.photolog-bates')).toHaveText('CPD-000303');
 });

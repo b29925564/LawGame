@@ -27,7 +27,7 @@ import { RelationPicker } from './RelationPicker';
 import { Cork, type CorkItem } from './Cork';
 import { Docket, EvidenceZoom } from './Dossier';
 import { Redaction } from './Redaction';
-import { ShotList, shotsById } from './ScenePhotos';
+import { DocPhotos, shotsById } from './ScenePhotos';
 import { Shell, Tabs } from './Shell';
 import { Timeline } from './Timeline';
 import { Recap } from './ActCard';
@@ -416,11 +416,7 @@ function Docs({ scene }: { scene: DeskScene }) {
           })}
         </ol>
         {/* 文件附的照片（第 9 章 PhotoLog）：警方報告附件二和 16:05 照片頁是同一份。 */}
-        {doc.photos && (
-          <div className="doc-photos">
-            <ShotList shots={shotsById(episodeOf(progress), doc.photos)} use="drawer" />
-          </div>
-        )}
+        {doc.photos && <DocPhotos shots={shotsById(episodeOf(progress), doc.photos)} />}
       </article>
     );
   return (
