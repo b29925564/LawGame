@@ -82,7 +82,6 @@
 死者過失比例: Decedent's share of fault
 判賠金額: Award
 懲罰性賠償: Punitive damages
-'不成立（{votes} 票，需要 {need} 票）': 'Not found ({votes} of {need} votes needed)'
 '・ 基調 {state}': '· Tone {state}'
 已選: set
 未選: not set
@@ -205,7 +204,6 @@
 被告不必賠償: The defendant owes nothing
 被告應負賠償責任: The defendant must pay damages
 審判無效，另定期日: Mistrial; set for retrial
-'{a} 票 : {b} 票': '{a} : {b}'
 陪審團評議後: After deliberation
 主要原因：: 'Main reason: '
 庭審結束時，已經有 {a} 位陪審員站你這邊。: 'By the end of testimony, {a} {a:juror was|jurors were} already on your side.'
@@ -252,3 +250,6 @@
 後靠抱胸: leaning back, arms crossed
 低頭寫筆記: head down, taking notes
 （已勾選）: ' (checked)'
+陪審團是否已經作出裁決？: Has the jury reached a verdict?
+是的，庭上。: We have, Your Honor.
+略過: Skip

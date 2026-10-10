@@ -24,8 +24,10 @@ import { Tally } from './Marks';
 import { Speech } from './Portrait';
 import { prose } from './prose';
 import { Shell, Tabs } from './Shell';
-import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
+import { useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { inkUnits, pen } from './court/hand';
+import { useVerdictRun, VerdictStage } from './court/VerdictStage';
+import type { Verdict as VerdictKind } from './court/verdictBeats';
 import { CourtCast, CourtFace } from './jury/CourtFace';
 import { castLook } from './jury/cast';
 
@@ -368,8 +370,6 @@ function Verdict({
     有責: t('被告應負賠償責任'),
     陪審團僵局: t('審判無效，另定期日'),
   };
-  const over = n - now;
-  const votes = t('{a} 票 : {b} 票', { a: Math.max(now, over), b: Math.min(now, over) });
 
   // 第一句「陪審長站起來。「……」」拆成宣讀卡；其餘照順序當後續（訊息、旁白）。
   const [first, ...rest] = ending;
@@ -400,13 +400,13 @@ function Verdict({
   // 陪審長的筆：裁決書上現場寫的每一筆照畫面順序接下去（設定集第 9 章 <VerdictForm>）。
   // 簽名在評議室就簽好了，帶進法庭時已經在紙上；現場只寫勾（刑事），民事再加金額與比例（設計師 #249）。
   const ink = pen();
-  const [written, setWritten] = useState(false);
-  useEffect(() => {
-    if (written) return;
-    const done = () => setWritten(true);
-    window.addEventListener('keydown', done, { once: true });
-    return () => window.removeEventListener('keydown', done);
-  }, [written]);
+  // 判決四拍（設定集 10.5）：裁決書手寫 → 筆錄黑條 → 字卡 → 窗光 → 才出現結論帶與評議欄。
+  const root = useRef<HTMLElement>(null);
+  const kind: VerdictKind =
+    v === '無罪' || v === '無責' ? '無罪' : v === '陪審團僵局' ? '陪審團僵局' : '有罪';
+  const run = useVerdictRun(kind, root);
+  const written = run.phase !== 'form';
+  const caption = useCaseTerms();
 
   const steps = [
     trial && { label: t('庭審結束'), j: trial },
@@ -415,7 +415,20 @@ function Verdict({
   ].filter((x): x is { label: string; j: Record<string, number> } => !!x);
 
   return (
-    <main className="vdict">
+    <main className="vdict" ref={root} data-stage={run.phase}>
+      {/* 四拍進行時結論還不能先說；螢幕報讀照樣有結論。 */}
+      {run.phase !== 'done' && (
+        <p className="sr-only" role="status">
+          {headline}
+        </p>
+      )}
+      <VerdictStage
+        v={kind}
+        word={v === '陪審團僵局' ? t('未達一致') : t(v)}
+        run={run}
+        line={civil ? t('被告是否有過失？') : t('就第一項罪名，被告')}
+        defendant={t(caption.defendant)}
+      />
       <header className="hero">
         <div>
           <p className="ey">
@@ -459,12 +472,10 @@ function Verdict({
 
       <div className="vcols">
         <div className="lcol">
-          {/* 點一下紙或按任一鍵，手寫直接寫完。 */}
           <section
             className={award ? 'vform' : 'vform short'}
             aria-labelledby="verdict-form-title"
             data-written={written || undefined}
-            onClick={() => setWritten(true)}
           >
             <div className="fh">
               <p className="c">{t('卡爾德郡高等法院')}</p>
@@ -510,17 +521,7 @@ function Verdict({
                     {p && (
                       <div className="fq">
                         <span className="qn">5.</span>
-                        <span className="ql">
-                          {t('懲罰性賠償')}
-                          {!p.found && (
-                            <small>
-                              {t('不成立（{votes} 票，需要 {need} 票）', {
-                                votes: p.votes,
-                                need: p.need,
-                              })}
-                            </small>
-                          )}
-                        </span>
+                        <span className="ql">{t('懲罰性賠償')}</span>
                         {p.found ? (
                           <Money v={money(p.amount)} s={ink(inkUnits(money(p.amount)))} />
                         ) : (
@@ -569,7 +570,6 @@ function Verdict({
                 {t('陪審長')}
                 <b>{foreSign}</b>
               </span>
-              {n > 0 && <span>{votes}</span>}
             </div>
           </section>
           {!won && top[0] && (
