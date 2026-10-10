@@ -260,7 +260,4 @@
 '準備時間 {n} 工時': 'Prep time: {n} h'
 準備方式: How to prepare
 取證筆錄影本: Deposition transcript copy
-'{name}　錄取逐字稿': '{name}, deposition transcript'
-本人宣誓所言屬實: I swear that my testimony is true.
-'問：{text}': 'Q: {text}'
-'答：{text}': 'A: {text}'
+'{who}錄取筆錄 {cite}': '{who} Dep. {cite}'

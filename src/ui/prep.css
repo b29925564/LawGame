@@ -52,53 +52,64 @@
 
 .prep-card {
   position: relative;
-  width: 340px;
+  width: 400px;
   max-width: 100%;
   cursor: pointer;
   outline: none;
 }
-/* 索引卡：5:3（寬 340、高 204 起），頂上一條 2px 頭線，橫線 32px 一格；字的基線落在線上。 */
+/*
+ * 索引卡（設定集第 9 章 :80：紅頂線＋藍橫線，和證據板的索引卡同一種）：400×240＝5:3，7 條線。
+ * 卡名寫在 1px --paper-margin 紅頂線上方（紅線是材質，不是語意）；其餘 6 條橫線是藍的，
+ * 深色主題的紙是同一張紙放在暗光下，印的線也照紙的比例變暗（元件內變數，不是新權杖）。
+ */
 .card-paper {
+  --blue: light-dark(#b9c9e3, #99a7bf);
   position: relative;
-  display: flow-root;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
   box-sizing: border-box;
-  min-height: calc(var(--pitch) * 6 + 12px);
-  padding: 12px 16px 0;
+  min-height: calc(var(--pitch) * 7 + 16px);
+  padding: 16px 16px 0;
   background-color: var(--note);
   background-image: repeating-linear-gradient(
     to bottom,
     transparent 0 calc(var(--pitch) - 1px),
-    var(--paper-rule) calc(var(--pitch) - 1px) var(--pitch)
+    var(--blue) calc(var(--pitch) - 1px) var(--pitch)
   );
-  background-position: 0 12px;
-  background-repeat: repeat-y;
-  background-size: 100% calc(100% - 12px);
+  background-position: 0 calc(16px + var(--pitch));
+  background-repeat: no-repeat;
+  background-size: 100% calc(100% - 16px - var(--pitch));
   color: var(--pencil);
   font: 400 calc(var(--fs-hand) * var(--text-scale)) / var(--pitch) var(--font-hand);
   letter-spacing: 0;
 }
-.card-paper::before {
-  content: '';
-  position: absolute;
-  inset: 11px 0 auto;
-  height: 2px;
-  background: var(--paper-rule);
-}
 .card-paper .label,
-.card-paper .detail {
+.card-paper .detail,
+.card-paper .cite {
   display: block;
-  position: relative;
 }
 .card-paper .label {
   font-weight: 700;
+  height: var(--pitch);
+  box-sizing: border-box;
+  /* 紅頂線拉滿卡寬。 */
+  margin: 0 -16px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--paper-margin);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-/* 選取不用全站「勾選＝黃邊」的樣式（那是玩家的手）：選取只有墨框。 */
-.prep-card[aria-checked='true'] {
-  border-color: transparent !important;
-  background: none !important;
-  box-shadow: none;
+.card-paper .detail {
+  flex: 1;
 }
-/* 選取框：卡外 2px 墨框，淡入。 */
+/* 盧卡斯引筆錄的寫法，寫在最後一條線上。 */
+.card-paper .cite {
+  height: var(--pitch);
+  white-space: nowrap;
+}
+/* 選取不用全站「勾選＝黃邊」（那是玩家的手）：全站規則排除 .ink-select，選取只有墨框。 */
 .card-paper::after {
   content: '';
   position: absolute;
@@ -120,76 +131,68 @@
   transition: opacity var(--dur-ui) var(--ease);
   pointer-events: none;
 }
-/* 夾筆錄影本的卡：影本壓在右下角，遮住最後兩條空白橫線；字留在上面四行（英文長了卡就往下長）。 */
-.prep-card.clipped {
-  display: grid;
-}
-.prep-card.clipped .card-paper {
-  grid-area: 1 / 1;
-  padding-bottom: calc(var(--pitch) * 2);
-}
 
+/*
+ * 夾著的筆錄：從第 N 頁剪下的一條，用迴紋針夾在卡的下緣後面，上緣約 6px 藏在卡後，其餘垂在卡下方。
+ * 排版是法庭筆錄元件的（.record／.rec-*），字級由寬度回推：寬 = (行寬 + 3.6 + 掛出 ) 個字。
+ */
+.prep-card.clipped {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
 .prep-copy {
   position: relative;
-  z-index: 1;
-  grid-row: 2;
-  grid-column: 1;
-  justify-self: end;
-  /* 壓在卡最後兩條橫線上，其餘往下往外露出。 */
-  margin: calc(var(--pitch) * -2 + 6px) -120px 0 0;
-  width: 300px;
-  padding: 10px 12px 10px;
-  box-sizing: border-box;
-  background: var(--copy-paper);
-  border: 1px solid var(--paper-rule);
-  color: var(--toner);
-  font: 400 14px / 1.45 var(--font-court);
+  z-index: 0;
+  container-type: inline-size;
+  width: 100%;
+  margin: -6px 0 0;
+  padding: 0;
+  color: var(--paper-muted);
   pointer-events: none;
 }
-:root:lang(en) .prep-copy {
-  font-size: 12px;
-}
-.prep-copy .pclip {
-  position: absolute;
-  top: -17px;
-  left: 22px;
-  width: 11px;
-  height: 26px;
-  border: 2px solid #7d8794;
-  border-radius: 6px;
-}
-.prep-copy figcaption {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 0 8px;
-  margin-bottom: 6px;
-  padding-bottom: 5px;
-  border-bottom: 1px solid var(--paper-rule);
-}
-.prep-copy .vol {
-  font-weight: 700;
-}
-.prep-copy .pg {
-  white-space: nowrap;
-}
-.prep-copy .oath {
-  grid-column: 1 / -1;
-}
-.prep-copy ol {
+.prep-strip.record {
+  --rec-measure: 24;
+  --rec-hang: 1;
+  --rec-fs: calc(100cqw / (var(--rec-measure) + 3.6 + var(--rec-hang)));
+  --rec-row: calc(var(--rec-fs) * 2);
+  --rec-gutter: calc(var(--rec-fs) * 2.2);
+  --rec-pl: calc(var(--rec-gutter) + var(--rec-fs) * 0.8);
+  --rec-pr: calc(var(--rec-fs) * 0.6);
   margin: 0;
-  padding: 0;
-  list-style: none;
+  background: none;
+  border: none;
 }
-.prep-copy li {
-  display: grid;
-  grid-template-columns: 1.8em minmax(0, 1fr);
-  gap: 0 8px;
+html[lang='en'] .prep-strip.record {
+  --rec-measure: 26.4;
+  --rec-hang: 0.6;
 }
-.prep-copy .ln {
-  text-align: right;
+.prep-strip .rec-paper {
+  /* 剪下來的紙：--copy-paper 底（影印本），上下是剪刀剪的直邊，只在上緣透出一點頁頂的空白。 */
+  background:
+    linear-gradient(var(--paper-rule), var(--paper-rule)) var(--rec-gutter) 0 / 1px 100% no-repeat,
+    linear-gradient(var(--paper-rule), var(--paper-rule)) calc(var(--rec-gutter) + 3px) 0 / 1px 100%
+      no-repeat,
+    var(--copy-paper);
+  color: var(--toner);
+  /* 剪下來的上緣有 6px 藏在卡後，再留一點空白，第一行字才不被卡壓到。 */
+  padding-top: calc(var(--rec-fs) * 0.9);
+  padding-bottom: 0;
 }
-.prep-copy .tx {
-  overflow-wrap: anywhere;
+.pclip {
+  position: absolute;
+  z-index: 2;
+  width: 14px;
+  height: 38px;
+  color: var(--paper-muted);
+  pointer-events: none;
+  /* 跨在卡的下緣：前腳在卡面，下端壓在影本上。 */
+  right: 28px;
+  bottom: -14px;
+}
+.paper-wrap {
+  position: relative;
+  z-index: 1;
 }
 
 .prep-bar {
@@ -215,15 +218,6 @@
   }
   .prep-card {
     width: auto;
-  }
-  /* 手機：影本改到卡的下方，整寬三行，不壓在卡上。 */
-  .prep-card.clipped .card-paper {
-    padding-bottom: 0;
-  }
-  .prep-copy {
-    justify-self: stretch;
-    width: auto;
-    margin: 14px 0 0;
   }
   /* 確認鈕固定在底部列。 */
   .prep-bar {
@@ -256,9 +250,6 @@
     flex-direction: column;
     align-items: flex-start;
     gap: 14px;
-  }
-  .prep-card.clipped {
-    margin-right: 120px;
   }
   .prep-bar {
     margin-top: 24px;

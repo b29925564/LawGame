@@ -211,7 +211,7 @@ export function batesOf(p: Progress, sceneId: string): Volume {
 }
 
 /** 中文的刪節號、破折號、彎引號換回中文字型（寬度在 record.ts 已經照全形算）。 */
-function punct(text: string) {
+export function punct(text: string) {
   if (!CJK_PUNCT.test(text)) return text;
   return text.split(/([…—“”‘’]+)/).map((part, i) =>
     i % 2 ? (

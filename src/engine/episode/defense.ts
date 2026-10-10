@@ -139,15 +139,18 @@ export function finish(s: DefenseScene, st: DefenseState, rules: JuryRules): Def
   return { ...next, deltas };
 }
 
-/** 準備桌上夾著的筆錄影本：頁碼、行號與前後一行，全取自錄取劇本。 */
+/** 準備桌上夾著的筆錄影本：從筆錄頁剪下的三段話（問、答、下一題的問）與答案落在的頁行。 */
 export interface Excerpt {
   witness: string;
   page: number;
-  rows: { line: number; who: 'q' | 'a'; text: string }[];
+  /** 答的第一行落在第幾行（劇本的 cite）；上一題的問排在它前面，下一題的問接在答後面。 */
+  line: number;
+  segs: { who: 'q' | 'a'; text: string }[];
 }
 
 /**
- * cite 是答案那一行（勘誤表引的「第 42 頁第 7 行」）；問在前一行，後一行是下一題的問，沒有下一題就只印兩行。
+ * cite 是答案的第一行（勘誤表引的「第 42 頁第 7 行」）；問排在它前面，下一題的問接在答之後，沒有下一題就只剪兩段。
+ * 每段占幾行由筆錄元件的排版（ui/record.ts layout）決定，行號也由它算出來。
  * 找不到（劇本改過、條件分支）回傳 null，卡上就沒有影本。
  */
 export function excerpt(ep: Episode, ref: { scene: string; q: string }): Excerpt | null {
@@ -157,13 +160,11 @@ export function excerpt(ep: Episode, ref: { scene: string; q: string }): Excerpt
   const cite = s.script[at]?.cite;
   if (!cite) return null;
   const [page, line] = cite.split(':').map(Number);
-  const flat = s.script.flatMap((x, i) => [
-    { i, who: 'q' as const, text: x.q },
-    { i, who: 'a' as const, text: x.a },
-  ]);
-  const hit = flat.findIndex((x) => x.i === at && x.who === 'a');
-  const rows = [hit - 1, hit, hit + 1]
-    .filter((k) => k >= 0 && k < flat.length)
-    .map((k) => ({ line: line + k - hit, who: flat[k].who, text: flat[k].text }));
-  return { witness: s.witness.name, page, rows };
+  const segs: Excerpt['segs'] = [
+    { who: 'q', text: s.script[at].q },
+    { who: 'a', text: s.script[at].a },
+  ];
+  const next = s.script[at + 1];
+  if (next) segs.push({ who: 'q', text: next.q });
+  return { witness: s.witness.name, page, line, segs };
 }

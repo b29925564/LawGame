@@ -133,36 +133,62 @@ test('選取：一次一張、2px 墨框、不放大；整個畫面只有確認�
   expect(red).toBe(0);
 });
 
-test('夾著的筆錄：頁行取自錄取（42:7），前後各一行；中文與英文', async ({ page }) => {
+test('夾著的筆錄：從第 42 頁剪下的一條，答案從 cite（42:7）起；中英文；卡面是紅頂線＋藍橫線', async ({
+  page,
+}) => {
   await open(page, 'ep2', TREVOR);
-  const copy = page.locator('.prep-card').nth(1).locator('.prep-copy');
-  await expect(copy).toContainText('第 42 頁');
-  await expect(copy).toContainText('本人宣誓所言屬實');
-  await expect(copy.locator('.ln')).toHaveText(['6', '7', '8']);
-  await expect(copy.locator('.tx').nth(1)).toHaveText(
-    '答：從系統上線就是提醒，從來沒有強制下線過。',
-  );
-  // 沒選到的卡沒有影本；影本沒有任何說明字。
+  const card = page.locator('.prep-card').nth(1);
+  const copy = card.locator('.prep-copy');
+  // 筆錄元件排的行：每一行都有行號，答的第一行是 7；沒有頁首、沒有宣誓句、沒有說明字。
+  const rows = copy.locator('.rec-row');
+  const nos = await rows.evaluateAll((els) => els.map((e) => e.getAttribute('data-no')));
+  expect(nos).toEqual(['5', '6', '7', '8', '9', '10', '11', '12']);
+  const answer = copy.locator('.rec-row', { has: page.locator('.rec-tag', { hasText: '答' }) });
+  await expect(answer).toHaveAttribute('data-no', '7');
+  await expect(answer).toContainText('從系統上線就是提醒，從來沒有強制下線過。');
+  await expect(copy).not.toContainText('宣誓所言屬實');
+  await expect(copy.locator('.rec-head')).toHaveCount(0);
+  await expect(copy).toHaveAttribute('data-page', '42');
+  // 頁碼由盧卡斯的鉛筆寫在卡上最後一條線。
+  await expect(card.locator('.cite')).toHaveText('米爾斯錄取筆錄 42:7–9');
   await expect(page.locator('.prep-card').nth(0).locator('.prep-copy')).toHaveCount(0);
   await expect(page.locator('.prep-copy')).toHaveCount(1);
-  expect(await copy.evaluate((e) => getComputedStyle(e).backgroundColor)).not.toBe(
-    'rgba(0, 0, 0, 0)',
-  );
+  expect(
+    await copy.locator('.rec-paper').evaluate((e) => getComputedStyle(e).backgroundColor),
+  ).not.toBe('rgba(0, 0, 0, 0)');
+  // 卡名下面是 1px 紅頂線（--paper-margin，材質不是語意）；其餘橫線是藍的。
+  const label = await card.locator('.label').evaluate((e) => {
+    const c = getComputedStyle(e);
+    return [c.borderBottomWidth, c.borderBottomColor];
+  });
+  expect(label).toEqual(['1px', 'rgb(217, 83, 79)']);
   await page.goto('/');
   await open(page, 'ep2', TREVOR, { lang: 'en' });
-  const en = page.locator('.prep-card').nth(1).locator('.prep-copy');
-  await expect(en).toContainText('Page 42');
-  await expect(en.locator('.ln')).toHaveText(['6', '7', '8']);
-  await expect(en.locator('.tx').nth(1)).toContainText(
-    "A: It's been a reminder since the system launched.",
-  );
+  const en = page.locator('.prep-card').nth(1);
+  const enNos = await en
+    .locator('.prep-copy .rec-row')
+    .evaluateAll((els) => els.map((e) => e.getAttribute('data-no')));
+  expect(enNos).toEqual(['5', '6', '7', '8', '9', '10', '11', '12']);
+  await expect(
+    en.locator('.prep-copy .rec-row', { has: page.locator('.rec-tag', { hasText: 'A.' }) }),
+  ).toHaveAttribute('data-no', '7');
+  await expect(en.locator('.cite')).toHaveText('Mills Dep. 42:7–9');
   // 英文手寫也是 LXGW。
-  const font = await page
-    .locator('.prep-card')
-    .nth(1)
-    .locator('.card-paper')
-    .evaluate((e) => getComputedStyle(e).fontFamily);
+  const font = await en.locator('.card-paper').evaluate((e) => getComputedStyle(e).fontFamily);
   expect(font).toContain('LXGW');
+});
+
+test('卡面尺寸：100% 字級時每張卡 5:3（400×240），中英文一樣', async ({ page }) => {
+  for (const lang of ['zh-TW', 'en']) {
+    await open(page, 'ep2', TREVOR, { lang });
+    if ((page.viewportSize()?.width ?? 1440) < 768) continue;
+    for (const c of await page.locator('.prep-card .card-paper').all()) {
+      const b = (await c.boundingBox())!;
+      expect(Math.abs(b.width - 400)).toBeLessThanOrEqual(1);
+      expect(Math.abs(b.height - 240)).toBeLessThanOrEqual(1);
+    }
+    await page.goto('/');
+  }
 });
 
 test('勘誤過（trevor-corrected）：「替他寫好答案」整張不出現', async ({ page }) => {
@@ -173,7 +199,7 @@ test('勘誤過（trevor-corrected）：「替他寫好答案」整張不出現'
   await expect(page.getByText('替他寫好答案')).toHaveCount(0);
 });
 
-test('版面：桌機影本壓在卡上；手機影本在卡下、確認鈕固定在底部', async ({ page }) => {
+test('版面：影本夾在卡後垂在卡下；手機確認鈕固定在底部', async ({ page }) => {
   await open(page, 'ep2', TREVOR);
   const mobile = (page.viewportSize()?.width ?? 1440) < 768;
   const card = page.locator('.prep-card').nth(1);
@@ -184,15 +210,15 @@ test('版面：桌機影本壓在卡上；手機影本在卡下、確認鈕固�
   const vh = page.viewportSize()!.height;
   expect(paper && copy && btn).toBeTruthy();
   if (mobile) {
-    // 不壓在卡上；確認鈕在視窗最下面。
-    expect(copy!.y).toBeGreaterThanOrEqual(paper!.y + paper!.height);
+    // 影本垂在卡下方（上緣 6px 藏在卡後）；確認鈕在視窗最下面。
+    expect(copy!.y).toBeGreaterThanOrEqual(paper!.y + paper!.height - 8);
     expect(btn!.y + btn!.height).toBeGreaterThan(vh - 40);
     expect(paper!.width).toBeGreaterThan(300);
   } else {
-    expect(paper!.width).toBeCloseTo(340, 0);
-    // 最後兩條線被影本蓋住，右下角往外露出。
+    // 影本夾在卡的下緣後面，整條垂在卡下方，鉛筆字不會被蓋到。
+    expect(paper!.width).toBeCloseTo(400, 0);
+    expect(copy!.y).toBeGreaterThanOrEqual(paper!.y + paper!.height - 8);
     expect(copy!.y).toBeLessThan(paper!.y + paper!.height);
-    expect(copy!.x + copy!.width).toBeGreaterThan(paper!.x + paper!.width);
     // 確認鈕在右欄下方靠右，不被影本蓋住。
     expect(btn!.y).toBeGreaterThanOrEqual(copy!.y + copy!.height);
   }
