@@ -7,6 +7,7 @@ import { theoryOutlook } from '../engine/ledger';
 import { useMoney, useT } from '../i18n';
 import { CommitBar } from './Commit';
 import { JuryStart } from './JuryStart';
+import { Lock } from './Lock';
 import { prose } from './prose';
 import { useScope } from './lang';
 import { Speech } from './Portrait';
@@ -107,7 +108,7 @@ export function Theory({ scene }: { scene: TheoryScene }) {
                   {outlook(th.id)}
                   <span className="theory-row">
                     <span className="jury-start-key">{t('代價')}</span>
-                    {prose(t(th.cost, scope))}
+                    <span>{prose(t(th.cost, scope))}</span>
                   </span>
                 </span>
                 <span className="theory-needs">
@@ -126,7 +127,8 @@ export function Theory({ scene }: { scene: TheoryScene }) {
                   })}
                 </span>
                 {!ok && (
-                  <span className="bad-text small">
+                  <span className="theory-missing small">
+                    <Lock />
                     {t('還缺 {list}', {
                       list: missing
                         .map((n) => t(argName(n), scope).split(/：|: /)[0])

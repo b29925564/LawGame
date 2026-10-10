@@ -29,28 +29,35 @@ async function load(page: Page, episode: string, scene: number) {
   await page.getByRole('button', { name: /^繼續/ }).first().click();
 }
 
-// 地點字卡的短黃線是那一格唯一的黃（設定集 11.3；第一道關卡 N3）：
-// 字卡在的 2.5 秒，主按鈕退成白框；字卡淡出時黃還給主按鈕，字卡整行拿掉。
-test('地點字卡在的時候，主按鈕不黃；字卡走了才黃', async ({ page }) => {
+// 換地點先放一格場記（PlaceBeat）：短黃線是那一格唯一的黃（設定集 11.3；第一道關卡 N3）。
+// 場記在的 2.5 秒，這一場的介面還沒掛；場記走了介面才出現，主按鈕一出現就是黃的。
+test('定場：場記在的時候介面還沒掛；走了之後主按鈕是黃的', async ({ page }) => {
   await load(page, 'ep2', 9);
   const slate = page.locator('.place-slate');
-  const primary = page.locator('button.primary:visible').first();
   await expect(slate).toBeVisible();
   await expect(page.locator('html')).toHaveAttribute('data-hand', 'slate');
-  await expect(primary).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
-  await expect(slate).toHaveCount(0, { timeout: 5000 });
+  await expect(page.locator('button.primary')).toHaveCount(0);
+  await expect(page.locator('.place-beat')).toHaveCount(0, { timeout: 6000 });
   await expect(page.locator('html')).not.toHaveAttribute('data-hand', 'slate');
-  await expect(primary).not.toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
-  // 黃用和字卡淡出一樣的 180ms 淡回主按鈕（設計師 r8）。
-  await expect(primary).toHaveCSS('transition-duration', /0\.18s/);
+  await expect(page.locator('button.primary:visible').first()).not.toHaveCSS(
+    'background-color',
+    'rgba(0, 0, 0, 0)',
+  );
 });
 
-test('減少動態：字卡走了，黃直接回到主按鈕，不淡入', async ({ page }) => {
+test('定場：點一下就跳過', async ({ page }) => {
+  await load(page, 'ep2', 9);
+  await expect(page.locator('.place-beat')).toBeVisible();
+  await page.locator('.place-beat').click();
+  await expect(page.locator('.place-beat')).toHaveCount(0, { timeout: 1500 });
+});
+
+test('減少動態：場記停 2.5 秒後直接收掉，黃直接回到主按鈕', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await load(page, 'ep2', 9);
-  const primary = page.locator('button.primary:visible').first();
   await expect(page.locator('html')).toHaveAttribute('data-hand', 'slate');
-  await expect(page.locator('.place-slate')).toHaveCount(0, { timeout: 5000 });
+  await expect(page.locator('.place-beat')).toHaveCount(0, { timeout: 5000 });
+  const primary = page.locator('button.primary:visible').first();
   await expect(primary).not.toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
   await expect(primary).toHaveCSS('transition-duration', '0s');
 });

@@ -156,13 +156,22 @@
   font-weight: 500;
   color: var(--cine-text);
 }
-.act-bates {
+.act-foot {
   position: absolute;
+  left: calc(70 * var(--u));
   right: calc(26 * var(--u));
   bottom: calc(16 * var(--u));
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 12px;
   font: 700 max(12px, calc(13 * var(--u))) / 1 var(--font-court);
   letter-spacing: 0.06em;
-  color: #5f6a79;
+  color: var(--cine-muted);
+}
+/* 集尾：「本集共製作 N 頁」在左，Bates 在右；窄到放不下就 Bates 掉到下一行靠右。 */
+.act-bates {
+  margin-left: auto;
 }
 /* 卡下方：旁白（工時、這一幕要做什麼）與「繼續」。 */
 .act-lines {
@@ -365,6 +374,13 @@
     background-clip: text;
     -webkit-background-clip: text;
   }
+  .act-foot {
+    left: calc(26 * var(--u));
+  }
+  /* 集尾卡的底部多一行（頁數）：場記往上讓。 */
+  .act-stage .act-card.ending .act-slate {
+    bottom: max(56px, calc(60 * var(--u)));
+  }
   .act-stage .act-card .act-slate {
     left: calc(26 * var(--u));
     right: calc(26 * var(--u));
@@ -408,6 +424,26 @@
   opacity: 0;
   animation: place-slate 2860ms linear both;
 }
+/* 手機一行：地點太長就在地點上省略，日子、時刻、色溫不縮（設計師 #225）。 */
+.place-slate > span {
+  white-space: nowrap;
+}
+.place-slate .ps-where {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.place-slate .ps-when {
+  flex: none;
+  white-space: pre;
+}
+/* 定場：黑底只放場記，場景的介面在它之後才掛上（PlaceBeat）。 */
+.place-beat {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-popover);
+  background: var(--grain), var(--cine-bg);
+}
 .place-slate::before {
   content: '';
   flex: none;
@@ -435,6 +471,10 @@
     left: var(--s4);
     bottom: calc(max(var(--s4), env(safe-area-inset-bottom)) + 88px);
     max-width: calc(100vw - 2 * var(--s4));
+    font-size: 12px;
+    letter-spacing: 0.02em;
+    gap: 8px;
+    padding: 6px 10px;
   }
 }
 @media (prefers-reduced-motion: reduce) {
