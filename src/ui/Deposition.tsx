@@ -15,6 +15,7 @@ const REVIEW = {
   blocked: '擋住了',
   waived: '放過了',
   wrong: '擋錯了',
+  baseless: '不用擋',
 } as const;
 
 /**
@@ -98,7 +99,9 @@ export function Deposition({ scene }: { scene: DepositionScene }) {
                 .map((q) => {
                   const flags = st.flags ?? [];
                   const kind = !q.objection
-                    ? 'plain'
+                    ? flags.includes(`depo:${scene.id}:${q.id}:baseless`)
+                      ? 'baseless'
+                      : 'plain'
                     : flags.includes(`depo:${scene.id}:${q.id}:preserved`)
                       ? 'blocked'
                       : flags.includes(`depo:${scene.id}:${q.id}:waived`)
@@ -116,7 +119,7 @@ export function Deposition({ scene }: { scene: DepositionScene }) {
                           })}
                         </span>
                       )}
-                      {kind !== 'plain' && kind !== 'blocked' && q.missed.flags.length > 0 && (
+                      {(kind === 'waived' || kind === 'wrong') && q.missed.flags.length > 0 && (
                         <span className="muted small">{t('這句話留在筆錄裡了。')}</span>
                       )}
                     </li>

@@ -63,7 +63,14 @@ export function defend(s: DepositionScene, st: DepoState, reason: DepoObjection 
   if (s.side !== 'theirs' || !q) return st;
   const right = reason !== null && reason === q.objection;
   const silenced = right && reason === '特權';
-  const flag = right ? 'preserved' : reason === null && q.objection ? 'waived' : null;
+  // 對沒有毛病的問題提異議：站不住，也要記下來，回顧才標得出和「擋錯了」不同的那一種。
+  const flag = right
+    ? 'preserved'
+    : reason === null && q.objection
+      ? 'waived'
+      : reason !== null && !q.objection
+        ? 'baseless'
+        : null;
   const log: Line[] = [
     { who: s.examiner, text: q.q, mood: '平', thought: false },
     ...(reason

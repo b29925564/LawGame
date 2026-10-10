@@ -125,17 +125,19 @@ export function Theory({ scene }: { scene: TheoryScene }) {
                       </span>
                     );
                   })}
+                  {!ok && (
+                    <span className="theory-missing">
+                      <Lock />
+                      <span className="sr-only">
+                        {t('還缺 {list}', {
+                          list: missing
+                            .map((n) => t(argName(n), scope).split(/：|: /)[0])
+                            .join(t('、')),
+                        })}
+                      </span>
+                    </span>
+                  )}
                 </span>
-                {!ok && (
-                  <span className="theory-missing small">
-                    <Lock />
-                    {t('還缺 {list}', {
-                      list: missing
-                        .map((n) => t(argName(n), scope).split(/：|: /)[0])
-                        .join(t('、')),
-                    })}
-                  </span>
-                )}
                 {done && on && <span className="good">{t('已選定。')}</span>}
               </button>
             </li>
