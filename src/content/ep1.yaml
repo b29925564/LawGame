@@ -1602,7 +1602,7 @@ scenes:
       - id: c-student
         name: 尼可・阿巴斯
         job: 大學生
-        sheet: 二十一歲，法律系三年級。
+        sheet: 二十一歲，大三，想念法學院。
         leans: [程序]
         start: 46
         lead: 1

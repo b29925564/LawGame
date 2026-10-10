@@ -8,7 +8,7 @@
 繼續（{label}）: Continue ({label})
 第 {n} 集: Episode {n}
 定場: Establishing
-本集共製作 {n} 頁: '{n} pages produced this episode'
+本集共製作 {n} 頁: '{n} page{n:s} produced this episode'
 已收回的訊息: The Unsent Message
 和解的價格: The Price of Settlement
 讀取存檔: Load game
@@ -65,8 +65,8 @@
 移動、縮放與推鏡改成淡入或直接切；沒設定時跟隨系統: Movement, zooms and push-ins become fades or cuts; follows your system setting until you change it
 陳述: Statement
 文件: Document
-物品: Object
-宣誓陳述: Affidavit
+物品: Item
+宣誓陳述: Sworn statement
 # 幕卡的案件標題欄（設定集 11.3）
 卡爾德州: State of Calder
 維加: Marisol Vega

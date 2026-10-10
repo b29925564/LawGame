@@ -112,7 +112,7 @@
 信心再降 {k}，條件就會鬆動。: Drop their confidence {k} more and the terms will move.
 這已經是對方開得出來最好的條件。: This is the best they can offer.
 被識破了。: They saw through it.
-'{name}的信心沒動；之後攤牌的效果少兩成。': "{name}'s confidence didn't move, and your showdowns now land 20% softer."
+'{name}的信心沒動；之後攤牌的效果少兩成。': "{name}'s confidence didn't move, and laying it out now lands 20% softer."
 '{name}的信心 {a} → {b}': "{name}'s confidence {a} → {b}"
 條件鬆動了：{label}: 'The terms moved: {label}'
 條件沒變。: 'The terms held. '
@@ -127,5 +127,5 @@
 信心低於 {n}: Confidence below {n}
 現在: Now
 超過授權: Over authority
-被識破過 {n} 次：攤牌的效果只剩 {p}%。: 'Caught bluffing {n} time{n:s}: your showdowns now land at {p}%.'
+被識破過 {n} 次：攤牌的效果只剩 {p}%。: 'Caught bluffing {n} time{n:s}: laying it out now lands at {p}%.'
 建議撐下去（回合用完，等於離席上法庭）: Advise holding out (no rounds left, so this means walking out to trial)
