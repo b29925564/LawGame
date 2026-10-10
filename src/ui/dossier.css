@@ -282,6 +282,10 @@
     #070708 84%
   );
 }
+/* 只有沖印、沒有紀錄欄（扣押袋那張）：四邊一樣的白邊。 */
+.photolog.bare {
+  padding-bottom: 10px;
+}
 .photolog-print img {
   width: 100%;
   height: 100%;
