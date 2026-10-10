@@ -7,6 +7,9 @@
 
 /* ══ 法院系統：聲請狀（UX board-spec §10、視覺規格 §17，法庭介面） ══ */
 :root {
+  /* 紙的下緣：一條 1px 的實線，所有紙類共用（不投影）。 */
+  --paper-edge-c: rgb(0 0 0 / 18%);
+  --paper-edge: 0 1px 0 var(--paper-edge-c);
   /* 紙上的墨水：紙永遠是淺色，兩個主題同值。
      章一律 --stamp 靛藍印泥、雙線框、±3°（設定集第 9 章：不用紅章，紅只代表有罪傾向）；准駁靠章上的字分。 */
   --ink-fill: #1f3a68;
@@ -51,9 +54,7 @@
   /* 紙沒有圓角；選中的墨框也跟著是直角（設計師 P2-6 r2）。 */
   border-radius: 0;
   background: var(--paper);
-  box-shadow:
-    0 1px 0 rgb(0 0 0 / 15%),
-    var(--shadow-1);
+  box-shadow: var(--paper-edge);
   padding: 14px 8px 0 14px;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -210,9 +211,7 @@
   color: var(--paper-ink);
   border-radius: 2px;
   padding: 36px 48px 44px 76px;
-  box-shadow:
-    0 1px 0 rgb(0 0 0 / 18%),
-    0 28px 60px -24px var(--shadow-deep);
+  box-shadow: var(--paper-edge);
 }
 .plead::before {
   content: '';
@@ -416,7 +415,6 @@
   background: var(--paper);
   border: 1px solid var(--paper-rule);
   border-radius: 6px;
-  box-shadow: var(--shadow-2);
   padding: 6px;
   display: grid;
   text-align: left;
@@ -624,7 +622,6 @@
   background: var(--note);
   color: var(--pencil);
   border-radius: 0;
-  box-shadow: var(--shadow-1);
 }
 .prereq-note small {
   margin-bottom: 4px;
@@ -757,7 +754,7 @@ details.earlier[open] > .lines {
   border-radius: var(--radius);
   background: var(--surface-3);
   border: 1px solid var(--border-strong);
-  box-shadow: var(--inset-hi), var(--shadow-1);
+  box-shadow: var(--inset-hi);
   flex: none;
 }
 .idphoto .ph {
@@ -1129,9 +1126,7 @@ button.cand[aria-pressed='true'],
   );
   box-shadow:
     inset 0 1px 0 rgb(255 255 255 / 12%),
-    inset 0 -10px 0 light-dark(rgb(90 60 30 / 18%), rgb(0 0 0 / 30%)),
-    var(--shadow-1),
-    0 24px 48px -24px var(--shadow-deep);
+    inset 0 -10px 0 light-dark(rgb(90 60 30 / 18%), rgb(0 0 0 / 30%));
 }
 .box::before {
   content: '';
@@ -1321,7 +1316,6 @@ button.cand[aria-pressed='true'],
   border: 1px solid var(--commit-edge);
   border-radius: var(--radius);
   background: var(--surface);
-  box-shadow: 0 -12px 32px -16px var(--shadow-deep);
 }
 .commitbar .who {
   margin: 0;
@@ -1482,9 +1476,7 @@ button.cand[aria-pressed='true'],
   background: var(--paper);
   background-image: var(--grain);
   color: var(--paper-ink);
-  box-shadow:
-    0 1px 0 rgb(0 0 0 / 18%),
-    0 24px 56px -24px var(--shadow-deep);
+  box-shadow: var(--paper-edge);
 }
 .vform .fh {
   text-align: center;
@@ -1920,6 +1912,19 @@ html[lang='en'] .trend-steps li {
 html[lang='en'] .trend-steps .arrow {
   display: none;
 }
+/* 右欄（走勢、三輪、判詞）比裁決書長時，裁決書跟著捲，不在左欄底下留一大塊空白（體驗評測 3A 備註）。 */
+@media (min-width: 1024px) and (max-width: 1179px) {
+  .vdict[data-stage='done'] .lcol {
+    position: sticky;
+    top: var(--s4);
+    align-self: start;
+  }
+  .vdict[data-stage='done'] .vform {
+    justify-content: center;
+    gap: var(--s4);
+    min-height: min(520px, calc(100dvh - 300px));
+  }
+}
 /* 英文抬頭不拉字距：拉開的拉丁字母讀起來像斷字。 */
 html[lang='en'] .vform .fh h2 {
   letter-spacing: 0.04em;
@@ -2193,7 +2198,7 @@ html[lang='en'] .record {
     linear-gradient(var(--paper-rule), var(--paper-rule)) calc(var(--rec-gutter) + 3px) 0 / 1px 100%
       no-repeat,
     var(--paper);
-  box-shadow: 0 1px 0 rgb(0 0 0 / 18%);
+  box-shadow: var(--paper-edge);
   color: var(--paper-ink);
   font: 400 var(--rec-fs) / var(--rec-row) var(--font-court);
   font-variant-numeric: tabular-nums;
@@ -2383,7 +2388,7 @@ html[lang='en'] .stamp.rec-stamp b {
   margin: calc(var(--rec-fs) * 0.4) calc(-1 * var(--rec-pr)) 0 calc(-1 * var(--rec-pl));
   background: var(--rec-gap-bg);
   box-shadow:
-    0 -1px 0 rgb(0 0 0 / 18%),
+    0 -1px 0 var(--paper-edge-c),
     0 1px 0 var(--paper-rule) inset;
 }
 .rec-pad {
@@ -3704,7 +3709,7 @@ html[lang='en'] .stamp.rec-stamp b {
   background: var(--exhibit-def);
   box-shadow:
     inset 0 0 0 1px rgb(0 0 0 / 14%),
-    0 1px 0 rgb(0 0 0 / 18%);
+    var(--paper-edge);
   font: 400 11px/13px var(--font-mono);
   white-space: nowrap;
 }
