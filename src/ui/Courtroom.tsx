@@ -74,21 +74,24 @@ function CourtJury({
   );
 }
 
-/** 手機與窄視窗（法庭版面變一欄的寬度）。 */
-function useNarrow() {
-  const q = '(max-width: 1023px)';
-  const [narrow, setNarrow] = useState(
-    () => typeof matchMedia !== 'undefined' && matchMedia(q).matches,
-  );
+/** 視窗符不符合這個寬度條件（隨視窗變動）。 */
+function useQuery(q: string) {
+  const [on, setOn] = useState(() => typeof matchMedia !== 'undefined' && matchMedia(q).matches);
   useEffect(() => {
     if (typeof matchMedia === 'undefined') return;
     const m = matchMedia(q);
-    const on = () => setNarrow(m.matches);
-    m.addEventListener('change', on);
-    return () => m.removeEventListener('change', on);
-  }, []);
-  return narrow;
+    const fn = () => setOn(m.matches);
+    m.addEventListener('change', fn);
+    return () => m.removeEventListener('change', fn);
+  }, [q]);
+  return on;
 }
+
+/** 手機與窄視窗（法庭版面變一欄的寬度）。 */
+const useNarrow = () => useQuery('(max-width: 1023px)');
+
+/** 左欄放不下 2×6、56×70 的陪審團面板（376 寬）的寬度：收成刻痕條，點開用 48×60（設定集第 10 章 :16）。 */
+const useCompactJury = () => useQuery('(max-width: 1179px)');
 
 /** 異議窗：預設回合制，設定裡可以改成限時（企劃書 6.9.5 與 6.14 的輔助選項）。 */
 function ObjectionWindow({
@@ -262,6 +265,7 @@ function CourtroomScreen({ scene: raw }: { scene: TrialScene }) {
   const record = useCourtEntries(st.log, scene.witness.name, st.stricken);
   const bates = batesOf(progress, raw.id);
   const narrow = useNarrow();
+  const compactJury = useCompactJury();
   const [beat, startBeat] = useObjectionBeat();
   const [insert, setInsert] = useState<HTMLDivElement | null>(null);
   const [cues, setCues] = useState<Cue[]>([]);
@@ -492,7 +496,7 @@ function CourtroomScreen({ scene: raw }: { scene: TrialScene }) {
               jury={st.jury}
               deltas={st.deltas}
               eventKey={st.said ?? st.log.length}
-              collapsible={narrow}
+              collapsible={compactJury}
             />
             {st.stage === 'cross' && (
               <Tabs

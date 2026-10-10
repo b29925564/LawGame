@@ -8,7 +8,6 @@ import { CommitBar } from './Commit';
 import { CardPick, EvidenceDrawer } from './Evidence';
 import { useScope } from './lang';
 import { Speech } from './Portrait';
-import { prose } from './prose';
 import { Shell, Tabs, Transcript } from './Shell';
 import { Recap } from './ActCard';
 
@@ -219,7 +218,6 @@ export function Negotiation({ scene }: { scene: NegotiationScene }) {
       {tab === 'offer' && (
         <section className="panel">
           <h2>{t('對方現在開的條件')}</h2>
-          <p className="claim-text">{prose(t(offer.label, scope))}</p>
           {nego.canAct(st) && <p className="muted small nego-next">{nextHint}</p>}
           {/* 條件階梯：每一檔的門檻和價放在一起，信心 100 時也看得出還差多少（體驗評測 v89）。 */}
           <ol className="nego-ladder" aria-label={t('條件階梯')}>

@@ -150,3 +150,70 @@ test('主詰問結束：手機英文底列不溢出', async ({ page }, info) => 
   const primary = (await page.locator('.shell-foot button.primary.wide').boundingBox())!;
   expect(primary.height).toBeLessThan(80);
 });
+
+/**
+ * 關卡 2 第 14 條：陪審團面板在左下（設定集第 8 章 :87、第 10 章 :16），桌機 2×6、每張 56×70；
+ * 交互詰問的工作欄因此不用讓出高度。1100 寬左欄放不下 376 寬，收成刻痕條（不縮小卡片）。
+ */
+for (const [width, height] of [
+  [1530, 860],
+  [1440, 900],
+  [1100, 800],
+] as const)
+  test(`陪審團在左下、卡片不縮小（${width}×${height}）`, async ({ page }, info) => {
+    test.skip(info.project.name !== 'desktop', '只量桌機');
+    await page.setViewportSize({ width, height });
+    await page.addInitScript(
+      (s) => {
+        if (sessionStorage.getItem('seeded')) return;
+        sessionStorage.setItem('seeded', '1');
+        localStorage.clear();
+        localStorage.setItem('lawgame-ep-auto', s);
+        localStorage.setItem('lawgame-record-instant', '1');
+      },
+      JSON.stringify({ version: 5, savedAt: Date.now(), label: 'x', progress: save.ep1 }),
+    );
+    await page.goto('/');
+    await page
+      .getByRole('button', { name: /^繼續（/ })
+      .first()
+      .click();
+    const open = page.getByRole('button', { name: '開庭' });
+    await open.or(page.locator('.record')).first().waitFor();
+    if (await open.isVisible()) await open.click();
+    const cross = page.getByRole('button', { name: '開始交互詰問' });
+    for (let i = 0; i < 40 && !(await cross.isVisible()); i++) {
+      const none = page.getByRole('button', { name: '不異議' });
+      if (await none.isVisible().catch(() => false)) {
+        await none.click();
+        continue;
+      }
+      await page
+        .locator('button.primary.wide')
+        .first()
+        .click({ timeout: 2000 })
+        .catch(() => {});
+      await page.waitForTimeout(400);
+    }
+    await cross.click();
+    await page.waitForTimeout(800);
+    const rec = (await page.locator('.record').boundingBox())!;
+    const jury = page.locator('.jurybox');
+    const jb = (await jury.boundingBox())!;
+    // 陪審團在筆錄下面、同一欄。
+    expect(jb.y).toBeGreaterThanOrEqual(rec.y + rec.height - 1);
+    expect(Math.abs(jb.x - rec.x)).toBeLessThan(4);
+    const body = await page
+      .locator('.shell-body')
+      .evaluate((e) => e.getBoundingClientRect().height);
+    if (width >= 1180) {
+      const face = (await page.locator('.jb-grid .jf-face').first().boundingBox())!;
+      expect([Math.round(face.width), Math.round(face.height)]).toEqual([56, 70]);
+      expect(body).toBeGreaterThanOrEqual(300);
+    } else {
+      await expect(jury).toHaveClass(/collapsed/);
+      await jury.locator('.jb-strip').click();
+      const face = (await page.locator('.jb-grid .jf-face').first().boundingBox())!;
+      expect([Math.round(face.width), Math.round(face.height)]).toEqual([48, 60]);
+    }
+  });

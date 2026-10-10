@@ -533,15 +533,7 @@ export function Tally({
     <section className="panel stack" aria-label={t('評議票數')}>
       <div className="tally-head">
         <b>{t('陪審團僵局')}</b>
-        <span className="count">
-          {t('第 {round} 輪\u3000{no} {ng}\u3000{yes} {g}', {
-            round,
-            no: t(w.no),
-            ng,
-            yes: t(w.yes),
-            g,
-          })}
-        </span>
+        <span className="count">{t('第 {round} 輪', { round })}</span>
         <span className="muted small">{t(short)}</span>
       </div>
       <ol className="tally">

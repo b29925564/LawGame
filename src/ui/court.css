@@ -2524,12 +2524,6 @@ html[lang='en'] .stamp.rec-stamp b {
     grid-row: 2 / 6;
     margin-bottom: 12px;
   }
-  /* 陪審團面板是 HUD：放在中間欄、按鈕列上方（左欄留給 25 行的筆錄紙）。 */
-  .shell:has(> .shell-tabs > .record) > .shell-tabs > .jurybox {
-    grid-column: 2;
-    grid-row: 4;
-    padding-top: 8px;
-  }
   .shell:has(> .shell-tabs > .record) > .shell-foot {
     grid-row: 5;
   }
@@ -3253,8 +3247,12 @@ html[lang='en'] .stamp.rec-stamp b {
   }
 }
 @media (min-width: 1024px) {
+  /*
+   * 陪審團面板在左下（設定集第 8 章 :87、第 10 章 :16）：左欄是筆錄紙加 2×6、56×70 的面板，
+   * 中間欄只剩論點、按鈕和鏡頭——交互詰問的工作欄不用再讓出高度。面板和鏡頭條同在最後一列，底緣對齊。
+   */
   .shell:has(> .shell-tabs > .record) {
-    grid-template-rows: auto auto minmax(0, 1fr) auto auto auto;
+    grid-template-rows: auto auto minmax(0, 1fr) auto auto;
   }
   /*
    * 主詰問（提示和異議窗共用一格）：那一格照內容高，中欄剩下的高度給陪審團——框撐到筆錄紙的底線，
@@ -3264,7 +3262,10 @@ html[lang='en'] .stamp.rec-stamp b {
     grid-template-rows: auto auto max-content auto auto minmax(min-content, 1fr);
   }
   .shell:has(> .shell-tabs > .record) > .shell-tabs > .record {
-    grid-row: 2 / 7;
+    grid-row: 2 / 5;
+  }
+  .shell:has(> .shell-tabs > .record):has(> .shell-body > .court-slot) > .shell-tabs > .record {
+    grid-row: 2 / 6;
   }
   /*
    * 按鈕列放在鏡頭條上方：提示＋主按鈕和異議窗共用鏡頭條上面那一格（設計師 #247 第一輪）。
@@ -3283,6 +3284,12 @@ html[lang='en'] .stamp.rec-stamp b {
     grid-row: 5;
   }
   .shell:has(> .shell-tabs > .record) > .shell-tabs > .jurybox {
+    grid-column: 1;
+    grid-row: 5;
+    align-self: end;
+    margin-bottom: 12px;
+  }
+  .shell:has(> .shell-tabs > .record):has(> .shell-body > .court-slot) > .shell-tabs > .jurybox {
     grid-row: 6;
   }
   /* 筆錄紙跨好幾列：不讓它 25 行的內容高度撐大陪審團那一列（紙的高度由格子給，內容自己捲）。 */
@@ -3293,16 +3300,22 @@ html[lang='en'] .stamp.rec-stamp b {
   .shell:has(> .shell-body > .court-slot) > .shell-body {
     padding-bottom: 0;
   }
-  .shell:has(> .shell-body > .court-slot) > .shell-tabs > .jurybox {
-    grid-template-rows: auto minmax(0, 1fr);
-    margin-bottom: 12px;
-  }
-  .shell:has(> .shell-body > .court-slot) > .shell-tabs > .jurybox > .tbd.row > .jb-grid {
-    flex: 1;
-    align-content: start;
-  }
   .court-cam.insert {
     display: none;
+  }
+}
+/* 1024–1179：左欄只有 320，放不下 376 寬的 2×6；收成刻痕條，點開用手機那組 48×60（不縮小成別的尺寸）。 */
+@media (min-width: 1024px) and (max-width: 1179px) {
+  .shell:has(> .shell-tabs > .record) > .shell-tabs > .jurybox {
+    max-width: 100%;
+  }
+  .shell:has(> .shell-tabs > .record) .jb-grid {
+    grid-template-columns: repeat(6, 48px);
+    gap: 12px 6px;
+  }
+  .shell:has(> .shell-tabs > .record) .jf-face {
+    width: 48px;
+    height: 60px;
   }
 }
 @media (max-width: 1023px) {
@@ -3464,9 +3477,16 @@ html[lang='en'] .stamp.rec-stamp b {
   }
 }
 @media (min-width: 1024px) {
-  /* 筆錄紙從第 2 列接到陪審團那一列（最後一列）的底（比 styles.css 那條「沒有 .jury 時 2 / 5」更具體）。 */
+  /* 筆錄紙停在陪審團面板（左下）的上緣：交互詰問 2 / 5，主詰問（多一列給提示）2 / 6。 */
   .shell:has(> .shell-tabs > .record):has(> .shell-tabs > .court-cam) > .shell-tabs > .record {
-    grid-row: 2 / 7;
+    grid-row: 2 / 5;
+  }
+  .shell:has(> .shell-tabs > .record):has(> .shell-tabs > .court-cam):has(
+      > .shell-body > .court-slot
+    )
+    > .shell-tabs
+    > .record {
+    grid-row: 2 / 6;
   }
 }
 
