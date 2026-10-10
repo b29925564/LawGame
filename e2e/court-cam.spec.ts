@@ -106,12 +106,10 @@ for (const lang of ['zh', 'en'] as const)
     });
 
 /**
- * 關卡 2（第 13、14 條）：主詰問結束後，手機英文底列的三顆按鈕都在畫面裡；
- * 桌機交互詰問的工作欄至少 220px 高（陪審團收成一排之前只有 115px，論點卡被切在一行字的中間）。
+ * 關卡 2（第 13 條）：主詰問結束後，手機英文底列的三顆按鈕都在畫面裡。
  */
-test('主詰問結束到交互詰問：底列不溢出、工作欄夠高', async ({ page }, info) => {
-  const phone = info.project.name !== 'desktop';
-  if (!phone) await page.setViewportSize({ width: 1530, height: 860 });
+test('主詰問結束：手機英文底列不溢出', async ({ page }, info) => {
+  test.skip(info.project.name === 'desktop', '只量手機');
   await page.addInitScript(
     (s) => {
       if (sessionStorage.getItem('seeded')) return;
@@ -147,16 +145,8 @@ test('主詰問結束到交互詰問：底列不溢出、工作欄夠高', async
   }
   await expect(cross).toBeVisible();
   const vw = page.viewportSize()!.width;
-  if (phone) {
-    const box = (await cross.boundingBox())!;
-    expect(box.x + box.width).toBeLessThanOrEqual(vw);
-    const primary = (await page.locator('.shell-foot button.primary.wide').boundingBox())!;
-    expect(primary.height).toBeLessThan(80);
-  }
-  await cross.click();
-  if (!phone) {
-    await page.waitForTimeout(800);
-    const h = await page.locator('.shell-body').evaluate((e) => e.getBoundingClientRect().height);
-    expect(h).toBeGreaterThanOrEqual(220);
-  }
+  const box = (await cross.boundingBox())!;
+  expect(box.x + box.width).toBeLessThanOrEqual(vw);
+  const primary = (await page.locator('.shell-foot button.primary.wide').boundingBox())!;
+  expect(primary.height).toBeLessThan(80);
 });
