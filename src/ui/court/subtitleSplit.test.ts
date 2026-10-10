@@ -88,4 +88,16 @@ describe('字幕拆卡', () => {
       expect(cards.every((c) => !/^(Mr|Daniel)\.?$/.test(c.text))).toBe(true);
     }
   });
+
+  it('英文：數字、頭銜、連字號修飾語不和後面拆開，尾巴不單獨一個字', () => {
+    const t =
+      'Mr. Grey asked whether the 31 photos were taken by Officer Daniel Park and whether they showed the whole scene. The victim had a blunt-force wound to the head.';
+    for (const em of [11, 12, 14, 16, 20, 24]) {
+      const joined = splitCards(t, em, 1).map((c) => c.text);
+      const bad = joined.filter(
+        (c) => /(\b31|Officer|Daniel|blunt-force)$/.test(c) || !/\s/.test(c),
+      );
+      expect(bad).toEqual([]);
+    }
+  });
 });
