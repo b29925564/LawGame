@@ -225,7 +225,7 @@ export const glossary: Term[] = [
   {
     term: '評議',
     en: 'Deliberation',
-    text: '陪審團退庭後關起門來討論證據，決定有罪或無罪。重罪的刑事判決必須全體一致（2020 年 Ramos v. Louisiana 之後全美皆然）。',
+    text: '陪審團退庭後關起門來討論證據，決定有罪或無罪。重罪的刑事裁決必須全體一致（2020 年 Ramos v. Louisiana 之後全美皆然）。',
   },
   {
     term: '陪審團僵局',
