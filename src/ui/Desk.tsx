@@ -1213,12 +1213,14 @@ function Motions({ scene, held }: { scene: DeskScene; held: string[] }) {
           </strong>
           <ul className="prereq-args">
             {missing.map((id) => {
-              const name = t(nameOf(id)?.name ?? argName(scene, id), scope);
+              const full = t(nameOf(id)?.name ?? argName(scene, id), scope);
+              const name = splitArg(full)[1] ?? full;
               return (
                 <li key={id}>
                   {/* ◆ 就是「論點」：名稱不再加「論點：」前綴（規格 v2.0 :225，和狀紙上的論點標籤同一個寫法）。 */}
                   <span aria-hidden>◆</span>
-                  <span>{prose(splitArg(name)[1] ?? name)}</span>
+                  {/* 自己一行，英文句首大寫（「the watch data…」→「The watch data…」）。 */}
+                  <span>{prose(name.charAt(0).toUpperCase() + name.slice(1))}</span>
                 </li>
               );
             })}
