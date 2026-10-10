@@ -586,7 +586,7 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
                 onClick={() => setView(x.id)}
               >
                 <span className="q-num">{num(i)}</span>
-                <span className="q-text">{t(x.text, scope)}</span>
+                <span className="q-text">{prose(t(x.text, scope))}</span>
                 <span className="q-meta">
                   <span>{s === 'open' ? t('進行中') : t('尚未開始')}</span>
                 </span>
@@ -808,7 +808,7 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
           <section className="workbench chain" aria-label={t(q.text, scope)}>
             <header className="wb-head">
               <p className="eyebrow">{t('疑問 {n}', { n: num(i) })}</p>
-              <h2>{t(q.text, scope)}</h2>
+              <h2>{prose(t(q.text, scope))}</h2>
             </header>
             {bench}
             <section className="panel step mine">

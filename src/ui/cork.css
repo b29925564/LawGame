@@ -62,6 +62,30 @@
   );
 }
 
+/*
+ * 手機的光圈：板子只放比對中的兩張，光圈跟著版面放大到蓋住兩張卡（設計師 P2-6 r5 更正：屬於解讀，不是偏離）。
+ * 亮度曲線不變，半徑放大 1.9 倍：兩張照片的影像中心落在光圈半徑 60% 以內。
+ */
+.cork.compact .cork-lamp {
+  background: radial-gradient(
+    circle 95cqw at 50% 50%,
+    #fff 0,
+    #f4f2f0 34%,
+    #d9d4cf 46%,
+    #a8a39e 52%,
+    #8c8781 66%,
+    #3a3836 84%,
+    #262524 100%
+  );
+}
+.cork.compact .cork-warm {
+  background: radial-gradient(
+    circle 70cqw at 50% 50%,
+    rgb(255 180 107 / 55%),
+    rgb(255 180 107 / 0%) 100%
+  );
+}
+
 /* ── 棉線：3px，下垂 34px，影子偏移 (4, 7)。在卡片上面、燈光下面。 ── */
 .cork-strings {
   position: absolute;
@@ -189,6 +213,11 @@
   .cork .cork-zoom {
     transition: opacity var(--dur-ui) var(--ease);
   }
+}
+
+/* 比對位要先量卡高才定得下來：量好以前（板子還沒有 .settled）不跑轉場，不然一進來兩張卡會滑一下。 */
+.cork:not(.settled) .cork-focus {
+  transition: none;
 }
 
 /* 影印紙：卡名、時間、內文前三行。 */
@@ -336,9 +365,14 @@ button.cork-empty:focus-visible {
 }
 
 /* ── 標記層：槽位標籤、關係結、黑條。介面物件，不被調光、不歪。 ── */
+/*
+ * A／B：貼在卡片上緣，一半在卡外、一半壓在 10px 白邊上（高 18px），不進入照片（設計師 P2-6 r5）。
+ * 籤中線比上緣高 1px：手機白邊 10px、籤半高 9px，卡歪 1° 時籤兩端差將近 1px，留這 1px 才不碰影像。
+ */
 .cork .cork-tag {
   z-index: 7;
-  margin: -9px 0 0 8px;
+  translate: 0 calc(-50% - 1px);
+  margin: 0 0 0 8px;
 }
 .cork-knot {
   position: absolute;
@@ -355,6 +389,27 @@ button.cork-empty:focus-visible {
 }
 .cork-knot.set {
   color: #e7eaee;
+}
+/*
+ * 選了關係以後，結變成從線的最低點垂下來的直條：
+ * 兩張比對卡中間只留了關係結的寬度（設計師 P2-6 r5），「說明機會」「Shows opportunity」橫排會壓到兩張照片。
+ * 中文一字一行往下排（不用 vertical-rl：等寬字型沒有直排字距，字會疊在一起）；英文整行轉 90° 側排。
+ */
+.cork-knot:is(.set, .ready) {
+  translate: -50% -4px;
+  width: min-content;
+  padding: 5px 3px;
+  line-height: 16px;
+  white-space: normal;
+  word-break: break-all;
+  text-align: center;
+}
+:root:lang(en) .cork-knot:is(.set, .ready) {
+  width: auto;
+  padding: 7px 3px;
+  line-height: 18px;
+  white-space: nowrap;
+  writing-mode: vertical-rl;
 }
 /* 三樣都齊：結變白（黃留給「連起來」主按鈕）。 */
 .cork-knot.ready {

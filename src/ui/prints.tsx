@@ -18,11 +18,9 @@ const SIZES = {
 } as const;
 const DEFAULT = { board: 400, thumb: 400, drawer: 800, zoom: 1600 } as const;
 /**
- * 圖是 4:3，照片紀錄表的沖印是 4×6（3:2，設定集第 9 章）：裁上下各一點。
- * 扣押袋那張標籤在最上面，設計師要標籤不被裁掉，所以那張從上緣對齊、只裁下面。
+ * 照片紀錄表的沖印是 4×6（3:2，設定集第 9 章），證據板上的卡是 4:3，都用 cover 置中裁。
+ * 手腕那張是 4:3，在紀錄表裡上下各裁一點；扣押袋那張是 3:2（場景光影照紀錄表重拍，標籤留了頭頂空間），在板上左右各裁一點。
  */
-const POS: Record<string, string> = { 'watch-listed': 'center top' };
-
 export type PrintUse = keyof typeof SIZES;
 
 const url = (id: string, w: number) => urls[`./photos/${id}-${w}.webp`];
@@ -39,7 +37,6 @@ export function Print({ id, use }: { id: string; use: PrintUse }) {
       sizes={SIZES[use]}
       alt=""
       decoding="async"
-      style={POS[id] ? { objectPosition: POS[id] } : undefined}
     />
   );
 }

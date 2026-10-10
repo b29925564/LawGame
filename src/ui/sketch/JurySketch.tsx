@@ -108,12 +108,15 @@ export function JurySketch({
   cards,
   look,
   provenance,
+  pool = 1,
 }: {
   on: boolean;
   cards: JuryCard[];
   look: (kind: string) => string;
   /** 出處小字：「法庭速寫 M. Osei 預審」或「…庭審第一日」。 */
   provenance: string;
+  /** 光圈半徑的倍率：手機的板子光圈放大，蓋住兩張比對卡（和 cork.css 的 .cork.compact .cork-lamp 一致）。 */
+  pool?: number;
 }) {
   const t = useT();
   const scope = useScope();
@@ -147,7 +150,7 @@ export function JurySketch({
     };
   }, []);
   const lang = useLang((s) => s.lang);
-  const key = `${cards.map((c) => `${c.id}@${c.at.join(',')}`).join()}|${lang}|${scheme}|${provenance}|${size}`;
+  const key = `${cards.map((c) => `${c.id}@${c.at.join(',')}`).join()}|${lang}|${scheme}|${provenance}|${size}|${pool}`;
 
   // 第一次成形要等玩家真的切過來才開始畫；筆觸先在 Worker 算好放著。
   const onRef = useRef(on);
@@ -190,8 +193,10 @@ export function JurySketch({
         const ch = cw0 * p.ratio;
         const x = (c.at[0] / 100) * w;
         const y = (c.at[1] / 100) * h;
+        // 加寬時往板子外側長（靠中線那一邊不動）：光圈裡左右兩張比對卡不會疊到一起。
+        const inner = x + cw0 / 2 < w / 2 ? x + cw0 : x;
         return {
-          cx: x + cw / 2,
+          cx: x + cw0 / 2 < w / 2 ? inner - cw / 2 : inner + cw / 2,
           cy: y + ch / 2,
           w: cw,
           h: ch,
@@ -243,7 +248,7 @@ export function JurySketch({
         scale,
         cards: sc,
         strings: [],
-        lamp: STOPS,
+        lamp: STOPS.map(([d, v]) => [d * pool, v]),
         base: { lum: 0.43, rgb: [0x8a, 0x6a, 0x48] },
         paper,
         ink,
