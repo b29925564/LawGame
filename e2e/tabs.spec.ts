@@ -58,6 +58,14 @@ for (const [lang, width] of [
     const nav = await pretrial(page, lang);
     const more = nav.getByRole('button', { name: /^(更多|More)/ });
     await expect(more).toBeVisible();
+    // 字型載完分頁會變寬（Shell 會重量）：先等字型載完，再量列和「更多」的寬，不然量到載入中途的樣子（CI 偶爾 91px 的差）。
+    const fontsReady = () =>
+      page.evaluate(() =>
+        document.fonts.ready.then(
+          () => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))),
+        ),
+      );
+    await fontsReady();
     expect(await cut(page)).toEqual([]);
     const row = () => nav.locator(':scope > button[data-key]').allInnerTexts();
     const before = await row();
@@ -70,13 +78,16 @@ for (const [lang, width] of [
     await expect(more).toHaveText(/^(開示|Discovery)/);
     await expect(more).toHaveAccessibleName(/^(更多：開示|More: Discovery)/);
     await expect(nav.locator('.apps-menu')).toHaveCount(0);
-    expect(await row()).toEqual(before);
-    expect(await more.evaluate((b) => b.getBoundingClientRect().width)).toBeCloseTo(slot, 0);
+    await expect.poll(row).toEqual(before);
+    await fontsReady();
+    await expect
+      .poll(() => more.evaluate((b) => Math.round(b.getBoundingClientRect().width)))
+      .toBe(Math.round(slot));
     expect(await cut(page)).toEqual([]);
     // 選回列上的分頁，「更多」又寫回「更多」。
     await nav.locator(':scope > button[data-key]').first().click();
     await expect(more).toHaveText(/^(更多|More)/);
-    expect(await row()).toEqual(before);
+    await expect.poll(row).toEqual(before);
     // Esc 收起選單，焦點回到「更多」。
     await more.click();
     await page.keyboard.press('Escape');
