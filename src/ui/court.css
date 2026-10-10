@@ -3190,13 +3190,12 @@ html[lang='en'] .stamp.rec-stamp b {
   }
 }
 /*
- * 英文理由（Lack of foundation、Violates the court's ruling）在桌機一律用 --fs-ui-meta 13px，最多兩行，按鈕維持 44px。
- * 15px 時中欄最寬（約 560）一顆按鈕也只有約 120，「Violates the court's ruling」要三行，按鈕被撐到 65。
+ * 理由按鈕中英文同一個字級 --fs-ui-row 15px、44px 高：行高 1.2，英文最長的（Lack of foundation、Violates the ruling）兩行剛好塞進 44px
+ * （設計師 #247 第三輪；「Violates the court's ruling」改短以後 1366 也在兩行內）。
  */
 @media (min-width: 1024px) {
-  :root:lang(en) .objection .row button {
-    padding-block: 2px;
-    font-size: var(--fs-ui-meta);
+  .objection .row button {
+    padding-block: 3px;
     line-height: 1.2;
   }
 }

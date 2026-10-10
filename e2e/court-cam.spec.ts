@@ -62,3 +62,45 @@ for (const [width, height] of [
     }
     expect(new Set(seen).size, `top 出現過：${[...new Set(seen)].join(', ')}`).toBe(1);
   });
+
+/** 異議理由按鈕兩列都是 44px：英文和中文同一個字級，最長的理由也只斷兩行（設計師 #247 第三輪）。 */
+for (const lang of ['zh', 'en'] as const)
+  for (const width of [1366, 1530, 1920] as const)
+    test(`異議理由按鈕都是 44px 高（${lang}・${width}）`, async ({ page }, info) => {
+      test.skip(info.project.name !== 'desktop', '只量桌機');
+      await page.setViewportSize({
+        width,
+        height: width === 1366 ? 768 : width === 1530 ? 860 : 1080,
+      });
+      await page.addInitScript(
+        ([s, lang]) => {
+          if (sessionStorage.getItem('seeded')) return;
+          sessionStorage.setItem('seeded', '1');
+          localStorage.clear();
+          localStorage.setItem('lawgame-ep-auto', s);
+          if (lang === 'en') localStorage.setItem('lawgame-lang', 'en');
+        },
+        [
+          JSON.stringify({ version: 5, savedAt: Date.now(), label: 'x', progress: save.ep1 }),
+          lang,
+        ] as const,
+      );
+      await page.goto('/');
+      await page
+        .getByRole('button', { name: lang === 'en' ? /^Continue/ : /^繼續（/ })
+        .first()
+        .click();
+      const cam = page.locator('.court-cam.strip');
+      const open = page.getByRole('button', { name: lang === 'en' ? /^Go to court/ : '開庭' });
+      await open.or(cam).first().waitFor();
+      if (await open.isVisible()) await open.click();
+      await page
+        .getByRole('button', { name: lang === 'en' ? 'Hear the next question' : '聽下一個問題' })
+        .click();
+      const buttons = page.locator('section.objection:not([data-off]) .row button');
+      await expect(buttons).toHaveCount(8);
+      const heights = await buttons.evaluateAll((bs) =>
+        bs.map((b) => Math.round(b.getBoundingClientRect().height)),
+      );
+      expect(heights).toEqual(Array(8).fill(44));
+    });

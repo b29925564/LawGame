@@ -75,11 +75,37 @@ interface Head {
  * 珍珠照解剖位置（同一隻耳朵轉向鏡頭，頭的中間偏下），跟著臉進暗部、不畫受光點（設計師轉頭審查）。
  */
 const TURN_DX = 30;
-/** 四分之三側臉的右緣：鼻、人中、下巴，照角度（弧度，0 在右、往下為正）加在橢圓上。 */
-const profile = (a: number) =>
-  12 * Math.exp(-(((a - 0.2) / 0.07) ** 2)) -
-  4 * Math.exp(-(((a - 0.42) / 0.06) ** 2)) +
-  4 * Math.exp(-(((a - 0.72) / 0.1) ** 2));
+/**
+ * 四分之三側臉的右緣（卡面 y → 往外推多少）：眉骨、鼻根、鼻尖、人中、上唇、唇縫、下唇、頦唇溝、下巴，再收進下顎。
+ * 線性內插，頭的輪廓在這一段加密取點，每個起伏都有好幾個點（設計師 #247 第三輪：不能只有一個尖鼻子）。
+ */
+const PROFILE: [number, number][] = [
+  [150, 0],
+  [172, 3], // 眉骨
+  [186, 3],
+  [197, -1], // 鼻根
+  [212, 5],
+  [228, 13], // 鼻尖
+  [234, 12],
+  [240, 7], // 鼻下
+  [248, 7], // 人中
+  [255, 11], // 上唇
+  [261, 8], // 唇縫
+  [268, 11], // 下唇
+  [278, 7], // 頦唇溝
+  [292, 13], // 下巴（下臉往前補，不然橢圓收得太快，下巴會往後縮）
+  [304, 12],
+  [318, 5],
+  [338, 0],
+];
+const profile = (y: number) => {
+  if (y <= PROFILE[0][0] || y >= PROFILE[PROFILE.length - 1][0]) return 0;
+  const i = PROFILE.findIndex(([py]) => py > y);
+  const [y0, d0] = PROFILE[i - 1],
+    [y1, d1] = PROFILE[i];
+  const t = (y - y0) / (y1 - y0);
+  return d0 + (d1 - d0) * (t * t * (3 - 2 * t));
+};
 
 // ── 頭：上半橢圓，下半往下巴收（jaw 0.82 圓、0.9 方、0.8 長）
 function head(p: JurorLook, turn = false): Head {
@@ -88,14 +114,16 @@ function head(p: JurorLook, turn = false): Head {
   const ry = p.jaw === 'long' ? RY + 8 : RY;
   const cx = turn ? CX + TURN_DX : CX;
   const pts: Poly = [];
-  for (let i = 0; i < 96; i++) {
-    const a = (i / 96) * 2 * Math.PI,
+  const n = turn ? 360 : 96; // 轉頭時側臉在右緣，取點要密才畫得出唇和下巴
+  for (let i = 0; i < n; i++) {
+    const a = (i / n) * 2 * Math.PI,
       s = Math.sin(a),
       c = Math.cos(a);
     // 下半收窄；轉頭時下巴在右下，左下是後頸，只收一點。
     const side = turn ? (c > 0 ? 1 : 0.3) : 1;
     const k = s > 0 ? 1 - (1 - jaw) * Math.pow(s, 1.6) * side : 1;
-    pts.push([cx + rx * c * k + (turn ? profile(a) : 0), CY + ry * s]);
+    const y = CY + ry * s;
+    pts.push([cx + rx * c * k + (turn && c > 0 ? profile(y) : 0), y]);
   }
   return { pts, rx, ry, cx, turn };
 }
@@ -116,23 +144,15 @@ function turnedHair(p: JurorLook, h: Head): Poly[] {
     }
     return o;
   };
+  // 一片鮑伯：蓋住後腦和頭頂，前緣停在額頭上方；髮尾是一刀乾淨的斜線，從耳下（前側長）斜到後頸（後側短）。
+  const cap = arc((deg) => 14 * (1 - ss(296, 334, deg)), 152, 334);
   return [
-    // 頭髮蓋住後腦和頭頂，前緣停在額頭上方，臉（右邊）露出來。
-    // 髮際到額頭前緣逐漸收薄，不留一個台階。
-    arc((deg) => 14 * (1 - ss(296, 334, deg)), 125, 334).concat([
+    cap.concat([
       [cx + rx * 0.55, CY - 60],
-      [cx - rx * 0.1, CY - 10],
-      [cx - rx * 0.7, CY + 50],
+      [cx + rx * 0.08, CY - 10],
+      [cx + rx * 0.06, 300],
+      [cx - rx * 0.12, 324],
     ]),
-    // 前側長的那一片（J1 在畫面左邊那一側）轉向鏡頭，蓋住耳朵垂到下顎；珍珠在它下緣附近。
-    [
-      [cx - rx * 0.1, CY - 50],
-      [cx + rx * 0.02, CY + 40],
-      [cx - rx * 0.12, 318],
-      [cx - rx * 0.55, 326],
-      [cx - rx - 8, 296],
-      [cx - rx - 14, CY],
-    ],
   ];
 }
 
