@@ -1415,9 +1415,9 @@ details summary {
 /* 錄取逐字稿的頁:行（Courier Prime 等寬小字，和證據卡的 Tr. 42:7 同一寫法）。 */
 .doc-cite {
   margin: 0 0 6px;
-  font-family: var(--font-mono);
-  font-size: 12px;
+  font: 700 12px/18px var(--font-court);
   letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
   color: var(--paper-muted);
 }
 .doc-lines li {
@@ -1429,10 +1429,9 @@ details summary {
   position: absolute;
   left: -52px;
   width: 28px;
-  top: 7px;
+  top: 11px;
   text-align: right;
-  font-family: var(--font-mono);
-  font-size: 11px;
+  font: 400 12px var(--font-court);
   color: var(--paper-muted);
 }
 .sentence {

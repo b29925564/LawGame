@@ -41,6 +41,13 @@ test('卷宗逐字稿：標頁:行，行號從 6 接著數，答句在第 7 行'
     .first()
     .click();
   await expect(page.locator('.doc-cite')).toHaveText('Tr. 42:6–7');
+  // 頁:行和行號是紙上印的字：Courier Prime，不是場記用的 JetBrains Mono（設定集第 9 章 <Transcript>）。
+  await expect(page.locator('.doc-cite')).toHaveCSS('font-family', /^"?Courier Prime/);
+  const numFont = await page
+    .locator('.doc-lines li')
+    .first()
+    .evaluate((el) => getComputedStyle(el, '::before').fontFamily);
+  expect(numFont).toMatch(/^"?Courier Prime/);
   // 行號是 CSS 計數器：從第 6 行開始數（counter-reset: line 5），兩句就是 6、7。
   await expect(page.locator('.doc-lines')).toHaveAttribute('style', /counter-reset:\s*line 5/);
   // 標了證據卡的那一句（答句）是第 7 行。
