@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { episodes } from '../content';
 import { proseUnits } from './lineUnits';
 
 describe('紙面內文的換行單位（設計師 P2-6 r2 第 12 條）', () => {
@@ -51,5 +52,36 @@ describe('紙面內文的換行單位（設計師 P2-6 r2 第 12 條）', () => 
     expect(proseUnits('Indictment filed: one count of murder.')).toEqual([
       'Indictment filed: one count of murder.',
     ]);
+  });
+
+  it('人名不拆（#246 r8：「伊／森就叫了車」）：台詞說話人的名字每一段都是一個單位', () => {
+    expect(proseUnits('22:33 手錶跳出死者帳號的訊息，22:34 伊森就叫了車。')).toContain('伊森');
+    const who = new Set<string>();
+    const walk = (o: unknown): void => {
+      if (Array.isArray(o)) return o.forEach(walk);
+      if (!o || typeof o !== 'object') return;
+      for (const [k, v] of Object.entries(o))
+        if (['who', 'owner', 'driver'].includes(k) && typeof v === 'string') who.add(v);
+        else walk(v);
+    };
+    walk(Object.values(episodes));
+    const split: string[] = [];
+    for (const n of who)
+      for (const part of n.split(/[・\s]/))
+        if ([...part].length >= 2 && /^\p{Script=Han}+$/u.test(part))
+          if (!proseUnits(`和${part}談過之後再說`).some((u) => u.includes(part))) split.push(part);
+    expect([...new Set(split)]).toEqual([]);
+  });
+
+  it('開頭的「誰的說法：」整組不拆，斷在冒號後（#246 r8 邊緣卡標題）', () => {
+    expect(proseUnits('伊森的說法：他先檢舉了沃斯')[0]).toBe('伊森的說法：');
+    // 標籤後面短短的末行不併進標籤（窄卡上會整組超出卡邊）；標籤後一個字不自己掛一行。
+    expect(proseUnits('伊森的說法：獎盃')).toEqual(['伊森的說法：', '獎盃']);
+    expect(proseUnits('伊森的說法：他先檢舉了沃斯').slice(0, 2)).toEqual(['伊森的說法：', '他先']);
+    expect(proseUnits('驗屍照片：死者的手錶')[0]).toBe('驗屍照片：');
+    // 冒號太後面的不是標籤，照常斷。
+    expect(proseUnits('被告委任惠特洛克・海爾律師事務所為訴訟代理人：具狀陳報。')[0]).not.toMatch(
+      /：$/,
+    );
   });
 });

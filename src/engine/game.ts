@@ -741,6 +741,9 @@ export const useEpisode = create<GameState>()((set, get) => {
         }
         if (p.step + 1 < s.steps.length) return set({ progress: { ...p, step: p.step + 1 } });
       }
+      // 片頭卡之後多一頁警方現場照片（設定集 11.5：冷開場不放血和黃）。
+      if (s.type === 'card' && s.photos?.length && p.step === 0)
+        return set({ progress: { ...p, step: 1 } });
       set({ progress: nextScene(p) });
     },
     choose: (option) => {

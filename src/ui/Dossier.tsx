@@ -7,7 +7,7 @@ import type { Progress } from '../engine/save';
 import { useLang, useT } from '../i18n';
 import { cardHighlights, Hl } from './Marks';
 import { useScope } from './lang';
-import { hasPrint, Print, type PrintUse } from './prints';
+import { hasPrint, Print, redactZone, type PrintUse } from './prints';
 import { prose } from './prose';
 import { Redaction } from './Redaction';
 import { caseTermsOf } from './terms';
@@ -240,7 +240,8 @@ function Who({ text }: { text: string }) {
 
 /**
  * 沖印本（零圓角）＋底邊四欄：案號、照片序號、時間、攝影者；右下角是 Bates（還沒有號碼就是一條黑條）。
- * 沒有實物照片時是警方閃光燈的版式（中心過曝、四角快速變暗），不畫道具；redacted 的照片畫「照片已遮蔽」黑條。
+ * 沒有實物照片時是警方閃光燈的版式（中心過曝、四角快速變暗），不畫道具。
+ * redacted 的照片：有實物照片和遮蔽範圍（redact.json）就只在那一塊畫「照片已遮蔽」黑條，否則整張是黑條。
  */
 export function PhotoLog({
   photo,
@@ -248,6 +249,7 @@ export function PhotoLog({
   image,
   use = 'drawer',
   redacted,
+  alt,
   children,
 }: {
   photo: PhotoRecord;
@@ -256,19 +258,37 @@ export function PhotoLog({
   image?: string;
   use?: PrintUse;
   redacted?: boolean;
+  /** 照片拍的是什麼（讀屏）；卡片上已經有卡名的地方不用給。 */
+  alt?: string;
   /** 照片上的標記層（例如證物牌）。 */
   children?: ReactNode;
 }) {
   const t = useT();
+  const print = !!id && hasPrint(id);
+  const zone = redacted && print ? redactZone(id) : undefined;
   return (
     <figure className="photolog">
       <span className="photolog-print">
-        {redacted ? (
+        {redacted && !zone ? (
           <Redaction label={t('照片已遮蔽')} />
-        ) : id && hasPrint(id) ? (
-          <Print id={id} use={use} />
+        ) : print ? (
+          <Print id={id} use={use} alt={alt} />
         ) : (
-          image && <img src={image} alt="" />
+          image && <img src={image} alt={alt ?? ''} />
+        )}
+        {/* 遮住遺體的那一塊：黑條、上緣 1px，左下角印「照片已遮蔽」（設計師 P2-6b 第一版審查）。 */}
+        {zone && (
+          <span
+            className="photolog-redact"
+            style={{
+              left: `${zone[0] * 100}%`,
+              top: `${zone[1] * 100}%`,
+              right: `${(1 - zone[2]) * 100}%`,
+              bottom: `${(1 - zone[3]) * 100}%`,
+            }}
+          >
+            <span>{t('照片已遮蔽')}</span>
+          </span>
         )}
         {children}
       </span>
@@ -474,25 +494,51 @@ export function EvidenceZoom({
 }) {
   const t = useT();
   const scope = useScope();
-  const ref = useRef<HTMLDialogElement>(null);
   const ep = episodeOf(progress);
   const { photo, bag } = dossierOf(ep, item.id);
   const hl = cardHighlights(ep)[item.id];
-  // 卸載時元素離開文件就自動關閉，不在清理函式裡 close()：那會排一個 close 事件，嚴格模式重掛時把自己關掉。
-  useEffect(() => {
-    const d = ref.current;
-    if (d && !d.open) d.showModal();
-  }, []);
   const body = photo ? (
     <PhotoLog photo={photo} id={item.id} image={item.image} use="zoom" />
   ) : (
     <Sheet item={item} hl={hl} />
   );
   return (
+    <ZoomDialog title={t(item.name, scope)} onClose={onClose}>
+      {!photo && <PrintPlate id={item.id} use="zoom" />}
+      {bag ? (
+        <EvidenceBag bag={bag} progress={progress}>
+          {body}
+        </EvidenceBag>
+      ) : (
+        body
+      )}
+      {photo && <Sheet item={item} hl={hl} />}
+    </ZoomDialog>
+  );
+}
+
+/** 放大檢視的外框：標題列加「關閉」，下面是內容。冷開場的警方照片也用這一個。 */
+export function ZoomDialog({
+  title,
+  onClose,
+  children,
+}: {
+  title: string;
+  onClose: () => void;
+  children: ReactNode;
+}) {
+  const t = useT();
+  const ref = useRef<HTMLDialogElement>(null);
+  // 卸載時元素離開文件就自動關閉，不在清理函式裡 close()：那會排一個 close 事件，嚴格模式重掛時把自己關掉。
+  useEffect(() => {
+    const d = ref.current;
+    if (d && !d.open) d.showModal();
+  }, []);
+  return (
     <dialog
       ref={ref}
       className="zoom"
-      aria-label={t('放大檢視 {name}', { name: t(item.name, scope) })}
+      aria-label={t('放大檢視 {name}', { name: title })}
       onClose={onClose}
       onClick={(e) => {
         // 只有點在框外（背幕）才關；框內的留白也算 dialog 自己，要看座標。
@@ -505,23 +551,13 @@ export function EvidenceZoom({
       onKeyDown={(e) => e.key === 'Escape' && e.stopPropagation()}
     >
       <header className="zoom-head">
-        <h2>{t(item.name, scope)}</h2>
+        <h2>{title}</h2>
         <button className="link" onClick={() => ref.current?.close()}>
           {t('關閉')}
         </button>
       </header>
       {/* 標題列固定，內容在框裡捲：框永遠留在視窗內，上下留白不被吃掉（設計師 r2 第 5 條）。 */}
-      <div className="zoom-body">
-        {!photo && <PrintPlate id={item.id} use="zoom" />}
-        {bag ? (
-          <EvidenceBag bag={bag} progress={progress}>
-            {body}
-          </EvidenceBag>
-        ) : (
-          body
-        )}
-        {photo && <Sheet item={item} hl={hl} />}
-      </div>
+      <div className="zoom-body">{children}</div>
     </dialog>
   );
 }

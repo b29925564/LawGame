@@ -493,7 +493,8 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
   }));
   // 疑問的答案都是發現；論點只在證據欄出現，拿來連線（試玩回報：兩邊各列一次太亂）。
   const answers = found;
-  const showPair = (p: readonly [string, string]) => `${t(p[0], scope)} ⟷ ${t(p[1], scope)}`;
+  // 兩張卡之間用 ×（手寫字型裡有這個字，⟷ 會退回別的字型）。
+  const showPair = (p: readonly [string, string]) => `${t(p[0], scope)} × ${t(p[1], scope)}`;
   // 還沒解鎖的疑問不列出來，免得題目先把還沒查到的線索講出來。
   const questions = desk.openQuestions(scene, st, progress.cards);
   const firstOpen = questions.find((q) => !st.confirmed.includes(q.id));
@@ -823,10 +824,14 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
               ) : (
                 (() => {
                   // 一條發現就是一張便條：編號與關係、連起來的兩張卡、連線的內容；點了放進答案。
+                  // 「新」：最近連出來、還沒放進任何一題答案的那一條。
+                  const placed = new Set(Object.values(st.attempts).flatMap((x) => x.cards));
+                  const newest = st.found[st.found.length - 1];
                   const note = (f: (typeof found)[number]) => (
                     <FoundNote
                       key={f.id}
                       fresh={f.id === fresh}
+                      isNew={f.id === newest && !placed.has(f.id)}
                       used={a.cards.includes(f.id)}
                       done={done}
                       label={`${t(f.name, scope)}${t('：')}${showPair(f.pair)}`}
@@ -1285,13 +1290,13 @@ function Jobs({ scene, held }: { scene: DeskScene; held: string[] }) {
         const done = st.jobs.includes(j.id);
         return (
           <li key={j.id} className="panel job">
-            <strong>{t(j.label, scope)}</strong>
+            <strong>{prose(t(j.label, scope))}</strong>
             <p className="muted">
               {t(j.who, scope)}
               {t('・')}
               {t('{n} 工時', { n: j.cost })}
             </p>
-            <p>{t(j.detail, scope)}</p>
+            <p>{prose(t(j.detail, scope))}</p>
             {/* 委託會留下旗標的，先把會發生的事列出來（決策代價規格一）；已委託的不必再看。 */}
             {!done && <EffectLines items={effectsIf(progress, j.flags)} />}
             {/* 前提寫在卡上：沒寫的話，玩家會以為不必任何證據就能委託。 */}
@@ -1305,7 +1310,7 @@ function Jobs({ scene, held }: { scene: DeskScene; held: string[] }) {
               </ul>
             )}
             {done ? (
-              <p className="good">{t('已回報。')}</p>
+              <ReportNote lines={j.report} />
             ) : (
               // 每張委託卡各一顆，一個畫面會有好幾顆：用次要鈕，黃只留給畫面上唯一的主按鈕（規格 v2.0 §10）。
               <button
@@ -1319,6 +1324,32 @@ function Jobs({ scene, held }: { scene: DeskScene; held: string[] }) {
         );
       })}
     </ul>
+  );
+}
+
+/**
+ * 已回報的委託下面一張回報便條（規格 v2.0 §14：§9 的便條，Mono 小標「回報」）：
+ * 盧卡斯把對方說的抄下來，自己的結論前面一條淡鉛筆線，和發現便條同一種紙、同一支筆。
+ */
+function ReportNote({ lines }: { lines: DeskScene['jobs'][number]['report'] }) {
+  const t = useT();
+  const scope = useScope();
+  // 小標寫回報的人（旁白、盧卡斯自己不算）。
+  const from = [...new Set(lines.map((l) => l.who))].filter((w) => w !== '盧卡斯' && w !== '旁白');
+  return (
+    <div className="found report-note">
+      <span className="found-head">
+        {t('回報')}
+        {from.length > 0 && <span>{from.map((w) => t(w)).join(t('、'))}</span>}
+      </span>
+      <span className="found-body open">
+        {lines.map((l, i) => (
+          <span key={i} className={l.who === '盧卡斯' ? 'found-note' : 'found-text'}>
+            {prose(t(l.text, scope))}
+          </span>
+        ))}
+      </span>
+    </div>
   );
 }
 
@@ -1366,6 +1397,7 @@ export function CardSheet({
  */
 function FoundNote({
   fresh,
+  isNew,
   used,
   done,
   label,
@@ -1376,6 +1408,7 @@ function FoundNote({
   note,
 }: {
   fresh: boolean;
+  isNew: boolean;
   used: boolean;
   done: boolean;
   label: string;
@@ -1409,12 +1442,15 @@ function FoundNote({
       >
         <span className="found-head">
           {head}
-          {used && <span className="good">{t('已放進答案')}</span>}
+          {isNew && <span className="found-new">{t('新')}</span>}
+          {used && <span className="found-used-tag">{t('已放進答案')}</span>}
         </span>
-        <strong className="found-pair">{pair}</strong>
-        <span ref={body} className={'found-body' + (long ? ' long' : '') + (open ? ' open' : '')}>
-          <span className="found-text">{text}</span>
-          {note && <span className="found-note">{note}</span>}
+        <strong className="found-pair">{prose(pair)}</strong>
+        <span className={'found-body' + (long ? ' long' : '') + (open ? ' open' : '')}>
+          <span ref={body} className="found-text">
+            {prose(text)}
+          </span>
+          {note && <span className="found-note">{prose(note)}</span>}
         </span>
       </button>
       {(long || open) && (

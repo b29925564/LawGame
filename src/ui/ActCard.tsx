@@ -3,6 +3,7 @@ import { episodeOf, useEpisode } from '../engine/game';
 import { useLang, useT } from '../i18n';
 import { prose } from './prose';
 import { reducedMotion } from './a11y';
+import { claimHand } from './hand';
 import { kelvinOf, rigOf } from './rigs';
 import { useCaseTerms } from './terms';
 import './actcard.css';
@@ -245,14 +246,34 @@ export function ActCard({
   );
 }
 
+/** 地點字卡的時間（actcard.css 的 place-slate 動畫 2860ms＝淡入 180＋停 2500＋淡出 180）。 */
+const SLATE_FADE = 180;
+const SLATE_HOLD = 2500;
+
 /**
  * 地點字卡（設定集 11.3）：換地點但沒有幕卡時，鏡頭左下一行場記，前面一段 14×2 的黃短槓。
  * 淡入 180ms、停 2.5 秒、淡出 180ms；不擋操作，讀屏照常唸。
+ * 短黃線算那一格唯一的黃：字卡在的時候認領 slate（hand.ts），主按鈕先退成白框；開始淡出時把黃還給主按鈕，
+ * 淡完整行拿掉，不留一個透明的字卡在畫面上（第一道關卡 N3）。
  */
 export function PlaceSlate({ id, place }: { id?: string; place: Place | null }) {
   const en = useLang((s) => s.lang) === 'en';
   const [where, right] = useSlate(place ?? undefined);
-  if (!place) return null;
+  const [done, setDone] = useState<string>();
+  const live = !!place && done !== id;
+  useEffect(() => {
+    if (!live) return;
+    const release = claimHand('slate');
+    const still = reducedMotion();
+    const back = setTimeout(release, still ? SLATE_HOLD : SLATE_FADE + SLATE_HOLD);
+    const gone = setTimeout(() => setDone(id), still ? SLATE_HOLD : 2 * SLATE_FADE + SLATE_HOLD);
+    return () => {
+      clearTimeout(back);
+      clearTimeout(gone);
+      release();
+    };
+  }, [live, id]);
+  if (!place || !live) return null;
   return (
     <p key={id} className="place-slate" role="status">
       {[where, right].join(en ? '  ' : '\u3000')}

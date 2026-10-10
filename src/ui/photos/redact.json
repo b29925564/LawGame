@@ -1,0 +1,6 @@
+{
+  "scene-overall": {
+    "redact": [0.4625, 0.4875, 1.0, 1.0],
+    "note": "image fractions x0,y0,x1,y1, top-left origin; the UI draws the 照片已遮蔽 bar here (body stand-in + right arm)"
+  }
+}

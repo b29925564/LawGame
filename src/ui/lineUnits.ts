@@ -37,7 +37,15 @@ const KEEP = [
   '月曆',
   // P2-6 r5：手機聲請便條說明裡的「檢方」。
   '檢方',
+  // #246 r8：人名 ICU 都切成單字（「伊／森就叫了車」「伊森／的說法」）。台詞說話人裡的名字由 prose.test.ts 檢查，
+  // 新角色上台詞時測試會指出要補哪個；不說話的（死者、證人）在這裡手動加。
+  ...['伊森', '蘇菲', '沃斯', '葛蘭特', '奧瑪', '瑞秋', '盧卡斯', '羅根', '普萊斯', '馬庫斯'],
+  ...['維多莉亞', '惠特洛克', '海爾', '莫羅', '潔德', '戴文', '奧卡福', '丹尼爾', '亞瑟', '凱瑟琳'],
+  ...['崔佛', '林肯', '瑪莉索', '米爾斯', '維加', '艾德勒', '蘿莎', '赫克托', '卡爾德', '柯瓦斯基'],
+  ...['普莉亞', '布魯克斯', '旁白', '語音', '法官', '法院系統', '卡爾德快遞'],
 ];
+/** 開頭的「誰的說法：」「驗屍照片：」這種標籤，冒號前面不超過這麼多字就整組不拆，要斷斷在冒號後（#246 r8）。 */
+const LABEL = 8;
 const MIN_TAIL = 4;
 const SIDE = 4;
 
@@ -122,11 +130,23 @@ export function proseUnits(text: string, tail = true): string[] {
       out.splice(i - 1, 3, a + ' ' + b);
   }
 
+  // 開頭的標籤（「伊森的說法：」）：到第一個冒號為止併成一個單位。
+  // 標籤後面緊接的單字（「他／先」）併成一組，不讓一個字自己掛一行；末行的規則也不併進標籤，標籤後永遠可以斷。
+  const colon = out.findIndex((x) => /[：:]$/.test(x));
+  let label = 0;
+  if (colon > 0 && [...out.slice(0, colon + 1).join('')].length <= LABEL + 1) {
+    out.splice(0, colon + 1, out.slice(0, colon + 1).join(''));
+    label = 1;
+    let j = 1;
+    while (j < out.length && [...out[j]].length === 1 && HAN.test(out[j]) && j - 1 < SIDE) j++;
+    if (j - 1 >= 2) out.splice(1, j - 1, out.slice(1, j).join(''));
+  }
+
   // 末行至少四個漢字；黏起來的那一段不超過十四個全形字寬。
   if (tail) {
     let k = out.length - 1;
     while (
-      k > 0 &&
+      k > label &&
       hanCount(out.slice(k).join('')) < MIN_TAIL &&
       ems(out.slice(k - 1).join('')) <= 14
     )

@@ -445,10 +445,17 @@ button.cork-empty:focus-visible {
   color: var(--redact-label);
 }
 
-/* 邊緣的卡退到暗處：內文只留兩行，卡不會超出板子。 */
+/* 邊緣的卡退到暗處：內文最多兩行。放不下時（英文卡名長、板子矮）Cork.tsx 量過卡高再少放幾行，
+   一行都放不下就不放（.bare），卡不超出板子、不蓋到下一格的卡（第一道關卡 N1）。 */
 .cork-card .cork-doc-text,
 .cork-card .cork-hand {
   --lines: 2;
+}
+.cork-card > span:is(.cork-doc-text, .cork-hand) {
+  --lines: var(--edge-lines, 2);
+}
+.cork-card.bare > span:is(.cork-doc-text, .cork-hand) {
+  display: none;
 }
 /* 光圈裡的比對卡是玩家拉進來要讀的：字全部放完、不淡出，卡跟著內容長高（設計師 P2-6 r6 第 2 條）。 */
 .cork-focus:not(.away) :is(.cork-doc-text, .cork-hand) {
@@ -466,18 +473,6 @@ body:has(.cork) .card .mini-btn[aria-pressed='true'] {
   border-color: transparent !important;
   background: transparent !important;
   box-shadow: none;
-}
-
-/* 發現便條：放進答案的那條是白框；編號不用黃。 */
-.board3 .found[aria-pressed='true'],
-.board-one .found[aria-pressed='true'] {
-  border-color: var(--text) !important;
-  background: var(--surface-2) !important;
-  box-shadow: inset 3px 0 0 var(--text);
-}
-.board3 .found-head,
-.board-one .found-head {
-  color: var(--text);
 }
 
 /* 手機：只有光圈裡的兩張，字不小於 12px。 */

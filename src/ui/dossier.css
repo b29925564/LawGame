@@ -296,6 +296,22 @@
   flex: none;
   width: 70%;
 }
+/* 照片裡的遮蔽（redact.json 的範圍）：純黑、上緣 1px，零圓角；字靠左下，Courier＋Noto Serif TC。
+   字色用 --redact-label 不用 --paper-muted：後者在黑條上只有 3.3:1（深）／3.6:1（淺），前者 4.69:1。 */
+.photolog-redact {
+  position: absolute;
+  display: flex;
+  align-items: flex-end;
+  padding: 8px 10px;
+  background: var(--redact);
+  border-top: 1px solid var(--cine-line);
+  border-radius: 0;
+}
+.photolog-redact span {
+  font: 400 13px/1.3 var(--font-court);
+  letter-spacing: 0.04em;
+  color: var(--redact-label);
+}
 .photolog-strip {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -659,7 +675,7 @@
  * 和 A／B 一樣貼在卡片上緣、靠右：看得到的籤高 18px，一半在卡外、一半壓在 10px 白邊上，不蓋照片（設計師 P2-6 r5）。
  * 左右內距 6px 和 A／B 一樣；離卡角多遠由 Cork 算（卡窄時往卡角靠，不蓋圖釘）。
  */
-.cork .cork-zoom {
+:is(.cork, .scene-photo) .cork-zoom {
   position: absolute;
   z-index: 7;
   translate: -100% calc(-50% - 1px);
@@ -675,14 +691,20 @@
   white-space: nowrap;
 }
 /* 點擊範圍 28px：看得到的籤 18px，透明的一圈撐大（設計師 P2-6 r1、r5）。 */
-.cork .cork-zoom::after {
+:is(.cork, .scene-photo) .cork-zoom::after {
   content: '';
   position: absolute;
   inset: -5px;
 }
-.cork .cork-zoom:hover:not(:disabled) {
+:is(.cork, .scene-photo) .cork-zoom:hover:not(:disabled) {
   border-color: #8e99a7;
   background: #19202a;
+}
+/* 冷開場的警方照片：同一顆「放大」，貼在沖印本上緣靠右，一半在紙外、一半壓在 10px 白邊上，不蓋照片。 */
+.scene-photo .cork-zoom {
+  top: 0;
+  right: 10px;
+  translate: 0 calc(-50% - 1px);
 }
 /* 陪審團視角停用：實線框、--ink-muted 字，不用透明度。 */
 .cork .cork-zoom:disabled {

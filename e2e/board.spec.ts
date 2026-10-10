@@ -124,6 +124,57 @@ for (const lang of ['zh', 'en'] as const)
     });
   });
 
+// 邊緣的卡不被板子切到（第一道關卡 N1）：英文卡名三行、板子矮的時候，內文少放幾行，還放不下才往上挪。
+// 修之前 1440／1366 的最下排超出板子下緣 2–52px。
+for (const lang of ['zh', 'en'] as const)
+  test(`邊緣的卡不超出板子（${lang}）`, async ({ page, isMobile }) => {
+    await openBoard(
+      page,
+      lang,
+      [
+        'ethan-accused',
+        'ethan-ride',
+        'ethan-message',
+        'ethan-flee',
+        'ethan-report',
+        'ethan-trophy',
+        'indictment',
+        'watch-listed',
+        'access-full',
+        'blood-report',
+      ],
+      [/完整門禁|Full badge/, /起訴書|Indictment/],
+    );
+    await eachWidth(page, isMobile, async (width) => {
+      const out = await page.evaluate(() => {
+        const board = document.querySelector<HTMLElement>('.cork')!;
+        const b = board.getBoundingClientRect();
+        const s = getComputedStyle(board);
+        const top = b.top + parseFloat(s.borderTopWidth);
+        const left = b.left + parseFloat(s.borderLeftWidth);
+        const inner = { t: top, b: top + board.clientHeight, l: left, r: left + board.clientWidth };
+        return [...board.querySelectorAll<HTMLElement>('.cork-card')]
+          .map((e) => ({ e, r: e.getBoundingClientRect() }))
+          .filter(
+            ({ r }) =>
+              r.top < inner.t - 1 ||
+              r.bottom > inner.b + 1 ||
+              r.left < inner.l - 1 ||
+              r.right > inner.r + 1,
+          )
+          .map(({ e }) => e.innerText.slice(0, 20));
+      });
+      expect(out, `${width}px`).toEqual([]);
+      // 卡片標題整組不拆（「伊森的說法：」）也不能把字擠出卡邊（設計師 #246 r8）。
+      const wide = await page.evaluate(() =>
+        [...document.querySelectorAll<HTMLElement>('.cork-card :is(b, .cork-doc-name)')]
+          .filter((e) => e.scrollWidth > e.clientWidth + 1)
+          .map((e) => e.innerText),
+      );
+      expect(wide, `${width}px`).toEqual([]);
+    });
+  });
+
 /** 存一個第 7 場的檔、打開證據板，把兩張卡放上光圈（手機先點第一題）。 */
 async function openBoard(page: Page, lang: 'zh' | 'en', cards: string[], picks: RegExp[]) {
   await page.goto('/');

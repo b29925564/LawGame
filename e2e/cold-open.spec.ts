@@ -26,6 +26,8 @@ test('冷開場：看過的訊息被收回，換場自動存檔，可從標題�
   await expect(page.getByText('此訊息已被收回')).toBeVisible();
   await expect(page.getByText('我們私下解決')).toHaveCount(0);
   await next();
+  // 冷開場裡沒有警方照片（設定集 11.5：冷開場沒有血、沒有黃）。
+  await expect(page.getByRole('list', { name: '現場照片' })).toHaveCount(0);
   await next();
   await expect(page.getByRole('heading', { name: '已收回的訊息' })).toBeVisible();
 
@@ -38,6 +40,25 @@ test('冷開場：看過的訊息被收回，換場自動存檔，可從標題�
   await page.getByRole('button', { name: '讀取存檔' }).click();
   await page.getByRole('button', { name: '讀取存檔 1' }).click();
   await expect(page.getByRole('heading', { name: '已收回的訊息' })).toBeVisible();
+
+  // 片頭卡切走之後，才是週六凌晨的警方現場照片（P2-6b）：三張沖印照順序排，遺體那一塊是「照片已遮蔽」黑條。
+  const photos = page.getByRole('list', { name: '現場照片' });
+  await expect(photos.getByRole('img')).toHaveCount(3, { timeout: 15000 });
+  await expect(photos.getByRole('img').first()).toHaveAccessibleName(/全景/);
+  await expect(photos.locator('.photolog-redact')).toHaveText('照片已遮蔽');
+  await expect(photos.locator('.photolog-bates')).toHaveText([
+    'CPD-000301',
+    'CPD-000302',
+    'CPD-000303',
+  ]);
+  await photos.getByRole('button', { name: /放大檢視 全景/ }).click();
+  await expect(page.getByRole('dialog', { name: /放大檢視 全景/ })).toBeVisible();
+  await page.getByRole('button', { name: '關閉' }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  // 「繼續」不是黃的：這一頁的黃是獎盃照片裡的證物牌（一格一黃）。
+  await expect(page.getByRole('button', { name: '繼續' })).not.toHaveClass(/primary/);
+  await next();
+  await expect(page.getByText('港灣大道一號，頂樓', { exact: false })).toBeVisible();
 });
 
 test('語言切換：標題畫面切成英文，重新整理後保留，切回中文', async ({ page }) => {
