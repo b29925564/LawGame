@@ -3015,14 +3015,23 @@ html[lang='en'] .stamp.rec-stamp b {
   .shell:has(> .shell-tabs > .record) > .shell-tabs > .record {
     grid-row: 2 / 7;
   }
+  /*
+   * 按鈕列放在鏡頭條上方：提示＋主按鈕和異議窗共用鏡頭條上面那一格（設計師 #247 第一輪）。
+   * 異議窗打開時按鈕列沒有按鈕、收成 0，窗長進它空出來的高度；1fr 的那一列加上按鈕列永遠一樣高，
+   * 鏡頭條的位置在窗開、一刀黑、法官席、落章、證人回答各個時間點都不動。
+   */
+  .shell:has(> .shell-tabs > .record) > .shell-foot {
+    grid-row: 4;
+    border-top: none;
+    background: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
   .shell:has(> .shell-tabs > .record) > .shell-tabs > .court-cam {
     grid-column: 2;
-    grid-row: 4;
-  }
-  .shell:has(> .shell-tabs > .record) > .shell-tabs > .jurybox {
     grid-row: 5;
   }
-  .shell:has(> .shell-tabs > .record) > .shell-foot {
+  .shell:has(> .shell-tabs > .record) > .shell-tabs > .jurybox {
     grid-row: 6;
   }
   .court-cam.insert {
@@ -3049,7 +3058,9 @@ html[lang='en'] .stamp.rec-stamp b {
   .court-cam.insert[data-open] {
     opacity: 1;
   }
+  /* 標籤那一列算在插入鏡頭自己的範圍裡：整列不透明，不壓在筆錄行號上；筆錄量的是整個插入區塊，最新一行捲到標籤上面（設計師 #247 第一輪）。 */
   .court-cam.insert > .tbd-label {
+    align-self: stretch;
     margin-bottom: 0;
     padding: 4px 0 4px 7px;
     background: var(--bg);
@@ -3087,14 +3098,50 @@ html[lang='en'] .stamp.rec-stamp b {
 .objection .row button {
   padding-inline: 4px;
 }
+/* 異議窗的框：淺色底上 --hl 只有約 1.4:1，黃色線條改用 --hl-edge（設計師 #247 第一輪）；--hl-wash 底色照舊。 */
+.objection {
+  border-color: light-dark(var(--hl-edge), var(--hl));
+}
+/* 「生效中」：寬螢幕和手機在理由下面一行；桌機 ≤ 1440 搬進標題列（在「要異議嗎？」和「不異議」之間），斷行只斷在「：」後面。 */
+.objection .in-effect.head {
+  display: none;
+}
+@media (min-width: 1024px) and (max-width: 1440px) {
+  .objection .panel-head > h2 {
+    white-space: nowrap;
+  }
+  .objection .in-effect.head {
+    display: flex;
+    flex-wrap: wrap;
+    min-width: 0;
+    flex: 1 1 0;
+    font-size: 0.85em;
+    line-height: 1.3;
+  }
+  .objection .panel-head > .pass {
+    min-width: 0;
+  }
+
+  .objection .in-effect.foot {
+    display: none;
+  }
+}
+/* 英文理由比較長（Improper character evidence）：桌機按鈕維持 44px 高、4 欄 2 列，字縮小，最多三行塞進 44px。 */
+@media (min-width: 1024px) {
+  :root:lang(en) .objection .row button {
+    padding-block: 2px;
+    font-size: 0.75em;
+    line-height: 1.1;
+  }
+}
 @media (max-width: 380px) {
   .objection .row {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 @media (min-width: 1024px) {
-  /* 筆錄紙從第 2 列接到陪審團那一列的底（比 styles.css 那條「沒有 .jury 時 2 / 5」更具體）。 */
+  /* 筆錄紙從第 2 列接到陪審團那一列（最後一列）的底（比 styles.css 那條「沒有 .jury 時 2 / 5」更具體）。 */
   .shell:has(> .shell-tabs > .record):has(> .shell-tabs > .court-cam) > .shell-tabs > .record {
-    grid-row: 2 / 6;
+    grid-row: 2 / 7;
   }
 }

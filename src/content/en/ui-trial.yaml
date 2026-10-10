@@ -126,6 +126,7 @@
 理論靠的論點: The theory rests on
 點一張卡比較，再按下面的「以這個理論開庭」定案。: Pick a card to compare, then press “Go to trial on this theory” below to commit.
 '生效中：{rulings}': 'In effect: {rulings}'
+'生效中：': 'In effect: '
 下次可以試: Next time
 完整帳目: Full ledger
 '（{where}）': ' ({where})'

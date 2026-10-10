@@ -115,12 +115,20 @@ function ObjectionWindow({
     }, 250);
     return () => clearInterval(timer);
   }, [seconds, onPass]);
+  const inEffect = rulings.map((r) => t(r, scope)).join(t('、'));
   return (
     <section className="panel objection" aria-label={t('異議')}>
       {/* 「不異議」放在標題列：法庭中欄還有鏡頭條和陪審團，整個面板要在一屏內，不捲動（設計師 P3 裁定 5）。 */}
       <div className="panel-head">
         <h2>{t('要異議嗎？')}</h2>
         {seconds > 0 && <span className="muted">{t('{n} 秒', { n: Math.max(0, left) })}</span>}
+        {/* 寬度 ≤ 1440 時「生效中」搬進標題列，窗壓矮（設計師 #247 第一輪）；放不下就斷在「：」後面。 */}
+        {rulings.length > 0 && (
+          <span className="in-effect head muted">
+            <span>{t('生效中：')}</span>
+            <span>{inEffect}</span>
+          </span>
+        )}
         <button className="pass" onClick={onPass}>
           {t('不異議')}
         </button>
@@ -139,10 +147,8 @@ function ObjectionWindow({
         ))}
       </div>
       {rulings.length > 0 && (
-        <p className="muted small">
-          {t('生效中：{rulings}', {
-            rulings: rulings.map((r) => t(r, scope)).join(t('、')),
-          })}
+        <p className="in-effect foot muted small">
+          {t('生效中：{rulings}', { rulings: inEffect })}
         </p>
       )}
     </section>
