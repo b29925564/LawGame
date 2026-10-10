@@ -90,3 +90,15 @@ test('放得下的時候沒有「更多」', async ({ page }) => {
   await expect(nav.getByRole('button', { name: /^More/ })).toHaveCount(0);
   await expect(nav.getByRole('button', { name: /^Discovery/ })).toBeVisible();
 });
+
+// 「證據板」是玩家最常回去的一頁：每種寬度都留在列上，不收進「更多」（設計師 #246 r9）。
+for (const lang of ['zh', 'en'] as const)
+  test(`最窄 320px 也看得到「證據板」（${lang}）`, async ({ page, isMobile }) => {
+    test.skip(!isMobile, '手機才放不下');
+    await page.setViewportSize({ width: 320, height: 800 });
+    const nav = await pretrial(page, lang);
+    await expect(
+      nav.locator(':scope > button[data-key]', { hasText: /^(證據板|Board)$/ }),
+    ).toBeVisible();
+    expect(await cut(page)).toEqual([]);
+  });

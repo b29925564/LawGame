@@ -6067,6 +6067,21 @@ button.found:hover:not(:disabled) {
     font-size: 0.9em;
   }
 }
+/* 窄於 340px：分頁左右內距和「更多」的 ⌄ 間距收小，讓「證據板」在每種寬度都留在列上
+   （設計師 #246 r9：英文 320 原本差 32px）。觸控高度、字級、標籤文字都不動。 */
+@media (max-width: 339px) {
+  /* 和上面英文那條同樣的權重，放在後面才蓋得過。 */
+  :root:is(:lang(en), :not(:lang(en))) .apps button {
+    padding-inline: 3px;
+  }
+  :root:is(:lang(en), :not(:lang(en))) .apps button::after {
+    left: 2px;
+    right: 2px;
+  }
+  .apps .apps-more .caret {
+    margin-left: 5px;
+  }
+}
 
 /*
  * 手機證據板整頁捲動：外框不再是一個視窗高的框、中間再捲一層（UX 規格「框中框」）。
