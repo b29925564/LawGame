@@ -34,24 +34,42 @@ import { TimelineView } from './Timeline';
  */
 /** 寬螢幕（電腦）上抽屜常駐在右欄，不用再點開。 */
 export const WIDE = '(min-width: 1024px)';
-export function useWide() {
-  const [wide, setWide] = useState(() => window.matchMedia(WIDE).matches);
+/**
+ * 書桌的證據欄只在 1181 以上常駐（設計師 #2 裁定：和陪審團收成刻痕條同一個斷點）；
+ * 1024–1180 工作台要吃滿寬度，證據欄收成「證據 n」鈕，點開才蓋上來。
+ */
+export const DOCK = '(min-width: 1181px)';
+function useMedia(query: string) {
+  const [on, setOn] = useState(() => window.matchMedia(query).matches);
   useEffect(() => {
-    const m = window.matchMedia(WIDE);
-    const on = () => setWide(m.matches);
-    m.addEventListener('change', on);
-    return () => m.removeEventListener('change', on);
-  }, []);
-  return wide;
+    const m = window.matchMedia(query);
+    const change = () => setOn(m.matches);
+    m.addEventListener('change', change);
+    return () => m.removeEventListener('change', change);
+  }, [query]);
+  return on;
 }
+export const useWide = () => useMedia(WIDE);
+export const useDock = () => useMedia(DOCK);
 
-export function EvidenceDrawer({ note, noTimeline }: { note?: string; noTimeline?: boolean }) {
+export function EvidenceDrawer({
+  note,
+  noTimeline,
+  collapse,
+}: {
+  note?: string;
+  noTimeline?: boolean;
+  /** 1024–1180 也收成抽屜（書桌）。 */
+  collapse?: boolean;
+}) {
   const progress = useEpisode((s) => s.progress);
   const t = useT();
   const scope = useScope();
   const items = evidence(progress);
   const [open, setOpen] = useState(false);
-  const wide = useWide();
+  const roomy = useWide();
+  const dock = useDock();
+  const wide = collapse ? dock : roomy;
   const [q, setQ] = useState('');
   useEffect(() => {
     if (!open) return;
