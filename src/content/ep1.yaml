@@ -85,6 +85,14 @@ _cards: &cards
     text: 被告入所時扣押物品：手機 1 支、皮夾 1 個、智慧手錶 1 支。
     source: 看守所財物清單
     bates: CPD-000021
+    # 入所時財物逐項拍照：手機、皮夾、手錶，手錶是第 3 張；交接給財物管理員之後拍。
+    photo:
+      caseNo: CH-2026-1147
+      bates: CPD-000024
+      no: 3
+      of: 3
+      at: '03/15 16:12'
+      by: R. Delgado　看守所財物管理員
     bag:
       caseNo: CH-2026-1147
       item: 財物清單　項 3
