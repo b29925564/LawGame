@@ -71,6 +71,12 @@ describe('文件 Bates 與出處', () => {
     expect(p('ep2', 'complaint').map((x) => x.kind)).toEqual(['filed']);
     // 起訴書收過文、又是檢方開示交出的：章和 Bates 都印。
     expect(p('ep1', 'indictment').map((x) => x.kind)).toEqual(['filed', 'bates']);
+    expect(p('ep1', 'indictment')[0]).not.toHaveProperty('ruling');
+    // 裁定是法院自己發的：章是准予，不是收文。
+    expect(p('ep1', 'statement-excluded')).toEqual([
+      { kind: 'filed', caseNo: '26-CR-0417', date: '04/03/2026', ruling: 'granted' },
+    ]);
+    expect(p('ep2', 'daubert-ruling')[0]).toMatchObject({ ruling: 'granted' });
     expect(p('ep1', 'ethan-accused')).toEqual([
       { kind: 'taken', at: '03/16 10:30', by: '盧卡斯・葛雷　會見筆記' },
     ]);
@@ -81,7 +87,7 @@ describe('驗證器', () => {
   const errs = (edit: (e: typeof episodes.ep2) => void) => {
     const e = structuredClone(episodes.ep2);
     edit(e);
-    return validateEpisode(e).filter((m) => /Bates|出處|頁行/.test(m));
+    return validateEpisode(e).filter((m) => /Bates|出處|頁行|ruling/.test(m));
   };
   const each = (
     e: typeof episodes.ep2,
@@ -111,6 +117,18 @@ describe('驗證器', () => {
         }),
       ),
     ).toEqual(['卡片 complaint 沒有出處：要寫 bates、cite、filed 或 taken 其中一項']);
+  });
+  it('裁定卡要寫准駁，訴狀不能寫', () => {
+    expect(
+      errs((e) =>
+        each(e, 'daubert-ruling', (c) => {
+          delete c.filed!.ruling;
+        }),
+      ),
+    ).toEqual(['裁定卡 daubert-ruling 的 filed 要寫 ruling（granted 或 denied）']);
+    expect(errs((e) => each(e, 'complaint', (c) => (c.filed!.ruling = 'granted')))).toEqual([
+      '卡片 complaint 不是裁定，filed 不能寫 ruling',
+    ]);
   });
   it('錄取那一題和卡片的頁行要對得上', () => {
     expect(errs((e) => each(e, 'trevor-sworn', (c) => (c.cite = '41:7')))).toHaveLength(1);

@@ -172,19 +172,22 @@ export function Stamp({
   sm,
   date,
   rot,
+  still,
 }: {
   text: string;
   sub?: string;
   sm?: boolean;
   date?: string;
   rot?: number;
+  /** 紙上早就印好的章（卡片出處）：不跑蓋章動畫，動畫只留給畫面上真的在蓋的那一刻。 */
+  still?: boolean;
 }) {
   const t = useT();
   const scope = useScope();
   const shown = t(text, scope);
   return (
     <span
-      className={sm ? 'stamp sm enter' : 'stamp enter'}
+      className={['stamp', sm && 'sm', !still && 'enter'].filter(Boolean).join(' ')}
       role="img"
       aria-label={date ? `${shown} ${date}` : shown}
       style={rot === undefined ? undefined : ({ '--rot': `${rot}deg` } as CSSProperties)}

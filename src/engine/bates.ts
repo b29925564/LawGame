@@ -58,7 +58,7 @@ export function cardBates(c: Card, ctx: branch.BranchContext): string | undefine
 
 /**
  * 每張紙的出處（設計師 bates-review.md 補充第 2 點、p2-1 review1）：開示交出的文件印 Bates；
- * 筆錄、勘誤表印頁行；法院裁定、訴狀蓋收文章（案號在章外）；陳述印記錄的時間與記錄人。
+ * 筆錄、勘誤表印頁行；訴狀蓋收文章、法院裁定蓋法官的准予／駁回章（案號都在章外）；陳述印記錄的時間與記錄人。
  * 一張紙可以有兩項：起訴書是收過文的訴狀，又是檢方開示交出來的，收文章和 Bates 都在。
  * 只有照片的卡（沒寫 bates），號碼印在沖印本上（photo.bates），這裡不再印一次；
  * 財物清單這種本身是一份紀錄、又附照片的卡，兩個號碼各印各的（清單 CPD-000021、照片 CPD-000024）。
@@ -66,7 +66,7 @@ export function cardBates(c: Card, ctx: branch.BranchContext): string | undefine
 export type Provenance =
   | { kind: 'bates'; bates: string }
   | { kind: 'cite'; page: number; line: number }
-  | { kind: 'filed'; caseNo: string; date: string }
+  | { kind: 'filed'; caseNo: string; date: string; ruling?: 'granted' | 'denied' }
   | { kind: 'taken'; at: string; by: string };
 
 /** 這一集裡的卡片（桌面場景之間共用同一份牌庫，找到第一張就是）。 */

@@ -417,7 +417,8 @@ export function CardPick({
 /**
  * 這張紙的出處，右下一行（設定集第 9 章 :4、:11、:44、:71、:117；設計師 p2-1 review1）：
  * - 開示交出的文件印 Bates（跟著分支換交出方）、筆錄與勘誤表印頁行：Courier 700。
- * - 裁定與訴狀蓋收文章（「收文」／FILED 加日期），案號一行 Courier 留在章外。
+ * - 訴狀蓋收文章（「收文」／FILED 加日期）；裁定是法院自己發的，蓋裁定那一刻同一個准予／駁回章。
+ *   案號一行 Courier 留在章外。章是早就印在紙上的，不跑蓋章動畫（still）。
  * - 陳述印記錄的時間與記錄人，用上一行（種類・出處）的字，不用 Courier：陳述不是法院紙本。
  * 只有照片的卡，號碼印在沖印本上。
  */
@@ -432,7 +433,13 @@ function Provenance({ id }: { id: string }) {
       {all.map((p) =>
         p.kind === 'filed' ? (
           <p key={p.kind} className="mini-prov filed">
-            <Stamp text="收文" date={p.date} rot={tilt(id)} sm />
+            <Stamp
+              text={p.ruling ? (p.ruling === 'granted' ? '准予' : '駁回') : '收文'}
+              date={p.date}
+              rot={tilt(id)}
+              sm
+              still
+            />
             <span className="no">{p.caseNo}</span>
           </p>
         ) : p.kind === 'taken' ? (

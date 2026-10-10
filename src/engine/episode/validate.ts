@@ -527,6 +527,11 @@ function batesErrors(e: Episode, errors: string[]) {
       !(c.bates || c.batesIf || c.photo?.bates || c.cite || c.filed || c.taken)
     )
       errors.push(`卡片 ${c.id} 沒有出處：要寫 bates、cite、filed 或 taken 其中一項`);
+    // 裁定卡（名稱以「裁定」開頭）是法院自己發的：章是准予／駁回，不是收文。
+    if (c.filed && c.name.startsWith('裁定') && !c.filed.ruling)
+      errors.push(`裁定卡 ${c.id} 的 filed 要寫 ruling（granted 或 denied）`);
+    if (c.filed?.ruling && !c.name.startsWith('裁定'))
+      errors.push(`卡片 ${c.id} 不是裁定，filed 不能寫 ruling`);
   }
   for (const s of e.scenes) {
     if (s.type !== 'deposition') continue;
