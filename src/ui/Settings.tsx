@@ -33,10 +33,11 @@ export function SettingsPanel() {
         <input
           type="range"
           min="0.9"
-          max="1.4"
+          max="1.5"
           step="0.1"
           value={textScale}
-          style={fill(textScale, 0.9, 1.4)}
+          aria-valuetext={`${Math.round(textScale * 100)}%`}
+          style={fill(textScale, 0.9, 1.5)}
           onChange={(e) => set({ textScale: Number(e.target.value) })}
         />
       </label>

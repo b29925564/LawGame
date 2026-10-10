@@ -904,7 +904,7 @@ details summary {
 .menu-toggle {
   min-height: 40px;
   padding: 6px 14px;
-  font-size: 14px;
+  font-size: var(--fs-ui-cap);
   letter-spacing: 0.1em;
   /* 實心：半透明時底下的分頁字會透出來（體驗評測 v88）。 */
   background: var(--surface);
@@ -919,7 +919,7 @@ details summary {
   }
 }
 .menu-panel {
-  width: min(360px, calc(100vw - 16px));
+  width: min(calc(360px * var(--text-scale)), calc(100vw - 16px));
   max-height: calc(100dvh - 72px);
   overflow-y: auto;
   box-shadow: var(--shadow-2);
@@ -931,7 +931,7 @@ details summary {
 }
 .menu-panel .row button {
   padding-inline: 6px;
-  font-size: 14px;
+  font-size: var(--fs-ui-cap);
 }
 .slots .slot,
 .slot {
@@ -959,6 +959,8 @@ details summary {
   gap: 10px;
   min-height: 36px;
   color: var(--text);
+  /* 開關的字跟著字級走，而且比下面那行說明大一級（全域 .toggle 是固定 13px，140% 時說明反而比選項大）。 */
+  font-size: var(--fs-ui-row);
 }
 /* 開關下面一行說明（光敏安全）：換到下一行，對齊開關的字。 */
 .settings .toggle:has(small) {
@@ -2858,7 +2860,7 @@ fieldset.relations.compact {
   gap: 12px;
   color: var(--cine-text);
   font-family: var(--font-mono);
-  font-size: 14px;
+  font-size: var(--fs-ui-cap);
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.24em;
 }
@@ -2871,7 +2873,7 @@ fieldset.relations.compact {
 .cine-text {
   margin: 0;
   font-family: var(--font-doc);
-  font-size: 20px;
+  font-size: calc(20px * var(--text-scale));
   line-height: 2;
   letter-spacing: 0.04em;
 }
@@ -6187,7 +6189,7 @@ button.found:hover:not(:disabled) {
   min-height: 36px;
   background: transparent;
   color: var(--muted);
-  font-size: 13px;
+  font-size: var(--fs-ui-meta);
 }
 .lang-switch button[aria-pressed='true'] {
   /* 設定值不是玩家的手：蓋掉全域選取的黃邊（一格一黃）。選中那格實心墨色底（P1-7）。 */
