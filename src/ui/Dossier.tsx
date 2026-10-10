@@ -7,6 +7,7 @@ import { useLang, useT } from '../i18n';
 import { cardHighlights, Hl } from './Marks';
 import { bates, pageAt } from './bates';
 import { useScope } from './lang';
+import { hasPrint, Print, type PrintUse } from './prints';
 import { prose } from './prose';
 import { Redaction } from './Redaction';
 import { caseTermsOf } from './terms';
@@ -243,12 +244,17 @@ function Who({ text }: { text: string }) {
  */
 export function PhotoLog({
   photo,
+  id,
   image,
+  use = 'drawer',
   redacted,
   children,
 }: {
   photo: PhotoRecord;
+  /** 卡片 id：有實物照片（prints.tsx）就印那張。 */
+  id?: string;
   image?: string;
+  use?: PrintUse;
   redacted?: boolean;
   /** 照片上的標記層（例如證物牌）。 */
   children?: ReactNode;
@@ -257,7 +263,13 @@ export function PhotoLog({
   return (
     <figure className="photolog">
       <span className="photolog-print">
-        {redacted ? <Redaction label={t('照片已遮蔽')} /> : image && <img src={image} alt="" />}
+        {redacted ? (
+          <Redaction label={t('照片已遮蔽')} />
+        ) : id && hasPrint(id) ? (
+          <Print id={id} use={use} />
+        ) : (
+          image && <img src={image} alt="" />
+        )}
         {children}
       </span>
       <dl className="photolog-strip">
@@ -283,6 +295,21 @@ export function PhotoLog({
       {/* 右下角的 Bates（#237 的 photo.bates）；還沒有號碼的照片只畫黑條，不印字。 */}
       <span className="photolog-bates">
         {photo.bates ? <b>{photo.bates}</b> : <i className="bates-bar" aria-hidden />}
+      </span>
+    </figure>
+  );
+}
+
+/**
+ * 沒有照片紀錄表的實物照片（伊森的錶：扣押袋那張）：只有沖印本身，白邊、零圓角，放在證物袋上面。
+ * 這張卡沒有照片就不畫。
+ */
+export function PrintPlate({ id, use }: { id: string; use: PrintUse }) {
+  if (!hasPrint(id)) return null;
+  return (
+    <figure className="photolog bare">
+      <span className="photolog-print">
+        <Print id={id} use={use} />
       </span>
     </figure>
   );
@@ -457,7 +484,7 @@ export function EvidenceZoom({
     if (d && !d.open) d.showModal();
   }, []);
   const body = photo ? (
-    <PhotoLog photo={photo} image={item.image} />
+    <PhotoLog photo={photo} id={item.id} image={item.image} use="zoom" />
   ) : (
     <Sheet item={item} hl={hl} />
   );
@@ -485,6 +512,7 @@ export function EvidenceZoom({
       </header>
       {/* 標題列固定，內容在框裡捲：框永遠留在視窗內，上下留白不被吃掉（設計師 r2 第 5 條）。 */}
       <div className="zoom-body">
+        {!photo && <PrintPlate id={item.id} use="zoom" />}
         {bag ? (
           <EvidenceBag bag={bag} progress={progress}>
             {body}
