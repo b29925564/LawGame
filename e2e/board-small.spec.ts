@@ -138,14 +138,57 @@ for (const lang of ['zh-TW', 'en'])
           ...document.querySelectorAll<HTMLElement>(
             '.cork-rack:not(.marks) > *, .cork-rack.marks .cork-redact',
           ),
-        ].map((e) => ({ w: e.offsetWidth, h: e.offsetHeight })),
+        ].map((e) => {
+          const print = e.querySelector<HTMLElement>('.cork-print');
+          const r = e.getBoundingClientRect();
+          return {
+            w: e.offsetWidth,
+            h: e.offsetHeight,
+            print: print && { w: print.offsetWidth, h: print.offsetHeight },
+            box: { l: r.left, t: r.top, r: r.right, b: r.bottom },
+            bar: e.classList.contains('cork-redact'),
+          };
+        }),
       );
     expect(await rack.count()).toBeGreaterThan(3);
     expect(await marks.count(), '黑條（尚未取得）排在第一頁').toBeGreaterThanOrEqual(1);
-    for (const c of await cells()) {
-      expect(Math.abs((c.w * 3) / 4 - c.h), `卡 ${c.w}×${c.h} 是 4:3`).toBeLessThanOrEqual(1);
-      expect(Math.min(c.w, c.h), '觸控範圍 ≥ 44').toBeGreaterThanOrEqual(44);
-    }
+    const checkPage = async () => {
+      const all = await cells();
+      let photos = 0;
+      for (const c of all) {
+        // 格子是 4:3；照片卡是一張沖印，比格子窄，照片本身是 4:3（不裁切，設計師 #2）。
+        if (c.print) {
+          photos++;
+          expect(Math.abs((c.print.w * 3) / 4 - c.print.h), '牌架照片 4:3').toBeLessThanOrEqual(
+            1.5,
+          );
+        } else
+          expect(Math.abs((c.w * 3) / 4 - c.h), `卡 ${c.w}×${c.h} 是 4:3`).toBeLessThanOrEqual(1);
+        expect(Math.min(c.w, c.h), '觸控範圍 ≥ 44').toBeGreaterThanOrEqual(44);
+      }
+      // 任兩格不重疊；黑條在左上第一格。
+      for (let i = 0; i < all.length; i++)
+        for (let j = i + 1; j < all.length; j++) {
+          const x = Math.min(all[i].box.r, all[j].box.r) - Math.max(all[i].box.l, all[j].box.l);
+          const y = Math.min(all[i].box.b, all[j].box.b) - Math.max(all[i].box.t, all[j].box.t);
+          expect(x > 2 && y > 2, `牌架第 ${i} 和第 ${j} 格重疊`).toBe(false);
+        }
+      const rackBox = await page.locator('.cork-rack:not(.marks)').evaluate((e) => {
+        const r = e.getBoundingClientRect();
+        return { l: r.left, t: r.top };
+      });
+      const bar = all.find((c) => c.bar);
+      if (bar) {
+        expect(Math.abs(bar.box.l - rackBox.l), '黑條在第一欄').toBeLessThanOrEqual(2);
+        expect(Math.abs(bar.box.t - rackBox.t), '黑條在第一列').toBeLessThanOrEqual(2);
+      }
+      return photos;
+    };
+    const p1 = await checkPage();
+    await page.locator('.cork-dots button').nth(1).click();
+    const p2 = await checkPage();
+    expect(p1 + p2, '牌架有照片卡').toBeGreaterThan(0);
+    await page.locator('.cork-dots button').first().click();
     await expect(marks.first()).toContainText(/尚未取得|Not obtained/);
 
     // 標題最多兩整行、整行切：高度是行高的整數倍，沒有淡出、沒有刪節號。
@@ -184,7 +227,7 @@ test('手機：板子和牌架不被答案列蓋住，A／B 也是', async ({ pa
   // 把板子捲到頂端欄下面：整塊板子都在答案列上方。
   await page.evaluate(() => {
     document.querySelector('.cork')!.scrollIntoView({ block: 'start' });
-    window.scrollBy(0, -120);
+    window.scrollBy(0, -100);
   });
   await page.waitForTimeout(400);
   const hit = await page.evaluate(() => {
@@ -235,6 +278,16 @@ test('手機：超過 6 張換頁、一次一整頁、頁碼點不是黃、放�
   await dots.nth(1).click();
   await expect(dots.nth(1)).toHaveAttribute('aria-current', 'true');
   const second = await names();
+  // 觸控範圍：頁碼點的按鈕 ≥ 44×44；最後一頁只剩 1–3 張時，卡在第 1 列（牌架上緣），不沉到第 2 列。
+  const dotBox = (await dots.first().boundingBox())!;
+  expect(Math.min(dotBox.width, dotBox.height)).toBeGreaterThanOrEqual(44);
+  const rackTop = await page
+    .locator('.cork-rack:not(.marks)')
+    .evaluate((e) => e.getBoundingClientRect().top);
+  const tops = await page
+    .locator('.cork-rack:not(.marks) > *')
+    .evaluateAll((els) => els.map((e) => e.getBoundingClientRect().top));
+  if (tops.length <= 3) for (const t of tops) expect(Math.abs(t - rackTop)).toBeLessThanOrEqual(2);
   expect(second.length).toBeGreaterThan(0);
   for (const n of second) expect(first).not.toContain(n);
   const dot = await dots.first().evaluate((e) => getComputedStyle(e, '::after').backgroundColor);

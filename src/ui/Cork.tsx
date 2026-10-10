@@ -93,13 +93,16 @@ const RACK_COLS = 3;
 const RACK_PER = 6;
 const RACK_PAD = 8; // 牌架離板邊（px）
 const RACK_GAP = 6; // 格與格（px）
-const RACK_DOTS = 28; // 頁碼點那一列的高（px），只有超過一頁才佔位
+const RACK_DOTS = 44; // 頁碼點那一列的高（px）＝ 觸控範圍 44，只有超過一頁才佔位
 const TOP_PAD = 16; // 比對的兩張離板上緣（px）
 const POOL_TO_RACK = 30; // 比對的兩張下緣到牌架上緣至少留這麼多軟木（px）
-/** 手機的光圈是橢圓（設計師 #2：牌架落在光圈外的暗處）：橫向蓋住兩張卡，縱向讓牌架上緣落在半徑 60% 處。 */
-const LAMP_RX = 1.25; // 橫向半徑 ＝ 板寬 × 這個數
-const RACK_AT = 0.6; // 牌架上緣落在縱向半徑的這個比例（設定集 :74 邊緣卡暗處：52–66% 停點之間開始退暗）
-const IMG_DARK = 0.62; // 比對兩張的下角最多落在縱向半徑的這個比例
+/**
+ * 手機的光圈是圓（設定集第 9 章，設計師 #2 裁定）：中心在 A／B 正中，半徑 ＝ A／B 最遠的角 ÷ IMG_DARK；
+ * 牌架上緣要落在半徑的 RACK_AT 以外，不夠就把板子加高（加大兩張卡和牌架之間的軟木），不壓扁燈。
+ */
+const AB_HALF = 0.46; // A／B 左右各佔的板寬比例（4%–96%）
+const RACK_AT = 0.6; // 牌架上緣落在半徑的這個比例（設定集 :74 邊緣卡暗處：52–66% 停點之間開始退暗）
+const IMG_DARK = 0.62; // A／B 最遠的角最多落在半徑的這個比例
 /** 板子上下至少留這麼多（px）：小籤伸出卡片上緣 10px，再留一點軟木。 */
 const BOARD_PAD = 24;
 const SAG = 34; // 下垂（px）
@@ -607,7 +610,11 @@ export function Cork({
       : FOCUS_TOP;
   const focusAt = xs.map((x) => [x, top]) as [number, number][];
   // 手機：光圈本來就是為這個版面另設的（設計師 P2-6 r5 更正），小手機上卡比較高，光圈放大到影像中心落在 IMG_IN 以內。
-  const pool = compact ? (LAMP_RX * w) / Math.max(w / 2, 1) : 1;
+  // 手機光圈（圓）：中心在 A／B 正中；半徑 ＝ A／B 最遠的角 ÷ 0.62；牌架上緣要在半徑 60% 以外，不夠就把板子加高。
+  const lampY = cardH ? topPx + cardH / 2 : h * 0.3;
+  const lampR = Math.hypot(AB_HALF * w, cardH / 2) / IMG_DARK;
+  const lampGap = Math.max(POOL_TO_RACK, RACK_AT * lampR - cardH / 2);
+  const pool = compact ? lampR / Math.max(w / 2, 1) : 1;
   // 兩格卡片（放大、歪之前）的中心：速寫版的卡對準這裡（設計師 P2-6 r6 第 1 條）。卡以（中線, 圖釘）為軸放大。
   // 這一格空著就用另一格的卡高；兩格都空就是光圈中心。
   const cellCenter = xs.map((x, i): [number, number] => [
@@ -616,9 +623,6 @@ export function Cork({
   ]);
   const abFrom = pinOf(focusAt[0], focusW);
   const abTo = pinOf(focusAt[1], focusW);
-  // 手機光圈（橢圓）：中心在兩張卡的正中間，橫向蓋住兩張卡，縱向讓牌架上緣落在 RACK_AT 以外。
-  const lampY = cardH ? topPx + cardH / 2 : h * 0.3;
-  const lampRy = Math.max((rackTop - lampY) / RACK_AT, cardH / 2 / IMG_DARK);
   // 關係結掛在 A–B 線的最低點。
   const knot = { left: (abFrom[0] + abTo[0]) / 2, top: abFrom[1] + (SAG / Math.max(h, 1)) * 100 };
 
@@ -786,14 +790,13 @@ export function Cork({
           minHeight: !cardH
             ? undefined
             : compact
-              ? 20 + TOP_PAD + cardH + POOL_TO_RACK + rackH + dotsH + RACK_PAD
+              ? 20 + TOP_PAD + cardH + lampGap + rackH + dotsH + RACK_PAD
               : cardH * scale + 2 * (BOARD_PAD + 10),
           '--pool': pool,
           ...(compact && w
             ? {
                 '--lamp-y': `${lampY}px`,
-                '--lamp-rx': `${LAMP_RX * w}px`,
-                '--lamp-ry': `${lampRy}px`,
+                '--lamp-r': `${lampR}px`,
               }
             : {}),
         } as CSSProperties
@@ -1018,7 +1021,7 @@ export function Cork({
           look={look}
           provenance={jury.provenance}
           pool={pool}
-          lamp={compact && w ? { y: lampY / h, sy: (LAMP_RX * w) / lampRy } : undefined}
+          lamp={compact && w ? { y: lampY / h, sy: 1 } : undefined}
         />
       )}
       {/* 手機上兩張卡之間沒有空隙，關係看下面選中的那顆。 */}
