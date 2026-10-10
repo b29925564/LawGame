@@ -624,11 +624,11 @@ details.earlier > summary {
 details.earlier[open] > .lines {
   margin-top: 10px;
 }
-/* 狀紙空格和後面的逗號一起換行。 */
+/* 狀紙空格和後面的逗號一起換行。空格裡的字自己換成兩行時，逗號對齊最後一行（last baseline），不掛在第一行尾。 */
 .plead .glue {
   display: inline-flex;
   flex-wrap: nowrap;
-  align-items: baseline;
+  align-items: last baseline;
   max-width: 100%;
 }
 .plead .glue > .blank {
@@ -928,7 +928,7 @@ button.cand[aria-pressed='true'],
   line-height: 1;
   vertical-align: 0.12em;
 }
-.closing-args .picked .last,
+.closing-args ~ .picked .last,
 .carry .theory-needs .need.miss {
   color: var(--text);
   font-weight: 600;
@@ -937,7 +937,7 @@ button.cand[aria-pressed='true'],
 .claim .pick .verb,
 .panel.reveal .pick .verb,
 .closing-args .pick .verb,
-.closing-args .picked .num {
+.closing-args ~ .picked .num {
   color: var(--text);
   font-weight: 600;
 }
