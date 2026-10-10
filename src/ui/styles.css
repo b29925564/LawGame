@@ -1016,6 +1016,20 @@ details summary {
 .credits li > .muted {
   font-size: 0.86em;
 }
+/* 連結用權杖色，不用瀏覽器預設的紫；授權名（CC BY 4.0）不斷行。 */
+.credits a {
+  color: var(--text);
+  text-decoration: underline;
+  text-decoration-color: var(--border-strong);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+.credits a:hover {
+  text-decoration-color: var(--text);
+}
+.credits li > span:last-child > a:last-child {
+  white-space: nowrap;
+}
 .back {
   margin: 12px 16px 0;
 }

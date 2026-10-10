@@ -425,24 +425,30 @@
   opacity: 0;
   animation: place-slate 2860ms linear both;
 }
-/* 手機一行：地點太長就在地點上省略，日子、時刻、色溫不縮（設計師 #225）。 */
+/* 手機一行：地點太長就整段拿掉場所名（不在字中間省略），日子、時刻、色溫不縮（設計師 #225）。 */
 .place-slate > span {
   white-space: nowrap;
 }
 .place-slate .ps-where {
   display: flex;
+  flex-direction: row-reverse;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   min-width: 0;
+  max-width: 100%;
+  /* 一行高；放不下的那一段掉到第二行被裁掉。 */
+  height: 1.4em;
   overflow: hidden;
 }
-/* 先省略前面的場所名（事務所名），房間最後才縮。 */
+/* 放不下時整段拿掉前面的場所名（事務所名），不在字中間省略；房間才是這一場的資訊，永遠留著。
+   排版順序是房間在前（row-reverse 讓它靠右），所以先被擠到第二行的是場所名；讀屏順序不變。 */
 .place-slate .ps-lead {
-  flex: 0 1 auto;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  order: 2;
+  flex: none;
   white-space: pre;
 }
 .place-slate .ps-room {
+  order: 1;
   flex: none;
 }
 /* 定場那一格還沒有鏡頭：左上標占位（和法庭鏡頭條同一種標法），鏡頭進來就拿掉。 */
@@ -496,6 +502,16 @@
     letter-spacing: 0.02em;
     gap: 8px;
     padding: 6px 10px;
+  }
+}
+@media (max-width: 380px) {
+  /* 360 寬的英文連房間加日子時刻都放不下：日子、時刻、色溫掉到下一行，房間不被切。 */
+  .place-slate {
+    flex-wrap: wrap;
+    row-gap: 2px;
+  }
+  .place-slate .ps-where {
+    max-width: calc(100% - 22px);
   }
 }
 @media (prefers-reduced-motion: reduce) {
