@@ -94,17 +94,20 @@ function ObjectionWindow({
   rulings,
   onPass,
   onObject,
+  live = true,
 }: {
   rulings: string[];
   onPass: () => void;
   onObject: (r: trial.Objection) => void;
+  /** 桌機：窗沒開時它還疊在提示框底下撐住那一格的高度，不計時、不能按、讀屏不讀。 */
+  live?: boolean;
 }) {
   const seconds = useSettings((s) => s.objectionSeconds);
   const t = useT();
   const scope = useScope();
   const [left, setLeft] = useState(seconds);
   useEffect(() => {
-    if (!seconds) return;
+    if (!seconds || !live) return;
     const end = Date.now() + seconds * 1000;
     const timer = setInterval(() => {
       const rest = Math.ceil((end - Date.now()) / 1000);
@@ -114,10 +117,16 @@ function ObjectionWindow({
       } else setLeft(rest);
     }, 250);
     return () => clearInterval(timer);
-  }, [seconds, onPass]);
+  }, [seconds, onPass, live]);
   const inEffect = rulings.map((r) => t(r, scope)).join(t('、'));
   return (
-    <section className="panel objection" aria-label={t('異議')}>
+    <section
+      className="panel objection"
+      aria-label={t('異議')}
+      data-off={live ? undefined : ''}
+      aria-hidden={live ? undefined : true}
+      inert={!live}
+    >
       {/* 「不異議」放在標題列：法庭中欄還有鏡頭條和陪審團，整個面板要在一屏內，不捲動（設計師 P3 裁定 5）。 */}
       <div className="panel-head">
         <h2>{t('要異議嗎？')}</h2>
@@ -395,6 +404,34 @@ function CourtroomScreen({ scene: raw }: { scene: TrialScene }) {
     );
   // 異議那一拍裡輸入鎖住：主按鈕藏起來（位置留著，版面不跳）。
   const locked = beat ? { className: 'locked', inert: true } : {};
+  const rulings = rulingsIn(progress);
+  // 桌機主詰問：提示、主按鈕和異議窗共用鏡頭條上面那一格；手機照舊，主按鈕在底列。
+  const slot = !narrow && st.stage === 'direct';
+  const prompt = (
+    <p className="muted">
+      {t('聽{who}問下去。有問題的地方就在問完的那一刻提異議。', {
+        who: t(scene.examiner ?? terms.other, scope),
+      })}
+    </p>
+  );
+  const listen = (
+    <>
+      <button
+        className={`primary wide${beat ? ' locked' : ''}`}
+        inert={!!beat}
+        onClick={nextQuestion}
+      >
+        {st.i < scene.witness.direct.length
+          ? t('聽下一個問題')
+          : t('{who}詰問完畢', { who: t(scene.examiner ?? terms.other, scope) })}
+      </button>
+      {st.i >= scene.witness.direct.length && (
+        <button {...locked} onClick={toCross}>
+          {t('開始交互詰問')}
+        </button>
+      )}
+    </>
+  );
 
   return (
     <>
@@ -492,24 +529,7 @@ function CourtroomScreen({ scene: raw }: { scene: TrialScene }) {
                 {t('詰問完畢')}
               </button>
             )}
-            {st.stage === 'direct' && !st.window && (
-              <>
-                <button
-                  className={`primary wide${beat ? ' locked' : ''}`}
-                  inert={!!beat}
-                  onClick={nextQuestion}
-                >
-                  {st.i < scene.witness.direct.length
-                    ? t('聽下一個問題')
-                    : t('{who}詰問完畢', { who: t(scene.examiner ?? terms.other, scope) })}
-                </button>
-                {st.i >= scene.witness.direct.length && (
-                  <button {...locked} onClick={toCross}>
-                    {t('開始交互詰問')}
-                  </button>
-                )}
-              </>
-            )}
+            {st.stage === 'direct' && !st.window && !slot && listen}
           </>
         }
       >
@@ -542,18 +562,41 @@ function CourtroomScreen({ scene: raw }: { scene: TrialScene }) {
             <p className="muted small">{t('按「休庭」看這一場的結果。')}</p>
           </section>
         )}
-        {st.stage === 'direct' && st.window && (
-          <ObjectionWindow rulings={rulingsIn(progress)} onPass={letPass} onObject={object} />
+        {slot && (
+          /*
+           * 桌機主詰問：提示框和異議窗疊在同一格（設計師 #247 第二輪）。這一格永遠是兩者裡比較高的那個，
+           * 鏡頭條不動；窗打開就是同一個框換了內容、亮起來，按完再換回提示。
+           */
+          <div className="court-slot">
+            <section
+              className="panel court-prompt"
+              data-off={st.window ? '' : undefined}
+              aria-hidden={st.window || undefined}
+              inert={st.window}
+            >
+              {prompt}
+              {rulings.length > 0 && (
+                <p className="muted small">
+                  {t('生效中：{rulings}', {
+                    rulings: rulings.map((r) => t(r, scope)).join(t('、')),
+                  })}
+                </p>
+              )}
+              <div className="court-prompt-act">{listen}</div>
+            </section>
+            <ObjectionWindow
+              key={st.window ? 'live' : 'off'}
+              live={st.window}
+              rulings={rulings}
+              onPass={letPass}
+              onObject={object}
+            />
+          </div>
         )}
-        {st.stage === 'direct' &&
-          !st.window &&
-          now(
-            <p className="muted">
-              {t('聽{who}問下去。有問題的地方就在問完的那一刻提異議。', {
-                who: t(scene.examiner ?? terms.other, scope),
-              })}
-            </p>,
-          )}
+        {!slot && st.stage === 'direct' && st.window && (
+          <ObjectionWindow rulings={rulings} onPass={letPass} onObject={object} />
+        )}
+        {!slot && st.stage === 'direct' && !st.window && now(prompt)}
 
         {st.stage === 'cross' && (
           <section className="panel">

@@ -280,6 +280,29 @@ export function CourtRecord({
   const box = useRef<HTMLDivElement>(null);
   const size = useFit(box, zh, live && fit, live);
   const [instant, setInstant] = useInstant();
+  const paper = useRef<HTMLDivElement>(null);
+  // 手機插入鏡頭打開時：紙的底邊停在鏡頭標籤的上緣，對齊行距，最後露出的是完整的一行（設計師 #247 第二輪）。
+  const [cut, setCut] = useState(0);
+  useLayoutEffect(() => {
+    const el = box.current;
+    const out = paper.current;
+    if (!cover || !el || !out || !size) {
+      setCut(0);
+      return;
+    }
+    const r = el.getBoundingClientRect();
+    const padT = parseFloat(getComputedStyle(el).paddingTop) + el.clientTop;
+    const rows = Math.max(
+      0,
+      Math.floor((cover.getBoundingClientRect().top - r.top - padT) / size.row),
+    );
+    setCut(
+      Math.max(
+        0,
+        Math.round(out.getBoundingClientRect().bottom - (r.top + padT + rows * size.row)),
+      ),
+    );
+  }, [cover, size]);
 
   // 這一批新進來的話從第幾句開始（掛載時已經有的話不重播），以及這一次才被蓋上黑條的句子
   // （刪除證詞：之前沒蓋的，依序蓋上；設定集 7-3）。照 React 的「由 props 推導狀態」寫法，
@@ -424,13 +447,16 @@ export function CourtRecord({
 
   return (
     <div
+      ref={paper}
       className={`lines transcript record${live ? ' live' : ''} ${className}`}
       data-beat={beatOn || undefined}
+      data-cut={cut > 0 || undefined}
       style={
         size
           ? ({
               '--rec-fs': `${size.fs}px`,
               '--rec-row': `${size.row}px`,
+              '--rec-cut': `${cut}px`,
               minHeight: size.min,
             } as CSSProperties)
           : undefined

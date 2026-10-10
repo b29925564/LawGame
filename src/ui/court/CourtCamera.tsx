@@ -92,18 +92,28 @@ function Stage({
   // 輪廓光照顯示寬度換算：畫面上 1.25px（設計師：1–1.5px，不能是原圖上的寬）。取 0.5 的倍數，拖拉視窗時不一直重畫。
   const shown = (m?.standee.w ?? 0.2) * width;
   const rimUnits = shown > 0 ? Math.max(1, Math.round(((1.25 * 400) / shown) * 2) / 2) : 8;
-  const [body, light] = useMemo(() => {
-    if (!look) return ['', ''];
-    const o = {
-      v: 85,
-      pose: 'J1' as const,
-      bg: false,
-      rim: rimUnits,
-      turn,
-      uid: `cam-${cam}-${look.id}`,
-    };
-    return [svg(look, { ...o, part: 'body' }), svg(look, { ...o, part: 'light' })];
-  }, [look, rimUnits, cam, turn]);
+  // 眼神光畫面上至少 2×2 px。
+  const catchSize = shown > 0 ? Math.max(5, Math.ceil((2 * 400) / shown)) : 5;
+  // 證人席有正面和轉頭兩張立牌，換的時候交叉淡化（第 7 章 :75，--dur-turn），不硬切。
+  const poses = useMemo(() => {
+    if (!look) return [];
+    return (cam === 'witness' ? [false, true] : [false]).map((t) => {
+      const o = {
+        v: 85,
+        pose: 'J1' as const,
+        bg: false,
+        rim: rimUnits,
+        catchSize,
+        turn: t,
+        uid: `cam-${cam}-${look.id}${t ? '-turn' : ''}`,
+      };
+      return {
+        turn: t,
+        body: svg(look, { ...o, part: 'body' }),
+        light: svg(look, { ...o, part: 'light' }),
+      };
+    });
+  }, [look, rimUnits, catchSize, cam]);
   if (!m || !plate) return null;
   const box = {
     left: `${m.standee.x * 100}%`,
@@ -120,18 +130,22 @@ function Stage({
       }
     >
       <Img src={plate} className="cam-plate" />
-      {look && (
-        <>
-          <span className="cam-standee" style={box} dangerouslySetInnerHTML={{ __html: body }} />
+      {poses.map((p) => (
+        <span key={String(p.turn)} className="cam-pose" data-on={p.turn === turn || undefined}>
+          <span className="cam-standee" style={box} dangerouslySetInnerHTML={{ __html: p.body }} />
           <span
             className="cam-light"
             style={rim ? ({ '--rim': `url("${rim.webp}")` } as CSSProperties) : undefined}
             data-rim={rim ? '' : undefined}
           >
-            <span className="cam-standee" style={box} dangerouslySetInnerHTML={{ __html: light }} />
+            <span
+              className="cam-standee"
+              style={box}
+              dangerouslySetInnerHTML={{ __html: p.light }}
+            />
           </span>
-        </>
-      )}
+        </span>
+      ))}
       {front && <Img src={front} className="cam-front" />}
     </div>
   );

@@ -69,10 +69,17 @@ interface Head {
 }
 
 /**
- * 轉頭（援引緘默權那一格，機位審查 review-v1 第 2 條）：臉從朝畫面左 20° 轉向離窗那側（右後方）約四分之三，肩不動。
- * 鏡頭看到的是後腦和右側：頭心移到頸根右邊 TURN_DX，下巴收在右下，左下是後頸；眼睛轉進陰影，不畫眼神光、不畫眼鏡。
+ * 轉頭（援引緘默權那一格；設定集第 3 章 :54「證人轉進暗部……只剩一隻眼睛有眼神光」、第 7 章 :57、:73）：
+ * 臉從朝畫面左 20° 轉向離窗那側（畫面右），四分之三側臉，臉的平面和鏡頭軸約 60°，肩不動。
+ * 頭心移到頸根右邊 TURN_DX；鼻子、嘴、下巴的線落在剪影右緣；近窗那隻眼睛留在畫面裡，眼神光是整格最亮的一點。
+ * 珍珠照解剖位置（同一隻耳朵轉向鏡頭，頭的中間偏下），跟著臉進暗部、不畫受光點（設計師轉頭審查）。
  */
 const TURN_DX = 30;
+/** 四分之三側臉的右緣：鼻、人中、下巴，照角度（弧度，0 在右、往下為正）加在橢圓上。 */
+const profile = (a: number) =>
+  12 * Math.exp(-(((a - 0.2) / 0.07) ** 2)) -
+  4 * Math.exp(-(((a - 0.42) / 0.06) ** 2)) +
+  4 * Math.exp(-(((a - 0.72) / 0.1) ** 2));
 
 // ── 頭：上半橢圓，下半往下巴收（jaw 0.82 圓、0.9 方、0.8 長）
 function head(p: JurorLook, turn = false): Head {
@@ -88,7 +95,7 @@ function head(p: JurorLook, turn = false): Head {
     // 下半收窄；轉頭時下巴在右下，左下是後頸，只收一點。
     const side = turn ? (c > 0 ? 1 : 0.3) : 1;
     const k = s > 0 ? 1 - (1 - jaw) * Math.pow(s, 1.6) * side : 1;
-    pts.push([cx + rx * c * k, CY + ry * s]);
+    pts.push([cx + rx * c * k + (turn ? profile(a) : 0), CY + ry * s]);
   }
   return { pts, rx, ry, cx, turn };
 }
@@ -100,37 +107,31 @@ function turnedHair(p: JurorLook, h: Head): Poly[] {
     return hair(p, { ...h, cx: CX, turn: false }).map((q) =>
       q.map(([x, y]): Pt => [x + TURN_DX, y]),
     );
-  const arc = (t: number, a0: number, a1: number, n = 64) => {
+  const arc = (th: (deg: number) => number, a0: number, a1: number, n = 64) => {
     const o: Poly = [];
     for (let i = 0; i <= n; i++) {
-      const a = rad(a0 + ((a1 - a0) * i) / n);
-      o.push([cx + (rx + t) * Math.cos(a), CY + (ry + t) * Math.sin(a)]);
+      const deg = a0 + ((a1 - a0) * i) / n,
+        t = th(deg);
+      o.push([cx + (rx + t) * Math.cos(rad(deg)), CY + (ry + t) * Math.sin(rad(deg))]);
     }
     return o;
   };
   return [
-    // 後腦整片都是頭髮：從左下（後頸上方）繞過頭頂到右側耳上。
-    arc(15, 150, 380).concat([
-      [cx + rx * 0.6, CY + 20],
-      [cx - rx * 0.6, CY + 40],
+    // 頭髮蓋住後腦和頭頂，前緣停在額頭上方，臉（右邊）露出來。
+    // 髮際到額頭前緣逐漸收薄，不留一個台階。
+    arc((deg) => 14 * (1 - ss(296, 334, deg)), 125, 334).concat([
+      [cx + rx * 0.55, CY - 60],
+      [cx - rx * 0.1, CY - 10],
+      [cx - rx * 0.7, CY + 50],
     ]),
-    // 鮑伯的後側：蓋住後腦下半，髮尾收進後頸（不然露出來的頭骨下緣會讀成朝左的下巴）。
+    // 前側長的那一片（J1 在畫面左邊那一側）轉向鏡頭，蓋住耳朵垂到下顎；珍珠在它下緣附近。
     [
-      [cx - rx - 15, CY - 20],
-      [cx - rx - 18, CY + 50],
-      [cx - rx - 6, 314],
-      [cx - rx + 30, 334],
-      [cx - 30, 336],
-      [cx, 320],
-      [cx, CY],
-    ],
-    // 前側長的那一片轉到右邊，垂到下顎；珍珠掛在它下緣。
-    [
-      [cx + rx + 12, CY - 10],
-      [cx + rx + 14, CY + 60],
-      [cx + rx - 2, 322],
-      [cx + rx - 34, 318],
-      [cx + rx - 30, CY],
+      [cx - rx * 0.1, CY - 50],
+      [cx + rx * 0.02, CY + 40],
+      [cx - rx * 0.12, 318],
+      [cx - rx * 0.55, 326],
+      [cx - rx - 8, 296],
+      [cx - rx - 14, CY],
     ],
   ];
 }
@@ -618,10 +619,12 @@ function extras(p: JurorLook, h: Head, t: Torso) {
         [CX + 28, top - 24],
       ]); // 髮髻上的鉛筆
     if (a === 'pearl') {
-      // 轉頭時珍珠那側轉到右邊，掛在長的那片髮尾下面，還是要露出來（第 6 章 :88：最後一個還亮著的高光）。
-      const px = h.turn ? h.cx + rx - 18 : CX - rx + 22;
-      H.push(ell(px, 336, 9, 9, 0, 360, 16));
-      LIT.push(ell(px - 2, 334, 4, 4, 0, 360, 12));
+      // 轉頭時照解剖位置（同一隻耳朵轉向鏡頭），跟著臉進暗部，不畫受光點。
+      if (h.turn) H.push(ell(h.cx - rx * 0.32, 334, 9, 9, 0, 360, 16));
+      else {
+        H.push(ell(CX - rx + 22, 336, 9, 9, 0, 360, 16));
+        LIT.push(ell(CX - rx + 20, 334, 4, 4, 0, 360, 12));
+      }
     } // 珍珠垂在鮑伯前緣髮尾下；它是彈劾時最後一個還亮著的高光                                               // 瑞秋的珍珠：垂在鮑伯下緣、下顎外側（只此一人）
     if (a === 'highcollar')
       S.push(
@@ -822,7 +825,12 @@ export function shapes(p: JurorLook, pose: Pose = 'J1', turn = false) {
     lit: lit.map(m),
     fill: fill.map(m),
     glasses: turn ? [] : glasses(p).map(up).map(m),
-    eye: m(up(ell(CX - 52, 190, 9, 5, 0, 360, 16))),
+    // 轉頭時是近窗那隻眼睛（臉轉到右邊，眼睛跟著到頭心右側）。
+    eye: m(
+      up(
+        turn ? ell(h.cx + h.rx * 0.42, 192, 8, 5, 0, 360, 16) : ell(CX - 52, 190, 9, 5, 0, 360, 16),
+      ),
+    ),
     head: h,
   };
 }
@@ -997,6 +1005,7 @@ export function svg(
     part = 'all',
     turn = false,
     stretch = 1,
+    catchSize = 5,
   }: {
     v?: number;
     pose?: Pose;
@@ -1007,6 +1016,8 @@ export function svg(
     part?: 'all' | 'body' | 'light';
     turn?: boolean;
     stretch?: number;
+    /** 眼神光那一點的邊長（卡面單位）。鏡頭條裡照顯示寬度換算，畫面上至少 2×2 px（設計師轉頭審查）。 */
+    catchSize?: number;
   } = {},
 ) {
   pose = pose || poseFor(v);
@@ -1066,7 +1077,7 @@ ${
     ? `<rect width="400" height="500" fill="var(${K})" opacity="${L?.flat ? '.06' : '.10'}" mask="url(#lit-${uid})"/>
 <g clip-path="url(#rimclip-${uid})"><g filter="url(#rim-${uid})" opacity="${inkOpacity(K, 0.9)}">${sil}</g></g>${extra ? `<g clip-path="url(#xclip-${uid})"><g filter="url(#xrim-${uid})" opacity="${inkOpacity(extra.k, 0.9)}">${sil}</g></g>` : ''}
 ${acc}${s.glasses.map((q) => `<path d="${d(q, false)}" fill="none" stroke="#c9ced6" stroke-width="5.7" opacity=".5"/>`).join('')}
-${pose === 'J4' || turn || shadowPct(v) >= 90 ? '' : `<path d="${d(s.eye)}" fill="#1a1f26"/><rect x="${(s.eye[0][0] - 12).toFixed(1)}" y="${(s.eye[0][1] - 4).toFixed(1)}" width="5" height="5" fill="var(${K})" opacity="${inkOpacity(K, 0.9)}"/>`}
+${pose === 'J4' || shadowPct(v) >= 90 ? '' : `<path d="${d(s.eye)}" fill="#1a1f26"/><rect x="${(s.eye[0][0] - 12).toFixed(1)}" y="${(s.eye[0][1] - 4).toFixed(1)}" width="${+catchSize.toFixed(1)}" height="${+catchSize.toFixed(1)}" fill="var(${K})" opacity="${inkOpacity(K, 0.9)}"/>`}
 ${notes}
 ${pose === 'J3' ? `<path clip-path="url(#armclip-${uid})" d="${d([morph([N[0] - 120, 436], 'J3'), morph([N[0] + 120, 436], 'J3')], false)}" stroke="var(${K})" stroke-width="9.3" opacity="${inkOpacity(K, 0.85)}" fill="none"/>` : ''}`
     : ''

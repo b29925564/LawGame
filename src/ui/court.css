@@ -2043,6 +2043,21 @@ html[lang='en'] .record {
 .rec-scroll {
   min-width: 0;
 }
+/* 手機插入鏡頭打開時，紙在最後一整行的底邊收起來，用 1px 紙邊封口（Record.tsx 算 --rec-cut）。 */
+.record[data-cut] {
+  position: relative;
+  clip-path: inset(0 0 var(--rec-cut) 0);
+}
+.record[data-cut]::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: var(--rec-cut);
+  height: 1px;
+  background: var(--border);
+  pointer-events: none;
+}
 /* 筆錄的寬只聽外框的，不讓紙的最小寬回頭撐開外框（休庭頁、陪審團長頁也一樣）；字級再照這個寬算。 */
 .record {
   contain: inline-size;
@@ -2984,6 +2999,21 @@ html[lang='en'] .stamp.rec-stamp b {
   position: absolute;
   inset: 0;
 }
+/* 正面和轉頭兩張立牌疊著，換的時候交叉淡化 --dur-turn 1500ms（第 7 章 :75）；減少動態用 --dur-rm。 */
+.cam-pose {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity var(--dur-turn) var(--ease);
+}
+.cam-pose[data-on] {
+  opacity: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .cam-pose {
+    transition-duration: var(--dur-rm);
+  }
+}
 /* 受光圖：輪廓光乘上它（灰階＝受光多少），影子落在立牌上的地方就沒有輪廓光。 */
 .cam-light[data-rim] {
   mask: var(--rim) 0 0 / 100% 100% no-repeat luminance;
@@ -3012,6 +3042,13 @@ html[lang='en'] .stamp.rec-stamp b {
   .shell:has(> .shell-tabs > .record) {
     grid-template-rows: auto auto minmax(0, 1fr) auto auto auto;
   }
+  /*
+   * 主詰問（提示和異議窗共用一格）：那一格照內容高，中欄剩下的高度給陪審團——框撐到筆錄紙的底線，
+   * 空白留在剪影下面，不留在提示和鏡頭條之間（設計師 #247 第二輪）。交互詰問的內容長，照舊由中間那列吃剩下的高度、自己捲。
+   */
+  .shell:has(> .shell-tabs > .record):has(> .shell-body > .court-slot) {
+    grid-template-rows: auto auto max-content auto auto minmax(min-content, 1fr);
+  }
   .shell:has(> .shell-tabs > .record) > .shell-tabs > .record {
     grid-row: 2 / 7;
   }
@@ -3034,6 +3071,22 @@ html[lang='en'] .stamp.rec-stamp b {
   .shell:has(> .shell-tabs > .record) > .shell-tabs > .jurybox {
     grid-row: 6;
   }
+  /* 筆錄紙跨好幾列：不讓它 25 行的內容高度撐大陪審團那一列（紙的高度由格子給，內容自己捲）。 */
+  .shell:has(> .shell-body > .court-slot) > .shell-tabs > .record {
+    contain: size;
+  }
+  /* 那一格本身就是框，不用再留捲動用的底距；1366×768 要一分一毫都放得下。 */
+  .shell:has(> .shell-body > .court-slot) > .shell-body {
+    padding-bottom: 0;
+  }
+  .shell:has(> .shell-body > .court-slot) > .shell-tabs > .jurybox {
+    grid-template-rows: auto minmax(0, 1fr);
+    margin-bottom: 12px;
+  }
+  .shell:has(> .shell-body > .court-slot) > .shell-tabs > .jurybox > .tbd.row > .jb-grid {
+    flex: 1;
+    align-content: start;
+  }
   .court-cam.insert {
     display: none;
   }
@@ -3048,8 +3101,9 @@ html[lang='en'] .stamp.rec-stamp b {
   }
   .court-cam.insert {
     position: absolute;
-    left: 14px;
-    right: 14px;
+    /* 和筆錄紙同寬（紙在螢幕兩側各留 8px）。 */
+    left: 8px;
+    right: 8px;
     bottom: 100%;
     z-index: 3;
     /* 收起來用 opacity，不用 visibility（裡面的機位會自己設 visible）；位置留著，筆錄才量得到它蓋住多少。 */
@@ -3102,11 +3156,18 @@ html[lang='en'] .stamp.rec-stamp b {
 .objection {
   border-color: light-dark(var(--hl-edge), var(--hl));
 }
-/* 「生效中」：寬螢幕和手機在理由下面一行；桌機 ≤ 1440 搬進標題列（在「要異議嗎？」和「不異議」之間），斷行只斷在「：」後面。 */
+/*
+ * 「生效中」：平常在理由下面一行；桌機矮螢幕搬進標題列（在「要異議嗎？」和「不異議」之間），窗從 211 壓到約 181。
+ * 用高度判斷（設計師 #247 第二輪）：中欄要放 頂列 74 + 異議窗 211 + 間距 30 + 鏡頭條 + 陪審團 268。
+ * 鏡頭條 ≈ 標籤 20 + 中欄寬 / 2.39，1366 寬 207、1440 寬約 228、1530 寬 255、1600 寬約 275，
+ * 所以需要的高度約 790（1366）、838（1530）、858（1600），門檻取 850（英文窗 207，比中文矮）。
+ * 結果：1366×768、1600×850 壓矮；1440×900、1530×860 照舊放下面。
+ * 斷行只斷在「：」後面；裁定那段用 balance，不讓最後一個字單獨掛一行。
+ */
 .objection .in-effect.head {
   display: none;
 }
-@media (min-width: 1024px) and (max-width: 1440px) {
+@media (min-width: 1024px) and (max-height: 850px) {
   .objection .panel-head > h2 {
     white-space: nowrap;
   }
@@ -3115,24 +3176,55 @@ html[lang='en'] .stamp.rec-stamp b {
     flex-wrap: wrap;
     min-width: 0;
     flex: 1 1 0;
-    font-size: 0.85em;
+    font-size: var(--fs-ui-meta);
     line-height: 1.3;
+  }
+  .objection .in-effect.head > :last-child {
+    text-wrap: balance;
   }
   .objection .panel-head > .pass {
     min-width: 0;
   }
-
   .objection .in-effect.foot {
     display: none;
   }
 }
-/* 英文理由比較長（Improper character evidence）：桌機按鈕維持 44px 高、4 欄 2 列，字縮小，最多三行塞進 44px。 */
+/*
+ * 英文理由（Lack of foundation、Violates the court's ruling）在桌機一律用 --fs-ui-meta 13px，最多兩行，按鈕維持 44px。
+ * 15px 時中欄最寬（約 560）一顆按鈕也只有約 120，「Violates the court's ruling」要三行，按鈕被撐到 65。
+ */
 @media (min-width: 1024px) {
   :root:lang(en) .objection .row button {
     padding-block: 2px;
-    font-size: 0.75em;
-    line-height: 1.1;
+    font-size: var(--fs-ui-meta);
+    line-height: 1.2;
   }
+}
+/* 桌機主詰問：提示框和異議窗疊在同一格，這一格的高度是兩者裡比較高的那個；沒開的那個藏起來（還撐著高度）。 */
+.court-slot {
+  display: grid;
+  flex: none;
+}
+.court-slot > * {
+  grid-area: 1 / 1;
+  margin: 0;
+}
+.court-slot > [data-off] {
+  visibility: hidden;
+}
+.court-prompt > p {
+  margin: 0;
+}
+.court-prompt-act {
+  display: flex;
+  gap: 8px;
+  margin-top: auto;
+}
+.court-prompt-act > .wide {
+  flex: 1;
+}
+.court-prompt-act > .locked {
+  visibility: hidden;
 }
 @media (max-width: 380px) {
   .objection .row {
