@@ -7,10 +7,9 @@
 
 /* ══ 法院系統：聲請狀（UX board-spec §10、視覺規格 §17，法庭介面） ══ */
 :root {
-  /* 紙上的墨水與章：紙永遠是淺色，兩個主題同值。 */
+  /* 紙上的墨水：紙永遠是淺色，兩個主題同值。
+     章一律 --stamp 靛藍印泥、雙線框、±3°（設定集第 9 章：不用紅章，紅只代表有罪傾向）；准駁靠章上的字分。 */
   --ink-fill: #1f3a68;
-  --stamp-ok: #1f7a4d;
-  --stamp-no: #b3322b;
 }
 .court-desk {
   display: grid;
@@ -104,10 +103,20 @@
   top: 8px;
   width: 26px;
   height: 14px;
-  border: 1.5px solid var(--paper-ink);
+  border: 1px solid var(--stamp);
+  /* 直角（#233）；收文 3°、--stamp 雙線框（設計師 #225 第二輪）。 */
   border-radius: 0;
-  opacity: 0.6;
-  transform: rotate(6deg);
+  opacity: 0.72;
+  rotate: 3deg;
+  mix-blend-mode: multiply;
+}
+/* 收文記號縮小版也是雙線框：內框 1px。 */
+.fthumb .rcv::after {
+  content: '';
+  position: absolute;
+  inset: 1px;
+  border: 1px solid var(--stamp);
+  border-radius: 0;
 }
 .fthumb .mini {
   position: absolute;
@@ -115,6 +124,8 @@
   bottom: 10px;
   width: 34px;
   height: 34px;
+  color: var(--stamp);
+  rotate: var(--rot);
   mix-blend-mode: multiply;
 }
 .fthumb .mini svg {
@@ -123,13 +134,14 @@
   overflow: visible;
   font-family: var(--font-doc);
 }
+/* 准 −3°、駁回 +3°（視覺規格 v2.0 §17）。 */
 .fthumb .mini.ok,
 .stamp-big.ok {
-  color: var(--stamp-ok);
+  --rot: -3deg;
 }
 .fthumb .mini.no,
 .stamp-big.no {
-  color: var(--stamp-no);
+  --rot: 3deg;
 }
 
 /* 手機：縮圖縮成一排紙籤（字在紙上、選中是墨框），聲請卡的標題和第一行留在 412×915 的第一屏（設計師 P2-6 r2 第 1 條）。 */
@@ -181,7 +193,7 @@
     repeating-linear-gradient(to bottom, transparent 0 31px, rgb(60 50 20 / 9%) 31px 32px);
   background-position:
     0 0,
-    0 20px;
+    0 var(--grid-y, 20px);
   color: var(--paper-ink);
   border-radius: 2px;
   padding: 36px 48px 44px 76px;
@@ -202,7 +214,7 @@
 .plead .ln {
   position: absolute;
   left: 22px;
-  top: 20px;
+  top: var(--grid-y, 20px);
   overflow: hidden;
   display: grid;
   align-content: start;
@@ -253,6 +265,53 @@
 .plead .body p {
   margin: 0;
 }
+/* 量基線的探針（Pleading.tsx）。 */
+.plead .baseline {
+  display: inline-block;
+  width: 0;
+  height: 0;
+}
+/*
+ * 空格裡每行也是 32px：手機上換行的空格、兩行的證物格，後面的行都留在格線上（設計師第二輪）。
+ * --bl＝內文字型和空格字型在 32px 行裡的基線差（實量，zh／en 不同）：用 padding 把空格裡的字推到內文的基線，
+ * 再用同樣大小的負 margin 收回，空格佔的高度永遠是整數行。底線畫成背景，疊在最後一行的格線（＝基線）上：
+ * --ul＝32px 行裡基線以下到行底的距離減 1。
+ */
+.plead .body .blank {
+  --bl: 0px;
+  --ul: 8px;
+  --u: var(--paper-muted);
+  line-height: 32px;
+  padding-block: max(var(--bl), 0px) max(-1 * var(--bl), 0px);
+  margin-block: min(var(--bl), 0px) min(-1 * var(--bl), 0px);
+  border-bottom: 0;
+  background-image: linear-gradient(var(--u), var(--u));
+  background-size: 100% 1px;
+  background-position: 0 calc(100% - var(--ul) - max(var(--bl), 0px));
+  background-repeat: no-repeat;
+}
+.plead .body .blank.filled {
+  --u: var(--paper-ink);
+}
+.plead .body .blank.open,
+.plead .body .blank.hot {
+  --u: var(--hl-edge);
+}
+@media (hover: hover) {
+  .plead .body button.blank:hover {
+    --u: var(--hl-edge);
+  }
+}
+.plead .body .blank.exhibit {
+  --bl: 2px;
+}
+:root:lang(en) .plead .body .blank {
+  --bl: -1px;
+  --ul: 9px;
+}
+:root:lang(en) .plead .body .blank.exhibit {
+  --bl: 2px;
+}
 .plead .nw {
   white-space: nowrap;
 }
@@ -268,7 +327,7 @@
   margin: 0 4px;
   padding: 0 10px;
   border: 0;
-  border-bottom: 1px dashed var(--paper-muted);
+  border-bottom: 1px solid var(--paper-muted);
   border-radius: 0;
   background: transparent;
   box-shadow: none;
@@ -278,10 +337,16 @@
   text-align: center;
   letter-spacing: 0.02em;
 }
-button.blank:hover,
+/* 觸控裝置點過之後 :hover 會黏住，看起來像選中：hover 只給有滑鼠的裝置（設計師第二輪）。 */
 .blank.open {
   background: var(--hl-wash);
   border-bottom-color: var(--hl-edge);
+}
+@media (hover: hover) {
+  button.blank:hover {
+    background: var(--hl-wash);
+    border-bottom-color: var(--hl-edge);
+  }
 }
 .blank .hint {
   font: 400 13px/1 var(--font);
@@ -292,7 +357,7 @@ button.blank:hover,
 }
 /* 等證物的空格：從右邊證據欄點一張就放進來。 */
 .blank.hot {
-  border-bottom: 1px dashed var(--hl-edge);
+  border-bottom: 1px solid var(--hl-edge);
   background: var(--hl-wash);
   box-shadow: 0 0 0 1px var(--hl);
   border-radius: 3px;
@@ -312,7 +377,7 @@ button.blank:hover,
   border-radius: 3px;
   color: var(--gold-paper);
   background: var(--paper);
-  font: 600 10px/1 var(--font-mono);
+  font: 700 10px/1 var(--font-court);
   letter-spacing: 0.08em;
   transform: rotate(-6deg);
   white-space: nowrap;
@@ -391,9 +456,13 @@ button.blank:hover,
   color: var(--paper-ink);
   white-space: nowrap;
 }
-.pop-list button:hover,
 .pop-list button.on {
   background: light-dark(#eceff3, #c9ccd1);
+}
+@media (hover: hover) {
+  .pop-list button:hover {
+    background: light-dark(#eceff3, #c9ccd1);
+  }
 }
 .sheet-options .pop-list button {
   min-height: 52px;
@@ -403,13 +472,20 @@ button.blank:hover,
 .sheet-options .pop-list button.on {
   background: var(--hl-wash);
 }
+/*
+ * 具狀人一行也坐在格線上：行框是內文的 17px／32px（和 .body 同一個字型撐行），小字是行內的 span，
+ * 基線跟內文一樣落在格線上；上面空一整行（設計師 #225 第三輪）。
+ */
 .plead .sig {
-  margin-top: 28px;
-  font: 400 13px/1.6 var(--font-court);
+  margin-top: 32px;
+  font: 400 17px/32px var(--font-doc);
   color: var(--paper-muted);
 }
+.plead .sig > span {
+  font: 400 13px/1 var(--font-court);
+}
 .plead .sig b {
-  font: 400 15px/1.6 var(--font-doc);
+  font: 400 15px/1 var(--font-doc);
   color: var(--paper-ink);
   border-bottom: 1px solid var(--paper-ink);
   padding: 0 16px;
@@ -429,78 +505,104 @@ button.blank:hover,
 }
 .plead .commit-row .cost {
   margin-left: 8px;
-  font: 500 12px/1 var(--font-mono);
+  font: 700 12px/1 var(--font-court);
   opacity: 0.8;
 }
 .plead .bates2 {
   position: absolute;
   left: 76px;
   bottom: 12px;
-  font: 400 11px/1 var(--font-court);
+  font: 700 11px/1 var(--font-court);
   color: var(--paper-muted);
 }
-/* 法官的一句話：左邊色線，章蓋在右邊，壓到簽名欄也沒關係。 */
+/*
+ * 法官的一句話：左邊色線，章蓋在右邊，壓到簽名欄也沒關係。
+ * 每一行都是 32px、基線在格線上：行框用內文的 17px／32px 撐，小標和裁定是行內的 span；
+ * 小標後面換行（不是 block，block 會換成小標自己的字型撐行，基線就偏了）。上面空一整行。
+ */
 .plead .judge {
   position: relative;
-  margin-top: 18px;
-  padding: 10px 150px 10px 14px;
-  border-left: 3px solid var(--stamp-no);
-  font: 400 15px/1.7 var(--font-court);
+  margin-top: 32px;
+  padding: 0 150px 0 14px;
+  border-left: 3px solid var(--stamp);
+  font: 400 17px/32px var(--font-doc);
   color: var(--paper-ink);
 }
-.plead .judge.ok {
-  border-left-color: var(--stamp-ok);
-}
 .plead .judge small {
-  display: block;
-  font: 400 12px/1.4 var(--font-court);
+  font: 400 12px/1 var(--font-court);
   color: var(--paper-muted);
+}
+.plead .judge small::after {
+  content: '\A';
+  white-space: pre;
+}
+.plead .judge .q {
+  font: 400 15px/1 var(--font-court);
 }
 .plead .judge .stamp-big {
   position: absolute;
-  /* 章轉 8 度會多出約 10px；往內收，不把整張紙撐寬。 */
   right: 12px;
   top: -18px;
 }
 .stamp-big {
+  --o: 0.86;
   display: block;
   width: 132px;
   height: 132px;
-  opacity: 0.86;
+  color: var(--stamp);
+  opacity: var(--o);
   mix-blend-mode: multiply;
-  transform: rotate(-8deg);
+  rotate: var(--rot);
 }
 .stamp-big svg {
   width: 100%;
   height: 100%;
   overflow: visible;
 }
+/* 狀紙只用三套字族（設定集第 9 章）：外圈 Courier、中央 Serif 900，英文的 GRANTED／DENIED 也一樣。 */
 .stamp-big .ring {
-  font: 500 8px/1 var(--font-mono);
+  font: 700 8px/1 var(--font-court);
   letter-spacing: 2.2px;
 }
 .stamp-big .word {
   font-family: var(--font-doc);
   font-weight: 900;
 }
-.stamp-big .word.latin {
-  font-family: var(--font-mono);
-  font-weight: 700;
-}
+/* 收文章：--stamp 雙線框（外框 2px＋內框 1px），轉 3°（視覺規格 v2.0 §17）。 */
 .stamp-rcv {
+  --o: 0.72;
   position: absolute;
   right: 44px;
   top: 10px;
-  padding: 6px 10px;
-  border: 2px solid var(--paper-ink);
+  padding: 7px 12px;
+  border: 2px solid var(--stamp);
   border-radius: 3px;
   font: 400 11px/1.4 var(--font-court);
-  color: var(--paper-ink);
+  color: var(--stamp);
   letter-spacing: 0.08em;
   text-align: center;
-  transform: rotate(6deg);
-  opacity: 0.72;
+  rotate: 3deg;
+  opacity: var(--o);
   mix-blend-mode: multiply;
+}
+.stamp-rcv::after {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  border: 1px solid var(--stamp);
+  border-radius: 1px;
+}
+/* 落章：--dur-stamp ease-in，墨色 60% → 100%，不縮放、不回彈（設定集第 10.2 章）。減少動態時直接出現。 */
+@media (prefers-reduced-motion: no-preference) {
+  .stamp-big,
+  .stamp-rcv {
+    animation: court-stamp var(--dur-stamp) ease-in both;
+  }
+  @keyframes court-stamp {
+    from {
+      opacity: calc(var(--o) * 0.6);
+    }
+  }
 }
 .stamp-rcv b {
   display: block;
@@ -624,11 +726,11 @@ details.earlier > summary {
 details.earlier[open] > .lines {
   margin-top: 10px;
 }
-/* 狀紙空格和後面的逗號一起換行。 */
+/* 狀紙空格和後面的逗號一起換行。空格裡的字自己換成兩行時，逗號對齊最後一行（last baseline），不掛在第一行尾。 */
 .plead .glue {
   display: inline-flex;
   flex-wrap: nowrap;
-  align-items: baseline;
+  align-items: last baseline;
   max-width: 100%;
 }
 .plead .glue > .blank {
@@ -730,12 +832,6 @@ details.earlier[open] > .lines {
   gap: 10px;
   align-items: center;
 }
-.trialbar .eb::before {
-  content: '';
-  width: 16px;
-  height: 2px;
-  background: var(--hl);
-}
 .trialbar .eb b {
   color: var(--text);
   font: 700 var(--fs-ui-head) / 1 var(--font);
@@ -759,7 +855,9 @@ details.earlier[open] > .lines {
   vertical-align: -3px;
 }
 .tb-tally b.low {
-  color: light-dark(var(--hl-edge), var(--hl));
+  /* 剩最後一次：粗底線，不用黃（一幀一個黃，第一道關卡 B2）。 */
+  text-decoration: underline 2px;
+  text-underline-offset: 4px;
 }
 .tb-tally small {
   font: 500 11px/1 var(--font-mono);
@@ -822,8 +920,10 @@ button.cand {
   box-shadow: none;
   font-weight: 400;
 }
-button.cand:hover:not(.on) {
-  background: color-mix(in srgb, var(--text) 4%, transparent);
+@media (hover: hover) {
+  button.cand:hover:not(.on) {
+    background: color-mix(in srgb, var(--text) 4%, transparent);
+  }
 }
 .cand .no {
   font: 600 var(--fs-ui-label) / 1 var(--font-mono);
@@ -871,22 +971,112 @@ button.cand:hover:not(.on) {
   color: var(--muted);
   transform: rotate(-4deg);
 }
+/* 選中的候選人：墨色左緣＋淡底。黃只給下一步（規格 v2.0 §1，第一道關卡 B2）。 */
 button.cand.on {
-  background: var(--hl-wash);
-  border-top: 1px solid var(--hl-edge);
-  border-bottom-color: var(--hl-edge);
-  border-left-color: var(--hl);
+  background: light-dark(rgb(17 23 32 / 5%), rgb(231 234 238 / 6%));
+  border-top: 1px solid var(--border-strong);
+  border-bottom-color: var(--border-strong);
+  border-left-color: var(--text);
 }
 .cand.on .seatno {
-  border-color: var(--hl-edge);
+  border-color: var(--text);
 }
-.cand.bench {
-  opacity: 0.78;
+/*
+ * 全域的「選取＝螢光筆」（styles.css [aria-pressed='true']）在這幾個畫面會和黃主按鈕同框：
+ * 選中改墨色左緣＋淡底，黃留給下一步（一幀一個黃）。
+ * 框是 2px 墨色（外框 1px＋內圈 1px）：手機上點過的 hover 也是灰底細框，選中要一眼分得出來（設計師第二輪）。
+ */
+button.cand[aria-pressed='true'],
+.closing-args [aria-pressed='true'],
+.closing-tones [aria-pressed='true'],
+.rec-bar-top [aria-pressed='true'] {
+  border-color: var(--text) !important;
+  background: light-dark(rgb(17 23 32 / 5%), rgb(231 234 238 / 6%)) !important;
+  box-shadow:
+    inset 0 0 0 1px var(--text),
+    inset 4px 0 0 var(--text);
 }
-.cand.struck {
-  opacity: 0.5;
+/* 開場的借據選取：墨色框，不用 --hl（黃只給「許下 n 個承諾」那顆主按鈕）。 */
+.iou-pick[aria-pressed='true'] .iou {
+  outline-color: var(--text);
+}
+/* 借據：「擔保」不換行；存根上的兩位數號碼橫排成一格（Chromium 不支援 digits 2，用 all 包在號碼上）。 */
+.iou-terms dt {
+  white-space: nowrap;
+}
+.iou-stub .no {
+  text-combine-upright: all;
+  letter-spacing: 0;
+}
+/*
+ * 後果提示（論點不夠、沒有理論、承諾沒兌現、明知是假的還問）：不用紅，紅只表示成立／有罪傾向（規格 v2.0）。
+ * 墨色 600，前面一個圈起來的驚嘆號；結辯「最後講 ×1.3」也不用綠。
+ */
+.court-warn {
+  color: var(--text);
+  font-weight: 600;
+}
+.court-warn::before,
+.nego-ladder .tg em::before,
+.stats.authority dd.over::before {
+  content: '!';
+  display: inline-grid;
+  place-items: center;
+  width: 1.2em;
+  height: 1.2em;
+  margin-right: 0.45em;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  font-size: 0.78em;
+  font-weight: 700;
+  line-height: 1;
+  vertical-align: 0.12em;
+}
+/*
+ * 中文換行（設計師 #225 第三輪）：對白、理論卡、結辯、判決、調解、開場借據的內文，加上聲請狀的裁定。詞不斷開靠 prose.tsx 的斷詞，
+ * 這裡補 text-wrap: pretty（末行不留孤字）和 line-break: strict（標點禁則）。
+ * 筆錄不加：25 行格線、頁行號是內容資料，重排會讓引用的頁行跑掉（Record.tsx 自己排行）。
+ */
+:is(
+  .speech,
+  .narration,
+  .epi,
+  .fore blockquote,
+  .theory-card,
+  .closing-args,
+  .vdict .why,
+  .rounds,
+  .claim-text,
+  .nego-ladder,
+  .iou-text,
+  .plead .judge
+) {
+  text-wrap: pretty;
+  line-break: strict;
+}
+/* 結辯分頁的 ✓ 是「這一頁做完了」，不是成立：墨色，和「理論靠的論點 ◆ 論點 A✓」一致（設計師 #225 第三輪）。 */
+.shell:has(.closing-head) > .shell-tabs .tick {
+  color: var(--text);
+}
+.closing-args ~ .picked .last,
+.carry .theory-needs .need.miss {
+  color: var(--text);
+  font-weight: 600;
+}
+/* 「出示」「亮出」和結辯的順序號：墨色 600，不用黃（淺色的赭、深色的 #f4c53d 都是黃家族，會和主按鈕成兩道黃）。 */
+.claim .pick .verb,
+.panel.reveal .pick .verb,
+.closing-args .pick .verb,
+.closing-args ~ .picked .num {
+  color: var(--text);
+  font-weight: 600;
+}
+/* 候補與刪除不用透明度表示（設計師 #225 第三輪）：實心的字色。候補的名字 --muted、縮圖照原樣；刪除的名字加刪除線、--faint。 */
+.cand.bench strong {
+  color: var(--muted);
 }
 .cand.struck strong {
+  color: var(--faint);
   text-decoration: line-through;
   text-decoration-thickness: 1px;
 }
@@ -899,24 +1089,33 @@ button.cand.on {
   padding: 0 var(--s4);
   font: 500 11px/1 var(--font-mono);
   letter-spacing: 0.1em;
-  color: light-dark(var(--hl-edge), var(--hl));
-  background: light-dark(rgb(255 208 46 / 10%), rgb(244 197 61 / 5%));
+  color: var(--muted);
+  background: light-dark(rgb(17 23 32 / 4%), rgb(231 234 238 / 4%));
   white-space: nowrap;
 }
 .cutline::before,
 .cutline::after {
   content: '';
   flex: 1;
-  border-top: 1px dashed currentColor;
-  opacity: 0.7;
+  border-top: 1px solid var(--border);
 }
 
+/*
+ * 人物卡不准比自己的字矮（設計師 #225 第三輪：英文的「還沒問過」被按鈕列蓋住）。
+ * 放不下時整欄捲動，「就用這 12 位」那條釘在欄底。
+ */
 .vd-right {
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-rows: auto minmax(min-content, 1fr) auto;
   gap: var(--s4);
   min-width: 0;
   min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.vd-right > .commitbar {
+  position: sticky;
+  bottom: 0;
 }
 /* 陪審席：木色箱＋扶手。 */
 .box {
@@ -988,15 +1187,16 @@ button.cand.on {
 .seatc .slot0 {
   width: 72px;
   aspect-ratio: 3 / 4.3;
-  border: 1.5px dashed light-dark(#8a6a43, #6b5640);
+  border: 1px solid light-dark(#8a6a43, #6b5640);
   border-radius: var(--radius);
   display: grid;
   place-items: center;
   font: 600 13px/1 var(--font-mono);
   color: light-dark(#8a6a43, #8a7258);
 }
-.seatc.on .idphoto {
-  outline: 2px solid var(--hl);
+.seatc.on .idphoto,
+.seatc.on .silcard {
+  outline: 2px solid var(--text);
   outline-offset: 2px;
 }
 
@@ -1004,13 +1204,46 @@ button.cand.on {
 .panel.prof {
   display: grid;
   grid-template-columns: 96px minmax(0, 1fr);
-  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-rows: auto minmax(min-content, 1fr) auto;
   gap: var(--s4);
   padding: var(--s4);
   min-height: 0;
 }
-.prof > .idphoto {
+.prof > .idphoto,
+.prof > .tbd {
   align-self: start;
+}
+/*
+ * 人物卡的「待放 AI 立繪　{全名}」：一行，橫跨在照片和名字上方（不鎖在 96px 框寬裡，也不超出卡片），
+ * 名字不准斷開（設計師 #225 第三輪）。引線從標籤左端垂直接到框頂。
+ */
+.prof > .tbd {
+  display: contents;
+}
+.prof > .tbd > .tbd-label {
+  grid-column: 1 / -1;
+  grid-row: 1;
+  justify-self: start;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+  max-width: 100%;
+  margin-bottom: calc(6px - var(--s4));
+}
+.prof > .tbd > .tbd-label > span + span {
+  overflow-wrap: normal;
+}
+.prof > .tbd > .silcard {
+  grid-column: 1;
+  grid-row: 2;
+  align-self: start;
+}
+/* 名字那一欄（沒有 class 的 div；.qa、.acts 照原本橫跨整張卡）。 */
+.prof:has(> .tbd) > div:not([class]) {
+  grid-column: 2;
+  grid-row: 2;
+}
+.prof:has(> .tbd) {
+  grid-template-rows: auto auto minmax(min-content, 1fr) auto;
 }
 .prof h3 {
   font: 700 20px/1.3 var(--font-doc);
@@ -1026,8 +1259,6 @@ button.cand.on {
   display: grid;
   gap: 6px;
   align-content: start;
-  min-height: 0;
-  overflow-y: auto;
   padding-top: var(--s3);
   border-top: 1px solid var(--border);
 }
@@ -1110,7 +1341,7 @@ button.cand.on {
   width: 28px;
   font-size: 10px;
 }
-.shell-body > .cands {
+.shell-body > .tbd > .cands {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--surface);
@@ -1135,7 +1366,8 @@ button.cand.on {
   .panel.prof {
     grid-template-columns: 72px minmax(0, 1fr);
   }
-  .panel.prof > .idphoto {
+  .panel.prof > .idphoto,
+  .panel.prof .silcard {
     --w: 72px !important;
   }
 }
@@ -1194,8 +1426,12 @@ button.cand.on {
 }
 .hero .amt b {
   font: 600 44px/1 var(--font-mono);
-  letter-spacing: -0.02em;
+  letter-spacing: 0;
   white-space: nowrap;
+}
+.hero .amt b .sep {
+  /* 等寬字的「.」「,」字身只有格寬的三分之一：左右各收 0.17em，數字本身照用等寬、字距歸零。 */
+  margin-inline: -0.17em;
 }
 .hero .amt b i {
   font: 500 18px/1 var(--font);
@@ -1277,8 +1513,14 @@ button.cand.on {
   font: 400 12px/1.5 var(--font);
   color: var(--paper-muted);
 }
+/*
+ * 陪審長的手寫：英文介面也用 LXGW WenKai TC（設定集第 9 章的手寫字，有拉丁字母），不退回 Source Serif 4 正體。
+ * 全域 --font-hand 的英文值歸介面與操作 #2；這裡只管判決書上這兩處。
+ */
 .fq .qv {
-  font: 400 21px/1 var(--font-hand);
+  font:
+    400 21px/1 'LXGW WenKai TC',
+    var(--font-hand);
   color: var(--ink-fill);
   white-space: nowrap;
 }
@@ -1311,7 +1553,9 @@ button.cand.on {
   min-width: 150px;
   margin-left: 8px;
   border-bottom: 1px solid var(--paper-ink);
-  font: 400 20px/1.2 var(--font-hand);
+  font:
+    400 20px/1.2 'LXGW WenKai TC',
+    var(--font-hand);
   color: var(--ink-fill);
   text-align: center;
 }
@@ -1320,6 +1564,15 @@ button.cand.on {
 }
 .lcol .ledger-tip {
   margin: 0;
+}
+.ledger-why,
+.ledger-claim {
+  margin: 8px 0 0;
+  font: 400 var(--fs-ui-meta) / 1.5 var(--font);
+  color: var(--text);
+}
+.ledger-claim {
+  font-variant-numeric: tabular-nums;
 }
 .fold > summary {
   font: 500 var(--fs-ui-meta) / 1.4 var(--font);
@@ -1390,9 +1643,10 @@ button.cand.on {
   border-radius: 2px;
   border: 1.5px solid var(--border-strong);
 }
+/* 站你這邊的票：實心墨色（規格 v2.0：綠只代表成立，風向不用綠）。 */
 .vpips i.y {
-  background: var(--good);
-  border-color: var(--good);
+  background: var(--text);
+  border-color: var(--text);
 }
 .panel.rounds {
   list-style: none;
@@ -1440,7 +1694,7 @@ button.cand.on {
 }
 .panel.fore {
   display: grid;
-  grid-template-columns: 40px minmax(0, 1fr);
+  grid-template-columns: auto minmax(0, 1fr);
   gap: var(--s3);
   padding: var(--s4);
   align-items: start;
@@ -1571,6 +1825,54 @@ html[lang='en'] .vform .fh .c {
   letter-spacing: 0.08em;
 }
 
+/*
+ * 法官耐心燈管（設定集第 10.2、10.6 章）：熄一根是 --dur-tube-off 一次降到 0，不閃。
+ * 最後一根熄掉（歸零）時閃兩下：亮兩次、每次一格 --dur-tube-off，中間全暗，每秒約 2 次，低於 3 次；面積遠小於 2%。
+ * 結束時是空心（第 10 章「熄滅＝空心」）。
+ * 光敏安全（html[data-photosafe='1']）不閃：歸零是一次 900ms 漸暗，和一般熄一根的 240ms 分得開；點亮 700ms（第 11 章）。
+ * 減少動態直接熄（建置時 @media 會連玩家設定一起認）。
+ */
+:root {
+  /* 亮著的燈管色：.pip.on 和歸零閃爍共用（淺色介面上燈管色幾乎看不見，淺色用深一點的綠）。 */
+  --tube-lit: light-dark(#5f8f68, var(--tube-on));
+}
+.patience .pip.on {
+  background: var(--tube-lit);
+  border-color: var(--tube-lit);
+}
+.patience .pip {
+  transition: none;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .patience .pip {
+    transition:
+      background-color var(--dur-tube-off) var(--ease-light),
+      border-color var(--dur-tube-off) var(--ease-light);
+  }
+  html:not([data-photosafe='1']) .patience .pip.spent {
+    animation: tube-spent calc(var(--dur-tube-off) * 4) step-end both;
+  }
+  html[data-photosafe='1'] .patience .pip.on {
+    transition-duration: 700ms;
+  }
+  html[data-photosafe='1'] .patience .pip.spent {
+    transition-duration: 900ms;
+  }
+  @keyframes tube-spent {
+    25%,
+    75% {
+      background-color: var(--tube-lit);
+      border-color: var(--tube-lit);
+    }
+    0%,
+    50%,
+    100% {
+      background-color: transparent;
+      border-color: var(--border-strong);
+    }
+  }
+}
+
 /* 調解：對方信心與每一檔條件的門檻（體驗評測 v88：看不到信心，攤牌後開價沒動也沒有回饋）。 */
 .patience.conf {
   gap: 4px 10px;
@@ -1610,6 +1912,21 @@ html[lang='en'] .vform .fh .c {
 }
 .nego-next {
   margin: 4px 0 0;
+}
+/*
+ * 「打電話請示」是這一頁唯一的主按鈕：條件表長到捲動框外時，它釘在框底，永遠整顆看得到
+ * （設計師 #225 第三輪：中文桌機被框的底邊切掉一半）。上下各墊一條面板色（上面那條就是按鈕間的 8px 間距，
+ * 沒釘住時看不出來），後面捲動的按鈕和字不會從縫裡露出來。
+ */
+.panel > .nego-pin {
+  position: sticky;
+  bottom: 8px;
+  z-index: 1;
+  display: grid;
+  margin-top: -8px;
+  padding-top: 8px;
+  background: var(--surface);
+  box-shadow: 0 8px 0 var(--surface);
 }
 /* 調解的條件階梯：每一檔信心門檻對應的條件，目前這一檔用螢光標示。 */
 .nego-ladder {
@@ -1651,9 +1968,11 @@ html[lang='en'] .vform .fh .c {
 .nego-ladder .tg b {
   color: var(--text);
 }
+/* 「超過授權」是警告，不是成立：墨色 600，前面一個圈起來的驚嘆號（紅只代表成立與有罪傾向，設計師 #225 第三輪）。 */
 .nego-ladder .tg em {
   font-style: normal;
-  color: var(--bad);
+  color: var(--text);
+  font-weight: 600;
 }
 .nego-ladder li.on {
   /* 目前這一檔：淡底＋左緣一條正文色。黃只給下一步（「打電話請示」），一格一黃（第一道關卡 B2）。 */
@@ -1662,20 +1981,6 @@ html[lang='en'] .vform .fh .c {
 }
 .nego-ladder li.on .th {
   color: var(--text);
-}
-/* 深色模式的 wash 上 --bad 只有 4.39：目前這一檔的「超過授權」改用正文色，前面加一顆紅點。 */
-.nego-ladder li.on .tg em {
-  color: var(--text);
-}
-.nego-ladder li.on .tg em::before {
-  content: '';
-  display: inline-block;
-  width: 7px;
-  height: 7px;
-  margin-right: 6px;
-  border-radius: 50%;
-  background: var(--bad);
-  vertical-align: 1px;
 }
 .fore blockquote .nw {
   white-space: nowrap;
@@ -1707,6 +2012,8 @@ html[lang='en'] .vform .fh .c {
   --rec-gutter: calc(var(--rec-fs) * 2.2);
   --rec-pl: calc(var(--rec-gutter) + var(--rec-fs) * 0.8);
   --rec-pr: calc(var(--rec-fs) * 0.6);
+  /* 行尾掛出去的標點佔的寬（em）：中文全形 1、英文 0.6（Record.tsx paperX 同一個數）。 */
+  --rec-hang: 1;
   --rec-gap-bg: var(--surface);
   display: flex;
   flex-direction: column;
@@ -1719,6 +2026,28 @@ html[lang='en'] .vform .fh .c {
 }
 html[lang='en'] .record {
   --rec-measure: 26.4;
+  --rec-hang: 0.6;
+}
+/*
+ * 手機：外框 .shell 的格線欄是 auto，會被筆錄紙的最小寬（一行字數 × 字級）撐開，右邊被 overflow 切掉
+ * （第一道關卡 S1：借據章、立即顯示全文、詰問完畢都被裁到）。法庭畫面把欄寬鎖在螢幕內，紙的字級再照框寬算。
+ */
+@media (max-width: 1023px) {
+  .shell:has(.record) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.record,
+.rec-scroll {
+  min-width: 0;
+}
+/* 筆錄的寬只聽外框的，不讓紙的最小寬回頭撐開外框（休庭頁、陪審團長頁也一樣）；字級再照這個寬算。 */
+.record {
+  contain: inline-size;
+}
+/* 證詞分頁列不被筆錄擠扁（同一張截圖：「✓ 證詞 1」下半截被切掉）。 */
+.shell:has(.record) > .shell-tabs > .apps {
+  flex-shrink: 0;
 }
 .rec-bar-top {
   display: flex;
@@ -1736,7 +2065,7 @@ html[lang='en'] .record {
 .rec-paper {
   position: relative;
   width: 100%;
-  min-width: calc((var(--rec-measure) + 3.6) * var(--rec-fs));
+  min-width: calc((var(--rec-measure) + 3.6 + var(--rec-hang)) * var(--rec-fs));
   padding: 0 var(--rec-pr) calc(var(--rec-fs) * 0.4) var(--rec-pl);
   border-radius: 0;
   background:
@@ -1761,8 +2090,9 @@ html[lang='en'] .record {
   color: var(--paper-muted);
   text-transform: uppercase;
 }
+/* 頁首：左邊「審判筆錄　第 N 卷」，右邊頁碼（卷＝Bates 裡的 T，設計師 10-09）。 */
 .rec-head::before {
-  content: attr(data-l);
+  content: attr(data-l) '\3000' attr(data-v);
 }
 .rec-head::after {
   content: attr(data-r);
@@ -1776,6 +2106,8 @@ html[lang='en'] .record {
   font: 700 calc(var(--rec-fs) * 0.75) / 1 var(--font-court);
   letter-spacing: 0.04em;
   color: var(--toner);
+  /* 字貼在這一行的底邊，字框會多出 1px 到紙外，捲動的終點就不在整行上（第三輪：框頂露半行）。 */
+  overflow: clip;
 }
 .rec-foot::after {
   content: attr(data-b);
@@ -1804,14 +2136,23 @@ html[lang='en'] .record {
   color: var(--paper-muted);
   user-select: none;
 }
-/* 目前行：頁邊一道螢光，筆錄層唯一的黃（設定集 10.3）。紙是淺的，加 1px --hl-edge 才看得出邊。 */
+/*
+ * 目前行：頁邊一道炭色 2px（設計師 10-09 裁定：黃只給玩家下一個動作，主按鈕能按時記號讓位）。
+ * 異議分鏡（第 10.3 章）期間輸入鎖住、畫面上沒有主按鈕，那時才換成黃；分鏡做好時（P3-1／3-2）
+ * 由分鏡在 .record 上加 data-beat，這裡已先接好。
+ */
 .rec-row.cur::after {
   content: '';
   position: absolute;
   top: calc(50% - 0.45em);
+  left: calc(-1 * var(--rec-pl) + 4px);
+  width: 2px;
+  height: 0.9em;
+  background: var(--paper-ink);
+}
+.record[data-beat] .rec-row.cur::after {
   left: calc(-1 * var(--rec-pl) + 3px);
   width: 4px;
-  height: 0.9em;
   background: var(--hl);
   box-shadow: 0 0 0 1px var(--hl-edge);
 }
@@ -1831,6 +2172,8 @@ html[lang='en'] .record {
   font-family: 'Noto Serif TC', serif;
 }
 .rec-entry.note {
+  /* 全域 .note 是 14px，筆錄裡的說明要跟筆錄同字級，不然英文長句會跑出紙邊（第一道關卡重跑時找到）。 */
+  font-size: inherit;
   color: var(--paper-muted);
 }
 /* 黑條：零圓角、上緣 1px、條內小字（設定集第 1、9 章）。報讀念的是條上的字，不是被蓋掉的話。 */
@@ -1866,26 +2209,35 @@ html[lang='en'] .record {
 /* 裁定章：靛藍小章落在異議那一行右邊（設定集 10.3）。 */
 .stamp.rec-stamp {
   --ink: var(--stamp);
-  /* 章連外框縮在自己那一行的行高內，雙線框：外框 1px＋內框 1px（設定集第 9 章 <Stamp>）。 */
-  --h: calc(var(--rec-row) - 6px);
+  /*
+   * 章連雙框縮在自己那一行的行高內：外框 1px＋留白 1px＋內框 1px（設定集第 9 章 <Stamp>）。
+   * 內框是 styles.css 的 .stamp::after，畫在外框裡面，印泥 mask 才不會把它切掉。
+   * 手機一行 20px 時，內框裡還留得下 11px 的字和上下各 1px。
+   */
+  --h: calc(var(--rec-row) - 2px);
+  --stamp-gap: 1px;
   vertical-align: middle;
   height: var(--h);
   align-content: center;
   margin-left: 0.8em;
-  padding: 0 5px;
+  padding: 0 6px;
   border-width: 1px;
-  outline: 1px solid var(--ink);
-  outline-offset: 1.5px;
   white-space: nowrap;
   mix-blend-mode: multiply;
 }
+.stamp.rec-stamp.tight {
+  position: absolute;
+  right: 3px;
+  top: 1px;
+  margin-left: 0;
+}
 /* 章內字至少 11px（視覺設計師 #2） */
 .stamp.rec-stamp b {
-  font-size: max(11px, min(var(--rec-fs) * 0.9, var(--h) - 4px));
+  font-size: max(11px, min(var(--rec-fs) * 0.9, var(--h) - 8px));
   line-height: 1;
 }
 html[lang='en'] .stamp.rec-stamp b {
-  font: 700 max(11px, min(var(--rec-fs) * 0.8, var(--h) - 2px)) / 1 var(--font-court);
+  font: 700 max(11px, min(var(--rec-fs) * 0.8, var(--h) - 7px)) / 1 var(--font-court);
   letter-spacing: 0.06em;
   margin-right: -0.06em;
   text-transform: uppercase;
@@ -1969,10 +2321,10 @@ html[lang='en'] .stamp.rec-stamp b {
       scale: 0 1;
     }
   }
+  /* 只有墨色 60% → 100%；不縮放、不回彈，角度是每枚章固定的 ±3°（設定集第 10.3 章）。 */
   @keyframes rec-stamp {
     from {
       opacity: 0.6;
-      scale: 1.15;
     }
   }
   @keyframes rec-wait {
@@ -2024,6 +2376,96 @@ html[lang='en'] .stamp.rec-stamp b {
     flex: 1 1 auto;
     min-height: 8rem;
     max-height: none;
+  }
+}
+
+/*
+ * 框是看紙的視窗，一頁 25 行要捲（設計師 10-09、#225 第三輪：桌機手機都一樣）。
+ * - 框高＝頁首＋整數行（Record.tsx 算），捲動對齊整行，框頂、框底都不會露出半行或半條黑條；
+ *   換頁的間隔、Bates 也各是一行高。最少頁首加 5 行。
+ * - 頁首、換頁的間隔不包在段落裡（display: contents），每一行都直接排在紙上，才能逐行對齊、黏在紙上。
+ * 休庭頁攤開的那份（.full）照紙的原樣排，不捲、不黏。
+ */
+.record:not(.full) {
+  --rec-whole: 1;
+}
+.record:not(.full) .rec-scroll {
+  padding-block: 0;
+  scroll-snap-type: y mandatory;
+}
+.record:not(.full) .rec-paper {
+  padding-bottom: 0;
+}
+.record:not(.full) :is(.rec-head, .rec-row, .rec-foot) {
+  scroll-snap-align: start;
+}
+.record:not(.full) :is(.rec-entry, .rec-break) {
+  display: contents;
+}
+.record:not(.full) .rec-break::before {
+  height: var(--rec-row);
+  margin: 0 calc(-1 * var(--rec-pr)) 0 calc(-1 * var(--rec-pl));
+}
+/*
+ * 黏頁首：手機的筆錄，和桌機上辯方詰問那個小框（放不下一整頁，頁首捲走就看不到卷、頁、Bates）。
+ * 每張頁首都黏在框頂；下一頁的頁首捲上來時蓋掉上一張，頁首上的卷、頁、Bates 永遠是它底下那幾行的。
+ * 法庭左欄在桌機放得下大半頁，頁首不黏（設計師 10-09）。
+ */
+.scene > .record.live .rec-scroll {
+  scroll-padding-top: var(--rec-row);
+}
+.scene > .record.live .rec-head {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  margin: 0 calc(-1 * var(--rec-pr)) 0 calc(-1 * var(--rec-pl));
+  padding: 0 var(--rec-pr) 0 var(--rec-pl);
+  /* 框頂在小數像素上時，上一行的字會從頁首上緣露出 1px：往上多蓋 2px 紙色。 */
+  box-shadow: 0 -2px 0 var(--paper);
+  background:
+    linear-gradient(var(--paper-rule), var(--paper-rule)) var(--rec-gutter) 0 / 1px 100% no-repeat,
+    linear-gradient(var(--paper-rule), var(--paper-rule)) calc(var(--rec-gutter) + 3px) 0 / 1px 100%
+      no-repeat,
+    var(--paper);
+}
+.scene > .record.live .rec-head::after {
+  content: attr(data-r) '\3000' attr(data-b);
+}
+/* 辯方詰問的小框（桌機）：高度只聽版面，紙的長度不回頭撐開它；放得下頁首加 11 行左右。 */
+.scene > .record.live {
+  contain: size;
+  height: clamp(240px, 100dvh - 440px, 520px);
+  max-height: none;
+}
+@media (max-width: 1023px) {
+  .shell:has(> .shell-tabs > .record) {
+    grid-template-rows: auto minmax(min-content, 1fr) auto auto;
+  }
+  /* 筆錄外框的高只聽版面（contain: size），不讓紙的長度回頭撐開它；法庭的格線至少留給它這麼高。 */
+  .shell-tabs > .record {
+    contain: size;
+  }
+  .scene > .record.live {
+    height: max(120px, 26dvh);
+  }
+  .record:not(.full) .rec-scroll {
+    scroll-padding-top: var(--rec-row);
+  }
+  .record:not(.full) .rec-head {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    margin: 0 calc(-1 * var(--rec-pr)) 0 calc(-1 * var(--rec-pl));
+    padding: 0 var(--rec-pr) 0 var(--rec-pl);
+    box-shadow: 0 -2px 0 var(--paper);
+    background:
+      linear-gradient(var(--paper-rule), var(--paper-rule)) var(--rec-gutter) 0 / 1px 100% no-repeat,
+      linear-gradient(var(--paper-rule), var(--paper-rule)) calc(var(--rec-gutter) + 3px) 0 / 1px
+        100% no-repeat,
+      var(--paper);
+  }
+  .record:not(.full) .rec-head::after {
+    content: attr(data-r) '\3000' attr(data-b);
   }
 }
 @media (max-width: 520px) {
@@ -2097,7 +2539,7 @@ html[lang='en'] .stamp.rec-stamp b {
   display: block;
   width: 56px;
   height: 70px;
-  border-radius: 4px;
+  border-radius: var(--radius);
   overflow: hidden;
   background: var(--cine-bg);
 }
@@ -2165,7 +2607,7 @@ html[lang='en'] .stamp.rec-stamp b {
   top: -3px;
   left: calc(var(--th) * 1%);
   height: 10px;
-  border-left: 1px dashed var(--muted);
+  border-left: 1px solid var(--muted);
 }
 .jb-track.over {
   background: var(--bad);
@@ -2229,13 +2671,14 @@ html[lang='en'] .stamp.rec-stamp b {
   .jf-tilt[data-nod] {
     animation: jf-nod var(--dur-nod) var(--ease) both;
   }
+  /* 點頭兩次：0 → +3°（朝辯方）→ 0 → +3° → 0，不越過 0；越過去像搖頭（視覺設計師 #2）。 */
   @keyframes jf-nod {
     25%,
     75% {
       rotate: 3deg;
     }
     50% {
-      rotate: -3deg;
+      rotate: 0deg;
     }
   }
 }
@@ -2252,4 +2695,164 @@ html[lang='en'] .stamp.rec-stamp b {
     width: 48px;
     height: 60px;
   }
+}
+
+/* 法庭說話者的剪影替身（P4-2）：同陪審團那套 SVG，卡面是鏡頭層的黑，不吃淺色主題。 */
+.portrait.sil {
+  overflow: hidden;
+  background: var(--cine-bg, #06080b);
+}
+.portrait.sil > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+/*
+ * 陪審員候選人：遴選在法庭裡，跟陪審席同一種剪影卡（設計師第二輪）。4:5、鏡頭層的黑、--radius，
+ * 只有 SVG 裡那一圈虛線；不套檔案照模板 B 的紙框，也不在卡下重複印名字。
+ */
+.silcard {
+  --w: 96px;
+  display: block;
+  flex: none;
+  width: var(--w);
+  aspect-ratio: 4 / 5;
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--cine-bg, #06080b);
+}
+.silcard.s28 {
+  border-radius: 3px;
+}
+.silcard > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/*
+ * 「待放 AI 立繪」標籤（設定集第 7 章 :9、第 5 章 0502）：框外上方，細引線連回空框，不寫在框裡。
+ * 單一人物的框寫全名不截字：先排「待放 AI 立繪」，名字放不下就換到第二行（寬度至少放得下前半句）。
+ * 成排的小卡（.row）整排一個標籤，連到整排的外框。
+ */
+.tbd {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  flex: none;
+  width: min-content;
+  vertical-align: top;
+}
+.tbd.row {
+  display: flex;
+  width: auto;
+  align-items: stretch;
+}
+.tbd.row:not(.bare) > :last-child {
+  padding: 5px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.tbd-label {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  /* 一個全形空格寬（「待放 AI 立繪\u3000{名字}」）：英文一行時「TBD」和名字才分得開。 */
+  column-gap: 1em;
+  margin: 0 0 6px;
+  padding-left: 7px;
+  font: 400 11px/1.35 var(--font-mono);
+  letter-spacing: 0;
+  color: var(--muted);
+}
+.tbd-label > span:first-child {
+  white-space: nowrap;
+}
+.tbd-label > span + span {
+  overflow-wrap: anywhere;
+}
+/* 細引線：從標籤第一行往下接到框頂。 */
+.tbd-label::before,
+.tbd-label::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.68em;
+  border-color: var(--border-strong);
+  border-style: solid;
+  border-width: 0;
+}
+.tbd-label::before {
+  bottom: -6px;
+  border-left-width: 1px;
+}
+.tbd-label::after {
+  width: 4px;
+  border-top-width: 1px;
+}
+/* 木色陪審席上的字跟方塊的字同色，才讀得到。 */
+.box .tbd-label {
+  color: light-dark(#5b4630, #b7a283);
+}
+.box .tbd-label::before,
+.box .tbd-label::after {
+  border-color: light-dark(rgb(91 70 48 / 55%), rgb(183 162 131 / 55%));
+}
+.box.mini .tbd-label {
+  margin-bottom: 4px;
+}
+.cand-scroll > .tbd > .tbd-label,
+.shell-body > .tbd > .tbd-label {
+  margin: 0 0 6px 10px;
+}
+/*
+ * 說話列（法庭、結辯、判決後的對白、陪審團長）：標籤一行「待放 AI 立繪　{全名}」橫跨在框和名字欄上方，
+ * 引線垂直接到框頂；名字不准斷開（設計師 #225 第三輪：「AI art TBD / Omar / Hassan」斷成三行，
+ * 標籤被鎖在 72px 框寬裡）。Tbd 在這裡拆開（display: contents），標籤自己佔第一列。
+ */
+:is(.speech, .epi .msg, .panel.fore):has(> .tbd) {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+}
+.speech:has(> .tbd) {
+  column-gap: 12px;
+  row-gap: 0;
+}
+:is(.epi .msg, .panel.fore):has(> .tbd) {
+  row-gap: 0;
+}
+:is(.speech, .epi .msg, .panel.fore) > .tbd {
+  display: contents;
+}
+:is(.speech, .epi .msg, .panel.fore) > .tbd > .tbd-label {
+  grid-column: 1 / -1;
+  justify-self: start;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+  max-width: 100%;
+}
+:is(.speech, .epi .msg, .panel.fore) > .tbd > .tbd-label > span + span {
+  overflow-wrap: normal;
+}
+:is(.speech, .epi .msg, .panel.fore) > .tbd > :not(.tbd-label) {
+  grid-column: 1;
+  grid-row: 2;
+}
+:is(.speech, .epi .msg, .panel.fore):has(> .tbd) > :not(.tbd) {
+  grid-column: 2;
+  grid-row: 2;
+}
+.epi .msg > .tbd > .portrait.sil {
+  display: block;
+  width: 40px;
+  height: 50px;
+  border-radius: var(--radius);
+}
+/* 「就用這 12 位」的鎖：單色 SVG，跟字同色（設計師第二輪：不用表情符號）。不叫 .lock：那是 styles.css 手機鎖定畫面的類別。 */
+.commit .vd-lock {
+  width: 0.78em;
+  height: 0.92em;
+  margin-right: 0.4em;
+  vertical-align: -0.08em;
 }

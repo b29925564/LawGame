@@ -8,6 +8,7 @@ import { CommitBar } from './Commit';
 import { CardPick, EvidenceDrawer } from './Evidence';
 import { useScope } from './lang';
 import { Speech } from './Portrait';
+import { prose } from './prose';
 import { Shell, Tabs, Transcript } from './Shell';
 import { Recap } from './ActCard';
 
@@ -121,7 +122,7 @@ export function Negotiation({ scene }: { scene: NegotiationScene }) {
         <div className="lines">
           <Recap />
           {scene.intro.map((l, i) => (
-            <Speech key={i} line={l} />
+            <Speech key={i} line={l} wrap />
           ))}
         </div>
         <button className="primary next" onClick={() => setIntro(false)}>
@@ -136,7 +137,7 @@ export function Negotiation({ scene }: { scene: NegotiationScene }) {
         <p className="eyebrow">{st.outcome === 'deal' ? t(terms.deal) : t('談判結束')}</p>
         <div className="lines">
           {st.log.slice(-4).map((l, i) => (
-            <Speech key={i} line={l} />
+            <Speech key={i} line={l} wrap />
           ))}
         </div>
         <dl className="stats">
@@ -184,7 +185,7 @@ export function Negotiation({ scene }: { scene: NegotiationScene }) {
         <>
           <Transcript count={st.log.length}>
             {st.log.map((l, i) => (
-              <Speech key={i} line={l} />
+              <Speech key={i} line={l} wrap />
             ))}
           </Transcript>
           <Tabs
@@ -192,7 +193,7 @@ export function Negotiation({ scene }: { scene: NegotiationScene }) {
             value={tab}
             onPick={setTab}
             items={[
-              { id: 'offer', label: t('她開的條件') },
+              { id: 'offer', label: t('對方開的條件') },
               { id: 'reveal', label: t('攤牌') },
               { id: 'bluff', label: t('虛張聲勢') },
             ]}
@@ -217,8 +218,8 @@ export function Negotiation({ scene }: { scene: NegotiationScene }) {
     >
       {tab === 'offer' && (
         <section className="panel">
-          <h2>{t('她現在開的條件')}</h2>
-          <p className="claim-text">{t(offer.label, scope)}</p>
+          <h2>{t('對方現在開的條件')}</h2>
+          <p className="claim-text">{prose(t(offer.label, scope))}</p>
           {nego.canAct(st) && <p className="muted small nego-next">{nextHint}</p>}
           {/* 條件階梯：每一檔的門檻和價放在一起，信心 100 時也看得出還差多少（體驗評測 v89）。 */}
           <ol className="nego-ladder" aria-label={t('條件階梯')}>
@@ -266,18 +267,12 @@ export function Negotiation({ scene }: { scene: NegotiationScene }) {
             </dl>
           )}
           {offer.lines.map((l, i) => (
-            <Speech key={i} line={l} />
+            <Speech key={i} line={l} wrap />
           ))}
           {moveNote}
-          <div className="stack">
-            <button
-              className="wide"
-              aria-pressed={ok ? choice === 'take' : undefined}
-              onClick={() => (ok ? setChoice('take') : advise(true))}
-            >
-              {t(ok ? '建議{name}接受' : '建議{name}接受（超過授權）', { name: client })}
-            </button>
-            {!ok && nego.canCall(scene, st) && (
+          {/* 主按鈕直接放在框裡：框比畫面長時黏在框底，永遠看得到（設計師第三輪）。 */}
+          {!ok && nego.canCall(scene, st) && (
+            <div className="nego-pin">
               <button
                 className="wide primary"
                 onClick={() => {
@@ -288,7 +283,16 @@ export function Negotiation({ scene }: { scene: NegotiationScene }) {
                 {t('打電話請示 {name}', { name: t(scene.client.name, scope) })}
                 <span className="cost">{t('−1 回合')}</span>
               </button>
-            )}
+            </div>
+          )}
+          <div className="stack nego-actions">
+            <button
+              className="wide"
+              aria-pressed={ok ? choice === 'take' : undefined}
+              onClick={() => (ok ? setChoice('take') : advise(true))}
+            >
+              {t(ok ? '建議{name}接受' : '建議{name}接受（超過授權）', { name: client })}
+            </button>
             <button
               className="wide"
               onClick={() => {
@@ -322,7 +326,7 @@ export function Negotiation({ scene }: { scene: NegotiationScene }) {
       )}
 
       {tab === 'reveal' && (
-        <section className="panel">
+        <section className="panel reveal">
           <h2>{t('攤牌')}</h2>
           {st.credit > 0 && (
             <p className="muted small">

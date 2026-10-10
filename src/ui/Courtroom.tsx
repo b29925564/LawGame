@@ -28,6 +28,7 @@ import { Stamp } from './Marks';
 import { Speech } from './Portrait';
 import { batesOf, CourtRecord, useCourtEntries } from './Record';
 import { Shell, Tabs } from './Shell';
+import { CourtCast } from './jury/CourtFace';
 import { Recap } from './ActCard';
 
 /**
@@ -143,7 +144,36 @@ function ObjectionWindow({
   );
 }
 
-export function Courtroom({ scene: raw }: { scene: TrialScene }) {
+/** 法庭畫面：說話者頭像是剪影替身（P4-2）。 */
+/**
+ * 法官耐心燈管（設定集第 10.2、10.6 章）：熄一根是一次降到 0、不閃；最後一根熄掉時閃兩下。
+ * 閃不閃、漸不漸暗都交給 court.css 讀 html[data-photosafe]／html[data-reduced-motion]。
+ */
+function Tubes({ n, max }: { n: number; max: number }) {
+  const [prev, setPrev] = useState(n);
+  const [spent, setSpent] = useState(false);
+  if (n !== prev) {
+    setPrev(n);
+    setSpent(n <= 0 && prev > 0);
+  }
+  return (
+    <span className="pips" aria-hidden>
+      {Array.from({ length: max }, (_, i) => (
+        <span key={i} className={i < n ? 'pip on' : spent && i === 0 ? 'pip spent' : 'pip'} />
+      ))}
+    </span>
+  );
+}
+
+export function Courtroom({ scene }: { scene: TrialScene }) {
+  return (
+    <CourtCast>
+      <CourtroomScreen scene={scene} />
+    </CourtCast>
+  );
+}
+
+function CourtroomScreen({ scene: raw }: { scene: TrialScene }) {
   const {
     progress,
     advance,
@@ -296,11 +326,7 @@ export function Courtroom({ scene: raw }: { scene: TrialScene }) {
               aria-label={t('法官耐心 {a} / {b}', { a: st.patience, b: scene.patience })}
             >
               {t('法官耐心')}
-              <span className="pips" aria-hidden>
-                {Array.from({ length: scene.patience }, (_, i) => (
-                  <span key={i} className={i < st.patience ? 'pip on' : 'pip'} />
-                ))}
-              </span>
+              <Tubes n={st.patience} max={scene.patience} />
             </p>
             {promised.length > 0 && (
               <ul className="iou-chips" aria-label={t('開場許下的承諾')}>
@@ -396,7 +422,13 @@ export function Courtroom({ scene: raw }: { scene: TrialScene }) {
                 {t('法官把這位證人在這一場說過的話全部從紀錄上拿掉，陪審團不能採用。')}
               </p>
             )}
-            <CourtRecord entries={record} from={Math.max(0, st.log.length - 3)} bates={bates} />
+            {/* 最後三句攤開排（.full）：不是捲動框，不會露出半行。 */}
+            <CourtRecord
+              entries={record}
+              from={Math.max(0, st.log.length - 3)}
+              bates={bates}
+              className="full"
+            />
             <p className="muted small">{t('按「休庭」看這一場的結果。')}</p>
           </section>
         )}

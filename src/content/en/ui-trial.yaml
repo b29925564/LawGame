@@ -13,7 +13,7 @@
 休庭: Recess
 成功彈劾: Successful impeachments
 刪除的證詞: Testimony stricken
-'{n} 句': '{n} line(s)'
+'{n} 句': '{n} line{n:s}'
 剩餘法官耐心: Judge’s patience left
 調查花掉的工時: Hours spent investigating
 '法官耐心 {a} / {b}': 'Judge’s patience {a} / {b}'
@@ -64,7 +64,7 @@
 開場陳述: Opening statement
 沒有選定的案件理論，沒有任何承諾可以許。: No case theory was chosen, so there are no promises to make.
 '承諾 {a} / {b}': 'Promises {a} / {b}'
-'許下 {n} 個承諾': 'Make {n} promises'
+'許下 {n} 個承諾': 'Make {n} promise{n:s}'
 不許任何承諾: Make no promises
 
 # Defense witness
@@ -88,11 +88,11 @@
 未選: not set
 '手上的論點不夠，結辯會空 {n} 格，{other}的說法沒人反駁。': 'You’re short on arguments: {n} closing slots will stay empty, and the other side’s account goes unanswered.'
 沒有案件理論，論點說服力打七折。: No case theory, so your arguments are 30% less persuasive.
-'開場許下的 {n} 個承諾沒有兌現，陪審員記得你說過的話。': '{n} promises from your opening went unkept. The jurors remember what you said.'
+'開場許下的 {n} 個承諾沒有兌現，陪審員記得你說過的話。': '{n} promise{n:s} from your opening went unkept. The jurors remember what you said.'
 結辯: Closing argument
 訴求基調: Appeal tone
 開始結辯: Start closing
-'挑 {n} 個論點，順序就是你講的順序': 'Pick {n} arguments. Your order is the order you deliver them.'
+'挑 {n} 個論點，順序就是你講的順序': 'Pick {n} argument{n:s}. Your order is the order you deliver them.'
 '手上只有 {n} 個確認過的論點，{rest}': 'You have only {n} confirmed arguments. {rest}'
 只能靠訴求基調結辯。: You can only close on your appeal tone.
 有幾個講幾個。: Use what you have.
@@ -106,8 +106,8 @@
 開庭若判有責: If the jury finds liability at trial
 '約 {low}到 {high}': 'About {low} to {high}'
 懲罰性賠償另計: Punitive damages on top
-'站你這邊 {a} 位，需要 {b} 位': '{a} with you, {b} needed'
-'差 {k} 位': '{k} short'
+'評議後：站你這邊 {a} 位，需要 {b} 位': 'After deliberation: {a} with you, {b} needed'
+'，差 {k} 位': ', {k} short'
 庭審結束: After testimony
 結辯後: After closing
 評議後: After deliberation
@@ -119,7 +119,7 @@
 '{tags}取向的陪審員反彈': 'Jurors who lead with {tags} push back'
 你帶進評議室的: What you carry into deliberation
 承諾: Promises
-'可許 {n} 個承諾，沒兌現會反噬': 'Up to {n} promises; broken ones come back at you'
+'可許 {n} 個承諾，沒兌現會反噬': 'Up to {n} promise{n:s}; broken ones come back at you'
 代價: Cost
 '還缺 {list}': 'Still missing {list}'
 以這個理論開庭: Go to trial on this theory
@@ -155,7 +155,7 @@
 懲罰性賠償看的是被告隱瞞了什麼，開示和證據要先處理。: Punitive damages turn on what the defendant hid; deal with discovery and the evidence first.
 懲罰性賠償可能再加同額: Punitive damages could add the same amount again
 懲罰性賠償可能另加 {r} 倍: 'Punitive damages could add {r}× on top'
-'理論 {base}%，票數浮動 {d}': 'Theory {base}%, vote swing {d}'
+'理論起點：死者過失 {base}%　陪審團寫下：{fault}%': 'Theory start: deceased {base}% at fault · Jury wrote: {fault}%'
 '開庭：約 {low}到 {high}': 'Trial: about {low} to {high}'
 ，懲罰性賠償另計: ', punitive damages extra'
 開庭：結果由陪審團決定: 'Trial: the jury decides'
@@ -176,18 +176,18 @@
 詰問結束: Examination over
 法官把這位證人在這一場說過的話全部從紀錄上拿掉，陪審團不能採用。: The judge strikes everything this witness said in this session. The jury may not consider it.
 按「休庭」看這一場的結果。: Press “Recess” to see how the day went.
-'前面的筆錄（{n} 句）': 'Earlier testimony ({n} lines)'
+'前面的筆錄（{n} 句）': 'Earlier testimony ({n} line{n:s})'
 剔除: Struck
 對方剔除: Struck by them
 有因剔除: Excused for cause
 '席 {n}': 'Seat {n}'
 '以上 {n} 位入座・以下候補': 'Above: the {n} who sit · Below: alternates'
-'你還可以問 {a} 題；無因迴避還剩 {b} 次。': '{a} questions and {b} peremptory strikes left.'
+'你還可以問 {a} 題；無因迴避還剩 {b} 次。': '{a} question{a:s} and {b} peremptory strike{b:s} left.'
 '你問・{q}': 'You asked · {q}'
 還沒問過。問一題，才看得出他偏向哪邊。: Not asked yet. One question shows which way they lean.
 '剩 {n}': '{n} left'
 陪審席: Jury box
-'陪審席・{n} 席': 'Jury box · {n} seats'
+'陪審席・{n} 席': 'Jury box · {n} seat{n:s}'
 由名單上往下入座: Seated from the top of the list
 候選: Pool
 '還沒問過 {n}': 'Not yet asked {n}'
@@ -207,9 +207,9 @@
 '{a} 票 : {b} 票': '{a} : {b}'
 陪審團評議後: After deliberation
 主要原因：: 'Main reason: '
-庭審結束時，已經有 {a} 位陪審員站你這邊。: By the end of testimony, {a} jurors were already on your side.
+庭審結束時，已經有 {a} 位陪審員站你這邊。: 'By the end of testimony, {a} {a:juror was|jurors were} already on your side.'
 結辯把站你這邊的陪審員從 {a} 位拉到 {b} 位。: Your closing brought the jurors on your side from {a} to {b}.
-評議時又說服了 {k} 位陪審員。: Deliberation won over {k} more jurors.
+評議時又說服了 {k} 位陪審員。: Deliberation won over {k} more juror{k:s}.
 判決書: Verdict form
 被告是否有過失？: Was the defendant negligent?
 是: 'Yes'
@@ -225,6 +225,7 @@
 # Trial transcript (art bible ch. 9 <Transcript>): 25 lines a page, Q/A, redaction bars
 審判筆錄: Trial transcript
 '第 {n} 頁': 'Page {n}'
+'第 {n} 卷': 'Vol. {n}'
 立即顯示全文: Show full text
 異議成立: Objection sustained
 已自紀錄刪除: Stricken from the record
@@ -235,7 +236,8 @@
 'record::駁回': Overruled
 'record::法官': The Court
 'record::葛雷律師': Mr. Grey
-'待放 AI 立繪　{no}': 'AI art TBD  {no}'
+待放 AI 立繪: AI art TBD
+陪審員: Jurors
 影子＝懷疑: Shadow = doubt
 陪審團（收合）: Jury (collapsed)
 點開看臉: Tap to see faces

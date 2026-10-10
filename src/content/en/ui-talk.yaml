@@ -42,11 +42,11 @@
 最後的條件: Final terms
 剩餘回合: Rounds left
 談判: Negotiation
-她開的條件: Her terms
+對方開的條件: Their terms
 攤牌: Lay it out
 虛張聲勢: Bluff
 離席: Walk out
-她現在開的條件: Her current terms
+對方現在開的條件: Their current terms
 條件: Terms
 授權上限: Authority cap
 附帶條款: Side terms
@@ -122,5 +122,5 @@
 信心低於 {n}: Confidence below {n}
 現在: Now
 超過授權: Over authority
-被識破過 {n} 次：攤牌的效果只剩 {p}%。: 'Caught bluffing {n} times: your showdowns now land at {p}%.'
+被識破過 {n} 次：攤牌的效果只剩 {p}%。: 'Caught bluffing {n} time{n:s}: your showdowns now land at {p}%.'
 建議撐下去（回合用完，等於離席上法庭）: Advise holding out (no rounds left, so this means walking out to trial)

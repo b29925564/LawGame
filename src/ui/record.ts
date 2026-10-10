@@ -96,8 +96,30 @@ function tokens(text: string): string[] {
   return out;
 }
 
-/** 把一段話切成行。first 是第一行可用的寬（扣掉縮排與標記），其餘每行 measure。 */
-export function wrap(text: string, measure: number, first = measure, zh = false): string[] {
+/**
+ * 一行的最後一個詞連同後面的標點切下來（中文是最後一個字），前面的開頭括號跟著走。
+ * 給裁定章讓位用：章放不下時，這個詞換到下一行，章跟著它。
+ */
+function tail(row: string): [string, string] {
+  const toks = tokens(row);
+  let i = toks.length - 1;
+  while (i > 0 && toks[i].length === 1 && noStart.test(toks[i])) i--;
+  while (i > 0 && toks[i - 1].length === 1 && noEnd.test(toks[i - 1])) i--;
+  if (i <= 0) return [row, ''];
+  return [toks.slice(0, i).join('').trimEnd(), toks.slice(i).join('')];
+}
+
+/**
+ * 把一段話切成行。first 是第一行可用的寬（扣掉縮排與標記），其餘每行 measure。
+ * reserve：最後一行要留給裁定章的寬（em）。放不下時最後一個詞往下掉一行，章永遠不蓋在字上（設計師 10-09）。
+ */
+export function wrap(
+  text: string,
+  measure: number,
+  first = measure,
+  zh = false,
+  reserve = 0,
+): string[] {
   const rows: string[] = [];
   let row = '';
   let w = 0;
@@ -119,8 +141,18 @@ export function wrap(text: string, measure: number, first = measure, zh = false)
       w += tw;
       continue;
     }
-    // 行首禁則：一個標點直接掛在行尾。
+    // 行首禁則：一個標點直接掛在行尾。紙邊只多留一個字的寬（Record.tsx paperX）：已經掛出去一個
+    // （「。）」的「。」）就不再掛第二個，最後一個字連同這些標點換到下一行（設計師 #225 第三輪：「）」貼紙邊）。
     if (row && tok.length === 1 && noStart.test(tok)) {
+      if (w > limit() + 1e-6) {
+        const [head, carry] = tail(row);
+        if (head && carry) {
+          rows.push(head);
+          row = carry + tok;
+          w = textWidth(row, zh);
+          continue;
+        }
+      }
       row += tok;
       w += tw;
       continue;
@@ -147,11 +179,21 @@ export function wrap(text: string, measure: number, first = measure, zh = false)
     w = textWidth(tok, zh);
   }
   if (row || !rows.length) flush();
+  const k = rows.length - 1;
+  if (reserve > 0 && textWidth(rows[k], zh) + reserve > (k ? measure : first) + 1e-6) {
+    const [head, carry] = tail(rows[k]);
+    if (head && carry) rows.splice(k, 1, head, carry);
+  }
   return rows;
 }
 
-/** 整份筆錄排成行。measure 是一行可用的寬（em）。 */
-export function layout(entries: readonly RecordEntry[], measure: number, zh = false): RecordRow[] {
+/** 整份筆錄排成行。measure 是一行可用的寬（em）；stamp：有裁定的那句，最後一行要留給章的寬（em）。 */
+export function layout(
+  entries: readonly RecordEntry[],
+  measure: number,
+  zh = false,
+  stamp: (ruling: Ruling) => number = () => 0,
+): RecordRow[] {
   const rows: RecordRow[] = [];
   entries.forEach((e, entry) => {
     const indent = INDENT[e.kind];
@@ -159,7 +201,8 @@ export function layout(entries: readonly RecordEntry[], measure: number, zh = fa
     const firstW = Math.max(4, measure - indent - (e.tag ? tagW : 0));
     const src = e.text.trim();
     let pos = 0;
-    wrap(e.text, measure, firstW, zh).forEach((text, k) => {
+    const reserve = e.ruling ? stamp(e.ruling) : 0;
+    wrap(e.text, measure, firstW, zh, reserve).forEach((text, k) => {
       const index = rows.length;
       pos = src.indexOf(text, pos) + text.length;
       let space = false;
