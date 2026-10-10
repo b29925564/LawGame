@@ -5505,11 +5505,14 @@ button.found:hover:not(:disabled) {
 .found-item.long > .found {
   padding-bottom: 30px;
 }
-.found-more {
+.found-item > button.found-more {
   position: absolute;
   right: 12px;
   bottom: 8px;
   font-size: 13px;
+  /* 便條是紙：「展開」用便條的鉛筆色，不用介面的 --text（深色主題是淺字，印在淺紙上只有 1.5:1；設計師 #252）。 */
+  color: var(--pencil);
+  text-decoration-color: var(--pencil);
 }
 .slot-open {
   width: 100%;
@@ -6226,6 +6229,10 @@ button.found:hover:not(:disabled) {
   /* 工作台裡答案列取代底列：這裡不需要「結束調查」，挑卡片在連線台底下。 */
   .shell:has(.board-one) > .shell-foot {
     display: none;
+  }
+  /* 答案列釘在底部：鍵盤焦點、scrollIntoView 都停在它上面，不被它蓋住（Desk.tsx 量高度）。 */
+  html {
+    scroll-padding-bottom: var(--answer-bar-h, 0px);
   }
   .board-one .answer-bar {
     margin-inline: -2px;
