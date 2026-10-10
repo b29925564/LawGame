@@ -165,6 +165,13 @@ for (const lang of ['zh', 'en'] as const)
           .map(({ e }) => e.innerText.slice(0, 20));
       });
       expect(out, `${width}px`).toEqual([]);
+      // 卡片標題整組不拆（「伊森的說法：」）也不能把字擠出卡邊（設計師 #246 r8）。
+      const wide = await page.evaluate(() =>
+        [...document.querySelectorAll<HTMLElement>('.cork-card :is(b, .cork-doc-name)')]
+          .filter((e) => e.scrollWidth > e.clientWidth + 1)
+          .map((e) => e.innerText),
+      );
+      expect(wide, `${width}px`).toEqual([]);
     });
   });
 

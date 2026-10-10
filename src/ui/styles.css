@@ -3672,7 +3672,10 @@ fieldset.relations.compact {
   border: 1px solid var(--border-strong);
 }
 /* 字卡開始淡出時黃還給主按鈕：按鈕本來就有 --dur-ui（180ms，和字卡淡出一樣長）的顏色轉場，黃跟著淡進來；
-   減少動態時直接換（設計師 r8）。 */
+   曲線也和字卡淡出一樣用線性，兩邊對著交換，黃不會先跳出來。減少動態時直接換（設計師 r8）。 */
+button.primary {
+  transition-timing-function: linear, linear, linear, var(--ease);
+}
 @media (prefers-reduced-motion: reduce) {
   button.primary {
     transition: none;
