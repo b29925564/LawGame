@@ -2,7 +2,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { afterAll, describe, expect, it } from 'vitest';
 import { parse } from 'yaml';
 import { episodes } from '../content';
-import { saveLabel } from '../engine/game';
+import { END_TITLE, saveLabel } from '../engine/game';
 import { readSave } from '../engine/save';
 import { install, reset, translate } from '../i18n';
 
@@ -48,8 +48,10 @@ describe('英文對照表的樣板', () => {
         const label = saveLabel({ episode, scene, step: 0, choices: {}, cards: [], scenes: {} });
         const n = `第 ${ep.number} 集`;
         expect(label.split('・')[1]).not.toBe(n);
+        // 演完最後一場：集尾畫面的標題（App.tsx 的 headline）是同一個字，兩集一致。
+        if (scene === ep.scenes.length) expect(label).toBe(`${n}・${END_TITLE}`);
         if (scene >= last && ep.scenes[last].type === 'card' && ep.scenes[last].act === n)
-          expect(label).toBe(`${n}・本集完`);
+          expect(label).toBe(`${n}・待續`);
       }
     }
     const store = new Map<string, string>([
@@ -73,6 +75,6 @@ describe('英文對照表的樣板', () => {
       ],
     ]);
     const storage = { getItem: (k: string) => store.get(k) ?? null } as Storage;
-    expect(readSave('auto', storage)?.label).toBe('第 1 集・本集完');
+    expect(readSave('auto', storage)?.label).toBe('第 1 集・待續');
   });
 });

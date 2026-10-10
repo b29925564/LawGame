@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { episodes } from '../content';
 import { batesAt, ownBates, totalPages } from '../engine/bates';
-import { episodeOf, followingEpisode, sceneOf, useEpisode } from '../engine/game';
+import { END_TITLE, episodeOf, followingEpisode, sceneOf, useEpisode } from '../engine/game';
 import { useSettings } from '../engine/settings';
 import { useGame } from '../engine/store';
 import { Board } from './Board';
@@ -67,7 +67,7 @@ export function App() {
   const headline = ending
     ? {
         kicker: t('第 {n} 集', { n: ep.number }),
-        title: card ? t(card.title, card.id) : t('待續'),
+        title: card ? t(card.title, card.id) : t(END_TITLE),
       }
     : card
       ? splitHeadline(
