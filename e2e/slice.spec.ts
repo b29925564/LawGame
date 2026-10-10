@@ -196,6 +196,8 @@ async function playToRachelLast(page: Page) {
   await page.getByRole('button', { name: '法院系統' }).click();
   await expect(page.locator('article.plead')).toContainText('死者手錶的健康資料');
   await fileMotion(page, '核發傳票給手錶廠商', '相關性', /手錶資料與本案相關/);
+  // 法官准了：證物貼紙的「供辨識」劃掉，蓋「已採納」章。
+  await expect(page.locator('.xs.admitted')).toHaveCount(1);
   await expect(page.getByText(/22:24，心率歸零。|23 分鐘/).first()).toBeVisible();
   await page.getByRole('button', { name: '回到桌面' }).click();
 

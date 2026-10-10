@@ -17,6 +17,7 @@ import {
 } from './Evidence';
 import { CommitBar } from './Commit';
 import { EffectLines, effectsIf } from './Effects';
+import { ExhibitSticker } from './ExhibitSticker';
 import { MarkLines } from './Marks';
 import { ExhibitTag, exhibitNo, FilingThumb, Pleading, Written } from './Pleading';
 import { useScope } from './lang';
@@ -105,9 +106,7 @@ export function Desk({ scene }: { scene: DeskScene }) {
                       ) : (
                         id
                       )}
-                      <span className="ex" aria-hidden>
-                        {t('證物')} {exhibitNo(i)}
-                      </span>
+                      {c && <ExhibitSticker no={exhibitNo(i)} admitted={ok} still />}
                     </span>
                   );
                 })}
@@ -1080,8 +1079,16 @@ function Motions({
       on: on ? on.split(',') : [],
       pick: (id) => toggleSupport(mid, id),
       tags: Array.from({ length: slots }, (_, i) => `${exhibit} ${exhibitNo(i)}`),
+      exhibits: true,
     });
-    return () => useCardPick.setState({ pool: [], on: [], pick: undefined, tags: undefined });
+    return () =>
+      useCardPick.setState({
+        pool: [],
+        on: [],
+        pick: undefined,
+        tags: undefined,
+        exhibits: undefined,
+      });
   }, [wide, editable, mid, poolIds, on, slots, exhibit, toggleSupport]);
   // 小選單：按 Esc 或點別的地方就收起來。
   useEffect(() => {
@@ -1169,9 +1176,7 @@ function Motions({
       <ExhibitTag name={t(c.name, scope)} arg={!('kind' in c) || c.kind === '論點'} />
     );
     const ex = (
-      <span className="ex" aria-hidden>
-        {exhibit} {exhibitNo(i)}
-      </span>
+      <ExhibitSticker no={exhibitNo(i)} admitted={a.ruling === 'granted'} still={!!a.ruling} />
     );
     if (!editable)
       return (

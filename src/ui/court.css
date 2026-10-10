@@ -380,20 +380,9 @@
   color: var(--paper-ink);
   padding-block: 4px 2px;
 }
-.blank .ex {
-  /* 小籤跟在證物標籤後面，不往上浮：浮起來會壓到上一行的字（體驗評測 v88）。 */
-  display: inline-block;
-  margin-left: 6px;
-  vertical-align: middle;
-  padding: 2px 5px;
-  border: 1.5px solid var(--gold-paper);
-  border-radius: 3px;
-  color: var(--gold-paper);
-  background: var(--paper);
-  font: 700 10px/1 var(--font-court);
-  letter-spacing: 0.08em;
-  transform: rotate(-6deg);
-  white-space: nowrap;
+/* 證物貼紙跟在證物標籤後面，不往上浮：浮起來會壓到上一行的字（體驗評測 v88）。 */
+.blank .xs-set {
+  margin-left: 8px;
 }
 /* 列內證物標籤（視覺規格 §16 .etag.row）：紙色、左邊一個孔。 */
 .etag.row {
@@ -3636,4 +3625,88 @@ html[lang='en'] .stamp.rec-stamp b {
   from {
     clip-path: inset(0 100% 0 0);
   }
+}
+
+/* ── 證物貼紙（設定集第 9 章 <ExhibitSticker>；視覺規格 v2.0 §16）──
+   辯方 --exhibit-def（＝--hl）＋ --exhibit-def-ink；檢方 --exhibit-state 藍，左上斜切 6px。3px 圓角。
+   類別 Mono、編號與「供辨識」是盧卡斯的鉛筆字（--font-hand、--pencil）；准了之後劃掉，蓋 --stamp 靛藍「已採納」章。 */
+.xs {
+  position: relative;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 7px;
+  padding: 4px 10px 4px 9px;
+  border-radius: 3px;
+  rotate: -1.5deg;
+  white-space: nowrap;
+  vertical-align: middle;
+  color: var(--exhibit-def-ink);
+  background: var(--exhibit-def);
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 14%);
+  line-height: 1;
+}
+.xs.state {
+  color: var(--exhibit-state-ink);
+  background: var(--exhibit-state);
+  clip-path: polygon(6px 0, 100% 0, 100% 100%, 0 100%, 0 6px);
+  padding-left: 11px;
+}
+.xs-cat {
+  font: 700 10px/1 var(--font-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.xs-no {
+  font: 400 19px/1 var(--font-hand);
+  color: var(--pencil);
+}
+.xs-st {
+  font: 400 13px/1 var(--font-hand);
+  color: var(--pencil);
+}
+.xs.admitted .xs-st {
+  text-decoration: line-through;
+  text-decoration-thickness: 1.5px;
+}
+.xs-set {
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+}
+/* 章壓在貼紙右緣，蓋住一點劃掉的字；章面本身的動畫在 --dur-stamp。 */
+.xs-set .stamp.sm {
+  --ink: var(--stamp);
+  margin-left: -10px;
+  padding: 4px 8px 3px;
+  --rot: -3deg;
+  --stamp-gap: 1px;
+  mix-blend-mode: multiply;
+}
+.xs-set .stamp.sm b {
+  font-size: 15px;
+  letter-spacing: 0.08em;
+  margin-right: -0.08em;
+}
+/* 貼上去：--dur-sticker，1.04 → 1，陰影收緊；減少動態時直接出現。 */
+@media (prefers-reduced-motion: no-preference) {
+  .xs.enter {
+    animation: xs-stick var(--dur-sticker) var(--ease) both;
+  }
+  @keyframes xs-stick {
+    from {
+      scale: 1.04;
+      box-shadow:
+        inset 0 0 0 1px rgb(0 0 0 / 14%),
+        0 3px 6px rgb(0 0 0 / 28%);
+    }
+  }
+}
+/* 抽屜的小卡：貼紙貼在右上角的卡緣，取代原本的黃色「證物 ①」膠囊；窄欄裡類別省掉，只留編號與狀態，才不壓到卡名。 */
+.card.mini > .mini-btn .xs-set {
+  position: absolute;
+  top: -18px;
+  right: 8px;
+}
+.card.mini > .mini-btn .xs-cat {
+  display: none;
 }
