@@ -6,6 +6,23 @@ import { layout, measureFor, ROWS_PER_PAGE, type RecordEntry } from './record';
 import { punct } from './Record';
 
 /**
+ * 黑條佔一行寬的幾成：行號與頁碼算出的雜湊，大約四條裡三條是 88–100%，一條是 35–65%，
+ * 不連續兩條短的，也不照固定週期重複（不然看起來是往下縮的階梯）。
+ */
+function barFrac(page: number, line: number, prevShort: boolean): { frac: number; short: boolean } {
+  let h = Math.imul(page * 131 + line, 0x9e3779b1) ^ Math.imul(line + 17, 0x85ebca6b);
+  h ^= h >>> 15;
+  h = Math.imul(h, 0x2c1b3c6d) >>> 0;
+  h ^= h >>> 13;
+  h = Math.imul(h, 0x297a2d39) >>> 0;
+  h ^= h >>> 16;
+  h >>>= 0;
+  const short = !prevShort && h % 4 === 0;
+  const u = ((h >>> 3) % 1000) / 1000;
+  return { short, frac: short ? 0.35 + 0.3 * u : 0.88 + 0.12 * u };
+}
+
+/**
  * 卷宗裡的錄取逐字稿：和證人準備夾在卡後的影本、庭上的筆錄用同一套排版（record.ts layout），
  * 所以同一句話在每個畫面都落在同一頁同一行。紙是一整頁 25 行：頁首（類別與頁碼）、行號、頁尾 Bates，
  * 節錄以外的行是空的。每一句仍然是一顆按鈕：點一下標記，命中關鍵事實才成卡。
@@ -81,11 +98,15 @@ export function TranscriptDoc({
       />,
     );
     let n = 1;
+    let prevShort = false;
     while (n <= ROWS_PER_PAGE) {
       const r = rows[(p - 1) * ROWS_PER_PAGE + n - 1 - base];
+      if (r) prevShort = false;
       if (!r) {
         // 節錄以外的行有字、只是玩家還沒拿到：黑條，長短固定地錯開，不寫字。
-        const w = (measureFor(zh) * (0.6 + (0.4 * ((n * 7 + p * 3) % 10)) / 9)).toFixed(1);
+        const bar = barFrac(p, n, prevShort);
+        prevShort = bar.short;
+        const w = (measureFor(zh) * bar.frac).toFixed(1);
         out.push(
           <span key={`${p}.${n}`} className="rec-row empty" aria-hidden data-no={n}>
             <span className="rec-bar" style={{ '--w': `${w}em` } as CSSProperties} />
