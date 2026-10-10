@@ -342,7 +342,8 @@ async function playToRachelLast(page: Page) {
   // 談判裡攤牌過的論點，庭上會標成已洩漏：對方備好了反擊。
   await expect(card(page, /出示 論點 A.*已洩漏/)).toBeVisible();
   await card(page, /出示 論點 A/).click();
-  await expect(page.getByText('那則通知……我沒有看過')).toBeVisible();
+  // 字幕列會重複同一句：在筆錄裡找。
+  await expect(page.locator('.record').getByText('那則通知……我沒有看過')).toBeVisible();
   await page.getByRole('button', { name: '詰問完畢' }).click();
   await expect(page.getByText('成功彈劾')).toBeVisible();
   await next(page);

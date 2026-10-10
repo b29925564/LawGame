@@ -16,7 +16,8 @@ const UI = {
     deal: '和解成立',
     caseNo: 'No. 26-CV-1182',
     parties: '維加　訴　卡爾德物流',
-    plaintiff: '維加',
+    /** 案件標題欄要寫當事人全名（設定集 11.3），parties 是卷宗標籤用的短案名。 */
+    plaintiff: '瑪莉索・維加',
     defendant: '卡爾德物流',
   },
 } as const;

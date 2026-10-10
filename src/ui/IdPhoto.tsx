@@ -20,7 +20,8 @@ export function IdPhoto({
   look,
 }: {
   who: string;
-  size?: 96 | 72 | 40 | 28;
+  /** 'fill'：填滿對話頭像的格子（.portrait，手機 56×70、桌機 72×90），不印名字。 */
+  size?: 96 | 72 | 40 | 28 | 'fill';
   /** 陪審員候選人：AI 立繪到位前用剪影替身（設定集第 7.6 章；設計師 10-09），端坐、不帶影子。 */
   look?: JurorLook;
 }) {
@@ -46,9 +47,20 @@ export function IdPhoto({
       .split(/[・·\s]+/)
       .filter(Boolean)
       .pop() ?? name;
-  const cls = size === 40 ? 'idphoto s40' : size === 28 ? 'idphoto s28' : 'idphoto';
+  const cls =
+    size === 'fill'
+      ? 'idphoto fill'
+      : size === 40
+        ? 'idphoto s40'
+        : size === 28
+          ? 'idphoto s28'
+          : 'idphoto';
   return (
-    <span className={cls} style={{ '--w': `${size}px` } as CSSProperties} aria-hidden>
+    <span
+      className={cls}
+      style={size === 'fill' ? undefined : ({ '--w': `${size}px` } as CSSProperties)}
+      aria-hidden
+    >
       <span className="ph">
         {who === LUCAS ? <img src={lucas('平', 144)} alt="" decoding="async" /> : <b>{last[0]}</b>}
       </span>

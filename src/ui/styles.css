@@ -26,11 +26,11 @@
   /* 螢光筆：填色與填色上的字。 */
   --hl: light-dark(#ffd02e, #f4c53d);
   --hl-ink: #16130a;
-  /* 定案（不可逆）按鈕：全遊戲唯一深底金邊＋🔒（視覺設計師定稿；UX 決策代價規格三）。 */
+  /* 定案（不可逆）按鈕：全遊戲唯一深底金邊＋鎖（視覺設計師定稿；UX 決策代價規格三）。 */
   --commit-bg: light-dark(#1d232b, #161c25);
   --commit-bg-hover: light-dark(#262e38, #1f2731);
   --commit-ink: #f1ece0;
-  /* 設定集沒有金色：定案＝深底＋1px 墨色邊＋🔒（規格 v2.0 裁定 15）。 */
+  /* 設定集沒有金色：定案＝深底＋1px 墨色邊＋鎖（規格 v2.0 裁定 15）。 */
   --commit-edge: light-dark(#111720, #e7eaee);
   /*
    * 圖層五層（UX 規格五）：版面上的固定列 < 證據欄與抽屜 < 提示框 < 選單 < 就地回饋。
@@ -231,6 +231,14 @@ button.commit {
   color: var(--commit-ink);
   font-weight: 700;
   letter-spacing: 0.02em;
+}
+/* 單色鎖，跟字同色（Lock.tsx）。 */
+.lock-icon {
+  width: 0.78em;
+  height: 0.92em;
+  margin-right: 0.4em;
+  vertical-align: -0.08em;
+  flex: none;
 }
 button.commit:hover:not(:disabled) {
   background: var(--commit-bg-hover);
@@ -577,6 +585,39 @@ details summary {
     height: 90px;
     flex-basis: 72px;
   }
+}
+/* 配角的檔案照（IdPhoto 模板 B）填滿頭像的格子：外框跟 .portrait 一樣大，換說話者時行高不跳。 */
+.portrait.id {
+  background: none;
+  box-shadow: none;
+  border-radius: 0;
+  display: block;
+}
+.portrait.faceless {
+  background: none;
+  box-shadow: none;
+}
+.idphoto.fill {
+  --w: 56px;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  grid-template-rows: 1fr;
+  gap: 0;
+  padding: 3px;
+}
+.idphoto.fill .ph {
+  aspect-ratio: auto;
+  min-height: 0;
+}
+@media (min-width: 768px) {
+  .idphoto.fill {
+    --w: 72px;
+    padding: 4px;
+  }
+}
+.call .idphoto.fill {
+  --w: 60px;
 }
 /* 對話場景旁的盧卡斯大圖：寬螢幕才有，貼在台詞欄左邊、底部對齊。 */
 .lucas-stage {
@@ -4805,9 +4846,8 @@ button.iou[aria-pressed='true'] {
     }
   }
 }
-/* 章在減少動態時直接出現，不淡入（視覺設計師 #2）。 */
+/* 章和便條在減少動態時直接出現，不淡入（視覺設計師 #2、#225）。 */
 @media (prefers-reduced-motion: reduce) {
-  .sticky.enter,
   .vo-veil,
   .vo-frame {
     animation: iv-fade var(--dur-rm) linear both;
@@ -6476,8 +6516,13 @@ button.found:hover:not(:disabled) {
   border-color: var(--hl);
   box-shadow: 0 0 0 2px var(--hl);
 }
-.theory-card.locked {
-  opacity: 0.6;
+/* 鎖住的理論卡：不用透明度（全域 button:disabled 的 .45 也蓋回來）。實心淡框、底色退一層、字是不透明的 --muted。 */
+.theory-card.locked,
+.theory-card.locked:disabled {
+  opacity: 1;
+  color: var(--muted);
+  background: var(--surface-2);
+  border-color: var(--border-strong);
 }
 .theory-name {
   font-family: var(--font-doc);
@@ -6517,8 +6562,14 @@ button.found:hover:not(:disabled) {
   color: var(--gold);
   margin-right: 2px;
 }
+/* 缺的條件：紅只表示成立／有罪傾向，這裡用 --text 粗體加 ✗。 */
 .theory-needs .need.miss {
-  color: var(--bad);
+  color: var(--text);
+  font-weight: 700;
+}
+.theory-missing {
+  color: var(--text);
+  font-weight: 700;
 }
 .theory-pick .commit-bar {
   background: var(--surface);

@@ -27,6 +27,7 @@ import { useScope } from './lang';
 import { Stamp } from './Marks';
 import { Speech } from './Portrait';
 import { batesOf, CourtRecord, useCourtEntries } from './Record';
+import type { Cue } from './record';
 import { Shell, Tabs } from './Shell';
 import { CourtCast } from './jury/CourtFace';
 import { Recap } from './ActCard';
@@ -263,6 +264,7 @@ function CourtroomScreen({ scene: raw }: { scene: TrialScene }) {
   const narrow = useNarrow();
   const [beat, startBeat] = useObjectionBeat();
   const [insert, setInsert] = useState<HTMLDivElement | null>(null);
+  const [cues, setCues] = useState<Cue[]>([]);
 
   // 手上確認過的論點，用來對質。論點的強度與標籤定義在調查那一幕的疑問裡。
   const deskScene = deskSceneOf(progress);
@@ -390,6 +392,7 @@ function CourtroomScreen({ scene: raw }: { scene: TrialScene }) {
     state: witnessState,
     patience: st.patience,
     scene: raw.id,
+    cues,
   };
   // 手機常駐的說話者頭像（第 10.1 章「對話頭像：法庭＝立繪」，56×70）：最後開口的人；盧卡斯用立繪。
   const speaker = [...st.log].reverse().find((l) => l.who !== '旁白')?.who ?? scene.witness.name;
@@ -481,6 +484,7 @@ function CourtroomScreen({ scene: raw }: { scene: TrialScene }) {
               onBeat={startBeat}
               beat={!!beat}
               cover={narrow && beat ? insert : null}
+              onCues={setCues}
             />
             {!narrow && <CourtCamera mode="strip" {...camera} />}
             <CourtJury
