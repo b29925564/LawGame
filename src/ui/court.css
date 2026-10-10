@@ -137,7 +137,8 @@
   .filings {
     flex-wrap: wrap;
     gap: 8px;
-    padding: 0;
+    /* 左側 2px：選中那一張的墨框不被紙籤列的左緣切掉（設計師 P2-6 r3 第 9 條）。 */
+    padding: 0 0 0 2px;
   }
   .fthumb {
     width: auto;
@@ -161,6 +162,12 @@
     width: 22px;
     height: 22px;
   }
+}
+
+/* 這一幕沒有聲請：那一行和上面案卷登錄表的紙張左緣對齊（設計師 P2-6 r3 第 11 條）。 */
+.motion-none {
+  width: min(720px, 100%);
+  margin-inline: auto;
 }
 
 /* 聲請狀：訴狀紙，32px 橫格線，左邊雙直線與行號。 */
@@ -519,6 +526,24 @@ button.blank:hover,
 }
 .prereq-note strong {
   font-size: 16px;
+}
+/* 缺的論點一行一個：◆（紙上用 --paper-ink，規格 v2.0 :225）＋論點名稱，名稱換行時對齊名稱的左緣。 */
+.prereq-args {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 16px;
+  line-height: 1.5;
+}
+.prereq-args li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 0.5em;
+}
+.prereq-args li > span:first-child {
+  color: var(--paper-ink);
 }
 @media (max-width: 760px) {
   .plead {

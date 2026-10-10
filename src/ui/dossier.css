@@ -391,6 +391,8 @@
   border: 1px solid rgb(255 255 255 / 72%);
   box-shadow: 0 0 0 1px rgb(0 0 0 / 14%);
   background: light-dark(rgb(190 200 212 / 30%), rgb(214 220 228 / 12%));
+  /* 袋裡的 z-index（高光、字在高光上面）只在袋子裡排，不蓋到抽屜的黏頂分組小標（設計師 r3 第 3 條）。 */
+  isolation: isolate;
 }
 /* 塑膠在東西上面：高光蓋在袋裡的紙和印刷上，點擊穿過去。淺色主題的袋身和高光調亮一點，但不洗掉字。 */
 .bag::after {
@@ -437,7 +439,9 @@
 .bag-window p {
   margin: 0;
 }
+/* 抽屜的卡片樣式（.card.mini .mini-body .mini-src）是深色介面的淡字，在袋裡的紙上要換回紙的權杖（設計師 r3 第 2 條）。 */
 .bag-window .mini-src,
+.card.mini .mini-body .bag-window .mini-src,
 .bag-window .zoom-src {
   margin-top: 6px;
   padding-top: 6px;
@@ -585,6 +589,8 @@
       calc(var(--fs-hand) * 8.5);
     grid-template-areas: 'at from to why';
     align-items: baseline;
+    /* 欄與欄至少 16px，職稱不和下一欄讀成同一句（設計師 P2-6 r3 第 7 條）。 */
+    column-gap: 16px;
   }
   .bag-chain .why {
     text-align: left;
@@ -603,6 +609,9 @@
   }
   .bag-chain :is(.who-name, .who-role) {
     display: block;
+  }
+  .bag-chain .who-role {
+    white-space: normal;
   }
   .bag-chain .bag-chain-cols {
     display: grid;

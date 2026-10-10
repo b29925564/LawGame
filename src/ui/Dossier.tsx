@@ -140,14 +140,15 @@ const ABBR = /(?:^|[\s(])(?:No|Nos|Dr|Mr|Mrs|Ms|St|Jr|Sr|Inc|Co|Corp|Ltd|v|vs|De
 /**
  * 迷你登錄表一行只放事項的第一個分句（切在第一個「：；。」，英文切在第一個「: 」「; 」「. 」）。
  * 括號裡的補充說明不算；還是太長就換行；不用省略號，也不用漸隱（設計師 P2-6 r2）。
+ * 行尾一律不放句尾標點，切在分句的行和整句的行看起來一樣（設計師 P2-6 r3 第 5 條）。
  */
 export function firstClause(text: string) {
   let depth = 0;
   for (let i = 1; i < text.length; i++) {
     const c = text[i];
     if (c === '(' || c === '（') {
-      // 括號裡是補充說明，不算第一個分句：英文在括號前面斷，補一個句點收尾；中文直接斷。
-      if (depth === 0 && c === '(' && text[i - 1] === ' ') return text.slice(0, i - 1) + '.';
+      // 括號裡是補充說明，不算第一個分句：在括號前面斷。
+      if (depth === 0 && c === '(' && text[i - 1] === ' ') return text.slice(0, i - 1);
       if (depth === 0 && c === '（') return text.slice(0, i);
       depth++;
     } else if (c === ')' || c === '）') depth = Math.max(0, depth - 1);
@@ -156,10 +157,10 @@ export function firstClause(text: string) {
     if (/[:;.]/.test(c) && text[i + 1] === ' ') {
       // 「No. 26-…」「Dr. Brooks」這種縮寫的句點不是句子結束。
       if (c === '.' && ABBR.test(text.slice(0, i + 1))) continue;
-      return c === '.' ? text.slice(0, i + 1) : text.slice(0, i);
+      return text.slice(0, i);
     }
   }
-  return text;
+  return ABBR.test(text) ? text : text.replace(/[。．.！？!?]+$/, '');
 }
 
 /**
@@ -177,7 +178,7 @@ export function DocketMini({ progress }: { progress: Progress }) {
         <span key={r.no} className={i === cur ? 'dk-row dk-cur' : 'dk-row'}>
           <b>{r.no}</b>
           <time>{r.date.slice(0, 5)}</time>
-          <span>{firstClause(t(r.entry))}</span>
+          <span>{prose(firstClause(t(r.entry)))}</span>
         </span>
       ))}
       {cur < rows.length - 1 && (
@@ -219,7 +220,10 @@ export function PhotoLogLine({ photo }: { photo: PhotoRecord }) {
   );
 }
 
-/** 人名加職稱（姓名、全形空格、職稱；英文是逗號）：姓名和職稱分兩段，各自整組不斷開；要不要換行由 CSS 決定。 */
+/**
+ * 人名加職稱（姓名、全形空格、職稱；英文是逗號）：姓名和職稱分兩段，各自整組不斷開；要不要換行由 CSS 決定。
+ * 保管鏈寬版的職稱欄放不下時以詞換行（英文在空白、中文在詞與詞之間），不壓進下一欄。
+ */
 function Who({ text }: { text: string }) {
   const t = useT();
   const shown = t(text);
@@ -228,7 +232,7 @@ function Who({ text }: { text: string }) {
   return (
     <>
       <span className="who-name">{shown.slice(0, at)}</span>
-      <span className="who-role">{shown.slice(at).replace(/^(\u3000|, )/, '')}</span>
+      <span className="who-role">{prose(shown.slice(at).replace(/^(\u3000|, )/, ''))}</span>
     </>
   );
 }

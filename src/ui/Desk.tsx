@@ -1060,7 +1060,7 @@ function Motions({ scene, held }: { scene: DeskScene; held: string[] }) {
       window.removeEventListener('pointerdown', away);
     };
   }, [menu, wide]);
-  if (!m || !a) return <p className="muted">{t('目前沒有可以提出的聲請。')}</p>;
+  if (!m || !a) return <p className="muted motion-none">{t('目前沒有可以提出的聲請。')}</p>;
   const n = scene.motions.indexOf(m) + 1;
   const nameOf = (id: string) => cards.find((c) => c.id === id);
   const quoteOf = (lines: { who: string; text: string }[]) => {
@@ -1203,15 +1203,26 @@ function Motions({ scene, held }: { scene: DeskScene; held: string[] }) {
             {t('・')}
             {t('還不能寫')}
           </small>
+          {/* 標題一句話講完，缺的論點一行一個，名字不塞進句子中間（劇本與內容）。 */}
           <strong>
             {prose(
-              t('還缺前提：先把 {names} 確認起來', {
-                names: missing
-                  .map((id) => `◆ ${t(nameOf(id)?.name ?? argName(scene, id), scope)}`)
-                  .join('、'),
-              }),
+              missing.length > 1
+                ? t('先確認這些論點，才能寫這份聲請：')
+                : t('先確認這個論點，才能寫這份聲請：'),
             )}
           </strong>
+          <ul className="prereq-args">
+            {missing.map((id) => {
+              const name = t(nameOf(id)?.name ?? argName(scene, id), scope);
+              return (
+                <li key={id}>
+                  {/* ◆ 就是「論點」：名稱不再加「論點：」前綴（規格 v2.0 :225，和狀紙上的論點標籤同一個寫法）。 */}
+                  <span aria-hidden>◆</span>
+                  <span>{prose(splitArg(name)[1] ?? name)}</span>
+                </li>
+              );
+            })}
+          </ul>
           <span>{prose(t(m.detail, scope))}</span>
         </aside>
       ) : (

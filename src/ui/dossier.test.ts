@@ -62,7 +62,7 @@ describe('迷你登錄表的第一個分句（設計師 P2-6 r2 第 7 條）', (
       '陪審團審理第一日',
     );
     expect(firstClause('Jury trial, day 1. Jury selection; twelve jurors sworn.')).toBe(
-      'Jury trial, day 1.',
+      'Jury trial, day 1',
     );
     expect(firstClause('Indictment filed: one count.')).toBe('Indictment filed');
   });
@@ -72,10 +72,16 @@ describe('迷你登錄表的第一個分句（設計師 P2-6 r2 第 7 條）', (
       firstClause(
         "Order granting defense inspection of defendant's booked smartwatch (property inventory No. 26-0315-088, item 3).",
       ),
-    ).toBe("Order granting defense inspection of defendant's booked smartwatch.");
+    ).toBe("Order granting defense inspection of defendant's booked smartwatch");
     expect(firstClause('Testimony of Dr. Brooks. Cross-examination.')).toBe(
-      'Testimony of Dr. Brooks.',
+      'Testimony of Dr. Brooks',
     );
     expect(firstClause('本院核發檢視令（財物清單 No. 26-0315-088 項 3）。')).toBe('本院核發檢視令');
+  });
+
+  it('行尾一律不放句尾標點（設計師 P2-6 r3 第 5 條）', () => {
+    expect(firstClause('Defense withdraws subpoena D-2.')).toBe('Defense withdraws subpoena D-2');
+    expect(firstClause('陪審團評議後宣告判決。')).toBe('陪審團評議後宣告判決');
+    expect(firstClause('Indictment filed')).toBe('Indictment filed');
   });
 });

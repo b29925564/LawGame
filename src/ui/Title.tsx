@@ -40,7 +40,11 @@ export function SlotList({
             <button
               className={sel === slot ? 'slot sel' : 'slot'}
               disabled={verb === '讀取' && !f}
-              onFocus={() => setSel(slot)}
+              onFocus={(e) => {
+                setSel(slot);
+                // 鍵盤移到這一欄：整張卡連同墨色焦點框捲進看得見的範圍（scroll-margin 留給焦點框；設計師 P2-6 r3 第 4 條）。
+                e.currentTarget.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+              }}
               onClick={() => onPick(slot)}
               aria-label={lang === 'en' ? `${t(verb)} ${name}` : `${verb}${name}`}
             >

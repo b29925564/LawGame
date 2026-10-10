@@ -703,6 +703,14 @@ details summary {
   --hl: #f4c53d;
   --hl-wash: rgb(244 197 61 / 13%);
   --inset-hi: inset 0 1px 0 rgb(255 255 255 / 4%);
+  /* 字的權杖也一樣：頁尾淡字、焦點框、定案鈕、成立／不成立都用深色那一邊（規格 v2.0 :312；設計師 P2-6 r3 第 8 條）。 */
+  --faint: #8a95a2;
+  --focus: #f4c53d;
+  --good: #4cc38a;
+  --bad: #ef6a62;
+  --commit-bg: #161c25;
+  --commit-bg-hover: #1f2731;
+  --commit-edge: #e7eaee;
   color-scheme: dark;
 }
 
@@ -882,6 +890,8 @@ details summary {
 .slots .slot,
 .slot {
   width: 100%;
+  /* 焦點框 2px＋外移 2px：捲進畫面時連框一起留出來（設計師 P2-6 r3 第 4 條）。 */
+  scroll-margin: 8px;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
