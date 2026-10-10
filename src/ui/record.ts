@@ -35,6 +35,11 @@ export interface RecordEntry {
   ruling?: Ruling;
   /** 異議被駁回、證人照樣回答的那句：出現時蓋著黑條，裁定後黑條抽走。 */
   unbar?: boolean;
+  /**
+   * 同一句的另一種語言（標記與全文）。兩種語言的頁行必須一樣（設計師 bates-review.md 第 3 點：
+   * 劇本兩種語言都說「第 42 頁第 7 行」），所以每句佔的行數取兩版比較多的那一版，短的那版後面留空行。
+   */
+  twin?: { tag: string; text: string };
 }
 
 export interface RecordRow {
@@ -187,28 +192,67 @@ export function wrap(
   return rows;
 }
 
-/** 整份筆錄排成行。measure 是一行可用的寬（em）；stamp：有裁定的那句，最後一行要留給章的寬（em）。 */
+/** 一句話切成的行（第一行扣掉縮排與標記）。 */
+function wrapEntry(
+  kind: RecordKind,
+  tag: string,
+  text: string,
+  measure: number,
+  zh: boolean,
+  reserve: number,
+): string[] {
+  const indent = INDENT[kind];
+  const tagW = kind === 'q' || kind === 'a' ? TAG_W : textWidth(tag, zh) + 0.6;
+  const firstW = Math.max(4, measure - indent - (tag ? tagW : 0));
+  return wrap(text, measure, firstW, zh, reserve);
+}
+
+/** 另一種語言的排版條件：一行的寬與裁定章的寬。 */
+export interface Twin {
+  measure: number;
+  zh: boolean;
+  stamp: (ruling: Ruling) => number;
+}
+
+/**
+ * 整份筆錄排成行。measure 是一行可用的寬（em）；stamp：有裁定的那句，最後一行要留給章的寬（em）。
+ * twin：另一種語言的排版條件。給了就讓每句佔的行數取兩種語言比較多的那一版（空行補在句尾），
+ * 兩種語言的頁行就一樣。
+ */
 export function layout(
   entries: readonly RecordEntry[],
   measure: number,
   zh = false,
   stamp: (ruling: Ruling) => number = () => 0,
+  twin?: Twin,
 ): RecordRow[] {
   const rows: RecordRow[] = [];
   entries.forEach((e, entry) => {
     const indent = INDENT[e.kind];
-    const tagW = e.kind === 'q' || e.kind === 'a' ? TAG_W : textWidth(e.tag, zh) + 0.6;
-    const firstW = Math.max(4, measure - indent - (e.tag ? tagW : 0));
     const src = e.text.trim();
     let pos = 0;
-    const reserve = e.ruling ? stamp(e.ruling) : 0;
-    wrap(e.text, measure, firstW, zh, reserve).forEach((text, k) => {
+    const lines = wrapEntry(e.kind, e.tag, e.text, measure, zh, e.ruling ? stamp(e.ruling) : 0);
+    const other =
+      twin && e.twin
+        ? wrapEntry(
+            e.kind,
+            e.twin.tag,
+            e.twin.text,
+            twin.measure,
+            twin.zh,
+            e.ruling ? twin.stamp(e.ruling) : 0,
+          ).length
+        : 0;
+    while (lines.length < other) lines.push('');
+    lines.forEach((text, k) => {
       const index = rows.length;
-      pos = src.indexOf(text, pos) + text.length;
       let space = false;
-      while (src[pos] === ' ') {
-        space = true;
-        pos++;
+      if (text) {
+        pos = src.indexOf(text, pos) + text.length;
+        while (src[pos] === ' ') {
+          space = true;
+          pos++;
+        }
       }
       rows.push({
         index,

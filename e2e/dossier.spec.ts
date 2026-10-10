@@ -86,7 +86,7 @@ test('存檔欄：縮小的登錄表加 Bates 區間', async ({ page }) => {
   const auto = page.locator('.slot').first();
   await expect(auto.locator('.dk-cur')).toContainText('04/08');
   // 從這一集的第一頁起，和幕卡同一套頁碼。
-  await expect(auto.locator('.dk-bates')).toHaveText('WH-E01-000057–000330');
+  await expect(auto.locator('.dk-bates')).toHaveText('WH-E01-000001–000266');
   // 冷開場還沒走到第一張登錄卡：沒有一行字，只有一條黑條。
   const cold = page.locator('.slot').nth(1);
   await expect(cold.locator('.dk-row:not(.dk-future)')).toHaveCount(0);

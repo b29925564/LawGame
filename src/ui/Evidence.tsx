@@ -2,6 +2,7 @@ import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { glossary } from '../content/glossary';
 import {
+  branchContext,
   deskSceneOf,
   episodeOf,
   deskState,
@@ -9,6 +10,7 @@ import {
   useEpisode,
   type Evidence as Item,
 } from '../engine/game';
+import { cardIn, provenanceOf } from '../engine/bates';
 import { play } from '../engine/sound';
 import { t as tr, useT } from '../i18n';
 import { dossierOf, EvidenceBag, EvidenceZoom, PhotoLog, PrintPlate } from './Dossier';
@@ -243,6 +245,7 @@ export function EvidenceCard({
           {t('・')}
           {t(item.source, scope)}
         </p>
+        <Provenance id={item.id} />
       </>
     );
     const press = () => {
@@ -409,6 +412,29 @@ export function CardPick({
       {(!compact || on) && <span className="pick-text">{t(item.text, scope)}</span>}
     </button>
   );
+}
+
+/**
+ * 這張紙的出處，右下一行 Courier（設定集第 9 章 :71、:117；設計師 bates-review.md）：
+ * 開示交出的文件印 Bates（跟著分支換交出方），筆錄與勘誤表印頁行，裁定與訴狀印案號與收文日，
+ * 陳述印時間與製作人。只有照片的卡，號碼印在沖印本上。
+ */
+function Provenance({ id }: { id: string }) {
+  const t = useT();
+  const scope = useScope();
+  const { progress } = useEpisode();
+  const card = cardIn(episodeOf(progress), id);
+  const p = card && provenanceOf(card, branchContext(progress));
+  if (!p) return null;
+  const text =
+    p.kind === 'bates'
+      ? p.bates
+      : p.kind === 'cite'
+        ? t('筆錄第 {page} 頁第 {line} 行', { page: p.page, line: p.line })
+        : p.kind === 'filed'
+          ? t('{caseNo}　收文 {date}', { caseNo: p.caseNo, date: p.date })
+          : t('{at}　製作：{by}', { at: p.at, by: t(p.by, scope) });
+  return <p className="mini-prov">{text}</p>;
 }
 
 /** 卡片上的日期與時間，例如「週五 22:34」。 */

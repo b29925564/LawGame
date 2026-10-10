@@ -1,11 +1,11 @@
 import { Fragment, useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import { batesAt } from '../engine/bates';
 import { branchContext, caseClosed, custodyOf, episodeOf } from '../engine/game';
 import { matches } from '../engine/episode/branch';
 import type { Card, Episode } from '../engine/episode/schema';
 import type { Progress } from '../engine/save';
 import { useLang, useT } from '../i18n';
 import { cardHighlights, Hl } from './Marks';
-import { bates, pageAt } from './bates';
 import { useScope } from './lang';
 import { hasPrint, Print, type PrintUse } from './prints';
 import { prose } from './prose';
@@ -191,12 +191,12 @@ export function DocketMini({ progress }: { progress: Progress }) {
   );
 }
 
-/** 存檔欄的 Bates 區間：從這一集的第一頁（和幕卡同一個 pageAt）到存檔那一場。放在章節那一行下面。 */
+/** 存檔欄的 Bates 區間：從這一集的第一頁到存檔那一場的第一頁（和幕卡同一條本所序列）。放在章節那一行下面。 */
 export function SaveBates({ progress }: { progress: Progress }) {
   const ep = episodeOf(progress);
   return (
     <span className="dk-bates" aria-hidden>
-      {bates(ep.number, pageAt(0))}–{bates(ep.number, pageAt(progress.scene)).slice(-6)}
+      {batesAt(ep, 0)}–{batesAt(ep, progress.scene).slice(-6)}
     </span>
   );
 }

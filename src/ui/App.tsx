@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { episodes } from '../content';
+import { batesAt } from '../engine/bates';
 import { episodeOf, followingEpisode, sceneOf, useEpisode } from '../engine/game';
 import { useSettings } from '../engine/settings';
 import { useGame } from '../engine/store';
@@ -13,7 +14,6 @@ import { Dialogue } from './Dialogue';
 import { GameMenu } from './GameMenu';
 import { Interview } from './Interview';
 import { ActCard, PlaceSlate, Recap, splitHeadline } from './ActCard';
-import { bates, pageAt } from './bates';
 import { Announcer } from './Marks';
 import { Negotiation } from './Negotiation';
 import { Phone } from './Phone';
@@ -80,7 +80,7 @@ export function App() {
   const before = ep.scenes[at - 1];
   const moved =
     !!here && before?.type !== 'card' && placed(ep.scenes.slice(0, at).reverse())?.place !== here;
-  const page = bates(ep.number, pageAt(at));
+  const page = batesAt(ep, at);
   return (
     <SceneScope.Provider value={scene?.id}>
       <Announcer />
