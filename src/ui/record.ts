@@ -141,8 +141,18 @@ export function wrap(
       w += tw;
       continue;
     }
-    // 行首禁則：一個標點直接掛在行尾。
+    // 行首禁則：一個標點直接掛在行尾。紙邊只多留一個字的寬（Record.tsx paperX）：已經掛出去一個
+    // （「。）」的「。」）就不再掛第二個，最後一個字連同這些標點換到下一行（設計師 #225 第三輪：「）」貼紙邊）。
     if (row && tok.length === 1 && noStart.test(tok)) {
+      if (w > limit() + 1e-6) {
+        const [head, carry] = tail(row);
+        if (head && carry) {
+          rows.push(head);
+          row = carry + tok;
+          w = textWidth(row, zh);
+          continue;
+        }
+      }
       row += tok;
       w += tw;
       continue;

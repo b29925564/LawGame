@@ -20,7 +20,7 @@ export interface JurorLook {
   jaw?: 'round' | 'square' | 'long';
   slope?: number;
   lift?: number;
-  beard?: 'full' | 'goatee';
+  beard?: 'full' | 'goatee' | 'pointed';
   acc?: string[];
   glasses?: 'round' | 'square' | 'cateye' | 'aviator' | 'halfmoon' | 'big';
   /** 主要角色才有（設定集第 7.6 章鉤子表）：粗頸、縮肩、方肩、法袍。 */
@@ -453,6 +453,20 @@ function extras(p: JurorLook, h: Head, t: Torso) {
       ]),
     );
   if (p.beard === 'goatee') H.push(ell(CX - 6, 344, 22, 22, 0, 180, 20).concat([[CX - 28, 330]]));
+  // 尖的山羊鬍（奧卡福）：從下巴前緣往前、往下長出來，72px 時比一般的 goatee 往前約 3px、往下約 2px，
+  // 受光那一側的輪廓光才勾得到它（設計師 #225 第三輪：原本在 72px 只剩下巴一個小折角）。
+  if (p.beard === 'pointed')
+    H.push([
+      [CX - 44, 324],
+      [CX - 50, 340],
+      [CX - 47, 358],
+      [CX - 40, 372],
+      [CX - 28, 375],
+      [CX - 12, 369],
+      [CX + 6, 358],
+      [CX + 16, 346],
+      [CX + 4, 338],
+    ]);
   for (const a of p.acc || []) {
     if (a === 'hood')
       S.push([

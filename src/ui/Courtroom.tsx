@@ -422,7 +422,13 @@ function CourtroomScreen({ scene: raw }: { scene: TrialScene }) {
                 {t('法官把這位證人在這一場說過的話全部從紀錄上拿掉，陪審團不能採用。')}
               </p>
             )}
-            <CourtRecord entries={record} from={Math.max(0, st.log.length - 3)} bates={bates} />
+            {/* 最後三句攤開排（.full）：不是捲動框，不會露出半行。 */}
+            <CourtRecord
+              entries={record}
+              from={Math.max(0, st.log.length - 3)}
+              bates={bates}
+              className="full"
+            />
             <p className="muted small">{t('按「休庭」看這一場的結果。')}</p>
           </section>
         )}

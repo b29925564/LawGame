@@ -439,7 +439,7 @@ export function Iou({
         <header>
           <b>{t('借據')}</b>
         </header>
-        <p className="iou-text">{t(text, scope)}</p>
+        <p className="iou-text">{prose(t(text, scope))}</p>
         <dl className="iou-terms">
           {backing && (
             <div>

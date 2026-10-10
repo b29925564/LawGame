@@ -3,6 +3,7 @@ import type { MotionAttempt } from '../engine/episode/desk';
 import type { Motion } from '../engine/episode/schema';
 import { useT } from '../i18n';
 import { useScope } from './lang';
+import { prose } from './prose';
 import { useCaseTerms } from './terms';
 
 /** 證物格的編號：①②③。 */
@@ -163,9 +164,11 @@ export function Pleading({
         </p>
       </div>
       {ruling && (
+        // 裁定和具狀人也坐在 32px 格線上：每一行的行框用內文的字型撐（17px／32px），小字只是行內的 span，
+        // 基線就和上面的內文落在同一組格線上（設計師 #225 第三輪：「整張紙都算」）。
         <div className={ruling.ok ? 'judge ok' : 'judge no'}>
           <small>{t('裁定・雷耶斯法官')}</small>
-          {ruling.quote ?? t(ruling.ok ? '准。' : '駁回。')}
+          <span className="q">{prose(ruling.quote ?? t(ruling.ok ? '准。' : '駁回。'))}</span>
           <CourtStamp ok={ruling.ok} />
         </div>
       )}

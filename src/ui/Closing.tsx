@@ -22,6 +22,7 @@ import { JurorFace, lookOf } from './jury/JuryBox';
 import { JuryStart } from './JuryStart';
 import { Tally } from './Marks';
 import { Speech } from './Portrait';
+import { prose } from './prose';
 import { Shell, Tabs } from './Shell';
 import { useState } from 'react';
 import { CourtCast, CourtFace } from './jury/CourtFace';
@@ -121,7 +122,7 @@ function ClosingScreen({ scene }: { scene: ClosingScene }) {
     <Shell
       resetKey={tab}
       head={
-        <header className="panel-head bench">
+        <header className="panel-head bench closing-head">
           <p className="eyebrow">
             {t(scene.act, scope)}
             {t('・')}
@@ -427,7 +428,18 @@ function Verdict({
           <div className="amt">
             <small>{t('被告應付')}</small>
             <b>
-              {splitMoney(money(owed)).n}
+              {/* 等寬字的小數點、千分位佔一整格，「$7.93」會讀成「$7 . 93」：標點收窄（設計師 #225 第三輪）。 */}
+              {splitMoney(money(owed))
+                .n.split(/([.,])/)
+                .map((x, i) =>
+                  i % 2 ? (
+                    <span key={i} className="sep">
+                      {x}
+                    </span>
+                  ) : (
+                    x
+                  ),
+                )}
               <i>{splitMoney(money(owed)).unit}</i>
             </b>
           </div>
@@ -574,8 +586,9 @@ function Verdict({
                 ))}
               </ol>
               <p className="trend-need">
-                {t('站你這邊 {a} 位，需要 {b} 位', { a: now, b: need })}
-                {now < need && <strong> {t('差 {k} 位', { k: need - now })}</strong>}
+                {/* 寫明是評議後：上面「庭審結束」那排點是庭審結束當下，數字不一樣（設計師 #225 第三輪）。 */}
+                {t('評議後：站你這邊 {a} 位，需要 {b} 位', { a: now, b: need })}
+                {now < need && <strong>{t('，差 {k} 位', { k: need - now })}</strong>}
               </p>
             </section>
           )}
@@ -652,7 +665,7 @@ function Verdict({
                 );
               if (l.mark || l.voice === 'off' || l.thought) return <Speech key={i} line={l} />;
               const text = t(l.text, scope);
-              if (l.who === '旁白') return <p key={i}>{text}</p>;
+              if (l.who === '旁白') return <p key={i}>{prose(text)}</p>;
               // 「（訊息）漂亮。」→ 寄件人一行寫「亞瑟・卡爾德・訊息」，內文只留話。只有真的頻道（訊息、電話、信、便條）
               // 才算不在場；「（他沒有回頭）」是舞台指示，人還在庭上（設計師第二輪）。
               const via = text.match(CHANNEL);
@@ -669,7 +682,7 @@ function Verdict({
                       {t(l.who)}
                       {via && t('・') + via[1]}
                     </small>
-                    {via ? text.slice(via[0].length) : text}
+                    {prose(via ? text.slice(via[0].length) : text)}
                   </div>
                 </div>
               );

@@ -13,7 +13,7 @@
 休庭: Recess
 成功彈劾: Successful impeachments
 刪除的證詞: Testimony stricken
-'{n} 句': '{n} line(s)'
+'{n} 句': '{n} line{n:s}'
 剩餘法官耐心: Judge’s patience left
 調查花掉的工時: Hours spent investigating
 '法官耐心 {a} / {b}': 'Judge’s patience {a} / {b}'
@@ -106,8 +106,8 @@
 開庭若判有責: If the jury finds liability at trial
 '約 {low}到 {high}': 'About {low} to {high}'
 懲罰性賠償另計: Punitive damages on top
-'站你這邊 {a} 位，需要 {b} 位': '{a} with you, {b} needed'
-'差 {k} 位': '{k} short'
+'評議後：站你這邊 {a} 位，需要 {b} 位': 'After deliberation: {a} with you, {b} needed'
+'，差 {k} 位': ', {k} short'
 庭審結束: After testimony
 結辯後: After closing
 評議後: After deliberation

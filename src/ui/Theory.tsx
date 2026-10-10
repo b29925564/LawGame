@@ -7,6 +7,7 @@ import { theoryOutlook } from '../engine/ledger';
 import { useMoney, useT } from '../i18n';
 import { CommitBar } from './Commit';
 import { JuryStart } from './JuryStart';
+import { prose } from './prose';
 import { useScope } from './lang';
 import { Speech } from './Portrait';
 import { Recap } from './ActCard';
@@ -36,7 +37,7 @@ export function Theory({ scene }: { scene: TheoryScene }) {
         <div className="lines">
           <Recap />
           {scene.intro.map((l, i) => (
-            <Speech key={i} line={l} />
+            <Speech key={i} line={l} wrap />
           ))}
         </div>
         <button className="primary next" onClick={() => setIntro(false)}>
@@ -94,7 +95,7 @@ export function Theory({ scene }: { scene: TheoryScene }) {
                 onClick={() => setPending(th.id)}
               >
                 <strong className="theory-name">{t(th.name, scope)}</strong>
-                <span className="theory-summary">{t(th.summary, scope)}</span>
+                <span className="theory-summary">{prose(t(th.summary, scope))}</span>
                 <span className="theory-rows">
                   <JuryStart jury={th.jury} civil={civil} />
                   {th.promises.length > 0 && !th.jury && (
@@ -106,7 +107,7 @@ export function Theory({ scene }: { scene: TheoryScene }) {
                   {outlook(th.id)}
                   <span className="theory-row">
                     <span className="jury-start-key">{t('代價')}</span>
-                    {t(th.cost, scope)}
+                    {prose(t(th.cost, scope))}
                   </span>
                 </span>
                 <span className="theory-needs">
@@ -197,7 +198,7 @@ export function Opening({ scene }: { scene: OpeningScene }) {
         </p>
         <div className="lines">
           {scene.intro.map((l, i) => (
-            <Speech key={i} line={l} />
+            <Speech key={i} line={l} wrap />
           ))}
         </div>
         <button className="primary next" onClick={() => setIntro(false)}>

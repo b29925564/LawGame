@@ -322,7 +322,9 @@ export function confront(
     ...(rebuttal.length ? [{ who: '旁白', text: noted(s.examiner ?? DA) }] : []),
   );
   if (rebuttal.length) next = { ...next, redirect: [...(next.redirect ?? []), ...rebuttal] };
-  if (impeached) next = say(next, { who: '旁白', text: s.witness.breakdown });
+  // 證人崩的那一刻只記一次：筆錄是紀錄，同一個反應印兩次會被讀成發生了兩次（設計師 #225 第三輪）。
+  if (impeached && st.impeachments === 0)
+    next = say(next, { who: '旁白', text: s.witness.breakdown });
   // 開場承諾兌現（企劃書 6.9.3）：陪審員記得你說過的話，全體往辯方移。
   const p = arg.promise;
   if (impeached && p && !(next.kept ?? []).includes(p.id)) {
