@@ -1354,6 +1354,9 @@ details summary {
 
 /* ── 文件：訴狀紙。行號、雙線邊界、螢光筆標記。 ── */
 .panel.doc {
+  /* 左邊雙直線的位置與正文的左緣；錄取逐字稿在手機上收窄（見 .doc-record-box），不然 24 字放不下。 */
+  --doc-rule: 40px;
+  --doc-pl: 58px;
   --text: var(--paper-ink);
   --muted: var(--paper-muted);
   --border: var(--paper-rule);
@@ -1362,20 +1365,20 @@ details summary {
   background:
     linear-gradient(
         to right,
-        transparent 40px,
-        var(--paper-margin) 40px,
-        var(--paper-margin) 41px,
-        transparent 41px,
-        transparent 44px,
-        var(--paper-margin) 44px,
-        var(--paper-margin) 45px,
-        transparent 45px
+        transparent var(--doc-rule),
+        var(--paper-margin) var(--doc-rule),
+        var(--paper-margin) calc(var(--doc-rule) + 1px),
+        transparent calc(var(--doc-rule) + 1px),
+        transparent calc(var(--doc-rule) + 4px),
+        var(--paper-margin) calc(var(--doc-rule) + 4px),
+        var(--paper-margin) calc(var(--doc-rule) + 5px),
+        transparent calc(var(--doc-rule) + 5px)
       )
       0 0 / 100% 100% no-repeat,
     var(--paper);
   border: none;
   border-radius: 3px;
-  padding: 18px 18px 28px 58px;
+  padding: 18px 18px 28px var(--doc-pl);
   font-family: var(--font-doc);
   box-shadow: none;
 }
@@ -1412,13 +1415,79 @@ details summary {
   flex-direction: column;
   gap: 2px;
 }
-/* 錄取逐字稿的頁:行（Courier Prime 等寬小字，和證據卡的 Tr. 42:7 同一寫法）。 */
-.doc-cite {
-  margin: 0 0 6px;
-  font: 700 12px/18px var(--font-court);
-  letter-spacing: 0.04em;
-  font-variant-numeric: tabular-nums;
-  color: var(--paper-muted);
+/*
+ * 卷宗裡的錄取逐字稿（TranscriptDoc）：和庭上的筆錄同一張 25 行的紙，放在卷宗的紙上：
+ * 左邊的雙直線和行號欄用卷宗自己的（.panel.doc），框伸到紙邊。字級照紙寬算（一行 24 字／44 字元，
+ * 中文不小於 14px、英文等寬字不小於 12px，再窄就在框裡橫向捲）。每一句仍是按鈕，螢光筆畫在字上。
+ */
+.doc-record-box {
+  container-type: inline-size;
+  margin: 8px -18px 0 calc(-1 * var(--doc-pl));
+}
+@media (max-width: 640px) {
+  .panel.doc:has(.doc-record-box) {
+    --doc-rule: 22px;
+    --doc-pl: 34px;
+  }
+}
+.doc-record-box .record.doc-record {
+  margin-inline: 0;
+  --rec-measure: 24;
+  --rec-hang: 0.6;
+  --rec-min: 14px;
+  --rec-pl: var(--doc-pl);
+  --rec-gutter: var(--doc-rule);
+  --rec-pr: 2px;
+  --rec-fs: max(
+    calc(var(--rec-min) * var(--text-scale)),
+    min(
+      calc((100cqw - var(--rec-pl) - var(--rec-pr)) / (var(--rec-measure) + var(--rec-hang))),
+      calc(15px * var(--text-scale))
+    )
+  );
+  --rec-row: calc(var(--rec-fs) * 2);
+  background: none;
+  border: none;
+  overflow-x: auto;
+}
+html[lang='en'] .doc-record-box .record.doc-record {
+  --rec-measure: 26.4;
+  --rec-min: 12px;
+}
+.doc-record .rec-paper {
+  min-width: calc(
+    var(--rec-pl) + var(--rec-pr) + (var(--rec-measure) + var(--rec-hang)) * var(--rec-fs)
+  );
+  background: none;
+  box-shadow: none;
+  color: var(--paper-ink);
+}
+.doc-record .rec-head {
+  padding-left: 0;
+}
+.doc-record .sentence {
+  display: block;
+  margin: 0;
+  padding: 0;
+  border-radius: 0;
+  font: inherit;
+  line-height: inherit;
+  white-space: normal;
+}
+.doc-record .sentence:hover:not(:disabled) {
+  background: none;
+}
+/* 螢光筆只畫在字上（.rec-tx），不畫在整行；「已成卡」的小章留給卡片，這裡不再多蓋一枚。 */
+.doc-record .sentence span {
+  padding: 0;
+  background: none;
+}
+.doc-record .sentence .rec-tx {
+  background: linear-gradient(var(--mark, transparent), var(--mark, transparent)) 0 62% / 100% 74%
+    no-repeat;
+}
+.doc-record .sentence.made::after {
+  content: none;
 }
 .doc-lines li {
   counter-increment: line;
@@ -1508,12 +1577,13 @@ details summary {
   --mark: rgb(255 208 46 / 85%);
 }
 .sentence.made::after {
-  content: '已成卡';
+  /* 文字由按鈕的 data-made 帶進來（跟著介面語言）；鉛筆色，綠色只給「成立」。 */
+  content: attr(data-made);
   margin-left: 8px;
   padding: 0 6px;
-  border: 1px solid #1d7a4c;
+  border: 1px solid var(--pencil);
   border-radius: 3px;
-  color: #1d7a4c;
+  color: var(--pencil);
   font-family: var(--font);
   font-size: 11px;
   font-weight: 700;

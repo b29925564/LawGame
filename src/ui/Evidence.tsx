@@ -14,6 +14,7 @@ import { cardIn, provenanceOf } from '../engine/bates';
 import { play } from '../engine/sound';
 import { t as tr, useT } from '../i18n';
 import { straight } from '../i18n/curly';
+import { Tabs } from './Shell';
 import { dossierOf, EvidenceBag, EvidenceZoom, PhotoLog, PrintPlate } from './Dossier';
 import { hasPrint, Print } from './prints';
 import { reducedMotion } from './a11y';
@@ -111,19 +112,17 @@ export function EvidenceDrawer({ note, noTimeline }: { note?: string; noTimeline
           )}
           <section className={wide ? 'sheet side' : 'sheet'} aria-label={t('證據抽屜')}>
             <div className="panel-head">
-              <nav className="apps sheet-tabs" aria-label={t('抽屜')}>
-                <button aria-current={page === 'cards'} onClick={() => setPage('cards')}>
-                  {t('證據 {n}', { n: items.length })}
-                </button>
-                {!noTimeline && (
-                  <button aria-current={page === 'timeline'} onClick={() => setPage('timeline')}>
-                    {t('時間軸')}
-                  </button>
-                )}
-                <button aria-current={page === 'terms'} onClick={() => setPage('terms')}>
-                  {t('法典')}
-                </button>
-              </nav>
+              <Tabs
+                className="sheet-tabs"
+                label={t('抽屜')}
+                value={page}
+                onPick={setPage}
+                items={[
+                  { id: 'cards' as const, label: t('證據 {n}', { n: items.length }) },
+                  ...(noTimeline ? [] : [{ id: 'timeline' as const, label: t('時間軸') }]),
+                  { id: 'terms' as const, label: t('法典') },
+                ]}
+              />
               {!wide && (
                 <button className="link" onClick={() => toggle(false)}>
                   {t('關閉')}
