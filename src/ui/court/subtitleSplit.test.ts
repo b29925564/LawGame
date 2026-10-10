@@ -58,11 +58,34 @@ describe('字幕拆卡', () => {
     expect(lines.length).toBeGreaterThan(1);
     expect(lines[lines.length - 1].length).toBeGreaterThan(6);
   });
+  it('英文在詞界斷：卡片不停在冠詞、所有格、介系詞上', () => {
+    const s = 'The victim was on the floor beside his desk with a blunt-force wound to the head.';
+    const stop =
+      /\b(a|an|the|this|that|these|those|his|her|its|their|my|your|our|with|beside|on|in|at|to|of|from|for|by|into|onto)$/i;
+    for (const em of [14, 16, 18, 20, 24, 30]) {
+      const cards = splitCards(s, em, 1);
+      expect(cards.map((c) => c.text).join(' ')).toBe(s);
+      for (const c of cards.slice(0, -1)) expect(stop.test(c.text)).toBe(false);
+      for (const c of cards) expect(c.text.split(' ').length).toBeGreaterThanOrEqual(2);
+    }
+  });
   it('英文只在空白斷，拼回來等於原文', () => {
     const s =
       'I was in the copy room on the thirty-first floor when I heard something heavy fall next door.';
     const cards = splitCards(s, 20);
     expect(cards.length).toBeGreaterThan(1);
     expect(cards.map((c) => c.text).join(' ')).toBe(s);
+  });
+
+  it('「Mr.」的句點不當句尾，稱謂不單獨成張', () => {
+    for (const em of [10, 14, 20]) {
+      const cards = splitCards(
+        'Mr. Grey asked whether the photos were taken by Officer Daniel Park.',
+        em,
+        1,
+      );
+      expect(cards[0].text).not.toBe('Mr.');
+      expect(cards.every((c) => !/^(Mr|Daniel)\.?$/.test(c.text))).toBe(true);
+    }
   });
 });

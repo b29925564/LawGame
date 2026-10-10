@@ -6,7 +6,73 @@ const NO_LINE_START = /[，。、；：！？）」』”’…—,.;:!?)\]]/;
 
 const w = (ch: string) => (/[\p{Script=Han}\u3000-ヿ＀-￯]/u.test(ch) ? 1 : 0.6);
 
+// 英文在詞界斷行的片語規則（設計師 #257 r4，業界字幕慣例）：
+// 冠詞、限定詞、所有格、介系詞後面不切（要切就切在它前面）；連接詞、關係詞前面優先切；
+// 稱謂與後面的名字、數字與後面的單位、名字的姓和名不拆；一張至少兩個字，找不到切點寧可多一個字。
+const NO_AFTER = new Set(
+  'a an the this that these those his her its their my your our with beside on in at to of from for by into onto as than over under about through between'.split(
+    ' ',
+  ),
+);
+const CONJ = new Set('and but or because which who when while if so'.split(' '));
+const norm = (w: string) => w.toLowerCase().replace(/[^a-z']/g, '');
+const isCap = (w: string) => /^[A-Z][a-z]/.test(w);
+
+function latinLines(text: string, em: number): string[] {
+  const words = text.split(/\s+/).filter(Boolean);
+  const n = words.length;
+  const wd = (a: number, b: number) => lineWidth(words.slice(a, b).join(' '));
+  const lines: string[] = [];
+  const allowed = (b: number) => {
+    const prev = words[b - 1];
+    const next = words[b];
+    if (NO_AFTER.has(norm(prev))) return false;
+    if (/^(Mr|Mrs|Ms|Dr|Prof|St|Jr|Sr)\.?$/.test(prev)) return false;
+    if (/^[\d$%.,-]+$/.test(prev)) return false;
+    if (isCap(prev) && isCap(next) && !/[.!?,;:]$/.test(prev)) return false;
+    return true;
+  };
+  let start = 0;
+  while (start < n) {
+    let j = start;
+    while (j < n && wd(start, j + 1) <= em) j++;
+    if (j === start) j = start + 1;
+    if (j >= n) {
+      lines.push(words.slice(start).join(' '));
+      break;
+    }
+    let cut = -1;
+    // 連接詞、關係詞前面優先（前半至少半行）；不然取最後一個可切的點，至少兩個字。
+    for (let b = j; b >= start + 2; b--) {
+      if (allowed(b) && CONJ.has(norm(words[b])) && wd(start, b) >= 0.5 * em) {
+        cut = b;
+        break;
+      }
+    }
+    if (cut < 0)
+      for (let b = j; b >= start + 2; b--)
+        if (allowed(b)) {
+          cut = b;
+          break;
+        }
+    // 找不到切點：往後找下一個可切的點，多一個字、行寬超過 25% 以內；再不行就照貪婪斷。
+    if (cut < 0) {
+      for (let b = j + 1; b <= n && wd(start, b) <= em * 1.25; b++) {
+        if (b === n || allowed(b)) {
+          cut = b;
+          break;
+        }
+      }
+    }
+    if (cut < 0) cut = Math.max(start + 1, j);
+    lines.push(words.slice(start, cut).join(' '));
+    start = cut;
+  }
+  return lines;
+}
+
 function greedy(text: string, em: number): string[] {
+  if (!/[\p{Script=Han}]/u.test(text)) return latinLines(text, em);
   const lines: string[] = [];
   let line = '';
   let width = 0;
@@ -33,7 +99,13 @@ function greedy(text: string, em: number): string[] {
 export function lineBreaks(text: string, em: number): string[] {
   let lines = greedy(text, em);
   const n = lines.length;
-  for (let k = 1; n > 1 && k <= 8 && lineWidth(lines[n - 1]) < 0.3 * em; k++) {
+  for (
+    let k = 1;
+    n > 1 &&
+    k <= 8 &&
+    (lineWidth(lines[n - 1]) < 0.3 * em || /^[^\s\p{Script=Han}]+$/u.test(lines[n - 1]));
+    k++
+  ) {
     const next = greedy(text, em - k);
     if (next.length !== n) break;
     lines = next;
@@ -65,7 +137,16 @@ export interface Card {
  */
 export function splitCards(text: string, em: number, maxLines = 2): Card[] {
   const fits = (t: string) => lineBreaks(t, em).length <= maxLines;
-  const pieces = (t: string, re: RegExp) => (t.match(re) ?? [t]).filter((x) => x.trim());
+  const pieces = (t: string, re: RegExp) => {
+    // 「Mr.」「Dr.」後面的句點不是句尾：併回下一段。
+    const out: string[] = [];
+    for (const x of (t.match(re) ?? [t]).filter((y) => y.trim())) {
+      if (out.length && /\b(?:Mr|Mrs|Ms|Dr|Prof|St|Jr|Sr)\.\s*$/.test(out[out.length - 1]))
+        out[out.length - 1] += x;
+      else out.push(x);
+    }
+    return out;
+  };
   const cards: Card[] = [];
   let at = 0;
   const push = (parts: string[]) => {
