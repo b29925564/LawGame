@@ -124,8 +124,20 @@ type Vars = Record<string, string | number>;
 
 /** 英文句中要小寫的代入值（「Objection, hearsay.」）：樣板裡寫成 {name:lower}。 */
 const lower = (v: string) => v.charAt(0).toLowerCase() + v.slice(1);
+/**
+ * 英文的單複數：{n:s} 在 n 不是 1 時補 s；{n:one|other} 照 n 是不是 1 挑一邊（「1 juror was」「3 jurors were」）。
+ * 中文沒有單複數，key 不必改。
+ */
+const plural = (out: string, name: string, v: string) =>
+  out
+    .split(`{${name}:s}`)
+    .join(v === '1' ? '' : 's')
+    .replace(
+      new RegExp(`\\{${name}:([^|{}]*)\\|([^{}]*)\\}`, 'g'),
+      (_, one: string, other: string) => (v === '1' ? one : other),
+    );
 const put = (out: string, name: string, v: string) =>
-  out.split(`{${name}:lower}`).join(lower(v)).split(`{${name}}`).join(v);
+  plural(out, name, v).split(`{${name}:lower}`).join(lower(v)).split(`{${name}}`).join(v);
 
 const fill = (s: string, vars: Vars) =>
   Object.entries(vars).reduce((out, [k, v]) => put(out, k, String(v)), s);

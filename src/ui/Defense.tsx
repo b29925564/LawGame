@@ -8,13 +8,23 @@ import { useScope } from './lang';
 import { MarkLines } from './Marks';
 import { Speech } from './Portrait';
 import { batesOf, CourtRecord, useCourtEntries } from './Record';
+import { CourtCast } from './jury/CourtFace';
 import { Recap } from './ActCard';
 
 /**
  * 辯方證人（企劃書 6.9.6）：先準備，再直接詰問。
  * 外觀是最小版，版面交給介面串。
  */
-export function Defense({ scene: raw }: { scene: DefenseScene }) {
+/** 法庭畫面：說話者頭像是剪影替身（P4-2）。 */
+export function Defense({ scene }: { scene: DefenseScene }) {
+  return (
+    <CourtCast>
+      <DefenseScreen scene={scene} />
+    </CourtCast>
+  );
+}
+
+function DefenseScreen({ scene: raw }: { scene: DefenseScene }) {
   const { progress, prepareWitness, askWitness, finishWitness, advance } = useEpisode();
   // 條件不符的題目（例如證人更正過筆錄）不出現。
   const scene = witnessScene(progress, raw);
@@ -60,9 +70,7 @@ export function Defense({ scene: raw }: { scene: DefenseScene }) {
             <li key={o.id} className="panel">
               <strong>{t(o.label, scope)}</strong>
               <p className="muted">{t(o.detail, scope)}</p>
-              <button className="primary" onClick={() => prepareWitness(o.id)}>
-                {t('就這樣準備')}
-              </button>
+              <button onClick={() => prepareWitness(o.id)}>{t('就這樣準備')}</button>
             </li>
           ))}
         </ul>
@@ -115,8 +123,7 @@ export function Defense({ scene: raw }: { scene: DefenseScene }) {
                   </button>
                   {/* 明知答案是假的還問（ethicsIf 條件成立）：問之前就要看得到風險。 */}
                   {q.ethicsIf && q.ethicsIf.has.every((c) => progress.cards.includes(c)) && (
-                    <p className="bad-text small ethics-risk">
-                      <span aria-hidden>⚠ </span>
+                    <p className="court-warn small ethics-risk">
                       {t('你手上的證據說這個回答不是真的。照問，是讓證人在庭上說假話。')}
                     </p>
                   )}

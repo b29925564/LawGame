@@ -20,6 +20,9 @@ describe('筆錄排版', () => {
     expect(wrap('一二三四五六', 3)).toEqual(['一二三', '四五六']);
     // 「。」放不下時掛在上一行尾，不單獨開一行。
     expect(wrap('一二三。四五', 3)).toEqual(['一二三。', '四五']);
+    // 只掛一個：「。）」兩個都放不下時，最後一個字帶著兩個標點換行（紙邊只多留一個字）。
+    expect(wrap('一二三。）', 3, 3, true)).toEqual(['一二', '三。）']);
+    expect(wrap('（一二三。）', 4, 4, true)).toEqual(['（一二', '三。）']);
     // 開頭的括號跟下一個字走。
     expect(wrap('一二「三四', 3)).toEqual(['一二', '「三四']);
   });
@@ -28,6 +31,26 @@ describe('筆錄排版', () => {
     expect(wrap('Where were you that night', 4)).toEqual(['Where', 'were', 'you', 'that', 'night']);
     expect(wrap('Where were you', 6, 3)).toEqual(['Where', 'were you']);
     expect(wrap('abcdefghijkl', 3)).toEqual(['abcde', 'fghij', 'kl']);
+  });
+
+  it('裁定章放不下時，最後一個詞換行，章跟著它（章不蓋在字上）', () => {
+    // 英文：最後一個詞往下掉。
+    expect(wrap('Objection, hearsay.', 14, 14, false, 5)).toEqual(['Objection,', 'hearsay.']);
+    // 放得下就不動。
+    expect(wrap('Objection, hearsay.', 14, 14, false, 2)).toEqual(['Objection, hearsay.']);
+    // 中文：最後一個字連同後面的標點一起掉；前面的開頭括號跟著走。
+    expect(wrap('異議，傳聞。', 6, 6, true, 2)).toEqual(['異議，傳', '聞。']);
+    expect(wrap('異議，「傳聞」。', 8, 8, true, 3)).toEqual(['異議，「傳', '聞」。']);
+    expect(wrap('一二「三」。', 6, 6, true, 2)).toEqual(['一二', '「三」。']);
+    // layout 照每句的裁定留寬。
+    const rows = layout(
+      [{ kind: 'say', tag: 'X:', text: 'Objection, hearsay.', ruling: '成立' }],
+      20,
+      false,
+      () => 6,
+    );
+    expect(rows.map((r) => r.text)).toEqual(['Objection,', 'hearsay.']);
+    expect(rows[0].space).toBe(true);
   });
 
   it('第一行扣掉標記，續行從行首開始', () => {

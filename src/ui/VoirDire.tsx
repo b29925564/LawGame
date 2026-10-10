@@ -6,9 +6,12 @@ import { useT } from '../i18n';
 import { CommitBar } from './Commit';
 import { CardSheet } from './Desk';
 import { IdPhoto } from './IdPhoto';
+import { lookOf } from './jury/JuryBox';
+import { Tbd } from './jury/Tbd';
 import { useScope } from './lang';
 import { Speech } from './Portrait';
 import { Shell, Tabs } from './Shell';
+import { CourtCast } from './jury/CourtFace';
 import { Recap } from './ActCard';
 
 type Filter = 'all' | 'seated' | 'unasked';
@@ -33,8 +36,18 @@ function useMedia(q: string) {
  * 又躺在最底下。這裡收成一行一位，點開才看名單細節，
  * 額度釘在上面、決定按鈕釘在下面。
  */
+/** 法庭畫面：說話者頭像是剪影替身（P4-2）。 */
 export function VoirDire({ scene }: { scene: VoirDireScene }) {
+  return (
+    <CourtCast>
+      <VoirDireScreen scene={scene} />
+    </CourtCast>
+  );
+}
+
+function VoirDireScreen({ scene }: { scene: VoirDireScene }) {
   const { progress, askJuror, challengeJuror, strikeJuror, seatJury, advance } = useEpisode();
+  const episode = progress.episode;
   const st = voirDireState(progress, scene);
   const t = useT();
   const scope = useScope();
@@ -135,51 +148,53 @@ export function VoirDire({ scene }: { scene: VoirDireScene }) {
   const leftStrikes = scene.peremptories - st.struck.length;
 
   const list = (
-    <ul className="cands" aria-label={t('候選人')}>
-      {rows.map((c) => {
-        const i = pool.indexOf(c);
-        const by = goneBy(c.id);
-        const asked = st.asked.includes(c.id);
-        const cls = ['cand', by ? 'struck' : i >= scene.seats ? 'bench' : 'seat'];
-        if (sel === c.id) cls.push('on');
-        return (
-          <li key={c.id} className="cand-li">
-            <button
-              className={cls.join(' ')}
-              aria-pressed={sel === c.id}
-              onClick={() => pick(c.id)}
-            >
-              <span className="no">{by ? '–' : i + 1}</span>
-              <IdPhoto who={c.name} size={40} />
-              <span className="txt">
-                <strong>
-                  {t(c.name, scope)}
-                  <span>{t(c.job, scope)}</span>
-                </strong>
-                <span className="line">{t(c.sheet, scope)}</span>
-              </span>
-              <span className="st">
-                {by ? (
-                  <span className="gone">{by}</span>
-                ) : (
-                  i < scene.seats && <span className="seatno">{t('席 {n}', { n: i + 1 })}</span>
-                )}
-                {asked && <span>{t('已問')}</span>}
-              </span>
-            </button>
-            {filter === 'all' && i === scene.seats - 1 && pool.length > scene.seats && (
-              <p className="cutline">{t('以上 {n} 位入座・以下候補', { n: scene.seats })}</p>
-            )}
-          </li>
-        );
-      })}
-      {rows.length === 0 && <li className="muted">{t('這個篩選沒有人。')}</li>}
-    </ul>
+    <Tbd row bare>
+      <ul className="cands" aria-label={t('候選人')}>
+        {rows.map((c) => {
+          const i = pool.indexOf(c);
+          const by = goneBy(c.id);
+          const asked = st.asked.includes(c.id);
+          const cls = ['cand', by ? 'struck' : i >= scene.seats ? 'bench' : 'seat'];
+          if (sel === c.id) cls.push('on');
+          return (
+            <li key={c.id} className="cand-li">
+              <button
+                className={cls.join(' ')}
+                aria-pressed={sel === c.id}
+                onClick={() => pick(c.id)}
+              >
+                <span className="no">{by ? '–' : i + 1}</span>
+                <IdPhoto who={c.name} size={40} look={lookOf(episode, c.id)} />
+                <span className="txt">
+                  <strong>
+                    {t(c.name, scope)}
+                    <span>{t(c.job, scope)}</span>
+                  </strong>
+                  <span className="line">{t(c.sheet, scope)}</span>
+                </span>
+                <span className="st">
+                  {by ? (
+                    <span className="gone">{by}</span>
+                  ) : (
+                    i < scene.seats && <span className="seatno">{t('席 {n}', { n: i + 1 })}</span>
+                  )}
+                  {asked && <span>{t('已問')}</span>}
+                </span>
+              </button>
+              {filter === 'all' && i === scene.seats - 1 && pool.length > scene.seats && (
+                <p className="cutline">{t('以上 {n} 位入座・以下候補', { n: scene.seats })}</p>
+              )}
+            </li>
+          );
+        })}
+        {rows.length === 0 && <li className="muted">{t('這個篩選沒有人。')}</li>}
+      </ul>
+    </Tbd>
   );
 
   const profile = picked && (
     <section className="panel prof" aria-label={t(picked.name, scope)}>
-      <IdPhoto who={picked.name} size={96} />
+      <IdPhoto who={picked.name} size={96} look={lookOf(episode, picked.id)} />
       <div>
         <h3>{t(picked.name, scope)}</h3>
         <p className="sub">
@@ -257,7 +272,7 @@ export function VoirDire({ scene }: { scene: VoirDireScene }) {
         aria-label={t('席 {n}', { n: k + 1 }) + t('・') + name}
         onClick={() => pick(c.id)}
       >
-        <IdPhoto who={c.name} size={wide ? 72 : 28} />
+        <IdPhoto who={c.name} size={wide ? 72 : 28} look={lookOf(episode, c.id)} />
         <span className="n">{wide ? t('席 {n}', { n: k + 1 }) : k + 1}</span>
         <span className="nm2">{surname(name)}</span>
       </button>
@@ -270,14 +285,16 @@ export function VoirDire({ scene }: { scene: VoirDireScene }) {
         <span>{t('陪審席・{n} 席', { n: scene.seats })}</span>
         <span>{t('由名單上往下入座')}</span>
       </div>
-      {wide && scene.seats > 6 ? (
-        <>
-          <div className="seats back">{seatsIdx.slice(6).map(seatCell)}</div>
-          <div className="seats">{seatsIdx.slice(0, 6).map(seatCell)}</div>
-        </>
-      ) : (
-        <div className="seats">{seatsIdx.map(seatCell)}</div>
-      )}
+      <Tbd row bare>
+        {wide && scene.seats > 6 ? (
+          <div className="seat-rows">
+            <div className="seats back">{seatsIdx.slice(6).map(seatCell)}</div>
+            <div className="seats">{seatsIdx.slice(0, 6).map(seatCell)}</div>
+          </div>
+        ) : (
+          <div className="seats">{seatsIdx.map(seatCell)}</div>
+        )}
+      </Tbd>
     </section>
   );
 
@@ -316,7 +333,16 @@ export function VoirDire({ scene }: { scene: VoirDireScene }) {
   );
   const seatButton = (
     <button className="commit" disabled={!vd.canSeat(scene, st)} onClick={seatJury}>
-      <span aria-hidden>🔒 </span>
+      {/* 單色鎖（設計師第二輪：表情符號換成 currentColor 的 SVG）。 */}
+      <svg className="vd-lock" viewBox="0 0 12 14" aria-hidden focusable="false">
+        <path
+          d="M3.5 6.5V4.25a2.5 2.5 0 0 1 5 0V6.5"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+        />
+        <rect x="1.5" y="6.5" width="9" height="6.5" rx="1" fill="currentColor" />
+      </svg>
       {t('就用這 {n} 位', { n: scene.seats })}
     </button>
   );

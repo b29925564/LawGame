@@ -1,0 +1,200 @@
+{
+  "_note": "法庭說話者的剪影參數（設定集第 7.6 章鉤子表與「光的個性」；視覺設計師 #2 10-09 通過 main）。secondary 是設定集沒寫鉤子的次要角色，照設計師 10-09 第二次裁定重做（鉤子在受光側、坐高 ±12、照身分給燈、32px 與同集陪審員池一起測）。改動先問視覺設計師。",
+  "main": [
+    {
+      "id": "lucas",
+      "hair": "fringe",
+      "build": "medium",
+      "head": "narrow",
+      "lift": 8,
+      "light": "backrim"
+    },
+    {
+      "id": "rachel",
+      "hair": "bob",
+      "acc": ["pearl"],
+      "build": "narrow",
+      "head": "medium",
+      "lift": 8,
+      "light": "window"
+    },
+    {
+      "id": "ethan",
+      "hair": "messy",
+      "hunch": true,
+      "build": "medium",
+      "head": "medium",
+      "lift": -16,
+      "light": "flat"
+    },
+    {
+      "id": "marcus",
+      "hair": "slick",
+      "acc": ["highcollar", "pocketsq"],
+      "build": "wide",
+      "head": "medium",
+      "lift": 12,
+      "light": "back"
+    },
+    {
+      "id": "victoria",
+      "hair": "crop",
+      "acc": ["turtleneck"],
+      "build": "narrow",
+      "head": "narrow",
+      "lift": 16,
+      "light": "front"
+    },
+    {
+      "id": "logan",
+      "hair": "sidepart",
+      "square": true,
+      "build": "medium",
+      "head": "medium",
+      "lift": 0,
+      "light": "top"
+    },
+    {
+      "id": "rosa",
+      "hair": "tightcurl",
+      "acc": ["popped"],
+      "build": "medium",
+      "head": "narrow",
+      "lift": -20,
+      "light": "side"
+    },
+    {
+      "id": "devon",
+      "hair": "curly",
+      "glasses": "big",
+      "build": "narrow",
+      "head": "wide",
+      "lift": -20,
+      "light": "lamp"
+    },
+    {
+      "id": "catherine",
+      "hair": "ponytail",
+      "acc": ["arms"],
+      "build": "medium",
+      "head": "narrow",
+      "lift": 20,
+      "light": "right"
+    },
+    {
+      "id": "augustus",
+      "hair": "receding",
+      "robe": true,
+      "glasses": "halfmoon",
+      "build": "wide",
+      "head": "wide",
+      "lift": 4,
+      "light": "bench"
+    },
+    {
+      "id": "sophie",
+      "hair": "long",
+      "acc": ["clip"],
+      "build": "narrow",
+      "head": "medium",
+      "lift": -4,
+      "light": "window"
+    },
+    {
+      "id": "ray",
+      "hair": "crew",
+      "neck": 66,
+      "build": "wide",
+      "head": "medium",
+      "slope": 32,
+      "lift": 0,
+      "light": "top"
+    },
+    {
+      "id": "ellen",
+      "hair": "tightcurl",
+      "acc": ["collar", "chain"],
+      "glasses": "round",
+      "build": "medium",
+      "head": "wide",
+      "lift": 20,
+      "light": "neutral"
+    }
+  ],
+  "secondary": [
+    {
+      "id": "priya",
+      "hair": "bangs",
+      "glasses": "square",
+      "acc": ["scarf"],
+      "lift": 6,
+      "head": "medium",
+      "build": "medium",
+      "light": "screen"
+    },
+    {
+      "id": "omar",
+      "hair": "receding",
+      "beard": "full",
+      "lift": -12,
+      "head": "medium",
+      "build": "narrow",
+      "light": "sodium"
+    },
+    {
+      "id": "arthur",
+      "hair": "quiff",
+      "acc": ["collar"],
+      "lift": 0,
+      "head": "wide",
+      "build": "narrow",
+      "light": "daylight"
+    },
+    {
+      "id": "trevor",
+      "hair": "buzz",
+      "acc": ["collar"],
+      "lift": -6,
+      "head": "narrow",
+      "build": "narrow",
+      "light": "desk"
+    },
+    {
+      "id": "okafor",
+      "hair": "bald",
+      "beard": "pointed",
+      "glasses": "square",
+      "acc": ["pads"],
+      "lift": -12,
+      "head": "wide",
+      "build": "medium",
+      "light": "counsel"
+    },
+    {
+      "id": "marisol",
+      "hair": "topbun",
+      "acc": ["hoops", "scarf"],
+      "lift": 6,
+      "head": "narrow",
+      "build": "medium",
+      "light": "overcast"
+    },
+    {
+      "id": "fisher",
+      "hair": "bouffant",
+      "lift": -6,
+      "head": "medium",
+      "build": "medium",
+      "light": "hospital"
+    },
+    {
+      "id": "tang",
+      "hair": "scrubcap",
+      "acc": ["headphones"],
+      "lift": -12,
+      "head": "medium",
+      "build": "medium",
+      "light": "hospital"
+    }
+  ]
+}

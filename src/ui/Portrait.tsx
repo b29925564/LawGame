@@ -3,11 +3,14 @@ import type { Line } from '../engine/episode/schema';
 import { useT } from '../i18n';
 import { LUCAS, lucas } from './cast';
 import { useScope } from './lang';
+import { CourtFace, useInCourt } from './jury/CourtFace';
 import { MarkLine } from './Marks';
+import { prose } from './prose';
 import { VoLine } from './VoiceOver';
 
 /**
- * 角色頭像，4:5。盧卡斯用正式立繪（cast.ts）；其他人還是暫代版，用固定的五官元件畫出來，情緒換表情。
+ * 角色頭像，4:5。盧卡斯用正式立繪（cast.ts）；其他人在法庭是剪影替身（jury/CourtFace）。
+ * 法庭外的五官元件是待下架的舊暫代：使用者 10-09 決定配角在桌上一律用檔案照（IdPhoto 模板 B），換圖排給介面與操作 #2。
  */
 const palette: Record<string, string> = {
   盧卡斯: '#1f4e8c',
@@ -54,11 +57,14 @@ export function Portrait({
   decorative?: boolean;
 }) {
   const t = useT();
+  const inCourt = useInCourt();
   const a11y = decorative
     ? ({ 'aria-hidden': true } as const)
     : ({ role: 'img', 'aria-label': t(who) } as const);
   const color = palette[who] ?? '#4a5866';
   if (who === '旁白') return null;
+  // 法庭裡的配角是剪影替身（P4-2），不再用暫代的五官；盧卡斯照舊放立繪。
+  if (inCourt && who !== LUCAS) return <CourtFace who={who} />;
   const src = who === LUCAS ? lucas(mood, 144) : undefined;
   if (src)
     return (
@@ -92,9 +98,19 @@ export function Portrait({
 }
 
 /** 一行台詞。盧卡斯沒說出口的話不進對白框：記號交給 Marks，畫外字幕交給 VoiceOver。 */
-export function Speech({ line: raw, body }: { line: Line; body?: ReactNode }) {
+export function Speech({
+  line: raw,
+  body,
+  wrap = false,
+}: {
+  line: Line;
+  body?: ReactNode;
+  /** 中文詞不斷開、末行不留一兩個字（prose.tsx）。法庭裡（CourtCast）一律開；調解、理論、開場由呼叫的人開。 */
+  wrap?: boolean;
+}) {
   const t = useT();
   const scope = useScope();
+  const inCourt = useInCourt();
   // 英文模式查表；說話者的 who 留著中文給立繪配色用，畫面上顯示譯名。
   const line = { ...raw, text: t(raw.text, scope) };
   // 記號不是說出口的話，不進對白框（設計稿 inner-voice）。
@@ -108,13 +124,15 @@ export function Speech({ line: raw, body }: { line: Line; body?: ReactNode }) {
         <span>{line.text}</span>
       </p>
     );
-  if (line.who === '旁白') return <p className="narration">{body ?? line.text}</p>;
+  // 法庭裡的對白：中文詞不斷開、末行不留一兩個字（prose.tsx；設計師 #225 第三輪）。
+  const text = body ?? (wrap || inCourt ? prose(line.text) : line.text);
+  if (line.who === '旁白') return <p className="narration">{text}</p>;
   return (
     <p className="speech">
       <Portrait who={line.who} mood={line.mood} decorative />
       <span>
         <span className="who">{t(line.who)}</span>
-        {body ?? line.text}
+        {text}
       </span>
     </p>
   );

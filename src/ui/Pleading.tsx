@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import type { MotionAttempt } from '../engine/episode/desk';
 import type { Motion } from '../engine/episode/schema';
 import { useT } from '../i18n';
 import { useScope } from './lang';
+import { prose } from './prose';
 import { useCaseTerms } from './terms';
 
 /** 證物格的編號：①②③。 */
@@ -83,15 +84,25 @@ export function Pleading({
   // 題目是「聲請傳票：死者手錶的健康資料」，抬頭只放冒號後面那段。
   const label = t(m.label, scope);
   // 行號只寫整行：紙多高就寫幾行，最後一個號碼不要被切一半。
+  // 32px 格線對齊內文：量第一行的基線，格線和行號跟著它走，抬頭多高、哪種寬度都一樣（設計師第二輪）。
   const paper = useRef<HTMLElement>(null);
-  const [lines, setLines] = useState(16);
+  const base = useRef<HTMLSpanElement>(null);
+  const [grid, setGrid] = useState({ lines: 16, y: 20 });
   useEffect(() => {
     const el = paper.current;
     if (!el || typeof ResizeObserver === 'undefined') return;
-    const fit = () => setLines(Math.max(1, Math.floor((el.clientHeight - 44) / 32)));
+    const fit = () => {
+      const b = base.current;
+      // 探針是 0 高的 inline-block：它的底邊就是基線。
+      const y = b ? (((b.offsetTop - 31) % 32) + 32) % 32 : 20;
+      const lines = Math.max(1, Math.floor((el.clientHeight - y - 24) / 32));
+      setGrid((g) => (g.y === y && g.lines === lines ? g : { lines, y }));
+    };
     const ro = new ResizeObserver(fit);
     ro.observe(el);
     fit();
+    // 字型載入後抬頭的高度會變，紙不一定跟著變高。
+    void document.fonts?.ready.then(fit);
     return () => ro.disconnect();
   }, []);
   const topic =
@@ -100,9 +111,14 @@ export function Pleading({
       .slice(1)
       .join('：') || label;
   return (
-    <article ref={paper} className={received ? 'plead received' : 'plead'} aria-label={label}>
+    <article
+      ref={paper}
+      className={received ? 'plead received' : 'plead'}
+      aria-label={label}
+      style={{ '--grid-y': `${grid.y}px` } as CSSProperties}
+    >
       <div className="ln" aria-hidden>
-        {Array.from({ length: lines }, (_, i) => (
+        {Array.from({ length: grid.lines }, (_, i) => (
           <span key={i}>{i + 1}</span>
         ))}
       </div>
@@ -121,6 +137,7 @@ export function Pleading({
       </header>
       <div className="body">
         <p>
+          <span ref={base} className="baseline" aria-hidden />
           {t('聲請人請求本院')}
           {/* 空格和逗號綁在一起：逗號不要單獨掉到下一行。 */}
           <span className="glue">
@@ -139,7 +156,7 @@ export function Pleading({
           {t('並提出')}
           {support.map((s, i) => (
             <span key={i}>
-              {i > 0 && '、'}
+              {i > 0 && t('、')}
               {s}
             </span>
           ))}
@@ -147,9 +164,11 @@ export function Pleading({
         </p>
       </div>
       {ruling && (
+        // 裁定和具狀人也坐在 32px 格線上：每一行的行框用內文的字型撐（17px／32px），小字只是行內的 span，
+        // 基線就和上面的內文落在同一組格線上（設計師 #225 第三輪：「整張紙都算」）。
         <div className={ruling.ok ? 'judge ok' : 'judge no'}>
           <small>{t('裁定・雷耶斯法官')}</small>
-          {ruling.quote ?? t(ruling.ok ? '准。' : '駁回。')}
+          <span className="q">{prose(ruling.quote ?? t(ruling.ok ? '准。' : '駁回。'))}</span>
           <CourtStamp ok={ruling.ok} />
         </div>
       )}

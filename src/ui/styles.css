@@ -241,6 +241,7 @@ button.primary:disabled {
   border: 1px solid var(--border-strong);
   color: var(--ink-muted);
   box-shadow: none;
+  cursor: not-allowed;
 }
 button.primary:hover:not(:disabled) {
   background: var(--hl);
@@ -3134,8 +3135,9 @@ fieldset.relations.compact {
   .scene > :nth-child(n + 3) {
     animation-delay: 0.08s;
   }
+  /* 異議面板只是一般介面淡入，不 slam、不回彈（設定集第 10.2、10.3 章）。 */
   .objection {
-    animation: slam 0.38s var(--ease) both;
+    animation: fade var(--dur-ui) var(--ease) both;
   }
   .board-note {
     animation: fade var(--dur-ui) var(--ease) both;
@@ -3152,9 +3154,6 @@ fieldset.relations.compact {
   .menu-panel {
     animation: drop 0.24s var(--ease) both;
     transform-origin: top right;
-  }
-  .juror.react .face {
-    animation: pop 0.36s var(--ease);
   }
   /* 黑條蓋上：四格斷奏，從左邊拉過去（設定集第 9 章 --dur-redact-in）。 */
   .redact {
@@ -3210,16 +3209,6 @@ fieldset.relations.compact {
       transform: translateY(6px);
     }
   }
-  @keyframes slam {
-    0% {
-      opacity: 0;
-      transform: scale(1.04);
-    }
-    60% {
-      opacity: 1;
-      transform: scale(0.995);
-    }
-  }
   @keyframes sheet-up {
     from {
       transform: translateY(100%);
@@ -3229,11 +3218,6 @@ fieldset.relations.compact {
     from {
       opacity: 0;
       transform: translateY(-6px) scale(0.98);
-    }
-  }
-  @keyframes pop {
-    40% {
-      transform: scale(1.18);
     }
   }
   @keyframes mark {
@@ -3942,13 +3926,14 @@ mark.hl::after {
 .stamp {
   --ink: var(--stamp-ui);
   --rot: -3deg;
+  /* 雙框的內框和外框之間留白多寬（內框畫在 ::after）。 */
+  --stamp-gap: 2px;
+  position: relative;
   display: inline-grid;
   justify-items: center;
   gap: 4px;
-  padding: 7px 14px 6px;
+  padding: 10px 17px 9px;
   border: 2px solid var(--ink);
-  outline: 1px solid var(--ink);
-  outline-offset: 2px;
   border-radius: 2px;
   color: var(--ink);
   rotate: var(--rot);
@@ -3957,6 +3942,18 @@ mark.hl::after {
   /* 印泥濃淡：雜訊把少數點吃掉 */
   mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='2' seed='7'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -2.6 0 0 0 2.3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")
     0 0 / 160px 160px;
+}
+/*
+ * 雙框的內框畫在外框裡面：上面那層印泥 mask 只留邊框以內，畫在外面的 outline 會被整條切掉，
+ * 章就只剩一條線（設計師 #225 第三輪）。外框 2px（小章 1.5px）＋留白＋內框 1px。
+ */
+.stamp::after {
+  content: '';
+  position: absolute;
+  inset: var(--stamp-gap);
+  border: 1px solid var(--ink);
+  border-radius: 1px;
+  pointer-events: none;
 }
 .stamp b {
   font: 900 22px/1 var(--font-doc);
@@ -3980,9 +3977,9 @@ mark.hl::after {
   grid-auto-flow: column;
   align-items: baseline;
   gap: 8px;
-  padding: 3px 8px 2px;
+  --stamp-gap: 1.5px;
+  padding: 5px 10px 4px;
   border-width: 1.5px;
-  outline: none;
   --rot: -2deg;
 }
 .stamp.sm b {
@@ -4546,10 +4543,10 @@ button.iou[aria-pressed='true'] {
       clip-path: inset(0 0 100% 0);
     }
   }
+  /* 蓋章只把墨色從 60% 拉到 100%，不縮放（設定集第 10.2 章 --dur-stamp）。 */
   @keyframes stamp {
     from {
       opacity: 0.6;
-      scale: 1.12;
     }
   }
   @keyframes ignite {
@@ -4590,9 +4587,9 @@ button.iou[aria-pressed='true'] {
     }
   }
 }
+/* 章在減少動態時直接出現，不淡入（視覺設計師 #2）。 */
 @media (prefers-reduced-motion: reduce) {
   .sticky.enter,
-  .stamp.enter,
   .vo-veil,
   .vo-frame {
     animation: iv-fade var(--dur-rm) linear both;
@@ -5791,8 +5788,9 @@ button.iou[aria-pressed='true'] {
   flex-wrap: wrap;
   gap: 8px;
 }
+/* 超過授權、未同意：警告用墨色 600＋圈起來的驚嘆號（court.css），紅只代表成立與有罪傾向。 */
 .stats.authority dd.over {
-  color: var(--bad);
+  color: var(--text);
   font-weight: 600;
 }
 

@@ -13,18 +13,32 @@ import {
   useEpisode,
 } from '../engine/game';
 import { ledger, type LedgerItem } from '../engine/ledger';
+import { useSettings } from '../engine/settings';
 import { useMoney, useT } from '../i18n';
 import { CardPick, EvidenceDrawer } from './Evidence';
 import { useScope } from './lang';
 import { IdPhoto } from './IdPhoto';
+import { JurorFace, lookOf } from './jury/JuryBox';
 import { JuryStart } from './JuryStart';
 import { Tally } from './Marks';
 import { Speech } from './Portrait';
+import { prose } from './prose';
 import { Shell, Tabs } from './Shell';
 import { useState } from 'react';
+import { CourtCast, CourtFace } from './jury/CourtFace';
+import { castLook } from './jury/cast';
 
 /** 結辯與判決（企劃書 6.9.8、6.10）：挑三個論點排順序、選基調，然後看三輪評議。 */
+/** 法庭畫面：說話者頭像是剪影替身（P4-2）。 */
 export function Closing({ scene }: { scene: ClosingScene }) {
+  return (
+    <CourtCast>
+      <ClosingScreen scene={scene} />
+    </CourtCast>
+  );
+}
+
+function ClosingScreen({ scene }: { scene: ClosingScene }) {
   const { progress, pickArg, setTone, deliver, advance } = useEpisode();
   const st = closingState(progress, scene);
   const terms = useCaseTerms();
@@ -108,7 +122,7 @@ export function Closing({ scene }: { scene: ClosingScene }) {
     <Shell
       resetKey={tab}
       head={
-        <header className="panel-head bench">
+        <header className="panel-head bench closing-head">
           <p className="eyebrow">
             {t(scene.act, scope)}
             {t('・')}
@@ -122,7 +136,7 @@ export function Closing({ scene }: { scene: ClosingScene }) {
             {t('・ 基調 {state}', { state: st.tone ? t('已選') : t('未選') })}
           </p>
           {need < scene.picks && (
-            <p className="bad-text small">
+            <p className="court-warn small">
               {t('手上的論點不夠，結辯會空 {n} 格，{other}的說法沒人反駁。', {
                 n: scene.picks - need,
                 other: t(terms.other, scope),
@@ -130,7 +144,7 @@ export function Closing({ scene }: { scene: ClosingScene }) {
             </p>
           )}
           {!promisesOf(progress).theory && (
-            <p className="bad-text small">{t('沒有案件理論，論點說服力打七折。')}</p>
+            <p className="court-warn small">{t('沒有案件理論，論點說服力打七折。')}</p>
           )}
           {/* 你帶進評議室的東西：理論的代價是選擇，不是失誤，用中性色（UX 規格 decision-cost §二）。 */}
           {th && (
@@ -166,7 +180,7 @@ export function Closing({ scene }: { scene: ClosingScene }) {
             </div>
           )}
           {(st.broken ?? []).length > 0 && (
-            <p className="bad-text small">
+            <p className="court-warn small">
               {t('開場許下的 {n} 個承諾沒有兌現，陪審員記得你說過的話。', { n: st.broken.length })}
             </p>
           )}
@@ -230,7 +244,7 @@ export function Closing({ scene }: { scene: ClosingScene }) {
                   <span className="num">{i + 1}.</span>{' '}
                   {t(args.find((a) => a.id === id)?.name ?? '', scope)}
                   {i === st.picked.length - 1 && st.picked.length === need && (
-                    <span className="good"> {t('・最後講，×1.3')}</span>
+                    <span className="last"> {t('・最後講，×1.3')}</span>
                   )}
                 </li>
               ))}
@@ -247,7 +261,7 @@ export function Closing({ scene }: { scene: ClosingScene }) {
               <Speech key={i} line={l} />
             ))}
           </div>
-          <div className="stack">
+          <div className="stack closing-tones">
             {scene.tones.map((tone) => (
               <CardPick
                 key={tone.id}
@@ -277,7 +291,7 @@ const surname = (name: string) =>
     .filter(Boolean)
     .pop() ?? name;
 
-/** 票格：站在你這邊的票實心（--good），另一邊空心。看的是對你有沒有利，不看有責或無罪。 */
+/** 票格：站在你這邊的票實心墨色，另一邊空心。看的是對你有沒有利，不看有責或無罪。 */
 function Pips({ ours }: { ours: boolean[] }) {
   return (
     <span className="vpips" aria-hidden>
@@ -317,8 +331,12 @@ function Verdict({
   const t = useT();
   const scope = useScope();
   const money = useMoney();
+  const episode = useEpisode((s) => s.progress.episode);
   const v = st.verdict!;
   const award = st.award;
+  // 理論起點對陪審團寫下的過失比例：是遊戲讀數，只在「顯示數值」打開時出現（設計師第二輪）。
+  const { showNumbers } = useSettings();
+  const claimed = showNumbers && award?.base !== undefined;
   const p = award?.punitive;
   const jurors = rules?.jurors ?? [];
   const n = jurors.length;
@@ -410,7 +428,18 @@ function Verdict({
           <div className="amt">
             <small>{t('被告應付')}</small>
             <b>
-              {splitMoney(money(owed)).n}
+              {/* 等寬字的小數點、千分位佔一整格，「$7.93」會讀成「$7 . 93」：標點收窄（設計師 #225 第三輪）。 */}
+              {splitMoney(money(owed))
+                .n.split(/([.,])/)
+                .map((x, i) =>
+                  i % 2 ? (
+                    <span key={i} className="sep">
+                      {x}
+                    </span>
+                  ) : (
+                    x
+                  ),
+                )}
               <i>{splitMoney(money(owed)).unit}</i>
             </b>
           </div>
@@ -446,18 +475,7 @@ function Verdict({
                     </div>
                     <div className="fq">
                       <span className="qn">3.</span>
-                      <span className="ql">
-                        {t('死者過失比例')}
-                        {award.base !== undefined && award.base !== award.fault && (
-                          <small>
-                            {t('理論 {base}%，票數浮動 {d}', {
-                              base: award.base,
-                              d: `${award.fault > award.base ? '+' : '−'}${Math.abs(award.fault - award.base)}`,
-                            })}
-                          </small>
-                        )}
-                        {award.why && <small>{t(award.why, scope)}</small>}
-                      </span>
+                      <span className="ql">{t('死者過失比例')}</span>
                       <span className="qv">
                         {award.fault}
                         <i>%</i>
@@ -520,11 +538,21 @@ function Verdict({
               <span className="ledger-key">{t('下次可以試')}</span> {tips[top[0].kind]}
             </p>
           )}
-          {items.length > 0 && (
+          {(items.length > 0 || claimed || award?.why) && (
             <details className="fold ledger">
               <summary>
                 {t('完整帳目')} <span className="faint">{t('每一筆怎麼算出來的')}</span>
               </summary>
+              {/* 判決書是世界裡的文件，不印遊戲的設計文字：理論怎麼算過失、起點和陪審團寫下的差多少，都收在帳目裡（設計師第二輪）。 */}
+              {award?.why && <p className="ledger-why">{t(award.why, scope)}</p>}
+              {claimed && (
+                <p className="ledger-claim">
+                  {t('理論起點：死者過失 {base}%　陪審團寫下：{fault}%', {
+                    base: award?.base ?? 0,
+                    fault: award?.fault ?? 0,
+                  })}
+                </p>
+              )}
               <ol className="ledger-reasons">
                 {items.map((it, i) => (
                   <li key={i} className={it.kind === 'punitive' ? 'money' : undefined}>
@@ -558,8 +586,9 @@ function Verdict({
                 ))}
               </ol>
               <p className="trend-need">
-                {t('站你這邊 {a} 位，需要 {b} 位', { a: now, b: need })}
-                {now < need && <strong> {t('差 {k} 位', { k: need - now })}</strong>}
+                {/* 寫明是評議後：上面「庭審結束」那排點是庭審結束當下，數字不一樣（設計師 #225 第三輪）。 */}
+                {t('評議後：站你這邊 {a} 位，需要 {b} 位', { a: now, b: need })}
+                {now < need && <strong>{t('，差 {k} 位', { k: need - now })}</strong>}
               </p>
             </section>
           )}
@@ -600,9 +629,13 @@ function Verdict({
           {readOut && (
             <section className="panel fore">
               {fore ? (
-                <IdPhoto
-                  who={fore.label.split('・').slice(0, -1).join('・') || fore.label}
-                  size={40}
+                // 陪審團長是陪審員：剪影替身，姿勢與影子跟著他的心證（設計師 10-09）。
+                <JurorFace
+                  look={lookOf(episode, fore.id)}
+                  v={st.jury[fore.id] ?? 0}
+                  seat={t(fore.label, scope)}
+                  // 標籤寫全名（「海倫・杜根」，不是只有姓）：label 是「名・姓・職業」，去掉最後的職業。
+                  name={foreParts.length > 1 ? foreParts.slice(0, -1).join('・') : foreParts[0]}
                 />
               ) : (
                 <span />
@@ -632,18 +665,24 @@ function Verdict({
                 );
               if (l.mark || l.voice === 'off' || l.thought) return <Speech key={i} line={l} />;
               const text = t(l.text, scope);
-              if (l.who === '旁白') return <p key={i}>{text}</p>;
-              // 「（訊息）漂亮。」→ 寄件人一行寫「亞瑟・卡爾德・訊息」，內文只留話。
-              const via = text.match(/^[（(]([^）)]{1,12})[）)]\s*/);
+              if (l.who === '旁白') return <p key={i}>{prose(text)}</p>;
+              // 「（訊息）漂亮。」→ 寄件人一行寫「亞瑟・卡爾德・訊息」，內文只留話。只有真的頻道（訊息、電話、信、便條）
+              // 才算不在場；「（他沒有回頭）」是舞台指示，人還在庭上（設計師第二輪）。
+              const via = text.match(CHANNEL);
               return (
                 <div key={i} className="msg">
-                  <IdPhoto who={l.who} size={28} />
+                  {/* 人在法庭：剪影替身；訊息、電話不在場：證件照（設計師 10-09：桌上證件照、庭上剪影）。 */}
+                  {!via && castLook(l.who) ? (
+                    <CourtFace who={l.who} />
+                  ) : (
+                    <IdPhoto who={l.who} size={28} />
+                  )}
                   <div>
                     <small>
                       {t(l.who)}
                       {via && t('・') + via[1]}
                     </small>
-                    {via ? text.slice(via[0].length) : text}
+                    {prose(via ? text.slice(via[0].length) : text)}
                   </div>
                 </div>
               );
@@ -657,6 +696,8 @@ function Verdict({
     </main>
   );
 }
+
+const CHANNEL = /^[（(](訊息|電話|信|便條|Text|Phone|On the phone|Letter|Note)[）)]\s*/;
 
 function Money({ v }: { v: string }) {
   const { n, unit } = splitMoney(v);

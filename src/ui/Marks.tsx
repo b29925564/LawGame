@@ -426,14 +426,20 @@ export function Iou({
   const { yes } = useCaseTerms();
   const t = useT();
   const scope = useScope();
+  // 存根直排：號碼兩位數橫排成一格（text-combine-upright），不會一個數字一行（設計師第二輪）。
+  const [before, after = ''] = t('借據 {n}', { n: '\u0001' }).split('\u0001');
   return (
     <div className="iou" data-state={state}>
-      <div className="iou-stub">{t('借據 {n}', { n })}</div>
+      <div className="iou-stub">
+        {before}
+        <span className="no">{n}</span>
+        {after}
+      </div>
       <div className="iou-body">
         <header>
           <b>{t('借據')}</b>
         </header>
-        <p className="iou-text">{t(text, scope)}</p>
+        <p className="iou-text">{prose(t(text, scope))}</p>
         <dl className="iou-terms">
           {backing && (
             <div>
@@ -452,7 +458,7 @@ export function Iou({
         </dl>
         <footer>
           <span className="sig">{t('葛雷')}</span>
-          <span className="to">{t('債權人\u3000陪審團')}</span>
+          <span className="to">{t('債權人・陪審團')}</span>
         </footer>
         {state === 'kept' && <Stamp text="已兌現" sm />}
         {state === 'broken' && <Stamp text="逾期未兌現" sm />}
