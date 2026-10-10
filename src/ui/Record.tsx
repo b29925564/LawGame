@@ -8,9 +8,10 @@ import {
   type RefObject,
 } from 'react';
 import { JUDGE, YOU } from '../engine/episode/trial';
+import { batesAt } from '../engine/bates';
 import { episodeOf } from '../engine/game';
 import type { Progress } from '../engine/save';
-import { useLang, useT } from '../i18n';
+import { preload, tIn, useCatalog, useLang, useT, type Lang } from '../i18n';
 import { useScope } from './lang';
 import {
   CJK_PUNCT,
@@ -31,21 +32,25 @@ const SPEAKER: Record<string, string> = { [JUDGE]: '法官', [YOU]: '葛雷律�
 
 /**
  * 庭上的話轉成筆錄的句子。stricken＝法官下令整段刪除這位證人的證詞：她說過的每一句都蓋上黑條。
+ * 每句另帶另一種語言的版本（twin），排版時兩種語言共用同一套頁行。中文模式也要英文表，
+ * 所以這裡先載進來；載好之前照中文排，載好後重排一次。
  */
 export function useCourtEntries(
   log: readonly { who: string; text: string; struck?: boolean }[],
   witness: string,
   stricken = false,
 ): RecordEntry[] {
-  const t = useT();
   const scope = useScope();
-  const en = useLang((s) => s.lang) === 'en';
+  const lang = useLang((s) => s.lang);
+  const catalog = useCatalog((s) => s.n);
+  useEffect(preload, []);
   // 法庭狀態每次重畫都是重新推出來的新陣列：用內容當 key，句子沒變就沿用同一份筆錄。
   const key = log.map((l) => `${l.who}\u0002${l.text}\u0002${l.struck ? 1 : 0}`).join('\u0001');
   return useMemo(() => {
     const kinds = kindsOf(log, witness, { judge: JUDGE, narrator: NARRATOR });
     const rulings = rulingsOf(log, { lawyer: YOU, judge: JUDGE, witness });
-    return log.map((l, i) => {
+    const say = (l: (typeof log)[number], i: number, in_: Lang) => {
+      const t = (zh: string, arg?: string | Record<string, string>) => tIn(in_, zh, arg);
       const kind = kinds[i];
       const name = t(SPEAKER[l.who] ?? l.who, 'record');
       const tag =
@@ -54,23 +59,26 @@ export function useCourtEntries(
           : kind === 'a'
             ? t('答', 'record')
             : kind === 'say'
-              ? en
+              ? in_ === 'en'
                 ? `${name.toUpperCase()}:`
                 : `${name}：`
               : '';
       const text = t(l.text, scope);
+      // 旁白寫進筆錄是括號裡的說明；本來就有括號的不再包一層。
+      const note = kind === 'note' && !/^[（(]/.test(text);
+      return { tag, text: note ? t('（{text}）', { text }) : text };
+    };
+    const other: Lang = lang === 'zh' ? 'en' : 'zh';
+    return log.map((l, i) => {
       const redact: Redaction | undefined = l.struck
         ? '異議成立'
         : stricken && l.who === witness
           ? '已自紀錄刪除'
           : undefined;
-      // 旁白寫進筆錄是括號裡的說明；本來就有括號的不再包一層。
-      const note = kind === 'note' && !/^[（(]/.test(text);
-      return { kind, tag, text: note ? t('（{text}）', { text }) : text, redact, ...rulings[i] };
+      return { kind: kinds[i], ...say(l, i, lang), redact, ...rulings[i], twin: say(l, i, other) };
     });
-    // t 每次重畫都是新的函式；跟著語言變就好。
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key, witness, stricken, scope, en]);
+  }, [key, witness, stricken, scope, lang, catalog]);
 }
 
 // 紙的左右（em）：行號欄＋雙直線＋內距、右內距，再留一個字給行尾掛出去的標點（中文全形 1em、英文 0.6em），
@@ -173,17 +181,24 @@ function useInstant() {
   return [on, set] as const;
 }
 
+/** 一卷筆錄印在紙上的東西：卷號（頁首），以及第幾張紙的 Bates（頁首與頁尾都用這一個）。 */
+export interface Volume {
+  vol: number;
+  bates: (sheet: number) => string;
+}
+
 /**
- * 筆錄每頁右下的 Bates（設定集第 9 章）：本事務所留存的那份＝WH-，集數，T＝庭審筆錄第幾卷（這一集的第幾場庭審）。
- * 全域唯一的編號表歸 遊戲系統（差距表 P2-1）；筆錄用自己的 T 系列，不會撞號。
+ * 筆錄的卷與 Bates（設定集第 9 章；計畫 p2-1/bates-plan.md）：卷＝這一集的第幾場庭審（含辯方證人）；
+ * Bates 是本所序列，那一場頁段的第一頁加第幾張（engine/bates.ts）。紙上印的頁碼另外算，庭審從第 1 頁起。
  */
-export function batesOf(p: Progress, sceneId: string): string {
+export function batesOf(p: Progress, sceneId: string): Volume {
   const ep = episodeOf(p);
+  const at = ep.scenes.findIndex((s) => s.id === sceneId);
   const vol =
     ep.scenes
       .filter((s) => s.type === 'trial' || s.type === 'defense')
       .findIndex((s) => s.id === sceneId) + 1;
-  return `WH-E${String(ep.number).padStart(2, '0')}-T${Math.max(1, vol)}-`;
+  return { vol: Math.max(1, vol), bates: (sheet) => batesAt(ep, at, sheet) };
 }
 
 /** 中文的刪節號、破折號、彎引號換回中文字型（寬度在 record.ts 已經照全形算）。 */
@@ -210,7 +225,7 @@ function punct(text: string) {
  * until：只放到第幾句之前（休庭頁折起來的前半段）。
  * live：庭上一邊進行一邊長的那份（逐行出現、翻到目前這一頁、紙張補滿 25 行）。
  * fit：框的高度由版面決定，行距收到一頁 25 行一次放得下（法庭左欄）。
- * bates：每頁右下的編號前綴（batesOf）；不給就不印。
+ * bates：卷號與每頁的 Bates（batesOf）；不給就不印。
  */
 export function CourtRecord({
   entries,
@@ -226,7 +241,7 @@ export function CourtRecord({
   until?: number;
   live?: boolean;
   fit?: boolean;
-  bates?: string;
+  bates?: Volume;
   className?: string;
 }) {
   const t = useT();
@@ -235,9 +250,21 @@ export function CourtRecord({
   // 行號也不會因為字級不同而跑掉。
   const granted = stampEm(t('成立', 'record'), zh, 11);
   const overruled = stampEm(t('駁回', 'record'), zh, 11);
+  // 另一種語言的章寬：兩種語言排在同一套頁行上（見 useCourtEntries）。
+  const other = zh ? 'en' : 'zh';
+  const twinGranted = stampEm(tIn(other, '成立', 'record'), !zh, 11);
+  const twinOverruled = stampEm(tIn(other, '駁回', 'record'), !zh, 11);
+  const catalog = useCatalog((s) => s.n);
   const rows = useMemo(
-    () => layout(entries, measureFor(zh), zh, (r) => (r === '成立' ? granted : overruled)),
-    [entries, zh, granted, overruled],
+    () =>
+      layout(entries, measureFor(zh), zh, (r) => (r === '成立' ? granted : overruled), {
+        measure: measureFor(!zh),
+        zh: !zh,
+        stamp: (r) => (r === '成立' ? twinGranted : twinOverruled),
+      }),
+    // catalog：英文表載好後章上的英文字才對。
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [entries, zh, granted, overruled, twinGranted, twinOverruled, catalog],
   );
   const shown = rows.filter((r) => r.entry >= from && r.entry < until);
   const box = useRef<HTMLDivElement>(null);
@@ -303,22 +330,20 @@ export function CourtRecord({
 
   // 頁首、行號、Bates 是紙上印好的東西：用屬性交給 CSS 畫，不進文字內容，報讀與搜尋都只讀到證詞本身。
   // 每張頁首都帶卷、頁、Bates；手機上每張都黏在框頂，下一頁的頁首捲上來時蓋掉上一張，
-  // 所以頁首上的頁碼永遠是它底下那幾行的頁（設計師 10-09）。卷＝Bates 裡的 T。
-  const vol = bates && /-T(\d+)-$/.exec(bates)?.[1];
+  // 所以頁首上的頁碼永遠是它底下那幾行的頁（設計師 10-09）。
+  // 庭審筆錄從第 1 頁起，紙上印的頁碼就是第幾張；節錄（證詞錄取）的起始頁是內容資料，Bates 照樣是第幾張。
   const pageHead = (page: number) => (
     <span
       className="rec-head"
       aria-hidden
       data-l={t('審判筆錄')}
-      data-v={vol ? t('第 {n} 卷', { n: vol }) : undefined}
+      data-v={bates ? t('第 {n} 卷', { n: bates.vol }) : undefined}
       data-r={t('第 {n} 頁', { n: page })}
-      data-b={bates ? `${bates}${String(page).padStart(4, '0')}` : undefined}
+      data-b={bates?.bates(page)}
     />
   );
   const pageFoot = (page: number) =>
-    bates && (
-      <span className="rec-foot" aria-hidden data-b={`${bates}${String(page).padStart(4, '0')}`} />
-    );
+    bates && <span className="rec-foot" aria-hidden data-b={bates.bates(page)} />;
 
   // 依句子分段：一句話一個 <p>，報讀時整句念完；行號與換頁是裝飾。
   const groups: RecordRow[][] = [];
@@ -336,7 +361,8 @@ export function CourtRecord({
       : [];
   const labelW = (label: string) => textWidth(t(label), zh) * 0.75 + 1.2;
   // 目前行：庭上那份的最後一行，跟著那一行一起出現。
-  const current = live ? last?.index : undefined;
+  // 句尾為了對齊另一種語言補的空行不算（見 useCourtEntries）。
+  const current = live ? ([...shown].reverse().find((r) => r.text) ?? last)?.index : undefined;
   const fresh = (i: number) => animate && i >= firstNew;
 
   return (
@@ -379,6 +405,8 @@ export function CourtRecord({
             const e = entries[g[0].entry];
             const label = e.redact ? t(e.redact) : '';
             const endRow = g[g.length - 1].index;
+            // 裁定章蓋在有字的最後一行，不蓋在句尾補的空行上。
+            const textEnd = ([...g].reverse().find((r) => r.text) ?? g[g.length - 1]).index;
             // 章在法官那一句出現之後落下（打字 → 一刀黑 → 法官的沉默 → 小章）；黑條在章落下後抽走。
             const benchEnd = lastRowOf(g[0].entry + 1);
             const stampK = (benchEnd >= 0 ? benchEnd : endRow) - firstNew + 1;
@@ -411,9 +439,11 @@ export function CourtRecord({
                       >
                         {r.first && e.tag && <b className="rec-tag">{e.tag} </b>}
                         {e.redact ? (
-                          <span className="rec-bar" aria-hidden>
-                            {r.first && <small>{label}</small>}
-                          </span>
+                          (r.text || r.first) && (
+                            <span className="rec-bar" aria-hidden>
+                              {r.first && <small>{label}</small>}
+                            </span>
+                          )
                         ) : (
                           <span className="rec-tx">
                             {zh ? punct(r.text) : r.text}
@@ -422,7 +452,7 @@ export function CourtRecord({
                           </span>
                         )}
                         {r.space && ' '}
-                        {e.ruling && r.index === endRow && (
+                        {e.ruling && r.index === textEnd && (
                           <span
                             className={`stamp sm rec-stamp${isNew ? ' new' : ''}${
                               // 這一行已經寫到紙邊、章放不下：章貼著紙的右緣蓋，壓到句尾也不出紙（第一道關卡：英文 SUSTAINED 出界）。

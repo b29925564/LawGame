@@ -1,6 +1,7 @@
 import { TERMS } from '../jury';
 import type {
   When,
+  Card,
   DefenseScene,
   DepositionScene,
   DeskScene,
@@ -73,6 +74,7 @@ export function validateEpisode(e: Episode): string[] {
   }
   effectErrors(e, errors);
   custodyErrors(e, errors);
+  batesErrors(e, errors);
   const { check } = whenChecker(e, errors);
   e.disposition?.forEach((d, i) => check(d.when, `登錄表最後一行第 ${i + 1} 項`));
   openingErrors(e, errors);
@@ -500,6 +502,52 @@ function defenseErrors(s: DefenseScene, e: Episode, errors: string[]) {
 
 /** 判決、收場、懲罰性賠償要等結辯之後才知道。 */
 const before = (w: When) => !!(w.verdict || w.outcome || w.deal || w.punitive !== undefined);
+
+/**
+ * Bates 與出處（設定集第 9 章 :71、:117；設計師 bates-review.md）：
+ * - 整集的 Bates 跨前綴一起查重複（卡片、batesIf 每條分支、照片沖印本、錄影）。
+ * - 每張紙至少有一項出處：Bates、頁行、案號收文、或陳述的時間與製作人。
+ * - 錄取時鎖成宣誓陳述或問出來的卡片，頁行要和那一題寫的一樣（勘誤表才找得到那一行）。
+ */
+function batesErrors(e: Episode, errors: string[]) {
+  const seen = new Map<string, string>();
+  const claim = (bates: string, where: string) => {
+    const was = seen.get(bates);
+    if (was) errors.push(`Bates ${bates} 重複：${was}、${where}`);
+    else seen.set(bates, where);
+  };
+  const cards = new Map<string, Card>();
+  for (const s of e.scenes) if (s.type === 'desk') for (const c of s.cards) cards.set(c.id, c);
+  for (const c of cards.values()) {
+    if (c.bates) claim(c.bates, `卡片 ${c.id}`);
+    c.batesIf?.forEach((b, i) => claim(b.bates, `卡片 ${c.id} 的 batesIf 第 ${i + 1} 筆`));
+    if (c.photo?.bates) claim(c.photo.bates, `卡片 ${c.id} 的照片`);
+    if (
+      c.kind !== '論點' &&
+      !(c.bates || c.batesIf || c.photo?.bates || c.cite || c.filed || c.taken)
+    )
+      errors.push(`卡片 ${c.id} 沒有出處：要寫 bates、cite、filed 或 taken 其中一項`);
+    // 裁定卡（名稱以「裁定」開頭）是法院自己發的：章是准予／駁回，不是收文。
+    if (c.filed && c.name.startsWith('裁定') && !c.filed.ruling)
+      errors.push(`裁定卡 ${c.id} 的 filed 要寫 ruling（granted 或 denied）`);
+    if (c.filed?.ruling && !c.name.startsWith('裁定'))
+      errors.push(`卡片 ${c.id} 不是裁定，filed 不能寫 ruling`);
+  }
+  for (const s of e.scenes) {
+    if (s.type !== 'deposition') continue;
+    if (s.video) claim(s.video.bates, `證詞錄取 ${s.id} 的錄影`);
+    for (const q of s.script) {
+      if (!q.cite) continue;
+      for (const id of [...(q.anchors ? [q.anchors] : []), ...q.gives]) {
+        const c = cards.get(id);
+        if (c?.cite && c.cite !== q.cite)
+          errors.push(
+            `卡片 ${id} 的頁行 ${c.cite} 和證詞錄取 ${s.id} 第 ${q.id} 題的 ${q.cite} 對不上`,
+          );
+      }
+    }
+  }
+}
 
 /** 保管鏈的進度條件：引用的東西要存在；證物在開庭前就經手完了，不能依判決或結果分支。 */
 function custodyErrors(e: Episode, errors: string[]) {

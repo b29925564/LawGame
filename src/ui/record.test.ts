@@ -1,4 +1,7 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { parse } from 'yaml';
+import { episodes } from '../content';
 import {
   kindsOf,
   layout,
@@ -114,5 +117,61 @@ describe('筆錄排版', () => {
     expect(r[3]).toEqual({ unbar: true });
     // 法官叫停（耐心用完）：沒有回答，只有章。
     expect(rulingsOf(overruled.slice(0, 3), who)[1]).toEqual({ ruling: '駁回' });
+  });
+});
+
+describe('中英文的頁行一樣（設計師 bates-review.md 第 3 點）', () => {
+  const catalog: Record<string, string> = Object.assign(
+    {},
+    ...['ep1', 'ep2'].map((f) =>
+      parse(readFileSync(new URL(`../content/en/${f}.yaml`, import.meta.url), 'utf8')),
+    ),
+  );
+  const en = (zh: string, scope: string) => catalog[`${scope}::${zh}`] ?? catalog[zh] ?? zh;
+  const twinOf = (zh: boolean) => ({ measure: measureFor(!zh), zh: !zh, stamp: () => 0 });
+  const starts = (rows: ReturnType<typeof layout>) =>
+    rows.filter((r) => r.first).map((r) => `${r.entry}@${r.page}:${r.line}`);
+
+  for (const ep of Object.values(episodes))
+    for (const s of ep.scenes) {
+      if (s.type !== 'trial') continue;
+      it(`${s.id}：每句的起始頁行在兩種語言相同`, () => {
+        const lines = s.witness.direct.flatMap((d) => [
+          { kind: 'q' as const, zh: d.q, en: en(d.q, s.id) },
+          { kind: 'a' as const, zh: d.a, en: en(d.a, s.id) },
+        ]);
+        expect(lines.some((l) => l.en !== l.zh)).toBe(true);
+        const zhEntries: RecordEntry[] = lines.map((l) => ({
+          kind: l.kind,
+          tag: l.kind === 'q' ? '問' : '答',
+          text: l.zh,
+          twin: { tag: l.kind === 'q' ? 'Q.' : 'A.', text: l.en },
+        }));
+        const enEntries: RecordEntry[] = zhEntries.map((e) => ({
+          ...e,
+          tag: e.twin!.tag,
+          text: e.twin!.text,
+          twin: { tag: e.tag, text: e.text },
+        }));
+        const zh = layout(zhEntries, measureFor(true), true, () => 0, twinOf(true));
+        const eng = layout(enEntries, measureFor(false), false, () => 0, twinOf(false));
+        expect(starts(eng)).toEqual(starts(zh));
+        expect(eng.length).toBe(zh.length);
+        // 沒有 twin 時照舊：只看自己的語言。
+        expect(layout(zhEntries, measureFor(true), true).length).toBeLessThanOrEqual(zh.length);
+      });
+    }
+
+  it('短的那一版在句尾補空行，裁定章與文字都在前面', () => {
+    const rows = layout(
+      [{ kind: 'a', tag: '答', text: '是。', twin: { tag: 'A.', text: 'x '.repeat(60) } }],
+      measureFor(true),
+      true,
+      () => 0,
+      twinOf(true),
+    );
+    expect(rows[0].text).toBe('是。');
+    expect(rows.length).toBeGreaterThan(1);
+    expect(rows.slice(1).every((r) => r.text === '' && !r.first)).toBe(true);
   });
 });
