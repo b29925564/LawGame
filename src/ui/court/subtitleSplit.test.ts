@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { lineBreaks, splitCards } from './subtitleSplit';
+import { lineBreaks, splitCards, subEm } from './subtitleSplit';
 
 describe('字幕拆卡', () => {
   it('短句一張卡', () => {
@@ -99,5 +99,10 @@ describe('字幕拆卡', () => {
       );
       expect(bad).toEqual([]);
     }
+  });
+
+  it('最窄的手機（390 寬）特寫 150% 字級，一行仍有 12 em 以上', () => {
+    expect(subEm(390, 17 * 1.5)).toBeGreaterThanOrEqual(12);
+    expect(subEm(412, 17 * 1.5)).toBeGreaterThanOrEqual(12);
   });
 });

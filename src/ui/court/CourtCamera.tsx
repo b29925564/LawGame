@@ -3,7 +3,7 @@ import { useT } from '../../i18n';
 import { useSettings } from '../../engine/settings';
 import { useScope } from '../lang';
 import type { Cue } from '../record';
-import { readUnits, splitCards, SUB_MIN_UNITS } from './subtitleSplit';
+import { readUnits, splitCards, subEm, SUB_MIN_UNITS } from './subtitleSplit';
 import { castLook } from '../jury/cast';
 import { svg } from '../jury/silhouette';
 
@@ -267,12 +267,11 @@ function Subtitles({ cues }: { cues: Cue[] }) {
       // 字幕字級：桌機 19px、手機特寫 17px，說話者名 14／13px，再乘設定裡的倍率（court.css 同一組數字）。
       const px = (insert ? 17 : 19) * voScale;
       const who = (insert ? 13 : 14) * 1.4 * voScale;
-      const inner = Math.min(el.clientWidth - 32, 36 * px) - 24;
       // 下巴線約在鏡頭條高度的 47%（手機特寫 50%），框底留 10px；機位 manifest 來了改讀它。
       const h = frame?.clientHeight ?? 0;
       const room = h - 10 - h * (insert ? 0.5 : 0.47) - who - 10;
       const lines = h ? Math.max(1, Math.min(2, Math.floor(room / (px * 1.5)))) : 2;
-      setFit({ em: Math.max(8, Math.floor((inner / px) * 0.92)), lines });
+      setFit({ em: subEm(el.clientWidth, px), lines });
     };
     measure();
     const ro = new ResizeObserver(measure);

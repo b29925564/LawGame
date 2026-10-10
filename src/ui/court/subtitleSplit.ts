@@ -224,3 +224,7 @@ export function splitCards(text: string, em: number, maxLines = 2): Card[] {
 export const SUB_MIN_UNITS = 10;
 export const readUnits = (t: string) =>
   Math.round([...t].reduce((n, ch) => n + (/\s/.test(ch) ? 0 : w(ch) === 1 ? 1 : 0.35), 0));
+
+/** 一行放得下幾 em：框寬（左右各 16px 邊距、最寬 36 個字）扣內距 24px，再留 8% 餘裕；不低於 8。 */
+export const subEm = (boxWidth: number, px: number) =>
+  Math.max(8, Math.floor(((Math.min(boxWidth - 32, 36 * px) - 24) / px) * 0.92));
