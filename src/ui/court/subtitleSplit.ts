@@ -2,6 +2,8 @@
  * 字幕一張卡最多兩行（設定集 10.1）：長句不截斷，拆成幾張依序換。
  * 寬度用 em 估：漢字與全形 1，其他 0.6；中文任何字之間都能斷（標點不放行首），英文只在空白斷。
  */
+import { proseUnits } from '../lineUnits';
+
 const NO_LINE_START = /[，。、；：！？）」』”’…—,.;:!?)\]]/;
 
 const w = (ch: string) => (/[\p{Script=Han}\u3000-ヿ＀-￯]/u.test(ch) ? 1 : 0.6);
@@ -26,20 +28,23 @@ const TITLES = new Set(
   ),
 );
 
+/** 英文在第 b 個字前面切得開嗎（詞界規則）。 */
+function canCut(words: string[], b: number) {
+  const prev = words[b - 1];
+  const next = words[b];
+  if (NO_AFTER.has(norm(prev))) return false;
+  if (TITLES.has(norm(prev)) && isCap(next)) return false;
+  if (/^[\d$%.,-]+$/.test(prev)) return false;
+  if (/\w-\w/.test(prev)) return false;
+  if (isCap(prev) && isCap(next) && !/[.!?,;:]$/.test(prev)) return false;
+  return true;
+}
+
 function latinLines(text: string, em: number): string[] {
   const words = text.split(/\s+/).filter(Boolean);
   const n = words.length;
   const wd = (a: number, b: number) => lineWidth(words.slice(a, b).join(' '));
-  const allowed = (b: number) => {
-    const prev = words[b - 1];
-    const next = words[b];
-    if (NO_AFTER.has(norm(prev))) return false;
-    if (TITLES.has(norm(prev)) && isCap(next)) return false;
-    if (/^[\d$%.,-]+$/.test(prev)) return false;
-    if (/\w-\w/.test(prev)) return false;
-    if (isCap(prev) && isCap(next) && !/[.!?,;:]$/.test(prev)) return false;
-    return true;
-  };
+  const allowed = (b: number) => canCut(words, b);
   const cuts: number[] = [0];
   let start = 0;
   while (start < n) {
@@ -101,20 +106,43 @@ function greedy(text: string, em: number): string[] {
   const lines: string[] = [];
   let line = '';
   let width = 0;
+  // 最近一個標點後面的斷點：字串位置與到那裡的寬度。
+  let punct: { at: number; width: number } | null = null;
   const flush = () => {
     if (line.trim()) lines.push(line.trim());
     line = '';
     width = 0;
+    punct = null;
   };
-  // 單字（連續非空白、非漢字）不拆；漢字逐字。
-  const tokens =
-    text.match(/[\p{Script=Han}\u3000-ヿ＀-￯]|\s+|[^\s\p{Script=Han}\u3000-ヿ＀-￯]+/gu) ?? [];
+  // 換行單位是詞（lineUnits 的中文斷詞，標點跟前一個詞）：詞不從中間斷；詞本身比一行還寬才逐字。
+  const wordsOf = (t: string) => proseUnits(t, false);
+  const tokens = wordsOf(text).flatMap((u) =>
+    [...u].reduce((n, ch) => n + w(ch), 0) > em && !/\s/.test(u) ? [...u] : [u],
+  );
   for (const tok of tokens) {
     const tw = [...tok].reduce((n, ch) => n + w(ch), 0);
-    if (width + tw > em && line.trim() && !(tok.length === 1 && NO_LINE_START.test(tok))) flush();
+    // 行尾的標點可以懸出一格（避頭尾）：詞本身放得進行內，只有它後面的標點超出就不換行。
+    const hang = (tok.match(/[，。、；：！？）」』,.;:!?]+$/)?.[0] ?? '').length;
+    if (
+      width + tw - Math.min(hang, 1) > em &&
+      line.trim() &&
+      !(tok.length === 1 && NO_LINE_START.test(tok))
+    ) {
+      // 要換行：優先斷在標點後面（前半至少 0.4 行、後半連這個詞放得進一行），不然斷在詞與詞之間。
+      const p = punct as { at: number; width: number } | null;
+      if (p && p.width >= 0.4 * em && width - p.width + tw <= em && p.at < line.length) {
+        const rest = line.slice(p.at);
+        const restW = width - p.width;
+        line = line.slice(0, p.at);
+        flush();
+        line = rest;
+        width = restW;
+      } else flush();
+    }
     if (!line && /^\s+$/.test(tok)) continue;
     line += tok;
     width += tw;
+    if (/[，、；：。！？,;:]$/.test(tok)) punct = { at: line.length, width };
   }
   flush();
   return lines;
@@ -257,19 +285,123 @@ export const subEm = (boxWidth: number, px: number) =>
   Math.max(8, Math.floor(((Math.min(boxWidth - 32, 36 * px) - 24) / px) * 0.92));
 
 export interface JudgeCard extends Card {
-  /** 這張一行放得下併行的寬度（說話者名併進同一行）：呼叫端要併行時才會有。 */
+  /** 這張說話者名併進第一行（框少一行高）：呼叫端要併行、而且這張放得進併行的寬度才會有。 */
   compact?: true;
 }
 
+/** 單行略寬於框（尾巴併回前一行的結果）：在片語邊界勻成兩行，兩行各自放得進框；找不到回傳 null。 */
+function balancedTwo(s: string, em: number, lead = 0, relax = false): string[] | null {
+  const zh = zhOf(s);
+  const u = zh ? proseUnits(s, false) : s.split(/\s+/).filter(Boolean);
+  const glue = zh ? '' : ' ';
+  let best: { score: number; lines: string[] } | null = null;
+  for (let b = 1; b < u.length; b++) {
+    if (!zh && (b < 2 || u.length - b < 2 || !(relax || canCut(u, b)))) continue;
+    const a = u.slice(0, b).join(glue).trim();
+    const c = u.slice(b).join(glue).trim();
+    const eps = zh ? 1 : 0.01;
+    const wa = lineWidth(a);
+    const wc = lineWidth(c);
+    if (wa > em - lead + eps || wc > em + eps || (zh && (wa < 3 || wc < 3))) continue;
+    // 標點後面斷最優先（設計師 #290 第三輪：「律師，／這個問題沒有問題。」），其次兩行勻。
+    const score = Math.abs(wa - lead - wc) - (/[，、；：,;:]$/.test(a) ? 100 : 0);
+    if (!best || score < best.score) best = { score, lines: [a, c] };
+  }
+  return best ? best.lines : null;
+}
+
 /**
- * 法官的話分張（設計師 #290 第二輪）：一張是一個完整的句子，最多兩行，放得下就不切；
- * 張數不隨寬度變（只要每句在這個寬度放得進兩行）。一句超過兩行，才在子句邊界切（splitCards）。
- * compactEm：說話者名併進同一行時，一行放得下幾 em（null＝不併）；放得進的張標 compact。
+ * 說話者名併進第一行（lead em 寬）時，這張放不放得進兩行：第一行比框窄 lead，第二行整寬。
+ * 一行放得下就一行；不然在片語邊界勻成兩行。
+ */
+function fitLead(s: string, em: number, lead: number): string[] | null {
+  if (lineWidth(s) <= em - lead + (zhOf(s) ? 1 : 0.01)) return [s];
+  if (lineWidth(s) > 2 * em - lead) return null;
+  // 守詞界規則找不到切點（「with that／question, counsel.」）：寧可切在限定詞後面，也不讓框蓋到燈管。
+  return balancedTwo(s, em, lead) ?? (zhOf(s) ? null : balancedTwo(s, em, lead, true));
+}
+
+/** 兩行放得下：行寬一格一格縮（尾巴併回前一行會讓行寬超過框寬，縮一點就排得進）；還是不行就勻成兩行。放不下回傳 null。 */
+function fitTwo(s: string, em: number): string[] | null {
+  for (let k = 0; k <= 3; k++) {
+    const t = lineBreaks(s, em - k);
+    if (t.length <= 2 && t.every((l) => lineWidth(l) <= em + (zhOf(l) ? 1 : 0.01))) return t;
+  }
+  return lineWidth(s) <= 2 * em ? balancedTwo(s, em) : null;
+}
+
+const ENDS_PUNCT = /[，、；：。！？,;:.!?]["”’)」』）]*$/;
+
+/**
+ * 一句放不下兩行：在片語邊界切成幾張，每張兩行以內、不留單字卡（設計師 #290 第三輪）。
+ * 切點：英文守詞界規則（canCut），中文只在詞與詞之間；偏好標點後面、連接詞前面；張數最少，再求各張勻。
+ */
+function phraseCards(
+  s: string,
+  em: number,
+  fit: (t: string) => string[] | null = (t) => fitTwo(t, em),
+): Card[] | null {
+  const zh = zhOf(s);
+  const u = zh ? proseUnits(s, false) : s.split(/\s+/).filter(Boolean);
+  const n = u.length;
+  const glue = zh ? '' : ' ';
+  const textOf = (a: number, b: number) => u.slice(a, b).join(glue).trim();
+  const memo = new Map<string, number>();
+  const cost = (a: number, b: number) => {
+    const key = a + ',' + b;
+    const hit = memo.get(key);
+    if (hit !== undefined) return hit;
+    let c = Infinity;
+    const t = textOf(a, b);
+    if (t && (a === 0 || zh || canCut(u, a)) && fit(t)) {
+      const wd = lineWidth(t);
+      const one = zh ? wd < 4 : b - a < 2;
+      if (!one || (a === 0 && b === n))
+        c =
+          1000 +
+          (b === n || ENDS_PUNCT.test(t) ? 0 : 150) -
+          (!zh && a > 0 && CONJ.has(norm(u[a])) ? 50 : 0) +
+          300 * (wd / (2 * em)) ** 2;
+    }
+    memo.set(key, c);
+    return c;
+  };
+  const best: { c: number; from: number }[] = Array.from({ length: n + 1 }, () => ({
+    c: Infinity,
+    from: -1,
+  }));
+  best[0].c = 0;
+  for (let b = 1; b <= n; b++)
+    for (let a = 0; a < b; a++) {
+      if (best[a].c === Infinity) continue;
+      const c = best[a].c + cost(a, b);
+      if (c < best[b].c) best[b] = { c, from: a };
+    }
+  if (best[n].c === Infinity) return null;
+  const cuts: number[] = [];
+  for (let b = n; b > 0; b = best[b].from) cuts.unshift(b);
+  const out: Card[] = [];
+  let a = 0;
+  let at = 0;
+  for (const b of cuts) {
+    const t = textOf(a, b);
+    const ls = fit(t) as string[];
+    out.push({ text: t, from: at, ...(ls.length > 1 ? { lines: ls } : {}) });
+    at += u.slice(a, b).reduce((m, x) => m + x.length, 0) + (zh ? 0 : b - a);
+    a = b;
+  }
+  return out;
+}
+
+/**
+ * 法官的話分張（設計師 #290 第二、三輪）：一張是一個完整的句子，最多兩行，放得下就不切；
+ * 張數不隨寬度變（只要每句在這個寬度放得進兩行）。一句超過兩行，在片語邊界切成兩張以上（phraseCards），不出三行、不出單字卡。
+ * compact：說話者名併進第一行時名字佔幾 em（lead），以及這張在原本排法下的行數要不要併（when）；null＝不併。
  */
 export function judgeCards(
   text: string,
   em: number,
-  compactEm: number | null,
+  compact: { lead: number; when: (lines: number) => boolean } | null,
   measure?: (t: string) => number,
 ): JudgeCard[] {
   const keep = MEASURE;
@@ -282,21 +414,33 @@ export function judgeCards(
       if (!s) continue;
       const from = at;
       at += piece.length;
-      // 兩行放得下：行寬一格一格縮（尾巴併回前一行會讓行寬超過框寬，縮一點就排得進）。
-      let ls: string[] | null = null;
-      for (let k = 0; k <= 3 && !ls; k++) {
-        const t = lineBreaks(s, em - k);
-        if (t.length <= 2 && t.every((l) => lineWidth(l) <= em + (zhOf(l) ? 1 : 0.01))) ls = t;
-      }
+      const ls = fitTwo(s, em);
       const cards: Card[] = ls
         ? [{ text: s, from: 0, ...(ls.length > 1 ? { lines: ls } : {}) }]
-        : splitCardsAt(s, em, 2);
+        : (phraseCards(s, em) ?? splitCardsAt(s, em, 2));
       for (const c of cards) {
-        const one =
-          compactEm != null &&
-          lineBreaks(c.text, compactEm).length === 1 &&
-          lineWidth(c.text) <= compactEm + (zhOf(c.text) ? 1 : 0.01);
-        out.push({ ...c, from: from + c.from, ...(one ? { compact: true as const } : {}) });
+        const rows = c.lines?.length ?? 1;
+        const plain = () => out.push({ ...c, from: from + c.from });
+        if (!compact || !compact.when(rows)) {
+          plain();
+          continue;
+        }
+        // 併行放不進：在片語邊界再切成幾張（每張都放得進併行），再不行才維持原樣。
+        const fit = (t: string) => fitLead(t, em, compact.lead);
+        const sub = fit(c.text) ? [c] : phraseCards(c.text, em, fit);
+        if (!sub) {
+          plain();
+          continue;
+        }
+        for (const x of sub) {
+          const ls = fit(x.text) as string[];
+          out.push({
+            text: x.text,
+            from: from + c.from + x.from,
+            ...(ls.length > 1 ? { lines: ls } : {}),
+            compact: true as const,
+          });
+        }
       }
     }
     return out.length ? out : [{ text, from: 0 }];

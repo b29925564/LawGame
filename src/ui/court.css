@@ -3194,7 +3194,7 @@ html[lang='en'] .stamp.rec-stamp b {
   display: inline;
   margin-right: 0.6em;
 }
-.cam-sub[data-compact] .ln {
+.cam-sub[data-compact] .ln:first-child {
   display: inline;
 }
 /*

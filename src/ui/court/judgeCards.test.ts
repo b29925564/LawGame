@@ -4,6 +4,7 @@ import { parse } from 'yaml';
 import { episodes } from '../../content';
 import { STRUCK_DEFAULT } from '../../engine/episode/trial';
 import { install, translate } from '../../i18n';
+import { proseUnits } from '../lineUnits';
 import { judgeCards, subEm } from './subtitleSplit';
 
 /**
@@ -28,6 +29,9 @@ const cardsAt = (text: string, g: (typeof GEOMS)[number]) =>
     null,
     est,
   );
+
+/** 設定裡字幕放大 150%：字級 ×1.5，一行放得下的字數少三分之一（同一組字幕列寬）。 */
+const at150 = (g: (typeof GEOMS)[number]) => ({ ...g, px: g.px * 1.5 });
 
 /** 英文行寬：Plex Sans 500 實測平均約 0.46em（真字型的實測在 e2e）。 */
 const est = (t: string) => t.length * 0.46;
@@ -72,6 +76,8 @@ beforeAll(() => {
  * 張數比寬的鏡頭條多；設計師說「連兩行都放不下整句就先回報」（#290 第二輪），回報後再決定。
  */
 const TOO_LONG_AT_1100 = [
+  // 這句在估算寬度（0.46em／字）下差幾個字放不進兩行；真字型的實測在 e2e 與 qa 紀錄。
+  "The witness's opinion of the defendant is character evidence",
   'The court has excluded that statement and the prosecution may not raise it',
   'the testimony of Ms. Adler is stricken in its entirety',
   'The witness has no way of knowing what the defendants’ executives have read',
@@ -117,6 +123,38 @@ describe('法官的台詞：一句一張、最多兩行、張數不隨寬度變'
       expect(bad).toEqual([]);
     });
   }
+  // 設計師 #290 第三輪：150% 不出三行、不出單字卡；一句放不下就在片語邊界切成兩張；中文不在詞中間斷。
+  for (const lang of ['zh', 'en'] as const)
+    it(`${lang}：字幕 150% 每張最多兩行、沒有單字卡、中文不斷在詞中間`, () => {
+      const bad: string[] = [];
+      for (const text of texts(lang))
+        for (const g of GEOMS.map(at150)) {
+          const em =
+            lang === 'zh'
+              ? subEm(g.w, g.px)
+              : Math.floor((Math.min(g.w - 32, 36 * g.px) - 24) / g.px);
+          for (const c of judgeCards(text, em, null, est)) {
+            const rows = c.lines ?? [c.text];
+            if (rows.length > 2) bad.push(`${g.name} 三行：${c.text}`);
+            const complete = /[。！？.!?」”’)）]$/.test(c.text);
+            const n = lang === 'en' ? c.text.split(/\s+/).length : c.text.length;
+            // 完整的一句（「Sustained.」）不算單字卡；沒收尾的零碎（「Counsel,」）才算。
+            if (!complete && n < (lang === 'en' ? 2 : 3))
+              bad.push(`${g.name} 單字卡：「${c.text}」`);
+            if (lang === 'zh' && rows.length > 1) {
+              const marks = new Set<number>();
+              let pos = 0;
+              for (const u of proseUnits(c.text, false)) marks.add((pos += u.length));
+              let cut = 0;
+              for (const l of rows.slice(0, -1)) {
+                cut += l.length;
+                if (!marks.has(cut)) bad.push(`${g.name} 斷在詞中間：${rows.join('／')}`);
+              }
+            }
+          }
+        }
+      expect(bad).toEqual([]);
+    });
   it('一句放得進兩行就是一張：張數等於句子數', () => {
     const bad: string[] = [];
     for (const text of texts('en').concat(texts('zh'))) {
