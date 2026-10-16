@@ -230,18 +230,45 @@ async function openBoard(page: Page, lang: 'zh' | 'en', cards: string[], picks: 
   await expect(page.locator('.cork-focus.filled')).toHaveCount(2);
 }
 
-/** 手機量 412／360／320，桌機量 1440／1366／1280／1024；每換一次寬度，等推進光圈的轉場跑完再量。 */
+/**
+ * 手機量 412／360／320，桌機量 1440／1366／1280／1024；每換一次寬度，等版面穩定再量。
+ * 穩定 ＝ 沒有在跑的轉場，而且卡、標記、照片的框連續幾個畫格都不動：換寬度後板子量測、重排、再起轉場是一連串的，
+ * 只看「這一刻沒有在跑的轉場」會在負載下落在下一段轉場開始之前，量到轉場中途的位置。
+ */
 async function eachWidth(page: Page, isMobile: boolean, check: (width: number) => Promise<void>) {
   const height = page.viewportSize()!.height;
   for (const width of isMobile ? [412, 360, 320] : [1440, 1366, 1280, 1024]) {
     await page.setViewportSize({ width, height });
-    await page.waitForTimeout(50);
-    await page.waitForFunction(() =>
-      document
-        .getAnimations()
-        .every(
-          (a) => a.playState !== 'running' || a.effect?.getComputedTiming().endTime === Infinity,
-        ),
+    await page.evaluate(() => {
+      const w = window as unknown as { __sig?: string; __still?: number };
+      delete w.__sig;
+      w.__still = 0;
+    });
+    await page.waitForFunction(
+      () => {
+        const running = document
+          .getAnimations()
+          .some(
+            (a) => a.playState === 'running' && a.effect?.getComputedTiming().endTime !== Infinity,
+          );
+        if (running) return false;
+        const sig = [
+          ...document.querySelectorAll(
+            '.cork-focus, .cork-print, .cork .cork-tag, .cork .cork-zoom, .cork .cork-knot',
+          ),
+        ]
+          .map((e) => {
+            const r = e.getBoundingClientRect();
+            return [r.left, r.top, r.width, r.height].map((n) => Math.round(n * 10)).join(',');
+          })
+          .join(';');
+        const w = window as unknown as { __sig?: string; __still?: number };
+        w.__still = sig === w.__sig ? (w.__still ?? 0) + 1 : 0;
+        w.__sig = sig;
+        return (w.__still ?? 0) >= 8;
+      },
+      undefined,
+      { polling: 'raf' },
     );
     await check(width);
   }
