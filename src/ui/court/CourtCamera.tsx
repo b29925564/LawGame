@@ -105,11 +105,31 @@ function changeOf(cam: Cam, from: Layer, to: Layer): { climb: string } | 'fade' 
   return climb ? { climb } : 'fade';
 }
 
-function Img({ src, className }: { src: { avif?: string; webp: string }; className: string }) {
+function Img({
+  src,
+  className,
+  onReady,
+}: {
+  src: { avif?: string; webp: string };
+  className: string;
+  /** 這張圖載好、解碼完了。 */
+  onReady?: () => void;
+}) {
+  const ready = (img: HTMLImageElement) =>
+    void (img.decode ? img.decode() : Promise.resolve()).catch(() => undefined).then(onReady);
   return (
     <picture className={className}>
       {src.avif && src.avif !== src.webp && <source type="image/avif" srcSet={src.avif} />}
-      <img src={src.webp} alt="" decoding="async" draggable={false} />
+      <img
+        src={src.webp}
+        alt=""
+        decoding="async"
+        draggable={false}
+        onLoad={(e) => ready(e.currentTarget)}
+        ref={(el) => {
+          if (el?.complete && el.naturalWidth) ready(el);
+        }}
+      />
     </picture>
   );
 }
@@ -155,9 +175,12 @@ function CamLayer({
     });
   }, [look, rimUnits, catchSize, cam, layer.name]);
   const { rim, front, plate } = layer;
+  // 底圖還沒畫出來，立牌（剪影）就不能出現：只剩剪影的黑格從 #281 起不准（設計師 #287 第三輪）。
+  const [loaded, setLoaded] = useState('');
   return (
     <div
       className="cam-layer"
+      data-plate={loaded === plate.webp ? '' : undefined}
       data-fx={fx ? (fx.mask ? 'climb' : 'fade') : undefined}
       style={
         fx?.mask
@@ -170,7 +193,7 @@ function CamLayer({
             : undefined
       }
     >
-      <Img src={plate} className="cam-plate" />
+      <Img src={plate} className="cam-plate" onReady={() => setLoaded(plate.webp)} />
       {poses.map((p) => (
         <span key={String(p.turn)} className="cam-pose" data-on={p.turn === turn || undefined}>
           <span className="cam-standee" style={box} dangerouslySetInnerHTML={{ __html: p.body }} />
@@ -240,27 +263,125 @@ function ClimbDefs({ name, src }: { name: string; src: string }) {
   );
 }
 
-/** 圖解碼好了沒：切鏡頭前新鏡頭的每一層都要解碼完，不然切過去那一格只有剪影和字幕（設計師 #281 第三輪）。 */
-const warmed = new Map<string, Promise<void>>();
+/**
+ * 圖解碼好了沒：切鏡頭前新鏡頭的每一層都要解碼完，不然切過去那一格只有剪影和字幕（設計師 #281 第三輪）。
+ * 底圖與前景在畫面上是 <picture>（有 avif 就用 avif），這裡要解碼的也得是瀏覽器真正會用的那一個，
+ * 不然「解碼好了」是另一個檔，畫面上還在載（設計師 #287 第三輪）。只有真的解碼成功才算好；失敗隔一秒再試，三次都失敗就不算。
+ */
+const warmed = new Map<string, Promise<boolean>>();
 const warmedDone = new Set<string>();
-function warm(url: string) {
+/** webp 網址 → 同一層的 avif 網址（Img 會優先用它）。 */
+const avifOf = new Map<string, string>();
+/** 輪廓光的遮罩圖（CSS mask-image）：樣式是用 CORS 模式抓的，預熱要用同樣的模式，不然進場又抓一次。 */
+const rimUrls = new Set<string>();
+/** 解碼好的圖留著參照，不然瀏覽器會把它丟掉；只留最近 24 張。 */
+const kept = new Map<string, HTMLImageElement>();
+function decode(url: string): Promise<boolean> {
+  const img = new Image();
+  const avif = avifOf.get(url);
+  if (avif) {
+    const pic = document.createElement('picture');
+    const source = document.createElement('source');
+    source.type = 'image/avif';
+    source.srcset = avif;
+    pic.append(source, img);
+  }
+  if (rimUrls.has(url)) img.crossOrigin = 'anonymous';
+  img.src = url;
+  const done = img.decode
+    ? img.decode()
+    : new Promise<void>((ok, no) => {
+        img.onload = () => ok();
+        img.onerror = () => no(new Error('img'));
+      });
+  return done.then(
+    () => {
+      kept.delete(url);
+      kept.set(url, img);
+      for (const k of kept.keys()) if (kept.size > 24) kept.delete(k);
+      return true;
+    },
+    () => false,
+  );
+}
+function warm(url: string): Promise<boolean> {
   let p = warmed.get(url);
   if (!p) {
-    const img = new Image();
-    img.src = url;
-    p = (img.decode ? img.decode() : Promise.resolve())
-      .catch(() => undefined)
-      .then(() => {
-        warmedDone.add(url);
-      });
+    p = (async () => {
+      for (let i = 0; i < 3; i++) {
+        if (await decode(url)) {
+          warmedDone.add(url);
+          return true;
+        }
+        await new Promise((r) => setTimeout(r, 1000));
+      }
+      warmed.delete(url);
+      return false;
+    })();
     warmed.set(url, p);
   }
   return p;
 }
 /** 進場等圖的保險上限（ms）：到了才先出字幕，鏡頭仍黑。 */
 const ENTRY_CAP = 8000;
-const layerUrls = (l: Layer | null) =>
-  l ? [l.plate.webp, l.rim?.webp, l.front?.webp].filter((u): u is string => !!u) : [];
+const layerUrls = (l: Layer | null) => {
+  if (!l) return [];
+  for (const src of [l.plate, l.front])
+    if (src?.avif && src.avif !== src.webp) avifOf.set(src.webp, src.avif);
+  if (l.rim) rimUrls.add(l.rim.webp);
+  return [l.plate.webp, l.rim?.webp, l.front?.webp].filter((u): u is string => !!u);
+};
+
+/** 這一場在這個狀態下，兩個機位各要哪幾層圖。CourtCamera 和進場前的預熱用同一個函式，網址集合不會分叉。 */
+export function shotUrls(scene: string, state: WitnessState, patience: number, en: boolean) {
+  const slot = MANIFESTS['./cam/bench.json']?.slots?.[scene];
+  const witnessNames = [`witness-${state}`, 'witness-default'];
+  const benchPick = benchNames(slot, patience, en);
+  return {
+    witnessNames,
+    benchPick,
+    urls: {
+      witness: layerUrls(resolve('witness', witnessNames)),
+      bench: layerUrls(resolve('bench', benchPick)),
+    },
+  };
+}
+
+/** 進場時（default、耐心滿）CourtCamera 會要的全部網址。 */
+export function entryUrls(scene: string, patience: number, en: boolean) {
+  const { witness, bench } = shotUrls(scene, 'default', patience, en).urls;
+  return [...witness, ...bench];
+}
+
+/**
+ * 下一場確定是審判時，在前一場就先把第一個機位的圖解碼好（設計師 #286 第二輪）：
+ * 前一場自己的圖都載完、瀏覽器閒下來才開始，不讓前一場的圖變晚；上限 5 秒不再等。
+ */
+export function warmCourt(scene: string, patience: number) {
+  const en = useLang.getState().lang === 'en';
+  const run = () => {
+    for (const u of entryUrls(scene, patience, en)) void warm(u);
+  };
+  const idle = () =>
+    typeof requestIdleCallback === 'function'
+      ? requestIdleCallback(run, { timeout: 500 })
+      : setTimeout(run, 200);
+  const pending = [...document.images].filter((i) => !i.complete);
+  if (!pending.length) return void idle();
+  let left = pending.length;
+  let fired = false;
+  const fire = () => {
+    if (fired) return;
+    fired = true;
+    idle();
+  };
+  const one = () => --left <= 0 && fire();
+  for (const i of pending) {
+    i.addEventListener('load', one, { once: true });
+    i.addEventListener('error', one, { once: true });
+  }
+  setTimeout(fire, 5000);
+}
 
 /** 英文台詞的實際寬度（em）：用字幕卡真正的字型家族，canvas 量。量不到就回 undefined，切分器照每字 0.6em 估。 */
 let ctx: CanvasRenderingContext2D | null | undefined;
@@ -468,18 +589,12 @@ export function CourtCamera({
     return () => ro.disconnect();
   }, []);
 
-  const slot = MANIFESTS['./cam/bench.json']?.slots?.[scene];
   const en = useLang((s) => s.lang) === 'en';
-  const benchPick = benchNames(slot, patience, en);
-  const witnessNames = [`witness-${state}`, 'witness-default'];
+  const { witnessNames, benchPick, urls } = shotUrls(scene, state, patience, en);
   const placeholder = MANIFESTS[`./cam/${cam}.json`]?.placeholder;
 
   // 兩個機位的圖一直先解碼好（異議一開始就載入法官席，在法官席時載入要切回去的證人席）；
   // 切鏡頭時新鏡頭每一層都解碼完才換，在那之前畫面停在舊鏡頭，不出現只剩剪影和字幕的黑格。
-  const urls = {
-    witness: layerUrls(resolve('witness', witnessNames)),
-    bench: layerUrls(resolve('bench', benchPick)),
-  };
   const warmKey = [...urls.witness, ...urls.bench].join('|');
   useEffect(() => {
     for (const u of warmKey.split('|')) if (u) void warm(u);
@@ -495,13 +610,13 @@ export function CourtCamera({
     if (seen === shot || ready) return;
     let dead = false;
     const go = () => !dead && setSeen(shot);
-    const all = Promise.all(need.map(warm));
+    const all = Promise.all(need.map(warm)).then((r) => r.every(Boolean));
     // 進場（設計師 #285）：沒有舊鏡頭可停，圖沒好就一直黑，好了硬切進來；
     // 約 8 秒還沒好才先出字幕（字幕是無障礙），鏡頭仍黑，不出載了一半的層。
     // 切鏡頭：停在舊鏡頭，最多等 1.5 秒。
     if (!entered) {
       const timer = setTimeout(() => !dead && setEntered(true), ENTRY_CAP);
-      void all.then(go);
+      void all.then((ok) => ok && go());
       return () => {
         dead = true;
         clearTimeout(timer);

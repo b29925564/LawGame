@@ -1,13 +1,21 @@
 import { useEffect, useState } from 'react';
 import { episodes } from '../content';
 import { batesAt, ownBates, totalPages } from '../engine/bates';
-import { END_TITLE, episodeOf, followingEpisode, sceneOf, useEpisode } from '../engine/game';
+import {
+  END_TITLE,
+  caseClosed,
+  episodeOf,
+  followingEpisode,
+  sceneOf,
+  useEpisode,
+} from '../engine/game';
 import { useSettings } from '../engine/settings';
 import { useGame } from '../engine/store';
 import { Board } from './Board';
 import { Court } from './Court';
 import { Closing } from './Closing';
 import { Courtroom } from './Courtroom';
+import { warmCourt } from './court/CourtCamera';
 import { Deposition } from './Deposition';
 import { Desk } from './Desk';
 import { Dialogue } from './Dialogue';
@@ -26,6 +34,12 @@ import { VoirDire } from './VoirDire';
 import { useT } from '../i18n';
 import { SceneScope, useDocumentLang } from './lang';
 import { prose } from './prose';
+
+/** 不畫東西：審判前一場演著時，把審判第一個機位的圖預熱。 */
+function WarmCourt({ id, patience }: { id: string; patience: number }) {
+  useEffect(() => warmCourt(id, patience), [id, patience]);
+  return null;
+}
 
 export function App() {
   const { mode, progress, advance, toTitle, nextEpisode } = useEpisode();
@@ -91,6 +105,15 @@ export function App() {
     text: t(where.place, where.id),
     rig: card?.rig ?? where.rig,
   };
+  // 下一場確定是審判（緊接著、沒有 when、案子沒結）：現在這一場演著的時候就把審判第一個機位的圖解碼好，進場零等待。
+  const upcoming = ep.scenes[at + 1];
+  const warmFor =
+    !!scene &&
+    upcoming?.type === 'trial' &&
+    !('when' in upcoming && upcoming.when) &&
+    !caseClosed(progress)
+      ? upcoming
+      : null;
   // 地點字卡：換了地點、前一場又不是幕卡（幕卡自己有場記）時，左下一行場記。
   const here = scene && 'place' in scene && scene.place ? scene.place : '';
   const hereRig = scene && 'rig' in scene ? scene.rig : undefined;
@@ -104,6 +127,7 @@ export function App() {
   return (
     <SceneScope.Provider value={scene?.id}>
       <Announcer />
+      {warmFor && <WarmCourt key={warmFor.id} id={warmFor.id} patience={warmFor.patience} />}
       <GameMenu />
       {beat && scene && (
         <PlaceBeat

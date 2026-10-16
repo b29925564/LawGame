@@ -3131,6 +3131,10 @@ html[lang='en'] .stamp.rec-stamp b {
 .cam-pose[data-on] {
   opacity: 1;
 }
+/* 底圖還沒載好解碼完，立牌不出現（不能只剩剪影）。 */
+.cam-layer:not([data-plate]) .cam-pose {
+  visibility: hidden;
+}
 @media (prefers-reduced-motion: reduce) {
   .cam-pose {
     transition-duration: var(--dur-rm);
