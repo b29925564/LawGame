@@ -5,7 +5,8 @@ import rigData from '../content/rigs.yaml';
  * 燈組資料在 src/content/rigs.yaml；每場戲在劇本裡用 rig: 指定一組（第 10 章 :108），法庭的日卡另外寫當天那一組。
  * 不再用地點字串猜色溫（設計師 2026-10-10：猜錯過，改劇本也容易猜錯）。
  */
-export type Rig = { label: string; time: string; kelvin: number };
+/** grade：算圖的調色參數（例如判決的暗部分色），介面不讀。 */
+export type Rig = { label: string; time: string; kelvin: number; grade?: { split?: number } };
 
 export const RIGS = rigData as Record<string, Rig>;
 
