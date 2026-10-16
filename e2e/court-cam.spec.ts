@@ -220,104 +220,108 @@ for (const [width, height] of [
 
 /**
  * 關卡 2 v92 #A、#B：法官的裁定分成幾張字幕，每一張都要在法官席上出現、讀完才切回證人；
- * 字幕框不壓法官的頭（立牌頂往下 40%）：框在頭下面、或整個在立牌左右。
- * 存檔停在柯瓦斯基主詰問開頭，第一題提異議會被駁回。
+ * 一句一張、最多兩行、張數不隨寬度變；框頂在立牌上緣往下 40% 的下面（不壓頭）。
+ * 法官席的裁切讓法官的眼睛落在畫面上三分之一（設定集 RD-ART-0406），字幕才不用躲頭。
+ * 存檔停在柯瓦斯基主詰問開頭：第一題提異議會被駁回（兩句），第二題成立（兩句）。
  */
-for (const [width, height, lang] of [
-  [1100, 800, 'zh'],
-  [1100, 800, 'en'],
-  [1366, 768, 'en'],
-  [1530, 860, 'en'],
-] as const)
-  test(`法官的裁定每張字幕都出現、不壓頭（${width}×${height}・${lang}）`, async ({
-    page,
-  }, info) => {
-    test.skip(info.project.name !== 'desktop', '鏡頭條只在桌機');
-    await page.setViewportSize({ width, height });
-    await page.addInitScript(
-      ([s, l]) => {
-        if (sessionStorage.getItem('seeded')) return;
-        sessionStorage.setItem('seeded', '1');
-        localStorage.clear();
-        localStorage.setItem('lawgame-ep-auto', s);
-        if (l === 'en') localStorage.setItem('lawgame-lang', 'en');
-      },
-      [
-        JSON.stringify({ version: 5, savedAt: Date.now(), label: 'x', progress: save.ep1 }),
-        lang,
-      ] as const,
-    );
-    await page.goto('/');
-    await page
-      .getByRole('button', { name: lang === 'en' ? /^Continue/ : /^繼續（/ })
-      .first()
-      .click();
-    const open = page.getByRole('button', { name: lang === 'en' ? 'Go to court' : '開庭' });
-    await open.or(page.locator('.court-cam.strip')).first().waitFor();
-    if (await open.isVisible()) await open.click();
-    await expect(page.locator('.court-cam.strip')).toBeVisible();
-    await page.waitForTimeout(1500);
-    const next = page.locator('button.primary.wide:not(.locked)').first();
-    await next.click();
-    const reason = page.locator('section.objection .row button').first();
-    await expect(reason).toBeVisible();
-    await reason.click();
-    // 一個樣本：這一格鏡頭在哪、看得見哪幾張字幕、框和立牌各在哪。
-    const sample = () =>
-      page.evaluate(() => {
-        const rect = (e: Element) => {
-          const b = e.getBoundingClientRect();
-          return { l: b.left, t: b.top, r: b.right, b: b.bottom };
-        };
-        const shot = document.querySelector('.cam-frame')?.getAttribute('data-shot') ?? '';
-        const subs = [...document.querySelectorAll('.cam-sub')].filter(
-          (e) =>
-            getComputedStyle(e).visibility !== 'hidden' &&
-            Number(getComputedStyle(e).opacity) > 0.9,
-        );
-        const head = document.querySelector('.cam-stage[data-cam="bench"] .cam-standee');
-        return {
-          shot,
-          texts: subs.map((e) =>
-            (e.querySelector('.tx') as HTMLElement).innerText.replace(/\s+/g, ' ').trim(),
-          ),
-          boxes: subs.map(rect),
-          head: head ? rect(head) : null,
-        };
-      });
-    const texts: string[] = [];
-    const t0 = Date.now();
-    let cutBackAt = 0;
-    let lastTextAt = 0;
-    while (Date.now() - t0 < 12000) {
-      const s = await sample();
-      if (s.shot === 'bench') {
-        for (const [i, t] of s.texts.entries()) {
-          if (!t) continue;
-          if (!texts.includes(t)) texts.push(t);
-          lastTextAt = Date.now();
-          const h = s.head!;
-          const b = s.boxes[i];
-          const headBottom = h.t + (h.b - h.t) * 0.4;
-          const clear = b.t >= headBottom || b.l >= h.r || b.r <= h.l;
-          expect(clear, `${t}：框 ${JSON.stringify(b)} 壓到法官的頭 ${JSON.stringify(h)}`).toBe(
-            true,
-          );
+const RULINGS = {
+  zh: [
+    ['異議駁回。', '律師，這個問題沒有問題。'],
+    ['異議成立。', '檢察官，請不要把答案放進問題裡。'],
+  ],
+  en: [
+    ['Overruled.', 'There’s nothing wrong with that question, counsel.'],
+    ['Sustained.', 'Counsel, don’t put the answer in the question.'],
+  ],
+} as const;
+
+for (const lang of ['zh', 'en'] as const)
+  for (const width of [1100, 1366, 1530, 0]) {
+    test(`法官的裁定一句一張、都讀得到、不壓頭（${width || '手機'}・${lang}）`, async ({
+      page,
+    }, info) => {
+      test.skip(
+        (info.project.name === 'desktop') === (width === 0),
+        width ? '鏡頭條只在桌機' : '手機插入鏡頭',
+      );
+      test.setTimeout(120_000);
+      if (width) await page.setViewportSize({ width, height: 860 });
+      await page.addInitScript(
+        ([s, l]) => {
+          if (sessionStorage.getItem('seeded')) return;
+          sessionStorage.setItem('seeded', '1');
+          localStorage.clear();
+          localStorage.setItem('lawgame-ep-auto', s);
+          if (l === 'en') localStorage.setItem('lawgame-lang', 'en');
+        },
+        [
+          JSON.stringify({ version: 5, savedAt: Date.now(), label: 'x', progress: save.ep1 }),
+          lang,
+        ] as const,
+      );
+      await page.goto('/');
+      await page
+        .getByRole('button', { name: lang === 'en' ? /^Continue/ : /^繼續（/ })
+        .first()
+        .click();
+      const open = page.getByRole('button', { name: lang === 'en' ? 'Go to court' : '開庭' });
+      await open.or(page.locator('.court-cam')).first().waitFor();
+      if (await open.isVisible()) await open.click();
+      await expect(page.locator('.court-cam').first()).toBeVisible();
+      await page.waitForTimeout(1500);
+      const next = page.locator('button.primary.wide:not(.locked)').first();
+      const rounds: string[][] = [];
+      for (let round = 0; round < 2; round++) {
+        await next.click();
+        const reason = page.locator('section.objection .row button').first();
+        await expect(reason).toBeVisible();
+        await reason.click();
+        const texts: string[] = [];
+        const t0 = Date.now();
+        let cut = false;
+        while (Date.now() - t0 < 14000 && !cut) {
+          const s = await page.evaluate(() => {
+            const frame = document.querySelector('.cam-frame')!;
+            const fr = frame.getBoundingClientRect();
+            const shot = frame.getAttribute('data-shot') ?? '';
+            const head = document.querySelector('.cam-stage[data-cam="bench"] .cam-standee')!;
+            const hr = head.getBoundingClientRect();
+            const subs = [...document.querySelectorAll('.cam-sub')]
+              .filter(
+                (e) =>
+                  getComputedStyle(e).visibility !== 'hidden' &&
+                  Number(getComputedStyle(e).opacity) > 0.9,
+              )
+              .map((e) => ({
+                text: (e.querySelector('.tx') as HTMLElement).innerText.replace(/\s+/g, ' ').trim(),
+                top: e.getBoundingClientRect().top - fr.top,
+                lines: Math.round(
+                  (e.querySelector('.tx') as HTMLElement).getBoundingClientRect().height /
+                    parseFloat(getComputedStyle(e).lineHeight),
+                ),
+              }));
+            return { shot, subs, headLimit: hr.top - fr.top + (hr.bottom - hr.top) * 0.4 };
+          });
+          if (s.shot === 'bench')
+            for (const c of s.subs) {
+              if (!c.text) continue;
+              if (!texts.includes(c.text)) texts.push(c.text);
+              expect(c.lines, `${c.text} 最多兩行`).toBeLessThanOrEqual(2);
+              expect(
+                c.top,
+                `${width || '手機'}：「${c.text}」框頂壓到法官的頭`,
+              ).toBeGreaterThanOrEqual(s.headLimit);
+            }
+          else if (texts.length && s.shot !== 'bench') cut = true;
+          await page.waitForTimeout(40);
         }
-      } else if (texts.length && s.shot !== 'bench' && !cutBackAt) {
-        cutBackAt = Date.now();
+        expect(cut, '法官席要切回證人').toBe(true);
+        rounds.push(texts);
+        await expect(next).toBeVisible({ timeout: 8000 });
       }
-      if (cutBackAt) break;
-      await page.waitForTimeout(40);
-    }
-    // 裁定是兩句話（駁回／成立＋一句理由）：至少要看到「理由」那一句，而且切回證人時還在讀的那張已經讀完。
-    const first = lang === 'en' ? 'Overruled.' : '異議駁回。';
-    expect(texts[0]).toBe(first);
-    const tail = lang === 'en' ? /nothing wrong|with that question|counsel/i : /沒有問題|這個問題/;
-    expect(
-      texts.some((t) => tail.test(t)),
-      `看過的字幕：${texts.join(' / ')}`,
-    ).toBe(true);
-    expect(cutBackAt, '法官席要切回證人').toBeGreaterThan(0);
-    expect(cutBackAt - lastTextAt, '最後一張字幕要先讀完才切').toBeGreaterThanOrEqual(0);
-  });
+      // 每一場、每個寬度：每一句一張，都讀得到。
+      expect(rounds.map((r) => r.map((t) => t.replace(/\s+/g, ' ')))).toEqual(
+        RULINGS[lang].map((r) => [...r]),
+      );
+    });
+  }

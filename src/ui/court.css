@@ -3186,7 +3186,7 @@ html[lang='en'] .stamp.rec-stamp b {
 .cam-sub .ln {
   display: block;
 }
-/* 法官席、鏡頭條矮到字幕框壓到法官的頭：說話者名併進同一行、框貼低 4px，高度少一行（CourtCamera 量過才開）。 */
+/* 法官席：一行的框頂會碰到法官的頭（字幕放大）時，說話者名併進同一行、框貼低 4px，高度少一行（CourtCamera 量過才開）。 */
 .cam-sub[data-compact] {
   margin-bottom: -4px;
 }
@@ -3196,12 +3196,6 @@ html[lang='en'] .stamp.rec-stamp b {
 }
 .cam-sub[data-compact] .ln {
   display: inline;
-}
-/* 還是壓到（字幕放大）：法官的話靠到立牌右邊（--side 是立牌右緣到鏡頭左緣）。 */
-.cam-sub[data-side] {
-  justify-self: start;
-  margin-left: calc(var(--side) - 16px);
-  max-width: min(calc(100% - var(--side) + 16px), 36em);
 }
 /*
  * 鏡頭層不跟主題，字幕底框跟（設定集 10 RD-ART-1001-L）：淺色主題是 HUD 淺色面板的表面、--text、--muted，

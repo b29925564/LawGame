@@ -146,6 +146,17 @@ const CLAUSE = /[^，、；：—,;:]+(?:[，、；：—,;:]+\s*)?/g;
 const zhOf = (t: string) => /[\p{Script=Han}]/u.test(t);
 const join = (parts: string[]) => parts.join(zhOf(parts[0] ?? '') ? '' : ' ');
 
+/** 依正規表示式分段；「Mr.」「Dr.」後面的句點不是句尾：併回下一段。 */
+function piecesOf(t: string, re: RegExp) {
+  const out: string[] = [];
+  for (const x of (t.match(re) ?? [t]).filter((y) => y.trim())) {
+    if (out.length && /\b(?:Mr|Mrs|Ms|Dr|Prof|St|Jr|Sr)\.\s*$/.test(out[out.length - 1]))
+      out[out.length - 1] += x;
+    else out.push(x);
+  }
+  return out;
+}
+
 export interface Card {
   text: string;
   /** 在原句裡的起點（字元數），用來對時間。 */
@@ -181,16 +192,7 @@ function splitCardsAt(text: string, em: number, maxLines: number): Card[] {
   const strict = (t: string) =>
     lineBreaks(t, em).every((l) => lineWidth(l) <= em + (zhOf(l) ? 1 : 0.01));
   const fits = (t: string) => lineBreaks(t, em).length <= maxLines && strict(t);
-  const pieces = (t: string, re: RegExp) => {
-    // 「Mr.」「Dr.」後面的句點不是句尾：併回下一段。
-    const out: string[] = [];
-    for (const x of (t.match(re) ?? [t]).filter((y) => y.trim())) {
-      if (out.length && /\b(?:Mr|Mrs|Ms|Dr|Prof|St|Jr|Sr)\.\s*$/.test(out[out.length - 1]))
-        out[out.length - 1] += x;
-      else out.push(x);
-    }
-    return out;
-  };
+  const pieces = piecesOf;
   const cards: Card[] = [];
   let at = 0;
   const push = (parts: string[]) => {
@@ -253,3 +255,52 @@ export const readUnits = (t: string) =>
 /** 一行放得下幾 em：框寬（左右各 16px 邊距、最寬 36 個字）扣內距 24px，再留 8% 餘裕；不低於 8。 */
 export const subEm = (boxWidth: number, px: number) =>
   Math.max(8, Math.floor(((Math.min(boxWidth - 32, 36 * px) - 24) / px) * 0.92));
+
+export interface JudgeCard extends Card {
+  /** 這張一行放得下併行的寬度（說話者名併進同一行）：呼叫端要併行時才會有。 */
+  compact?: true;
+}
+
+/**
+ * 法官的話分張（設計師 #290 第二輪）：一張是一個完整的句子，最多兩行，放得下就不切；
+ * 張數不隨寬度變（只要每句在這個寬度放得進兩行）。一句超過兩行，才在子句邊界切（splitCards）。
+ * compactEm：說話者名併進同一行時，一行放得下幾 em（null＝不併）；放得進的張標 compact。
+ */
+export function judgeCards(
+  text: string,
+  em: number,
+  compactEm: number | null,
+  measure?: (t: string) => number,
+): JudgeCard[] {
+  const keep = MEASURE;
+  MEASURE = measure;
+  try {
+    const out: JudgeCard[] = [];
+    let at = 0;
+    for (const piece of piecesOf(text, SENTENCE)) {
+      const s = piece.trim();
+      if (!s) continue;
+      const from = at;
+      at += piece.length;
+      // 兩行放得下：行寬一格一格縮（尾巴併回前一行會讓行寬超過框寬，縮一點就排得進）。
+      let ls: string[] | null = null;
+      for (let k = 0; k <= 3 && !ls; k++) {
+        const t = lineBreaks(s, em - k);
+        if (t.length <= 2 && t.every((l) => lineWidth(l) <= em + (zhOf(l) ? 1 : 0.01))) ls = t;
+      }
+      const cards: Card[] = ls
+        ? [{ text: s, from: 0, ...(ls.length > 1 ? { lines: ls } : {}) }]
+        : splitCardsAt(s, em, 2);
+      for (const c of cards) {
+        const one =
+          compactEm != null &&
+          lineBreaks(c.text, compactEm).length === 1 &&
+          lineWidth(c.text) <= compactEm + (zhOf(c.text) ? 1 : 0.01);
+        out.push({ ...c, from: from + c.from, ...(one ? { compact: true as const } : {}) });
+      }
+    }
+    return out.length ? out : [{ text, from: 0 }];
+  } finally {
+    MEASURE = keep;
+  }
+}

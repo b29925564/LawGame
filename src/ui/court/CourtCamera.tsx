@@ -16,7 +16,14 @@ import { P_FROM, P_TO, climbCoef, easeOf } from './climb';
 import { useSettings } from '../../engine/settings';
 import { useScope } from '../lang';
 import type { Cue } from '../record';
-import { readUnits, splitCards, subEm, SUB_MIN_UNITS } from './subtitleSplit';
+import {
+  judgeCards,
+  readUnits,
+  splitCards,
+  subEm,
+  SUB_MIN_UNITS,
+  type Card,
+} from './subtitleSplit';
 import { castLook } from '../jury/cast';
 import { svg } from '../jury/silhouette';
 
@@ -26,7 +33,7 @@ import { svg } from '../jury/silhouette';
  *
  * 一個機位由這幾個檔組成（src/ui/court/cam/，算圖來了直接覆蓋，不用改程式）：
  * - `{機位}.json`：清單。standee＝立牌（400×500 的剪影卡面）在 16:9 畫面裡的左、上、寬（比例）；
- *   crop239＝鏡頭條的裁切框 [x, y, w, h]（比例）；eye＝眼線高度；slots＝法官席每一場的窗光時段；
+ *   crop239＝鏡頭條的裁切框 [x, y, w, h]（比例）；cropInsert＝手機插入鏡頭的裁切框（法官席眼睛在上三分之一，要放大裁切）；eye＝眼線高度；slots＝法官席每一場的窗光時段；
  *   placeholder＝占位圖（框上方標「待放 3D 機位」）。
  * - `{機位}-{狀態}.avif／.webp`：那個狀態的底圖（各層光已合成好、調過色，人不在圖裡、影子在）。
  *   證人席的狀態是 default／lock／build／confront／fifth；法官席是 p0–p5（耐心剩幾根燈管），
@@ -57,6 +64,8 @@ interface Manifest {
   placeholder?: boolean;
   eye: number;
   crop239: [number, number, number, number];
+  /** 手機插入的 16:9 鏡頭用的裁切框；沒有就整張。 */
+  cropInsert?: [number, number, number, number];
   standee: { x: number; y: number; w: number };
   slots?: Record<string, string>;
 }
@@ -432,8 +441,8 @@ function Stage({
   turn?: boolean;
 }) {
   const m = MANIFESTS[`./cam/${cam}.json`];
-  // 16:9 的機位圖放進框裡：照裁切框把整張圖往上、往左推（2.39:1 只露出 crop239 那一段，眼線仍在 1/3）。
-  const crop = mode === 'strip' && m ? m.crop239 : [0, 0, 1, 1];
+  // 16:9 的機位圖放進框裡：照裁切框把整張圖往上、往左推（2.39:1 只露出 crop239 那一段，手機插入用 cropInsert；眼線在上三分之一，設定集 RD-ART-0406）。
+  const crop = (mode === 'strip' ? m?.crop239 : m?.cropInsert) ?? [0, 0, 1, 1];
   const width = frameW / crop[2];
   const target = resolve(cam, names);
   const look = castLook(who);
@@ -672,7 +681,6 @@ export function CourtCamera({
  * 一批裡的每句疊在同一格：各自在 --at 出現、在下一句的 --at 收掉，時間跟筆錄同一張節拍表，不另開計時器。
  * 被蓋掉的話（異議成立、自紀錄刪除）只剩一條黑條，條裡寫原因（第 1 章「默」：黑條只在字幕列與筆錄）。
  */
-type Fit = { mode: '' | 'compact' | 'side' };
 /** 併成一行的框比平常貼低的距離（框底留白從 10px 變 6px）。 */
 const COMPACT_DROP = 4;
 
@@ -693,10 +701,10 @@ function Subtitles({ cues, onJudgeRead }: { cues: Cue[]; onJudgeRead?: (ms: numb
     lines: 2,
     insert: false,
     font: '',
-    mode: '' as Fit['mode'],
-    side: 0,
-    emJudge: 30,
-    emRawJudge: 32,
+    px: 19,
+    who: 19.6,
+    h: 0,
+    headLimit: 0,
   });
   const shown = cues.length > 0;
   useLayoutEffect(() => {
@@ -713,37 +721,25 @@ function Subtitles({ cues, onJudgeRead }: { cues: Cue[]; onJudgeRead?: (ms: numb
       const room = h - 10 - h * (insert ? 0.7 : 0.47) - who - 10;
       // 手機插入鏡頭一律一行（設定集第 10 章 :12）；鏡頭還沒打開量不到高度時也不退回兩行（關卡二 #6）。
       const lines = insert ? 1 : h ? Math.max(1, Math.min(2, Math.floor(room / (px * 1.5)))) : 2;
-      // 法官席：框放在底下會不會壓到法官的頭（鏡頭條矮的時候，1100 寬）。壓到就先把說話者名併進同一行、框貼低一點；
-      // 還是壓到（字幕放到 1.5 倍），法官的話靠到立牌右邊、框寬扣掉左邊那段（關卡二 v92 #B）。
-      const sd = insert ? null : frame?.querySelector('.cam-stage[data-cam="bench"] .cam-standee');
-      let mode: Fit['mode'] = '';
-      let side = 0;
+      // 法官立牌的頭（立牌頂往下 HEAD_ZONE）下緣：法官的字幕框頂要在它下面（設定集第 10 章，頭在上三分之一）。
+      const sd = frame?.querySelector('.cam-stage[data-cam="bench"] .cam-standee');
+      let headLimit = 0;
       if (frame && sd) {
         const fr = frame.getBoundingClientRect();
         const sr = sd.getBoundingClientRect();
-        const headBottom = sr.top - fr.top + sr.height * HEAD_ZONE + 4;
-        if (h - 10 - (who + px * 1.5 + 10) < headBottom) {
-          if (h - 10 + COMPACT_DROP - (px * 1.5 + 10) >= headBottom) mode = 'compact';
-          else {
-            mode = 'side';
-            side = Math.ceil(sr.right - fr.left) + 10;
-          }
-        }
+        headLimit = sr.top - fr.top + sr.height * HEAD_ZONE + 4;
       }
       const w = el.clientWidth;
-      const ws = w - Math.max(0, side - 16);
-      // 併成一行時說話者名佔掉前面約 4 個字寬。
-      const cut = mode === 'compact' ? 4 : 0;
       setFit({
         em: subEm(w, px),
         emRaw: Math.floor((Math.min(w - 32, 36 * px) - 24) / px),
         lines,
         insert,
         font: `500 ${px}px ${probeFamily(el)}`,
-        mode,
-        side,
-        emJudge: subEm(ws, px) - cut,
-        emRawJudge: Math.floor((Math.min(ws - 32, 36 * px) - 24) / px) - cut,
+        px,
+        who,
+        h,
+        headLimit,
       });
     };
     measure();
@@ -765,7 +761,6 @@ function Subtitles({ cues, onJudgeRead }: { cues: Cue[]; onJudgeRead?: (ms: numb
       next?: string;
       until?: string;
       units?: number;
-      side?: number;
       compact?: boolean;
     }[] = [];
     for (const c of cues) {
@@ -780,14 +775,26 @@ function Subtitles({ cues, onJudgeRead }: { cues: Cue[]; onJudgeRead?: (ms: numb
       // 英文用實際字型量過整行寬度，行寬不必再留估算用的餘裕：一行放得下就不切。
       // 法官的話（切到法官席時出現）桌機也只放一行，字幕框才不蓋住法官的頭（關卡二 #1）。
       const latin = !/[\p{Script=Han}]/u.test(c.text);
-      const tight = c.who === JUDGE && fit.mode !== '';
-      const side = tight ? fit.side : 0;
-      const parts = splitCards(
-        c.text,
-        tight ? (latin ? fit.emRawJudge : fit.emJudge) : latin ? fit.emRaw : fit.em,
-        c.who === JUDGE ? 1 : fit.lines,
-        latin ? measureOf(fit.font) : undefined,
-      );
+      const judge = c.who === JUDGE;
+      // 法官的話：一句一張、最多兩行；一行的框頂會碰到頭、併成一行（框貼低 4px）就碰不到時，併行（設計師 #290）。
+      const normalTop = fit.h - 10 - (fit.who + fit.px * 1.5 + 10);
+      const compactOk =
+        fit.headLimit > 0 &&
+        normalTop < fit.headLimit &&
+        fit.h - 10 + COMPACT_DROP - (fit.px * 1.5 + 10) >= fit.headLimit;
+      const parts: (Card & { compact?: boolean })[] = judge
+        ? judgeCards(
+            c.text,
+            latin ? fit.emRaw : fit.em,
+            compactOk ? (latin ? fit.emRaw : fit.em) - 4 : null,
+            latin ? measureOf(fit.font) : undefined,
+          )
+        : splitCards(
+            c.text,
+            latin ? fit.emRaw : fit.em,
+            fit.lines,
+            latin ? measureOf(fit.font) : undefined,
+          );
       // 每張讀得完才換下一張：漢字 1 單位、其他 0.35，至少 10 單位；從這句出現的時間累計（字幕比筆錄慢，不閃過）。
       let read = 0;
       parts.forEach((p, k) => {
@@ -799,8 +806,7 @@ function Subtitles({ cues, onJudgeRead }: { cues: Cue[]; onJudgeRead?: (ms: numb
           cue: c.key,
           until: c.until,
           units: Math.max(SUB_MIN_UNITS, readUnits(p.text)),
-          side,
-          compact: tight && fit.mode === 'compact',
+          compact: !!p.compact,
           at: read > 0 ? `calc(${c.at} + ${read} * var(--dur-sub-unit))` : c.at,
         });
         read += Math.max(SUB_MIN_UNITS, readUnits(p.text));
@@ -839,8 +845,7 @@ function Subtitles({ cues, onJudgeRead }: { cues: Cue[]; onJudgeRead?: (ms: numb
           <p
             key={c.key}
             className="cam-sub"
-            style={{ '--at': c.at, '--next': c.next, '--side': `${c.side}px` } as CSSProperties}
-            data-side={c.side || undefined}
+            style={{ '--at': c.at, '--next': c.next } as CSSProperties}
             data-compact={c.compact || undefined}
             data-last={(i === cards.length - 1 && !c.until) || undefined}
           >
