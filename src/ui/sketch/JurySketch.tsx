@@ -113,6 +113,7 @@ export function JurySketch({
   look,
   provenance,
   pool = 1,
+  lamp: lampAt,
 }: {
   on: boolean;
   cards: JuryCard[];
@@ -121,6 +122,8 @@ export function JurySketch({
   provenance: string;
   /** 光圈半徑的倍率：手機的板子光圈放大，蓋住兩張比對卡（和 cork.css 的 .cork.compact .cork-lamp 一致）。 */
   pool?: number;
+  /** 手機牌架的橢圓光圈：中心高（板高的比例）、橫向 ÷ 縱向半徑。 */
+  lamp?: { y: number; sy: number };
 }) {
   const t = useT();
   const scope = useScope();
@@ -154,7 +157,7 @@ export function JurySketch({
     };
   }, []);
   const lang = useLang((s) => s.lang);
-  const key = `${cards.map((c) => `${c.id}@${(c.center ?? c.at).map((x) => x.toFixed(1)).join(',')}`).join()}|${lang}|${scheme}|${provenance}|${size}|${pool}`;
+  const key = `${cards.map((c) => `${c.id}@${(c.center ?? c.at).map((x) => x.toFixed(1)).join(',')}`).join()}|${lang}|${scheme}|${provenance}|${size}|${pool}|${lampAt ? `${lampAt.y.toFixed(3)},${lampAt.sy.toFixed(2)}` : ''}`;
 
   // 第一次成形要等玩家真的切過來才開始畫；筆觸先在 Worker 算好放著。
   const onRef = useRef(on);
@@ -268,6 +271,7 @@ export function JurySketch({
         cards: sc,
         strings: [],
         lamp: STOPS.map(([d, v]) => [d * pool, v]),
+        lampAt,
         base: { lum: 0.43, rgb: [0x8a, 0x6a, 0x48] },
         paper,
         ink,
