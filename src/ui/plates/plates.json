@@ -1,0 +1,42 @@
+{
+  "plates": [
+    {
+      "id": "s1-an",
+      "scene": "ep1:theory",
+      "rig": "ep1-conf-a-sun-night",
+      "card_kelvin": 2700,
+      "date": "2026-04-05 22:40",
+      "episode": 1,
+      "files": {
+        "desktop": {
+          "file": "s1-an-desktop.jpg",
+          "bytes": 75330
+        },
+        "phone": {
+          "file": "s1-an-phone.jpg",
+          "bytes": 46973
+        }
+      },
+      "frames_res": [2304, 1440],
+      "frames": {
+        "lucas": [1058, 0, 2304, 1440],
+        "hale": [1283, 0, 1642, 1010]
+      },
+      "phone_cx": 0.73,
+      "phone_crop_px": [1277, 0, 2087, 1440],
+      "key": "lamp",
+      "fill": ["corr", "harbor", "city"],
+      "target": "8:1",
+      "measured_ratio": 7.999,
+      "floor_L": {
+        "desktop": 3.87,
+        "phone": 3.85
+      },
+      "yellow_final_violations": {
+        "desktop": 0,
+        "phone": 0
+      },
+      "source": "project-files art-bible/scenes/s1-conference (s1_conference.py state=an cam=wide, finish_s1_an.py); review designer-review-an-v1.md v5"
+    }
+  ]
+}
