@@ -272,6 +272,8 @@ const warmed = new Map<string, Promise<boolean>>();
 const warmedDone = new Set<string>();
 /** webp 網址 → 同一層的 avif 網址（Img 會優先用它）。 */
 const avifOf = new Map<string, string>();
+/** 輪廓光的遮罩圖（CSS mask-image）：樣式是用 CORS 模式抓的，預熱要用同樣的模式，不然進場又抓一次。 */
+const rimUrls = new Set<string>();
 /** 解碼好的圖留著參照，不然瀏覽器會把它丟掉；只留最近 24 張。 */
 const kept = new Map<string, HTMLImageElement>();
 function decode(url: string): Promise<boolean> {
@@ -284,6 +286,7 @@ function decode(url: string): Promise<boolean> {
     source.srcset = avif;
     pic.append(source, img);
   }
+  if (rimUrls.has(url)) img.crossOrigin = 'anonymous';
   img.src = url;
   const done = img.decode
     ? img.decode()
@@ -325,6 +328,7 @@ const layerUrls = (l: Layer | null) => {
   if (!l) return [];
   for (const src of [l.plate, l.front])
     if (src?.avif && src.avif !== src.webp) avifOf.set(src.webp, src.avif);
+  if (l.rim) rimUrls.add(l.rim.webp);
   return [l.plate.webp, l.rim?.webp, l.front?.webp].filter((u): u is string => !!u);
 };
 
