@@ -13,13 +13,13 @@ import { CUT_EXCEPTIONS, judgeCards, sentencesOf, subEm } from './subtitleSplit'
  * 同一句在每個寬度都切成一樣的張數，不能只剩一個字、斷在片語中間。
  * 鏡頭條各寬度的字幕列寬與字級是在真實頁面量的（桌機 1100–1530、Pixel 7 手機）。
  */
-const GEOMS: { name: string; w: number; px: number }[] = [
-  { name: '1100', w: 372, px: 19 },
-  { name: '1180', w: 396, px: 19 },
-  { name: '1366', w: 446, px: 19 },
-  { name: '1440', w: 520, px: 19 },
-  { name: '1530', w: 560, px: 19 },
-  { name: '手機', w: 396, px: 17 },
+const GEOMS: { name: string; w: number; px: number; h: number }[] = [
+  { name: '1100', w: 372, px: 19, h: 156 },
+  { name: '1180', w: 396, px: 19, h: 166 },
+  { name: '1366', w: 446, px: 19, h: 187 },
+  { name: '1440', w: 520, px: 19, h: 218 },
+  { name: '1530', w: 560, px: 19, h: 234 },
+  { name: '手機', w: 396, px: 17, h: 223 },
 ];
 const cardsAt = (text: string, g: (typeof GEOMS)[number]) =>
   judgeCards(
@@ -76,6 +76,26 @@ beforeAll(() => {
  * 這幾句在 1100／1180 寬放不進兩行（字級 100%，整句要 33 個 em 以上，一行只放得下 16 個 em），只能在子句邊界切，
  * 張數比寬的鏡頭條多；設計師說「連兩行都放不下整句就先回報」（#290 第二輪），回報後再決定。
  */
+/** 125%／150% 用到勉強換行點的組合（單元測試釘住；多一個都要回報）。 */
+const WEAK_USED: string[] = [
+  "1100/125%/一般｜the defendants' | executives",
+  '1100/125%/併行｜court has | excluded',
+  "1100/125%/併行｜the defendants' | executives",
+  "1100/150%/一般｜the defendants' | executives",
+  '1100/150%/併行｜court has | excluded',
+  "1100/150%/併行｜the defendants' | executives",
+  "1180/125%/一般｜the defendants' | executives",
+  "1180/125%/併行｜the defendants' | executives",
+  "1180/150%/一般｜the defendants' | executives",
+  '1180/150%/併行｜court has | excluded',
+  "1180/150%/併行｜the defendants' | executives",
+  "1366/150%/一般｜the defendants' | executives",
+  '1366/150%/併行｜court has | excluded',
+  "1366/150%/併行｜the defendants' | executives",
+  "手機/150%/一般｜the defendants' | executives",
+  "手機/150%/併行｜the defendants' | executives",
+];
+
 const TOO_LONG_AT_1100 = [
   // 這句在估算寬度（0.46em／字）下差幾個字放不進兩行；真字型的實測在 e2e 與 qa 紀錄。
   "The witness's opinion of the defendant is character evidence",
@@ -180,12 +200,30 @@ describe('法官的台詞：一句一張、最多兩行、張數不隨寬度變'
         LEADS.map((lead) => {
           const px = g0.px * sc;
           const em = Math.floor((Math.min(g0.w - 32, 36 * px) - 24) / px);
-          return { name: `${g0.name}/${sc * 100}%/${lead ? '併行' : '一般'}`, em, lead };
+          // 框頂（相對鏡頭條）與燈管、鐘的下緣：桌機鏡頭條裁切 y 從 0.1142 起、1.0×；手機插入露整張（bench.json 的 inView）。
+          const phone = g0.name === '手機';
+          const ph = g0.w * 0.5625;
+          const y0 = phone ? 0 : 0.1142;
+          const hole = ph * (0.3333 - y0) + 4; // 燈管下緣；鐘靠框寬收窄閃開，不算
+          const who = (phone ? 13 : 14) * 1.4 * sc;
+          const boxTop = (rows: number) => g0.h - 10 - (who + px * 1.5 * rows + 10);
+          return {
+            name: `${g0.name}/${sc * 100}%/${lead ? '併行' : '一般'}`,
+            em,
+            lead,
+            hits: (rows: number) => boxTop(rows) < hole,
+          };
         }),
       ),
     );
     const run = (sentence: string, c: (typeof combos)[number], marks: boolean) =>
-      judgeCards(sentence, c.em, c.lead ? { lead: c.lead, when: () => true } : null, est, marks);
+      judgeCards(
+        sentence,
+        c.em,
+        c.lead ? { lead: c.lead, when: () => true, hits: c.hits } : null,
+        est,
+        marks,
+      );
     it('任何寬度、字級下會分張的台詞都有標斷點', () => {
       const missing = sentencesNow().filter(
         (s) => !markedFor(s) && combos.some((c) => run(s, c, false).length > 1),
@@ -241,7 +279,7 @@ describe('法官的台詞：一句一張、最多兩行、張數不隨寬度變'
         shape('Members of the jury: the testimony of Ms. Adler is stricken in its entirety.'),
       ).toBe('Members of the jury: ▏ the testimony／of Ms. Adler ▏ is stricken／in its entirety.');
     });
-    it('勉強的換行點（~）只有清單上那 3 處，只在 125%／150%、或 100% 併行且 1180 以下用到', () => {
+    it('勉強的換行點（~）只有清單上那 3 處；100% 任何寬度都用不到；125%／150% 用到的組合釘成清單', () => {
       const weak = (m: ReturnType<typeof parseMarked>, at: number) =>
         `${m.words.slice(Math.max(0, at - 2), at).join(' ')} | ${m.words[at]}`;
       const marked = JUDGE_BREAKS.flatMap((x) => {
@@ -249,7 +287,7 @@ describe('法官的台詞：一句一張、最多兩行、張數不隨寬度變'
         return m.kinds.flatMap((k, i) => (k === 'W' ? [weak(m, i)] : []));
       });
       expect(marked.sort()).toEqual([...WEAK_BREAKS].sort());
-      const bad: string[] = [];
+      const used = new Set<string>();
       for (const s of sentencesNow()) {
         const m = markedFor(s);
         if (!m) continue;
@@ -260,18 +298,14 @@ describe('法官的台詞：一句一張、最多兩行、張數不隨寬度變'
             let w = at;
             const starts = [at, ...rows.slice(0, -1).map((l) => (w += l.split(' ').length))];
             for (const b of starts)
-              if (b > 0 && m.kinds[b] === 'W') {
-                const scale = Number(c.name.split('/')[1].replace('%', '')) / 100;
-                const narrow = ['1100', '1180'].includes(c.name.split('/')[0]);
-                const joined = c.name.endsWith('併行');
-                // 設計師原話是「125–150% 且 1180 以下」；實測 1366 以上的 150%（燈管下的框寬）與 1100／1180 的 100% 併行也只剩這個切法，已回報。
-                if (!(scale >= 1.25 || (joined && narrow))) bad.push(`${c.name}｜${weak(m, b)}`);
-              }
+              if (b > 0 && m.kinds[b] === 'W') used.add(`${c.name}｜${weak(m, b)}`);
             at += card.text.split(' ').length;
           }
         }
       }
-      expect(bad).toEqual([]);
+      // 100%：一個都沒有（設計師 #290：勉強換行點是併行用太多逼出來的，併行會逼出時改三列）。
+      expect([...used].filter((x) => x.includes('/100%/'))).toEqual([]);
+      expect([...used].sort()).toEqual(WEAK_USED);
     });
     it('標記本身：每一句的字都對得上台詞、一般規則不准切的位置只出現在例外清單', () => {
       for (const src of JUDGE_BREAKS) {

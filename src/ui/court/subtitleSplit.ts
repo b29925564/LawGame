@@ -507,7 +507,12 @@ function markedParts(
 export function judgeCards(
   text: string,
   em: number,
-  compact: { lead: number; when: (lines: number) => boolean } | null,
+  compact: {
+    lead: number;
+    when: (lines: number) => boolean;
+    /** 名字獨立一行、台詞 n 行的框（不併行）會不會蓋到燈管或鐘。 */
+    hits: (lines: number) => boolean;
+  } | null,
   measure?: (t: string) => number,
   useMarks = true,
 ): JudgeCard[] {
@@ -524,7 +529,9 @@ export function judgeCards(
       const marked = useMarks && !zhOf(s) ? markedFor(s) : undefined;
       const sw = s.split(/\s+/).filter(Boolean);
       if (marked && marked.words.length === sw.length) {
-        const parts = markedParts(sw, marked, em, 0, sw.length, 0);
+        const parts =
+          markedParts(sw, marked, em, 0, sw.length, 0, { noWeak: true }) ??
+          markedParts(sw, marked, em, 0, sw.length, 0);
         if (parts) {
           // 字元起點：第 i 個字前面有 i 個空白。
           const offs: number[] = [];
@@ -556,6 +563,14 @@ export function judgeCards(
               if (b) {
                 push(b, false);
                 continue;
+              }
+              // 併行會逼出勉強換行點：不併行，名字獨立一行、台詞兩行（三列）；只要不蓋到燈管和鐘就用，壓頭照舊接受。
+              if (!compact.hits(2)) {
+                const t3 = markedParts(sw, marked, em, pt.a, pt.b, 0, { noWeak: true });
+                if (t3) {
+                  push(t3, false);
+                  continue;
+                }
               }
               const c = markedParts(sw, marked, em, pt.a, pt.b, compact.lead);
               if (c) {

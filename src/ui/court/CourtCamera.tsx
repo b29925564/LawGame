@@ -809,6 +809,8 @@ function Subtitles({ cues, onJudgeRead }: { cues: Cue[]; onJudgeRead?: (ms: numb
           ? {
               lead: Math.ceil(((nameW + 0.6 * whoPx) / fit.px) * 2) / 2,
               when: (rows: number) => boxTop(rows) < Math.max(fit.headLimit, fit.tubesBottom),
+              // 鐘靠框寬收窄閃開（下面），不算蓋住。
+              hits: (rows: number) => boxTop(rows) < fit.tubesBottom,
             }
           : null;
       const meas = latin ? measureOf(fit.font) : undefined;
