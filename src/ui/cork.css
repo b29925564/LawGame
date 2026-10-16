@@ -221,6 +221,22 @@
   transition: none;
 }
 
+/* 量「這一題最高的卡」用的隱藏層（Cork.tsx 的 candidates）：和光圈裡的卡同寬同樣式，看不見、點不到、不占版面。 */
+.cork-measure {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  visibility: hidden;
+  pointer-events: none;
+}
+.cork-measure-card {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform: none;
+  transition: none;
+}
+
 /* 全站按鈕的 hover 會換底色：板上的卡是紙，滑過去紙色不變（和 :active 的縮放）。 */
 .cork-card:is(:hover, :active):not(:disabled),
 .cork-pick:is(:hover, :active):not(:disabled) {
@@ -273,7 +289,7 @@
 
 /* 索引卡：卡名在紅頂線上方，手寫字寫在藍橫線上。 */
 .cork-card.index,
-.cork-focus.index .cork-pick {
+:is(.cork-focus, .cork-measure-card).index .cork-pick {
   background: var(--note);
 }
 .cork-index-head {
@@ -301,11 +317,11 @@
 
 /* 便條（論點）：便條色、手寫字，翹角用陰影。 */
 .cork-card.note,
-.cork-focus.note .cork-pick {
+:is(.cork-focus, .cork-measure-card).note .cork-pick {
   background: linear-gradient(168deg, transparent 72%, rgb(0 0 0 / 8%)), var(--note);
 }
 .cork-card.note b.cork-hand,
-.cork-focus.note b.cork-hand {
+:is(.cork-focus, .cork-measure-card).note b.cork-hand {
   --lines: 2;
   font-size: 16px;
   background: none;
@@ -313,7 +329,7 @@
 
 /* 照片：白邊 10px＋底欄。沒有實物縮圖時是警方閃光燈的版式：中心過曝、四角快速變暗、背景死黑。 */
 .cork-card.photo,
-.cork-focus.photo .cork-pick {
+:is(.cork-focus, .cork-measure-card).photo .cork-pick {
   padding: 10px 10px 0;
   gap: 0;
   background: #f4f4f1;
@@ -334,7 +350,8 @@
 .cork-print img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  /* 照片不裁切：框的比例由 Cork.tsx 的 printStyle 跟著照片走。 */
+  object-fit: contain;
   display: block;
 }
 /* 證物立牌：一律灰白（設定集第 5 章；黃只給獎盃那張）。 */
@@ -489,7 +506,7 @@ button.cork-empty:focus-visible {
   display: none;
 }
 /* 光圈裡的比對卡是玩家拉進來要讀的：字全部放完、不淡出，卡跟著內容長高（設計師 P2-6 r6 第 2 條）。 */
-.cork-focus:not(.away) :is(.cork-doc-text, .cork-hand) {
+:is(.cork-focus:not(.away), .cork-measure-card) :is(.cork-doc-text, .cork-hand) {
   max-height: none;
   mask-image: none;
 }
@@ -540,6 +557,9 @@ body:has(.cork) .card .mini-btn[aria-pressed='true'] {
   font-size: 12px;
   line-height: 16px;
   max-height: 32px;
+  /* 標題放格子裡放得下的整行數（格高 − 上 14 下 4 的內距），round(down) 保證下緣落在行與行之間、不切半行。
+     不認得 round() 的舊瀏覽器留上一行的兩行。 */
+  max-height: round(down, calc(var(--cell-h) - 18px), 16px);
   overflow: hidden;
 }
 .cork-card.rack .cork-index-head {
@@ -552,6 +572,7 @@ body:has(.cork) .card .mini-btn[aria-pressed='true'] {
   font-size: 13px;
   line-height: 17px;
   max-height: 34px;
+  max-height: round(down, calc(var(--cell-h) - 18px), 17px);
   background: none;
 }
 .cork-card.rack.photo {
@@ -591,15 +612,13 @@ body:has(.cork) .card .mini-btn[aria-pressed='true'] {
   flex: none;
   font-size: 12px;
   line-height: 16px;
-  max-height: 32px;
+  /* 黑條卡佔一欄兩列高（Cork.tsx 的 packRack）：說明整段放得下，卡名拿剩下的整行（RackBar 量出行數設 max-height）。 */
   overflow: hidden;
 }
 .cork-rack .cork-redact span {
   flex: none;
   font-size: 11px;
   line-height: 14px;
-  max-height: 28px;
-  overflow: hidden;
   /* 「尚未取得　需傳票」只在全形空格斷，不在詞中間；英文不在單字中間。 */
   word-break: keep-all;
   overflow-wrap: normal;

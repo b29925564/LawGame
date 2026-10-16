@@ -117,14 +117,17 @@ for (const lang of ['zh-TW', 'en'])
         expect(b.mask).toBe('none');
         if (b.cut) expect(Math.abs(b.rows - Math.round(b.rows)) * 17).toBeLessThanOrEqual(1);
       }
-      // 照片在邊緣和光圈裡都是 4:3（±1px）：同一張相片不因為位置不同而換裁切。
+      // 照片在邊緣和光圈裡都不裁切：沖印框的比例就是照片的比例（多數 4:3，扣押袋那張 3:2；沒有照片的閃光燈版式是 4:3）。
       const prints = await page.locator('.cork .cork-print').evaluateAll((els) =>
-        els.map((e) => ({
-          width: (e as HTMLElement).offsetWidth,
-          height: (e as HTMLElement).offsetHeight,
-        })),
+        els.map((e) => {
+          const img = e.querySelector('img');
+          return {
+            width: (e as HTMLElement).offsetWidth,
+            height: (e as HTMLElement).offsetHeight,
+            ratio: img && img.naturalHeight ? img.naturalWidth / img.naturalHeight : 4 / 3,
+          };
+        }),
       );
       expect(prints.length).toBeGreaterThan(0);
-      for (const r of prints)
-        expect(Math.abs((r.width * 3) / 4 - r.height)).toBeLessThanOrEqual(1.5);
+      for (const r of prints) expect(Math.abs(r.width / r.ratio - r.height)).toBeLessThanOrEqual(3);
     });

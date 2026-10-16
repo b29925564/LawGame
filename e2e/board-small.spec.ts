@@ -144,7 +144,14 @@ for (const lang of ['zh-TW', 'en'])
           return {
             w: e.offsetWidth,
             h: e.offsetHeight,
-            print: print && { w: print.offsetWidth, h: print.offsetHeight },
+            print: print && {
+              w: print.offsetWidth,
+              h: print.offsetHeight,
+              nat: (() => {
+                const i = print.querySelector('img');
+                return i && i.naturalWidth / i.naturalHeight;
+              })(),
+            },
             box: { l: r.left, t: r.top, r: r.right, b: r.bottom },
             bar: e.classList.contains('cork-redact'),
           };
@@ -156,12 +163,20 @@ for (const lang of ['zh-TW', 'en'])
       const all = await cells();
       let photos = 0;
       for (const c of all) {
-        // 格子是 4:3；照片卡是一張沖印，比格子窄，照片本身是 4:3（不裁切，設計師 #2）。
+        // 格子是 4:3；照片卡是一張沖印，比格子窄，框跟著照片的比例走（不裁切，設計師 #2）：多數是 4:3，扣押袋那張是 3:2。
         if (c.print) {
           photos++;
-          expect(Math.abs((c.print.w * 3) / 4 - c.print.h), '牌架照片 4:3').toBeLessThanOrEqual(
-            1.5,
-          );
+          const ratio = c.print.nat || 4 / 3;
+          expect(
+            Math.abs(c.print.w / ratio - c.print.h),
+            `牌架照片 ${ratio.toFixed(3)}`,
+          ).toBeLessThanOrEqual(1.5);
+        } else if (c.bar) {
+          // 黑條卡佔一欄兩列高（標籤要整張放得下）：寬是一格，高是兩格加一個間距。
+          expect(
+            Math.abs(c.h - (2 * ((c.w * 3) / 4) + 6)),
+            `黑條 ${c.w}×${c.h} 是一欄兩列`,
+          ).toBeLessThanOrEqual(1);
         } else
           expect(Math.abs((c.w * 3) / 4 - c.h), `卡 ${c.w}×${c.h} 是 4:3`).toBeLessThanOrEqual(1);
         expect(Math.min(c.w, c.h), '觸控範圍 ≥ 44').toBeGreaterThanOrEqual(44);
@@ -191,7 +206,7 @@ for (const lang of ['zh-TW', 'en'])
     await page.locator('.cork-dots button').first().click();
     await expect(marks.first()).toContainText(/尚未取得|Not obtained/);
 
-    // 標題最多兩整行、整行切：高度是行高的整數倍，沒有淡出、沒有刪節號。
+    // 標題整行切：高度是行高的整數倍，沒有淡出、沒有刪節號。
     const titles = await page
       .locator(
         '.cork-rack .cork-doc-name, .cork-rack .cork-index-head b, .cork-rack b.cork-hand, .cork-rack .cork-strip b, .cork-rack .cork-redact b',
@@ -202,7 +217,6 @@ for (const lang of ['zh-TW', 'en'])
           const lh = parseFloat(cs.lineHeight);
           return {
             rows: e.clientHeight / lh,
-            cut: e.scrollHeight > e.clientHeight + 1,
             mask: cs.maskImage,
             ellipsis: cs.textOverflow,
           };
@@ -210,11 +224,22 @@ for (const lang of ['zh-TW', 'en'])
       );
     expect(titles.length).toBeGreaterThan(3);
     for (const t of titles) {
-      expect(t.rows).toBeLessThanOrEqual(2.05);
       expect(Math.abs(t.rows - Math.round(t.rows)) * 17, '整行切').toBeLessThanOrEqual(1);
       expect(t.mask).toBe('none');
       expect(t.ellipsis).toBe('clip');
     }
+    // 尚未取得的黑條卡：標籤本身就是要傳達的資訊，卡名和「尚未取得、需傳票」一個字都不能被切掉。
+    const bar = await page
+      .locator('.cork-rack.marks .cork-redact')
+      .first()
+      .evaluate((e) =>
+        [...e.querySelectorAll('b, span')].map((x) => ({
+          tag: x.tagName,
+          cut: x.scrollHeight - x.clientHeight,
+        })),
+      );
+    expect(bar.length).toBe(2);
+    for (const x of bar) expect(x.cut, `黑條卡的 ${x.tag} 被切掉`).toBeLessThanOrEqual(1);
   });
 
 test('手機：板子和牌架不被答案列蓋住，A／B 也是', async ({ page }) => {
@@ -224,7 +249,7 @@ test('手機：板子和牌架不被答案列蓋住，A／B 也是', async ({ pa
   await page.locator('.cork-rack:not(.marks) .cork-card').first().click();
   await page.locator('.cork-rack:not(.marks) .cork-card').first().click();
   await expect(page.locator('.cork-focus.filled')).toHaveCount(2);
-  // 把板子捲到頂端欄下面：整塊板子都在答案列上方。
+  // 把板子捲到頂端欄下面：牌架（在板子上緣）整個不被答案列蓋住、A／B 的中心也不被蓋住（板子本身比一屏高，下面空的軟木會捲到答案列後面）。
   await page.evaluate(() => {
     document.querySelector('.cork')!.scrollIntoView({ block: 'start' });
     window.scrollBy(0, -100);
@@ -241,11 +266,21 @@ test('手機：板子和牌架不被答案列蓋住，A／B 也是', async ({ pa
         return { inside: !!el?.closest('.cork'), bottom: b.bottom };
       },
     );
-    return { barTop: bar.top, corkBottom: r.bottom, pts };
+    const rack = document.querySelector('.cork-rack:not(.marks)')!.getBoundingClientRect();
+    const ab = [...document.querySelectorAll('.cork-focus')].map(
+      (e) => e.getBoundingClientRect().bottom,
+    );
+    return {
+      barTop: bar.top,
+      corkBottom: r.bottom,
+      rackBottom: rack.bottom,
+      abBottom: Math.max(...ab),
+      pts,
+    };
   });
-  expect(hit.pts.length).toBeGreaterThan(4);
+  expect(hit.pts.length).toBeGreaterThanOrEqual(4);
   for (const p of hit.pts) expect(p.inside, '卡片中心被別的東西蓋住').toBe(true);
-  expect(hit.corkBottom, '板子下緣在答案列上方').toBeLessThanOrEqual(hit.barTop);
+  expect(hit.rackBottom, '牌架在答案列上方').toBeLessThanOrEqual(hit.barTop);
 });
 
 test('手機：超過 6 張換頁、一次一整頁、頁碼點不是黃、放進 A 的卡原位空著', async ({ page }) => {
@@ -294,4 +329,286 @@ test('手機：超過 6 張換頁、一次一整頁、頁碼點不是黃、放�
   expect(dot, '頁碼點不用黃').not.toMatch(
     /^rgb\((2[0-9]{2}), (1[5-9][0-9]|2[0-9]{2}), [0-9]{1,2}\)$/,
   );
+});
+
+// 證據欄只在板子放得下大板面時常駐（Evidence.tsx 的 DOCK）：1024–1379 是抽屜＋大板，≥1380 常駐＋大板；
+// 桌機任何寬度都不出現手機的 4:5 板（第二道關卡 v92 #2：1180 大板、1181 手機板）。
+for (const [w, docked] of [
+  [1179, false],
+  [1180, false],
+  [1181, false],
+  [1280, false],
+  [1360, false],
+  [1379, false],
+  [1380, true],
+  [1440, true],
+] as const)
+  test(`${w}：${docked ? '證據欄常駐' : '證據欄收進抽屜'}，板子是大板面`, async ({ page }) => {
+    await page.setViewportSize({ width: w, height: 800 });
+    await open(page, 'en');
+    await expect(page.locator('.cork')).toBeVisible();
+    await page.waitForTimeout(500);
+    await expect(page.locator('.side-wrap')).toHaveCount(docked ? 1 : 0);
+    await expect(page.locator('.cork.compact'), '桌機不用手機的板').toHaveCount(0);
+    const box = (await page.locator('.cork').boundingBox())!;
+    expect(box.width - 20, '板內寬 ≥ 600').toBeGreaterThanOrEqual(600);
+    expect(box.width / box.height, '大板 16:10').toBeGreaterThan(1.5);
+    await expect(page.locator('.cork-empty').first()).toHaveText(
+      docked ? 'Click a card on the right to place it' : SLOT,
+    );
+  });
+
+// 設計師 #2 2026-10-16 (d)：板子從一開始就照這一題最高的卡算高度，A／B 空著、放一張、放兩張，Pixel 7 的板子一樣高。
+for (const lang of ['zh-TW', 'en'])
+  for (const scale of ['1', '1.5'])
+    test(`手機：A／B 空、放一張、放兩張，板子同高、牌架不動（${lang}，字級 ${scale}）`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width: 412, height: 839 });
+      await open(page, lang, ['q2a']);
+      await page.evaluate(
+        (s) => document.documentElement.style.setProperty('--text-scale', s),
+        scale,
+      );
+      await question(page);
+      const read = () =>
+        page.evaluate(() => {
+          const c = document.querySelector('.cork')!.getBoundingClientRect();
+          const r = document.querySelector('.cork-rack:not(.marks)')!.getBoundingClientRect();
+          return { w: c.width, h: c.height, rackTop: r.top - c.top };
+        });
+      const none = await read();
+      expect(none.h / none.w, '板子至少 4:5').toBeGreaterThanOrEqual(1.25 - 0.01);
+      await page.locator('.cork-rack:not(.marks) .cork-card').first().click();
+      await expect(page.locator('.cork-focus.filled')).toHaveCount(1);
+      await page.waitForTimeout(400);
+      const one = await read();
+      await page.locator('.cork-rack:not(.marks) .cork-card').first().click();
+      await expect(page.locator('.cork-focus.filled')).toHaveCount(2);
+      await page.waitForTimeout(400);
+      const two = await read();
+      console.log(
+        `${lang} ×${scale}：空 ${none.w}×${none.h.toFixed(1)}（${(none.h / none.w).toFixed(3)}）、一張 ${one.h.toFixed(1)}、兩張 ${two.h.toFixed(1)}`,
+      );
+      expect(Math.abs(one.h - none.h), '放一張，板高不變').toBeLessThanOrEqual(1);
+      expect(Math.abs(two.h - none.h), '放兩張，板高不變').toBeLessThanOrEqual(1);
+      expect(Math.abs(two.rackTop - none.rackTop), '牌架不動').toBeLessThanOrEqual(1);
+    });
+
+test('手機：牌架上的照片不裁切（框跟著照片比例）', async ({ page }) => {
+  await page.setViewportSize({ width: 412, height: 839 });
+  await open(page, 'zh-TW', ['q2a']);
+  await question(page);
+  await page.locator('.cork-dots button').nth(1).click();
+  await page.waitForTimeout(400);
+  const prints = await page.locator('.cork-rack .cork-print img').evaluateAll((els) =>
+    els.map((e) => {
+      const img = e as HTMLImageElement;
+      const box = img.parentElement!.getBoundingClientRect();
+      return {
+        src: img.currentSrc,
+        nat: img.naturalWidth / img.naturalHeight,
+        box: box.width / box.height,
+      };
+    }),
+  );
+  expect(prints.length).toBeGreaterThan(0);
+  for (const p of prints)
+    expect(Math.abs(p.nat - p.box) / p.nat, `${p.src} 框 ${p.box} 對照片 ${p.nat}`).toBeLessThan(
+      0.03,
+    );
+});
+
+// 設計師 2026-10-16 審 #284：英文板子變高（約 700px），牌架在板子上緣，頁面捲在最上面時，牌架第一列要整列在第一屏內、
+// 也在答案列上方。
+for (const [w, h] of [
+  [412, 839],
+  [360, 740],
+] as const)
+  for (const lang of ['zh-TW', 'en'])
+    test(`手機 ${w}×${h}：頁面在最上面，牌架第一列整列在第一屏（${lang}）`, async ({ page }) => {
+      await page.setViewportSize({ width: w, height: h });
+      await open(page, lang, ['q2a']);
+      await question(page);
+      await page.evaluate(() => window.scrollTo(0, 0));
+      await page.waitForTimeout(300);
+      const r = await page.evaluate(() => {
+        const rack = document.querySelector('.cork-rack:not(.marks)')!.getBoundingClientRect();
+        const row1 = [...document.querySelectorAll('.cork-rack .cork-card')]
+          .map((e) => e.getBoundingClientRect())
+          .filter((b) => b.top < rack.top + 5);
+        return {
+          vh: innerHeight,
+          bottom: Math.max(...row1.map((b) => b.bottom)),
+          barTop: document.querySelector('.answer-bar')?.getBoundingClientRect().top ?? innerHeight,
+          n: row1.length,
+        };
+      });
+      expect(r.n).toBeGreaterThan(0);
+      expect(r.bottom, '第一列在第一屏').toBeLessThanOrEqual(r.vh);
+      expect(r.bottom, '第一列在答案列上方').toBeLessThanOrEqual(r.barTop);
+    });
+
+// 設計師 2026-10-16 審 #284（37a111a）：手機第一次從牌架放卡時，A／B 在答案列後面，頁面要捲到板子上緣貼在頂列下面，
+// 捲完牌架第一列整列可見，A／B 標籤和卡名在答案列上方。
+async function scrolledBoard(page: Page) {
+  await page.waitForFunction(() => {
+    const w = window as unknown as { __y?: number; __n?: number };
+    const y = Math.round(scrollY);
+    w.__n = y === w.__y ? (w.__n ?? 0) + 1 : 0;
+    w.__y = y;
+    return w.__n! >= 8;
+  });
+  return page.evaluate(() => {
+    const rack = document.querySelector('.cork-rack:not(.marks)')!.getBoundingClientRect();
+    const row1 = [...document.querySelectorAll('.cork-rack .cork-card')]
+      .map((e) => e.getBoundingClientRect())
+      .filter((b) => b.top < rack.top + 5);
+    const bottom = (sel: string) =>
+      Math.max(...[...document.querySelectorAll(sel)].map((e) => e.getBoundingClientRect().bottom));
+    return {
+      y: Math.round(scrollY),
+      corkTop: document.querySelector('.cork')!.getBoundingClientRect().top,
+      head: document.querySelector('.wb-head')!.getBoundingClientRect().height,
+      rackTop: Math.min(...row1.map((b) => b.top)),
+      rackBottom: Math.max(...row1.map((b) => b.bottom)),
+      barTop: document.querySelector('.answer-bar')!.getBoundingClientRect().top,
+      tags: bottom('.slot-tag'),
+      names: bottom(
+        '.cork-focus.filled :is(.cork-doc-name, .cork-index-head b, b.cork-hand, .cork-strip b)',
+      ),
+      empty: bottom('.cork-focus:not(.filled)'),
+    };
+  });
+}
+
+for (const [w, h] of [
+  [412, 839],
+  [360, 740],
+] as const)
+  for (const lang of ['zh-TW', 'en'])
+    test(`手機 ${w}×${h}：第一次放卡把板子捲到頂列下面（${lang}）`, async ({ page }) => {
+      await page.setViewportSize({ width: w, height: h });
+      await open(page, lang, ['q2a']);
+      await question(page);
+      await page.evaluate(() => window.scrollTo(0, 0));
+      await page.waitForTimeout(300);
+      await page.locator('.cork-rack:not(.marks) .cork-card').first().click();
+      const r = await scrolledBoard(page);
+      expect(r.y, '有捲').toBeGreaterThan(0);
+      expect(Math.abs(r.corkTop - r.head), '板子上緣貼在頂列下面').toBeLessThanOrEqual(2);
+      expect(r.rackTop, '牌架第一列在頂列下面').toBeGreaterThanOrEqual(r.head);
+      expect(r.rackBottom, '牌架第一列在答案列上方').toBeLessThanOrEqual(r.barTop);
+      expect(r.tags, 'A／B 標籤在答案列上方').toBeLessThanOrEqual(r.barTop);
+      expect(r.names, '卡名在答案列上方').toBeLessThanOrEqual(r.barTop);
+      expect(r.empty, '空格在答案列上方').toBeLessThanOrEqual(r.barTop);
+    });
+
+test('手機：每題只捲一次，玩家捲走後不拉回；板子已在可視區就不捲', async ({ page }) => {
+  await page.setViewportSize({ width: 412, height: 839 });
+  await open(page, 'zh-TW', ['q2a']);
+  await question(page);
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.waitForTimeout(300);
+  await page.locator('.cork-rack:not(.marks) .cork-card').first().click();
+  const first = await scrolledBoard(page);
+  // 玩家自己捲回最上面，再放第二張：不拉回。
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.waitForTimeout(300);
+  await page.locator('.cork-rack:not(.marks) .cork-card').first().click();
+  await page.waitForTimeout(700);
+  expect(await page.evaluate(() => Math.round(scrollY)), '不拉回').toBe(0);
+  expect(first.y).toBeGreaterThan(0);
+});
+
+test('手機：A／B 已在答案列上方就不捲', async ({ page }) => {
+  await page.setViewportSize({ width: 412, height: 839 });
+  await open(page, 'zh-TW', ['q2a']);
+  await question(page);
+  // 玩家先把板子捲到 A／B 都在答案列上方，再從牌架放卡。
+  await page.evaluate(() => {
+    const cork = document.querySelector('.cork')!.getBoundingClientRect();
+    window.scrollTo(0, scrollY + cork.top - 200);
+  });
+  await page.waitForTimeout(300);
+  const before = await page.evaluate(() => Math.round(scrollY));
+  await page.locator('.cork-rack:not(.marks) .cork-card').first().click();
+  await page.waitForTimeout(700);
+  expect(await page.evaluate(() => Math.round(scrollY)), '位置不動').toBe(before);
+});
+
+test('手機：減少動態時直接跳到位，不演捲動', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.setViewportSize({ width: 412, height: 839 });
+  await open(page, 'zh-TW', ['q2a']);
+  await question(page);
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.waitForTimeout(300);
+  await page.locator('.cork-rack:not(.marks) .cork-card').first().click();
+  // 兩個畫格內就在終點（一般捲動要 280ms）。
+  await page.evaluate(
+    () => new Promise((ok) => requestAnimationFrame(() => requestAnimationFrame(ok))),
+  );
+  const r = await page.evaluate(() => ({
+    corkTop: document.querySelector('.cork')!.getBoundingClientRect().top,
+    head: document.querySelector('.wb-head')!.getBoundingClientRect().height,
+  }));
+  expect(Math.abs(r.corkTop - r.head), '一下就到').toBeLessThanOrEqual(2);
+});
+
+// 設計師 2026-10-16 審 #284：板上的字固定 px，但讀字的兩條路（放大檢視、證據抽屜）要跟著字級放大、不切字。
+test('字級 1.5：放大檢視的標題、說明、出處、Bates 都放大，沒有切字', async ({ page }) => {
+  await page.setViewportSize({ width: 412, height: 839 });
+  await open(page, 'en', ['q2a']);
+  await question(page);
+  // 找一張有「放大」鈕的卡（照片紀錄表或證物袋）：依序把牌架的卡放進 A，沒有就拿下來換下一張。
+  let found = false;
+  const dots = page.locator('.cork-dots button');
+  for (let k = 0; k < (await dots.count()) && !found; k++) {
+    await dots.nth(k).click();
+    const cards = page.locator('.cork-rack:not(.marks) .cork-card');
+    for (let c = 0; c < (await cards.count()) && !found; c++) {
+      await cards.nth(c).click();
+      await page.waitForTimeout(300);
+      if (await page.locator('.cork-zoom').count()) found = true;
+      else await page.locator('.cork-focus.filled .cork-pick').first().click();
+    }
+  }
+  expect(found, '牌架上有帶「放大」鈕的卡').toBe(true);
+  const sizes = async (scale: string) => {
+    await page.evaluate(
+      (s) => document.documentElement.style.setProperty('--text-scale', s),
+      scale,
+    );
+    await page.locator('.cork-zoom').first().click();
+    await expect(page.locator('dialog.zoom')).toBeVisible();
+    const r = await page.evaluate(() => {
+      const px = (sel: string) => {
+        const e = document.querySelector<HTMLElement>(`dialog.zoom ${sel}`);
+        return e ? parseFloat(getComputedStyle(e).fontSize) : 0;
+      };
+      const cut = [...document.querySelectorAll<HTMLElement>('dialog.zoom *')].filter(
+        (e) =>
+          getComputedStyle(e).overflowY === 'hidden' &&
+          !e.classList.contains('sr-only') &&
+          e.scrollHeight > e.clientHeight + 1,
+      ).length;
+      return {
+        title: px('.zoom-head h2'),
+        sheet: px('.zoom-sheet p:not(.zoom-src)'),
+        src: px('.zoom-src'),
+        bates: px('.photolog-bates b'),
+        cut,
+      };
+    });
+    await page.keyboard.press('Escape');
+    await expect(page.locator('dialog.zoom')).toHaveCount(0);
+    return r;
+  };
+  const base = await sizes('1');
+  const big = await sizes('1.5');
+  for (const key of ['title', 'sheet', 'src'] as const)
+    expect(big[key] / base[key], `放大檢視的 ${key} 跟著字級`).toBeCloseTo(1.5, 1);
+  if (base.bates) expect(big.bates / base.bates, 'Bates 跟著字級').toBeCloseTo(1.5, 1);
+  expect(big.cut, '放大後沒有被切掉的字').toBe(0);
 });

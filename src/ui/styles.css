@@ -6825,10 +6825,10 @@ button.found:hover:not(:disabled) {
   }
 }
 /*
- * 1024–1180：書桌的證據欄收成「證據 n」鈕（設計師 #2 裁定，斷點和陪審團刻痕條同為 1180），
+ * 1024–1379：書桌的證據欄收成「證據 n」鈕（斷點見 Evidence.tsx 的 DOCK：常駐時板子要放得下大板面），
  * 右欄的位置還給工作台；應用程式列、頂列都拉到內容右緣。
  */
-@media (min-width: 1024px) and (max-width: 1180px) {
+@media (min-width: 1024px) and (max-width: 1379px) {
   :root[data-dock='off'] .shell {
     padding-right: 24px;
   }

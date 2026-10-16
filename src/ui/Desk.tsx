@@ -66,7 +66,7 @@ export function Desk({ scene }: { scene: DeskScene }) {
   // 卷宗也掛未讀數：新進來的文件（例如法官的裁定）不會被跳過（體驗評測、劇本與內容）。
   const unreadDocs = scene.docs.filter((d) => !st.readDocs.includes(d.id)).length;
   const finished = desk.done(scene, st);
-  // 1024–1180：證據欄收成「證據 n」鈕，版面讓出右欄（styles.css 的 data-dock）。
+  // 1024–1379：證據欄收成「證據 n」鈕，版面讓出右欄（styles.css 的 data-dock）。
   const docked = useDock();
   useEffect(() => {
     if (docked) return;
@@ -712,7 +712,7 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
     return docked ? (
       <span className="cork-empty">{t('點右邊的卡片放上來')}</span>
     ) : (
-      // 手機和 1180 以下：空格就是挑卡片的入口，挑完回到這裡看得到 A、B（UX 規格 P1-11）。
+      // 手機和 1379 以下：空格就是挑卡片的入口，挑完回到這裡看得到 A、B（UX 規格 P1-11）。
       <button
         className="cork-empty"
         disabled={i > st.link.cards.length}

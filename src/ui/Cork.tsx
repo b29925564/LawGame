@@ -1,4 +1,5 @@
 import {
+  Fragment,
   useEffect,
   useLayoutEffect,
   useRef,
@@ -9,12 +10,13 @@ import {
 import type { Relation } from '../engine/constants';
 import { useT } from '../i18n';
 import { durUi, reducedMotion } from './a11y';
+import { scrollPageTo } from './pageScroll';
 import { PhotoLogLine, type PhotoRecord } from './Dossier';
 import { useScope } from './lang';
 import { prose } from './prose';
 import './cork.css';
 import { JurySketch, type JuryCard } from './sketch/JurySketch';
-import { hasPrint, Print } from './prints';
+import { hasPrint, Print, printRatio } from './prints';
 
 /**
  * 證據板（設定集第 9 章 RD-ART-0903）：一塊軟木板，一盞 2700K 吊燈打在中央。
@@ -90,17 +92,20 @@ const COMPACT_X = [4, 52];
  * 牌架 3 欄 × 2 列、每格 4:3（板內寬 330 時約 100×75，觸控 ≥ 44），一頁 6 張，換頁一次一整頁。
  */
 const RACK_COLS = 3;
-const RACK_PER = 6;
+const RACK_ROWS = 2;
+const RACK_PER = RACK_COLS * RACK_ROWS;
 const RACK_PAD = 8; // 牌架離板邊（px）
 const RACK_GAP = 6; // 格與格（px）
 const RACK_DOTS = 44; // 頁碼點那一列的高（px）＝ 觸控範圍 44，只有超過一頁才佔位
-const TOP_PAD = 16; // 比對的兩張離板上緣（px）
+const TOP_PAD = 16; // 比對的兩張（手機）離板下緣（px）
 const POOL_TO_RACK = 30; // 比對的兩張下緣到牌架上緣至少留這麼多軟木（px）
 /**
  * 手機的光圈是圓（設定集第 9 章，設計師 #2 裁定）：中心在 A／B 正中，半徑 ＝ A／B 最遠的角 ÷ IMG_DARK；
  * 牌架上緣要落在半徑的 RACK_AT 以外，不夠就把板子加高（加大兩張卡和牌架之間的軟木），不壓扁燈。
  */
 const AB_HALF = 0.46; // A／B 左右各佔的板寬比例（4%–96%）
+/** 兩格都空時 A／B 的高（px，cork.css 的 .cork-empty min-height）：光圈最小、中心離牌架最近的狀態。 */
+const EMPTY_SLOT = 112;
 const RACK_AT = 0.6; // 牌架上緣落在半徑的這個比例（設定集 :74 邊緣卡暗處：52–66% 停點之間開始退暗）
 const IMG_DARK = 0.62; // A／B 最遠的角最多落在半徑的這個比例
 /** 板子上下至少留這麼多（px）：小籤伸出卡片上緣 10px，再留一點軟木。 */
@@ -130,6 +135,12 @@ function edgeSize(el: HTMLElement): EdgeSize {
   };
 }
 
+/** 沖印框跟著照片的比例走（prints.tsx 的 ratios.json），沒登記的是 4:3（cork.css）。 */
+const printStyle = (id: string): CSSProperties | undefined => {
+  const r = hasPrint(id) ? printRatio(id) : undefined;
+  return r ? { aspectRatio: r } : undefined;
+};
+
 /** 同一張卡每次都歪同一個角度（±2.5°），不隨機跳動。 */
 function tilt(id: string, max = 2.5) {
   let h = 0;
@@ -145,7 +156,7 @@ function look(kind: string) {
   return 'copy';
 }
 
-function Face({ item }: { item: CorkItem }) {
+function Face({ item, bare }: { item: CorkItem; bare?: boolean }) {
   const t = useT();
   const scope = useScope();
   const when = [item.date && t(item.date, scope), item.time].filter(Boolean).join(' ');
@@ -157,8 +168,8 @@ function Face({ item }: { item: CorkItem }) {
       return (
         <>
           {/* 警方照片的閃光燈：中心過曝、四角快速變暗；證物立牌灰白。有照片紀錄表的（驗屍照片）不畫立牌：放大後會把錯的道具放大（設計師 P2-6 r1）。 */}
-          <span className="cork-print">
-            {hasPrint(item.id) ? (
+          <span className="cork-print" style={printStyle(item.id)}>
+            {bare ? null : hasPrint(item.id) ? (
               <Print id={item.id} use="board" />
             ) : item.image ? (
               <img src={item.image} alt="" />
@@ -211,7 +222,7 @@ function RackFace({ item }: { item: CorkItem }) {
     case 'photo':
       return (
         <>
-          <span className="cork-print">
+          <span className="cork-print" style={printStyle(item.id)}>
             {hasPrint(item.id) ? (
               <Print id={item.id} use="board" />
             ) : item.image ? (
@@ -427,6 +438,93 @@ function useSize() {
   return [ref, h, w] as const;
 }
 
+/**
+ * 手機牌架的黑條卡（尚未取得）：佔一欄兩列高。標籤本身就是要傳達的資訊，所以說明（「尚未取得、需傳票」）的行數優先，
+ * 卡名拿剩下的整行（設計師 #2 2026-10-16）；英文說明在「·」後面斷行（「·」和前一個字之間不斷，不讓點孤零零自成一行）。放不下說明時不縮字，卡名先讓到 0 行，由 e2e 把它報出來。
+ */
+function RackBar({ bar, style }: { bar: CorkPending; style: CSSProperties }) {
+  const t = useT();
+  const scope = useScope();
+  const root = useRef<HTMLDivElement>(null);
+  const name = useRef<HTMLElement>(null);
+  const why = useRef<HTMLSpanElement>(null);
+  const [lines, setLines] = useState<number>();
+  useLayoutEffect(() => {
+    const el = root.current;
+    const b = name.current;
+    const w = why.current;
+    if (!el || !b || !w) return;
+    const fit = () => {
+      const cs = getComputedStyle(el);
+      const room =
+        el.clientHeight -
+        parseFloat(cs.paddingTop) -
+        parseFloat(cs.paddingBottom) -
+        (parseFloat(cs.rowGap) || 0) -
+        w.offsetHeight;
+      setLines(Math.max(0, Math.floor(room / (parseFloat(getComputedStyle(b).lineHeight) || 16))));
+    };
+    fit();
+    const ro = new ResizeObserver(fit);
+    ro.observe(el);
+    ro.observe(w);
+    return () => ro.disconnect();
+  }, []);
+  const parts = t(bar.why).split(' · ');
+  return (
+    <div ref={root} className="cork-redact" style={style}>
+      <b ref={name} style={lines === undefined ? undefined : { maxHeight: `calc(${lines} * 1lh)` }}>
+        {t(bar.name, scope)}
+      </b>
+      <span ref={why}>
+        {parts.map((p, i) => (
+          <Fragment key={i}>
+            {p}
+            {i < parts.length - 1 && (
+              <>
+                {'\u00a0·'}
+                <br />
+              </>
+            )}
+          </Fragment>
+        ))}
+      </span>
+    </div>
+  );
+}
+
+/**
+ * 牌架分頁排格：一頁 3 欄 × 2 列。尚未取得的黑條卡佔一欄兩列高（標籤本身就是要傳達的資訊，英文「Heart-rate log from Voss’s watch」＋
+ * 「Not obtained · subpoena needed」要整張放得下，一格 4:3 放不下），其他卡一格；依序放進第一個放得下的空格，放不下就換頁。
+ * 卡在 A／B 時原位空著（呼叫端不畫），格子不補位。
+ */
+function packRack<T extends { bar?: unknown }>(items: T[]) {
+  type Cell = { item: T; col: number; row: number };
+  const pages: Cell[][] = [];
+  let free = new Set<number>();
+  let page: Cell[] = [];
+  const fresh = () => {
+    page = [];
+    pages.push(page);
+    free = new Set(Array.from({ length: RACK_PER }, (_, n) => n));
+  };
+  fresh();
+  for (const item of items) {
+    const tall = !!item.bar;
+    const fits = (n: number) =>
+      free.has(n) && (!tall || (n < RACK_COLS && free.has(n + RACK_COLS)));
+    let at = [...free].sort((a, b) => a - b).find(fits);
+    if (at === undefined) {
+      fresh();
+      at = 0;
+    }
+    free.delete(at);
+    if (tall) free.delete(at + RACK_COLS);
+    page.push({ item, col: at % RACK_COLS, row: Math.floor(at / RACK_COLS) });
+  }
+  return pages;
+}
+
 export function Cork({
   focus,
   relation,
@@ -469,6 +567,23 @@ export function Cork({
   const t = useT();
   const scope = useScope();
   const [ref, h, w] = useSize();
+  // 手機：第一次從牌架放卡時，A／B 若落在答案列後面，把頁面捲到板子上緣貼在頂列下面（設計師 2026-10-16 審 #284），
+  // 不然點了卡，卡從牌架消失、去的地方在第一屏外。每題只捲一次（這個元件每題掛一次）；板子已經在可視區就不捲。
+  const scrolled = useRef(false);
+  const scrollToBoard = () => {
+    if (scrolled.current) return;
+    scrolled.current = true;
+    requestAnimationFrame(() => {
+      const board = ref.current;
+      const ab = focusEls.current[0];
+      if (!board || !ab) return;
+      const barTop =
+        document.querySelector('.answer-bar')?.getBoundingClientRect().top ?? innerHeight;
+      if (ab.getBoundingClientRect().top <= barTop) return;
+      const head = document.querySelector('.wb-head')?.getBoundingClientRect().height ?? 0;
+      scrollPageTo(window.scrollY + board.getBoundingClientRect().top - head);
+    });
+  };
   // 板子窄到光圈卡上放不下圖釘兩側的小籤（1350px 以下的桌機視窗），也改用手機的板面。
   const compact = phone || (w > 0 && w < ROOMY);
   // 比對位兩格的卡高（在原位的不算）：卡高變了（換卡、換語言、字型載入）就重量。兩格上緣對齊，取高的那張置中。
@@ -488,6 +603,22 @@ export function Cork({
     const id = requestAnimationFrame(() => setSettled(true));
     return () => cancelAnimationFrame(id);
   }, [settled, w, cardH]);
+  // 這一題所有可能放進 A／B 的卡（A／B 裡的加其他到手的）：量它們放進光圈那一格的高度，取最高的。
+  // 藏在板子裡量，不畫圖（照片只留框），語言、字級、字型載入變了就重量。
+  const candidates = compact ? [...focus.filter((c) => !!c), ...loose] : [];
+  const candKey = candidates.map((c) => c.id).join(',');
+  const candEls = useRef(new Map<string, HTMLElement>());
+  const [candH, setCandH] = useState(0);
+  useLayoutEffect(() => {
+    if (!compact || !w) return;
+    const read = () =>
+      setCandH(Math.max(0, ...[...candEls.current.values()].map((e) => e.offsetHeight)));
+    read();
+    if (typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver(read);
+    candEls.current.forEach((e) => ro.observe(e));
+    return () => ro.disconnect();
+  }, [compact, w, candKey]);
   const [tile] = useState(corkTile);
   // 手機牌架：先黑條（尚未取得的證據，第一頁看得到）、再其他已到手的卡；放進 A／B 的卡原位空著，不重複畫。
   const rackItems = compact
@@ -496,17 +627,18 @@ export function Cork({
         ...loose.map((c) => ({ id: c.id, bar: undefined, card: c })),
       ]
     : [];
-  const pages = Math.max(1, Math.ceil(rackItems.length / RACK_PER));
+  const rackPages = packRack(rackItems);
+  const pages = rackPages.length;
   const [rackAt, setRackAt] = useState(0);
   const page = Math.min(rackAt, pages - 1);
   const cellW = w ? (w - 2 * RACK_PAD - (RACK_COLS - 1) * RACK_GAP) / RACK_COLS : 0;
   const cellH = (cellW * 3) / 4;
   const rackH = 2 * cellH + RACK_GAP;
   const dotsH = pages > 1 ? RACK_DOTS : 0;
-  const rackTop = h - RACK_PAD - dotsH - rackH;
+  const rackTop = RACK_PAD;
   const pinY = (PIN / Math.max(h, 1)) * 100;
-  const rackPage = rackItems.slice(page * RACK_PER, (page + 1) * RACK_PER);
-  const rackStyle = { '--cell-h': `${cellH}px`, bottom: RACK_PAD + dotsH } as CSSProperties;
+  const rackPage = rackPages[page];
+  const rackStyle = { '--cell-h': `${cellH}px`, top: RACK_PAD } as CSSProperties;
 
   // 邊緣位置分配：先給連線（兩兩一組），再給黑條佔位（兩欄最下面那格優先），剩下的放其他卡。
   type Placed = { item: CorkItem; at: [number, number] };
@@ -589,6 +721,15 @@ export function Cork({
       .forEach((c, i) => placed.push({ item: c, at: EDGE[free[i]] }));
   }
 
+  // 板高從一開始就照這一題最高的卡算（設計師 #2 2026-10-16 (d)）：A／B 空著、放一張、放兩張，板子一樣高，放卡不跳版面。
+  // 光圈照實際放著的卡算（下面的 lampR），板子空著時 A／B 下面多一段暗的軟木。
+  // 手機：牌架在板子上緣、A／B 和光圈在牌架下面（設計師 2026-10-16 審 #284：英文板高 658px，牌架在下緣時第一列落在第一屏外）。
+  // 牌架下緣要落在光圈半徑 RACK_AT 以外，不夠就加大牌架和 A／B 之間的軟木（lampGap），不壓扁燈。
+  // A／B 的上緣固定（放卡不動），所以卡越矮光圈中心越靠近牌架：兩格都空（EMPTY_SLOT 高）最吃緊，拿它算。
+  const reserveH = compact ? Math.max(cardH, candH) : cardH;
+  const darkGap = (cH: number) => RACK_AT * (Math.hypot(AB_HALF * w, cH / 2) / IMG_DARK) - cH / 2;
+  const lampGap = Math.max(POOL_TO_RACK, darkGap(Math.min(EMPTY_SLOT, reserveH || EMPTY_SLOT)));
+  const abTop = RACK_PAD + rackH + dotsH + lampGap;
   // 比對位上下置中在光圈中心（板高 50%）：卡以（中線, 圖釘）為軸放大，放大後的中心＝上緣＋PIN＋(卡高/2−PIN)×倍率。
   const scale = compact ? 1 : FOCUS_SCALE;
   const focusW = compact ? 44 : FOCUS_W;
@@ -596,7 +737,7 @@ export function Cork({
   // 照片的影像中心離光圈中心多遠（px）：左右是卡中線到板中線，上下是影像中心到板高一半。
   const imgDx = Math.abs(xs[0] + focusW / 2 - 50) * (w / 100);
   const imgDy = (topPx: number) => h / 2 - (topPx + PIN + (imgMid - PIN) * scale);
-  let topPx = cardH ? (compact ? TOP_PAD : h / 2 - PIN - (cardH / 2 - PIN) * scale) : 0;
+  let topPx = cardH ? (compact ? abTop : h / 2 - PIN - (cardH / 2 - PIN) * scale) : 0;
   // 桌機：光圈是設定集的 360/1400，不動。字多、板子小的時候卡比較高，整組置中會讓影像中心超出 60%，
   // 這時卡往下讓到影像中心剛好在 IMG_IN 為止（上下就不完全置中了）。
   if (!compact && cardH && imgMid && w) {
@@ -606,14 +747,13 @@ export function Cork({
   const top = cardH
     ? (topPx / Math.max(h, 1)) * 100
     : compact
-      ? (TOP_PAD / Math.max(h, 1)) * 100
+      ? (abTop / Math.max(h, 1)) * 100
       : FOCUS_TOP;
   const focusAt = xs.map((x) => [x, top]) as [number, number][];
   // 手機：光圈本來就是為這個版面另設的（設計師 P2-6 r5 更正），小手機上卡比較高，光圈放大到影像中心落在 IMG_IN 以內。
   // 手機光圈（圓）：中心在 A／B 正中；半徑 ＝ A／B 最遠的角 ÷ 0.62；牌架上緣要在半徑 60% 以外，不夠就把板子加高。
   const lampY = cardH ? topPx + cardH / 2 : h * 0.3;
   const lampR = Math.hypot(AB_HALF * w, cardH / 2) / IMG_DARK;
-  const lampGap = Math.max(POOL_TO_RACK, RACK_AT * lampR - cardH / 2);
   const pool = compact ? lampR / Math.max(w / 2, 1) : 1;
   // 兩格卡片（放大、歪之前）的中心：速寫版的卡對準這裡（設計師 P2-6 r6 第 1 條）。卡以（中線, 圖釘）為軸放大。
   // 這一格空著就用另一格的卡高；兩格都空就是光圈中心。
@@ -790,7 +930,7 @@ export function Cork({
           minHeight: !cardH
             ? undefined
             : compact
-              ? 20 + TOP_PAD + cardH + lampGap + rackH + dotsH + RACK_PAD
+              ? 20 + abTop + reserveH + TOP_PAD
               : cardH * scale + 2 * (BOARD_PAD + 10),
           '--pool': pool,
           ...(compact && w
@@ -885,10 +1025,29 @@ export function Cork({
           </div>
         );
       })}
+      {compact && w > 0 && (
+        <div className="cork-measure" aria-hidden inert>
+          {candidates.map((c) => (
+            <div
+              key={c.id}
+              ref={(el) => {
+                if (el) candEls.current.set(c.id, el);
+                else candEls.current.delete(c.id);
+              }}
+              className={`cork-measure-card ${look(c.kind)}`}
+              style={{ width: `${focusW}%` }}
+            >
+              <div className="cork-pick">
+                <Face item={c} bare />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
       {/* 手機牌架：在吊燈下面，所以落在光圈外的暗處。 */}
       {compact && w > 0 && (
         <div className="cork-rack" style={rackStyle}>
-          {rackPage.map(({ id, card }, k) =>
+          {rackPage.map(({ item: { id, card }, col, row }) =>
             card && !focusIds.includes(id) ? (
               <button
                 key={id}
@@ -898,12 +1057,15 @@ export function Cork({
                 className={`cork-card rack ${look(card.kind)}`}
                 style={
                   {
-                    gridColumn: (k % RACK_COLS) + 1,
-                    gridRow: Math.floor(k / RACK_COLS) + 1,
+                    gridColumn: col + 1,
+                    gridRow: row + 1,
                     '--tilt': `${tilt(id, 1)}deg`,
                   } as CSSProperties
                 }
-                onClick={() => onPick(id)}
+                onClick={() => {
+                  onPick(id);
+                  scrollToBoard();
+                }}
               >
                 <RackFace item={card} />
               </button>
@@ -916,25 +1078,23 @@ export function Cork({
       {/* 標記層：不被吊燈調光。 */}
       {compact && w > 0 && (
         <div className="cork-rack marks" style={rackStyle}>
-          {rackPage.map(({ id, bar }, k) =>
+          {rackPage.map(({ item: { id, bar }, col, row }) =>
             bar ? (
-              <div
+              <RackBar
                 key={id}
-                className="cork-redact"
-                style={{
-                  gridColumn: (k % RACK_COLS) + 1,
-                  gridRow: Math.floor(k / RACK_COLS) + 1,
-                }}
-              >
-                <b>{t(bar.name, scope)}</b>
-                <span>{t(bar.why)}</span>
-              </div>
+                bar={bar}
+                style={{ gridColumn: col + 1, gridRow: `${row + 1} / span ${RACK_ROWS}` }}
+              />
             ) : null,
           )}
         </div>
       )}
       {compact && pages > 1 && (
-        <div className="cork-dots" aria-hidden style={{ height: RACK_DOTS }}>
+        <div
+          className="cork-dots"
+          aria-hidden
+          style={{ height: RACK_DOTS, top: RACK_PAD + rackH, bottom: 'auto' }}
+        >
           {Array.from({ length: pages }, (_, n) => (
             <button
               key={n}
