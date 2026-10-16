@@ -36,10 +36,11 @@ import { TimelineView } from './Timeline';
 /** 寬螢幕（電腦）上抽屜常駐在右欄，不用再點開。 */
 export const WIDE = '(min-width: 1024px)';
 /**
- * 書桌的證據欄只在 1181 以上常駐（設計師 #2 裁定：和陪審團收成刻痕條同一個斷點）；
- * 1024–1180 工作台要吃滿寬度，證據欄收成「證據 n」鈕，點開才蓋上來。
+ * 書桌的證據欄只在 1380 以上常駐：常駐時板子要有 ≥600px 的內寬（Cork.tsx 的 ROOMY），不然桌機會出現手機版的 4:5 板，
+ * 而且 1180 是大板、1181 變手機板，差 1px 版面跳兩次（第二道關卡 v92 #2）。1360 時板內寬 606，再留 20px 給捲軸。
+ * 1024–1379 工作台吃滿寬度，證據欄收成「證據 n」鈕，點開才蓋上來（陪審團刻痕條仍是 1180，不受影響）。
  */
-export const DOCK = '(min-width: 1181px)';
+export const DOCK = '(min-width: 1380px)';
 function useMedia(query: string) {
   const [on, setOn] = useState(() => window.matchMedia(query).matches);
   useEffect(() => {
@@ -60,7 +61,7 @@ export function EvidenceDrawer({
 }: {
   note?: string;
   noTimeline?: boolean;
-  /** 1024–1180 也收成抽屜（書桌）。 */
+  /** 1024–1379 也收成抽屜（書桌）。 */
   collapse?: boolean;
 }) {
   const progress = useEpisode((s) => s.progress);
