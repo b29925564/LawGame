@@ -81,6 +81,37 @@ async function open(page: Page, lang: string, confirmed: string[] = []) {
     .click();
 }
 // 手機先看疑問清單：點第一個還沒確認的疑問才看到連線台。
+/**
+ * 等牌架上的照片載好、板子、牌架和頁面捲動連續幾個畫格都不動：代替固定等待
+ * （CI 慢時固定等待會落在載圖或動畫中途，讀到 naturalWidth 0 或過渡中的尺寸）。
+ */
+async function settled(page: Page) {
+  await page.evaluate(() => {
+    const w = window as unknown as { __sig?: string; __still?: number };
+    delete w.__sig;
+    w.__still = 0;
+  });
+  await page.waitForFunction(
+    () => {
+      const imgs = [...document.querySelectorAll<HTMLImageElement>('.cork-print img')];
+      if (imgs.some((i) => !i.complete || i.naturalWidth === 0)) return false;
+      const sig = [
+        Math.round(scrollY),
+        ...[...document.querySelectorAll('.cork, .cork-rack, .cork-focus')].map((e) => {
+          const r = e.getBoundingClientRect();
+          return [r.left, r.top, r.width, r.height].map((n) => Math.round(n * 10)).join(',');
+        }),
+      ].join(';');
+      const w = window as unknown as { __sig?: string; __still?: number };
+      w.__still = sig === w.__sig ? (w.__still ?? 0) + 1 : 0;
+      w.__sig = sig;
+      return (w.__still ?? 0) >= 6;
+    },
+    undefined,
+    { polling: 'raf' },
+  );
+}
+
 async function question(page: Page) {
   const q = page.locator('.q-item:not(.done):not(.timeline-entry)').first();
   if (await q.isVisible()) await q.click();
@@ -160,6 +191,7 @@ for (const lang of ['zh-TW', 'en'])
     expect(await rack.count()).toBeGreaterThan(3);
     expect(await marks.count(), '黑條（尚未取得）排在第一頁').toBeGreaterThanOrEqual(1);
     const checkPage = async () => {
+      await settled(page);
       const all = await cells();
       let photos = 0;
       for (const c of all) {
@@ -204,6 +236,7 @@ for (const lang of ['zh-TW', 'en'])
     const p2 = await checkPage();
     expect(p1 + p2, '牌架有照片卡').toBeGreaterThan(0);
     await page.locator('.cork-dots button').first().click();
+    await settled(page);
     await expect(marks.first()).toContainText(/尚未取得|Not obtained/);
 
     // 標題整行切：高度是行高的整數倍，沒有淡出、沒有刪節號。
@@ -254,7 +287,7 @@ test('手機：板子和牌架不被答案列蓋住，A／B 也是', async ({ pa
     document.querySelector('.cork')!.scrollIntoView({ block: 'start' });
     window.scrollBy(0, -100);
   });
-  await page.waitForTimeout(400);
+  await settled(page);
   const hit = await page.evaluate(() => {
     const cork = document.querySelector('.cork')!;
     const bar = document.querySelector('.answer-bar')!.getBoundingClientRect();
@@ -431,11 +464,11 @@ for (const lang of ['zh-TW', 'en'])
       expect(none.h / none.w, '板子至少 4:5').toBeGreaterThanOrEqual(1.25 - 0.01);
       await page.locator('.cork-rack:not(.marks) .cork-card').first().click();
       await expect(page.locator('.cork-focus.filled')).toHaveCount(1);
-      await page.waitForTimeout(400);
+      await settled(page);
       const one = await read();
       await page.locator('.cork-rack:not(.marks) .cork-card').first().click();
       await expect(page.locator('.cork-focus.filled')).toHaveCount(2);
-      await page.waitForTimeout(400);
+      await settled(page);
       const two = await read();
       console.log(
         `${lang} ×${scale}：空 ${none.w}×${none.h.toFixed(1)}（${(none.h / none.w).toFixed(3)}）、一張 ${one.h.toFixed(1)}、兩張 ${two.h.toFixed(1)}`,
@@ -450,7 +483,7 @@ test('手機：牌架上的照片不裁切（框跟著照片比例）', async ({
   await open(page, 'zh-TW', ['q2a']);
   await question(page);
   await page.locator('.cork-dots button').nth(1).click();
-  await page.waitForTimeout(400);
+  await settled(page);
   const prints = await page.locator('.cork-rack .cork-print img').evaluateAll((els) =>
     els.map((e) => {
       const img = e as HTMLImageElement;
