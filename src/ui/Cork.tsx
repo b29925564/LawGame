@@ -96,13 +96,15 @@ const RACK_PER = RACK_COLS * RACK_ROWS;
 const RACK_PAD = 8; // 牌架離板邊（px）
 const RACK_GAP = 6; // 格與格（px）
 const RACK_DOTS = 44; // 頁碼點那一列的高（px）＝ 觸控範圍 44，只有超過一頁才佔位
-const TOP_PAD = 16; // 比對的兩張離板上緣（px）
+const TOP_PAD = 16; // 比對的兩張（手機）離板下緣（px）
 const POOL_TO_RACK = 30; // 比對的兩張下緣到牌架上緣至少留這麼多軟木（px）
 /**
  * 手機的光圈是圓（設定集第 9 章，設計師 #2 裁定）：中心在 A／B 正中，半徑 ＝ A／B 最遠的角 ÷ IMG_DARK；
  * 牌架上緣要落在半徑的 RACK_AT 以外，不夠就把板子加高（加大兩張卡和牌架之間的軟木），不壓扁燈。
  */
 const AB_HALF = 0.46; // A／B 左右各佔的板寬比例（4%–96%）
+/** 兩格都空時 A／B 的高（px，cork.css 的 .cork-empty min-height）：光圈最小、中心離牌架最近的狀態。 */
+const EMPTY_SLOT = 112;
 const RACK_AT = 0.6; // 牌架上緣落在半徑的這個比例（設定集 :74 邊緣卡暗處：52–66% 停點之間開始退暗）
 const IMG_DARK = 0.62; // A／B 最遠的角最多落在半徑的這個比例
 /** 板子上下至少留這麼多（px）：小籤伸出卡片上緣 10px，再留一點軟木。 */
@@ -615,10 +617,10 @@ export function Cork({
   const cellH = (cellW * 3) / 4;
   const rackH = 2 * cellH + RACK_GAP;
   const dotsH = pages > 1 ? RACK_DOTS : 0;
-  const rackTop = h - RACK_PAD - dotsH - rackH;
+  const rackTop = RACK_PAD;
   const pinY = (PIN / Math.max(h, 1)) * 100;
   const rackPage = rackPages[page];
-  const rackStyle = { '--cell-h': `${cellH}px`, bottom: RACK_PAD + dotsH } as CSSProperties;
+  const rackStyle = { '--cell-h': `${cellH}px`, top: RACK_PAD } as CSSProperties;
 
   // 邊緣位置分配：先給連線（兩兩一組），再給黑條佔位（兩欄最下面那格優先），剩下的放其他卡。
   type Placed = { item: CorkItem; at: [number, number] };
@@ -701,6 +703,15 @@ export function Cork({
       .forEach((c, i) => placed.push({ item: c, at: EDGE[free[i]] }));
   }
 
+  // 板高從一開始就照這一題最高的卡算（設計師 #2 2026-10-16 (d)）：A／B 空著、放一張、放兩張，板子一樣高，放卡不跳版面。
+  // 光圈照實際放著的卡算（下面的 lampR），板子空著時 A／B 下面多一段暗的軟木。
+  // 手機：牌架在板子上緣、A／B 和光圈在牌架下面（設計師 2026-10-16 審 #284：英文板高 658px，牌架在下緣時第一列落在第一屏外）。
+  // 牌架下緣要落在光圈半徑 RACK_AT 以外，不夠就加大牌架和 A／B 之間的軟木（lampGap），不壓扁燈。
+  // A／B 的上緣固定（放卡不動），所以卡越矮光圈中心越靠近牌架：兩格都空（EMPTY_SLOT 高）最吃緊，拿它算。
+  const reserveH = compact ? Math.max(cardH, candH) : cardH;
+  const darkGap = (cH: number) => RACK_AT * (Math.hypot(AB_HALF * w, cH / 2) / IMG_DARK) - cH / 2;
+  const lampGap = Math.max(POOL_TO_RACK, darkGap(Math.min(EMPTY_SLOT, reserveH || EMPTY_SLOT)));
+  const abTop = RACK_PAD + rackH + dotsH + lampGap;
   // 比對位上下置中在光圈中心（板高 50%）：卡以（中線, 圖釘）為軸放大，放大後的中心＝上緣＋PIN＋(卡高/2−PIN)×倍率。
   const scale = compact ? 1 : FOCUS_SCALE;
   const focusW = compact ? 44 : FOCUS_W;
@@ -708,7 +719,7 @@ export function Cork({
   // 照片的影像中心離光圈中心多遠（px）：左右是卡中線到板中線，上下是影像中心到板高一半。
   const imgDx = Math.abs(xs[0] + focusW / 2 - 50) * (w / 100);
   const imgDy = (topPx: number) => h / 2 - (topPx + PIN + (imgMid - PIN) * scale);
-  let topPx = cardH ? (compact ? TOP_PAD : h / 2 - PIN - (cardH / 2 - PIN) * scale) : 0;
+  let topPx = cardH ? (compact ? abTop : h / 2 - PIN - (cardH / 2 - PIN) * scale) : 0;
   // 桌機：光圈是設定集的 360/1400，不動。字多、板子小的時候卡比較高，整組置中會讓影像中心超出 60%，
   // 這時卡往下讓到影像中心剛好在 IMG_IN 為止（上下就不完全置中了）。
   if (!compact && cardH && imgMid && w) {
@@ -718,18 +729,13 @@ export function Cork({
   const top = cardH
     ? (topPx / Math.max(h, 1)) * 100
     : compact
-      ? (TOP_PAD / Math.max(h, 1)) * 100
+      ? (abTop / Math.max(h, 1)) * 100
       : FOCUS_TOP;
   const focusAt = xs.map((x) => [x, top]) as [number, number][];
   // 手機：光圈本來就是為這個版面另設的（設計師 P2-6 r5 更正），小手機上卡比較高，光圈放大到影像中心落在 IMG_IN 以內。
   // 手機光圈（圓）：中心在 A／B 正中；半徑 ＝ A／B 最遠的角 ÷ 0.62；牌架上緣要在半徑 60% 以外，不夠就把板子加高。
   const lampY = cardH ? topPx + cardH / 2 : h * 0.3;
   const lampR = Math.hypot(AB_HALF * w, cardH / 2) / IMG_DARK;
-  // 板高從一開始就照這一題最高的卡算（設計師 #2 2026-10-16 (d)）：A／B 空著、放一張、放兩張，板子一樣高，放卡不跳版面。
-  // 光圈照實際放著的卡算（上面的 lampR），板子空著時中間多一段暗的軟木。
-  const reserveH = compact ? Math.max(cardH, candH) : cardH;
-  const reserveR = Math.hypot(AB_HALF * w, reserveH / 2) / IMG_DARK;
-  const lampGap = Math.max(POOL_TO_RACK, RACK_AT * reserveR - reserveH / 2);
   const pool = compact ? lampR / Math.max(w / 2, 1) : 1;
   // 兩格卡片（放大、歪之前）的中心：速寫版的卡對準這裡（設計師 P2-6 r6 第 1 條）。卡以（中線, 圖釘）為軸放大。
   // 這一格空著就用另一格的卡高；兩格都空就是光圈中心。
@@ -906,7 +912,7 @@ export function Cork({
           minHeight: !cardH
             ? undefined
             : compact
-              ? 20 + TOP_PAD + reserveH + lampGap + rackH + dotsH + RACK_PAD
+              ? 20 + abTop + reserveH + TOP_PAD
               : cardH * scale + 2 * (BOARD_PAD + 10),
           '--pool': pool,
           ...(compact && w
@@ -1063,7 +1069,11 @@ export function Cork({
         </div>
       )}
       {compact && pages > 1 && (
-        <div className="cork-dots" aria-hidden style={{ height: RACK_DOTS }}>
+        <div
+          className="cork-dots"
+          aria-hidden
+          style={{ height: RACK_DOTS, top: RACK_PAD + rackH, bottom: 'auto' }}
+        >
           {Array.from({ length: pages }, (_, n) => (
             <button
               key={n}

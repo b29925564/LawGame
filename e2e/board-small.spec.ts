@@ -249,7 +249,7 @@ test('手機：板子和牌架不被答案列蓋住，A／B 也是', async ({ pa
   await page.locator('.cork-rack:not(.marks) .cork-card').first().click();
   await page.locator('.cork-rack:not(.marks) .cork-card').first().click();
   await expect(page.locator('.cork-focus.filled')).toHaveCount(2);
-  // 把板子捲到頂端欄下面：整塊板子都在答案列上方。
+  // 把板子捲到頂端欄下面：牌架（在板子上緣）整個不被答案列蓋住、A／B 的中心也不被蓋住（板子本身比一屏高，下面空的軟木會捲到答案列後面）。
   await page.evaluate(() => {
     document.querySelector('.cork')!.scrollIntoView({ block: 'start' });
     window.scrollBy(0, -100);
@@ -266,11 +266,21 @@ test('手機：板子和牌架不被答案列蓋住，A／B 也是', async ({ pa
         return { inside: !!el?.closest('.cork'), bottom: b.bottom };
       },
     );
-    return { barTop: bar.top, corkBottom: r.bottom, pts };
+    const rack = document.querySelector('.cork-rack:not(.marks)')!.getBoundingClientRect();
+    const ab = [...document.querySelectorAll('.cork-focus')].map(
+      (e) => e.getBoundingClientRect().bottom,
+    );
+    return {
+      barTop: bar.top,
+      corkBottom: r.bottom,
+      rackBottom: rack.bottom,
+      abBottom: Math.max(...ab),
+      pts,
+    };
   });
   expect(hit.pts.length).toBeGreaterThanOrEqual(4);
   for (const p of hit.pts) expect(p.inside, '卡片中心被別的東西蓋住').toBe(true);
-  expect(hit.corkBottom, '板子下緣在答案列上方').toBeLessThanOrEqual(hit.barTop);
+  expect(hit.rackBottom, '牌架在答案列上方').toBeLessThanOrEqual(hit.barTop);
 });
 
 test('手機：超過 6 張換頁、一次一整頁、頁碼點不是黃、放進 A 的卡原位空著', async ({ page }) => {
@@ -407,4 +417,91 @@ test('手機：牌架上的照片不裁切（框跟著照片比例）', async ({
     expect(Math.abs(p.nat - p.box) / p.nat, `${p.src} 框 ${p.box} 對照片 ${p.nat}`).toBeLessThan(
       0.03,
     );
+});
+
+// 設計師 2026-10-16 審 #284：英文板子變高（約 700px），牌架在板子上緣，頁面捲在最上面時，牌架第一列要整列在第一屏內、
+// 也在答案列上方。
+for (const [w, h] of [
+  [412, 839],
+  [360, 740],
+] as const)
+  for (const lang of ['zh-TW', 'en'])
+    test(`手機 ${w}×${h}：頁面在最上面，牌架第一列整列在第一屏（${lang}）`, async ({ page }) => {
+      await page.setViewportSize({ width: w, height: h });
+      await open(page, lang, ['q2a']);
+      await question(page);
+      await page.evaluate(() => window.scrollTo(0, 0));
+      await page.waitForTimeout(300);
+      const r = await page.evaluate(() => {
+        const rack = document.querySelector('.cork-rack:not(.marks)')!.getBoundingClientRect();
+        const row1 = [...document.querySelectorAll('.cork-rack .cork-card')]
+          .map((e) => e.getBoundingClientRect())
+          .filter((b) => b.top < rack.top + 5);
+        return {
+          vh: innerHeight,
+          bottom: Math.max(...row1.map((b) => b.bottom)),
+          barTop: document.querySelector('.answer-bar')?.getBoundingClientRect().top ?? innerHeight,
+          n: row1.length,
+        };
+      });
+      expect(r.n).toBeGreaterThan(0);
+      expect(r.bottom, '第一列在第一屏').toBeLessThanOrEqual(r.vh);
+      expect(r.bottom, '第一列在答案列上方').toBeLessThanOrEqual(r.barTop);
+    });
+
+// 設計師 2026-10-16 審 #284：板上的字固定 px，但讀字的兩條路（放大檢視、證據抽屜）要跟著字級放大、不切字。
+test('字級 1.5：放大檢視的標題、說明、出處、Bates 都放大，沒有切字', async ({ page }) => {
+  await page.setViewportSize({ width: 412, height: 839 });
+  await open(page, 'en', ['q2a']);
+  await question(page);
+  // 找一張有「放大」鈕的卡（照片紀錄表或證物袋）：依序把牌架的卡放進 A，沒有就拿下來換下一張。
+  let found = false;
+  const dots = page.locator('.cork-dots button');
+  for (let k = 0; k < (await dots.count()) && !found; k++) {
+    await dots.nth(k).click();
+    const cards = page.locator('.cork-rack:not(.marks) .cork-card');
+    for (let c = 0; c < (await cards.count()) && !found; c++) {
+      await cards.nth(c).click();
+      await page.waitForTimeout(300);
+      if (await page.locator('.cork-zoom').count()) found = true;
+      else await page.locator('.cork-focus.filled .cork-pick').first().click();
+    }
+  }
+  expect(found, '牌架上有帶「放大」鈕的卡').toBe(true);
+  const sizes = async (scale: string) => {
+    await page.evaluate(
+      (s) => document.documentElement.style.setProperty('--text-scale', s),
+      scale,
+    );
+    await page.locator('.cork-zoom').first().click();
+    await expect(page.locator('dialog.zoom')).toBeVisible();
+    const r = await page.evaluate(() => {
+      const px = (sel: string) => {
+        const e = document.querySelector<HTMLElement>(`dialog.zoom ${sel}`);
+        return e ? parseFloat(getComputedStyle(e).fontSize) : 0;
+      };
+      const cut = [...document.querySelectorAll<HTMLElement>('dialog.zoom *')].filter(
+        (e) =>
+          getComputedStyle(e).overflowY === 'hidden' &&
+          !e.classList.contains('sr-only') &&
+          e.scrollHeight > e.clientHeight + 1,
+      ).length;
+      return {
+        title: px('.zoom-head h2'),
+        sheet: px('.zoom-sheet p:not(.zoom-src)'),
+        src: px('.zoom-src'),
+        bates: px('.photolog-bates b'),
+        cut,
+      };
+    });
+    await page.keyboard.press('Escape');
+    await expect(page.locator('dialog.zoom')).toHaveCount(0);
+    return r;
+  };
+  const base = await sizes('1');
+  const big = await sizes('1.5');
+  for (const key of ['title', 'sheet', 'src'] as const)
+    expect(big[key] / base[key], `放大檢視的 ${key} 跟著字級`).toBeCloseTo(1.5, 1);
+  if (base.bates) expect(big.bates / base.bates, 'Bates 跟著字級').toBeCloseTo(1.5, 1);
+  expect(big.cut, '放大後沒有被切掉的字').toBe(0);
 });
