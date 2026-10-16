@@ -14,29 +14,39 @@ export const JUDGE_BREAKS: readonly string[] = [
   "Counsel,/don't put/the answer|in the question.",
   'A prior record/is/character evidence.',
   'It cannot be used|to prove¦what the defendant/did/this time.',
-  'The jury/will disregard¦the question.',
-  "The victim's~words¦cannot come in|through this witness.",
+  'The jury¦will disregard/the question.',
+  "The victim's words¦cannot come in|through this witness.",
   "The witness's opinion/of the defendant|is/character evidence.",
   'It cannot be used|to prove/what he did/that night.',
-  'Members~of the jury:|the testimony/of Ms. Adler¦is stricken/in its entirety.',
-  'You will not/consider it|in your~deliberations.',
-  'Counsel,/let the witness|answer~for herself.',
-  "The witness~has no way/of knowing|what the defendants'~executives/have read.",
-  'The witness may/testify|only to her own~research.',
-  "There's nothing wrong|with that/question, counsel.",
+  'Members of the jury:|the testimony/of Ms. Adler¦is stricken/in its entirety.',
+  'You will not/consider it|in your deliberations.',
+  'Counsel,/let the witness|answer for herself.',
+  "The witness/has no way/of knowing|what the defendants'~executives/have read.",
+  'The witness|may testify only/to her own research.',
+  "There's nothing wrong|with that~question, counsel.",
   'The court has~excluded/that statement|and the prosecution/may not/raise it.',
   // ── 以下是我標的，等設計師確認 ──
   'The guard/can come|and/testify himself.',
-  "The witness/is not inside|the defendant's~head.",
-  "The witness/cannot guess at|the defendant's~intent.",
-  'The defense/may examine|Sophie Martinez.',
-  'The defense/may examine|Dr. Joanna Fisher.',
-  'The defense/may examine|Dr. Michael Tang.',
+  "The witness|is not inside/the defendant's head.",
+  "The witness|cannot guess at/the defendant's intent.",
+  'The defense|may examine/Sophie Martinez.',
+  'The defense|may examine/Dr. Joanna Fisher.',
+  'The defense|may examine/Dr. Michael Tang.',
   "Counsel,/don't testify|for the witness.",
-  'The witness/may~only testify|to what she/knows herself.',
+  'The witness|may only testify to/what she knows herself.',
   'This court/has excluded/that testimony.',
-  'Counsel will not/bring it in|through~the back door.',
+  'Counsel will not/bring it in|through the back door.',
   'The witness/is a physician,|not an expert/on dispatch systems.',
+];
+
+/**
+ * 勉強的換行點（~）清單：只允許出現在字級 125%／150% 且鏡頭條 1180 以下（設計師 #290）。
+ * 單元測試釘住這份清單；以後多一處都要再給設計師看。
+ */
+export const WEAK_BREAKS: readonly string[] = [
+  "the defendants' | executives",
+  'court has | excluded',
+  'with that | question,',
 ];
 
 export type MarkKind = '1' | '2' | 'L' | 'W';

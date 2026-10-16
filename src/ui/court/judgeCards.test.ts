@@ -5,7 +5,7 @@ import { episodes } from '../../content';
 import { STRUCK_DEFAULT } from '../../engine/episode/trial';
 import { install, translate } from '../../i18n';
 import { proseUnits } from '../lineUnits';
-import { JUDGE_BREAKS, markedFor, parseMarked, plainOf } from './judgeBreaks';
+import { JUDGE_BREAKS, markedFor, parseMarked, plainOf, WEAK_BREAKS } from './judgeBreaks';
 import { CUT_EXCEPTIONS, judgeCards, sentencesOf, subEm } from './subtitleSplit';
 
 /**
@@ -240,6 +240,38 @@ describe('法官的台詞：一句一張、最多兩行、張數不隨寬度變'
       expect(
         shape('Members of the jury: the testimony of Ms. Adler is stricken in its entirety.'),
       ).toBe('Members of the jury: ▏ the testimony／of Ms. Adler ▏ is stricken／in its entirety.');
+    });
+    it('勉強的換行點（~）只有清單上那 3 處，只在 125%／150%、或 100% 併行且 1180 以下用到', () => {
+      const weak = (m: ReturnType<typeof parseMarked>, at: number) =>
+        `${m.words.slice(Math.max(0, at - 2), at).join(' ')} | ${m.words[at]}`;
+      const marked = JUDGE_BREAKS.flatMap((x) => {
+        const m = parseMarked(x);
+        return m.kinds.flatMap((k, i) => (k === 'W' ? [weak(m, i)] : []));
+      });
+      expect(marked.sort()).toEqual([...WEAK_BREAKS].sort());
+      const bad: string[] = [];
+      for (const s of sentencesNow()) {
+        const m = markedFor(s);
+        if (!m) continue;
+        for (const c of combos) {
+          let at = 0;
+          for (const card of run(s, c, true)) {
+            const rows = card.lines ?? [card.text];
+            let w = at;
+            const starts = [at, ...rows.slice(0, -1).map((l) => (w += l.split(' ').length))];
+            for (const b of starts)
+              if (b > 0 && m.kinds[b] === 'W') {
+                const scale = Number(c.name.split('/')[1].replace('%', '')) / 100;
+                const narrow = ['1100', '1180'].includes(c.name.split('/')[0]);
+                const joined = c.name.endsWith('併行');
+                // 設計師原話是「125–150% 且 1180 以下」；實測 1366 以上的 150%（燈管下的框寬）與 1100／1180 的 100% 併行也只剩這個切法，已回報。
+                if (!(scale >= 1.25 || (joined && narrow))) bad.push(`${c.name}｜${weak(m, b)}`);
+              }
+            at += card.text.split(' ').length;
+          }
+        }
+      }
+      expect(bad).toEqual([]);
     });
     it('標記本身：每一句的字都對得上台詞、一般規則不准切的位置只出現在例外清單', () => {
       for (const src of JUDGE_BREAKS) {

@@ -435,6 +435,7 @@ function markedParts(
   a0: number,
   b0: number,
   lead: number,
+  opts: { oneLine?: boolean; noWeak?: boolean } = {},
 ): { a: number; b: number; lines: string[] }[] | null {
   const eps = 0.01;
   const text = (a: number, b: number) => words.slice(a, b).join(' ');
@@ -442,8 +443,9 @@ function markedParts(
   const fitRange = (a: number, b: number) => {
     const t = text(a, b);
     if (lineWidth(t) <= em - lead + eps) return [t];
+    if (opts.oneLine) return null;
     // 先只用正常的換行點（/、沒用到的分張點）；放不進才用勉強的（~）。
-    for (const weak of [false, true]) {
+    for (const weak of opts.noWeak ? [false] : [false, true]) {
       let best: { score: number; lines: string[] } | null = null;
       for (let c = a + 1; c < b; c++) {
         if (!m.kinds[c] || (m.kinds[c] === 'W') !== weak) continue;
@@ -460,11 +462,16 @@ function markedParts(
     // 標的換行點都放不進：這一段退回一般規則（單元測試會抓出來，不應該發生在標好的台詞上）。
     return fallback ? (lead ? fitLead(t, em, lead) : fitTwo(t, em)) : null;
   };
-  for (const [fb, allow] of [
-    [false, ['1']],
-    [false, ['1', '2']],
-    [true, ['1', '2']],
-  ] as [boolean, string[]][]) {
+  for (const [fb, allow] of (opts.noWeak
+    ? [
+        [false, ['1']],
+        [false, ['1', '2']],
+      ]
+    : [
+        [false, ['1']],
+        [false, ['1', '2']],
+        [true, ['1', '2']],
+      ]) as [boolean, string[]][]) {
     fallback = fb;
     const at = [a0];
     for (let c = a0 + 1; c < b0; c++) if (allow.includes(m.kinds[c])) at.push(c);
@@ -528,30 +535,39 @@ export function judgeCards(
           }
           for (const pt of parts) {
             let lines = pt.lines;
-            let isCompact = false;
-            if (compact && compact.when(lines.length)) {
-              // 併行：先整張重排（第一行比框窄 lead）；不行就用全部分張點再切。
-              const sub =
-                markedParts(sw, marked, em, pt.a, pt.b, compact.lead)?.map((x) => ({ ...x })) ??
-                null;
-              if (sub) {
-                for (const x of sub)
+            // 台詞放得進一行：說話者名獨立一行，不併行（設計師 #290）。兩行以上才考慮併行。
+            if (compact && lines.length > 1 && compact.when(lines.length)) {
+              const push = (xs: { a: number; b: number; lines: string[] }[], c: boolean) => {
+                for (const x of xs)
                   out.push({
                     text: sw.slice(x.a, x.b).join(' '),
                     from: from + offs[x.a],
                     ...(x.lines.length > 1 ? { lines: x.lines } : {}),
-                    compact: true as const,
+                    ...(c ? { compact: true as const } : {}),
                   });
+              };
+              // 併行（不用勉強換行點）→ 每張一行、名字獨立一行（高度一樣）→ 併行（可用勉強換行點）。
+              const a = markedParts(sw, marked, em, pt.a, pt.b, compact.lead, { noWeak: true });
+              if (a) {
+                push(a, true);
+                continue;
+              }
+              const b = markedParts(sw, marked, em, pt.a, pt.b, 0, { oneLine: true, noWeak: true });
+              if (b) {
+                push(b, false);
+                continue;
+              }
+              const c = markedParts(sw, marked, em, pt.a, pt.b, compact.lead);
+              if (c) {
+                push(c, true);
                 continue;
               }
               lines = pt.lines;
-              isCompact = false;
             }
             out.push({
               text: sw.slice(pt.a, pt.b).join(' '),
               from: from + offs[pt.a],
               ...(lines.length > 1 ? { lines } : {}),
-              ...(isCompact ? { compact: true as const } : {}),
             });
           }
           continue;
@@ -564,7 +580,7 @@ export function judgeCards(
       for (const c of cards) {
         const rows = c.lines?.length ?? 1;
         const plain = () => out.push({ ...c, from: from + c.from });
-        if (!compact || !compact.when(rows)) {
+        if (!compact || rows < 2 || !compact.when(rows)) {
           plain();
           continue;
         }
