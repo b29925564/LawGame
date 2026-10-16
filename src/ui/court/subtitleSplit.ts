@@ -4,7 +4,9 @@
  */
 const NO_LINE_START = /[，。、；：！？）」』”’…—,.;:!?)\]]/;
 
-const w = (ch: string) => (/[\p{Script=Han}\u3000-ヿ＀-￯]/u.test(ch) ? 1 : 0.6);
+/** 英文每個字平均寬幾 em。預設 0.6（偏寬）；有量到實際字型就用量的（splitCards 的 latin）。 */
+let LATIN = 0.6;
+const w = (ch: string) => (/[\p{Script=Han}\u3000-ヿ＀-￯]/u.test(ch) ? 1 : LATIN);
 
 // 英文在詞界斷行的片語規則（設計師 #257 r4，業界字幕慣例）：
 // 冠詞、限定詞、所有格、介系詞後面不切（要切就切在它前面）；連接詞、關係詞前面優先切；
@@ -158,7 +160,17 @@ export interface Card {
  * 3. 子句還放不下，才在詞界斷（lineBreaks，中文逐字、英文在空白），每 maxLines 行一張。
  * 一句放得進一張就不拆；每張盡量是完整的句子或子句。
  */
-export function splitCards(text: string, em: number, maxLines = 2): Card[] {
+export function splitCards(text: string, em: number, maxLines = 2, latin = 0.6): Card[] {
+  const keep = LATIN;
+  LATIN = latin;
+  try {
+    return splitCardsAt(text, em, maxLines);
+  } finally {
+    LATIN = keep;
+  }
+}
+
+function splitCardsAt(text: string, em: number, maxLines: number): Card[] {
   const fits = (t: string) => lineBreaks(t, em).length <= maxLines;
   const pieces = (t: string, re: RegExp) => {
     // 「Mr.」「Dr.」後面的句點不是句尾：併回下一段。

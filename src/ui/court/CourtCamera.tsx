@@ -239,6 +239,50 @@ function ClimbDefs({ name, src }: { name: string; src: string }) {
   );
 }
 
+/** 圖解碼好了沒：切鏡頭前新鏡頭的每一層都要解碼完，不然切過去那一格只有剪影和字幕（設計師 #281 第三輪）。 */
+const warmed = new Map<string, Promise<void>>();
+const warmedDone = new Set<string>();
+function warm(url: string) {
+  let p = warmed.get(url);
+  if (!p) {
+    const img = new Image();
+    img.src = url;
+    p = (img.decode ? img.decode() : Promise.resolve())
+      .catch(() => undefined)
+      .then(() => {
+        warmedDone.add(url);
+      });
+    warmed.set(url, p);
+  }
+  return p;
+}
+const layerUrls = (l: Layer | null) =>
+  l ? [l.plate.webp, l.rim?.webp, l.front?.webp].filter((u): u is string => !!u) : [];
+
+/** 英文台詞在實際字型下每個字平均寬幾 em（量一次，加 1% 餘裕）；中文或量不到就用預設。 */
+const LATIN_GUESS = 0.6;
+/** 字幕卡實際用的字型家族（英文介面和中文不同）：放一張空卡進去讀 computed style。 */
+function probeFamily(el: HTMLElement) {
+  const p = document.createElement('p');
+  p.className = 'cam-sub';
+  p.style.visibility = 'hidden';
+  el.appendChild(p);
+  const fam = getComputedStyle(p).fontFamily;
+  p.remove();
+  return fam;
+}
+let ctx: CanvasRenderingContext2D | null | undefined;
+function latinEm(text: string, font: string) {
+  if (!font || /[\p{Script=Han}]/u.test(text)) return LATIN_GUESS;
+  ctx ??= document.createElement('canvas').getContext('2d');
+  if (!ctx) return LATIN_GUESS;
+  ctx.font = font;
+  const px = parseFloat(/(\d+(?:\.\d+)?)px/.exec(font)?.[1] ?? '17');
+  const n = [...text].length;
+  const em = (ctx.measureText(text).width / px / n) * 1.01;
+  return Number.isFinite(em) && em > 0.3 && em < 0.7 ? em : LATIN_GUESS;
+}
+
 function token(el: Element, name: string) {
   return getComputedStyle(el).getPropertyValue(name).trim();
 }
@@ -427,6 +471,33 @@ export function CourtCamera({
   const witnessNames = [`witness-${state}`, 'witness-default'];
   const placeholder = MANIFESTS[`./cam/${cam}.json`]?.placeholder;
 
+  // 兩個機位的圖一直先解碼好（異議一開始就載入法官席，在法官席時載入要切回去的證人席）；
+  // 切鏡頭時新鏡頭每一層都解碼完才換，在那之前畫面停在舊鏡頭，不出現只剩剪影和字幕的黑格。
+  const urls = {
+    witness: layerUrls(resolve('witness', witnessNames)),
+    bench: layerUrls(resolve('bench', benchPick)),
+  };
+  const warmKey = [...urls.witness, ...urls.bench].join('|');
+  useEffect(() => {
+    for (const u of warmKey.split('|')) if (u) void warm(u);
+  }, [warmKey]);
+  const [seen, setSeen] = useState<Shot>(shot);
+  const need = shot === 'black' ? [] : urls[shot];
+  const ready = need.every((u) => warmedDone.has(u));
+  if (seen !== shot && ready) setSeen(shot);
+  useLayoutEffect(() => {
+    if (seen === shot || ready) return;
+    let dead = false;
+    const go = () => !dead && setSeen(shot);
+    void Promise.race([Promise.all(need.map(warm)), new Promise((r) => setTimeout(r, 1500))]).then(
+      go,
+    );
+    return () => {
+      dead = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shot, warmKey]);
+
   return (
     <div ref={ref} className={`court-cam ${mode}`} data-open={open || undefined} aria-hidden>
       {placeholder && (
@@ -435,12 +506,12 @@ export function CourtCamera({
           <span>{t(LABEL[cam])}</span>
         </span>
       )}
-      <div className="cam-frame" ref={frame} data-shot={shot}>
+      <div className="cam-frame" ref={frame} data-shot={seen}>
         <Stage
           cam="witness"
           who={witness}
           names={witnessNames}
-          on={shot === 'witness'}
+          on={seen === 'witness'}
           mode={mode}
           frameW={width}
           turn={state === 'fifth'}
@@ -449,7 +520,7 @@ export function CourtCamera({
           cam="bench"
           who="法官"
           names={benchPick}
-          on={shot === 'bench'}
+          on={seen === 'bench'}
           mode={mode}
           frameW={width}
         />
@@ -474,7 +545,7 @@ function Subtitles({ cues }: { cues: Cue[] }) {
   const voScale = useSettings((s) => s.voScale);
   const voBox = useSettings((s) => s.voBox);
   // 一行放得下幾 em、一張放得下幾行：量框寬與實際字級；行數看「下巴線到框底」放得下幾行（最少 1、最多 2，設計師 #257）。
-  const [fit, setFit] = useState({ em: 30, lines: 2 });
+  const [fit, setFit] = useState({ em: 30, emRaw: 32, lines: 2, font: '' });
   const shown = cues.length > 0;
   useLayoutEffect(() => {
     const el = box.current;
@@ -489,7 +560,12 @@ function Subtitles({ cues }: { cues: Cue[] }) {
       const h = frame?.clientHeight ?? 0;
       const room = h - 10 - h * (insert ? 0.7 : 0.47) - who - 10;
       const lines = h ? Math.max(1, Math.min(2, Math.floor(room / (px * 1.5)))) : 2;
-      setFit({ em: subEm(el.clientWidth, px), lines });
+      setFit({
+        em: subEm(el.clientWidth, px),
+        emRaw: Math.floor((Math.min(el.clientWidth - 32, 36 * px) - 24) / px),
+        lines,
+        font: `500 ${px}px ${probeFamily(el)}`,
+      });
     };
     measure();
     const ro = new ResizeObserver(measure);
@@ -518,7 +594,14 @@ function Subtitles({ cues }: { cues: Cue[] }) {
         flat.push({ key: c.key, who: c.who, redact: c.redact, at: c.at, cue: c.key });
         continue;
       }
-      const parts = splitCards(c.text, fit.em, fit.lines);
+      // 英文用實際字型量過每字寬度，行寬就不必再留中文估算用的餘裕：一行放得下就不切。
+      const latin = latinEm(c.text, fit.font);
+      const parts = splitCards(
+        c.text,
+        latin === LATIN_GUESS ? fit.em : fit.emRaw,
+        fit.lines,
+        latin,
+      );
       // 每張讀得完才換下一張：漢字 1 單位、其他 0.35，至少 10 單位；從這句出現的時間累計（字幕比筆錄慢，不閃過）。
       let read = 0;
       parts.forEach((p, k) => {
