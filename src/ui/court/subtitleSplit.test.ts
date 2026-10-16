@@ -127,3 +127,26 @@ describe('手機插入鏡頭：一行一張', () => {
     for (const c of cards) expect(lineBreaks(c.text, 30).length).toBe(1);
   });
 });
+
+describe('每一行真的放得進框（關卡二 #3、#5）', () => {
+  const m = (t: string) => t.length * 0.45;
+  it('一行放不下就切張，不靠「尾巴併回去放寬」硬塞成一張', () => {
+    const t = 'Overruled. There’s nothing wrong with that question, counsel.';
+    const cards = splitCards(t, 25, 1, m);
+    expect(cards.map((c) => c.text)).toEqual([
+      'Overruled.',
+      'There’s nothing wrong with that question, counsel.',
+    ]);
+  });
+  it('兩行上限：長句切成幾張，每張都放得進兩行；硬換行的每一行不比框寬', () => {
+    const t =
+      'The witness is a physician, not an expert in this field, and has never testified about it before today, which the jury should keep in mind.';
+    const cards = splitCards(t, 26, 2, m);
+    expect(cards.length).toBeGreaterThan(1);
+    for (const c of cards) {
+      expect(m(c.text)).toBeLessThanOrEqual(2 * 26.01);
+      for (const l of c.lines ?? []) expect(m(l)).toBeLessThanOrEqual(26.01);
+      expect((c.lines ?? []).length).toBeLessThanOrEqual(2);
+    }
+  });
+});
