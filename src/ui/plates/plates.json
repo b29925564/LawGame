@@ -133,6 +133,140 @@
         "phone": 0
       },
       "source": "project-files art-bible/scenes/s6-steps (s6_steps.py, finish_s6.py id=s6-steps-en exp=-1.45 black=0.085 hth=12); review designer-review-v4.md"
+    },
+    {
+      "id": "holding-door",
+      "scene": "ep1:epilogue-deal-custody",
+      "rig": "ep1-holding-door-mon",
+      "card_kelvin": 4100,
+      "date": "2026-04-06 10:20",
+      "episode": 1,
+      "lang": "en",
+      "lang_note": "門邊告示照介面語言；兩版只差告示那一塊",
+      "files": {
+        "desktop": {
+          "file": "holding-door-desktop.jpg",
+          "bytes": 89022
+        },
+        "phone": {
+          "file": "holding-door-phone.jpg",
+          "bytes": 75325
+        }
+      },
+      "frames_res": [2304, 1440],
+      "frames": {
+        "ethan": [1191, 544, 1302, 991],
+        "bailiff": [1276, 538, 1381, 971],
+        "lucas": [698, 481, 962, 1381]
+      },
+      "phone_cx": 0.4505,
+      "phone_crop_px": [633, 0, 1443, 1440],
+      "standee": {
+        "ethan": {
+          "feet_uv": [0.5415, 0.6882],
+          "crown_uv": [0.5417, 0.3583]
+        },
+        "bailiff": {
+          "feet_uv": [0.5762, 0.6742],
+          "crown_uv": [0.5766, 0.3545]
+        },
+        "lucas": {
+          "feet_uv": [0.3642, 0.943],
+          "crown_uv": [0.3629, 0.2994],
+          "rim": {
+            "side": "door (screen left)",
+            "hex": "#fffef2",
+            "note": "盧卡斯立繪靠門那一側帶一點邊光，用溢光色 #fffef2，不用燈管的綠（設計審查 v3 §3）"
+          }
+        }
+      },
+      "key": "fl-door",
+      "fill": ["fl-mid", "court-spill"],
+      "target": "3:1",
+      "measured_ratio": 3.044,
+      "eye_L_ethan": 35.8,
+      "notes": {
+        "court_spill_weight": "0.99（法庭側門的溢光，照法庭光層在門口的入射亮度校正；校正時隱藏門扇。設計審查 v3）",
+        "lens": "28 mm，shift_y −0.035（垂直線保持直的；立繪照 standee 的腳底和頭頂座標貼，才不會浮）",
+        "door": "側門開 90°，門弓器手臂伸直",
+        "lucas_rim": "盧卡斯立繪靠門那一側（畫面左）加輪廓光，用溢光色 #fffef2，不用燈管的綠"
+      },
+      "floor_L": {
+        "desktop": 3.79,
+        "phone": 3.89
+      },
+      "yellow_final_violations": {
+        "desktop": 0,
+        "phone": 0
+      },
+      "source": "project-files art-bible/scenes/holding-door (holding_door.py, finish_hd.py id=holding-door exp=2.65); review designer-review-v6.md"
+    },
+    {
+      "id": "holding-door-zh",
+      "scene": "ep1:epilogue-deal-custody",
+      "rig": "ep1-holding-door-mon",
+      "card_kelvin": 4100,
+      "date": "2026-04-06 10:20",
+      "episode": 1,
+      "lang": "zh",
+      "lang_note": "門邊告示照介面語言；兩版只差告示那一塊",
+      "files": {
+        "desktop": {
+          "file": "holding-door-zh-desktop.jpg",
+          "bytes": 89010
+        },
+        "phone": {
+          "file": "holding-door-zh-phone.jpg",
+          "bytes": 75203
+        }
+      },
+      "frames_res": [2304, 1440],
+      "frames": {
+        "ethan": [1191, 544, 1302, 991],
+        "bailiff": [1276, 538, 1381, 971],
+        "lucas": [698, 481, 962, 1381]
+      },
+      "phone_cx": 0.4505,
+      "phone_crop_px": [633, 0, 1443, 1440],
+      "standee": {
+        "ethan": {
+          "feet_uv": [0.5415, 0.6882],
+          "crown_uv": [0.5417, 0.3583]
+        },
+        "bailiff": {
+          "feet_uv": [0.5762, 0.6742],
+          "crown_uv": [0.5766, 0.3545]
+        },
+        "lucas": {
+          "feet_uv": [0.3642, 0.943],
+          "crown_uv": [0.3629, 0.2994],
+          "rim": {
+            "side": "door (screen left)",
+            "hex": "#fffef2",
+            "note": "盧卡斯立繪靠門那一側帶一點邊光，用溢光色 #fffef2，不用燈管的綠（設計審查 v3 §3）"
+          }
+        }
+      },
+      "key": "fl-door",
+      "fill": ["fl-mid", "court-spill"],
+      "target": "3:1",
+      "measured_ratio": 3.044,
+      "eye_L_ethan": 35.8,
+      "notes": {
+        "court_spill_weight": "0.99（法庭側門的溢光，照法庭光層在門口的入射亮度校正；校正時隱藏門扇。設計審查 v3）",
+        "lens": "28 mm，shift_y −0.035（垂直線保持直的；立繪照 standee 的腳底和頭頂座標貼，才不會浮）",
+        "door": "側門開 90°，門弓器手臂伸直",
+        "lucas_rim": "盧卡斯立繪靠門那一側（畫面左）加輪廓光，用溢光色 #fffef2，不用燈管的綠"
+      },
+      "floor_L": {
+        "desktop": 3.79,
+        "phone": 3.89
+      },
+      "yellow_final_violations": {
+        "desktop": 0,
+        "phone": 0
+      },
+      "source": "project-files art-bible/scenes/holding-door (holding_door.py, finish_hd.py id=holding-door-zh exp=2.65); review designer-review-v6.md"
     }
   ]
 }
