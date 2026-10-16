@@ -442,7 +442,16 @@ function useSize() {
  * 手機牌架的黑條卡（尚未取得）：佔一欄兩列高。標籤本身就是要傳達的資訊，所以說明（「尚未取得、需傳票」）的行數優先，
  * 卡名拿剩下的整行（設計師 #2 2026-10-16）；英文說明在「·」後面斷行（「·」和前一個字之間不斷，不讓點孤零零自成一行）。放不下說明時不縮字，卡名先讓到 0 行，由 e2e 把它報出來。
  */
-function RackBar({ bar, style }: { bar: CorkPending; style: CSSProperties }) {
+function RackBar({
+  bar,
+  style,
+  board,
+}: {
+  bar: CorkPending;
+  style: CSSProperties;
+  /** 大板邊緣的黑條：高度是這一格往下到下一格的空間，規則和牌架一樣（說明整段放完，卡名拿剩下的整行）。 */
+  board?: boolean;
+}) {
   const t = useT();
   const scope = useScope();
   const root = useRef<HTMLDivElement>(null);
@@ -457,12 +466,15 @@ function RackBar({ bar, style }: { bar: CorkPending; style: CSSProperties }) {
     const fit = () => {
       const cs = getComputedStyle(el);
       const room =
-        el.clientHeight -
+        el.getBoundingClientRect().height -
         parseFloat(cs.paddingTop) -
         parseFloat(cs.paddingBottom) -
+        (parseFloat(cs.borderTopWidth) || 0) -
         (parseFloat(cs.rowGap) || 0) -
-        w.offsetHeight;
-      setLines(Math.max(0, Math.floor(room / (parseFloat(getComputedStyle(b).lineHeight) || 16))));
+        w.getBoundingClientRect().height;
+      setLines(
+        Math.max(0, Math.floor(room / (parseFloat(getComputedStyle(b).lineHeight) || 16) + 0.05)),
+      );
     };
     fit();
     const ro = new ResizeObserver(fit);
@@ -472,7 +484,7 @@ function RackBar({ bar, style }: { bar: CorkPending; style: CSSProperties }) {
   }, []);
   const parts = t(bar.why).split(' · ');
   return (
-    <div ref={root} className="cork-redact" style={style}>
+    <div ref={root} className={board ? 'cork-redact board' : 'cork-redact'} style={style}>
       <b ref={name} style={lines === undefined ? undefined : { maxHeight: `calc(${lines} * 1lh)` }}>
         {t(bar.name, scope)}
       </b>
@@ -567,19 +579,21 @@ export function Cork({
   const t = useT();
   const scope = useScope();
   const [ref, h, w] = useSize();
-  // 手機：第一次從牌架放卡時，A／B 若落在答案列後面，把頁面捲到板子上緣貼在頂列下面（設計師 2026-10-16 審 #284），
-  // 不然點了卡，卡從牌架消失、去的地方在第一屏外。每題只捲一次（這個元件每題掛一次）；板子已經在可視區就不捲。
-  const scrolled = useRef(false);
-  const scrollToBoard = () => {
-    if (scrolled.current) return;
-    scrolled.current = true;
+  // 手機：每一次從牌架放卡，剛收到卡的那一格（A／B 標籤和卡名）若落在答案列後面，就把頁面捲到板子上緣貼在頂列下面
+  // （設計師 2026-10-16 審 #284、gate 2 v92b）：不然點了卡，卡從牌架消失、去的地方在第一屏外，玩家看不到放進去的是哪張。
+  // 標籤和卡名已在答案列上面就不捲；玩家自己捲動、按鍵會中止（pageScroll.ts）。
+  const scrollToSlot = (slot: number) => {
     requestAnimationFrame(() => {
       const board = ref.current;
-      const ab = focusEls.current[0];
-      if (!board || !ab) return;
+      const el = focusEls.current[slot];
+      if (!board || !el) return;
       const barTop =
         document.querySelector('.answer-bar')?.getBoundingClientRect().top ?? innerHeight;
-      if (ab.getBoundingClientRect().top <= barTop) return;
+      const seen = [
+        board.querySelectorAll('.slot-tag')[slot],
+        el.querySelector('.cork-doc-name, .cork-index-head b, b.cork-hand, .cork-strip b'),
+      ].map((e) => e?.getBoundingClientRect().bottom ?? 0);
+      if (Math.max(...seen) <= barTop) return;
       const head = document.querySelector('.wb-head')?.getBoundingClientRect().height ?? 0;
       scrollPageTo(window.scrollY + board.getBoundingClientRect().top - head);
     });
@@ -1063,8 +1077,9 @@ export function Cork({
                   } as CSSProperties
                 }
                 onClick={() => {
+                  const slot = focus.findIndex((c) => !c);
                   onPick(id);
-                  scrollToBoard();
+                  if (slot >= 0) scrollToSlot(slot);
                 }}
               >
                 <RackFace item={card} />
@@ -1106,16 +1121,24 @@ export function Cork({
           ))}
         </div>
       )}
-      {bars.map(({ p, at }) => (
-        <div
-          key={p.id}
-          className="cork-redact"
-          style={{ left: `${at[0]}%`, top: `${at[1]}%`, width: `${CARD_W}%` }}
-        >
-          <b>{t(p.name, scope)}</b>
-          <span>{t(p.why)}</span>
-        </div>
-      ))}
+      {bars.map(({ p, at }) => {
+        // 高度最多到下一格（或板子下緣）：說明整段放完，卡名拿剩下的整行（和牌架的黑條一樣），不超出板子、不蓋到下面的卡。
+        const room = h ? roomOf(at) : undefined;
+        return (
+          <RackBar
+            key={p.id}
+            bar={p}
+            board
+            style={{
+              left: `${at[0]}%`,
+              top: `${at[1]}%`,
+              width: `${CARD_W}%`,
+              maxHeight: room,
+              minHeight: room === undefined ? undefined : Math.min(92, room),
+            }}
+          />
+        );
+      })}
       {focus.map((_, i) => (
         <span
           key={i}
