@@ -37,6 +37,102 @@
         "phone": 0
       },
       "source": "project-files art-bible/scenes/s1-conference (s1_conference.py state=an cam=wide, finish_s1_an.py); review designer-review-an-v1.md v5"
+    },
+    {
+      "id": "s6-steps",
+      "scene": "ep1:epilogue-deal",
+      "rig": "ep1-court-steps-mon",
+      "card_kelvin": 5600,
+      "date": "2026-04-06 11:20",
+      "episode": 1,
+      "lang": "zh",
+      "lang_note": "石楣上的法院名照介面語言：中文「卡爾德郡高等法院」一行，英文 CALDER COUNTY SUPERIOR COURT 兩行；兩版只差石楣那一塊",
+      "files": {
+        "desktop": {
+          "file": "s6-steps-desktop.jpg",
+          "bytes": 147983
+        },
+        "phone": {
+          "file": "s6-steps-phone.jpg",
+          "bytes": 94056
+        }
+      },
+      "frames_res": [2304, 1440],
+      "frames": {
+        "ethan": [964, 860, 1020, 1084],
+        "sister": [1502, 1032, 1576, 1288],
+        "lucas": [1058, 777, 1106, 972]
+      },
+      "phone_cx": 0.431,
+      "phone_crop_px": [588, 0, 1398, 1440],
+      "key": "sky",
+      "fill": ["sun"],
+      "target": null,
+      "target_note": "伊森是剪影，不量主補比（審查 v1 S6 (1)）",
+      "measured_riser_ratio_sun_over_shade": 3.13,
+      "grade": {
+        "exp": -1.45,
+        "black": 0.085,
+        "hth": 12
+      },
+      "grade_note": "hth=12（halation 門檻）：finish.py 的預設門檻在白天外景會把照到太陽的漫射石面（11.5% 像素）當亮部去暈，橘色暈光把陰影推紅（樹影 a* +6.3）。這張改成 12，只剩金屬反光點（0.002%）會暈，樹影 a* +0.1。跟曝光走的門檻規則定好以前先用這個值（設計審查 S6 v4 第 1 節）",
+      "floor_L": {
+        "desktop": 3.81,
+        "phone": 3.73
+      },
+      "yellow_final_violations": {
+        "desktop": 0,
+        "phone": 0
+      },
+      "source": "project-files art-bible/scenes/s6-steps (s6_steps.py, finish_s6.py id=s6-steps exp=-1.45 black=0.085 hth=12); review designer-review-v4.md"
+    },
+    {
+      "id": "s6-steps-en",
+      "scene": "ep1:epilogue-deal",
+      "rig": "ep1-court-steps-mon",
+      "card_kelvin": 5600,
+      "date": "2026-04-06 11:20",
+      "episode": 1,
+      "lang": "en",
+      "lang_note": "石楣上的法院名照介面語言：中文「卡爾德郡高等法院」一行，英文 CALDER COUNTY SUPERIOR COURT 兩行；兩版只差石楣那一塊",
+      "files": {
+        "desktop": {
+          "file": "s6-steps-en-desktop.jpg",
+          "bytes": 148192
+        },
+        "phone": {
+          "file": "s6-steps-en-phone.jpg",
+          "bytes": 94314
+        }
+      },
+      "frames_res": [2304, 1440],
+      "frames": {
+        "ethan": [964, 860, 1020, 1084],
+        "sister": [1502, 1032, 1576, 1288],
+        "lucas": [1058, 777, 1106, 972]
+      },
+      "phone_cx": 0.431,
+      "phone_crop_px": [588, 0, 1398, 1440],
+      "key": "sky",
+      "fill": ["sun"],
+      "target": null,
+      "target_note": "伊森是剪影，不量主補比（審查 v1 S6 (1)）",
+      "measured_riser_ratio_sun_over_shade": 3.13,
+      "grade": {
+        "exp": -1.45,
+        "black": 0.085,
+        "hth": 12
+      },
+      "grade_note": "hth=12（halation 門檻）：finish.py 的預設門檻在白天外景會把照到太陽的漫射石面（11.5% 像素）當亮部去暈，橘色暈光把陰影推紅（樹影 a* +6.3）。這張改成 12，只剩金屬反光點（0.002%）會暈，樹影 a* +0.1。跟曝光走的門檻規則定好以前先用這個值（設計審查 S6 v4 第 1 節）",
+      "floor_L": {
+        "desktop": 3.81,
+        "phone": 3.73
+      },
+      "yellow_final_violations": {
+        "desktop": 0,
+        "phone": 0
+      },
+      "source": "project-files art-bible/scenes/s6-steps (s6_steps.py, finish_s6.py id=s6-steps-en exp=-1.45 black=0.085 hth=12); review designer-review-v4.md"
     }
   ]
 }
