@@ -296,7 +296,7 @@ function balancedTwo(s: string, em: number, lead = 0, relax = false): string[] |
   const glue = zh ? '' : ' ';
   let best: { score: number; lines: string[] } | null = null;
   for (let b = 1; b < u.length; b++) {
-    if (!zh && (b < 2 || u.length - b < 2 || !(relax || canCut(u, b)))) continue;
+    if (!zh && !(relax || canCut(u, b))) continue;
     const a = u.slice(0, b).join(glue).trim();
     const c = u.slice(b).join(glue).trim();
     const eps = zh ? 1 : 0.01;
@@ -304,7 +304,8 @@ function balancedTwo(s: string, em: number, lead = 0, relax = false): string[] |
     const wc = lineWidth(c);
     if (wa > em - lead + eps || wc > em + eps || (zh && (wa < 3 || wc < 3))) continue;
     // 標點後面斷最優先（設計師 #290 第三輪：「律師，／這個問題沒有問題。」），其次兩行勻。
-    const score = Math.abs(wa - lead - wc) - (/[，、；：,;:]$/.test(a) ? 100 : 0);
+    const lone = !zh && (b < 2 || u.length - b < 2) ? 30 : 0; // 一行只有一個字：最後才選
+    const score = lone + Math.abs(wa - lead - wc) - (/[，、；：,;:]$/.test(a) ? 100 : 0);
     if (!best || score < best.score) best = { score, lines: [a, c] };
   }
   return best ? best.lines : null;
@@ -318,7 +319,10 @@ function fitLead(s: string, em: number, lead: number): string[] | null {
   if (lineWidth(s) <= em - lead + (zhOf(s) ? 1 : 0.01)) return [s];
   if (lineWidth(s) > 2 * em - lead) return null;
   // 守詞界規則找不到切點（「with that／question, counsel.」）：寧可切在限定詞後面，也不讓框蓋到燈管。
-  return balancedTwo(s, em, lead) ?? (zhOf(s) ? null : balancedTwo(s, em, lead, true));
+  return (
+    balancedTwo(s, em, lead) ??
+    (CUT_EXCEPTIONS.includes(s.toLowerCase()) ? balancedTwo(s, em, lead, true) : null)
+  );
 }
 
 /** 兩行放得下：行寬一格一格縮（尾巴併回前一行會讓行寬超過框寬，縮一點就排得進）；還是不行就勻成兩行。放不下回傳 null。 */
@@ -329,6 +333,22 @@ function fitTwo(s: string, em: number): string[] | null {
   }
   return lineWidth(s) <= 2 * em ? balancedTwo(s, em) : null;
 }
+
+/**
+ * 英文分張的切點偏好（設計師 #290 第三輪）：動詞和它的受詞、補語不分開，優先切在介系詞片語或子句的前面
+ * （「Counsel, don't put the answer／in the question.」），或標點後面。沒有這樣的切點才切在別處（罰分，不禁止）。
+ */
+const BREAK_BEFORE = new Set(
+  'in on at to of from for by into onto with beside over under about through between than as and but or because which who when while if so'.split(
+    ' ',
+  ),
+);
+
+/**
+ * 詞界規則找不到切點、只能切在限定詞後面的卡（設計師例外，只有這一句；清單每多一句都要再給設計師看）。
+ * 單元測試釘住這份清單。
+ */
+export const CUT_EXCEPTIONS: readonly string[] = ['with that question, counsel.'];
 
 const ENDS_PUNCT = /[，、；：。！？,;:.!?]["”’)」』）]*$/;
 
@@ -359,7 +379,10 @@ function phraseCards(
       if (!one || (a === 0 && b === n))
         c =
           1000 +
-          (b === n || ENDS_PUNCT.test(t) ? 0 : 150) -
+          (b === n || ENDS_PUNCT.test(t) ? 0 : 150) +
+          (!zh && a > 0 && !ENDS_PUNCT.test(textOf(0, a)) && !BREAK_BEFORE.has(norm(u[a]))
+            ? 500
+            : 0) -
           (!zh && a > 0 && CONJ.has(norm(u[a])) ? 50 : 0) +
           300 * (wd / (2 * em)) ** 2;
     }

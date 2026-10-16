@@ -5,7 +5,7 @@ import { episodes } from '../../content';
 import { STRUCK_DEFAULT } from '../../engine/episode/trial';
 import { install, translate } from '../../i18n';
 import { proseUnits } from '../lineUnits';
-import { judgeCards, subEm } from './subtitleSplit';
+import { CUT_EXCEPTIONS, judgeCards, subEm } from './subtitleSplit';
 
 /**
  * 法官的話在鏡頭條上的樣子（設計師 #290 第二輪）：一張是一個完整的句子，最多兩行，
@@ -155,6 +155,19 @@ describe('法官的台詞：一句一張、最多兩行、張數不隨寬度變'
         }
       expect(bad).toEqual([]);
     });
+  // 設計師 #290 第三輪：動詞和受詞不分開，優先切在介系詞片語前面。
+  it('150%：「Counsel, don’t put the answer／in the question.」不把動詞和受詞拆開', () => {
+    for (const g of [GEOMS[0], GEOMS[1]].map(at150)) {
+      const em = Math.floor((Math.min(g.w - 32, 36 * g.px) - 24) / g.px);
+      const t = judgeCards('Counsel, don’t put the answer in the question.', em, null, est).map(
+        (c) => c.text,
+      );
+      expect(t, g.name).toEqual(['Counsel, don’t put the answer', 'in the question.']);
+    }
+  });
+  it('詞界規則的例外清單只有一句（清單每多一句都要再給設計師看）', () => {
+    expect(CUT_EXCEPTIONS).toEqual(['with that question, counsel.']);
+  });
   it('一句放得進兩行就是一張：張數等於句子數', () => {
     const bad: string[] = [];
     for (const text of texts('en').concat(texts('zh'))) {

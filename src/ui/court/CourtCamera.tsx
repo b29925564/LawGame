@@ -704,6 +704,9 @@ function Subtitles({ cues, onJudgeRead }: { cues: Cue[]; onJudgeRead?: (ms: numb
     h: 0,
     headLimit: 0,
     tubesBottom: 0,
+    clockLeft: 0,
+    clockBottom: 0,
+    frameW: 0,
   });
   const shown = cues.length > 0;
   useLayoutEffect(() => {
@@ -731,10 +734,14 @@ function Subtitles({ cues, onJudgeRead }: { cues: Cue[]; onJudgeRead?: (ms: numb
       // 燈管（連發光）下緣：字幕框頂不能蓋到（manifest 的 inView，換算成這個框裡的位置）。
       const bm = MANIFESTS['./cam/bench.json'];
       let tubesBottom = 0;
+      let clockLeft = 0;
+      let clockBottom = 0;
       if (bm?.inView) {
         const c = insert ? [0, 0, 1, 1] : bm.crop239;
         const ph = ((frame?.clientWidth ?? 0) / c[2]) * (9 / 16);
         tubesBottom = ph * (bm.inView.tubes[1] + bm.inView.tubes[3] - c[1]) + 4;
+        clockLeft = ph * (16 / 9) * (bm.inView.clock[0] - c[0]) - 4;
+        clockBottom = ph * (bm.inView.clock[1] + bm.inView.clock[3] - c[1]) + 4;
       }
       const w = el.clientWidth;
       setFit({
@@ -748,6 +755,9 @@ function Subtitles({ cues, onJudgeRead }: { cues: Cue[]; onJudgeRead?: (ms: numb
         h,
         headLimit,
         tubesBottom,
+        clockLeft,
+        clockBottom,
+        frameW: frame?.clientWidth ?? 0,
       });
     };
     measure();
@@ -770,6 +780,7 @@ function Subtitles({ cues, onJudgeRead }: { cues: Cue[]; onJudgeRead?: (ms: numb
       until?: string;
       units?: number;
       compact?: boolean;
+      shift?: number;
     }[] = [];
     for (const c of cues) {
       if (c.blank) {
@@ -800,14 +811,26 @@ function Subtitles({ cues, onJudgeRead }: { cues: Cue[]; onJudgeRead?: (ms: numb
               when: (rows: number) => boxTop(rows) < Math.max(fit.headLimit, fit.tubesBottom),
             }
           : null;
-      const parts: (Card & { compact?: boolean })[] = judge
-        ? judgeCards(c.text, em, compact, latin ? measureOf(fit.font) : undefined)
-        : splitCards(
-            c.text,
-            latin ? fit.emRaw : fit.em,
-            fit.lines,
-            latin ? measureOf(fit.font) : undefined,
+      const meas = latin ? measureOf(fit.font) : undefined;
+      let parts: (Card & { compact?: boolean })[] = judge
+        ? judgeCards(c.text, em, compact, meas)
+        : splitCards(c.text, em, fit.lines, meas);
+      // 兩行的框頂會落進鐘的高度：框右緣收到鐘的左邊（框往左靠、寬度收窄，左緣仍留 16px），這句重排（鐘不能蓋，設計師 #290 第三輪）。
+      let shift = 0;
+      if (judge && fit.clockLeft > 0) {
+        const topOf = (p: Card & { compact?: boolean }) => {
+          const rows = p.lines?.length ?? 1;
+          return p.compact ? fit.h - 6 - (fit.px * 1.5 * rows + 10) : boxTop(rows);
+        };
+        if (parts.some((p) => topOf(p) < fit.clockBottom)) {
+          shift = Math.max(0, fit.frameW - 16 - fit.clockLeft);
+          const narrow = Math.max(
+            8,
+            Math.floor(((fit.clockLeft - 16 - 24) / fit.px) * (latin ? 1 : 0.92)),
           );
+          if (narrow < em) parts = judgeCards(c.text, narrow, compact, meas);
+        }
+      }
       // 每張讀得完才換下一張：漢字 1 單位、其他 0.35，至少 10 單位；從這句出現的時間累計（字幕比筆錄慢，不閃過）。
       let read = 0;
       parts.forEach((p, k) => {
@@ -820,6 +843,7 @@ function Subtitles({ cues, onJudgeRead }: { cues: Cue[]; onJudgeRead?: (ms: numb
           until: c.until,
           units: Math.max(SUB_MIN_UNITS, readUnits(p.text)),
           compact: !!p.compact,
+          shift,
           at: read > 0 ? `calc(${c.at} + ${read} * var(--dur-sub-unit))` : c.at,
         });
         read += Math.max(SUB_MIN_UNITS, readUnits(p.text));
@@ -858,7 +882,13 @@ function Subtitles({ cues, onJudgeRead }: { cues: Cue[]; onJudgeRead?: (ms: numb
           <p
             key={c.key}
             className="cam-sub"
-            style={{ '--at': c.at, '--next': c.next } as CSSProperties}
+            style={
+              {
+                '--at': c.at,
+                '--next': c.next,
+                ...(c.shift ? { marginRight: c.shift } : {}),
+              } as CSSProperties
+            }
             data-compact={c.compact || undefined}
             data-last={(i === cards.length - 1 && !c.until) || undefined}
           >
