@@ -1,10 +1,19 @@
 {
-  "placeholder": true,
-  "eye": 0.3333333333333333,
-  "crop239": [0, 0.0854, 1, 0.7438],
+  "placeholder": false,
+  "eye": 0.6225,
+  "crop239": [0.0, 0.1269, 1.0, 0.7435],
   "standee": {
-    "x": 0.4155,
-    "y": 0.1961,
-    "w": 0.1625
+    "x": 0.3558,
+    "y": 0.5793,
+    "w": 0.053
+  },
+  "slots_available": ["d1-am", "d2-pm", "d3-ov", "verdict"],
+  "slots": {
+    "court-kowalski": "d1-am",
+    "court-marisol": "d1-am",
+    "court-sophie": "d2-pm",
+    "court-rachel": "d2-pm",
+    "court-fisher": "d2-pm",
+    "court-doctor": "d2-pm"
   }
 }

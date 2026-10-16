@@ -106,3 +106,24 @@ describe('字幕拆卡', () => {
     expect(subEm(412, 17 * 1.5)).toBeGreaterThanOrEqual(12);
   });
 });
+
+describe('手機插入鏡頭：一行一張', () => {
+  const em = 18;
+  const long =
+    '死者倒在辦公桌旁，頭部有重擊傷。桌上的水晶獎盃掉在地毯上，上面有血，旁邊還有一支沒蓋上的筆，筆尖是濕的。';
+  it('每張只佔一行，切在標點，沒有只剩兩三個字的尾卡', () => {
+    const cards = splitCards(long, em, 1);
+    expect(cards.length).toBeGreaterThan(2);
+    for (const c of cards) {
+      expect(lineBreaks(c.text, em).length).toBe(1);
+      expect([...c.text].length).toBeGreaterThanOrEqual(4);
+    }
+    expect(cards.map((c) => c.text).join('')).toBe(long);
+  });
+  it('英文子句切在詞界，不拆名字', () => {
+    const en = 'The victim was on the floor beside his desk, with a blunt-force wound to the head.';
+    const cards = splitCards(en, 30, 1);
+    expect(cards.length).toBeGreaterThan(1);
+    for (const c of cards) expect(lineBreaks(c.text, 30).length).toBe(1);
+  });
+});
