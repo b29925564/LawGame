@@ -34,7 +34,7 @@ export const redactZone = (id: string) => zones?.[id]?.redact;
 
 /**
  * 每張證物照片的原圖寬高（ratios.json，照 webp 實際尺寸填）：證據板上的沖印框跟著照片的比例走，照片一律不裁切
- * （設計師 #2 2026-10-16；設定集規定證物縮圖是 800×600，watch-listed 現在是 800×534，等場景光影重出）。沒有登記的是 4:3。
+ * （設計師 #2 2026-10-16；設定集規定證物縮圖是 800×600）。沒有登記的是 4:3。
  */
 const sizes = Object.values(
   import.meta.glob<Record<string, [number, number]>>('./photos/ratios.json', {
@@ -59,9 +59,8 @@ const SIZES = {
 /** 沒有 srcset 的瀏覽器用哪一張：至少這麼寬的最小一張。 */
 const DEFAULT = { board: 400, thumb: 400, drawer: 800, zoom: 1600, scene: 800 } as const;
 /**
- * 照片紀錄表的沖印是 4×6（3:2，設定集第 9 章），紀錄表裡用 cover 置中裁。
- * 手腕那張是 4:3，在紀錄表裡上下各裁一點；扣押袋那張是 3:2（場景光影照紀錄表重拍，標籤留了頭頂空間）。
- * 證據板上的沖印框跟著照片的比例走（printRatio），不裁切。
+ * 照片紀錄表的沖印預設是 4×6（3:2，設定集第 9 章）；ratios.json 有登記的照片，紀錄表和證據板的沖印框
+ * 都跟著照片的比例走（printRatio），不裁切。手腕那張和扣押袋那張都是 4:3（扣押袋那張 2026-10-16 照 800×600 重出）。
  * 31 樓警方照片是 3:2，紀錄表裡不裁，遮蔽範圍照原圖座標畫。
  */
 export type PrintUse = keyof typeof SIZES;

@@ -8,7 +8,7 @@ import type { Progress } from '../engine/save';
 import { useLang, useT } from '../i18n';
 import { cardHighlights, Hl } from './Marks';
 import { useScope } from './lang';
-import { hasPrint, Print, redactZone, type PrintUse } from './prints';
+import { hasPrint, Print, printRatio, redactZone, type PrintUse } from './prints';
 import { prose } from './prose';
 import { Redaction } from './Redaction';
 import { caseTermsOf } from './terms';
@@ -239,6 +239,12 @@ export function Who({ text }: { text: string }) {
   );
 }
 
+/** 沖印框跟著照片的比例走（ratios.json 有登記的），照片不裁切；沒登記的照舊是 4×6（dossier.css）。 */
+const printFrame = (id?: string) => {
+  const r = id ? printRatio(id) : undefined;
+  return r ? { aspectRatio: r } : undefined;
+};
+
 /**
  * 沖印本（零圓角）＋底邊四欄：案號、照片序號、時間、攝影者；右下角是 Bates（還沒有號碼就是一條黑條）。
  * 沒有實物照片時是警方閃光燈的版式（中心過曝、四角快速變暗），不畫道具。
@@ -275,7 +281,7 @@ export function PhotoLog({
   const zone = redacted && print ? redactZone(id) : undefined;
   return (
     <figure className="photolog">
-      <span className="photolog-print">
+      <span className="photolog-print" style={printFrame(print ? id : undefined)}>
         {redacted && !zone ? (
           <Redaction label={t('照片已遮蔽')} />
         ) : print ? (
@@ -349,7 +355,7 @@ export function PrintPlate({ id, use }: { id: string; use: PrintUse }) {
   if (!hasPrint(id)) return null;
   return (
     <figure className="photolog bare">
-      <span className="photolog-print">
+      <span className="photolog-print" style={printFrame(id)}>
         <Print id={id} use={use} />
       </span>
     </figure>
