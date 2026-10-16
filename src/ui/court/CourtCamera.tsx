@@ -482,10 +482,13 @@ export function CourtCamera({
   useEffect(() => {
     for (const u of warmKey.split('|')) if (u) void warm(u);
   }, [warmKey]);
-  const [seen, setSeen] = useState<Shot>(shot);
   const need = shot === 'black' ? [] : urls[shot];
   const ready = need.every((u) => warmedDone.has(u));
+  // 進場的第一個機位也一樣：圖還沒解碼完就先停在黑，剪影與字幕等圖到了才一起出現（上限 1.5 秒）。
+  const [seen, setSeen] = useState<Shot>(ready ? shot : 'black');
+  const [entered, setEntered] = useState(ready);
   if (seen !== shot && ready) setSeen(shot);
+  if (!entered && seen === shot) setEntered(true);
   useLayoutEffect(() => {
     if (seen === shot || ready) return;
     let dead = false;
@@ -526,7 +529,7 @@ export function CourtCamera({
           frameW={width}
         />
         <div className="cam-black" />
-        <Subtitles cues={cues} />
+        <Subtitles cues={entered ? cues : []} />
       </div>
     </div>
   );
