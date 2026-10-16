@@ -78,11 +78,13 @@ export function Tabs<T extends string>({
   value,
   onPick,
   items,
+  className,
 }: {
   label: string;
   value: T;
   onPick: (v: T) => void;
   items: TabItem<T>[];
+  className?: string;
 }) {
   const t = useT();
   const ref = useRef<HTMLElement>(null);
@@ -199,7 +201,7 @@ export function Tabs<T extends string>({
   return (
     <nav
       ref={ref}
-      className={rest.length ? 'apps has-more' : 'apps'}
+      className={['apps', rest.length && 'has-more', className].filter(Boolean).join(' ')}
       aria-label={t(label)}
       onKeyDown={(e) => {
         if (e.key !== 'Escape' || !open) return;

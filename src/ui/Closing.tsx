@@ -413,7 +413,14 @@ function Verdict({
   const steps = [
     trial && { label: t('庭審結束'), j: trial },
     st.spoken && { label: t('結辯後'), j: st.spoken },
-    { label: t('評議後'), j: st.jury },
+    // 最後一輪的點就是評議後的點：下面三輪表已經畫了，這裡不再畫第二排（設計師 關卡 2 第 18 條：同一個結果只畫一次）。
+    !(
+      st.rounds.length > 0 &&
+      ours(st.rounds[st.rounds.length - 1].jury).join() === ours(st.jury).join()
+    ) && {
+      label: t('評議後'),
+      j: st.jury,
+    },
   ].filter((x): x is { label: string; j: Record<string, number> } => !!x);
 
   return (

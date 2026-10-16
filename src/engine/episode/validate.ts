@@ -182,12 +182,16 @@ function deskErrors(s: DeskScene, available: Set<string>, args: Set<string>, err
       if (!l.fact) return;
       if (!cards.has(l.fact)) errors.push(`卷宗 ${d.id} 標記了不存在的卡片 ${l.fact}`);
       reachable.add(l.fact);
-      // 逐字稿裡那句話的頁:行，要和證據卡引的 cite 一樣。
+      // 逐字稿裡那句話的頁:行，要和證據卡引的 cite 一樣。每句占幾行由筆錄排版決定（ui/record.ts，
+      // 兩種語言取較多的那一版），這裡只擋明顯不可能的：同一頁、不在第一句之前。精確的行落在哪裡由 e2e 驗。
       const cite = s.cards.find((c) => c.id === l.fact)?.cite;
-      if (tr && cite && cite !== `${tr.page}:${tr.line + i}`)
-        errors.push(
-          `卷宗 ${d.id} 第 ${i + 1} 句是 ${tr.page}:${tr.line + i}，卡片 ${l.fact} 引的是 ${cite}`,
-        );
+      if (tr && cite) {
+        const [cp, cl] = cite.split(':').map(Number);
+        if (cp !== tr.page || cl < tr.line + i || cl > 25)
+          errors.push(
+            `卷宗 ${d.id} 第 ${i + 1} 句最早落在 ${tr.page}:${tr.line + i}，卡片 ${l.fact} 引的是 ${cite}`,
+          );
+      }
     });
   }
   for (const m of s.mail)

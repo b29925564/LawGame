@@ -40,7 +40,7 @@ for (const lang of ['zh-TW', 'en']) {
     await tab.click();
     const tabs = page.locator('.sheet-tabs');
     await expect(tabs).toBeVisible();
-    const buttons = await tabs.locator('button').all();
+    const buttons = await tabs.locator('button:not(.measure)').all();
     expect(buttons.length).toBe(3);
     const close = (await page.locator('.sheet > .panel-head > .link').boundingBox())!;
     const bar = (await tabs.boundingBox())!;
@@ -66,3 +66,47 @@ for (const lang of ['zh-TW', 'en']) {
     await expect(buttons[2]).toHaveAttribute('aria-current', 'true');
   });
 }
+
+// v91 第二道關卡 F：1530 寬、字級 150%、英文：桌機的抽屜分頁放不下時收進「更多」，「Legal terms」點得到。
+test('字級 150%（桌機、英文）：抽屜分頁折進「更多」，不被切成「Lega」', async ({ page }, info) => {
+  test.skip(info.project.name !== 'desktop', '桌機才有常開的抽屜');
+  await page.setViewportSize({ width: 1530, height: 860 });
+  await page.goto('/');
+  await page.evaluate(() => {
+    localStorage.setItem('lawgame-lang', 'en');
+    localStorage.setItem(
+      'lawgame-ep-auto',
+      JSON.stringify({
+        version: 5,
+        savedAt: Date.now(),
+        label: 'x',
+        progress: {
+          episode: 'ep1',
+          scene: 7,
+          step: 0,
+          choices: {},
+          cards: [],
+          flags: [],
+          ethics: [],
+          scenes: {},
+        },
+      }),
+    );
+  });
+  await page.reload();
+  await page
+    .getByRole('button', { name: /^(繼續|Continue)/ })
+    .first()
+    .click();
+  await page.waitForTimeout(300);
+  const beat = page.locator('.place-beat');
+  if (await beat.count()) await beat.click();
+  await page.evaluate(() => document.documentElement.style.setProperty('--text-scale', '1.5'));
+  const tabs = page.locator('.sheet-tabs');
+  await expect(tabs).toBeVisible();
+  // 沒有任何分頁被切掉：列內不需要橫向捲。
+  expect(await tabs.evaluate((e) => e.scrollWidth <= e.clientWidth + 1)).toBe(true);
+  await tabs.locator('.apps-more:not(.measure)').click();
+  await tabs.locator('.apps-menu').getByRole('button', { name: 'Legal terms' }).click();
+  await expect(tabs.locator('.apps-more:not(.measure)')).toHaveAttribute('aria-current', 'true');
+});

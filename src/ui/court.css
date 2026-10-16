@@ -382,19 +382,32 @@
 /* 列內證物標籤（視覺規格 §16 .etag.row）：紙色、左邊一個孔。 */
 .etag.row {
   display: inline-flex;
-  align-items: center;
+  flex-wrap: nowrap;
+  align-items: flex-start;
   gap: 6px;
-  height: 24px;
   padding: 0 10px 0 6px;
   background: var(--paper);
   border: 1px solid var(--paper-rule);
   border-radius: 3px;
   color: var(--paper-ink);
   font: 500 13px/1 var(--font);
-  white-space: nowrap;
   vertical-align: middle;
+  /* 名稱長的證物（手機英文）自己換行，不把紙撐寬。 */
+  max-width: 100%;
+  height: auto;
+  min-height: 24px;
+  padding-block: 3px;
+  line-height: 1.35;
+  text-align: left;
+}
+.etag.row > span:not(.etag-hole):not([aria-hidden]) {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 .etag.row .etag-hole {
+  flex: none;
+  margin-top: 5px;
+  align-self: flex-start;
   width: 5px;
   height: 5px;
   border-radius: 50%;
@@ -3291,8 +3304,13 @@ html[lang='en'] .stamp.rec-stamp b {
   .shell:has(> .shell-tabs > .record) > .shell-tabs > .jurybox {
     grid-column: 1;
     grid-row: 5;
-    align-self: end;
+    align-self: start;
     margin-bottom: 12px;
+    /* 面板和上面的筆錄同寬：右緣對齊，六張卡在框裡兩端對齊（卡本身還是 56×70）。 */
+    justify-content: stretch;
+  }
+  .shell:has(> .shell-tabs > .record) > .shell-tabs > .jurybox:not(.collapsed) .jb-grid {
+    justify-content: space-between;
   }
   .shell:has(> .shell-tabs > .record):has(> .shell-body > .court-slot) > .shell-tabs > .jurybox {
     grid-row: 6;

@@ -864,8 +864,8 @@ scenes:
       - id: doc-transcript
         title: 崔佛・米爾斯　錄取逐字稿
         from: 法院書記官
-        # 節錄第 42 頁第 6–7 行：證據卡 trevor-sworn 引的 42:7 就是這一頁的答句。
-        transcript: { page: 42, line: 6 }
+        # 節錄第 42 頁第 5–9 行（問占 5–6、答占 7–9，和證人準備的影本同一套排版）：證據卡 trevor-sworn 引的 42:7 是答句的第一行。
+        transcript: { page: 42, line: 5 }
         lines:
           - text: 問：這個機制一直都是這樣嗎？
           - text: 答：從系統上線就是提醒，從來沒有強制下線過。
