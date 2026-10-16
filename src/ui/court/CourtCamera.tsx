@@ -603,7 +603,7 @@ function Subtitles({ cues }: { cues: Cue[] }) {
       const latin = !/[\p{Script=Han}]/u.test(c.text);
       const parts = splitCards(
         c.text,
-        latin ? Math.floor(fit.emRaw * 0.98) : fit.em,
+        latin ? fit.emRaw : fit.em,
         c.who === JUDGE ? 1 : fit.lines,
         latin ? measureOf(fit.font) : undefined,
       );
