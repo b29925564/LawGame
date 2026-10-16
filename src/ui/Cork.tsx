@@ -10,6 +10,7 @@ import {
 import type { Relation } from '../engine/constants';
 import { useT } from '../i18n';
 import { durUi, reducedMotion } from './a11y';
+import { scrollPageTo } from './pageScroll';
 import { PhotoLogLine, type PhotoRecord } from './Dossier';
 import { useScope } from './lang';
 import { prose } from './prose';
@@ -566,6 +567,23 @@ export function Cork({
   const t = useT();
   const scope = useScope();
   const [ref, h, w] = useSize();
+  // 手機：第一次從牌架放卡時，A／B 若落在答案列後面，把頁面捲到板子上緣貼在頂列下面（設計師 2026-10-16 審 #284），
+  // 不然點了卡，卡從牌架消失、去的地方在第一屏外。每題只捲一次（這個元件每題掛一次）；板子已經在可視區就不捲。
+  const scrolled = useRef(false);
+  const scrollToBoard = () => {
+    if (scrolled.current) return;
+    scrolled.current = true;
+    requestAnimationFrame(() => {
+      const board = ref.current;
+      const ab = focusEls.current[0];
+      if (!board || !ab) return;
+      const barTop =
+        document.querySelector('.answer-bar')?.getBoundingClientRect().top ?? innerHeight;
+      if (ab.getBoundingClientRect().top <= barTop) return;
+      const head = document.querySelector('.wb-head')?.getBoundingClientRect().height ?? 0;
+      scrollPageTo(window.scrollY + board.getBoundingClientRect().top - head);
+    });
+  };
   // 板子窄到光圈卡上放不下圖釘兩側的小籤（1350px 以下的桌機視窗），也改用手機的板面。
   const compact = phone || (w > 0 && w < ROOMY);
   // 比對位兩格的卡高（在原位的不算）：卡高變了（換卡、換語言、字型載入）就重量。兩格上緣對齊，取高的那張置中。
@@ -1044,7 +1062,10 @@ export function Cork({
                     '--tilt': `${tilt(id, 1)}deg`,
                   } as CSSProperties
                 }
-                onClick={() => onPick(id)}
+                onClick={() => {
+                  onPick(id);
+                  scrollToBoard();
+                }}
               >
                 <RackFace item={card} />
               </button>
