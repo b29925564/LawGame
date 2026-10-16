@@ -257,6 +257,8 @@ function warm(url: string) {
   }
   return p;
 }
+/** 進場等圖的保險上限（ms）：到了才先出字幕，鏡頭仍黑。 */
+const ENTRY_CAP = 8000;
 const layerUrls = (l: Layer | null) =>
   l ? [l.plate.webp, l.rim?.webp, l.front?.webp].filter((u): u is string => !!u) : [];
 
@@ -484,7 +486,7 @@ export function CourtCamera({
   }, [warmKey]);
   const need = shot === 'black' ? [] : urls[shot];
   const ready = need.every((u) => warmedDone.has(u));
-  // 進場的第一個機位也一樣：圖還沒解碼完就先停在黑，剪影與字幕等圖到了才一起出現（上限 1.5 秒）。
+  // 進場的第一個機位：圖還沒解碼完就先停在黑，剪影與字幕等圖到了才一起出現。
   const [seen, setSeen] = useState<Shot>(ready ? shot : 'black');
   const [entered, setEntered] = useState(ready);
   if (seen !== shot && ready) setSeen(shot);
@@ -493,9 +495,19 @@ export function CourtCamera({
     if (seen === shot || ready) return;
     let dead = false;
     const go = () => !dead && setSeen(shot);
-    void Promise.race([Promise.all(need.map(warm)), new Promise((r) => setTimeout(r, 1500))]).then(
-      go,
-    );
+    const all = Promise.all(need.map(warm));
+    // 進場（設計師 #285）：沒有舊鏡頭可停，圖沒好就一直黑，好了硬切進來；
+    // 約 8 秒還沒好才先出字幕（字幕是無障礙），鏡頭仍黑，不出載了一半的層。
+    // 切鏡頭：停在舊鏡頭，最多等 1.5 秒。
+    if (!entered) {
+      const timer = setTimeout(() => !dead && setEntered(true), ENTRY_CAP);
+      void all.then(go);
+      return () => {
+        dead = true;
+        clearTimeout(timer);
+      };
+    }
+    void Promise.race([all, new Promise((r) => setTimeout(r, 1500))]).then(go);
     return () => {
       dead = true;
     };
