@@ -1,5 +1,16 @@
-import { useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type Ref } from 'react';
-import { useT } from '../../i18n';
+import {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+  type Ref,
+} from 'react';
+import { useLang, useT } from '../../i18n';
+import { reducedMotion } from '../a11y';
+import { benchNames } from './camNames';
+import { P_FROM, P_TO, climbCoef, easeOf } from './climb';
 import { useSettings } from '../../engine/settings';
 import { useScope } from '../lang';
 import type { Cue } from '../record';
@@ -17,9 +28,10 @@ import { svg } from '../jury/silhouette';
  *   placeholder＝占位圖（框上方標「待放 3D 機位」）。
  * - `{機位}-{狀態}.avif／.webp`：那個狀態的底圖（各層光已合成好、調過色，人不在圖裡、影子在）。
  *   證人席的狀態是 default／lock／build／confront／fifth；法官席是 p0–p5（耐心剩幾根燈管），
- *   有時段就是 bench-{時段}-p{n}。找不到就退回 default。
+ *   有時段就是 bench-{時段}-p{n}，英文介面先找 -en（背牆的字）；找不到退回 bench-d2-pm。
  * - `{機位}-{狀態}-rim.webp`：立牌的受光圖（灰階，和底圖同一個畫面）。輪廓光乘上它，被百葉窗光條、
  *   盧卡斯的影子擋掉的地方就沒有輪廓光；沒有這張就照剪影自己的燈畫。
+ * - 證人席 lock→build、build→confront 另有 `{機位}-{從}-{到}-climb.png`：影子往上爬的遮罩（climb.ts），換狀態時 --dur-shadow 掃過去；其他狀態互換淡化，減少動態直接換。
  * - `{機位}-front.webp`（或 `{機位}-{狀態}-front.webp`）：擋在立牌前面的東西（證人席桌面、欄杆、法官席桌緣），帶 alpha。
  */
 
@@ -28,10 +40,16 @@ const PLATES = import.meta.glob('./cam/*.{avif,webp}', {
   query: '?url',
   import: 'default',
 }) as Record<string, string>;
-const MANIFESTS = import.meta.glob('./cam/*.json', { eager: true, import: 'default' }) as Record<
-  string,
-  Manifest
->;
+/** 影子往上爬的遮罩（climb.ts），檔名 {機位}-{從}-{到}-climb.png，例如 witness-lock-build-climb.png。 */
+const CLIMBS = import.meta.glob('./cam/*-climb.png', {
+  eager: true,
+  query: '?url',
+  import: 'default',
+}) as Record<string, string>;
+const MANIFESTS = import.meta.glob('./cam/{bench,witness}.json', {
+  eager: true,
+  import: 'default',
+}) as Record<string, Manifest>;
 
 interface Manifest {
   placeholder?: boolean;
@@ -49,12 +67,41 @@ export type WitnessState = 'default' | 'lock' | 'build' | 'confront' | 'fifth';
 const LABEL: Record<Cam, string> = { witness: '證人席', bench: '法官席' };
 
 function pick(names: string[]) {
-  for (const n of names) {
-    const avif = PLATES[`./cam/${n}.avif`];
-    const webp = PLATES[`./cam/${n}.webp`];
-    if (avif || webp) return { avif, webp: webp ?? avif };
+  for (const name of names) {
+    const avif = PLATES[`./cam/${name}.avif`];
+    const webp = PLATES[`./cam/${name}.webp`];
+    if (avif || webp) return { name, avif, webp: webp ?? avif };
   }
   return null;
+}
+
+type Plate = NonNullable<ReturnType<typeof pick>>;
+/** 一層：底圖、受光圖、前景（同一個狀態的三張圖）。換狀態時新舊兩層疊著，用遮罩或透明度換。 */
+interface Layer {
+  name: string;
+  plate: Plate;
+  rim: Plate | null;
+  front: Plate | null;
+}
+
+function resolve(cam: Cam, names: string[]): Layer | null {
+  const plate = pick(names);
+  if (!plate) return null;
+  return {
+    name: plate.name,
+    plate,
+    rim: pick([`${plate.name}-rim`]),
+    front: pick([`${plate.name}-front`, `${cam}-front`]),
+  };
+}
+
+/** 從這一層換到那一層的方式：有遮罩就由下往上爬；證人席其他狀態互換用淡化；其餘（轉頭、法官席）直接換。 */
+function changeOf(cam: Cam, from: Layer, to: Layer): { climb: string } | 'fade' | null {
+  if (cam !== 'witness') return null;
+  const state = (l: Layer) => l.name.slice(l.name.indexOf('-') + 1);
+  if (state(from) === 'fifth' || state(to) === 'fifth') return null;
+  const climb = CLIMBS[`./cam/${from.name}-${state(to)}-climb.png`];
+  return climb ? { climb } : 'fade';
 }
 
 function Img({ src, className }: { src: { avif?: string; webp: string }; className: string }) {
@@ -66,7 +113,137 @@ function Img({ src, className }: { src: { avif?: string; webp: string }; classNa
   );
 }
 
-/** 一個機位：底圖、立牌（本體＋受光）、前景。 */
+/** 一層的畫面：底圖、立牌（本體＋受光）、前景。 */
+function CamLayer({
+  cam,
+  layer,
+  look,
+  turn,
+  rimUnits,
+  catchSize,
+  box,
+  fx,
+}: {
+  cam: Cam;
+  layer: Layer;
+  look: ReturnType<typeof castLook>;
+  turn: boolean;
+  rimUnits: number;
+  catchSize: number;
+  box: CSSProperties;
+  fx?: { mask?: string; fade?: boolean };
+}) {
+  // 證人席有正面和轉頭兩張立牌，換的時候交叉淡化（第 7 章 :75，--dur-turn），不硬切。
+  const poses = useMemo(() => {
+    if (!look) return [];
+    return (cam === 'witness' ? [false, true] : [false]).map((t) => {
+      const o = {
+        v: 85,
+        pose: 'J1' as const,
+        bg: false,
+        rim: rimUnits,
+        catchSize,
+        turn: t,
+        uid: `cam-${layer.name}-${look.id}${t ? '-turn' : ''}`,
+      };
+      return {
+        turn: t,
+        body: svg(look, { ...o, part: 'body' }),
+        light: svg(look, { ...o, part: 'light' }),
+      };
+    });
+  }, [look, rimUnits, catchSize, cam, layer.name]);
+  const { rim, front, plate } = layer;
+  return (
+    <div
+      className="cam-layer"
+      data-fx={fx ? (fx.mask ? 'climb' : 'fade') : undefined}
+      style={
+        fx?.mask
+          ? {
+              maskImage: `url(#${maskId(layer.name)})`,
+              WebkitMaskImage: `url(#${maskId(layer.name)})`,
+            }
+          : fx
+            ? { opacity: 0 }
+            : undefined
+      }
+    >
+      <Img src={plate} className="cam-plate" />
+      {poses.map((p) => (
+        <span key={String(p.turn)} className="cam-pose" data-on={p.turn === turn || undefined}>
+          <span className="cam-standee" style={box} dangerouslySetInnerHTML={{ __html: p.body }} />
+          <span
+            className="cam-light"
+            style={rim ? ({ '--rim': `url("${rim.webp}")` } as CSSProperties) : undefined}
+            data-rim={rim ? '' : undefined}
+          >
+            <span
+              className="cam-standee"
+              style={box}
+              dangerouslySetInnerHTML={{ __html: p.light }}
+            />
+          </span>
+        </span>
+      ))}
+      {front && <Img src={front} className="cam-front" />}
+    </div>
+  );
+}
+
+function maskId(name: string) {
+  return `cam-climb-${name}`;
+}
+
+/** 遮罩的 SVG 定義：遮罩圖過一道 feComponentTransfer（climb.ts 的係數），進度由 Stage 每格改 intercept。 */
+function ClimbDefs({ name, src }: { name: string; src: string }) {
+  const c = climbCoef(P_FROM);
+  const f = { type: 'linear', slope: c.slope, intercept: c.intercept } as const;
+  return (
+    <svg className="cam-defs" width="0" height="0" aria-hidden focusable="false">
+      <defs>
+        <filter
+          id={`${maskId(name)}-f`}
+          colorInterpolationFilters="sRGB"
+          x="0"
+          y="0"
+          width="1"
+          height="1"
+        >
+          <feComponentTransfer>
+            <feFuncR {...f} />
+            <feFuncG {...f} />
+            <feFuncB {...f} />
+          </feComponentTransfer>
+        </filter>
+        <mask
+          id={maskId(name)}
+          maskContentUnits="objectBoundingBox"
+          x="0"
+          y="0"
+          width="1"
+          height="1"
+        >
+          <image
+            href={src}
+            x="0"
+            y="0"
+            width="1"
+            height="1"
+            preserveAspectRatio="none"
+            filter={`url(#${maskId(name)}-f)`}
+          />
+        </mask>
+      </defs>
+    </svg>
+  );
+}
+
+function token(el: Element, name: string) {
+  return getComputedStyle(el).getPropertyValue(name).trim();
+}
+
+/** 一個機位：兩層疊著換（底圖、立牌、前景）。 */
 function Stage({
   cam,
   who,
@@ -89,36 +266,83 @@ function Stage({
   // 16:9 的機位圖放進框裡：照裁切框把整張圖往上、往左推（2.39:1 只露出 crop239 那一段，眼線仍在 1/3）。
   const crop = mode === 'strip' && m ? m.crop239 : [0, 0, 1, 1];
   const width = frameW / crop[2];
-  const plate = pick(names);
-  const rim = pick(names.map((n) => `${n}-rim`));
-  const front = pick([...names.map((n) => `${n}-front`), `${cam}-front`]);
+  const target = resolve(cam, names);
   const look = castLook(who);
   // 輪廓光照顯示寬度換算：畫面上 1.25px（設計師：1–1.5px，不能是原圖上的寬）。取 0.5 的倍數，拖拉視窗時不一直重畫。
   const shown = (m?.standee.w ?? 0.2) * width;
   const rimUnits = shown > 0 ? Math.max(1, Math.round(((1.25 * 400) / shown) * 2) / 2) : 8;
   // 眼神光畫面上至少 2×2 px。
   const catchSize = shown > 0 ? Math.max(5, Math.ceil((2 * 400) / shown)) : 5;
-  // 證人席有正面和轉頭兩張立牌，換的時候交叉淡化（第 7 章 :75，--dur-turn），不硬切。
-  const poses = useMemo(() => {
-    if (!look) return [];
-    return (cam === 'witness' ? [false, true] : [false]).map((t) => {
-      const o = {
-        v: 85,
-        pose: 'J1' as const,
-        bg: false,
-        rim: rimUnits,
-        catchSize,
-        turn: t,
-        uid: `cam-${cam}-${look.id}${t ? '-turn' : ''}`,
+
+  // 換狀態：鏡頭正開著才有過場（一刀切過來的那一格直接是新的）；減少動態直接換。
+  const [base, setBase] = useState(target);
+  const [inc, setInc] = useState<{ layer: Layer; climb?: string } | null>(null);
+  const wasOn = useRef(on);
+  const root = useRef<HTMLDivElement>(null);
+  const shownName = (inc?.layer ?? base)?.name;
+  useLayoutEffect(() => {
+    const was = wasOn.current;
+    wasOn.current = on;
+    if (!target || target.name === shownName) return;
+    // 上一個過場還沒走完就又換了：先把它定下來，再從它開始。
+    const settled = inc?.layer ?? base;
+    const how = on && was && settled && !reducedMotion() ? changeOf(cam, settled, target) : null;
+    if (!how || !settled) {
+      setBase(target);
+      setInc(null);
+      return;
+    }
+    setBase(settled);
+    setInc({ layer: target, climb: how === 'fade' ? undefined : how.climb });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [target?.name, on]);
+
+  // 過場：--dur-shadow 300ms、--ease-light，進度 p 由 rAF 推；新一層的圖都解碼好才開始，不閃空白。
+  useEffect(() => {
+    const el = root.current;
+    if (!inc || !el) return;
+    const layerEl = el.querySelector<HTMLElement>('.cam-layer[data-fx]');
+    if (!layerEl) return;
+    const dur = parseFloat(token(el, '--dur-shadow')) || 300;
+    const ease = easeOf(token(el, '--ease-light'));
+    const funcs = Array.from(
+      el.querySelectorAll('.cam-defs feFuncR, .cam-defs feFuncG, .cam-defs feFuncB'),
+    );
+    const apply = (e: number) => {
+      if (inc.climb) {
+        const c = climbCoef(P_FROM + (P_TO - P_FROM) * e);
+        for (const f of funcs) f.setAttribute('intercept', String(c.intercept));
+      } else layerEl.style.opacity = String(e);
+    };
+    let raf = 0;
+    let dead = false;
+    const warm = [
+      ...Array.from(layerEl.querySelectorAll('img')),
+      ...(inc.climb ? [Object.assign(new Image(), { src: inc.climb })] : []),
+    ].map((i) => (i.decode ? i.decode().catch(() => undefined) : Promise.resolve()));
+    const go = () => {
+      if (dead) return;
+      const t0 = performance.now();
+      const step = (now: number) => {
+        const t = Math.min(1, (now - t0) / dur);
+        apply(ease(t));
+        if (t < 1) raf = requestAnimationFrame(step);
+        else {
+          setBase(inc.layer);
+          setInc(null);
+        }
       };
-      return {
-        turn: t,
-        body: svg(look, { ...o, part: 'body' }),
-        light: svg(look, { ...o, part: 'light' }),
-      };
-    });
-  }, [look, rimUnits, catchSize, cam]);
-  if (!m || !plate) return null;
+      raf = requestAnimationFrame(step);
+    };
+    void Promise.race([Promise.all(warm), new Promise((r) => setTimeout(r, 1000))]).then(go);
+    return () => {
+      dead = true;
+      cancelAnimationFrame(raf);
+    };
+  }, [inc]);
+
+  const layers = [base, inc?.layer].filter((l): l is Layer => !!l);
+  if (!m || !layers.length) return null;
   const box = {
     left: `${m.standee.x * 100}%`,
     top: `${m.standee.y * 100}%`,
@@ -126,6 +350,7 @@ function Stage({
   };
   return (
     <div
+      ref={root}
       className="cam-stage"
       data-cam={cam}
       data-on={on || undefined}
@@ -133,24 +358,20 @@ function Stage({
         { '--cx': crop[0], '--cy': crop[1], '--cw': crop[2], '--ch': crop[3] } as CSSProperties
       }
     >
-      <Img src={plate} className="cam-plate" />
-      {poses.map((p) => (
-        <span key={String(p.turn)} className="cam-pose" data-on={p.turn === turn || undefined}>
-          <span className="cam-standee" style={box} dangerouslySetInnerHTML={{ __html: p.body }} />
-          <span
-            className="cam-light"
-            style={rim ? ({ '--rim': `url("${rim.webp}")` } as CSSProperties) : undefined}
-            data-rim={rim ? '' : undefined}
-          >
-            <span
-              className="cam-standee"
-              style={box}
-              dangerouslySetInnerHTML={{ __html: p.light }}
-            />
-          </span>
-        </span>
+      {inc?.climb && <ClimbDefs name={inc.layer.name} src={inc.climb} />}
+      {layers.map((l) => (
+        <CamLayer
+          key={l.name}
+          cam={cam}
+          layer={l}
+          look={look}
+          turn={turn}
+          rimUnits={rimUnits}
+          catchSize={catchSize}
+          box={box}
+          fx={inc && l === inc.layer ? { mask: inc.climb } : undefined}
+        />
       ))}
-      {front && <Img src={front} className="cam-front" />}
     </div>
   );
 }
@@ -201,11 +422,8 @@ export function CourtCamera({
   }, []);
 
   const slot = MANIFESTS['./cam/bench.json']?.slots?.[scene];
-  const benchNames = [
-    ...(slot ? [`bench-${slot}-p${Math.max(0, patience)}`] : []),
-    `bench-p${Math.max(0, patience)}`,
-    'bench-default',
-  ];
+  const en = useLang((s) => s.lang) === 'en';
+  const benchPick = benchNames(slot, patience, en);
   const witnessNames = [`witness-${state}`, 'witness-default'];
   const placeholder = MANIFESTS[`./cam/${cam}.json`]?.placeholder;
 
@@ -230,7 +448,7 @@ export function CourtCamera({
         <Stage
           cam="bench"
           who="法官"
-          names={benchNames}
+          names={benchPick}
           on={shot === 'bench'}
           mode={mode}
           frameW={width}

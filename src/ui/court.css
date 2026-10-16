@@ -3088,10 +3088,18 @@ html[lang='en'] .stamp.rec-stamp b {
 .cam-stage[data-on] {
   visibility: visible;
 }
+.cam-layer,
 .cam-plate,
 .cam-front {
   position: absolute;
   inset: 0;
+}
+/* 影子往上爬的遮罩定義（SVG 濾鏡＋<mask>），不佔版面。 */
+.cam-defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
 }
 .cam-plate img,
 .cam-front img {
