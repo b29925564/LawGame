@@ -262,6 +262,57 @@ const ENTRY_CAP = 8000;
 const layerUrls = (l: Layer | null) =>
   l ? [l.plate.webp, l.rim?.webp, l.front?.webp].filter((u): u is string => !!u) : [];
 
+/** 這一場在這個狀態下，兩個機位各要哪幾層圖。CourtCamera 和進場前的預熱用同一個函式，網址集合不會分叉。 */
+export function shotUrls(scene: string, state: WitnessState, patience: number, en: boolean) {
+  const slot = MANIFESTS['./cam/bench.json']?.slots?.[scene];
+  const witnessNames = [`witness-${state}`, 'witness-default'];
+  const benchPick = benchNames(slot, patience, en);
+  return {
+    witnessNames,
+    benchPick,
+    urls: {
+      witness: layerUrls(resolve('witness', witnessNames)),
+      bench: layerUrls(resolve('bench', benchPick)),
+    },
+  };
+}
+
+/** 進場時（default、耐心滿）CourtCamera 會要的全部網址。 */
+export function entryUrls(scene: string, patience: number, en: boolean) {
+  const { witness, bench } = shotUrls(scene, 'default', patience, en).urls;
+  return [...witness, ...bench];
+}
+
+/**
+ * 下一場確定是審判時，在前一場就先把第一個機位的圖解碼好（設計師 #286 第二輪）：
+ * 前一場自己的圖都載完、瀏覽器閒下來才開始，不讓前一場的圖變晚；上限 5 秒不再等。
+ */
+export function warmCourt(scene: string, patience: number) {
+  const en = useLang.getState().lang === 'en';
+  const run = () => {
+    for (const u of entryUrls(scene, patience, en)) void warm(u);
+  };
+  const idle = () =>
+    typeof requestIdleCallback === 'function'
+      ? requestIdleCallback(run, { timeout: 2000 })
+      : setTimeout(run, 200);
+  const pending = [...document.images].filter((i) => !i.complete);
+  if (!pending.length) return void idle();
+  let left = pending.length;
+  let fired = false;
+  const fire = () => {
+    if (fired) return;
+    fired = true;
+    idle();
+  };
+  const one = () => --left <= 0 && fire();
+  for (const i of pending) {
+    i.addEventListener('load', one, { once: true });
+    i.addEventListener('error', one, { once: true });
+  }
+  setTimeout(fire, 5000);
+}
+
 /** 英文台詞的實際寬度（em）：用字幕卡真正的字型家族，canvas 量。量不到就回 undefined，切分器照每字 0.6em 估。 */
 let ctx: CanvasRenderingContext2D | null | undefined;
 function measureOf(font: string): ((t: string) => number) | undefined {
@@ -468,18 +519,12 @@ export function CourtCamera({
     return () => ro.disconnect();
   }, []);
 
-  const slot = MANIFESTS['./cam/bench.json']?.slots?.[scene];
   const en = useLang((s) => s.lang) === 'en';
-  const benchPick = benchNames(slot, patience, en);
-  const witnessNames = [`witness-${state}`, 'witness-default'];
+  const { witnessNames, benchPick, urls } = shotUrls(scene, state, patience, en);
   const placeholder = MANIFESTS[`./cam/${cam}.json`]?.placeholder;
 
   // 兩個機位的圖一直先解碼好（異議一開始就載入法官席，在法官席時載入要切回去的證人席）；
   // 切鏡頭時新鏡頭每一層都解碼完才換，在那之前畫面停在舊鏡頭，不出現只剩剪影和字幕的黑格。
-  const urls = {
-    witness: layerUrls(resolve('witness', witnessNames)),
-    bench: layerUrls(resolve('bench', benchPick)),
-  };
   const warmKey = [...urls.witness, ...urls.bench].join('|');
   useEffect(() => {
     for (const u of warmKey.split('|')) if (u) void warm(u);
