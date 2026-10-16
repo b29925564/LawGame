@@ -5,7 +5,8 @@ import { episodes } from '../../content';
 import { STRUCK_DEFAULT } from '../../engine/episode/trial';
 import { install, translate } from '../../i18n';
 import { proseUnits } from '../lineUnits';
-import { CUT_EXCEPTIONS, judgeCards, subEm } from './subtitleSplit';
+import { JUDGE_BREAKS, markedFor, parseMarked, plainOf } from './judgeBreaks';
+import { CUT_EXCEPTIONS, judgeCards, sentencesOf, subEm } from './subtitleSplit';
 
 /**
  * 法官的話在鏡頭條上的樣子（設計師 #290 第二輪）：一張是一個完整的句子，最多兩行，
@@ -167,6 +168,90 @@ describe('法官的台詞：一句一張、最多兩行、張數不隨寬度變'
   });
   it('詞界規則的例外清單只有一句（清單每多一句都要再給設計師看）', () => {
     expect(CUT_EXCEPTIONS).toEqual(['with that question, counsel.']);
+  });
+  // 設計師 #290 後續：凡是會分張的法官台詞，斷點都是人標的；切出來的位置必須是標的位置。
+  describe('人工斷點', () => {
+    const SCALES = [1, 1.25, 1.5];
+    const LEADS = [0, 3];
+    // 英文譯文在 beforeAll 才裝進來，所以在測試裡才取。
+    const sentencesNow = () => [...new Set(texts('en').flatMap(sentencesOf))];
+    const combos = SCALES.flatMap((sc) =>
+      GEOMS.flatMap((g0) =>
+        LEADS.map((lead) => {
+          const px = g0.px * sc;
+          const em = Math.floor((Math.min(g0.w - 32, 36 * px) - 24) / px);
+          return { name: `${g0.name}/${sc * 100}%/${lead ? '併行' : '一般'}`, em, lead };
+        }),
+      ),
+    );
+    const run = (sentence: string, c: (typeof combos)[number], marks: boolean) =>
+      judgeCards(sentence, c.em, c.lead ? { lead: c.lead, when: () => true } : null, est, marks);
+    it('任何寬度、字級下會分張的台詞都有標斷點', () => {
+      const missing = sentencesNow().filter(
+        (s) => !markedFor(s) && combos.some((c) => run(s, c, false).length > 1),
+      );
+      expect(missing).toEqual([]);
+    });
+    it('切出來的分張點與換行點都在標的位置（沒標的位置不切）', () => {
+      const bad: string[] = [];
+      const sentences = sentencesNow();
+      for (const s of sentences) {
+        const m = markedFor(s);
+        if (!m) continue;
+        for (const c of combos) {
+          let at = 0;
+          for (const card of run(s, c, true)) {
+            const words = card.text.split(' ').length;
+            if (at > 0 && !['1', '2'].includes(m.kinds[at]))
+              bad.push(`${c.name}｜${s} → 分張點沒標：${card.text}`);
+            const rows = card.lines ?? [card.text];
+            let w = at;
+            for (const [k, l] of rows.entries()) {
+              if (k > 0 && !m.kinds[w])
+                bad.push(`${c.name}｜${s} → 換行點沒標：${rows.join('／')}`);
+              w += l.split(' ').length;
+            }
+            at += words;
+          }
+        }
+      }
+      expect(sentences.length).toBeGreaterThan(20);
+      expect(bad).toEqual([]);
+    });
+    it('設計師審查給的句子，在 1100／150%（估算寬度）切出來就是她標的', () => {
+      const g = at150(GEOMS[0]);
+      const em = Math.floor((Math.min(g.w - 32, 36 * g.px) - 24) / g.px);
+      const shape = (t: string) =>
+        judgeCards(t, em, null, est)
+          .map((c) => (c.lines ?? [c.text]).join('／'))
+          .join(' ▏ ');
+      expect(shape("Counsel, don't put the answer in the question.")).toBe(
+        "Counsel, don't put／the answer ▏ in the question.",
+      );
+      expect(shape("The victim's words cannot come in through this witness.")).toBe(
+        "The victim's words／cannot come in ▏ through this witness.",
+      );
+      expect(shape("The witness's opinion of the defendant is character evidence.")).toBe(
+        "The witness's opinion／of the defendant ▏ is character evidence.",
+      );
+      expect(shape('Counsel, let the witness answer for herself.')).toBe(
+        'Counsel,／let the witness ▏ answer for herself.',
+      );
+      expect(
+        shape('Members of the jury: the testimony of Ms. Adler is stricken in its entirety.'),
+      ).toBe('Members of the jury: ▏ the testimony／of Ms. Adler ▏ is stricken／in its entirety.');
+    });
+    it('標記本身：每一句的字都對得上台詞、一般規則不准切的位置只出現在例外清單', () => {
+      for (const src of JUDGE_BREAKS) {
+        const m = parseMarked(src);
+        expect(markedFor(plainOf(m)), src).toBe(markedFor(plainOf(m)));
+        expect(
+          JUDGE_BREAKS.filter((x) => plainOf(parseMarked(x)) === plainOf(m)),
+          src,
+        ).toHaveLength(1);
+      }
+      expect(CUT_EXCEPTIONS).toEqual(['with that question, counsel.']);
+    });
   });
   it('一句放得進兩行就是一張：張數等於句子數', () => {
     const bad: string[] = [];

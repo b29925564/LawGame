@@ -3,6 +3,7 @@
  * 寬度用 em 估：漢字與全形 1，其他 0.6；中文任何字之間都能斷（標點不放行首），英文只在空白斷。
  */
 import { proseUnits } from '../lineUnits';
+import { type Marked, markedFor } from './judgeBreaks';
 
 const NO_LINE_START = /[，。、；：！？）」』”’…—,.;:!?)\]]/;
 
@@ -184,6 +185,12 @@ function piecesOf(t: string, re: RegExp) {
   }
   return out;
 }
+
+/** 一段文字的句子（Mr./Dr. 等後面的句點不算句尾）。 */
+export const sentencesOf = (text: string) =>
+  piecesOf(text, SENTENCE)
+    .map((x) => x.trim())
+    .filter(Boolean);
 
 export interface Card {
   text: string;
@@ -417,6 +424,75 @@ function phraseCards(
 }
 
 /**
+ * 照人工斷點（judgeBreaks.ts）排一句：先只用第一優先的分張點，每一段都放得進兩行就夠；
+ * 不夠才加第二優先。每段的換行只在標記的位置（沒用到的分張點也算）。放不進回傳 null。
+ * lead：說話者名併進第一行佔的寬度（em）。
+ */
+function markedParts(
+  words: string[],
+  m: Marked,
+  em: number,
+  a0: number,
+  b0: number,
+  lead: number,
+): { a: number; b: number; lines: string[] }[] | null {
+  const eps = 0.01;
+  const text = (a: number, b: number) => words.slice(a, b).join(' ');
+  let fallback = false;
+  const fitRange = (a: number, b: number) => {
+    const t = text(a, b);
+    if (lineWidth(t) <= em - lead + eps) return [t];
+    // 先只用正常的換行點（/、沒用到的分張點）；放不進才用勉強的（~）。
+    for (const weak of [false, true]) {
+      let best: { score: number; lines: string[] } | null = null;
+      for (let c = a + 1; c < b; c++) {
+        if (!m.kinds[c] || (m.kinds[c] === 'W') !== weak) continue;
+        const x = text(a, c);
+        const y = text(c, b);
+        const wx = lineWidth(x);
+        const wy = lineWidth(y);
+        if (wx > em - lead + eps || wy > em + eps) continue;
+        const score = Math.abs(wx - lead - wy);
+        if (!best || score < best.score) best = { score, lines: [x, y] };
+      }
+      if (best) return best.lines;
+    }
+    // 標的換行點都放不進：這一段退回一般規則（單元測試會抓出來，不應該發生在標好的台詞上）。
+    return fallback ? (lead ? fitLead(t, em, lead) : fitTwo(t, em)) : null;
+  };
+  for (const [fb, allow] of [
+    [false, ['1']],
+    [false, ['1', '2']],
+    [true, ['1', '2']],
+  ] as [boolean, string[]][]) {
+    fallback = fb;
+    const at = [a0];
+    for (let c = a0 + 1; c < b0; c++) if (allow.includes(m.kinds[c])) at.push(c);
+    at.push(b0);
+    // 張數最少，再求第二優先用得少。
+    const best: { cost: number; from: number }[] = at.map(() => ({ cost: Infinity, from: -1 }));
+    best[0].cost = 0;
+    for (let j = 1; j < at.length; j++)
+      for (let i = 0; i < j; i++) {
+        if (best[i].cost === Infinity || !fitRange(at[i], at[j])) continue;
+        const cost = best[i].cost + 1000 + (i > 0 && m.kinds[at[i]] === '2' ? 1 : 0);
+        if (cost < best[j].cost) best[j] = { cost, from: i };
+      }
+    const last = at.length - 1;
+    if (best[last].cost === Infinity) continue;
+    const cuts: number[] = [];
+    for (let j = last; j > 0; j = best[j].from) cuts.unshift(j);
+    let prev = 0;
+    return cuts.map((j) => {
+      const part = { a: at[prev], b: at[j], lines: fitRange(at[prev], at[j]) as string[] };
+      prev = j;
+      return part;
+    });
+  }
+  return null;
+}
+
+/**
  * 法官的話分張（設計師 #290 第二、三輪）：一張是一個完整的句子，最多兩行，放得下就不切；
  * 張數不隨寬度變（只要每句在這個寬度放得進兩行）。一句超過兩行，在片語邊界切成兩張以上（phraseCards），不出三行、不出單字卡。
  * compact：說話者名併進第一行時名字佔幾 em（lead），以及這張在原本排法下的行數要不要併（when）；null＝不併。
@@ -426,6 +502,7 @@ export function judgeCards(
   em: number,
   compact: { lead: number; when: (lines: number) => boolean } | null,
   measure?: (t: string) => number,
+  useMarks = true,
 ): JudgeCard[] {
   const keep = MEASURE;
   MEASURE = measure;
@@ -437,6 +514,49 @@ export function judgeCards(
       if (!s) continue;
       const from = at;
       at += piece.length;
+      const marked = useMarks && !zhOf(s) ? markedFor(s) : undefined;
+      const sw = s.split(/\s+/).filter(Boolean);
+      if (marked && marked.words.length === sw.length) {
+        const parts = markedParts(sw, marked, em, 0, sw.length, 0);
+        if (parts) {
+          // 字元起點：第 i 個字前面有 i 個空白。
+          const offs: number[] = [];
+          let o = 0;
+          for (const w of sw) {
+            offs.push(o);
+            o += w.length + 1;
+          }
+          for (const pt of parts) {
+            let lines = pt.lines;
+            let isCompact = false;
+            if (compact && compact.when(lines.length)) {
+              // 併行：先整張重排（第一行比框窄 lead）；不行就用全部分張點再切。
+              const sub =
+                markedParts(sw, marked, em, pt.a, pt.b, compact.lead)?.map((x) => ({ ...x })) ??
+                null;
+              if (sub) {
+                for (const x of sub)
+                  out.push({
+                    text: sw.slice(x.a, x.b).join(' '),
+                    from: from + offs[x.a],
+                    ...(x.lines.length > 1 ? { lines: x.lines } : {}),
+                    compact: true as const,
+                  });
+                continue;
+              }
+              lines = pt.lines;
+              isCompact = false;
+            }
+            out.push({
+              text: sw.slice(pt.a, pt.b).join(' '),
+              from: from + offs[pt.a],
+              ...(lines.length > 1 ? { lines } : {}),
+              ...(isCompact ? { compact: true as const } : {}),
+            });
+          }
+          continue;
+        }
+      }
       const ls = fitTwo(s, em);
       const cards: Card[] = ls
         ? [{ text: s, from: 0, ...(ls.length > 1 ? { lines: ls } : {}) }]
