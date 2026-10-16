@@ -404,6 +404,8 @@ export function CourtRecord({
       text: zh ? e.text : curly(e.text),
       redact: e.redact,
       at: at(i),
+      // 異議那一拍：法官的裁定留到切回證人為止，不跟著回到證人席。
+      ...(animate && beat && i === beat.o + 1 ? { until: cssOf(beat.t.back) } : {}),
     });
     // 字幕留到下一句開始為止：下一句是鏡頭外的人（律師的問句、旁白）就收成空，不讓上一句看起來像在答新問題（設計師 #257）。
     const fresh = entries.flatMap((e, i) =>
@@ -416,7 +418,9 @@ export function CourtRecord({
     return last >= 0 && inShot(entries[last]) ? [{ ...cue(entries[last], last), at: '0s' }] : [];
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [live, entries, batch, rows, animate, beat]);
-  const cueKey = cues.map((c) => `${c.key}|${c.at}|${c.redact ?? ''}|${c.text}`).join('\n');
+  const cueKey = cues
+    .map((c) => `${c.key}|${c.at}|${c.until ?? ''}|${c.redact ?? ''}|${c.text}`)
+    .join('\n');
   useEffect(() => {
     onCues?.(cues);
     // eslint-disable-next-line react-hooks/exhaustive-deps

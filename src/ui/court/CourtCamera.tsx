@@ -9,6 +9,7 @@ import {
 } from 'react';
 import { useLang, useT } from '../../i18n';
 import { reducedMotion } from '../a11y';
+import { JUDGE } from '../../engine/episode/trial';
 import { benchNames } from './camNames';
 import { P_FROM, P_TO, climbCoef, easeOf } from './climb';
 import { useSettings } from '../../engine/settings';
@@ -259,8 +260,19 @@ function warm(url: string) {
 const layerUrls = (l: Layer | null) =>
   l ? [l.plate.webp, l.rim?.webp, l.front?.webp].filter((u): u is string => !!u) : [];
 
-/** 英文台詞在實際字型下每個字平均寬幾 em（量一次，加 1% 餘裕）；中文或量不到就用預設。 */
-const LATIN_GUESS = 0.6;
+/** 英文台詞的實際寬度（em）：用字幕卡真正的字型家族，canvas 量。量不到就回 undefined，切分器照每字 0.6em 估。 */
+let ctx: CanvasRenderingContext2D | null | undefined;
+function measureOf(font: string): ((t: string) => number) | undefined {
+  if (!font) return undefined;
+  ctx ??= document.createElement('canvas').getContext('2d');
+  const c = ctx;
+  if (!c) return undefined;
+  const px = parseFloat(/(\d+(?:\.\d+)?)px/.exec(font)?.[1] ?? '17');
+  return (t) => {
+    c.font = font;
+    return c.measureText(t).width / px;
+  };
+}
 /** 字幕卡實際用的字型家族（英文介面和中文不同）：放一張空卡進去讀 computed style。 */
 function probeFamily(el: HTMLElement) {
   const p = document.createElement('p');
@@ -270,17 +282,6 @@ function probeFamily(el: HTMLElement) {
   const fam = getComputedStyle(p).fontFamily;
   p.remove();
   return fam;
-}
-let ctx: CanvasRenderingContext2D | null | undefined;
-function latinEm(text: string, font: string) {
-  if (!font || /[\p{Script=Han}]/u.test(text)) return LATIN_GUESS;
-  ctx ??= document.createElement('canvas').getContext('2d');
-  if (!ctx) return LATIN_GUESS;
-  ctx.font = font;
-  const px = parseFloat(/(\d+(?:\.\d+)?)px/.exec(font)?.[1] ?? '17');
-  const n = [...text].length;
-  const em = (ctx.measureText(text).width / px / n) * 1.01;
-  return Number.isFinite(em) && em > 0.3 && em < 0.7 ? em : LATIN_GUESS;
 }
 
 function token(el: Element, name: string) {
@@ -545,7 +546,7 @@ function Subtitles({ cues }: { cues: Cue[] }) {
   const voScale = useSettings((s) => s.voScale);
   const voBox = useSettings((s) => s.voBox);
   // 一行放得下幾 em、一張放得下幾行：量框寬與實際字級；行數看「下巴線到框底」放得下幾行（最少 1、最多 2，設計師 #257）。
-  const [fit, setFit] = useState({ em: 30, emRaw: 32, lines: 2, font: '' });
+  const [fit, setFit] = useState({ em: 30, emRaw: 32, lines: 2, insert: false, font: '' });
   const shown = cues.length > 0;
   useLayoutEffect(() => {
     const el = box.current;
@@ -559,11 +560,13 @@ function Subtitles({ cues }: { cues: Cue[] }) {
       // 下巴線約在鏡頭條高度的 47%；手機插入 70%（法官席立牌頭底在 69%，設定集第 10 章 :12 字幕在下三分之一），框底留 10px。
       const h = frame?.clientHeight ?? 0;
       const room = h - 10 - h * (insert ? 0.7 : 0.47) - who - 10;
-      const lines = h ? Math.max(1, Math.min(2, Math.floor(room / (px * 1.5)))) : 2;
+      // 手機插入鏡頭一律一行（設定集第 10 章 :12）；鏡頭還沒打開量不到高度時也不退回兩行（關卡二 #6）。
+      const lines = insert ? 1 : h ? Math.max(1, Math.min(2, Math.floor(room / (px * 1.5)))) : 2;
       setFit({
         em: subEm(el.clientWidth, px),
         emRaw: Math.floor((Math.min(el.clientWidth - 32, 36 * px) - 24) / px),
         lines,
+        insert,
         font: `500 ${px}px ${probeFamily(el)}`,
       });
     };
@@ -584,6 +587,7 @@ function Subtitles({ cues }: { cues: Cue[] }) {
       at: string;
       cue: string;
       next?: string;
+      until?: string;
     }[] = [];
     for (const c of cues) {
       if (c.blank) {
@@ -594,13 +598,14 @@ function Subtitles({ cues }: { cues: Cue[] }) {
         flat.push({ key: c.key, who: c.who, redact: c.redact, at: c.at, cue: c.key });
         continue;
       }
-      // 英文用實際字型量過每字寬度，行寬就不必再留中文估算用的餘裕：一行放得下就不切。
-      const latin = latinEm(c.text, fit.font);
+      // 英文用實際字型量過整行寬度，行寬不必再留估算用的餘裕：一行放得下就不切。
+      // 法官的話（切到法官席時出現）桌機也只放一行，字幕框才不蓋住法官的頭（關卡二 #1）。
+      const latin = !/[\p{Script=Han}]/u.test(c.text);
       const parts = splitCards(
         c.text,
-        latin === LATIN_GUESS ? fit.em : fit.emRaw,
-        fit.lines,
-        latin,
+        latin ? fit.emRaw : fit.em,
+        c.who === JUDGE ? 1 : fit.lines,
+        latin ? measureOf(fit.font) : undefined,
       );
       // 每張讀得完才換下一張：漢字 1 單位、其他 0.35，至少 10 單位；從這句出現的時間累計（字幕比筆錄慢，不閃過）。
       let read = 0;
@@ -611,6 +616,7 @@ function Subtitles({ cues }: { cues: Cue[] }) {
           text: p.text,
           lines: p.lines,
           cue: c.key,
+          until: c.until,
           at: read > 0 ? `calc(${c.at} + ${read} * var(--dur-sub-unit))` : c.at,
         });
         read += Math.max(SUB_MIN_UNITS, readUnits(p.text));
@@ -619,10 +625,13 @@ function Subtitles({ cues }: { cues: Cue[] }) {
     // 每張收在下一張出現時；下一句（別的人）先到，就在那一刻收，不讓長句的後幾張壓在新的一句上。
     flat.forEach((c, i) => {
       const nextCard = flat[i + 1];
-      if (!nextCard) return;
-      const nextCue = flat.slice(i + 1).find((x) => x.cue !== c.cue);
-      c.next =
-        nextCard.cue === c.cue && nextCue ? `min(${nextCard.at}, ${nextCue.at})` : nextCard.at;
+      if (nextCard) {
+        const nextCue = flat.slice(i + 1).find((x) => x.cue !== c.cue);
+        c.next =
+          nextCard.cue === c.cue && nextCue ? `min(${nextCard.at}, ${nextCue.at})` : nextCard.at;
+      }
+      // 有收掉時間的句子（異議裁定：切回證人就收）：到時間就收，不留在證人的畫面上（關卡二 #8）。
+      if (c.until) c.next = c.next ? `min(${c.next}, ${c.until})` : c.until;
     });
     return flat;
   }, [cues, fit]);
@@ -640,7 +649,7 @@ function Subtitles({ cues }: { cues: Cue[] }) {
             key={c.key}
             className="cam-sub"
             style={{ '--at': c.at, '--next': c.next } as CSSProperties}
-            data-last={i === cards.length - 1 || undefined}
+            data-last={(i === cards.length - 1 && !c.until) || undefined}
           >
             <span className="who">{t(c.who, scope)}</span>
             {c.redact ? (

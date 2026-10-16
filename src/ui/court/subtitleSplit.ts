@@ -4,9 +4,9 @@
  */
 const NO_LINE_START = /[，。、；：！？）」』”’…—,.;:!?)\]]/;
 
-/** 英文每個字平均寬幾 em。預設 0.6（偏寬）；有量到實際字型就用量的（splitCards 的 latin）。 */
-let LATIN = 0.6;
-const w = (ch: string) => (/[\p{Script=Han}\u3000-ヿ＀-￯]/u.test(ch) ? 1 : LATIN);
+const w = (ch: string) => (/[\p{Script=Han}\u3000-ヿ＀-￯]/u.test(ch) ? 1 : 0.6);
+/** 英文用實際字型量過的寬度（em）；沒有就照每字 0.6em 估（偏寬）。splitCards 進來時暫時掛上。 */
+let MEASURE: ((t: string) => number) | undefined;
 
 // 英文在詞界斷行的片語規則（設計師 #257 r4，業界字幕慣例）：
 // 冠詞、限定詞、所有格、介系詞後面不切（要切就切在它前面）；連接詞、關係詞前面優先切；
@@ -138,7 +138,8 @@ export function lineBreaks(text: string, em: number): string[] {
   return lines;
 }
 
-const lineWidth = (t: string) => [...t].reduce((n, ch) => n + w(ch), 0);
+const lineWidth = (t: string) =>
+  MEASURE && !/[\p{Script=Han}]/u.test(t) ? MEASURE(t) : [...t].reduce((n, ch) => n + w(ch), 0);
 const SENTENCE = /[^。！？.!?]+(?:[。！？.!?]+[」』”’)）]*\s*)?/g;
 const CLAUSE = /[^，、；：—,;:]+(?:[，、；：—,;:]+\s*)?/g;
 
@@ -160,18 +161,26 @@ export interface Card {
  * 3. 子句還放不下，才在詞界斷（lineBreaks，中文逐字、英文在空白），每 maxLines 行一張。
  * 一句放得進一張就不拆；每張盡量是完整的句子或子句。
  */
-export function splitCards(text: string, em: number, maxLines = 2, latin = 0.6): Card[] {
-  const keep = LATIN;
-  LATIN = latin;
+export function splitCards(
+  text: string,
+  em: number,
+  maxLines = 2,
+  measure?: (t: string) => number,
+): Card[] {
+  const keep = MEASURE;
+  MEASURE = measure;
   try {
     return splitCardsAt(text, em, maxLines);
   } finally {
-    LATIN = keep;
+    MEASURE = keep;
   }
 }
 
 function splitCardsAt(text: string, em: number, maxLines: number): Card[] {
-  const fits = (t: string) => lineBreaks(t, em).length <= maxLines;
+  // 放得進一張＝行數不超過、而且每一行真的不比框寬（尾巴併回前一行放寬到 1.35 倍只是排版用，字幕框放不下，瀏覽器會多折一行）。
+  const strict = (t: string) =>
+    lineBreaks(t, em).every((l) => lineWidth(l) <= em + (zhOf(l) ? 1 : 0.01));
+  const fits = (t: string) => lineBreaks(t, em).length <= maxLines && strict(t);
   const pieces = (t: string, re: RegExp) => {
     // 「Mr.」「Dr.」後面的句點不是句尾：併回下一段。
     const out: string[] = [];
@@ -187,7 +196,10 @@ function splitCardsAt(text: string, em: number, maxLines: number): Card[] {
   const push = (parts: string[]) => {
     const t = join(parts.map((x) => x.trim()));
     const used = parts.reduce((n, x) => n + x.length, 0);
-    const single = parts.length > 1 && parts.every((x) => lineBreaks(x.trim(), em).length === 1);
+    const single =
+      parts.length > 1 &&
+      parts.length <= maxLines &&
+      parts.every((x) => lineBreaks(x.trim(), em).length === 1 && strict(x.trim()));
     cards.push({ text: t, from: at, ...(single ? { lines: parts.map((x) => x.trim()) } : {}) });
     at += used;
   };
@@ -215,7 +227,8 @@ function splitCardsAt(text: string, em: number, maxLines: number): Card[] {
     const lines = lineBreaks(p.trim(), em);
     for (let k = 0; k < lines.length; k += maxLines) {
       const grp = lines.slice(k, k + maxLines);
-      cards.push({ text: join(grp), from: at });
+      // 兩行以上照量好的斷點硬換行，不交給瀏覽器重折（會多出一行）。
+      cards.push({ text: join(grp), from: at, ...(grp.length > 1 ? { lines: grp } : {}) });
       at += grp.reduce((n, x) => n + x.length, 0);
     }
   };

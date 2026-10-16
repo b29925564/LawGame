@@ -56,6 +56,8 @@ export interface Cue {
   at: string;
   /** 沒有字幕：鏡頭外的人開口（或旁白），上一句字幕收掉。 */
   blank?: boolean;
+  /** 這句字幕在這個時間點收掉（異議那一拍：法官的話留到切回證人為止）。 */
+  until?: string;
 }
 
 export interface RecordRow {
