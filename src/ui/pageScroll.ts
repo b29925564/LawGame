@@ -4,11 +4,15 @@ import { easeOf } from './court/climb';
 /** 捲動時長（ms）：設計師 2026-10-16 裁定 ≤300ms。 */
 const DUR = 280;
 
+/** 上一段還在跑的捲動：新的一段開始時先停掉它，不兩段搶。 */
+let cancelLast: (() => void) | undefined;
+
 /**
  * 把頁面捲到 top（px）：--ease-light、不回彈；減少動態時直接跳過去。
  * 玩家自己動手（滾輪、觸控、鍵盤）就停手，不跟玩家搶。
  */
 export function scrollPageTo(top: number) {
+  cancelLast?.();
   const to = Math.max(0, Math.round(top));
   if (reducedMotion()) {
     window.scrollTo(0, to);
@@ -26,6 +30,7 @@ export function scrollPageTo(top: number) {
   };
   for (const ev of ['wheel', 'touchstart', 'keydown'] as const)
     window.addEventListener(ev, stop, { passive: true });
+  cancelLast = stop;
   const t0 = performance.now();
   const step = (now: number) => {
     const p = Math.min(1, (now - t0) / DUR);

@@ -105,7 +105,8 @@ test('字級 150%（桌機、英文）：抽屜分頁折進「更多」，不被
   const tabs = page.locator('.sheet-tabs');
   await expect(tabs).toBeVisible();
   // 沒有任何分頁被切掉：列內不需要橫向捲。
-  expect(await tabs.evaluate((e) => e.scrollWidth <= e.clientWidth + 1)).toBe(true);
+  // 字級一改，分頁要等量測層重算才折進「更多」（CI 上慢，所以輪詢到穩定）。
+  await expect.poll(() => tabs.evaluate((e) => e.scrollWidth <= e.clientWidth + 1)).toBe(true);
   await tabs.locator('.apps-more:not(.measure)').click();
   await tabs.locator('.apps-menu').getByRole('button', { name: 'Legal terms' }).click();
   await expect(tabs.locator('.apps-more:not(.measure)')).toHaveAttribute('aria-current', 'true');

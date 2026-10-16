@@ -623,6 +623,20 @@ body:has(.cork) .card .mini-btn[aria-pressed='true'] {
   word-break: keep-all;
   overflow-wrap: normal;
 }
+/* 大板邊緣的黑條：高度由 Cork.tsx 限在這一格以內（RackBar board），規則和牌架的一樣：說明整段、卡名拿剩下的整行。 */
+.cork-redact.board {
+  gap: 8px;
+  overflow: hidden;
+}
+.cork-redact.board b {
+  flex: none;
+  overflow: hidden;
+}
+.cork-redact.board span {
+  flex: none;
+  word-break: keep-all;
+  overflow-wrap: normal;
+}
 /* 頁碼點：不用黃，白（目前這頁）和板上標記的灰（其他頁）。一次換一整頁。 */
 .cork-dots {
   position: absolute;
