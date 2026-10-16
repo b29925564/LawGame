@@ -5,7 +5,16 @@
  */
 
 /** 用得到的權杖：--dur-ui、--dur-rm、--dur-cut-black、--dur-bench-hold…（去掉前綴）。 */
-export type Tok = 'ui' | 'rm' | 'cut-black' | 'bench-hold' | 'stamp' | 'redact-in' | 'redact-out';
+export type Tok =
+  | 'ui'
+  | 'rm'
+  | 'cut-black'
+  | 'bench-hold'
+  | 'stamp'
+  | 'redact-in'
+  | 'redact-out'
+  | 'sub-unit'
+  | 'judge-read';
 /** 一個時間點：每個權杖用了幾次。 */
 export type At = Partial<Record<Tok, number>>;
 
@@ -22,7 +31,11 @@ export function plus(...xs: At[]): At {
 export function cssOf(at: At): string {
   const terms = (Object.entries(at) as [Tok, number][])
     .filter(([, n]) => n)
-    .map(([k, n]) => (n === 1 ? `var(--dur-${k})` : `${n} * var(--dur-${k})`));
+    .map(([k, n]) => {
+      // 法官的話讀完還差多久：字幕量過才知道，量到之前是 0（法庭畫面在開拍後寫進 --dur-judge-read）。
+      const v = k === 'judge-read' ? `var(--dur-${k}, 0s)` : `var(--dur-${k})`;
+      return n === 1 ? v : `${n} * ${v}`;
+    });
   return terms.length ? `calc(${terms.join(' + ')})` : '0s';
 }
 
@@ -50,6 +63,8 @@ export function tokensFrom(el: Element): (tok: Tok) => number {
  * - stamp：章落下（--dur-stamp）；成立時條上的「異議成立」跟著出現。之後法官的話逐行出現（judge）。
  * - 駁回：法官說完，黑條從右邊抽走（unbar，--dur-redact-out），切回證人（back），證人照答（rest）。
  * - 成立：法官說完再停一拍沉默，切回證人；證人不答。
+ * - judge-read：法官的裁定分成幾張字幕、讀完要多久，比筆錄上的行數長時補上差額（字幕量過才知道），
+ *   不然切回證人時後面幾張還沒輪到就被收掉（關卡二 v92 #A）。
  * - end：輸入解鎖、主按鈕回來、目前行記號變回炭色。
  */
 export interface ObjectionBeat {
@@ -77,7 +92,7 @@ export function objectionBeat(
   const judge = plus(stamp, { stamp: 1 });
   const said = plus(judge, { ui: rows.judge });
   if (sustained) {
-    const back = plus(said, { 'bench-hold': 1 });
+    const back = plus(said, { 'judge-read': 1 }, { 'bench-hold': 1 });
     const rest = plus(back, { 'cut-black': 1 });
     return {
       sustained,
@@ -91,7 +106,7 @@ export function objectionBeat(
       end: plus(rest, { ui: rows.rest }),
     };
   }
-  const unbar = said;
+  const unbar = plus(said, { 'judge-read': 1 });
   const back = plus(unbar, { 'redact-out': 1 });
   const rest = plus(back, { 'cut-black': 1 });
   return {

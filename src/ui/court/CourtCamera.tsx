@@ -11,6 +11,7 @@ import { useLang, useT } from '../../i18n';
 import { reducedMotion } from '../a11y';
 import { JUDGE } from '../../engine/episode/trial';
 import { benchNames } from './camNames';
+import { tokensFrom } from './beat';
 import { P_FROM, P_TO, climbCoef, easeOf } from './climb';
 import { useSettings } from '../../engine/settings';
 import { useScope } from '../lang';
@@ -553,6 +554,7 @@ export function CourtCamera({
   mode,
   open = true,
   cues = [],
+  onJudgeRead,
   ref,
 }: {
   shot: Shot;
@@ -567,6 +569,8 @@ export function CourtCamera({
   open?: boolean;
   /** 字幕列（設定集 10.1）：鏡頭裡的人說的話，由筆錄交出來。 */
   cues?: Cue[];
+  /** 有收掉時間的字幕（法官的裁定）全部讀完要多久（毫秒）；沒有就是 0。法庭畫面用它撐長法官席那一拍。 */
+  onJudgeRead?: (ms: number) => void;
   /** 手機：筆錄要知道鏡頭蓋住它多少（最新那一行捲到鏡頭上面）。 */
   ref?: Ref<HTMLDivElement>;
 }) {
@@ -656,7 +660,7 @@ export function CourtCamera({
           frameW={width}
         />
         <div className="cam-black" />
-        <Subtitles cues={entered ? cues : []} />
+        <Subtitles cues={entered ? cues : []} onJudgeRead={onJudgeRead} />
       </div>
     </div>
   );
@@ -668,7 +672,14 @@ export function CourtCamera({
  * 一批裡的每句疊在同一格：各自在 --at 出現、在下一句的 --at 收掉，時間跟筆錄同一張節拍表，不另開計時器。
  * 被蓋掉的話（異議成立、自紀錄刪除）只剩一條黑條，條裡寫原因（第 1 章「默」：黑條只在字幕列與筆錄）。
  */
-function Subtitles({ cues }: { cues: Cue[] }) {
+type Fit = { mode: '' | 'compact' | 'side' };
+/** 併成一行的框比平常貼低的距離（框底留白從 10px 變 6px）。 */
+const COMPACT_DROP = 4;
+
+/** 立牌上算「頭」的部分：從立牌頂往下這一段（頭、頸），字幕框不能壓。 */
+const HEAD_ZONE = 0.4;
+
+function Subtitles({ cues, onJudgeRead }: { cues: Cue[]; onJudgeRead?: (ms: number) => void }) {
   const t = useT();
   const scope = useScope();
   const box = useRef<HTMLDivElement>(null);
@@ -676,7 +687,17 @@ function Subtitles({ cues }: { cues: Cue[] }) {
   const voScale = useSettings((s) => s.voScale);
   const voBox = useSettings((s) => s.voBox);
   // 一行放得下幾 em、一張放得下幾行：量框寬與實際字級；行數看「下巴線到框底」放得下幾行（最少 1、最多 2，設計師 #257）。
-  const [fit, setFit] = useState({ em: 30, emRaw: 32, lines: 2, insert: false, font: '' });
+  const [fit, setFit] = useState({
+    em: 30,
+    emRaw: 32,
+    lines: 2,
+    insert: false,
+    font: '',
+    mode: '' as Fit['mode'],
+    side: 0,
+    emJudge: 30,
+    emRawJudge: 32,
+  });
   const shown = cues.length > 0;
   useLayoutEffect(() => {
     const el = box.current;
@@ -692,12 +713,37 @@ function Subtitles({ cues }: { cues: Cue[] }) {
       const room = h - 10 - h * (insert ? 0.7 : 0.47) - who - 10;
       // 手機插入鏡頭一律一行（設定集第 10 章 :12）；鏡頭還沒打開量不到高度時也不退回兩行（關卡二 #6）。
       const lines = insert ? 1 : h ? Math.max(1, Math.min(2, Math.floor(room / (px * 1.5)))) : 2;
+      // 法官席：框放在底下會不會壓到法官的頭（鏡頭條矮的時候，1100 寬）。壓到就先把說話者名併進同一行、框貼低一點；
+      // 還是壓到（字幕放到 1.5 倍），法官的話靠到立牌右邊、框寬扣掉左邊那段（關卡二 v92 #B）。
+      const sd = insert ? null : frame?.querySelector('.cam-stage[data-cam="bench"] .cam-standee');
+      let mode: Fit['mode'] = '';
+      let side = 0;
+      if (frame && sd) {
+        const fr = frame.getBoundingClientRect();
+        const sr = sd.getBoundingClientRect();
+        const headBottom = sr.top - fr.top + sr.height * HEAD_ZONE + 4;
+        if (h - 10 - (who + px * 1.5 + 10) < headBottom) {
+          if (h - 10 + COMPACT_DROP - (px * 1.5 + 10) >= headBottom) mode = 'compact';
+          else {
+            mode = 'side';
+            side = Math.ceil(sr.right - fr.left) + 10;
+          }
+        }
+      }
+      const w = el.clientWidth;
+      const ws = w - Math.max(0, side - 16);
+      // 併成一行時說話者名佔掉前面約 4 個字寬。
+      const cut = mode === 'compact' ? 4 : 0;
       setFit({
-        em: subEm(el.clientWidth, px),
-        emRaw: Math.floor((Math.min(el.clientWidth - 32, 36 * px) - 24) / px),
+        em: subEm(w, px),
+        emRaw: Math.floor((Math.min(w - 32, 36 * px) - 24) / px),
         lines,
         insert,
         font: `500 ${px}px ${probeFamily(el)}`,
+        mode,
+        side,
+        emJudge: subEm(ws, px) - cut,
+        emRawJudge: Math.floor((Math.min(ws - 32, 36 * px) - 24) / px) - cut,
       });
     };
     measure();
@@ -718,6 +764,9 @@ function Subtitles({ cues }: { cues: Cue[] }) {
       cue: string;
       next?: string;
       until?: string;
+      units?: number;
+      side?: number;
+      compact?: boolean;
     }[] = [];
     for (const c of cues) {
       if (c.blank) {
@@ -731,9 +780,11 @@ function Subtitles({ cues }: { cues: Cue[] }) {
       // 英文用實際字型量過整行寬度，行寬不必再留估算用的餘裕：一行放得下就不切。
       // 法官的話（切到法官席時出現）桌機也只放一行，字幕框才不蓋住法官的頭（關卡二 #1）。
       const latin = !/[\p{Script=Han}]/u.test(c.text);
+      const tight = c.who === JUDGE && fit.mode !== '';
+      const side = tight ? fit.side : 0;
       const parts = splitCards(
         c.text,
-        latin ? fit.emRaw : fit.em,
+        tight ? (latin ? fit.emRawJudge : fit.emJudge) : latin ? fit.emRaw : fit.em,
         c.who === JUDGE ? 1 : fit.lines,
         latin ? measureOf(fit.font) : undefined,
       );
@@ -747,6 +798,9 @@ function Subtitles({ cues }: { cues: Cue[] }) {
           lines: p.lines,
           cue: c.key,
           until: c.until,
+          units: Math.max(SUB_MIN_UNITS, readUnits(p.text)),
+          side,
+          compact: tight && fit.mode === 'compact',
           at: read > 0 ? `calc(${c.at} + ${read} * var(--dur-sub-unit))` : c.at,
         });
         read += Math.max(SUB_MIN_UNITS, readUnits(p.text));
@@ -765,6 +819,13 @@ function Subtitles({ cues }: { cues: Cue[] }) {
     });
     return flat;
   }, [cues, fit]);
+  // 有收掉時間的句子（法官的裁定）所有張數讀完要幾個單位；量完回報，法庭畫面照這個撐長法官席那一拍。
+  const judgeUnits = cards.reduce((n, c) => (c.until ? n + (c.units ?? 0) : n), 0);
+  useEffect(() => {
+    if (!onJudgeRead) return;
+    const unit = box.current ? tokensFrom(box.current)('sub-unit') : 0;
+    onJudgeRead(judgeUnits * unit);
+  }, [judgeUnits, onJudgeRead]);
   if (!cues.length) return null;
   return (
     <div
@@ -778,7 +839,9 @@ function Subtitles({ cues }: { cues: Cue[] }) {
           <p
             key={c.key}
             className="cam-sub"
-            style={{ '--at': c.at, '--next': c.next } as CSSProperties}
+            style={{ '--at': c.at, '--next': c.next, '--side': `${c.side}px` } as CSSProperties}
+            data-side={c.side || undefined}
+            data-compact={c.compact || undefined}
             data-last={(i === cards.length - 1 && !c.until) || undefined}
           >
             <span className="who">{t(c.who, scope)}</span>

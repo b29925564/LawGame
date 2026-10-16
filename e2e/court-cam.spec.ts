@@ -217,3 +217,107 @@ for (const [width, height] of [
       expect([Math.round(face.width), Math.round(face.height)]).toEqual([48, 60]);
     }
   });
+
+/**
+ * 關卡 2 v92 #A、#B：法官的裁定分成幾張字幕，每一張都要在法官席上出現、讀完才切回證人；
+ * 字幕框不壓法官的頭（立牌頂往下 40%）：框在頭下面、或整個在立牌左右。
+ * 存檔停在柯瓦斯基主詰問開頭，第一題提異議會被駁回。
+ */
+for (const [width, height, lang] of [
+  [1100, 800, 'zh'],
+  [1100, 800, 'en'],
+  [1366, 768, 'en'],
+  [1530, 860, 'en'],
+] as const)
+  test(`法官的裁定每張字幕都出現、不壓頭（${width}×${height}・${lang}）`, async ({
+    page,
+  }, info) => {
+    test.skip(info.project.name !== 'desktop', '鏡頭條只在桌機');
+    await page.setViewportSize({ width, height });
+    await page.addInitScript(
+      ([s, l]) => {
+        if (sessionStorage.getItem('seeded')) return;
+        sessionStorage.setItem('seeded', '1');
+        localStorage.clear();
+        localStorage.setItem('lawgame-ep-auto', s);
+        if (l === 'en') localStorage.setItem('lawgame-lang', 'en');
+      },
+      [
+        JSON.stringify({ version: 5, savedAt: Date.now(), label: 'x', progress: save.ep1 }),
+        lang,
+      ] as const,
+    );
+    await page.goto('/');
+    await page
+      .getByRole('button', { name: lang === 'en' ? /^Continue/ : /^繼續（/ })
+      .first()
+      .click();
+    const open = page.getByRole('button', { name: lang === 'en' ? 'Go to court' : '開庭' });
+    await open.or(page.locator('.court-cam.strip')).first().waitFor();
+    if (await open.isVisible()) await open.click();
+    await expect(page.locator('.court-cam.strip')).toBeVisible();
+    await page.waitForTimeout(1500);
+    const next = page.locator('button.primary.wide:not(.locked)').first();
+    await next.click();
+    const reason = page.locator('section.objection .row button').first();
+    await expect(reason).toBeVisible();
+    await reason.click();
+    // 一個樣本：這一格鏡頭在哪、看得見哪幾張字幕、框和立牌各在哪。
+    const sample = () =>
+      page.evaluate(() => {
+        const rect = (e: Element) => {
+          const b = e.getBoundingClientRect();
+          return { l: b.left, t: b.top, r: b.right, b: b.bottom };
+        };
+        const shot = document.querySelector('.cam-frame')?.getAttribute('data-shot') ?? '';
+        const subs = [...document.querySelectorAll('.cam-sub')].filter(
+          (e) =>
+            getComputedStyle(e).visibility !== 'hidden' &&
+            Number(getComputedStyle(e).opacity) > 0.9,
+        );
+        const head = document.querySelector('.cam-stage[data-cam="bench"] .cam-standee');
+        return {
+          shot,
+          texts: subs.map((e) =>
+            (e.querySelector('.tx') as HTMLElement).innerText.replace(/\s+/g, ' ').trim(),
+          ),
+          boxes: subs.map(rect),
+          head: head ? rect(head) : null,
+        };
+      });
+    const texts: string[] = [];
+    const t0 = Date.now();
+    let cutBackAt = 0;
+    let lastTextAt = 0;
+    while (Date.now() - t0 < 12000) {
+      const s = await sample();
+      if (s.shot === 'bench') {
+        for (const [i, t] of s.texts.entries()) {
+          if (!t) continue;
+          if (!texts.includes(t)) texts.push(t);
+          lastTextAt = Date.now();
+          const h = s.head!;
+          const b = s.boxes[i];
+          const headBottom = h.t + (h.b - h.t) * 0.4;
+          const clear = b.t >= headBottom || b.l >= h.r || b.r <= h.l;
+          expect(clear, `${t}：框 ${JSON.stringify(b)} 壓到法官的頭 ${JSON.stringify(h)}`).toBe(
+            true,
+          );
+        }
+      } else if (texts.length && s.shot !== 'bench' && !cutBackAt) {
+        cutBackAt = Date.now();
+      }
+      if (cutBackAt) break;
+      await page.waitForTimeout(40);
+    }
+    // 裁定是兩句話（駁回／成立＋一句理由）：至少要看到「理由」那一句，而且切回證人時還在讀的那張已經讀完。
+    const first = lang === 'en' ? 'Overruled.' : '異議駁回。';
+    expect(texts[0]).toBe(first);
+    const tail = lang === 'en' ? /nothing wrong|with that question|counsel/i : /沒有問題|這個問題/;
+    expect(
+      texts.some((t) => tail.test(t)),
+      `看過的字幕：${texts.join(' / ')}`,
+    ).toBe(true);
+    expect(cutBackAt, '法官席要切回證人').toBeGreaterThan(0);
+    expect(cutBackAt - lastTextAt, '最後一張字幕要先讀完才切').toBeGreaterThanOrEqual(0);
+  });
