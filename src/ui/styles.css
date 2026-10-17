@@ -557,6 +557,45 @@ details summary {
   backdrop-filter: blur(8px);
   mask-image: none;
 }
+/* 字幕模式（有底圖的對話，art bible 10.1）：下三分之一只留最新一句，說話者名在上、主題底框；
+   前面的台詞收進「筆錄」抽屜（打開時字幕讓位，同一句不在畫面上出現兩次）。 */
+.scene.plated.subs > .transcript[data-closed] {
+  display: none;
+}
+.scene.plated.subs > .sub-card,
+.scene.plated.subs > .sub-actions {
+  width: min(760px, 100%);
+  align-self: center;
+}
+.sub-card {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 10px 16px 12px;
+  border-radius: 6px;
+  background: var(--panel-glass);
+  backdrop-filter: blur(8px);
+  font-size: calc(17px * var(--sub-scale));
+  line-height: 1.7;
+}
+.sub-card .who {
+  font-weight: 600;
+  font-size: calc(13px * var(--sub-scale));
+  line-height: 1.4;
+  letter-spacing: 0.04em;
+}
+.sub-card.narration .tx {
+  color: var(--muted);
+}
+.sub-actions {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.sub-actions > .rec-toggle {
+  margin: 8px 0 0 auto;
+}
 @media (max-width: 767px) {
   .scene.plated > .lines {
     max-height: 36dvh;

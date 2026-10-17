@@ -106,8 +106,12 @@ for (const lang of ['zh', 'en'] as const)
         ([w, h]) => {
           // 底圖不吃指標事件，點得到的是它前面的東西：只要不是台詞框、按鈕、眉標、選單，就是空的、看得見圖。
           const hit = (fx: number, fy: number) =>
-            !document.elementFromPoint(w * fx, h * fy)?.closest('.lines, button, .eyebrow, dialog');
-          const lines = document.querySelector('.scene.plated > .lines')!.getBoundingClientRect();
+            !document
+              .elementFromPoint(w * fx, h * fy)
+              ?.closest('.lines, .sub-card, .sub-actions, button, .eyebrow, dialog');
+          // 對話是字幕（最新一句）；理論開場那一頁還是台詞框。
+          const lines = (document.querySelector('.scene.plated > .sub-card') ??
+            document.querySelector('.scene.plated > .lines'))!.getBoundingClientRect();
           return {
             open: [0.15, 0.5, 0.85].every((fx) => [0.2, 0.3, 0.4].every((fy) => hit(fx, fy))),
             linesTop: lines.top / h,
@@ -117,7 +121,9 @@ for (const lang of ['zh', 'en'] as const)
       );
       expect(top.open).toBe(true);
       expect(top.linesTop).toBeGreaterThan(0.5);
-      await expect(page.locator('.scene.plated > .lines')).toBeVisible();
+      await expect(
+        page.locator('.scene.plated > .sub-card, .scene.plated > .lines:not([data-closed])'),
+      ).toBeVisible();
       await expect(page.locator('.scene.plated .primary')).toBeVisible();
     });
   }
@@ -209,26 +215,66 @@ test('案件理論：開場那一頁有底圖；選理論那一頁留著同一�
   expect(hs.shadow).not.toBe('none');
 });
 
-test('底圖上的台詞框：半透明加模糊、上緣不淡出；有底圖就沒有盧卡斯大圖；眉標一行', async ({
+test('底圖上的字幕模式：只留最新一句，筆錄抽屜才有前面的台詞；框半透明加模糊、上緣不淡出；沒有盧卡斯大圖；眉標一行', async ({
   page,
 }) => {
   await open(page, 33, 'zh', 'o-probation');
   await page.locator('.place-beat').click();
-  const lines = page.locator('.scene.plated > .lines');
-  await expect(lines).toBeVisible();
-  const st = await lines.evaluate((e) => {
+  const card = page.locator('.scene.plated > .sub-card');
+  await expect(card).toBeVisible();
+  // 第一句：旁白，不掛名字；筆錄收著，前面的台詞不在畫面上。
+  await expect(card).toContainText('伊森的姊姊在等他');
+  await expect(card.locator('.who')).toHaveCount(0);
+  await expect(page.locator('.scene.plated > .transcript')).toBeHidden();
+  const cs = await card.evaluate((e) => {
+    const c = getComputedStyle(e);
+    return { blur: c.backdropFilter, bg: c.backgroundColor };
+  });
+  expect(cs.blur).toContain('blur(8px)');
+  expect(cs.bg).toMatch(/rgba\(.*0\.\d+\)/);
+  // 下三分之一、最多兩行（這一場的句子都夠短）。
+  const box = (await card.boundingBox())!;
+  const vh = page.viewportSize()!.height;
+  expect(box.y).toBeGreaterThan(vh * 0.6);
+  const lh = await card.locator('.tx').evaluate((e) => parseFloat(getComputedStyle(e).lineHeight));
+  expect((await card.locator('.tx').boundingBox())!.height).toBeLessThanOrEqual(lh * 2 + 1);
+  // 第二句：說話者的名字在上（亮字，不用黃），上一句不在畫面上。
+  await page.locator('.scene.plated .primary').click();
+  await expect(card).toContainText('謝謝你');
+  await expect(card).not.toContainText('伊森的姊姊在等他');
+  const who = card.locator('.who');
+  await expect(who).toHaveText('伊森・蕭');
+  expect(await who.evaluate((e) => getComputedStyle(e).color)).not.toMatch(
+    /^rgb\(2[0-9]{2}, 1[5-9]/,
+  );
+  // 筆錄抽屜：打開以後字幕讓位（同一句不出現兩次），前面的台詞都在；半透明加模糊、上緣不淡出。
+  const rec = page.getByRole('button', { name: '筆錄' });
+  await rec.click();
+  await expect(card).toHaveCount(0);
+  const log = page.locator('.scene.plated > .transcript');
+  await expect(log).toBeVisible();
+  await expect(log).toContainText('伊森的姊姊在等他');
+  await expect(log).toContainText('謝謝你');
+  const st = await log.evaluate((e) => {
     const c = getComputedStyle(e);
     return { blur: c.backdropFilter, mask: c.maskImage, bg: c.backgroundColor };
   });
   expect(st.blur).toContain('blur(8px)');
   expect(st.mask).toBe('none');
-  // --panel-glass 帶透明度（不是實心紙色）
   expect(st.bg).toMatch(/rgba\(.*0\.\d+\)/);
+  await expect(page.getByRole('button', { name: '收起筆錄' })).toHaveAttribute(
+    'aria-expanded',
+    'true',
+  );
+  await page.getByRole('button', { name: '收起筆錄' }).click();
+  await expect(log).toBeHidden();
+  await expect(card).toBeVisible();
+  // 沒有盧卡斯大圖；眉標一行。
   await expect(page.locator('.lucas-stage')).toHaveCount(0);
   const eyebrow = page.locator('.plate-eyebrow');
-  const box = await eyebrow.boundingBox();
-  const lh = await eyebrow.evaluate((e) => parseFloat(getComputedStyle(e).lineHeight));
-  expect(box!.height).toBeLessThan(lh * 2);
+  const eb = await eyebrow.boundingBox();
+  const elh = await eyebrow.evaluate((e) => parseFloat(getComputedStyle(e).lineHeight));
+  expect(eb!.height).toBeLessThan(elh * 2);
 });
 
 test('底圖上的畫外字幕：走鏡頭層，只壓暗圖、不用紙色蓋掉；滑鼠靠近也不變色', async ({ page }) => {

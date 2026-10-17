@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { optionOpen, useEpisode, sceneChoices } from '../engine/game';
 import type { DialogueScene, Line } from '../engine/episode/schema';
 import { useT } from '../i18n';
@@ -5,6 +6,7 @@ import { useScope } from './lang';
 import { LucasStage, Speech } from './Portrait';
 import { Transcript } from './Shell';
 import { Recap, splitSlate } from './ActCard';
+import { prose } from './prose';
 import {
   OnPlate,
   onPlateOf,
@@ -21,6 +23,8 @@ export function Dialogue({ scene }: { scene: DialogueScene }) {
   const scope = useScope();
   // 這一場有底圖就當背景（沒有的場景照舊）：台詞框貼底，讓出上半部給圖。
   const shown = useShown(useScenePlate(progress.episode, scene));
+  // 有底圖的場景是字幕模式：畫面下三分之一只留最新一句（最多兩行），前面的台詞收進「筆錄」抽屜（設計師 #296）。
+  const [rec, setRec] = useState(false);
   const picks = sceneChoices(progress);
   const lines: Line[] = [];
   for (let i = 0; i <= progress.step && i < scene.steps.length; i++) {
@@ -97,9 +101,21 @@ export function Dialogue({ scene }: { scene: DialogueScene }) {
       </main>
     );
 
+  const latest = lines[lines.length - 1];
+  // 畫外字幕、記號、心聲不進字幕框：畫外字幕有自己的一層，記號是手的記號。
+  const card = latest && !latest.mark && !latest.thought && latest.voice !== 'off' ? latest : null;
+
   return (
     <OnPlate.Provider value={onPlateOf(shown)}>
-      <main className={shown ? 'scene dialogue plated' : 'scene dialogue'}>
+      <main
+        className={
+          shown
+            ? rec
+              ? 'scene dialogue plated subs rec-open'
+              : 'scene dialogue plated subs'
+            : 'scene dialogue'
+        }
+      >
         {/* 眉標和地點字卡左欄讀同一個欄位（設定集 11.3 裁定）。 */}
         {shown ? (
           <PlateEyebrow text={splitSlate(t(scene.place, scope))[0]} />
@@ -108,15 +124,38 @@ export function Dialogue({ scene }: { scene: DialogueScene }) {
         )}
         {/* 有底圖時不放盧卡斯大圖：攝影棚光對不上底圖的光；他在畫面裡的位置由立牌負責（設計師 #296）。 */}
         {!shown && <LucasStage lines={lines} />}
-        <Transcript count={lines.length}>
+        <Transcript count={lines.length} open={!shown || rec}>
           <Recap />
           {lines.map((l, i) => (
             <Speech key={i} line={l} />
           ))}
         </Transcript>
-        {action}
+        {shown && !rec && card && <SubCard line={card} />}
+        {shown ? (
+          <div className="sub-actions">
+            {action}
+            <button className="rec-toggle" aria-expanded={rec} onClick={() => setRec((v) => !v)}>
+              {rec ? t('收起筆錄') : t('筆錄')}
+            </button>
+          </div>
+        ) : (
+          action
+        )}
         {shown && <ScenePlate shown={shown} />}
       </main>
     </OnPlate.Provider>
+  );
+}
+
+/** 底圖上的字幕（art bible 10.1）：下三分之一、最多兩行、一張卡一句，說話者的名字在上（亮字，不用黃）；旁白不掛名字。 */
+function SubCard({ line }: { line: Line }) {
+  const t = useT();
+  const scope = useScope();
+  const text = prose(t(line.text, scope));
+  return (
+    <p className={line.who === '旁白' ? 'sub-card narration' : 'sub-card'} aria-live="polite">
+      {line.who !== '旁白' && <span className="who">{t(line.who)}</span>}
+      <span className="tx">{text}</span>
+    </p>
   );
 }
