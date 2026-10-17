@@ -54,7 +54,7 @@
         },
         "phone": {
           "file": "s6-steps-phone.jpg",
-          "bytes": 97917
+          "bytes": 92146
         }
       },
       "frames_res": [2304, 1440],
@@ -65,6 +65,22 @@
       },
       "phone_cx": 0.5495,
       "phone_crop_px": [861, 0, 1671, 1440],
+      "phone_crop_note": "立牌示意圖審查 v1 §4：三人的剪影外框離手機畫面左右各至少裁切寬的 12%（伊森 13.3%、姊姊 12.1%），石楣完整入鏡；只從同一張全解析圖重新裁，桌機檔逐像素不變",
+      "standee": {
+        "ethan": {
+          "feet_uv": [0.4306, 0.7525],
+          "crown_uv": [0.4306, 0.5879]
+        },
+        "sister": {
+          "feet_uv": [0.6677, 0.8944],
+          "crown_uv": [0.6677, 0.7066]
+        },
+        "lucas": {
+          "feet_uv": [0.4698, 0.6753],
+          "crown_uv": [0.4698, 0.5321]
+        }
+      },
+      "standee_note": "腳底、頭頂由 S6 鏡頭把三人站的位置投影出來（伊森、盧卡斯 1.78 m，姊姊 1.68 m），腳底和 frames 下緣差不到 1 px；剪影外形、顏色和邊光照 project-files art-bible/scenes/standee-mock/v2（立牌示意圖審查 v2 通過）",
       "key": "sky",
       "fill": ["sun"],
       "target": null,
@@ -102,7 +118,7 @@
         },
         "phone": {
           "file": "s6-steps-en-phone.jpg",
-          "bytes": 98186
+          "bytes": 92415
         }
       },
       "frames_res": [2304, 1440],
@@ -113,6 +129,22 @@
       },
       "phone_cx": 0.5495,
       "phone_crop_px": [861, 0, 1671, 1440],
+      "phone_crop_note": "立牌示意圖審查 v1 §4：三人的剪影外框離手機畫面左右各至少裁切寬的 12%（伊森 13.3%、姊姊 12.1%），石楣完整入鏡；只從同一張全解析圖重新裁，桌機檔逐像素不變",
+      "standee": {
+        "ethan": {
+          "feet_uv": [0.4306, 0.7525],
+          "crown_uv": [0.4306, 0.5879]
+        },
+        "sister": {
+          "feet_uv": [0.6677, 0.8944],
+          "crown_uv": [0.6677, 0.7066]
+        },
+        "lucas": {
+          "feet_uv": [0.4698, 0.6753],
+          "crown_uv": [0.4698, 0.5321]
+        }
+      },
+      "standee_note": "腳底、頭頂由 S6 鏡頭把三人站的位置投影出來（伊森、盧卡斯 1.78 m，姊姊 1.68 m），腳底和 frames 下緣差不到 1 px；剪影外形、顏色和邊光照 project-files art-bible/scenes/standee-mock/v2（立牌示意圖審查 v2 通過）",
       "key": "sky",
       "fill": ["sun"],
       "target": null,
