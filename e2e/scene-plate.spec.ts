@@ -81,7 +81,7 @@ for (const lang of ['zh', 'en'] as const)
       await expect(plate).toHaveAttribute('data-kelvin', String(rigs[c.rig].kelvin));
       await expect(plate).toHaveAttribute('data-state', 'ok');
       const phone = info.project.name === 'chromium';
-      const img = plate.locator('img');
+      const img = plate.locator('.plate-bg');
       await expect(img).toHaveAttribute('src', phone ? /phone/ : /desktop/);
       expect(await img.evaluate((e: HTMLImageElement) => e.complete && e.naturalWidth > 0)).toBe(
         true,
@@ -299,3 +299,134 @@ test('手機的英文眉標拿掉前段後，剩下的首字大寫', async ({ pa
   const room = (await eyebrow.locator('.ps-room').innerText()).trim();
   expect(room.charAt(0)).toBe(room.charAt(0).toUpperCase());
 });
+
+// 人物立牌：剪影站在底圖上（standees.json），位置是圖上的百分比，不管視窗多大都落在原有的接觸影子上。
+const STANDEES = JSON.parse(
+  readFileSync(new URL('../src/ui/plates/standees.json', import.meta.url), 'utf8'),
+) as {
+  sets: Record<
+    string,
+    {
+      plates: string[];
+      size: Record<'desktop' | 'phone', [number, number]>;
+      anchor: Record<'desktop' | 'phone', { at: number; to: number }>;
+      people: {
+        id: string;
+        desktop: { box: number[]; ink: number[]; head: number[] };
+        phone: { box: number[]; ink: number[]; head: number[] };
+      }[];
+    }
+  >;
+};
+
+for (const lang of ['zh', 'en'] as const)
+  for (const c of CASES.filter((x) => x.deal)) {
+    test(`${c.name}：立牌站在底圖上，位置跟著圖走（${lang}）`, async ({ page }) => {
+      await open(page, c.scene, lang, c.deal);
+      await page.locator('.place-beat').click();
+      const bg = page.locator('.scene.plated > .scene-plate');
+      await expect(bg).toHaveAttribute('data-state', 'ok');
+      const set = Object.values(STANDEES.sets).find((x) => x.plates.includes(c.plate[lang]))!;
+      const phone = (page.viewportSize()?.width ?? 0) < 768;
+      const variant = phone ? 'phone' : 'desktop';
+      const [pw, ph] = set.size[variant];
+      const got = await page.evaluate(() => {
+        const rect = (e: Element) => {
+          const r = e.getBoundingClientRect();
+          return [r.x, r.y, r.width, r.height];
+        };
+        const bgImg = document.querySelector<HTMLImageElement>('.scene.plated .plate-bg')!;
+        return {
+          vw: innerWidth,
+          vh: innerHeight,
+          stage: rect(document.querySelector('.scene.plated .plate-stage')!),
+          natural: [bgImg.naturalWidth, bgImg.naturalHeight],
+          people: Object.fromEntries(
+            [...document.querySelectorAll('.scene.plated .standee')].map((e) => [
+              (e as HTMLElement).dataset.standee,
+              { box: rect(e), loaded: (e as HTMLImageElement).complete },
+            ]),
+          ),
+        };
+      });
+      // 圖本身就是底圖那個尺寸，舞台照 cover 鋪滿（兩邊至少一邊剛好貼齊）。
+      expect(got.natural).toEqual([pw, ph]);
+      const [sx, sy, sw, sh] = got.stage;
+      expect(sw / sh).toBeCloseTo(pw / ph, 2);
+      expect(sx).toBeLessThanOrEqual(0.5);
+      expect(sy).toBeLessThanOrEqual(0.5);
+      expect(sx + sw).toBeGreaterThanOrEqual(got.vw - 0.5);
+      expect(sy + sh).toBeGreaterThanOrEqual(got.vh - 0.5);
+      expect(Math.min(sw - got.vw, sh - got.vh)).toBeLessThanOrEqual(1);
+      // 每個人都在，位置 = 圖上像素換成舞台上的位置。
+      expect(Object.keys(got.people).sort()).toEqual(set.people.map((p) => p.id).sort());
+      for (const p of set.people) {
+        const [bx, by, bw, bh] = p[variant].box;
+        const [x, y, w, h] = got.people[p.id].box;
+        expect(got.people[p.id].loaded).toBe(true);
+        expect(x).toBeCloseTo(sx + (bx / pw) * sw, 0);
+        expect(y).toBeCloseTo(sy + (by / ph) * sh, 0);
+        expect(w).toBeCloseTo((bw / pw) * sw, 0);
+        expect(h).toBeCloseTo((bh / ph) * sh, 0);
+        // 人不能被視窗切掉。S6 的手機裁切左右各留 12%（含 PNG 邊上 12 px 的透明邊），整個框都要在視窗裡；
+        // 羈押室的手機裁切三個人佔 85% 寬（還沒留邊距），較窄的手機（直立 9:16 以外）會切到法警／盧卡斯的邊，
+        // 這裡先只要求人的中線在視窗裡，邊距等場景光影重裁。
+        const mid = x + w / 2;
+        expect(mid).toBeGreaterThan(0);
+        expect(mid).toBeLessThan(got.vw);
+        if (c.name === '法院台階') {
+          expect(x).toBeGreaterThanOrEqual(0);
+          expect(x + w).toBeLessThanOrEqual(got.vw);
+        }
+      }
+      // 人不吃指標、不給讀屏，也不帶任何標籤字。
+      await expect(page.locator('.standee').first()).toHaveCSS('pointer-events', 'none');
+      await expect(page.locator('.scene-plate')).toHaveAttribute('aria-hidden', 'true');
+      expect(await page.locator('.scene-plate').innerText()).toBe('');
+    });
+  }
+
+test('沒有立牌的底圖（會議室夜）不放人', async ({ page }) => {
+  await open(page, 13, 'zh');
+  await page.locator('.place-beat').click();
+  await expect(page.locator('.scene.plated > .scene-plate')).toHaveAttribute('data-state', 'ok');
+  await expect(page.locator('.standee')).toHaveCount(0);
+});
+
+// 手機的水平裁切（standees.json 的 anchor）：
+// 1. S6：以人群中心對齊視窗，三個人的外框離左右邊緣都至少 2%。
+// 2. 羈押室：三個人佔圖寬 85%，360 寬的手機只看得到 80%，放不下；優先順序是每個人的頭完整入鏡且離邊至少 2%，
+//    遠景的伊森、法警身體也完整入鏡，只有前景的盧卡斯身體可以被左緣切到（法警右緣離右邊 2%，不夠的寬度全從盧卡斯那側扣）。
+for (const view of [
+  { width: 360, height: 800 },
+  { width: 412, height: 839 },
+  { width: 390, height: 844 },
+] as const)
+  for (const c of CASES.filter((x) => x.deal)) {
+    test(`${c.name}：手機 ${view.width}×${view.height}，人群的裁切`, async ({ page }) => {
+      test.skip((page.viewportSize()?.width ?? 0) >= 768, '只有手機');
+      await page.setViewportSize(view);
+      await open(page, c.scene, 'zh', c.deal);
+      await page.locator('.place-beat').click();
+      await expect(page.locator('.scene.plated > .scene-plate')).toHaveAttribute(
+        'data-state',
+        'ok',
+      );
+      const set = Object.values(STANDEES.sets).find((x) => x.plates.includes(c.plate.zh))!;
+      const stage = await page
+        .locator('.scene.plated .plate-stage')
+        .evaluate((e) => e.getBoundingClientRect().toJSON() as { x: number; width: number });
+      const [pw] = set.size.phone;
+      const at = (px: number) => (stage.x + (px / pw) * stage.width) / view.width;
+      const edge = 0.02;
+      for (const p of set.people) {
+        const head = p.phone.head;
+        expect(at(head[0]), `${p.id} 頭左緣`).toBeGreaterThanOrEqual(edge);
+        expect(at(head[1]), `${p.id} 頭右緣`).toBeLessThanOrEqual(1 - edge);
+        const near = c.name === '羈押室門口' && p.id === 'lucas';
+        if (near) continue; // 前景的盧卡斯：身體可以被左緣切到，頭不行
+        expect(at(p.phone.ink[0]), `${p.id} 身體左緣`).toBeGreaterThanOrEqual(edge - 0.0005);
+        expect(at(p.phone.ink[1]), `${p.id} 身體右緣`).toBeLessThanOrEqual(1 - edge + 0.0005);
+      }
+    });
+  }

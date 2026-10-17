@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { RIGS } from './rigs';
 import { bandNeedsScrim, plateFor } from './scenePlate';
@@ -73,5 +73,47 @@ describe('自適應襯底的判斷（art bible 10.1，量場景本身的字幕�
   });
   it('帶以外的亮不算', () => {
     expect(bandNeedsScrim(grid(255, () => 0))).toBe(false);
+  });
+});
+
+describe('人物立牌（standees.json）', () => {
+  type Sets = Record<
+    string,
+    {
+      plates: string[];
+      size: Record<'desktop' | 'phone', [number, number]>;
+      people: { id: string; desktop: F; phone: F }[];
+    }
+  >;
+  type F = { file: string; box: [number, number, number, number] };
+  const { sets } = JSON.parse(
+    readFileSync(new URL('./plates/standees.json', import.meta.url), 'utf8'),
+  ) as { sets: Sets };
+
+  it('每組指到的底圖都在 plates.json，同一張底圖只屬於一組', () => {
+    const ids = new Set(plates.map((p) => p.id));
+    const seen: string[] = [];
+    for (const set of Object.values(sets))
+      for (const id of set.plates) {
+        expect(ids.has(id), id).toBe(true);
+        seen.push(id);
+      }
+    expect(new Set(seen).size).toBe(seen.length);
+  });
+
+  it('每個人桌機、手機各一張透明 PNG，框在底圖裡面', () => {
+    for (const [name, set] of Object.entries(sets)) {
+      expect(set.people.length, name).toBeGreaterThan(0);
+      for (const p of set.people)
+        for (const v of ['desktop', 'phone'] as const) {
+          const { file, box } = p[v];
+          expect(existsSync(new URL(`./plates/standee/${file}`, import.meta.url)), file).toBe(true);
+          const [w, h] = set.size[v];
+          expect(box[0]).toBeGreaterThanOrEqual(0);
+          expect(box[1]).toBeGreaterThanOrEqual(0);
+          expect(box[0] + box[2]).toBeLessThanOrEqual(w);
+          expect(box[1] + box[3]).toBeLessThanOrEqual(h);
+        }
+    }
   });
 });

@@ -1,6 +1,15 @@
-import { createContext, useContext, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import {
+  createContext,
+  useContext,
+  type CSSProperties,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
 import { useLang, type Lang } from '../i18n';
 import plateData from './plates/plates.json';
+import standeeData from './plates/standees.json';
 import { RIGS } from './rigs';
 import './scenePlate.css';
 
@@ -26,6 +35,42 @@ const urls = import.meta.glob<string>('./plates/*.jpg', {
   query: '?url',
   import: 'default',
 });
+
+/**
+ * 人物立牌（standees.json，tools/standee/render.py 畫的透明 PNG）：站在底圖上的剪影，位置是圖上的像素，
+ * 顯示時換成百分比跟著圖走。人形和邊光是場景光影的設定（身體 #07090c、每人最多一條邊光），腳落在底圖原有的接觸影子上，
+ * 這裡不另外畫影子、不加任何標籤。
+ */
+type Standee = {
+  id: string;
+  desktop: StandeeFile;
+  phone: StandeeFile;
+};
+type StandeeFile = {
+  file: string;
+  box: [number, number, number, number];
+  ink: [number, number];
+  head: [number, number];
+};
+type StandeeSet = {
+  plates: string[];
+  size: Record<Variant, [number, number]>;
+  /** 窄視窗裁左右時舞台怎麼對齊：圖上的 at（圖寬的比例）落在視窗寬的 to 處（人群中心對視窗中心，或羈押室手機的右緣）。 */
+  anchor: Record<Variant, { at: number; to: number }>;
+  people: Standee[];
+};
+type Variant = 'desktop' | 'phone';
+
+const STANDEES = Object.values(
+  (standeeData as unknown as { sets: Record<string, StandeeSet> }).sets,
+);
+const standeeUrls = import.meta.glob<string>('./plates/standee/*.png', {
+  eager: true,
+  query: '?url',
+  import: 'default',
+});
+/** 底圖的像素尺寸（舞台的長寬比）：桌機 1440×900，手機 720×1280；plates 的 jpg 一律這兩個尺寸。 */
+const PLATE_PX: Record<Variant, [number, number]> = { desktop: [1440, 900], phone: [720, 1280] };
 
 export type Plate = {
   id: string;
@@ -134,22 +179,34 @@ function sampleBand(img: HTMLImageElement): Uint8ClampedArray | null {
 }
 const loading = new Map<string, Promise<State>>();
 
-/** 載好並解碼；同一張只做一次。圖壞掉算 fail（不記住，下次再試）。 */
-export function warmPlate(url: string): Promise<State> {
-  const known = settled.get(url);
-  if (known) return Promise.resolve(known);
-  let p = loading.get(url);
-  if (!p) {
-    const img = new Image();
-    img.src = url;
-    const done = img.decode
+function decoded(src: string): Promise<HTMLImageElement> {
+  const img = new Image();
+  img.src = src;
+  return (
+    img.decode
       ? img.decode()
       : new Promise<void>((ok, no) => {
           img.onload = () => ok();
           img.onerror = () => no(new Error('img'));
-        });
-    p = done.then(
-      () => {
+        })
+  ).then(() => img);
+}
+
+/** 這張底圖上站的人（立牌）的圖檔位址：和底圖一起解碼完才算好，人不會晚一拍才冒出來。 */
+function standeeSrcs(plateId: string, variant: Variant): string[] {
+  return (STANDEES.find((x) => x.plates.includes(plateId))?.people ?? []).map(
+    (p) => standeeUrls[`./plates/standee/${p[variant].file}`],
+  );
+}
+
+/** 載好並解碼（底圖加上面的人）；同一張只做一次。圖壞掉算 fail（不記住，下次再試）。 */
+export function warmPlate(url: string, extra: string[] = []): Promise<State> {
+  const known = settled.get(url);
+  if (known) return Promise.resolve(known);
+  let p = loading.get(url);
+  if (!p) {
+    p = Promise.all([decoded(url), ...extra.map(decoded)]).then(
+      ([img]) => {
         const band = sampleBand(img);
         scrims.set(url, band ? bandNeedsScrim(band) : false);
         settled.set(url, 'ok');
@@ -166,18 +223,21 @@ export function warmPlate(url: string): Promise<State> {
 /** 太久不來就放棄（慢網路、壞檔）：定場照舊放黑底場記，不卡住玩家。 */
 const GIVE_UP = 5000;
 
-export type Shown = { plate: Plate; url: string; state: State; scrim: boolean };
+export type Shown = { plate: Plate; url: string; state: State; scrim: boolean; phone: boolean };
 
 /** 照螢幕挑那一版，等它解碼完。已經解碼過的第一個畫面就是 ok，不閃黑。 */
 export function useShown(plate: Plate | null): Shown | null {
   const phone = usePhone();
   const url = plate ? (phone ? plate.phone : plate.desktop) : '';
+  // 同一個 url 一定是同一張底圖、同一個版本，所以上面站的人也只由 url 決定。
+  const extra = plate ? standeeSrcs(plate.id, phone ? 'phone' : 'desktop') : [];
+  const key = extra.join('|');
   const [got, setGot] = useState<{ url: string; state: State }>();
   useEffect(() => {
     if (!url || settled.has(url)) return;
     let live = true;
     const stop = setTimeout(() => live && setGot({ url, state: 'fail' }), GIVE_UP);
-    void warmPlate(url).then((state) => {
+    void warmPlate(url, key ? key.split('|') : []).then((state) => {
       clearTimeout(stop);
       if (live) setGot({ url, state });
     });
@@ -185,10 +245,10 @@ export function useShown(plate: Plate | null): Shown | null {
       live = false;
       clearTimeout(stop);
     };
-  }, [url]);
+  }, [url, key]);
   if (!plate) return null;
   const state = settled.get(url) ?? (got?.url === url ? got.state : 'wait');
-  return state === 'fail' ? null : { plate, url, state, scrim: scrims.get(url) ?? false };
+  return state === 'fail' ? null : { plate, url, state, scrim: scrims.get(url) ?? false, phone };
 }
 
 /**
@@ -196,7 +256,11 @@ export function useShown(plate: Plate | null): Shown | null {
  * 燈組與色溫寫在 data 上（驗收截圖與 e2e 讀它，不讀圖檔）。
  */
 export function ScenePlate({ shown, dim }: { shown: Shown; dim?: boolean }) {
-  const { plate, url, state } = shown;
+  const { plate, url, state, phone } = shown;
+  const variant: Variant = phone ? 'phone' : 'desktop';
+  const [w, h] = PLATE_PX[variant];
+  const set = STANDEES.find((x) => x.plates.includes(plate.id));
+  const people = set?.people ?? [];
   return (
     <div
       className="scene-plate"
@@ -207,7 +271,38 @@ export function ScenePlate({ shown, dim }: { shown: Shown; dim?: boolean }) {
       data-dim={dim ? '' : undefined}
       aria-hidden
     >
-      <img src={url} alt="" decoding="async" draggable={false} />
+      <div
+        className="plate-stage"
+        style={
+          {
+            '--ar': `${w} / ${h}`,
+            '--f': set?.anchor[variant].at ?? 0.5,
+            '--a': set?.anchor[variant].to ?? 0.5,
+          } as CSSProperties
+        }
+      >
+        <img className="plate-bg" src={url} alt="" decoding="async" draggable={false} />
+        {people.map((p) => {
+          const { file, box } = p[variant];
+          return (
+            <img
+              key={p.id}
+              className="standee"
+              data-standee={p.id}
+              src={standeeUrls[`./plates/standee/${file}`]}
+              alt=""
+              decoding="async"
+              draggable={false}
+              style={{
+                left: `${(box[0] / w) * 100}%`,
+                top: `${(box[1] / h) * 100}%`,
+                width: `${(box[2] / w) * 100}%`,
+                height: `${(box[3] / h) * 100}%`,
+              }}
+            />
+          );
+        })}
+      </div>
     </div>
   );
 }
