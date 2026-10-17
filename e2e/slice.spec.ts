@@ -326,7 +326,10 @@ async function playToRachelLast(page: Page) {
   await next(page);
 
   // 第三幕收尾（週日深夜）：選案件理論。四條論點都確認了，選難的那條。
-  await page.getByRole('button', { name: '選擇案件理論' }).click();
+  // 開場頁是字幕卡，一張一張翻到最後，按鈕才變成「選擇案件理論」。
+  const pick = page.getByRole('button', { name: '選擇案件理論' });
+  await until(page, pick);
+  await pick.click();
   // 點卡片只是選中，底部定案列的按鈕才真的選定。
   await page.locator('button.theory-card', { hasText: '另有其人：瑞秋' }).click();
   await page.getByRole('button', { name: '以這個理論開庭' }).click();

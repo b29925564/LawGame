@@ -576,14 +576,24 @@ details summary {
   border-radius: 6px;
   background: var(--panel-glass);
   backdrop-filter: blur(8px);
-  font-size: calc(17px * var(--sub-scale));
-  line-height: 1.7;
+  /* 設定集 10.1：桌機 20px、手機 17px，行高 1.5；旁白一樣大。 */
+  font-size: calc(20px * var(--sub-scale));
+  line-height: 1.5;
+}
+.sub-card .ln {
+  display: block;
 }
 .sub-card .who {
   font-weight: 600;
-  font-size: calc(13px * var(--sub-scale));
+  font-size: calc(14px * var(--sub-scale));
   line-height: 1.4;
   letter-spacing: 0.04em;
+}
+.sub-card.narration {
+  /* 旁白的通用樣式（.narration）會蓋掉字幕框的內距和行高：字幕框一樣大、一樣疏。 */
+  margin: 0;
+  padding: 10px 16px 12px;
+  line-height: 1.5;
 }
 .sub-card.narration .tx {
   color: var(--muted);
@@ -599,6 +609,12 @@ details summary {
 @media (max-width: 767px) {
   .scene.plated > .lines {
     max-height: 36dvh;
+  }
+  .sub-card {
+    font-size: calc(17px * var(--sub-scale));
+  }
+  .sub-card .who {
+    font-size: calc(13px * var(--sub-scale));
   }
 }
 /* 捲動區裡的東西不准被壓扁：清單外框有 overflow: hidden，彈性版面會把它擠成一條。 */

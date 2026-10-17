@@ -146,6 +146,19 @@ const CLAUSE = /[^，、；：—,;:]+(?:[，、；：—,;:]+\s*)?/g;
 const zhOf = (t: string) => /[\p{Script=Han}]/u.test(t);
 const join = (parts: string[]) => parts.join(zhOf(parts[0] ?? '') ? '' : ' ');
 
+/** 照正規式切段；「Mr.」「Dr.」後面的句點不是句尾：併回下一段。 */
+function splitPieces(t: string, re: RegExp): string[] {
+  const out: string[] = [];
+  for (const x of (t.match(re) ?? [t]).filter((y) => y.trim())) {
+    if (out.length && /\b(?:Mr|Mrs|Ms|Dr|Prof|St|Jr|Sr)\.\s*$/.test(out[out.length - 1]))
+      out[out.length - 1] += x;
+    else out.push(x);
+  }
+  return out;
+}
+/** 依句號、問號、驚嘆號分句（句尾的引號留在句子裡）。 */
+export const sentences = (t: string) => splitPieces(t, SENTENCE).map((x) => x.trim());
+
 export interface Card {
   text: string;
   /** 在原句裡的起點（字元數），用來對時間。 */
@@ -181,16 +194,7 @@ function splitCardsAt(text: string, em: number, maxLines: number): Card[] {
   const strict = (t: string) =>
     lineBreaks(t, em).every((l) => lineWidth(l) <= em + (zhOf(l) ? 1 : 0.01));
   const fits = (t: string) => lineBreaks(t, em).length <= maxLines && strict(t);
-  const pieces = (t: string, re: RegExp) => {
-    // 「Mr.」「Dr.」後面的句點不是句尾：併回下一段。
-    const out: string[] = [];
-    for (const x of (t.match(re) ?? [t]).filter((y) => y.trim())) {
-      if (out.length && /\b(?:Mr|Mrs|Ms|Dr|Prof|St|Jr|Sr)\.\s*$/.test(out[out.length - 1]))
-        out[out.length - 1] += x;
-      else out.push(x);
-    }
-    return out;
-  };
+  const pieces = splitPieces;
   const cards: Card[] = [];
   let at = 0;
   const push = (parts: string[]) => {

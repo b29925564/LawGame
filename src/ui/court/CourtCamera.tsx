@@ -16,6 +16,7 @@ import { useSettings } from '../../engine/settings';
 import { useScope } from '../lang';
 import type { Cue } from '../record';
 import { readUnits, splitCards, subEm, SUB_MIN_UNITS } from './subtitleSplit';
+import { measureOf } from './subtitleMeasure';
 import { castLook } from '../jury/cast';
 import { svg } from '../jury/silhouette';
 
@@ -383,19 +384,6 @@ export function warmCourt(scene: string, patience: number) {
   setTimeout(fire, 5000);
 }
 
-/** 英文台詞的實際寬度（em）：用字幕卡真正的字型家族，canvas 量。量不到就回 undefined，切分器照每字 0.6em 估。 */
-let ctx: CanvasRenderingContext2D | null | undefined;
-function measureOf(font: string): ((t: string) => number) | undefined {
-  if (!font) return undefined;
-  ctx ??= document.createElement('canvas').getContext('2d');
-  const c = ctx;
-  if (!c) return undefined;
-  const px = parseFloat(/(\d+(?:\.\d+)?)px/.exec(font)?.[1] ?? '17');
-  return (t) => {
-    c.font = font;
-    return c.measureText(t).width / px;
-  };
-}
 /** 字幕卡實際用的字型家族（英文介面和中文不同）：放一張空卡進去讀 computed style。 */
 function probeFamily(el: HTMLElement) {
   const p = document.createElement('p');

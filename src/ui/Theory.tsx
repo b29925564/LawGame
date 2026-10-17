@@ -11,6 +11,8 @@ import { Lock } from './Lock';
 import { prose } from './prose';
 import { useScope } from './lang';
 import { Speech } from './Portrait';
+import { SubActions, useSubs } from './SubCard';
+import { Transcript } from './Shell';
 import { Recap, splitSlate } from './ActCard';
 import {
   OnPlate,
@@ -36,34 +38,68 @@ export function Theory({ scene }: { scene: TheoryScene }) {
   const [pending, setPending] = useState<string | null>(null);
   // 這一場有底圖：開場那一頁當背景；選理論那一頁留著同一張，壓暗 58%（人還在同一間會議室），卡片照紙層不動。
   const shown = useShown(useScenePlate(progress.episode, scene));
+  // 有底圖的開場頁是字幕模式（底圖上的對白一律如此）：一張卡一句，「繼續」翻完所有卡才進選理論那一頁。
+  const [at, setAt] = useState(0);
+  const [rec, setRec] = useState(false);
+  const cue = scene.intro[at];
+  const subs = useSubs(shown && intro ? cue : null, at, !rec);
+  const lastLine = at >= scene.intro.length - 1;
+
+  if (intro && shown)
+    return (
+      <OnPlate.Provider value={onPlateOf(shown)}>
+        <main
+          className={rec ? 'scene dialogue plated subs rec-open' : 'scene dialogue plated subs'}
+        >
+          <PlateEyebrow
+            text={`${t(scene.act, scope)}${t('・')}${splitSlate(t(scene.place, scope))[0]}`}
+          />
+          <Transcript count={at + 1} open={rec}>
+            <Recap />
+            {scene.intro.slice(0, at + 1).map((l, i) => (
+              <Speech key={i} line={l} wrap />
+            ))}
+          </Transcript>
+          {!rec && subs.node}
+          <SubActions
+            rec={rec}
+            onRec={() => setRec((v) => !v)}
+            action={
+              <button
+                className="primary next"
+                onClick={() => {
+                  if (!rec && subs.step()) return;
+                  if (!lastLine) setAt(at + 1);
+                  else setIntro(false);
+                }}
+              >
+                {subs.last && lastLine ? t('選擇案件理論') : t('繼續')}
+              </button>
+            }
+          />
+          <ScenePlate shown={shown} />
+        </main>
+      </OnPlate.Provider>
+    );
 
   if (intro)
     return (
-      <OnPlate.Provider value={onPlateOf(shown)}>
-        <main className={shown ? 'scene dialogue plated' : 'scene'}>
-          {shown ? (
-            <PlateEyebrow
-              text={`${t(scene.act, scope)}${t('・')}${splitSlate(t(scene.place, scope))[0]}`}
-            />
-          ) : (
-            <p className="eyebrow">
-              {t(scene.act, scope)}
-              {t('・')}
-              {t(scene.place, scope)}
-            </p>
-          )}
-          <div className={shown ? 'lines transcript' : 'lines'}>
-            <Recap />
-            {scene.intro.map((l, i) => (
-              <Speech key={i} line={l} wrap />
-            ))}
-          </div>
-          <button className="primary next" onClick={() => setIntro(false)}>
-            {t('選擇案件理論')}
-          </button>
-          {shown && <ScenePlate shown={shown} />}
-        </main>
-      </OnPlate.Provider>
+      <main className="scene">
+        <p className="eyebrow">
+          {t(scene.act, scope)}
+          {t('・')}
+          {t(scene.place, scope)}
+        </p>
+        <div className="lines">
+          <Recap />
+          {scene.intro.map((l, i) => (
+            <Speech key={i} line={l} wrap />
+          ))}
+        </div>
+        <button className="primary next" onClick={() => setIntro(false)}>
+          {t('選擇案件理論')}
+        </button>
+      </main>
     );
 
   const noneOpen = !scene.theories.some((th) => theory.unlocked(th, held));

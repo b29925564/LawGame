@@ -6,7 +6,7 @@ import { useScope } from './lang';
 import { LucasStage, Speech } from './Portrait';
 import { Transcript } from './Shell';
 import { Recap, splitSlate } from './ActCard';
-import { prose } from './prose';
+import { SubActions, useSubs } from './SubCard';
 import {
   OnPlate,
   onPlateOf,
@@ -42,6 +42,11 @@ export function Dialogue({ scene }: { scene: DialogueScene }) {
   const call = scene.call;
   // 打完最後一句：通話結束，螢幕上的通話時間停住。
   const ended = progress.step >= scene.steps.length - 1;
+  const latest = lines[lines.length - 1];
+  // 畫外字幕、記號、心聲不進字幕框：畫外字幕有自己的一層，記號是手的記號。
+  const card = latest && !latest.mark && !latest.thought && latest.voice !== 'off' ? latest : null;
+  // 一句拆成幾張時，「繼續」先翻完這一句的卡才往下走。
+  const subs = useSubs(shown ? card : null, lines.length, !rec, choosing);
   const action =
     choosing && step.do === 'choose' ? (
       <div
@@ -59,7 +64,13 @@ export function Dialogue({ scene }: { scene: DialogueScene }) {
         )}
       </div>
     ) : (
-      <button className={call ? 'cine-next' : 'primary next'} onClick={advance}>
+      <button
+        className={call ? 'cine-next' : 'primary next'}
+        onClick={() => {
+          if (shown && !rec && subs.step()) return;
+          advance();
+        }}
+      >
         {t('繼續')}
       </button>
     );
@@ -101,10 +112,6 @@ export function Dialogue({ scene }: { scene: DialogueScene }) {
       </main>
     );
 
-  const latest = lines[lines.length - 1];
-  // 畫外字幕、記號、心聲不進字幕框：畫外字幕有自己的一層，記號是手的記號。
-  const card = latest && !latest.mark && !latest.thought && latest.voice !== 'off' ? latest : null;
-
   return (
     <OnPlate.Provider value={onPlateOf(shown)}>
       <main
@@ -130,32 +137,10 @@ export function Dialogue({ scene }: { scene: DialogueScene }) {
             <Speech key={i} line={l} />
           ))}
         </Transcript>
-        {shown && !rec && card && <SubCard line={card} />}
-        {shown ? (
-          <div className="sub-actions">
-            {action}
-            <button className="rec-toggle" aria-expanded={rec} onClick={() => setRec((v) => !v)}>
-              {rec ? t('收起筆錄') : t('筆錄')}
-            </button>
-          </div>
-        ) : (
-          action
-        )}
+        {shown && !rec && subs.node}
+        {shown ? <SubActions action={action} rec={rec} onRec={() => setRec((v) => !v)} /> : action}
         {shown && <ScenePlate shown={shown} />}
       </main>
     </OnPlate.Provider>
-  );
-}
-
-/** 底圖上的字幕（art bible 10.1）：下三分之一、最多兩行、一張卡一句，說話者的名字在上（亮字，不用黃）；旁白不掛名字。 */
-function SubCard({ line }: { line: Line }) {
-  const t = useT();
-  const scope = useScope();
-  const text = prose(t(line.text, scope));
-  return (
-    <p className={line.who === '旁白' ? 'sub-card narration' : 'sub-card'} aria-live="polite">
-      {line.who !== '旁白' && <span className="who">{t(line.who)}</span>}
-      <span className="tx">{text}</span>
-    </p>
   );
 }

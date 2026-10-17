@@ -48,6 +48,9 @@ test('換地點：先放一格場記（一行），演完才掛介面', async ({
   expect(h).toBeLessThan(40);
   await beat.click();
   await expect(page.locator('.place-beat')).toHaveCount(0);
+  // 有底圖的對白是字幕卡；台詞和頭像在筆錄抽屜裡。
+  await expect(page.locator('.sub-card')).toBeVisible();
+  await page.getByRole('button', { name: '筆錄' }).click();
   await expect(page.locator('.speech').first()).toBeVisible();
   // 配角的頭像是檔案照（姓的第一個字），不是程式畫的卡通臉。
   await expect(page.locator('.speech .portrait.id .idphoto .ph b').first()).toHaveText('海');
@@ -57,6 +60,13 @@ test('換地點：先放一格場記（一行），演完才掛介面', async ({
 test('鎖住的理論卡：不透明、不用紅；沒有 🔒 表情符號', async ({ page }) => {
   await open(page, 'ep1', 13);
   await page.locator('.place-beat').click();
+  // 開場頁是字幕卡：一張一張翻到最後，按鈕才變成「選擇案件理論」。
+  for (
+    let i = 0;
+    i < 12 && !(await page.getByRole('button', { name: /選擇案件理論/ }).count());
+    i++
+  )
+    await page.locator('.scene.plated .primary').click();
   await page.getByRole('button', { name: /選擇案件理論/ }).click();
   const locked = page.locator('.theory-card.locked').first();
   await expect(locked).toBeVisible();

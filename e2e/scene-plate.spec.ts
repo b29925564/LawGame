@@ -38,11 +38,15 @@ const CASES: Case[] = [
   },
 ];
 
-async function open(page: Page, scene: number, lang: 'zh' | 'en', deal?: string) {
+async function open(page: Page, scene: number, lang: 'zh' | 'en', deal?: string, scale = 1) {
   await page.goto('/');
   await page.evaluate(
-    ([scene, lang, deal]) => {
+    ([scene, lang, deal, scale]) => {
       localStorage.setItem('lawgame-lang', lang as string);
+      localStorage.setItem(
+        'lawgame-settings',
+        JSON.stringify({ state: { voScale: scale }, version: 1 }),
+      );
       localStorage.setItem(
         'lawgame-ep-auto',
         JSON.stringify({
@@ -62,13 +66,19 @@ async function open(page: Page, scene: number, lang: 'zh' | 'en', deal?: string)
         }),
       );
     },
-    [scene, lang, deal] as const,
+    [scene, lang, deal, scale] as const,
   );
   await page.reload();
   await page
     .getByRole('button', { name: /^(繼續|Continue)/ })
     .first()
     .click();
+}
+
+/** 一張一張翻字幕，翻到畫外字幕（盧卡斯沒說出口的那句）出現。 */
+async function toVoiceOver(page: Page) {
+  for (let i = 0; i < 12 && !(await page.locator('.vo').count()); i++)
+    await page.locator('.scene.plated .primary').click();
 }
 
 for (const lang of ['zh', 'en'] as const)
@@ -195,6 +205,14 @@ test('案件理論：開場那一頁有底圖；選理論那一頁留著同一�
   await open(page, 13, 'zh');
   await page.locator('.place-beat').click();
   await expect(page.locator('.scene.plated > .scene-plate')).toHaveAttribute('data-plate', 's1-an');
+  // 開場頁是字幕模式：一張卡一句，翻到最後一張，按鈕才是「選擇案件理論」。
+  const next = page.locator('.scene.plated .primary');
+  for (
+    let i = 0;
+    i < 12 && !(await page.getByRole('button', { name: /選擇案件理論/ }).count());
+    i++
+  )
+    await next.click();
   await page.getByRole('button', { name: /選擇案件理論/ }).click();
   await expect(page.locator('.theory-card').first()).toBeVisible();
   const bg = page.locator('.scene-plate');
@@ -238,7 +256,12 @@ test('底圖上的字幕模式：只留最新一句，筆錄抽屜才有前面�
   expect(box.y).toBeGreaterThan(vh * 0.6);
   const lh = await card.locator('.tx').evaluate((e) => parseFloat(getComputedStyle(e).lineHeight));
   expect((await card.locator('.tx').boundingBox())!.height).toBeLessThanOrEqual(lh * 2 + 1);
-  // 第二句：說話者的名字在上（亮字，不用黃），上一句不在畫面上。
+  // 一張卡一句：旁白兩句是兩張，「繼續」先翻卡，不跳到下一個人。
+  await expect(card).not.toContainText('他走到一半停下來');
+  await page.locator('.scene.plated .primary').click();
+  await expect(card).toContainText('他走到一半停下來');
+  await expect(card).not.toContainText('伊森的姊姊在等他');
+  // 下一個人：說話者的名字在上（亮字，不用黃），上一句不在畫面上。
   await page.locator('.scene.plated .primary').click();
   await expect(card).toContainText('謝謝你');
   await expect(card).not.toContainText('伊森的姊姊在等他');
@@ -277,13 +300,66 @@ test('底圖上的字幕模式：只留最新一句，筆錄抽屜才有前面�
   expect(eb!.height).toBeLessThan(elh * 2);
 });
 
+// 字幕卡（設計師 #296）：桌機 20px、手機 17px（乘設定的 1／1.25／1.5），行高 1.5，旁白一樣大；
+// 一張卡一句、翻完一個人的話才換人，任何一張都不超過兩行、不超出視窗。
+for (const lang of ['zh', 'en'] as const)
+  for (const scale of [1, 1.25, 1.5])
+    for (const c of CASES)
+      for (const narrow of [false, true])
+        test(`字幕卡一句一張、不超過兩行：${c.name}（${lang}）${scale * 100}%${narrow ? ' 最窄手機 360' : ''}`, async ({
+          page,
+        }, info) => {
+          // 手機另外在最窄的 360 寬再跑一次（預設的是 412）。
+          test.skip(narrow && info.project.name !== 'chromium', '只有手機專案');
+          if (narrow) await page.setViewportSize({ width: 360, height: 800 });
+          await open(page, c.scene, lang, c.deal, scale);
+          await page.locator('.place-beat').click();
+          const card = page.locator('.scene.plated > .sub-card');
+          await expect(card).toBeVisible();
+          const phone = info.project.name === 'chromium';
+          const px = (phone ? 17 : 20) * scale;
+          const view = page.viewportSize()!;
+          const seen: string[] = [];
+          for (let i = 0; i < 16 && (await card.count()); i++) {
+            const tx = card.locator('.tx');
+            const text = await tx.innerText();
+            seen.push(text);
+            const m = await card.evaluate((e) => {
+              const x = e.querySelector('.tx')!;
+              const cs = getComputedStyle(x);
+              const r = e.getBoundingClientRect();
+              const rows = new Set([...x.getClientRects()].map((q) => Math.round(q.top)));
+              return {
+                size: cs.fontSize,
+                lh: parseFloat(cs.lineHeight),
+                h: x.getBoundingClientRect().height,
+                left: r.left,
+                right: r.right,
+                rows: rows.size,
+              };
+            });
+            expect(m.size, text).toBe(`${px}px`);
+            expect(m.lh, text).toBeCloseTo(px * 1.5, 1);
+            expect(m.h, text).toBeLessThanOrEqual(m.lh * 2 + 1);
+            expect(m.left).toBeGreaterThanOrEqual(0);
+            expect(m.right).toBeLessThanOrEqual(view.width);
+            // 一張只有一個句子（句尾標點後面不再接字）。
+            expect(text, '一張卡兩個句子').not.toMatch(/[。！？.!?][」』”’"]?\s*\S/);
+            await page.locator('.scene.plated .primary').click();
+            await expect
+              .poll(async () => ((await card.count()) ? await tx.innerText() : null))
+              .not.toBe(text);
+          }
+          // 每個場景至少一張，而且翻到頭（對話走完才換下一個畫面）。
+          expect(seen.length).toBeGreaterThanOrEqual(3);
+          expect(seen.length).toBeLessThan(16);
+        });
+
 test('底圖上的畫外字幕：走鏡頭層，只壓暗圖、不用紙色蓋掉；滑鼠靠近也不變色', async ({ page }) => {
   await open(page, 33, 'zh', 'o-probation');
   await page.locator('.place-beat').click();
   // 最後一句（盧卡斯的畫外字幕）
-  for (let i = 0; i < 3; i++) {
-    await page.locator('.scene.plated .primary').click();
-  }
+  await toVoiceOver(page);
   const vo = page.locator('.vo');
   await expect(vo).toHaveAttribute('data-layer', 'scene');
   const hit = vo.locator('.vo-hit');
@@ -326,7 +402,7 @@ test('底圖在字幕帶太亮：畫外字幕加自適應襯底（art bible 10.1
   );
   await open(page, 33, 'zh', 'o-probation');
   await page.locator('.place-beat').click();
-  for (let i = 0; i < 3; i++) await page.locator('.scene.plated .primary').click();
+  await toVoiceOver(page);
   const vo = page.locator('.vo');
   await expect(vo).toHaveAttribute('data-layer', 'scene');
   await expect(vo).toHaveAttribute('data-scrim', 'on');
