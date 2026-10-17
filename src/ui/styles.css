@@ -2426,7 +2426,6 @@ fieldset.relations.compact {
   box-shadow: none;
   background: rgb(4 6 9 / 55%);
   backdrop-filter: blur(3px);
-  -webkit-backdrop-filter: blur(3px);
 }
 .sheet-back:hover:not(:disabled) {
   background: rgb(4 6 9 / 55%);
@@ -3207,7 +3206,6 @@ fieldset.relations.compact {
   color: #f2f4f7;
   background: rgb(255 255 255 / 12%);
   backdrop-filter: blur(18px) saturate(140%);
-  -webkit-backdrop-filter: blur(18px) saturate(140%);
   box-shadow: 0 8px 24px rgb(0 0 0 / 30%);
 }
 .notif:hover:not(:disabled) {
