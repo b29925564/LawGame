@@ -33,9 +33,15 @@ export function VoLine({ line }: { line: Line }) {
     .map((b) => b.text)
     .join('/');
   const [open, setOpen] = useState(() => !played.has(key));
+  const onPlate = useOnPlate();
   const close = useCallback(() => {
     played.add(key);
     setOpen(false);
+    // 底圖上的畫外字幕只壓暗背景，筆錄看得見：這一句等字幕收掉才進筆錄，捲到底讓它在框裡。
+    requestAnimationFrame(() => {
+      const box = document.querySelector<HTMLElement>('.scene.plated .transcript');
+      if (box) box.scrollTop = box.scrollHeight;
+    });
     // 字幕收掉後，焦點和視線交給這個畫面的主要動作（休庭的「繼續」、回報的「回到桌面」）。
     requestAnimationFrame(() =>
       document.querySelector<HTMLElement>('main .primary.next')?.focus({ preventScroll: true }),
@@ -43,12 +49,13 @@ export function VoLine({ line }: { line: Line }) {
   }, [key]);
   return (
     <>
-      {beatsOf(line).map((b, i) => (
-        <p key={i} className="vo-log">
-          <span className="vo-mark" aria-hidden />
-          <span>{plain(t(b.text, scope))}</span>
-        </p>
-      ))}
+      {!(open && onPlate) &&
+        beatsOf(line).map((b, i) => (
+          <p key={i} className="vo-log">
+            <span className="vo-mark" aria-hidden />
+            <span>{plain(t(b.text, scope))}</span>
+          </p>
+        ))}
       {open && createPortal(<VoiceOver line={line} onDone={close} />, document.body)}
     </>
   );
@@ -155,6 +162,7 @@ export function VoiceOver({ line, onDone }: { line: Line; onDone: () => void }) 
     return () => window.removeEventListener('keydown', key);
   });
 
+  const cue = <span className={phase === 'shown' ? 'vo-cue on' : 'vo-cue'}>{t('點擊繼續')}</span>;
   let n = 0;
   return (
     <div
@@ -191,8 +199,9 @@ export function VoiceOver({ line, onDone }: { line: Line; onDone: () => void }) 
             ))}
         </p>
         <span className="vo-progress" style={{ '--p': p } as CSSProperties} />
+        {onPlate && cue}
       </div>
-      <span className={phase === 'shown' ? 'vo-cue on' : 'vo-cue'}>{t('點擊繼續')}</span>
+      {!onPlate && cue}
     </div>
   );
 }

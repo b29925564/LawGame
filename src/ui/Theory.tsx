@@ -11,8 +11,8 @@ import { Lock } from './Lock';
 import { prose } from './prose';
 import { useScope } from './lang';
 import { Speech } from './Portrait';
-import { Recap } from './ActCard';
-import { OnPlate, ScenePlate, useScenePlate, useShown } from './scenePlate';
+import { Recap, splitSlate } from './ActCard';
+import { OnPlate, PlateEyebrow, ScenePlate, useScenePlate, useShown } from './scenePlate';
 
 /**
  * 案件理論（企劃書 6.9.2）：整集最大的策略決定，選了不能換。
@@ -27,18 +27,24 @@ export function Theory({ scene }: { scene: TheoryScene }) {
   const held = progress.cards;
   const [intro, setIntro] = useState(!theory.done(st));
   const [pending, setPending] = useState<string | null>(null);
-  // 開場那一頁有底圖就當背景；選理論的那一頁是整頁的比較卡，不放（圖會被卡片蓋掉）。
+  // 這一場有底圖：開場那一頁當背景；選理論那一頁留著同一張，壓暗 58%（人還在同一間會議室），卡片照紙層不動。
   const shown = useShown(useScenePlate(progress.episode, scene));
 
   if (intro)
     return (
       <OnPlate.Provider value={!!shown}>
         <main className={shown ? 'scene dialogue plated' : 'scene'}>
-          <p className="eyebrow">
-            {t(scene.act, scope)}
-            {t('・')}
-            {t(scene.place, scope)}
-          </p>
+          {shown ? (
+            <PlateEyebrow
+              text={`${t(scene.act, scope)}${t('・')}${splitSlate(t(scene.place, scope))[0]}`}
+            />
+          ) : (
+            <p className="eyebrow">
+              {t(scene.act, scope)}
+              {t('・')}
+              {t(scene.place, scope)}
+            </p>
+          )}
           <div className={shown ? 'lines transcript' : 'lines'}>
             <Recap />
             {scene.intro.map((l, i) => (
@@ -85,7 +91,7 @@ export function Theory({ scene }: { scene: TheoryScene }) {
   const done = theory.done(st);
   // 三張並排的比較卡（UX 規格 decision-cost §二）：點卡片＝選中，底部定案列才真的選定。
   return (
-    <main className="scene theory-pick">
+    <main className={shown ? 'scene theory-pick backdrop' : 'scene theory-pick'}>
       <p className="eyebrow">{t('案件理論')}</p>
       {!done && <p className="muted">{t('點一張卡比較，再按下面的「以這個理論開庭」定案。')}</p>}
       <ul className="theory-grid">
@@ -165,6 +171,7 @@ export function Theory({ scene }: { scene: TheoryScene }) {
           {t('繼續')}
         </button>
       )}
+      {shown && <ScenePlate shown={shown} dim />}
     </main>
   );
 }

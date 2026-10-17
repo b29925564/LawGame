@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useLang, type Lang } from '../i18n';
 import plateData from './plates/plates.json';
 import { RIGS } from './rigs';
@@ -140,7 +140,7 @@ export function useShown(plate: Plate | null): Shown | null {
  * 底圖層：釘在視窗後面，圖沒好以前是純黑。圖不放在介面前面，介面（台詞框、按鈕）自己讓出上半部。
  * 燈組與色溫寫在 data 上（驗收截圖與 e2e 讀它，不讀圖檔）。
  */
-export function ScenePlate({ shown }: { shown: Shown }) {
+export function ScenePlate({ shown, dim }: { shown: Shown; dim?: boolean }) {
   const { plate, url, state } = shown;
   return (
     <div
@@ -149,6 +149,7 @@ export function ScenePlate({ shown }: { shown: Shown }) {
       data-rig={plate.rig}
       data-kelvin={plate.kelvin}
       data-state={state}
+      data-dim={dim ? '' : undefined}
       aria-hidden
     >
       <img src={url} alt="" decoding="async" draggable={false} />
@@ -162,3 +163,43 @@ export function ScenePlate({ shown }: { shown: Shown }) {
  */
 export const OnPlate = createContext(false);
 export const useOnPlate = () => useContext(OnPlate);
+
+/**
+ * 底圖上的眉標：縮成一條場記，規則和定場場記（PlaceSlate）一樣——手機永遠一行，放不下就整段拿掉前面的場所名／幕名，
+ * 不在字中間斷；房間才是這一場的資訊，永遠留著。讀屏照常唸整句（拿掉的那段只是不畫）。
+ */
+/** 眉標右邊留給選單鈕的寬度（styles.css 的 .plate-eyebrow max-width 同一個值）。 */
+const EYEBROW_MENU = 96;
+
+export function PlateEyebrow({ text }: { text: string }) {
+  const sep = useLang((s) => s.lang) === 'en' ? ', ' : '\u3000';
+  const cut = text.lastIndexOf(sep);
+  const [lead, room] =
+    cut > 0 ? [text.slice(0, cut + sep.length), text.slice(cut + sep.length)] : ['', text];
+  const ref = useRef<HTMLParagraphElement>(null);
+  const [short, setShort] = useState(false);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    const box = el?.parentElement;
+    if (!el || !box || !lead) return;
+    // 整句（含前面那段；拿掉的那段只是不畫，量得到寬度）放不放得下：可用寬度同 CSS 的 max-width（右上角留給選單鈕）。
+    const fit = () => {
+      const cs = getComputedStyle(box);
+      const room = box.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+      const full = [...el.children].reduce((w, c) => w + (c as HTMLElement).offsetWidth, 0);
+      const pad =
+        el.offsetWidth - el.clientWidth + 2 * parseFloat(getComputedStyle(el).paddingLeft);
+      setShort(full + pad > room - EYEBROW_MENU);
+    };
+    fit();
+    window.addEventListener('resize', fit);
+    void document.fonts?.ready.then(fit);
+    return () => window.removeEventListener('resize', fit);
+  }, [lead, room]);
+  return (
+    <p ref={ref} className={short ? 'eyebrow plate-eyebrow short' : 'eyebrow plate-eyebrow'}>
+      {lead && <span className="ps-lead">{lead}</span>}
+      <span className="ps-room">{room}</span>
+    </p>
+  );
+}

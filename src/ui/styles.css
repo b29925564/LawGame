@@ -499,14 +499,19 @@ details summary {
     overflow: visible;
   }
 }
-/* 有底圖的對話場景（scenePlate.tsx）：圖是整頁的背景，眉標縮成一條場記貼左上，台詞框貼底、最多佔下面一截，
-   上半部留給圖，介面不壓在圖的主體上。台詞框、按鈕照舊跟主題（和來電畫面一樣：鏡頭層的黑上放面板）。 */
-.scene.plated {
+/* 有底圖的場景（scenePlate.tsx）：圖是整頁的背景，眉標縮成一條場記貼左上，台詞框貼底、最多佔下面一截，
+   上半部留給圖，介面不壓在圖的主體上。台詞框跟主題（RD-ART-1001-L：淺色主題只有面板改淺），但疊在鏡頭層上，
+   所以用 --panel-glass 加模糊（規格裁定 14），上緣不淡出（淡出在暗圖上會變成一塊發光的板）。 */
+.scene.plated,
+.scene.backdrop {
   isolation: isolate;
+}
+.scene.plated {
   justify-content: flex-end;
 }
-.scene.plated > .eyebrow:first-child {
-  margin-bottom: auto;
+.scene.plated > .eyebrow:first-child,
+.scene.backdrop > .eyebrow:first-child,
+.scene.backdrop > .muted {
   align-self: flex-start;
   max-width: calc(100% - 96px);
   min-height: 0;
@@ -516,9 +521,27 @@ details summary {
   font: 500 13px / 1.4 var(--font-mono);
   letter-spacing: 0.06em;
 }
+.scene.plated > .eyebrow:first-child {
+  margin-bottom: auto;
+}
+/* 眉標和定場場記同一套規則：一行，放不下就整段拿掉前面的場所名／幕名（.short），不在字中間斷。 */
+.plate-eyebrow {
+  display: block;
+  width: fit-content;
+  overflow: hidden;
+  white-space: pre;
+}
+.plate-eyebrow.short .ps-lead {
+  position: absolute;
+  visibility: hidden;
+}
 .scene.plated > .lines {
   flex: 0 1 auto;
   max-height: min(44dvh, 420px);
+  background: var(--panel-glass);
+  /* 只寫標準那一條：兩條都寫，壓縮器只留 -webkit- 那條，Chromium 就沒有模糊。 */
+  backdrop-filter: blur(8px);
+  mask-image: none;
 }
 @media (max-width: 767px) {
   .scene.plated > .lines {
@@ -5357,6 +5380,16 @@ button.iou[aria-pressed='true'] {
   background: transparent;
   box-shadow: none;
   border-radius: 0;
+}
+/* 鏡頭層不跟主題（設定集 ch02 :236）：縫、記號、提示的 light-dark() 權杖在底圖上一律取深色那一邊。 */
+.vo[data-layer='scene'] {
+  color-scheme: dark;
+}
+/* 底圖上的字幕：「點擊繼續」屬於字幕，接在進度線下方 16px，不掛在台詞框下緣。 */
+.vo[data-layer='scene'] .vo-frame > .vo-cue {
+  position: static;
+  translate: none;
+  margin-top: 16px;
 }
 /* 全螢幕的點擊層不吃一般按鈕的 hover／按下樣式：滑鼠一靠近就整頁變成 --surface-2，蓋掉後面的世界（底圖上的字幕看得最清楚）。 */
 .vo > .vo-hit:hover:not(:disabled),

@@ -37,3 +37,10 @@
 .scene > .scene-plate {
   animation: none;
 }
+/* 壓暗：選案件理論那一頁，圖留著但退後（和畫外字幕的鏡頭層同一個 58%），卡片照紙層不動。 */
+.scene-plate[data-dim]::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgb(6 8 11 / 58%);
+}

@@ -185,13 +185,41 @@ test('沒有底圖的場景照舊：定場放占位字，對話不貼底', async
   await expect(page.locator('.scene.plated')).toHaveCount(0);
 });
 
-test('案件理論：開場那一頁有底圖，選理論那一頁沒有（整頁的比較卡不蓋住圖）', async ({ page }) => {
+test('案件理論：開場那一頁有底圖；選理論那一頁留著同一張，壓暗 58%，卡片照舊', async ({ page }) => {
   await open(page, 13, 'zh');
   await page.locator('.place-beat').click();
   await expect(page.locator('.scene.plated > .scene-plate')).toHaveAttribute('data-plate', 's1-an');
   await page.getByRole('button', { name: /選擇案件理論/ }).click();
   await expect(page.locator('.theory-card').first()).toBeVisible();
-  await expect(page.locator('.scene-plate')).toHaveCount(0);
+  const bg = page.locator('.scene-plate');
+  await expect(bg).toHaveCount(1);
+  await expect(bg).toHaveAttribute('data-plate', 's1-an');
+  await expect(bg).toHaveAttribute('data-state', 'ok');
+  await expect(bg).toHaveAttribute('data-dim', '');
+  const veil = await bg.evaluate((e) => getComputedStyle(e, '::after').backgroundColor);
+  expect(veil).toBe('rgba(6, 8, 11, 0.58)');
+});
+
+test('底圖上的台詞框：半透明加模糊、上緣不淡出；有底圖就沒有盧卡斯大圖；眉標一行', async ({
+  page,
+}) => {
+  await open(page, 33, 'zh', 'o-probation');
+  await page.locator('.place-beat').click();
+  const lines = page.locator('.scene.plated > .lines');
+  await expect(lines).toBeVisible();
+  const st = await lines.evaluate((e) => {
+    const c = getComputedStyle(e);
+    return { blur: c.backdropFilter, mask: c.maskImage, bg: c.backgroundColor };
+  });
+  expect(st.blur).toContain('blur(8px)');
+  expect(st.mask).toBe('none');
+  // --panel-glass 帶透明度（不是實心紙色）
+  expect(st.bg).toMatch(/rgba\(.*0\.\d+\)/);
+  await expect(page.locator('.lucas-stage')).toHaveCount(0);
+  const eyebrow = page.locator('.plate-eyebrow');
+  const box = await eyebrow.boundingBox();
+  const lh = await eyebrow.evaluate((e) => parseFloat(getComputedStyle(e).lineHeight));
+  expect(box!.height).toBeLessThan(lh * 2);
 });
 
 test('底圖上的畫外字幕：走鏡頭層，只壓暗圖、不用紙色蓋掉；滑鼠靠近也不變色', async ({ page }) => {
@@ -212,4 +240,13 @@ test('底圖上的畫外字幕：走鏡頭層，只壓暗圖、不用紙色蓋�
   expect(veil).toBe('rgba(6, 8, 11, 0.58)');
   expect(hitBg).toBe('rgba(0, 0, 0, 0)');
   await expect(page.locator('.scene.plated > .scene-plate')).toHaveAttribute('data-state', 'ok');
+  // 縫的光不跟主題（淺色主題也是鏡頭層）；字幕開著的時候這一句還沒進筆錄；提示屬於字幕，在進度細線下面。
+  expect(await vo.evaluate((e) => getComputedStyle(e).colorScheme)).toBe('dark');
+  await expect(page.locator('.scene.plated .vo-log')).toHaveCount(0);
+  await expect(vo.locator('.vo-frame > .vo-cue')).toHaveCount(1);
+  const [prog, cue] = await Promise.all([
+    vo.locator('.vo-progress').boundingBox(),
+    vo.locator('.vo-cue').boundingBox(),
+  ]);
+  expect(cue!.y).toBeGreaterThanOrEqual(prog!.y + prog!.height);
 });
