@@ -576,7 +576,11 @@ details summary {
   border-radius: 6px;
   background: var(--panel-glass);
   backdrop-filter: blur(8px);
-  /* 設定集 10.1：桌機 20px、手機 17px，行高 1.5；旁白一樣大。 */
+  /* 設定集 10.1：Noto Sans TC 500，桌機 20px、手機 17px，行高 1.5；旁白一樣（旁白靠沒有名字、--muted 區分，不換字型）。 */
+  font-family: var(--font);
+  font-weight: 500;
+  /* 瀏覽器自己折的卡，兩行拉勻，不留一個字的末行（「You tell the jury one / story.」）。 */
+  text-wrap: balance;
   font-size: calc(20px * var(--sub-scale));
   line-height: 1.5;
 }
@@ -590,7 +594,9 @@ details summary {
   letter-spacing: 0.04em;
 }
 .sub-card.narration {
-  /* 旁白的通用樣式（.narration）會蓋掉字幕框的內距和行高：字幕框一樣大、一樣疏。 */
+  /* 旁白的通用樣式（.narration）會蓋掉字幕框的內距、行高、字型：字幕框一樣大、一樣疏、一樣的字。 */
+  font-family: var(--font);
+  text-wrap: balance;
   margin: 0;
   padding: 10px 16px 12px;
   line-height: 1.5;

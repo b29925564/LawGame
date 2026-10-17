@@ -26,20 +26,23 @@ const TITLES = new Set(
   ),
 );
 
+/** 英文在第 b 個字前面斷行／斷張合不合片語規則（冠詞、介系詞後面、稱謂與名字、數字與單位、姓和名不拆）。 */
+export function latinBreakAllowed(words: string[], b: number): boolean {
+  const prev = words[b - 1];
+  const next = words[b];
+  if (NO_AFTER.has(norm(prev))) return false;
+  if (TITLES.has(norm(prev)) && isCap(next)) return false;
+  if (/^[\d$%.,-]+$/.test(prev)) return false;
+  if (/\w-\w/.test(prev)) return false;
+  if (isCap(prev) && isCap(next) && !/[.!?,;:]$/.test(prev)) return false;
+  return true;
+}
+
 function latinLines(text: string, em: number): string[] {
   const words = text.split(/\s+/).filter(Boolean);
   const n = words.length;
   const wd = (a: number, b: number) => lineWidth(words.slice(a, b).join(' '));
-  const allowed = (b: number) => {
-    const prev = words[b - 1];
-    const next = words[b];
-    if (NO_AFTER.has(norm(prev))) return false;
-    if (TITLES.has(norm(prev)) && isCap(next)) return false;
-    if (/^[\d$%.,-]+$/.test(prev)) return false;
-    if (/\w-\w/.test(prev)) return false;
-    if (isCap(prev) && isCap(next) && !/[.!?,;:]$/.test(prev)) return false;
-    return true;
-  };
+  const allowed = (b: number) => latinBreakAllowed(words, b);
   const cuts: number[] = [0];
   let start = 0;
   while (start < n) {

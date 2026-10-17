@@ -5,7 +5,7 @@ import { useT } from '../i18n';
 import { useScope } from './lang';
 import { prose } from './prose';
 import { measureOf } from './court/subtitleMeasure';
-import { subCards } from './subCards';
+import { subCards, type Sub } from './subCards';
 
 /** 字幕框裡放得下的字數：量卡片實際的內寬與字型（桌機 20px、手機 17px 由樣式決定，這裡不另存一份）。 */
 interface Fit {
@@ -47,9 +47,9 @@ export function useSubs(line: Line | null, token: number, active: boolean, atEnd
       const px = parseFloat(cs.fontSize) || 17;
       const inner = el.clientWidth - parseFloat(box.paddingLeft) - parseFloat(box.paddingRight);
       const next = {
-        // 中文照每字 1em 估，留 5% 餘裕；英文用實際字型量，只扣一點捨入。
+        // 中文照每字 1em 估，留 5% 餘裕；英文用實際字型量（canvas 量到的和 DOM 一樣寬），只扣 0.08em（約 2px）的捨入。
         em: Math.max(8, Math.floor((inner / px) * 0.95)),
-        emRaw: Math.max(8, Math.floor((inner / px) * 100 - 20) / 100),
+        emRaw: Math.max(8, Math.floor((inner / px) * 100 - 8) / 100),
         font: `${cs.fontWeight} ${px}px ${cs.fontFamily}`,
       };
       setFit((f) =>
@@ -61,9 +61,9 @@ export function useSubs(line: Line | null, token: number, active: boolean, atEnd
     ro.observe(el);
     return () => ro.disconnect();
   }, [active, voScale, text]);
-  const cards = useMemo(() => {
+  const cards = useMemo((): Sub[] => {
     if (!text) return [];
-    if (!fit) return [{ text, from: 0 }];
+    if (!fit) return [{ text, from: 0, of: 1, marked: false }];
     const latin = !/\p{Script=Han}/u.test(text);
     return subCards(text, latin ? fit.emRaw : fit.em, latin ? measureOf(fit.font) : undefined);
   }, [text, fit, fonts]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -76,6 +76,8 @@ export function useSubs(line: Line | null, token: number, active: boolean, atEnd
         ref={ref}
         className={line.who === '旁白' ? 'sub-card narration' : 'sub-card'}
         data-subbox={voBox ? 'on' : undefined}
+        data-of={card.of > 1 ? card.of : undefined}
+        data-marked={card.marked ? '' : undefined}
         style={{ '--sub-scale': voScale } as React.CSSProperties}
         aria-live="polite"
       >

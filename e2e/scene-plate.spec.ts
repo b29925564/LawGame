@@ -302,6 +302,30 @@ test('底圖上的字幕模式：只留最新一句，筆錄抽屜才有前面�
 
 // 字幕卡（設計師 #296）：桌機 20px、手機 17px（乘設定的 1／1.25／1.5），行高 1.5，旁白一樣大；
 // 一張卡一句、翻完一個人的話才換人，任何一張都不超過兩行、不超出視窗。
+/** 設計師 #296 第二版的斷點表（最窄手機 360、字幕 150%、英文，無襯線 500 的實測字寬）：每一張卡的內容。 */
+const BREAKS_150: Record<string, string[]> = {
+  會議室夜: [
+    'And it has to stand',
+    "on the arguments you've actually got.",
+    'Change the story halfway',
+    'and all they remember is that you changed it.',
+  ],
+  法院台階: [
+    'On the courthouse steps,',
+    "Ethan's sister is waiting for him.",
+    'Halfway down he stops',
+    'and looks back at Lucas.',
+  ],
+  羈押室門口: [
+    'The side door of the sentencing courtroom',
+    'leads to the holding cells.',
+    'At the door the bailiff pauses long enough',
+    'for Ethan to look back.',
+    'His hands are cuffed in front of him;',
+    "he can't offer one.",
+  ],
+};
+
 for (const lang of ['zh', 'en'] as const)
   for (const scale of [1, 1.25, 1.5])
     for (const c of CASES)
@@ -330,6 +354,10 @@ for (const lang of ['zh', 'en'] as const)
               const r = e.getBoundingClientRect();
               const rows = new Set([...x.getClientRects()].map((q) => Math.round(q.top)));
               return {
+                of: e.getAttribute('data-of'),
+                marked: e.hasAttribute('data-marked'),
+                weight: cs.fontWeight,
+                family: cs.fontFamily,
                 size: cs.fontSize,
                 lh: parseFloat(cs.lineHeight),
                 h: x.getBoundingClientRect().height,
@@ -338,6 +366,12 @@ for (const lang of ['zh', 'en'] as const)
                 rows: rows.size,
               };
             });
+            // 英文的句子只要在這個寬度、字級斷成多張，就要是手標的斷點（plateBreaks.ts），不准程式猜。
+            if (lang === 'en' && m.of) expect(m.marked, `沒標斷點：${text}`).toBe(true);
+            // 設定集 10.1：字幕是無襯線 500（旁白也一樣，不用明體）。
+            expect(m.weight, text).toBe('500');
+            expect(m.family, text).toMatch(/^"?(Noto Sans TC|IBM Plex Sans)/);
+            expect(m.family, text).not.toMatch(/Serif|Songti|PMingLiU/);
             expect(m.size, text).toBe(`${px}px`);
             expect(m.lh, text).toBeCloseTo(px * 1.5, 1);
             expect(m.h, text).toBeLessThanOrEqual(m.lh * 2 + 1);
@@ -353,6 +387,11 @@ for (const lang of ['zh', 'en'] as const)
           // 每個場景至少一張，而且翻到頭（對話走完才換下一個畫面）。
           expect(seen.length).toBeGreaterThanOrEqual(3);
           expect(seen.length).toBeLessThan(16);
+          // 最窄手機＋150% 的英文：照設計師的斷點表斷（plateBreaks.ts），卡裡的換行也是表上的位置。
+          if (narrow && scale === 1.5 && lang === 'en') {
+            const flat = seen.map((x) => x.replace(/\s+/g, ' ').replace(/[’‘]/g, "'").trim());
+            for (const want of BREAKS_150[c.name]) expect(flat, want).toContain(want);
+          }
         });
 
 test('底圖上的畫外字幕：走鏡頭層，只壓暗圖、不用紙色蓋掉；滑鼠靠近也不變色', async ({ page }) => {

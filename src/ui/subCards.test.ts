@@ -129,4 +129,28 @@ describe('字幕卡（有底圖的場景）', () => {
     expect(cards.map((c) => c.text).join('')).toBe(s);
     for (const c of cards) expect(lineBreaks(c.text, 12).length).toBeLessThanOrEqual(2);
   });
+
+  it('中文一張兩行：在最靠中間的逗號後面換行', () => {
+    const cards = subCards('法警在門口停了一下，讓伊森回頭。', 14);
+    expect(cards.length).toBe(1);
+    expect(cards[0].lines).toEqual(['法警在門口停了一下，', '讓伊森回頭。']);
+    // 放得進一行就不硬換。
+    expect(subCards('法警在門口停了一下，讓伊森回頭。', 34)[0].lines).toBeUndefined();
+    // 沒有一個逗號兩半都放得進一行：不硬換，交給瀏覽器折。
+    expect(subCards('手銬扣在他身前他沒辦法伸手也沒辦法回頭，嗯嗯。', 14)[0].lines).toBeUndefined();
+  });
+
+  it('沒標斷點的英文句：片語規則、每行不比框寬、接續卡至少三個字', () => {
+    const measure = (t: string) => t.length * 0.46;
+    const s = 'The witness will say that nobody else was anywhere near the room that night.';
+    const cards = subCards(s, 14, measure);
+    expect(cards.map((c) => c.text).join(' ')).toBe(s);
+    expect(cards.length).toBeGreaterThan(1);
+    cards.forEach((c, i) => {
+      for (const l of c.lines ?? [c.text]) expect(measure(l), l).toBeLessThanOrEqual(14);
+      for (const l of c.lines ?? [])
+        expect(l, '不在冠詞、介系詞後面換行').not.toMatch(/\b(the|of|that)$/);
+      if (i > 0) expect(c.text.split(' ').length).toBeGreaterThanOrEqual(3);
+    });
+  });
 });
