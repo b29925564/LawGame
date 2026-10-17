@@ -3245,6 +3245,10 @@ html[lang='en'] .stamp.rec-stamp b {
 .cam-sub[data-last] {
   animation: sub-show var(--dur-cut) linear var(--at) both;
 }
+/* 切回證人那一格就收：字幕的計時和鏡頭的計時是兩條時鐘，卡頓時字幕會晚收（關卡二 v92 #C）。 */
+.cam-sub[data-gone] {
+  visibility: hidden;
+}
 @keyframes sub-show {
   from {
     opacity: 0;

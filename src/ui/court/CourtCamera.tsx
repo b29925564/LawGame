@@ -670,7 +670,11 @@ export function CourtCamera({
           frameW={width}
         />
         <div className="cam-black" />
-        <Subtitles cues={entered ? cues : []} onJudgeRead={onJudgeRead} />
+        <Subtitles
+          cues={entered ? cues : []}
+          onJudgeRead={onJudgeRead}
+          away={shot === 'witness' || (shot === 'black' && last === 'bench')}
+        />
       </div>
     </div>
   );
@@ -685,7 +689,16 @@ export function CourtCamera({
 /** 立牌上算「頭」的部分：從立牌頂往下這一段（頭、頸），字幕框不能壓。 */
 const HEAD_ZONE = 0.4;
 
-function Subtitles({ cues, onJudgeRead }: { cues: Cue[]; onJudgeRead?: (ms: number) => void }) {
+function Subtitles({
+  cues,
+  onJudgeRead,
+  away,
+}: {
+  cues: Cue[];
+  onJudgeRead?: (ms: number) => void;
+  /** 鏡頭已不在法官席（切回證人）：有收掉時間的句子（法官的裁定）跟著鏡頭同一格收，不等自己的計時。 */
+  away?: boolean;
+}) {
   const t = useT();
   const scope = useScope();
   const box = useRef<HTMLDivElement>(null);
@@ -893,6 +906,7 @@ function Subtitles({ cues, onJudgeRead }: { cues: Cue[]; onJudgeRead?: (ms: numb
             }
             data-compact={c.compact || undefined}
             data-last={(i === cards.length - 1 && !c.until) || undefined}
+            data-gone={(away && c.until) || undefined}
           >
             <span className="who">{t(c.who, scope)}</span>
             {c.redact ? (

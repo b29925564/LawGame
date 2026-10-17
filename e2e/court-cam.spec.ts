@@ -418,7 +418,14 @@ for (const lang of ['zh', 'en'] as const)
                     `${tag} 蓋到${name}`,
                   ).toBe(true);
             }
-          } else if (texts.length && s.shot !== 'bench') cut = true;
+          } else if (texts.length) {
+            cut = true;
+            // 切回證人的那一格，法官的字幕就收了（不留在證人的畫面上；關卡二 v92 #C）。
+            expect(
+              s.subs.filter((c) => c.text).map((c) => c.text),
+              `${width || '手機'}・${scale * 100}% 切回證人後法官的字幕還在`,
+            ).toEqual([]);
+          }
           await page.waitForTimeout(40);
         }
         expect(cut, '法官席要切回證人').toBe(true);
