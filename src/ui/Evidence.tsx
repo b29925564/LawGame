@@ -113,6 +113,97 @@ export function EvidenceDrawer({
     (g) =>
       !q || has(g.term) || has(g.text) || (!!g.en && straight(g.en).toLowerCase().includes(ql)),
   );
+  // 手機的抽屜掛到 body：浮層不能住在 .shell-foot 裡，底列有 backdrop-filter 時會變成 fixed 的定位基準，遮罩就縮成按鈕列。
+  const drawer = (open || wide) && (
+    <div className={wide ? 'side-wrap' : 'sheet-wrap'}>
+      {!wide && (
+        <button
+          className="sheet-back"
+          aria-label={t('關閉證據抽屜')}
+          onClick={() => toggle(false)}
+        />
+      )}
+      <section className={wide ? 'sheet side' : 'sheet'} aria-label={t('證據抽屜')}>
+        <div className="panel-head">
+          <Tabs
+            className="sheet-tabs"
+            label={t('抽屜')}
+            value={page}
+            onPick={setPage}
+            items={[
+              { id: 'cards' as const, label: t('證據 {n}', { n: items.length }) },
+              ...(noTimeline ? [] : [{ id: 'timeline' as const, label: t('時間軸') }]),
+              { id: 'terms' as const, label: t('法典') },
+            ]}
+          />
+          {!wide && (
+            <button className="link" onClick={() => toggle(false)}>
+              {t('關閉')}
+            </button>
+          )}
+        </div>
+        {page === 'cards' && note && <p className="muted small">{t(note, scope)}</p>}
+        {page !== 'timeline' && (
+          <input
+            className="find"
+            type="search"
+            value={q}
+            placeholder={page === 'terms' ? t('找名詞，例如「相關性」') : t('找卡片')}
+            aria-label={page === 'terms' ? t('找名詞') : t('找卡片')}
+            onChange={(e) => setQ(e.target.value)}
+          />
+        )}
+        {page === 'cards' && (
+          <>
+            <KindFilter items={items} value={kind} onPick={setKind} />
+            {/* 清單自己捲：能被鍵盤聚焦，卡片不能選的畫面也捲得到下面（無障礙審查第 3 條）。 */}
+            <ul className="stack cards sheet-list" tabIndex={0} aria-label={t('證據清單')}>
+              {motion
+                ? usableFirst(hit, pool, (i) => (
+                    <EvidenceCard key={i.id} item={i} pickable={wide} mini />
+                  ))
+                : timeGroups(hit, (i) => <EvidenceCard key={i.id} item={i} pickable={wide} mini />)}
+              {hit.length === 0 && (
+                <li className="muted">
+                  {items.length ? t('沒有符合的卡片。') : t('還沒有任何卡片。')}
+                </li>
+              )}
+            </ul>
+          </>
+        )}
+        {page === 'timeline' && (
+          <div className="sheet-list">
+            <TimelineView rows={rows} />
+          </div>
+        )}
+        {page === 'terms' && (
+          <dl className="terms sheet-list" tabIndex={0} aria-label={t('法典')}>
+            {terms.map((g) => {
+              const term = t(g.term, scope);
+              return (
+                <div key={g.term} className="term">
+                  <dt>
+                    {term}
+                    {g.en && term.toLowerCase() !== g.en.toLowerCase() && (
+                      <span className="muted small"> {g.en}</span>
+                    )}
+                  </dt>
+                  <dd>{t(g.text, scope)}</dd>
+                  {g.inGame && (
+                    <dd className="in-game">
+                      <span className="in-game-label">{t('遊戲裡')}</span>
+                      {t(g.inGame, scope)}
+                    </dd>
+                  )}
+                </div>
+              );
+            })}
+            {terms.length === 0 && <p className="muted">{t('沒有符合的名詞。')}</p>}
+          </dl>
+        )}
+      </section>
+    </div>
+  );
   return (
     <>
       {!wide && (
@@ -120,98 +211,7 @@ export function EvidenceDrawer({
           {t('證據')} <strong>{items.length}</strong>
         </button>
       )}
-      {(open || wide) && (
-        <div className={wide ? 'side-wrap' : 'sheet-wrap'}>
-          {!wide && (
-            <button
-              className="sheet-back"
-              aria-label={t('關閉證據抽屜')}
-              onClick={() => toggle(false)}
-            />
-          )}
-          <section className={wide ? 'sheet side' : 'sheet'} aria-label={t('證據抽屜')}>
-            <div className="panel-head">
-              <Tabs
-                className="sheet-tabs"
-                label={t('抽屜')}
-                value={page}
-                onPick={setPage}
-                items={[
-                  { id: 'cards' as const, label: t('證據 {n}', { n: items.length }) },
-                  ...(noTimeline ? [] : [{ id: 'timeline' as const, label: t('時間軸') }]),
-                  { id: 'terms' as const, label: t('法典') },
-                ]}
-              />
-              {!wide && (
-                <button className="link" onClick={() => toggle(false)}>
-                  {t('關閉')}
-                </button>
-              )}
-            </div>
-            {page === 'cards' && note && <p className="muted small">{t(note, scope)}</p>}
-            {page !== 'timeline' && (
-              <input
-                className="find"
-                type="search"
-                value={q}
-                placeholder={page === 'terms' ? t('找名詞，例如「相關性」') : t('找卡片')}
-                aria-label={page === 'terms' ? t('找名詞') : t('找卡片')}
-                onChange={(e) => setQ(e.target.value)}
-              />
-            )}
-            {page === 'cards' && (
-              <>
-                <KindFilter items={items} value={kind} onPick={setKind} />
-                {/* 清單自己捲：能被鍵盤聚焦，卡片不能選的畫面也捲得到下面（無障礙審查第 3 條）。 */}
-                <ul className="stack cards sheet-list" tabIndex={0} aria-label={t('證據清單')}>
-                  {motion
-                    ? usableFirst(hit, pool, (i) => (
-                        <EvidenceCard key={i.id} item={i} pickable={wide} mini />
-                      ))
-                    : timeGroups(hit, (i) => (
-                        <EvidenceCard key={i.id} item={i} pickable={wide} mini />
-                      ))}
-                  {hit.length === 0 && (
-                    <li className="muted">
-                      {items.length ? t('沒有符合的卡片。') : t('還沒有任何卡片。')}
-                    </li>
-                  )}
-                </ul>
-              </>
-            )}
-            {page === 'timeline' && (
-              <div className="sheet-list">
-                <TimelineView rows={rows} />
-              </div>
-            )}
-            {page === 'terms' && (
-              <dl className="terms sheet-list" tabIndex={0} aria-label={t('法典')}>
-                {terms.map((g) => {
-                  const term = t(g.term, scope);
-                  return (
-                    <div key={g.term} className="term">
-                      <dt>
-                        {term}
-                        {g.en && term.toLowerCase() !== g.en.toLowerCase() && (
-                          <span className="muted small"> {g.en}</span>
-                        )}
-                      </dt>
-                      <dd>{t(g.text, scope)}</dd>
-                      {g.inGame && (
-                        <dd className="in-game">
-                          <span className="in-game-label">{t('遊戲裡')}</span>
-                          {t(g.inGame, scope)}
-                        </dd>
-                      )}
-                    </div>
-                  );
-                })}
-                {terms.length === 0 && <p className="muted">{t('沒有符合的名詞。')}</p>}
-              </dl>
-            )}
-          </section>
-        </div>
-      )}
+      {wide ? drawer : open && createPortal(drawer, document.body)}
     </>
   );
 }
