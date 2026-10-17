@@ -47,10 +47,11 @@ async function open(
   confirmed: string[] = [],
   found: string[] = [],
   cards: string[] = CARDS,
+  where: [string, number] = ['ep1', 7],
 ) {
   await page.goto('/');
   await page.evaluate(
-    ([lang, cards, desk, confirmed, found]) => {
+    ([lang, cards, desk, confirmed, found, where]) => {
       localStorage.setItem('lawgame-lang', lang as string);
       localStorage.setItem(
         'lawgame-ep-auto',
@@ -59,8 +60,8 @@ async function open(
           savedAt: Date.now(),
           label: 'x',
           progress: {
-            episode: 'ep1',
-            scene: 7,
+            episode: (where as [string, number])[0],
+            scene: (where as [string, number])[1],
             step: 0,
             choices: {},
             cards,
@@ -71,7 +72,7 @@ async function open(
         }),
       );
     },
-    [lang, cards, desk, confirmed, found] as const,
+    [lang, cards, desk, confirmed, found, where] as const,
   );
   await page.reload();
   await page
@@ -542,6 +543,118 @@ for (const w of [1380, 1381, 1440, 1530])
       }
     });
 
+// 第二道關卡 v92d：第 2 集 1380 英文，邊緣卡「Medical record: hypertension」在字中間斷行成「hypertensio／n」。
+// 邊緣卡的卡頭不在字中間斷行：卡至少做到放得下最長的字。
+for (const w of [1380, 1440, 1530])
+  for (const lang of ['zh-TW', 'en'])
+    test(`${w}：第 2 集邊緣卡的卡頭不在字中間斷行（${lang}）`, async ({ page }) => {
+      await page.setViewportSize({ width: w, height: 860 });
+      await open(
+        page,
+        lang,
+        [],
+        [],
+        ['med-record', 'pharmacy', 'voice-memo', 'app-log', 'autopsy2', 'contract'],
+        ['ep2', 6],
+      );
+      await question(page);
+      await page.evaluate(() => document.fonts.ready);
+      await settled(page);
+      const r = await page.evaluate(() => {
+        const cork = document.querySelector<HTMLElement>('.cork')!;
+        const split: string[] = [];
+        let n = 0;
+        for (const card of cork.querySelectorAll<HTMLElement>(':scope > .cork-card')) {
+          n++;
+          const body = card.querySelector(':scope > span:is(.cork-doc-text, .cork-hand)');
+          const walk = document.createTreeWalker(card, NodeFilter.SHOW_TEXT);
+          for (let t = walk.nextNode(); t; t = walk.nextNode()) {
+            if (body?.contains(t)) continue;
+            for (const m of (t.textContent ?? '').matchAll(/[^\s-]+/g)) {
+              if (/[\u3000-\u9fff\uff00-\uffef]/.test(m[0])) continue;
+              const range = document.createRange();
+              range.setStart(t, m.index);
+              range.setEnd(t, m.index + m[0].length);
+              if (range.getClientRects().length > 1) split.push(m[0]);
+            }
+          }
+        }
+        return { split, n };
+      });
+      expect(r.n, '邊緣有卡').toBeGreaterThan(3);
+      expect(r.split, '沒有被拆開的字').toEqual([]);
+    });
+
+// 第二道關卡 v92d：手機證據架的照片卡（財物清單）格子只放得下一行卡名（設計師 #2 2026-10-17 裁定 A）：
+// 放得下的整個字、整個詞；不在字中間斷、不以虛詞收尾、不加刪節號；第一個字都放不下就整個不放。
+for (const w of [412, 360, 320])
+  for (const lang of ['zh-TW', 'en'])
+    test(`手機 ${w}：證據架照片卡名只放一行整詞，不以虛詞收尾（${lang}）`, async ({ page }) => {
+      await page.setViewportSize({ width: w, height: 839 });
+      await open(page, lang, ['q2a']);
+      await question(page);
+      await page.evaluate(() => document.fonts.ready);
+      const dots = page.locator('.cork-dots button');
+      let seen = 0;
+      for (let k = 0; k < Math.max(1, await dots.count()); k++) {
+        if (await dots.count()) await dots.nth(k).click();
+        await page.waitForTimeout(200);
+        const r = await page.evaluate(() =>
+          [
+            ...document.querySelectorAll<HTMLElement>(
+              '.cork-rack:not(.marks) .cork-card.photo .cork-strip b',
+            ),
+          ].map((b) => ({
+            full: b.dataset.name ?? '',
+            shown: b.textContent ?? '',
+            wide: b.scrollWidth - b.clientWidth,
+            tall: b.scrollHeight - b.clientHeight,
+            box: b.parentElement!.clientWidth - b.getBoundingClientRect().width,
+          })),
+        );
+        for (const b of r) {
+          seen++;
+          expect(b.tall, `${b.full} 只有一行`).toBeLessThanOrEqual(1);
+          expect(b.wide, `${b.full} 不超出卡寬`).toBeLessThanOrEqual(1);
+          if (b.shown === b.full || !b.shown) continue;
+          expect(b.full.startsWith(b.shown), `${b.shown} 是 ${b.full} 的開頭`).toBe(true);
+          const next = b.full[b.shown.length];
+          const cjk = /[\u3000-\u9fff\uff00-\uffef]/.test(b.full);
+          if (!cjk) expect(/\s/.test(next), `${b.shown}｜${next} 在字的邊界`).toBe(true);
+          const lastWord = b.shown
+            .split(/\s+/)
+            .pop()!
+            .replace(/[:,.]+$/, '')
+            .toLowerCase();
+          expect(
+            [
+              'a',
+              'an',
+              'the',
+              'of',
+              'in',
+              'on',
+              'at',
+              'to',
+              'for',
+              'and',
+              'or',
+              'by',
+              'with',
+              'from',
+            ],
+            `${b.shown} 不以虛詞收尾`,
+          ).not.toContain(lastWord);
+          if (cjk)
+            expect(
+              /[的之與和及或在於對把被為從到以而並]$/.test(b.shown),
+              `${b.shown} 不以虛詞收尾`,
+            ).toBe(false);
+        }
+      }
+      expect(seen, '證據架有照片卡').toBeGreaterThan(0);
+    });
+
 // 設計師 #2 2026-10-16 (d)：板子從一開始就照這一題最高的卡算高度，A／B 空著、放一張、放兩張，Pixel 7 的板子一樣高。
 for (const lang of ['zh-TW', 'en'])
   for (const scale of ['1', '1.5'])
@@ -799,6 +912,65 @@ for (const lang of ['en', 'zh-TW'])
         expect(c.bottom, `${'AB'[slot]} 整張在答案列上方`).toBeLessThanOrEqual(c.barTop);
       else expect(c.top, `${'AB'[slot]} 放不下：上緣貼頂列`).toBeLessThanOrEqual(c.head + 10);
       expect(c.top, `${'AB'[slot]} 上緣不在頂列後面`).toBeGreaterThanOrEqual(c.head - 1);
+    }
+  });
+
+// gate 2 v92d E：Pixel 7 英文第 2 題，A、B 都放了卡，把 A 拔掉：B 的卡補到 A，再放新卡進 B。
+// 補到 A 的那張舊卡有 27% 在答案列下面（捲動只顧新放的那一張）。兩張一起放得下就兩張都在答案列上方。
+for (const lang of ['en', 'zh-TW'])
+  test(`手機 412×839：A、B 都有卡，拔掉 A 再放新卡，兩張卡（放得下的話）都在答案列上方（${lang}）`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 412, height: 839 });
+    await open(page, lang, ['q1']);
+    await question(page);
+    const rack = page.locator('.cork-rack:not(.marks) .cork-card');
+    const filled = page.locator('.cork-focus.filled');
+    for (const [a, b, c] of [
+      [0, 1, 2],
+      [1, 0, 3],
+      [2, 3, 4],
+    ]) {
+      await page.evaluate(() => window.scrollTo(0, 0));
+      await page.waitForTimeout(300);
+      await rack.nth(a).click();
+      await expect(filled).toHaveCount(1);
+      await settled(page);
+      await rack.nth(b > a ? b - 1 : b).click();
+      await expect(filled).toHaveCount(2);
+      await settled(page);
+      // 拔掉 A：點光圈裡的第一張卡放回去，再放新卡。
+      await filled.first().locator('.cork-pick').click();
+      await expect(filled).toHaveCount(1);
+      await settled(page);
+      await rack.nth(c).click();
+      await expect(filled).toHaveCount(2);
+      await settled(page);
+      const r = await page.evaluate(() => {
+        const head = document.querySelector('.wb-head')!.getBoundingClientRect().height;
+        const barTop = document.querySelector('.answer-bar')!.getBoundingClientRect().top;
+        const cards = [...document.querySelectorAll<HTMLElement>('.cork-focus.filled')].map(
+          (f) => ({
+            top: f.getBoundingClientRect().top,
+            height: f.offsetHeight,
+          }),
+        );
+        return { head, barTop, cards };
+      });
+      const tall = Math.max(...r.cards.map((x) => x.height));
+      for (const x of r.cards) {
+        if (tall <= r.barTop - r.head - 16)
+          expect(
+            x.top + x.height,
+            `[${a},${b},${c}] 兩張一起放得下：整張在答案列上方`,
+          ).toBeLessThanOrEqual(r.barTop);
+        expect(x.top, `[${a},${b},${c}] 上緣不在頂列後面`).toBeGreaterThanOrEqual(r.head - 1);
+      }
+      for (let i = 0; i < 2; i++) {
+        await filled.first().locator('.cork-pick').click();
+        await page.waitForTimeout(150);
+      }
+      await expect(filled).toHaveCount(0);
     }
   });
 

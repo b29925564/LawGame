@@ -117,12 +117,14 @@ const PIN_R = 5.5; // 圖釘半徑（cork.css .cork-pick::before 11px）
 /** 邊緣同一欄上下兩張卡之間至少留的軟木（px）；卡和內文之間的 flex gap（cork.css）。 */
 const EDGE_GAP = 6;
 const BODY_GAP = 4;
+/** 邊緣卡為了放得下最長的字，最寬做到板寬的這麼多 %（CARD_W 之外）。 */
+const EDGE_WIDE = 24;
 /** 黑條最矮的高度（px）：cork.css .cork-redact 的 min-height。 */
 const BAR_MIN = 92;
 /** 放卡後捲頁面：整張卡離頂列、答案列至少留這麼多（px）。 */
 const SEE_GAP = 8;
 
-type EdgeSize = { h: number; head: number; lh: number; words: number[] };
+type EdgeSize = { h: number; head: number; lh: number; words: number[]; minW: number };
 /** 邊緣卡的內文（影印紙正文、索引卡和便條的手寫）：放不下時少放幾行的那一段。 */
 const BODY = ':scope > span:is(.cork-doc-text, .cork-hand)';
 /**
@@ -151,6 +153,23 @@ function lineWords(body: HTMLElement, angle: number, lh: number): number[] {
   }
   return out;
 }
+/** 卡頭裡最長的一個字（不含內文；中日文本來就能在字間斷，不算）排出來多寬（px）：卡至少要有「字寬＋左右內距」。 */
+function longestWord(el: HTMLElement, body: HTMLElement | null): number {
+  let max = 0;
+  const walk = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+  for (let n = walk.nextNode(); n; n = walk.nextNode()) {
+    if (body?.contains(n)) continue;
+    for (const m of (n.textContent ?? '').matchAll(/[^\s-]+/g)) {
+      if (/[\u3000-\u9fff\uff00-\uffef]/.test(m[0])) continue;
+      const r = document.createRange();
+      r.setStart(n, m.index);
+      r.setEnd(n, m.index + m[0].length);
+      max = Math.max(max, r.getBoundingClientRect().width);
+    }
+  }
+  const cs = getComputedStyle(el);
+  return max ? Math.ceil(max + parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight) + 1) : 0;
+}
 function edgeSize(el: HTMLElement, angle: number): EdgeSize {
   const body = el.querySelector<HTMLElement>(BODY);
   const shown = body?.offsetHeight ?? 0;
@@ -159,6 +178,7 @@ function edgeSize(el: HTMLElement, angle: number): EdgeSize {
     h: el.offsetHeight,
     head: el.offsetHeight - (shown ? shown + BODY_GAP : 0),
     lh,
+    minW: longestWord(el, body),
   };
   if (!body || !lh) return { ...size, words: [] };
   // 內文被拿掉（.bare）時暫時顯示出來量，量完同一格還回去（不繪製、不觸發 ResizeObserver）。
@@ -248,6 +268,74 @@ function Face({ item, bare }: { item: CorkItem; bare?: boolean }) {
 }
 
 /** 牌架上的卡只放標題（設計師 #2 裁定 M1）：最多兩整行，放不下的整行拿掉，不加刪節號、不淡出。 */
+/** 一行放不下時，結尾不收在虛詞上（「Autopsy photo: the」→「Autopsy photo:」）。 */
+const TRAILING = new Set([
+  ...'a an the of in on at to for and or by with from as is are was were his her their its'.split(
+    ' ',
+  ),
+  ...'的 之 與 和 及 或 在 於 對 把 被 為 從 到 以 而 並'.split(' '),
+]);
+let measureCtx: CanvasRenderingContext2D | null | undefined;
+/**
+ * 手機牌架的照片卡：格子放不下兩行卡名（設計師 #2 2026-10-17 裁定只放一行）。取放得下的最長一段，
+ * 整個字、整個詞（中文用詞切）；結尾不是虛詞；第一個字都放不下就整個不放。不加刪節號、不露半個字。
+ */
+export function fitLine(text: string, width: number, font: string): string {
+  measureCtx ??= document.createElement('canvas').getContext('2d');
+  const ctx = measureCtx;
+  if (!ctx || width <= 0) return text;
+  ctx.font = font;
+  const cjk = /[\u3000-\u9fff\uff00-\uffef]/.test(text);
+  const parts: string[] = cjk
+    ? [...new Intl.Segmenter('zh-TW', { granularity: 'word' }).segment(text)].map((x) => x.segment)
+    : text.split(/(?<=\s)/);
+  const at = (k: number) => parts.slice(0, k).join('').trimEnd();
+  if (ctx.measureText(text).width <= width) return text;
+  let k = parts.length - 1;
+  while (k > 0 && ctx.measureText(at(k)).width > width) k--;
+  const last = (n: number) =>
+    parts[n - 1]
+      .trim()
+      .replace(/[:：,，、.。]+$/, '')
+      .toLowerCase();
+  while (k > 0 && TRAILING.has(last(k))) k--;
+  return at(k).replace(/[,，、]+$/, '');
+}
+
+/** 單行卡名：量格子寬度（字型載好、換語言、換尺寸都重量），只放得下的整個字。 */
+function OneLine({ text }: { text: string }) {
+  const ref = useRef<HTMLElement>(null);
+  const [shown, setShown] = useState(text);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    const box = el?.parentElement;
+    if (!el || !box) return;
+    const fit = () => {
+      const cs = getComputedStyle(el);
+      setShown(
+        fitLine(
+          text,
+          box.clientWidth,
+          `${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`,
+        ),
+      );
+    };
+    fit();
+    const ro = new ResizeObserver(fit);
+    ro.observe(box);
+    document.fonts?.addEventListener('loadingdone', fit);
+    return () => {
+      ro.disconnect();
+      document.fonts?.removeEventListener('loadingdone', fit);
+    };
+  }, [text]);
+  return (
+    <b ref={ref} data-name={text}>
+      {shown}
+    </b>
+  );
+}
+
 function RackFace({ item }: { item: CorkItem }) {
   const t = useT();
   const scope = useScope();
@@ -266,7 +354,7 @@ function RackFace({ item }: { item: CorkItem }) {
             )}
           </span>
           <span className="cork-strip">
-            <b>{name}</b>
+            <OneLine text={t(item.name, scope)} />
           </span>
         </>
       );
@@ -661,9 +749,21 @@ export function Cork({
       ].map((e) => e?.getBoundingClientRect().bottom ?? 0);
       let move = Math.max(...seen) <= barTop ? 0 : board.getBoundingClientRect().top - head;
       const top = el.getBoundingClientRect().top - move;
+      // 兩格都有卡時兩張一起看（拔掉 A、B 的卡補到 A，新卡放進 B：舊卡不能留在答案列後面）；兩張一起放不下就看新放的這張。
+      const avail = barTop - head - 2 * SEE_GAP;
+      const both = Math.max(
+        ...focusEls.current
+          .filter(
+            (f): f is HTMLDivElement =>
+              !!f?.classList.contains('filled') && !f.classList.contains('away'),
+          )
+          .map((f) => f.offsetHeight),
+        el.offsetHeight,
+      );
+      const hh = both <= avail ? both : el.offsetHeight;
       const toTop = top - (head + SEE_GAP);
-      const toBottom = top + el.offsetHeight - (barTop - SEE_GAP);
-      if (el.offsetHeight > barTop - head - 2 * SEE_GAP) move += toTop;
+      const toBottom = top + hh - (barTop - SEE_GAP);
+      if (hh > avail) move += toTop;
       else if (toBottom > 0) move += toBottom;
       else if (toTop < 0) move += toTop;
       if (Math.abs(move) >= 1) scrollPageTo(window.scrollY + move);
@@ -767,10 +867,12 @@ export function Cork({
   };
   // 邊緣的照片卡維持 4:3（同一張相片在邊緣和光圈裡裁切一樣，設計師 #270），和其他邊緣卡一樣寬；
   // 底欄放卡名全部的行（英文可能三行，不截名，設計師 #300 審），高度照實量，放不下就由 needH 把板子撐高。
-  const boxOf = (_item: CorkItem, cell: [number, number]): { x: number; w: number } => ({
-    x: cell[0],
-    w: CARD_W,
-  });
+  const boxOf = (item: CorkItem, cell: [number, number]): { x: number; w: number } => {
+    // 卡頭最長的字放不下就把卡做寬（最多 EDGE_WIDE），不在字中間斷行；靠右那一欄的卡右緣不動。
+    const need = w ? ((edgeM[item.id]?.minW ?? 0) / w) * 100 : 0;
+    const pct = Math.min(EDGE_WIDE, Math.max(CARD_W, need));
+    return { x: cell[0] > 50 ? cell[0] + CARD_W - pct : cell[0], w: pct };
+  };
   // 還是放不下（照片卡、卡名本身就很長）：往上挪，下緣（含歪斜後低下去的那個角）留和上排一樣的 3%。
   const fit = (id: string, at: [number, number]): [number, number] => {
     const H = edgeM[id]?.h;
@@ -957,6 +1059,7 @@ export function Cork({
             was.h === m.h &&
             was.head === m.head &&
             was.lh === m.lh &&
+            was.minW === m.minW &&
             was.words.join() === m.words.join()
           )
             return;

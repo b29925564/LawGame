@@ -153,6 +153,11 @@
   overflow-wrap: anywhere;
   cursor: pointer;
 }
+/* 邊緣的卡不在字中間斷行（第二道關卡 v92d：「hypertensio／n」）：Cork.tsx 量最長的字，卡至少做到放得下它；
+   手機牌架的格子寬度固定，仍可斷。 */
+.cork-card:not(.rack) {
+  overflow-wrap: normal;
+}
 .cork-card {
   position: absolute;
   z-index: 2;
@@ -592,9 +597,13 @@ body:has(.cork) .card .mini-btn[aria-pressed='true'] {
   font-size: 11px;
   line-height: 14px;
   max-height: 28px;
+  /* 放不下的整行拿掉，不露出下一行的上緣（#300 拿掉邊緣卡的兩行上限時連這裡的 overflow 一起掉了）。 */
+  overflow: hidden;
 }
 .cork-card.rack.photo .cork-strip b {
   max-height: 14px;
+  /* 一行：Cork.tsx OneLine 取放得下的整個字，不靠瀏覽器斷行。 */
+  white-space: nowrap;
 }
 .cork-rack .cork-redact {
   position: relative;
