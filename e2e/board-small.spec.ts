@@ -391,7 +391,8 @@ for (const [w, docked] of [
     await expect(page.locator('.cork.compact'), '桌機不用手機的板').toHaveCount(0);
     const box = (await page.locator('.cork').boundingBox())!;
     expect(box.width - 20, '板內寬 ≥ 600').toBeGreaterThanOrEqual(600);
-    expect(box.width / box.height, '大板 16:10').toBeGreaterThan(1.5);
+    // 大板至少 16:10；邊緣的卡頭比一格高時板子會長高（#300），但還是橫的大板（手機的板是 4:5＝0.8）。
+    expect(box.width / box.height, '橫的大板').toBeGreaterThan(1.2);
     await expect(page.locator('.cork-empty').first()).toHaveText(
       docked ? 'Click a card on the right to place it' : SLOT,
     );
@@ -477,7 +478,10 @@ for (const w of [1380, 1381, 1440, 1530])
         .first()
         .click();
       await expect(page.locator('.cork')).toBeVisible();
+      // 手寫字型載好後每行幾個字才定，邊緣卡的內文行數跟著重算。
+      await page.evaluate(() => document.fonts.ready);
       await settled(page);
+      await page.waitForTimeout(300);
       const r = await page.evaluate(() => {
         const cork = document.querySelector<HTMLElement>('.cork')!;
         const boxes = [
@@ -492,8 +496,32 @@ for (const w of [1380, 1381, 1440, 1530])
           h: e.offsetHeight,
           bar: e.classList.contains('cork-redact'),
           cutName: (() => {
-            const n = e.classList.contains('cork-redact') ? e.querySelector('b') : null;
+            const n = e.querySelector(':scope > .cork-strip > b, :scope.cork-redact > b');
             return n ? n.scrollHeight - n.clientHeight : 0;
+          })(),
+          // 照片卡的卡名在卡裡（底欄不被卡的下緣切掉）。
+          stripOut: (() => {
+            const n = e.querySelector<HTMLElement>(':scope > .cork-strip');
+            return n ? n.offsetTop + n.offsetHeight - e.clientHeight : 0;
+          })(),
+          // 內文放出來的字（空白分隔的語言）至少兩個字，不留「Voss」這種單字殘句。
+          bodyWords: (() => {
+            const b = e.querySelector<HTMLElement>(':scope > span:is(.cork-doc-text, .cork-hand)');
+            if (!b || !b.offsetHeight || !/\s/.test(b.textContent ?? '')) return 99;
+            const m = new DOMMatrixReadOnly(getComputedStyle(e).transform);
+            const tan = Math.tan(Math.atan2(m.b, m.a));
+            const lh = parseFloat(getComputedStyle(b).lineHeight);
+            const ys: number[] = [];
+            const walk = document.createTreeWalker(b, NodeFilter.SHOW_TEXT);
+            for (let t = walk.nextNode(); t; t = walk.nextNode())
+              for (const w of (t.textContent ?? '').matchAll(/\S+/g)) {
+                const r = document.createRange();
+                r.setStart(t, w.index);
+                r.setEnd(t, w.index + w[0].length);
+                const q = r.getBoundingClientRect();
+                ys.push((q.top + q.bottom) / 2 - ((q.left + q.right) / 2) * tan);
+              }
+            return ys.filter((y) => y - ys[0] < b.offsetHeight - lh / 2).length;
           })(),
         }));
         return { boxes, inner: cork.clientHeight, compact: cork.classList.contains('compact') };
@@ -502,7 +530,9 @@ for (const w of [1380, 1381, 1440, 1530])
       expect(r.boxes.length, '邊緣有卡').toBeGreaterThan(4);
       for (const a of r.boxes) {
         expect(a.y + a.h, `${a.name} 在板子裡`).toBeLessThanOrEqual(r.inner);
-        expect(a.cutName, `${a.name} 黑條的卡名完整`).toBeLessThanOrEqual(1);
+        expect(a.cutName, `${a.name} 的卡名完整（黑條、照片卡）`).toBeLessThanOrEqual(1);
+        expect(a.stripOut, `${a.name} 底欄在卡裡`).toBeLessThanOrEqual(1);
+        expect(a.bodyWords, `${a.name} 內文不只剩一個字`).toBeGreaterThanOrEqual(2);
         for (const b of r.boxes) {
           if (a === b) continue;
           const across = Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x);

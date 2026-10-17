@@ -116,27 +116,57 @@ const PIN_R = 5.5; // 圖釘半徑（cork.css .cork-pick::before 11px）
 
 /** 邊緣同一欄上下兩張卡之間至少留的軟木（px）；卡和內文之間的 flex gap（cork.css）。 */
 const EDGE_GAP = 6;
-/** 邊緣照片卡除了照片以外的高度（px）：白邊 10＋底欄白邊 14＋卡名兩行 31。 */
-const PHOTO_CHROME = 55;
-/** 邊緣照片卡最窄寬度（板寬的 %）：再窄就不認得是哪張相片。 */
-const PHOTO_MIN_W = 9;
 const BODY_GAP = 4;
 /** 黑條最矮的高度（px）：cork.css .cork-redact 的 min-height。 */
 const BAR_MIN = 92;
 /** 放卡後捲頁面：整張卡離頂列、答案列至少留這麼多（px）。 */
 const SEE_GAP = 8;
 
-type EdgeSize = { h: number; head: number; lh: number };
+type EdgeSize = { h: number; head: number; lh: number; words: number[] };
 /** 邊緣卡的內文（影印紙正文、索引卡和便條的手寫）：放不下時少放幾行的那一段。 */
 const BODY = ':scope > span:is(.cork-doc-text, .cork-hand)';
-function edgeSize(el: HTMLElement): EdgeSize {
+/**
+ * 內文排出來每一行有幾個字（空白分隔；中文沒有空白，回傳空陣列，不用這條規則）。卡是歪的（tilt），
+ * 先把字的中心點轉回水平再分行。
+ */
+function lineWords(body: HTMLElement, angle: number, lh: number): number[] {
+  if (!/\s/.test(body.textContent ?? '')) return [];
+  const slope = Math.tan((angle * Math.PI) / 180);
+  const out: number[] = [];
+  let y = NaN;
+  const walk = document.createTreeWalker(body, NodeFilter.SHOW_TEXT);
+  for (let n = walk.nextNode(); n; n = walk.nextNode()) {
+    for (const m of (n.textContent ?? '').matchAll(/\S+/g)) {
+      const r = document.createRange();
+      r.setStart(n, m.index);
+      r.setEnd(n, m.index + m[0].length);
+      const b = r.getBoundingClientRect();
+      const cy = (b.top + b.bottom) / 2 - ((b.left + b.right) / 2) * slope;
+      if (out.length && Math.abs(cy - y) < lh / 2) out[out.length - 1]++;
+      else {
+        out.push(1);
+        y = cy;
+      }
+    }
+  }
+  return out;
+}
+function edgeSize(el: HTMLElement, angle: number): EdgeSize {
   const body = el.querySelector<HTMLElement>(BODY);
   const shown = body?.offsetHeight ?? 0;
-  return {
+  const lh = body ? parseFloat(getComputedStyle(body).lineHeight) || 0 : 0;
+  const size = {
     h: el.offsetHeight,
     head: el.offsetHeight - (shown ? shown + BODY_GAP : 0),
-    lh: body ? parseFloat(getComputedStyle(body).lineHeight) || 0 : 0,
+    lh,
   };
+  if (!body || !lh) return { ...size, words: [] };
+  // 內文被拿掉（.bare）時暫時顯示出來量，量完同一格還回去（不繪製、不觸發 ResizeObserver）。
+  const was = body.style.display;
+  if (!shown) body.style.display = 'block';
+  const words = lineWords(body, angle, lh);
+  body.style.display = was;
+  return { ...size, words };
 }
 
 /** 沖印框跟著照片的比例走（prints.tsx 的 ratios.json），沒登記的是 4:3（cork.css）。 */
@@ -730,16 +760,17 @@ export function Cork({
   const linesOf = (id: string, at: [number, number]) => {
     const m = edgeM[id];
     if (!m?.lh) return 2;
-    return Math.max(0, Math.min(2, Math.floor((roomOf(at) - m.head - BODY_GAP) / m.lh)));
+    const n = Math.max(0, Math.min(2, Math.floor((roomOf(at) - m.head - BODY_GAP) / m.lh)));
+    // 放出來的字加起來只有一個字（「Voss」）讀起來像殘句：這一行也拿掉，整段不放（設計師 #2，同字幕不出現單字卡）。
+    const shown = m.words.slice(0, n).reduce((a, b) => a + b, 0);
+    return m.words.length && shown < 2 ? 0 : n;
   };
-  // 邊緣的照片卡維持 4:3（同一張相片在邊緣和光圈裡裁切一樣，設計師 #270）：放不下就把卡做窄，
-  // 高 ＝ 白邊 10＋照片 3/4×(寬−20)＋底欄（白邊 14＋卡名最多兩整行 31）。靠右那一欄的卡右緣不動。
-  const boxOf = (item: CorkItem, cell: [number, number]): { x: number; w: number } => {
-    if (look(item.kind) !== 'photo' || !w || !h) return { x: cell[0], w: CARD_W };
-    const px = (roomOf(cell) - PHOTO_CHROME) / 0.75 + 20;
-    const pct = Math.min(CARD_W, Math.max(PHOTO_MIN_W, (px / w) * 100));
-    return { x: cell[0] > 50 ? cell[0] + CARD_W - pct : cell[0], w: pct };
-  };
+  // 邊緣的照片卡維持 4:3（同一張相片在邊緣和光圈裡裁切一樣，設計師 #270），和其他邊緣卡一樣寬；
+  // 底欄放卡名全部的行（英文可能三行，不截名，設計師 #300 審），高度照實量，放不下就由 needH 把板子撐高。
+  const boxOf = (_item: CorkItem, cell: [number, number]): { x: number; w: number } => ({
+    x: cell[0],
+    w: CARD_W,
+  });
   // 還是放不下（照片卡、卡名本身就很長）：往上挪，下緣（含歪斜後低下去的那個角）留和上排一樣的 3%。
   const fit = (id: string, at: [number, number]): [number, number] => {
     const H = edgeM[id]?.h;
@@ -787,7 +818,7 @@ export function Cork({
   }
 
   // 大板（桌機）邊緣每一欄三格各佔板高的一段：英文卡名長、板子小的時候，不算內文的卡頭就比一格高，
-  // 蓋到下一格的卡（關卡 2 重驗 D：1380 的英文）。照片卡自己會做窄（boxOf），不算；其他卡和黑條照實量的高度把板子撐到放得下，
+  // 蓋到下一格的卡（關卡 2 重驗 D：1380 的英文）。每張卡（照片卡的整張高度＝卡頭）和黑條照實量的高度把板子撐到放得下，
   // 不縮字、不截卡名。內文先少放幾行（linesOf），所以這裡只看卡頭。
   const needH = compact
     ? 0
@@ -795,9 +826,7 @@ export function Cork({
       Math.ceil(
         Math.max(
           0,
-          ...placed.map(({ item, at }) =>
-            look(item.kind) === 'photo' || !edgeM[item.id] ? 0 : spanH(edgeM[item.id].head, at),
-          ),
+          ...placed.map(({ item, at }) => (edgeM[item.id] ? spanH(edgeM[item.id].head, at) : 0)),
           ...bars.map(({ p, at }) => (barNat[p.id] ? spanH(barNat[p.id], at) : 0)),
         ),
       );
@@ -921,19 +950,32 @@ export function Cork({
       setEdgeM((prev) => {
         let next = prev;
         edgeEls.current.forEach((el, id) => {
-          const m = edgeSize(el);
           const was = prev[id];
-          if (was && was.h === m.h && was.head === m.head && was.lh === m.lh) return;
+          const m = edgeSize(el, tilt(id));
+          if (
+            was &&
+            was.h === m.h &&
+            was.head === m.head &&
+            was.lh === m.lh &&
+            was.words.join() === m.words.join()
+          )
+            return;
           if (next === prev) next = { ...prev };
           next[id] = m;
         });
         return next;
       });
     measure();
-    if (typeof ResizeObserver === 'undefined') return;
+    // 手寫字型載好後每行幾個字會變，但內文框的高度不變（量不到尺寸變化）：字型載好也重量。
+    document.fonts?.addEventListener('loadingdone', measure);
+    if (typeof ResizeObserver === 'undefined')
+      return () => document.fonts?.removeEventListener('loadingdone', measure);
     const ro = new ResizeObserver(measure);
     edgeEls.current.forEach((el) => ro.observe(el));
-    return () => ro.disconnect();
+    return () => {
+      ro.disconnect();
+      document.fonts?.removeEventListener('loadingdone', measure);
+    };
   }, [edgeIds, ids, compact]);
 
   useLayoutEffect(() => {
