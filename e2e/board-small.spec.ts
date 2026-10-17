@@ -41,10 +41,16 @@ const CARDS = [
 const SLOT = /點板上的卡，或從證據裡挑|Tap a card on the board, or pick one from Evidence./;
 
 // confirmed：q2a 已確認，論點 arg-watch 上板，聲請「死者手錶的健康資料」還沒裁定，牌架第一頁排一條黑條。
-async function open(page: Page, lang: string, confirmed: string[] = []) {
+async function open(
+  page: Page,
+  lang: string,
+  confirmed: string[] = [],
+  found: string[] = [],
+  cards: string[] = CARDS,
+) {
   await page.goto('/');
   await page.evaluate(
-    ([lang, cards, desk, confirmed]) => {
+    ([lang, cards, desk, confirmed, found]) => {
       localStorage.setItem('lawgame-lang', lang as string);
       localStorage.setItem(
         'lawgame-ep-auto',
@@ -60,12 +66,12 @@ async function open(page: Page, lang: string, confirmed: string[] = []) {
             cards,
             flags: [],
             ethics: [],
-            scenes: { investigate: { ...(desk as object), confirmed } },
+            scenes: { investigate: { ...(desk as object), confirmed, found } },
           },
         }),
       );
     },
-    [lang, CARDS, desk, confirmed] as const,
+    [lang, cards, desk, confirmed, found] as const,
   );
   await page.reload();
   await page
@@ -441,6 +447,71 @@ for (const w of [1100, 1180, 1280, 1379, 1380, 1381, 1440, 1530])
       }
     });
 
+// 第二道關卡 v92c D：1380–1381 英文、兩條連線都找到時，邊緣的索引卡（Sophie 的陳述）卡頭比一格高，被下面的卡蓋掉 57px。
+// 板子照實量的卡頭和黑條高度長高到每張邊緣的卡都在自己那一格裡：互不重疊、都在板子裡、黑條的卡名完整。
+const GATE_CARDS = [
+  'ethan-accused',
+  'ethan-ride',
+  'ethan-message',
+  'sophie-home',
+  'sophie-health-app',
+  'indictment',
+  'access-partial',
+  'access-full',
+  'ride-receipt',
+  'watch-notice',
+  'autopsy',
+  'watch-listed',
+  'watch-photo',
+  'arg-a',
+  'arg-watch',
+];
+for (const w of [1380, 1381, 1440, 1530])
+  for (const lang of ['zh-TW', 'en'])
+    test(`${w}：大板邊緣的卡各在自己那一格，不互相蓋（${lang}）`, async ({ page }) => {
+      await page.setViewportSize({ width: w, height: 860 });
+      await open(page, lang, ['q1', 'q2a'], ['l-watch', 'l-called-msg'], GATE_CARDS);
+      await page
+        .locator('.q-item')
+        .filter({ hasText: /手錶資料與本案相關|the watch data is relevant/ })
+        .first()
+        .click();
+      await expect(page.locator('.cork')).toBeVisible();
+      await settled(page);
+      const r = await page.evaluate(() => {
+        const cork = document.querySelector<HTMLElement>('.cork')!;
+        const boxes = [
+          ...cork.querySelectorAll<HTMLElement>(
+            ':scope > .cork-card:not(.cork-focus), :scope > .cork-redact',
+          ),
+        ].map((e) => ({
+          name: (e.querySelector('b')?.textContent ?? e.className).slice(0, 30),
+          x: e.offsetLeft,
+          y: e.offsetTop,
+          w: e.offsetWidth,
+          h: e.offsetHeight,
+          bar: e.classList.contains('cork-redact'),
+          cutName: (() => {
+            const n = e.classList.contains('cork-redact') ? e.querySelector('b') : null;
+            return n ? n.scrollHeight - n.clientHeight : 0;
+          })(),
+        }));
+        return { boxes, inner: cork.clientHeight, compact: cork.classList.contains('compact') };
+      });
+      expect(r.compact, '大板').toBe(false);
+      expect(r.boxes.length, '邊緣有卡').toBeGreaterThan(4);
+      for (const a of r.boxes) {
+        expect(a.y + a.h, `${a.name} 在板子裡`).toBeLessThanOrEqual(r.inner);
+        expect(a.cutName, `${a.name} 黑條的卡名完整`).toBeLessThanOrEqual(1);
+        for (const b of r.boxes) {
+          if (a === b) continue;
+          const across = Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x);
+          const down = Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y);
+          expect(across > 1 && down > 0, `${a.name} 沒蓋到 ${b.name}`).toBe(false);
+        }
+      }
+    });
+
 // 設計師 #2 2026-10-16 (d)：板子從一開始就照這一題最高的卡算高度，A／B 空著、放一張、放兩張，Pixel 7 的板子一樣高。
 for (const lang of ['zh-TW', 'en'])
   for (const scale of ['1', '1.5'])
@@ -579,9 +650,13 @@ for (const [w, h] of [
       await page.locator('.cork-rack:not(.marks) .cork-card').first().click();
       const r = await scrolledBoard(page);
       expect(r.y, '有捲').toBeGreaterThan(0);
-      expect(Math.abs(r.corkTop - r.head), '板子上緣貼在頂列下面').toBeLessThanOrEqual(2);
-      expect(r.rackTop, '牌架第一列在頂列下面').toBeGreaterThanOrEqual(r.head);
-      expect(r.rackBottom, '牌架第一列在答案列上方').toBeLessThanOrEqual(r.barTop);
+      // 板子上緣至少捲到頂列下面；卡很長（英文索引卡、小手機）放不下整張時再多捲，牌架第一列就捲到頂列後面（v92c E，
+      // 整張卡在答案列上方比牌架第一列重要）。沒多捲的時候牌架第一列整列可見。
+      expect(r.corkTop, '板子上緣至少貼到頂列').toBeLessThanOrEqual(r.head + 2);
+      if (Math.abs(r.corkTop - r.head) <= 2) {
+        expect(r.rackTop, '牌架第一列在頂列下面').toBeGreaterThanOrEqual(r.head);
+        expect(r.rackBottom, '牌架第一列在答案列上方').toBeLessThanOrEqual(r.barTop);
+      }
       expect(r.tags, 'A／B 標籤在答案列上方').toBeLessThanOrEqual(r.barTop);
       expect(r.names, '卡名在答案列上方').toBeLessThanOrEqual(r.barTop);
       expect(r.empty, '空格在答案列上方').toBeLessThanOrEqual(r.barTop);
@@ -662,14 +737,52 @@ for (const [w, h] of [
       });
     });
 
-test('手機：A／B 已在答案列上方就不捲', async ({ page }) => {
+// gate 2 v92c E：Pixel 7 英文第 1 集，標籤和卡名在答案列上方，但卡很長，下半張（索引卡的內文）被答案列蓋住 27–46%。
+// 整張卡放得下就整張在頂列和答案列之間；放不下就卡的上緣貼在頂列下面，能看多少看多少。
+for (const lang of ['en', 'zh-TW'])
+  test(`手機 412×839：每次放卡後，整張卡（放得下的話）在頂列和答案列之間（${lang}）`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 412, height: 839 });
+    await open(page, lang, ['q2a']);
+    await question(page);
+    const seeCard = async (slot: number) => {
+      await scrolledBoard(page);
+      return page.evaluate((i) => {
+        const f = document.querySelectorAll<HTMLElement>('.cork-focus')[i];
+        const r = f.getBoundingClientRect();
+        return {
+          top: r.top,
+          bottom: f.getBoundingClientRect().top + f.offsetHeight,
+          height: f.offsetHeight,
+          head: document.querySelector('.wb-head')!.getBoundingClientRect().height,
+          barTop: document.querySelector('.answer-bar')!.getBoundingClientRect().top,
+        };
+      }, slot);
+    };
+    for (const slot of [0, 1]) {
+      await page.evaluate(() => window.scrollTo(0, 0));
+      await page.waitForTimeout(300);
+      await page.locator('.cork-rack:not(.marks) .cork-card').first().click();
+      const c = await seeCard(slot);
+      if (c.height <= c.barTop - c.head)
+        expect(c.bottom, `${'AB'[slot]} 整張在答案列上方`).toBeLessThanOrEqual(c.barTop);
+      else expect(c.top, `${'AB'[slot]} 放不下：上緣貼頂列`).toBeLessThanOrEqual(c.head + 10);
+      expect(c.top, `${'AB'[slot]} 上緣不在頂列後面`).toBeGreaterThanOrEqual(c.head - 1);
+    }
+  });
+
+test('手機：整張卡放得進頂列和答案列之間就不捲', async ({ page }) => {
   await page.setViewportSize({ width: 412, height: 839 });
   await open(page, 'zh-TW', ['q2a']);
   await question(page);
-  // 玩家先把板子捲到 A／B 都在答案列上方，再從牌架放卡。
+  // 玩家先把板子上緣捲到頂列下面（A／B 和中文卡整張都在答案列上方），再從牌架放卡。
   await page.evaluate(() => {
     const cork = document.querySelector('.cork')!.getBoundingClientRect();
-    window.scrollTo(0, scrollY + cork.top - 200);
+    window.scrollTo(
+      0,
+      scrollY + cork.top - document.querySelector('.wb-head')!.getBoundingClientRect().height,
+    );
   });
   await page.waitForTimeout(300);
   const before = await page.evaluate(() => Math.round(scrollY));
