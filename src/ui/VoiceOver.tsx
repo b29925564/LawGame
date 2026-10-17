@@ -168,6 +168,7 @@ export function VoiceOver({ line, onDone }: { line: Line; onDone: () => void }) 
     <div
       className="vo"
       data-layer={onPlate ? 'scene' : undefined}
+      data-scrim={onPlate?.scrim ? 'on' : undefined}
       role="dialog"
       aria-modal="true"
       aria-label={t('盧卡斯沒有說出口')}

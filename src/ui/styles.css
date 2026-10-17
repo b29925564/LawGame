@@ -510,8 +510,7 @@ details summary {
   justify-content: flex-end;
 }
 .scene.plated > .eyebrow:first-child,
-.scene.backdrop > .eyebrow:first-child,
-.scene.backdrop > .muted {
+.scene.backdrop > .eyebrow:first-child {
   align-self: flex-start;
   max-width: calc(100% - 96px);
   min-height: 0;
@@ -523,6 +522,21 @@ details summary {
 }
 .scene.plated > .eyebrow:first-child {
   margin-bottom: auto;
+}
+/* 選擇頁的說明字是介面上的說明，不是場記：不放黑條，直接寫在壓暗的房間上（只有眉標是黑條）。 */
+.scene.backdrop > .muted {
+  align-self: flex-start;
+  max-width: calc(100% - 96px);
+  color: var(--cine-text);
+  font-size: 14px;
+  text-shadow:
+    0 1px 2px rgb(0 0 0 / 80%),
+    0 0 18px rgb(0 0 0 / 55%);
+}
+@media (max-width: 767px) {
+  .scene.backdrop > .muted {
+    font-size: 13px;
+  }
 }
 /* 眉標和定場場記同一套規則：一行，放不下就整段拿掉前面的場所名／幕名（.short），不在字中間斷。 */
 .plate-eyebrow {
@@ -5384,6 +5398,11 @@ button.iou[aria-pressed='true'] {
 /* 鏡頭層不跟主題（設定集 ch02 :236）：縫、記號、提示的 light-dark() 權杖在底圖上一律取深色那一邊。 */
 .vo[data-layer='scene'] {
   color-scheme: dark;
+  /* 只設 color-scheme 不夠：這三個權杖在 :root 的 light-dark() 已經解成淺色那一邊（量過：記號 rgb(93,104,119)，
+     縫的中心比帶外亮 80），所以在這裡直接重新宣告成深色的值。 */
+  --vo-seam: color-mix(in srgb, var(--k-window) 9%, transparent);
+  --vo-mark: color-mix(in srgb, var(--k-window) 70%, transparent);
+  --vo-cue-ink: var(--cine-muted);
 }
 /* 底圖上的字幕：「點擊繼續」屬於字幕，接在進度線下方 16px，不掛在台詞框下緣。 */
 .vo[data-layer='scene'] .vo-frame > .vo-cue {

@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { RIGS } from './rigs';
-import { plateFor } from './scenePlate';
+import { bandNeedsScrim, plateFor } from './scenePlate';
 
 /**
  * 底圖接進場景（scenePlate.tsx）：照「集:場景 id」找，燈組要和場景自己寫的一樣，有語言的圖跟介面語言。
@@ -44,5 +44,34 @@ describe('場景底圖', () => {
 
   it('沒有底圖的場景是 null', () => {
     expect(plateFor('ep1', { id: 'firm-morning', rig: 'ep1-conf-a-thu' }, 'zh')).toBeNull();
+  });
+});
+
+/** 64×8 的 RGBA；band 這幾列用 rowFill，其餘填 base。 */
+function grid(base: number, band?: (x: number) => number) {
+  const d = new Uint8ClampedArray(64 * 8 * 4);
+  for (let y = 0; y < 8; y++)
+    for (let x = 0; x < 64; x++) {
+      const v = (y === 3 || y === 4) && band ? band(x) : base;
+      d.set([v, v, v, 255], (y * 64 + x) * 4);
+    }
+  return d;
+}
+
+describe('自適應襯底的判斷（art bible 10.1，量場景本身的字幕帶）', () => {
+  it('暗的底圖不加', () => {
+    expect(bandNeedsScrim(grid(60))).toBe(false);
+  });
+  it('整條都很亮（平均 > 0.35）要加', () => {
+    expect(bandNeedsScrim(grid(0, () => 200))).toBe(true);
+  });
+  it('只有一格近乎純白（最大值 > 0.7）也要加', () => {
+    expect(bandNeedsScrim(grid(0, (x) => (x === 10 ? 245 : 0)))).toBe(true);
+  });
+  it('一格只有中等亮度，不加', () => {
+    expect(bandNeedsScrim(grid(0, (x) => (x === 10 ? 200 : 0)))).toBe(false);
+  });
+  it('帶以外的亮不算', () => {
+    expect(bandNeedsScrim(grid(255, () => 0))).toBe(false);
   });
 });

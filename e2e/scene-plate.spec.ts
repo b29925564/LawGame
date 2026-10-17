@@ -198,6 +198,15 @@ test('案件理論：開場那一頁有底圖；選理論那一頁留著同一�
   await expect(bg).toHaveAttribute('data-dim', '');
   const veil = await bg.evaluate((e) => getComputedStyle(e, '::after').backgroundColor);
   expect(veil).toBe('rgba(6, 8, 11, 0.58)');
+  // 說明字不是場記：不放黑條，直接寫在壓暗的房間上（只有眉標是黑條）。
+  const hint = page.locator('.scene.backdrop > .muted');
+  const hs = await hint.evaluate((e) => {
+    const c = getComputedStyle(e);
+    return { bg: c.backgroundColor, size: c.fontSize, shadow: c.textShadow };
+  });
+  expect(hs.bg).toBe('rgba(0, 0, 0, 0)');
+  expect(hs.size).toBe((page.viewportSize()?.width ?? 0) < 768 ? '13px' : '14px');
+  expect(hs.shadow).not.toBe('none');
 });
 
 test('底圖上的台詞框：半透明加模糊、上緣不淡出；有底圖就沒有盧卡斯大圖；眉標一行', async ({
@@ -249,4 +258,44 @@ test('底圖上的畫外字幕：走鏡頭層，只壓暗圖、不用紙色蓋�
     vo.locator('.vo-cue').boundingBox(),
   ]);
   expect(cue!.y).toBeGreaterThanOrEqual(prog!.y + prog!.height);
+  // 縫的光不跟主題：light-dark() 權杖在 :root 已經解成淺色那邊，要在 .vo 上重宣告（亮、暗主題一樣是暖色記號）。
+  for (const theme of ['light', 'dark']) {
+    await page.evaluate((t) => (document.documentElement.dataset.theme = t), theme);
+    const mark = await vo.locator('.vo-mark').evaluate((e) => getComputedStyle(e).backgroundColor);
+    expect(mark).not.toBe('rgb(93, 104, 119)');
+    expect(mark).toMatch(/^color\(srgb 1 0\.88/);
+  }
+  // 這三張底圖字幕帶都夠暗，不加襯底。
+  await expect(vo).not.toHaveAttribute('data-scrim', 'on');
+});
+
+// 一張全白的 64×36 JPEG：字幕帶太亮的情況。
+const WHITE_JPG = Buffer.from(
+  '/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCAAkAEADASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD3qiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKAP//Z',
+  'base64',
+);
+test('底圖在字幕帶太亮：畫外字幕加自適應襯底（art bible 10.1）', async ({ page }) => {
+  await page.route(/\/assets\/s6-steps[^/]*\.jpg/, (r) =>
+    r.fulfill({ status: 200, contentType: 'image/jpeg', body: WHITE_JPG }),
+  );
+  await open(page, 33, 'zh', 'o-probation');
+  await page.locator('.place-beat').click();
+  for (let i = 0; i < 3; i++) await page.locator('.scene.plated .primary').click();
+  const vo = page.locator('.vo');
+  await expect(vo).toHaveAttribute('data-layer', 'scene');
+  await expect(vo).toHaveAttribute('data-scrim', 'on');
+  const scrim = await vo
+    .locator('.vo-frame')
+    .evaluate((e) => getComputedStyle(e, '::after').backgroundImage);
+  expect(scrim).toContain('radial-gradient');
+});
+
+test('手機的英文眉標拿掉前段後，剩下的首字大寫', async ({ page }) => {
+  test.skip((page.viewportSize()?.width ?? 0) >= 768, '只有手機會拿掉前段');
+  await open(page, 33, 'en', 'o-probation');
+  await page.locator('.place-beat').click();
+  const eyebrow = page.locator('.plate-eyebrow');
+  await expect(eyebrow).toHaveClass(/short/);
+  const room = (await eyebrow.locator('.ps-room').innerText()).trim();
+  expect(room.charAt(0)).toBe(room.charAt(0).toUpperCase());
 });

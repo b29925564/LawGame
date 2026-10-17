@@ -5,7 +5,14 @@ import { useScope } from './lang';
 import { LucasStage, Speech } from './Portrait';
 import { Transcript } from './Shell';
 import { Recap, splitSlate } from './ActCard';
-import { OnPlate, PlateEyebrow, ScenePlate, useScenePlate, useShown } from './scenePlate';
+import {
+  OnPlate,
+  onPlateOf,
+  PlateEyebrow,
+  ScenePlate,
+  useScenePlate,
+  useShown,
+} from './scenePlate';
 
 /** 對話場景：一路往下讀，遇到選擇就停。之前的台詞留在畫面上，方便回頭看。 */
 export function Dialogue({ scene }: { scene: DialogueScene }) {
@@ -91,7 +98,7 @@ export function Dialogue({ scene }: { scene: DialogueScene }) {
     );
 
   return (
-    <OnPlate.Provider value={!!shown}>
+    <OnPlate.Provider value={onPlateOf(shown)}>
       <main className={shown ? 'scene dialogue plated' : 'scene dialogue'}>
         {/* 眉標和地點字卡左欄讀同一個欄位（設定集 11.3 裁定）。 */}
         {shown ? (

@@ -12,7 +12,14 @@ import { prose } from './prose';
 import { useScope } from './lang';
 import { Speech } from './Portrait';
 import { Recap, splitSlate } from './ActCard';
-import { OnPlate, PlateEyebrow, ScenePlate, useScenePlate, useShown } from './scenePlate';
+import {
+  OnPlate,
+  onPlateOf,
+  PlateEyebrow,
+  ScenePlate,
+  useScenePlate,
+  useShown,
+} from './scenePlate';
 
 /**
  * 案件理論（企劃書 6.9.2）：整集最大的策略決定，選了不能換。
@@ -32,7 +39,7 @@ export function Theory({ scene }: { scene: TheoryScene }) {
 
   if (intro)
     return (
-      <OnPlate.Provider value={!!shown}>
+      <OnPlate.Provider value={onPlateOf(shown)}>
         <main className={shown ? 'scene dialogue plated' : 'scene'}>
           {shown ? (
             <PlateEyebrow

@@ -79,6 +79,59 @@ function usePhone() {
 
 type State = 'wait' | 'ok' | 'fail';
 const settled = new Map<string, State>();
+/** 這張圖在字幕帶的判斷結果（圖解碼完算一次，見 bandNeedsScrim）。 */
+const scrims = new Map<string, boolean>();
+
+/** 字幕帶：64×8 降採樣的第 3、4 列（畫面高 37.5%–62.5%，畫外字幕固定在 46%）。 */
+const BAND_ROWS = [3, 4];
+const GRID = { w: 64, h: 8 };
+
+const lin = (c: number) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
+
+/**
+ * 自適應襯底的判斷式（art bible 10.1）：字幕帶（場景本身的，不含畫外字幕那層 58% 壓暗；壓暗之後最亮也只到約 0.16，
+ * 永遠到不了門檻）相對亮度平均 > 0.35，或最亮的一格 > 0.7，才加 --sub-scrim。data 是 64×8 的 RGBA。
+ */
+export function bandNeedsScrim(data: ArrayLike<number>): boolean {
+  let sum = 0;
+  let max = 0;
+  let n = 0;
+  for (const row of BAND_ROWS)
+    for (let x = 0; x < GRID.w; x++) {
+      const i = (row * GRID.w + x) * 4;
+      const [r, g, b] = [0, 1, 2].map((k) => lin(data[i + k] / 255));
+      const y = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+      sum += y;
+      max = Math.max(max, y);
+      n++;
+    }
+  return sum / n > 0.35 || max > 0.7;
+}
+
+/** 照現在的視窗比例（object-fit: cover）把圖降採樣成 64×8；做不到（沒有 canvas）就回 null，當作不需要襯底。 */
+function sampleBand(img: HTMLImageElement): Uint8ClampedArray | null {
+  try {
+    const vw = globalThis.innerWidth || img.naturalWidth;
+    const vh = globalThis.innerHeight || img.naturalHeight;
+    const scale = Math.max(vw / img.naturalWidth, vh / img.naturalHeight);
+    const [sw, sh] = [vw / scale, vh / scale];
+    const [sx, sy] = [(img.naturalWidth - sw) / 2, (img.naturalHeight - sh) / 2];
+    // 兩段降採樣：一次縮到 64×8 會跳過大部分像素。
+    const mid = document.createElement('canvas');
+    [mid.width, mid.height] = [GRID.w * 4, GRID.h * 4];
+    const m = mid.getContext('2d');
+    const out = document.createElement('canvas');
+    [out.width, out.height] = [GRID.w, GRID.h];
+    const o = out.getContext('2d', { willReadFrequently: true });
+    if (!m || !o) return null;
+    m.imageSmoothingQuality = o.imageSmoothingQuality = 'high';
+    m.drawImage(img, sx, sy, sw, sh, 0, 0, mid.width, mid.height);
+    o.drawImage(mid, 0, 0, GRID.w, GRID.h);
+    return o.getImageData(0, 0, GRID.w, GRID.h).data;
+  } catch {
+    return null;
+  }
+}
 const loading = new Map<string, Promise<State>>();
 
 /** 載好並解碼；同一張只做一次。圖壞掉算 fail（不記住，下次再試）。 */
@@ -97,6 +150,8 @@ export function warmPlate(url: string): Promise<State> {
         });
     p = done.then(
       () => {
+        const band = sampleBand(img);
+        scrims.set(url, band ? bandNeedsScrim(band) : false);
         settled.set(url, 'ok');
         return 'ok' as const;
       },
@@ -111,7 +166,7 @@ export function warmPlate(url: string): Promise<State> {
 /** 太久不來就放棄（慢網路、壞檔）：定場照舊放黑底場記，不卡住玩家。 */
 const GIVE_UP = 5000;
 
-export type Shown = { plate: Plate; url: string; state: State };
+export type Shown = { plate: Plate; url: string; state: State; scrim: boolean };
 
 /** 照螢幕挑那一版，等它解碼完。已經解碼過的第一個畫面就是 ok，不閃黑。 */
 export function useShown(plate: Plate | null): Shown | null {
@@ -133,7 +188,7 @@ export function useShown(plate: Plate | null): Shown | null {
   }, [url]);
   if (!plate) return null;
   const state = settled.get(url) ?? (got?.url === url ? got.state : 'wait');
-  return state === 'fail' ? null : { plate, url, state };
+  return state === 'fail' ? null : { plate, url, state, scrim: scrims.get(url) ?? false };
 }
 
 /**
@@ -161,7 +216,9 @@ export function ScenePlate({ shown, dim }: { shown: Shown; dim?: boolean }) {
  * 這一場有底圖在背後：畫外字幕（VoiceOver）改走鏡頭層的版本（data-layer='scene'）——圖只壓暗到 58%、字用鏡頭層的白，
  * 不用整頁的紙色／墨色把圖蓋掉。
  */
-export const OnPlate = createContext(false);
+export const OnPlate = createContext<{ scrim: boolean } | null>(null);
+/** Provider 的值：沒有底圖是 null；字幕帶太亮就帶 scrim（畫外字幕自己加襯底）。 */
+export const onPlateOf = (shown: Shown | null) => (shown ? { scrim: shown.scrim } : null);
 export const useOnPlate = () => useContext(OnPlate);
 
 /**
@@ -172,7 +229,8 @@ export const useOnPlate = () => useContext(OnPlate);
 const EYEBROW_MENU = 96;
 
 export function PlateEyebrow({ text }: { text: string }) {
-  const sep = useLang((s) => s.lang) === 'en' ? ', ' : '\u3000';
+  const en = useLang((s) => s.lang) === 'en';
+  const sep = en ? ', ' : '\u3000';
   const cut = text.lastIndexOf(sep);
   const [lead, room] =
     cut > 0 ? [text.slice(0, cut + sep.length), text.slice(cut + sep.length)] : ['', text];
@@ -199,7 +257,9 @@ export function PlateEyebrow({ text }: { text: string }) {
   return (
     <p ref={ref} className={short ? 'eyebrow plate-eyebrow short' : 'eyebrow plate-eyebrow'}>
       {lead && <span className="ps-lead">{lead}</span>}
-      <span className="ps-room">{room}</span>
+      <span className="ps-room">
+        {short && en ? room.charAt(0).toUpperCase() + room.slice(1) : room}
+      </span>
     </p>
   );
 }
