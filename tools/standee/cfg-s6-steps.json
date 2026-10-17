@@ -1,76 +1,44 @@
 {
- "id": "s6-steps",
- "frames_res": [
-  2304,
-  1440
- ],
- "phone_crop_px": [
-  861,
-  0,
-  1671,
-  1440
- ],
- "people": [
-  {
-   "name": "lucas",
-   "fig": "lucas_front",
-   "h": 1.78,
-   "feet_px": [
-    1082.4,
-    972.4
-   ],
-   "crown_px": [
-    1082.4,
-    766.2
-   ],
-   "body": "#07090c",
-   "lights": []
-  },
-  {
-   "name": "ethan",
-   "fig": "ethan_lookback",
-   "h": 1.78,
-   "feet_px": [
-    992.1,
-    1083.6
-   ],
-   "crown_px": [
-    992.1,
-    846.6
-   ],
-   "body": "#07090c",
-   "lights": []
-  },
-  {
-   "name": "sister",
-   "fig": "sister",
-   "h": 1.68,
-   "feet_px": [
-    1538.4,
-    1287.9
-   ],
-   "crown_px": [
-    1538.4,
-    1017.5
-   ],
-   "body": "#07090c",
-   "lights": [
+  "id": "s6-steps",
+  "frames_res": [2304, 1440],
+  "phone_crop_px": [861, 0, 1671, 1440],
+  "people": [
     {
-     "dir": [
-      0.63,
-      -0.78
-     ],
-     "color": "#a19a93",
-     "width": 1.5,
-     "alpha": 1.0,
-     "soft": 0.3
+      "name": "lucas",
+      "fig": "lucas_front",
+      "h": 1.78,
+      "feet_px": [1082.4, 972.4],
+      "crown_px": [1082.4, 766.2],
+      "body": "#07090c",
+      "lights": []
+    },
+    {
+      "name": "ethan",
+      "fig": "ethan_lookback",
+      "h": 1.78,
+      "feet_px": [992.1, 1083.6],
+      "crown_px": [992.1, 846.6],
+      "body": "#07090c",
+      "lights": []
+    },
+    {
+      "name": "sister",
+      "fig": "sister",
+      "h": 1.68,
+      "feet_px": [1538.4, 1287.9],
+      "crown_px": [1538.4, 1017.5],
+      "body": "#07090c",
+      "lights": [
+        {
+          "dir": [0.63, -0.78],
+          "color": "#a19a93",
+          "width": 1.5,
+          "alpha": 1.0,
+          "soft": 0.3
+        }
+      ]
     }
-   ]
-  }
- ],
- "plates": [
-  "s6-steps",
-  "s6-steps-en"
- ],
- "fit": {}
+  ],
+  "plates": ["s6-steps", "s6-steps-en"],
+  "fit": {}
 }
