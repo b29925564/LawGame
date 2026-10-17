@@ -362,9 +362,18 @@ for (const lang of ['zh', 'en'] as const)
                     lines: lineStarts.length,
                   };
                 });
+              // 還看得到的字幕（淡出到一半也算）：visibility 不是 hidden、opacity 大於 0。
+              const shownAny = [...document.querySelectorAll('.cam-sub')]
+                .filter(
+                  (e) =>
+                    getComputedStyle(e).visibility !== 'hidden' &&
+                    Number(getComputedStyle(e).opacity) > 0,
+                )
+                .map((e) => e.textContent!.replace(/\s+/g, ' ').trim());
               return {
                 shot,
                 subs,
+                shownAny,
                 frame: { w: fr.width, h: fr.height },
                 tubes: rectOf(view.tubes),
                 clock: rectOf(view.clock),
@@ -418,7 +427,14 @@ for (const lang of ['zh', 'en'] as const)
                     `${tag} 蓋到${name}`,
                   ).toBe(true);
             }
-          } else if (texts.length && s.shot !== 'bench') cut = true;
+          } else if (texts.length) {
+            cut = true;
+            // 切回證人的那一格，法官的字幕就收了（不留在證人的畫面上；關卡二 v92 #C）。
+            expect(
+              s.shownAny,
+              `${width || '手機'}・${scale * 100}% 切回證人後法官的字幕還在`,
+            ).toEqual([]);
+          }
           await page.waitForTimeout(40);
         }
         expect(cut, '法官席要切回證人').toBe(true);
@@ -435,3 +451,73 @@ for (const lang of ['zh', 'en'] as const)
         expect(rounds.map((r) => r.length)).toEqual(RULINGS[lang].map((r) => r.length));
     });
   }
+
+/**
+ * 關卡 2 v92 #C（設計師 #299）：切回證人那一格，法官的字幕就收，不等自己的 CSS 計時。
+ * 原問題是卡頓時兩條時鐘（字幕的 CSS 動畫、鏡頭的 JS 計時）對不上；CI 不卡，所以用 CDP
+ * Animation.setPlaybackRate 把 CSS 動畫放慢（鏡頭的 JS 計時不受影響），字幕的計時一定比鏡頭晚。
+ * 舊碼（字幕自己的計時收）在這裡會紅：切回證人時法官的字幕還在。
+ */
+for (const lang of ['zh', 'en'] as const)
+  test(`切回證人那一格法官的字幕就收，CSS 動畫放慢也一樣（${lang}）`, async ({ page }, info) => {
+    test.skip(info.project.name !== 'desktop', '桌機鏡頭條');
+    test.setTimeout(90_000);
+    await page.setViewportSize({ width: 1530, height: 860 });
+    await page.addInitScript(
+      ([s, l]) => {
+        if (sessionStorage.getItem('seeded')) return;
+        sessionStorage.setItem('seeded', '1');
+        localStorage.clear();
+        localStorage.setItem('lawgame-ep-auto', s);
+        if (l === 'en') localStorage.setItem('lawgame-lang', 'en');
+      },
+      [
+        JSON.stringify({ version: 5, savedAt: Date.now(), label: 'x', progress: save.ep1 }),
+        lang,
+      ] as const,
+    );
+    await page.goto('/');
+    await page
+      .getByRole('button', { name: lang === 'en' ? /^Continue/ : /^繼續（/ })
+      .first()
+      .click();
+    const open = page.getByRole('button', { name: lang === 'en' ? 'Go to court' : '開庭' });
+    await open.or(page.locator('.court-cam')).first().waitFor();
+    if (await open.isVisible()) await open.click();
+    await expect(page.locator('.court-cam').first()).toBeVisible();
+    await page.waitForTimeout(1500);
+    await page.locator('button.primary.wide:not(.locked)').first().click();
+    const reason = page.locator('section.objection .row button').first();
+    await expect(reason).toBeVisible();
+    await reason.click();
+    const state = () =>
+      page.evaluate(() => ({
+        shot: document.querySelector('.cam-frame')?.getAttribute('data-shot') ?? '',
+        shown: [...document.querySelectorAll('.cam-sub')]
+          .filter(
+            (e) =>
+              getComputedStyle(e).visibility !== 'hidden' &&
+              Number(getComputedStyle(e).opacity) > 0,
+          )
+          .map((e) => e.textContent!.replace(/\s+/g, ' ').trim()),
+      }));
+    // 法官席上第一張字幕出現之後才放慢：之後字幕的收尾計時比鏡頭晚 4 倍。
+    const cdp = await page.context().newCDPSession(page);
+    await cdp.send('Animation.enable');
+    let slowed = false;
+    let cutAt: { shot: string; shown: string[] } | null = null;
+    const t0 = Date.now();
+    while (Date.now() - t0 < 20_000 && !cutAt) {
+      const s = await state();
+      if (!slowed) {
+        if (s.shot === 'bench' && s.shown.length) {
+          await cdp.send('Animation.setPlaybackRate', { playbackRate: 0.25 });
+          slowed = true;
+        }
+      } else if (s.shot !== 'bench') cutAt = s;
+      await page.waitForTimeout(16);
+    }
+    expect(slowed, '法官席上要有字幕').toBe(true);
+    expect(cutAt, '法官席要切回證人').not.toBeNull();
+    expect(cutAt!.shown, '切回證人那一格法官的字幕還在').toEqual([]);
+  });
