@@ -499,6 +499,32 @@ details summary {
     overflow: visible;
   }
 }
+/* 有底圖的對話場景（scenePlate.tsx）：圖是整頁的背景，眉標縮成一條場記貼左上，台詞框貼底、最多佔下面一截，
+   上半部留給圖，介面不壓在圖的主體上。台詞框、按鈕照舊跟主題（和來電畫面一樣：鏡頭層的黑上放面板）。 */
+.scene.plated {
+  isolation: isolate;
+  justify-content: flex-end;
+}
+.scene.plated > .eyebrow:first-child {
+  margin-bottom: auto;
+  align-self: flex-start;
+  max-width: calc(100% - 96px);
+  min-height: 0;
+  padding: 6px 12px;
+  background: var(--cine-bg);
+  color: var(--cine-text);
+  font: 500 13px / 1.4 var(--font-mono);
+  letter-spacing: 0.06em;
+}
+.scene.plated > .lines {
+  flex: 0 1 auto;
+  max-height: min(44dvh, 420px);
+}
+@media (max-width: 767px) {
+  .scene.plated > .lines {
+    max-height: 36dvh;
+  }
+}
 /* 捲動區裡的東西不准被壓扁：清單外框有 overflow: hidden，彈性版面會把它擠成一條。 */
 .stack > *,
 .shell-body > * {
@@ -5331,6 +5357,13 @@ button.iou[aria-pressed='true'] {
   background: transparent;
   box-shadow: none;
   border-radius: 0;
+}
+/* 全螢幕的點擊層不吃一般按鈕的 hover／按下樣式：滑鼠一靠近就整頁變成 --surface-2，蓋掉後面的世界（底圖上的字幕看得最清楚）。 */
+.vo > .vo-hit:hover:not(:disabled),
+.vo > .vo-hit:active:not(:disabled) {
+  background: transparent;
+  border-color: transparent;
+  transform: none;
 }
 .vo > .vo-frame,
 .vo > .vo-cue {

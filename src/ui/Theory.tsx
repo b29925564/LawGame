@@ -12,6 +12,7 @@ import { prose } from './prose';
 import { useScope } from './lang';
 import { Speech } from './Portrait';
 import { Recap } from './ActCard';
+import { OnPlate, ScenePlate, useScenePlate, useShown } from './scenePlate';
 
 /**
  * 案件理論（企劃書 6.9.2）：整集最大的策略決定，選了不能換。
@@ -26,25 +27,30 @@ export function Theory({ scene }: { scene: TheoryScene }) {
   const held = progress.cards;
   const [intro, setIntro] = useState(!theory.done(st));
   const [pending, setPending] = useState<string | null>(null);
+  // 開場那一頁有底圖就當背景；選理論的那一頁是整頁的比較卡，不放（圖會被卡片蓋掉）。
+  const shown = useShown(useScenePlate(progress.episode, scene));
 
   if (intro)
     return (
-      <main className="scene">
-        <p className="eyebrow">
-          {t(scene.act, scope)}
-          {t('・')}
-          {t(scene.place, scope)}
-        </p>
-        <div className="lines">
-          <Recap />
-          {scene.intro.map((l, i) => (
-            <Speech key={i} line={l} wrap />
-          ))}
-        </div>
-        <button className="primary next" onClick={() => setIntro(false)}>
-          {t('選擇案件理論')}
-        </button>
-      </main>
+      <OnPlate.Provider value={!!shown}>
+        <main className={shown ? 'scene dialogue plated' : 'scene'}>
+          <p className="eyebrow">
+            {t(scene.act, scope)}
+            {t('・')}
+            {t(scene.place, scope)}
+          </p>
+          <div className={shown ? 'lines transcript' : 'lines'}>
+            <Recap />
+            {scene.intro.map((l, i) => (
+              <Speech key={i} line={l} wrap />
+            ))}
+          </div>
+          <button className="primary next" onClick={() => setIntro(false)}>
+            {t('選擇案件理論')}
+          </button>
+          {shown && <ScenePlate shown={shown} />}
+        </main>
+      </OnPlate.Provider>
     );
 
   const noneOpen = !scene.theories.some((th) => theory.unlocked(th, held));

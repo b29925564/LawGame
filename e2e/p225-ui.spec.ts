@@ -42,8 +42,8 @@ test('換地點：先放一格場記（一行），演完才掛介面', async ({
   // 場記還在的時候，這一場的介面一個都還沒掛。
   await expect(page.locator('.speech')).toHaveCount(0);
   await expect(page.locator('.place-slate')).toBeVisible();
-  // 定場還沒有鏡頭：左上標占位。
-  await expect(page.locator('.place-tbd')).toContainText('待放 3D 機位');
+  // 這一場有底圖：定場就是那張圖（沒有底圖的場景才放占位字，見 scene-plate.spec.ts）。
+  await expect(page.locator('.place-beat .scene-plate')).toHaveAttribute('data-state', 'ok');
   const h = await page.locator('.place-slate').evaluate((e) => e.getBoundingClientRect().height);
   expect(h).toBeLessThan(40);
   await beat.click();

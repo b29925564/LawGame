@@ -1,0 +1,39 @@
+/* ── 場景底圖（scenePlate.tsx）：釘在視窗後面的一整張鏡頭，介面住在它上面 ── */
+.scene-plate {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  /* 圖還沒解碼完：純黑，不是桌面、不是半張圖。 */
+  background: #000;
+  pointer-events: none;
+}
+.scene-plate img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  /* 底圖本來就是鏡頭構圖：寬螢幕裁上下、窄螢幕用手機版，兩邊都以畫面中心為準。 */
+  object-fit: cover;
+  object-position: 50% 50%;
+  opacity: 0;
+}
+.scene-plate[data-state='ok'] img {
+  opacity: 1;
+}
+/* 第一個畫面就解碼好的（定場演過、預載過）直接是亮的；只有「等到了」才淡入。 */
+@media (prefers-reduced-motion: no-preference) {
+  .scene-plate img {
+    transition: opacity 0.35s var(--ease-light, ease-out);
+  }
+}
+/* 定場那一格：圖是鏡頭本身，在場記後面（場記 z-index 40，自己帶底色）。 */
+.place-beat .scene-plate {
+  z-index: 0;
+}
+.place-beat.waiting {
+  background: #000;
+}
+/* 場景自己的 fade-in 不套在底圖上：切進來那一格就是整張圖。 */
+.scene > .scene-plate {
+  animation: none;
+}

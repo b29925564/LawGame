@@ -5,12 +5,15 @@ import { useScope } from './lang';
 import { LucasStage, Speech } from './Portrait';
 import { Transcript } from './Shell';
 import { Recap, splitSlate } from './ActCard';
+import { OnPlate, ScenePlate, useScenePlate, useShown } from './scenePlate';
 
 /** 對話場景：一路往下讀，遇到選擇就停。之前的台詞留在畫面上，方便回頭看。 */
 export function Dialogue({ scene }: { scene: DialogueScene }) {
   const { progress, advance, choose } = useEpisode();
   const t = useT();
   const scope = useScope();
+  // 這一場有底圖就當背景（沒有的場景照舊）：台詞框貼底，讓出上半部給圖。
+  const shown = useShown(useScenePlate(progress.episode, scene));
   const picks = sceneChoices(progress);
   const lines: Line[] = [];
   for (let i = 0; i <= progress.step && i < scene.steps.length; i++) {
@@ -88,17 +91,20 @@ export function Dialogue({ scene }: { scene: DialogueScene }) {
     );
 
   return (
-    <main className="scene dialogue">
-      {/* 眉標和地點字卡左欄讀同一個欄位（設定集 11.3 裁定）。 */}
-      <p className="eyebrow">{splitSlate(t(scene.place, scope))[0]}</p>
-      <LucasStage lines={lines} />
-      <Transcript count={lines.length}>
-        <Recap />
-        {lines.map((l, i) => (
-          <Speech key={i} line={l} />
-        ))}
-      </Transcript>
-      {action}
-    </main>
+    <OnPlate.Provider value={!!shown}>
+      <main className={shown ? 'scene dialogue plated' : 'scene dialogue'}>
+        {/* 眉標和地點字卡左欄讀同一個欄位（設定集 11.3 裁定）。 */}
+        <p className="eyebrow">{splitSlate(t(scene.place, scope))[0]}</p>
+        <LucasStage lines={lines} />
+        <Transcript count={lines.length}>
+          <Recap />
+          {lines.map((l, i) => (
+            <Speech key={i} line={l} />
+          ))}
+        </Transcript>
+        {action}
+        {shown && <ScenePlate shown={shown} />}
+      </main>
+    </OnPlate.Provider>
   );
 }

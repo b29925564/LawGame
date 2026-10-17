@@ -6,6 +6,7 @@ import { reducedMotion } from './a11y';
 import { useT } from '../i18n';
 import { useScope } from './lang';
 import { announce } from './Marks';
+import { useOnPlate } from './scenePlate';
 import { voTiming } from './voTiming';
 
 /** 這一輪已經播過的字幕：回到同一畫面時只留筆錄，不再整段重播。 */
@@ -65,6 +66,7 @@ function buttonUnder(x: number, y: number): HTMLButtonElement | null {
 
 export function VoiceOver({ line, onDone }: { line: Line; onDone: () => void }) {
   const { voAuto, voScale, voBox } = useSettings();
+  const onPlate = useOnPlate();
   const t = useT();
   const scope = useScope();
   const beats = beatsOf(line).map((b) => ({ ...b, text: t(b.text, scope) }));
@@ -157,6 +159,7 @@ export function VoiceOver({ line, onDone }: { line: Line; onDone: () => void }) 
   return (
     <div
       className="vo"
+      data-layer={onPlate ? 'scene' : undefined}
       role="dialog"
       aria-modal="true"
       aria-label={t('盧卡斯沒有說出口')}
