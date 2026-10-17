@@ -1,0 +1,162 @@
+{
+  "sets": {
+    "holding-door": {
+      "plates": ["holding-door", "holding-door-zh"],
+      "size": {
+        "desktop": [1440, 900],
+        "phone": [720, 1280]
+      },
+      "anchor": {
+        "desktop": {
+          "at": 0.4573,
+          "to": 0.5
+        },
+        "phone": {
+          "at": 0.9444,
+          "to": 0.98
+        }
+      },
+      "people": [
+        {
+          "id": "bailiff",
+          "fig": "bailiff",
+          "desktop": {
+            "file": "holding-door-bailiff-desktop.png",
+            "ink": [785, 874],
+            "head": [815, 845],
+            "box": [772, 306, 114, 314],
+            "feet": [829.8, 606.8],
+            "crown": [830.3, 319.1]
+          },
+          "phone": {
+            "file": "holding-door-bailiff-phone.png",
+            "ink": [553, 680],
+            "head": [596, 639],
+            "box": [541, 441, 151, 435],
+            "feet": [617.4, 862.9],
+            "crown": [618.2, 453.8]
+          }
+        },
+        {
+          "id": "ethan",
+          "fig": "ethan_cuffed",
+          "desktop": {
+            "file": "holding-door-ethan-desktop.png",
+            "ink": [740, 819],
+            "head": [764, 797],
+            "box": [728, 310, 103, 322],
+            "feet": [779.8, 619.4],
+            "crown": [780.1, 322.5]
+          },
+          "phone": {
+            "file": "holding-door-ethan-phone.png",
+            "ink": [490, 602],
+            "head": [525, 571],
+            "box": [478, 446, 136, 448],
+            "feet": [546.3, 880.9],
+            "crown": [546.8, 458.7]
+          }
+        },
+        {
+          "id": "lucas",
+          "fig": "lucas_back",
+          "desktop": {
+            "file": "holding-door-lucas-desktop.png",
+            "ink": [443, 609],
+            "head": [495, 557],
+            "box": [431, 257, 191, 605],
+            "feet": [524.4, 848.7],
+            "crown": [522.6, 269.4]
+          },
+          "phone": {
+            "file": "holding-door-lucas-phone.png",
+            "ink": [68, 304],
+            "head": [141, 229],
+            "box": [55, 371, 261, 850],
+            "feet": [183.2, 1207.0],
+            "crown": [180.5, 383.2]
+          }
+        }
+      ]
+    },
+    "s6-steps": {
+      "plates": ["s6-steps", "s6-steps-en"],
+      "size": {
+        "desktop": [1440, 900],
+        "phone": [720, 1280]
+      },
+      "anchor": {
+        "desktop": {
+          "at": 0.5517,
+          "to": 0.5
+        },
+        "phone": {
+          "at": 0.5062,
+          "to": 0.5
+        }
+      },
+      "people": [
+        {
+          "id": "lucas",
+          "fig": "lucas_front",
+          "desktop": {
+            "file": "s6-steps-lucas-desktop.png",
+            "ink": [657, 695],
+            "head": [669, 683],
+            "box": [645, 466, 62, 154],
+            "feet": [676.5, 607.8],
+            "crown": [676.5, 478.9]
+          },
+          "phone": {
+            "file": "s6-steps-lucas-phone.png",
+            "ink": [169, 222],
+            "head": [187, 206],
+            "box": [157, 669, 78, 208],
+            "feet": [196.8, 864.4],
+            "crown": [196.8, 681.1]
+          }
+        },
+        {
+          "id": "ethan",
+          "fig": "ethan_lookback",
+          "desktop": {
+            "file": "s6-steps-ethan-desktop.png",
+            "ink": [605, 639],
+            "head": [612, 631],
+            "box": [593, 517, 59, 173],
+            "feet": [620.1, 677.2],
+            "crown": [620.1, 529.1]
+          },
+          "phone": {
+            "file": "s6-steps-ethan-phone.png",
+            "ink": [95, 144],
+            "head": [105, 133],
+            "box": [83, 740, 73, 236],
+            "feet": [116.5, 963.2],
+            "crown": [116.5, 752.5]
+          }
+        },
+        {
+          "id": "sister",
+          "fig": "sister",
+          "desktop": {
+            "file": "s6-steps-sister-desktop.png",
+            "ink": [935, 984],
+            "head": [953, 972],
+            "box": [923, 623, 73, 195],
+            "feet": [961.5, 804.9],
+            "crown": [961.5, 635.9]
+          },
+          "phone": {
+            "file": "s6-steps-sister-phone.png",
+            "ink": [564, 634],
+            "head": [590, 617],
+            "box": [552, 892, 94, 266],
+            "feet": [602.1, 1144.8],
+            "crown": [602.1, 904.4]
+          }
+        }
+      ]
+    }
+  }
+}

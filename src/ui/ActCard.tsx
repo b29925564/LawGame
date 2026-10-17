@@ -6,6 +6,7 @@ import { prose } from './prose';
 import { reducedMotion } from './a11y';
 import { claimHand } from './hand';
 import { rigOf } from './rigs';
+import { ScenePlate, useScenePlate, useShown } from './scenePlate';
 import { useCaseTerms } from './terms';
 import './actcard.css';
 
@@ -99,7 +100,7 @@ function useHeld(on: boolean) {
 /** 選單開著時，幕卡不切走、按鍵也不跳過。 */
 const menuOpen = () => !!document.querySelector('dialog[open], [role="dialog"]');
 
-function useCut(onDone?: () => void, wait?: number) {
+function useCut(onDone?: () => void, wait?: number, hold = false) {
   const [black, setBlack] = useState(false);
   const done = useRef(onDone);
   useEffect(() => {
@@ -113,7 +114,8 @@ function useCut(onDone?: () => void, wait?: number) {
       if (menuOpen()) id = window.setTimeout(fire, 500);
       else setBlack(true);
     };
-    id = window.setTimeout(fire, wait ?? (reducedMotion() ? ENTER_RM : ENTER) + HOLD);
+    // hold：還在等底圖，計時先不跑（點一下、按鍵照樣可以跳過）。
+    if (!hold) id = window.setTimeout(fire, wait ?? (reducedMotion() ? ENTER_RM : ENTER) + HOLD);
     const key = (e: KeyboardEvent) => {
       if (e.key !== 'Enter' && e.key !== ' ') return;
       if (menuOpen()) return;
@@ -128,7 +130,7 @@ function useCut(onDone?: () => void, wait?: number) {
       clearTimeout(id);
       window.removeEventListener('keydown', key);
     };
-  }, [auto, wait]);
+  }, [auto, wait, hold]);
   useEffect(() => {
     if (!black) return;
     const id = window.setTimeout(() => done.current?.(), CUT);
@@ -323,22 +325,41 @@ export function PlaceSlate({ id, place }: { id?: string; place: Place | null }) 
  * 所以字卡不會蓋到任何東西（設計師 #225）。點一下、Enter、空白鍵可以跳過。
  * 之後場景有定場鏡頭（3D 或場景圖）時，這一格改成場記疊在鏡頭上，同一個元件。
  */
-export function PlaceBeat({ id, place, onDone }: { id: string; place: Place; onDone: () => void }) {
+export function PlaceBeat({
+  id,
+  episode,
+  place,
+  onDone,
+}: {
+  id: string;
+  episode: string;
+  place: Place;
+  onDone: () => void;
+}) {
   const t = useT();
   const wait = reducedMotion() ? SLATE_HOLD : 2 * SLATE_FADE + SLATE_HOLD;
-  const cut = useCut(onDone, wait);
+  // 有底圖就是定場鏡頭：圖解碼完才放場記、才開始計時；等的時候整格純黑（不放占位字、不放顆粒）。
+  const shown = useShown(useScenePlate(episode, { id, rig: place.rig }));
+  const waiting = shown?.state === 'wait';
+  const cut = useCut(onDone, wait, waiting);
   return (
     <main
-      className={cut.black ? 'act-stage place-beat cut' : 'act-stage place-beat'}
+      className={['act-stage place-beat', waiting && 'waiting', cut.black && 'cut']
+        .filter(Boolean)
+        .join(' ')}
       onClick={cut.skip}
       data-auto=""
     >
-      <span className="place-tbd">
-        {t('待放 3D 機位')}
-        {'\u3000'}
-        {t('定場')}
-      </span>
-      <PlaceSlate id={id} place={place} />
+      {shown ? (
+        <ScenePlate shown={shown} />
+      ) : (
+        <span className="place-tbd">
+          {t('待放 3D 機位')}
+          {'\u3000'}
+          {t('定場')}
+        </span>
+      )}
+      {!waiting && <PlaceSlate id={id} place={place} />}
     </main>
   );
 }

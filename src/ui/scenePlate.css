@@ -1,0 +1,69 @@
+/* ── 場景底圖（scenePlate.tsx）：釘在視窗後面的一整張鏡頭，介面住在它上面 ── */
+.scene-plate {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  /* 圖還沒解碼完：純黑，不是桌面、不是半張圖。 */
+  background: #000;
+  pointer-events: none;
+}
+/* 一張底圖加上站在上面的人（立牌）住在同一個舞台：舞台和圖同一個長寬比、照 cover 的算法鋪滿視窗（兩邊以畫面中心為準），
+   人用圖上的百分比定位，所以不管視窗多大，人的腳都在底圖原有的接觸影子上。 */
+.scene-plate {
+  container-type: size;
+}
+.plate-stage {
+  /* 舞台寬：cover 的算法（長寬比同底圖，兩邊至少一邊貼齊視窗）。 */
+  --sw: max(100cqw, calc(100cqh * var(--ar)));
+  position: absolute;
+  /* 窄視窗要裁左右時，圖上 --f 的那一點落在視窗寬的 --a 處（預設：人群中心對視窗中心，不是圖的中心）；
+     夾在「貼齊視窗」的範圍內，不露出圖外。 */
+  left: clamp(
+    calc(100cqw - var(--sw)),
+    calc(var(--a, 0.5) * 100cqw - var(--f, 0.5) * var(--sw)),
+    0px
+  );
+  top: 50%;
+  width: var(--sw);
+  aspect-ratio: var(--ar);
+  translate: 0 -50%;
+  opacity: 0;
+}
+.scene-plate[data-state='ok'] .plate-stage {
+  opacity: 1;
+}
+.plate-stage > img {
+  position: absolute;
+  display: block;
+  user-select: none;
+}
+.plate-stage > .plate-bg {
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+/* 第一個畫面就解碼好的（定場演過、預載過）直接是亮的；只有「等到了」才淡入。 */
+@media (prefers-reduced-motion: no-preference) {
+  .plate-stage {
+    transition: opacity 0.35s var(--ease-light, ease-out);
+  }
+}
+/* 定場那一格：圖是鏡頭本身，在場記後面（場記 z-index 40，自己帶底色）。 */
+.place-beat .scene-plate {
+  z-index: 0;
+}
+.place-beat.waiting {
+  background: #000;
+}
+/* 場景自己的 fade-in 不套在底圖上：切進來那一格就是整張圖。 */
+.scene > .scene-plate {
+  animation: none;
+}
+/* 壓暗：選案件理論那一頁，圖留著但退後（和畫外字幕的鏡頭層同一個 58%），卡片照紙層不動。 */
+.scene-plate[data-dim]::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgb(6 8 11 / 58%);
+}
