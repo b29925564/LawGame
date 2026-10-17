@@ -565,6 +565,7 @@ export function CourtCamera({
   open = true,
   cues = [],
   onJudgeRead,
+  onJudgeShown,
   ref,
 }: {
   shot: Shot;
@@ -581,6 +582,8 @@ export function CourtCamera({
   cues?: Cue[];
   /** 有收掉時間的字幕（法官的裁定）全部讀完要多久（毫秒）；沒有就是 0。法庭畫面用它撐長法官席那一拍。 */
   onJudgeRead?: (ms: number) => void;
+  /** 法官的第一張裁定字幕真的開始出現的那一刻（字幕靠 CSS 計時，瀏覽器忙時會比 JS 計時晚）；法庭畫面用它等字幕讀完才切回。 */
+  onJudgeShown?: () => void;
   /** 手機：筆錄要知道鏡頭蓋住它多少（最新那一行捲到鏡頭上面）。 */
   ref?: Ref<HTMLDivElement>;
 }) {
@@ -673,6 +676,7 @@ export function CourtCamera({
         <Subtitles
           cues={entered ? cues : []}
           onJudgeRead={onJudgeRead}
+          onJudgeShown={onJudgeShown}
           away={shot === 'witness' || (shot === 'black' && last === 'bench')}
         />
       </div>
@@ -692,10 +696,12 @@ const HEAD_ZONE = 0.4;
 function Subtitles({
   cues,
   onJudgeRead,
+  onJudgeShown,
   away,
 }: {
   cues: Cue[];
   onJudgeRead?: (ms: number) => void;
+  onJudgeShown?: () => void;
   /** 鏡頭已不在法官席（切回證人）：有收掉時間的句子（法官的裁定）跟著鏡頭同一格收，不等自己的計時。 */
   away?: boolean;
 }) {
@@ -907,6 +913,13 @@ function Subtitles({
             data-compact={c.compact || undefined}
             data-last={(i === cards.length - 1 && !c.until) || undefined}
             data-gone={(away && c.until) || undefined}
+            onAnimationStart={
+              c.until && c === cards.find((x) => x.until)
+                ? (e) =>
+                    (e.animationName === 'sub-show' || e.animationName === 'sub-fade-in') &&
+                    onJudgeShown?.()
+                : undefined
+            }
           >
             <span className="who">{t(c.who, scope)}</span>
             {c.redact ? (
