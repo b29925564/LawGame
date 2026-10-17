@@ -2,7 +2,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { afterAll, describe, expect, it } from 'vitest';
 import { parse } from 'yaml';
 import { install, reset, translate } from '../i18n';
-import { lineBreaks, sentences } from './court/subtitleSplit';
+import { lineBreaks, sentencesOf } from './court/subtitleSplit';
 import { subCards } from './subCards';
 
 /**
@@ -80,7 +80,7 @@ describe('字幕卡（有底圖的場景）', () => {
               for (const c of cards) {
                 expect(lineBreaks(c.text, em).length, c.text).toBeLessThanOrEqual(2);
                 // 一張只放一個句子；例外只有「一個字的句子」併進旁邊那句。
-                const inCard = sentences(c.text).filter(Boolean);
+                const inCard = sentencesOf(c.text).filter(Boolean);
                 expect(inCard.filter((x) => !oneWord(x)).length, c.text).toBeLessThanOrEqual(1);
               }
             }

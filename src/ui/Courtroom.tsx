@@ -199,6 +199,11 @@ type Phase = 'type' | 'black' | 'bench' | 'back' | 'answer';
 function useObjectionBeat() {
   const [beat, setBeat] = useState<{ t: ObjectionBeat; phase: Phase } | null>(null);
   const timers = useRef<number[]>([]);
+  // 法官的裁定（可能分成好幾張字幕）全部讀完要多久：字幕量過回報；切回證人要等它讀完。
+  const judgeRead = useRef(0);
+  // 法官的第一張裁定字幕真的開始出現的時刻（performance.now）；字幕靠 CSS 計時，瀏覽器忙時會比這裡的計時器晚，
+  // 切回證人要等字幕從它自己出現起讀滿（關卡 2 對 58fc5fb）。
+  const judgeShown = useRef(0);
   const clear = () => {
     timers.current.forEach((id) => clearTimeout(id));
     timers.current = [];
@@ -206,17 +211,48 @@ function useObjectionBeat() {
   useEffect(() => clear, []);
   const start = useCallback((t: ObjectionBeat, read: (tok: Tok) => number) => {
     clear();
+    const root = document.documentElement.style;
+    root.setProperty('--dur-judge-read', '0ms');
+    judgeShown.current = 0;
     setBeat({ t, phase: 'type' });
+    const t0 = performance.now();
+    // 計時照節拍表從按下那一刻起算；已經過去的時間扣掉，後面的時間點讀最新的權杖。
     const at = (when: typeof t.black, f: () => void) =>
-      timers.current.push(window.setTimeout(f, msOf(when, read)));
+      timers.current.push(
+        window.setTimeout(f, Math.max(0, msOf(when, read) - (performance.now() - t0))),
+      );
     const go = (phase: Phase) => () => setBeat((b) => (b ? { ...b, phase } : b));
     at(t.black, go('black'));
-    at(t.bench, go('bench'));
-    at(t.back, go('back'));
-    at(t.rest, go('answer'));
-    at(t.end, () => setBeat(null));
+    at(t.bench, () => {
+      go('bench')();
+      // 法官席開始時字幕早已量好：讀完的時間比筆錄上法官那幾行加沉默長，就把差額補在法官說完之後，
+      // 筆錄（同一個權杖）與後面的計時一起順延。
+      const base = msOf(t.back, (k) => (k === 'judge-read' ? 0 : read(k))) - msOf(t.judge, read);
+      root.setProperty('--dur-judge-read', `${Math.max(0, judgeRead.current - base)}ms`);
+      const back = () => {
+        go('back')();
+        at(t.rest, go('answer'));
+        at(t.end, () => setBeat(null));
+      };
+      at(t.back, function waitRead() {
+        // 字幕從自己第一張出現起要讀滿 judgeRead；還沒滿就把差額補進同一個權杖（筆錄與後面的計時一起順延），再等一次。
+        const wait = judgeShown.current
+          ? judgeShown.current + judgeRead.current - performance.now()
+          : 0;
+        if (wait <= 0) return back();
+        const extra = parseFloat(root.getPropertyValue('--dur-judge-read')) || 0;
+        root.setProperty('--dur-judge-read', `${extra + wait}ms`);
+        at(t.back, waitRead);
+      });
+    });
   }, []);
-  return [beat, start] as const;
+  const onJudgeRead = useCallback((ms: number) => {
+    judgeRead.current = ms;
+  }, []);
+  const onJudgeShown = useCallback(() => {
+    if (!judgeShown.current) judgeShown.current = performance.now();
+  }, []);
+  return [beat, start, onJudgeRead, onJudgeShown] as const;
 }
 
 /** 這一刻的鏡頭：減少動態時不切黑，直接（淡入）換到下一個機位。 */
@@ -266,7 +302,7 @@ function CourtroomScreen({ scene: raw }: { scene: TrialScene }) {
   const bates = batesOf(progress, raw.id);
   const narrow = useNarrow();
   const compactJury = useCompactJury();
-  const [beat, startBeat] = useObjectionBeat();
+  const [beat, startBeat, onJudgeRead, onJudgeShown] = useObjectionBeat();
   const [insert, setInsert] = useState<HTMLDivElement | null>(null);
   const [cues, setCues] = useState<Cue[]>([]);
 
@@ -397,6 +433,8 @@ function CourtroomScreen({ scene: raw }: { scene: TrialScene }) {
     patience: st.patience,
     scene: raw.id,
     cues,
+    onJudgeRead,
+    onJudgeShown,
   };
   // 手機常駐的說話者頭像（第 10.1 章「對話頭像：法庭＝立繪」，56×70）：最後開口的人；盧卡斯用立繪。
   const speaker = [...st.log].reverse().find((l) => l.who !== '旁白')?.who ?? scene.witness.name;

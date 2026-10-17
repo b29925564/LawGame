@@ -153,6 +153,11 @@
   overflow-wrap: anywhere;
   cursor: pointer;
 }
+/* 邊緣的卡不在字中間斷行（第二道關卡 v92d：「hypertensio／n」）：Cork.tsx 量最長的字，卡至少做到放得下它；
+   手機牌架的格子寬度固定，仍可斷。 */
+.cork-card:not(.rack) {
+  overflow-wrap: normal;
+}
 .cork-card {
   position: absolute;
   z-index: 2;
@@ -374,12 +379,8 @@
 .cork-strip b {
   font: 700 12px/1.3 var(--font-doc);
 }
-/* 邊緣的照片卡退在暗處、只認得出是哪張：照片維持 4:3（和光圈裡同一個裁切，Cork.tsx 把卡做窄來放進一格），
-   只留卡名、最多兩整行（不留半行）；時間和紀錄列放大時才讀（第二道關卡 2）。 */
-.cork-card.photo .cork-strip b {
-  max-height: calc(2 * 1.3em);
-  overflow: hidden;
-}
+/* 邊緣的照片卡退在暗處、只認得出是哪張：照片維持 4:3（和光圈裡同一個裁切），只留卡名、全部的行
+   （不截名，板子由 Cork.tsx 撐到放得下）；時間和紀錄列放大時才讀（第二道關卡 2）。 */
 .cork-card.photo .cork-strip :is(time, .photolog-line) {
   display: none;
 }
@@ -596,9 +597,13 @@ body:has(.cork) .card .mini-btn[aria-pressed='true'] {
   font-size: 11px;
   line-height: 14px;
   max-height: 28px;
+  /* 放不下的整行拿掉，不露出下一行的上緣（#300 拿掉邊緣卡的兩行上限時連這裡的 overflow 一起掉了）。 */
+  overflow: hidden;
 }
 .cork-card.rack.photo .cork-strip b {
   max-height: 14px;
+  /* 一行：Cork.tsx OneLine 取放得下的整個字，不靠瀏覽器斷行。 */
+  white-space: nowrap;
 }
 .cork-rack .cork-redact {
   position: relative;

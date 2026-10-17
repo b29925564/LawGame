@@ -1,5 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { expect, test, type Page } from '@playwright/test';
+import { proseUnits } from '../src/ui/lineUnits';
+import { readUnits, SUB_MIN_UNITS } from '../src/ui/court/subtitleSplit';
 
 /**
  * 鏡頭條在異議那一拍裡不動（設計師 #247 第一輪）：一刀黑、法官席、落章、證人回答都在鏡頭條裡剪，
@@ -217,3 +219,397 @@ for (const [width, height] of [
       expect([Math.round(face.width), Math.round(face.height)]).toEqual([48, 60]);
     }
   });
+
+/**
+ * 關卡 2 v92 #A、#B（設計師 #290 第三輪）：法官的裁定分成幾張字幕，每一張都要在法官席上出現、讀完才切回證人；
+ * 一句一張、最多兩行、不出單字卡、中文不斷在詞中間；字幕框不蓋燈管與牆上的鐘。
+ * 法官席鏡頭 1.0×，裁切框盡量往下，但五支耐心燈管與鐘整個在畫面裡（燈管頂離畫面上緣 ≥4px）。
+ * 框壓到法官的頭：設計師裁定可接受（量測見 qa/court-ui/2026-10-16-gate2-fixes/round3/README.md），不再斷言。
+ * 存檔停在柯瓦斯基主詰問開頭：第一題提異議會被駁回（兩句），第二題成立（兩句）。
+ */
+const RULINGS = {
+  zh: [
+    ['異議駁回。', '律師，這個問題沒有問題。'],
+    ['異議成立。', '檢察官，請不要把答案放進問題裡。'],
+  ],
+  en: [
+    ['Overruled.', 'There’s nothing wrong with that question, counsel.'],
+    ['Sustained.', 'Counsel, don’t put the answer in the question.'],
+  ],
+} as const;
+
+const benchCam = JSON.parse(
+  readFileSync(new URL('../src/ui/court/cam/bench.json', import.meta.url), 'utf8'),
+) as {
+  crop239: number[];
+  inView: Record<'tubes' | 'clock', number[]>;
+};
+
+for (const lang of ['zh', 'en'] as const)
+  for (const [width, scale] of [
+    [1100, 1],
+    [1366, 1],
+    [1530, 1],
+    [0, 1],
+    [1100, 1.5],
+    [0, 1.5],
+  ] as const) {
+    test(`法官的裁定一句一張、都讀得到、燈管與鐘在畫面內（${width || '手機'}・${scale * 100}%・${lang}）`, async ({
+      page,
+    }, info) => {
+      test.skip(
+        (info.project.name === 'desktop') === (width === 0),
+        width ? '鏡頭條只在桌機' : '手機插入鏡頭',
+      );
+      test.setTimeout(120_000);
+      if (width) await page.setViewportSize({ width, height: 860 });
+      await page.addInitScript(
+        ([s, l, sc]) => {
+          if (sessionStorage.getItem('seeded')) return;
+          sessionStorage.setItem('seeded', '1');
+          localStorage.clear();
+          localStorage.setItem('lawgame-ep-auto', s);
+          if (l === 'en') localStorage.setItem('lawgame-lang', 'en');
+          if (sc !== 1)
+            localStorage.setItem(
+              'lawgame-settings',
+              JSON.stringify({ state: { voScale: sc, voAuto: false, voBox: false }, version: 1 }),
+            );
+        },
+        [
+          JSON.stringify({ version: 5, savedAt: Date.now(), label: 'x', progress: save.ep1 }),
+          lang,
+          scale,
+        ] as const,
+      );
+      await page.goto('/');
+      await page
+        .getByRole('button', { name: lang === 'en' ? /^Continue/ : /^繼續（/ })
+        .first()
+        .click();
+      const open = page.getByRole('button', { name: lang === 'en' ? 'Go to court' : '開庭' });
+      await open.or(page.locator('.court-cam')).first().waitFor();
+      if (await open.isVisible()) await open.click();
+      await expect(page.locator('.court-cam').first()).toBeVisible();
+      await page.waitForTimeout(1500);
+      const next = page.locator('button.primary.wide:not(.locked)').first();
+      const rounds: string[][] = [];
+      for (let round = 0; round < 2; round++) {
+        await next.click();
+        const reason = page.locator('section.objection .row button').first();
+        await expect(reason).toBeVisible();
+        await reason.click();
+        const texts: string[] = [];
+        const t0 = Date.now();
+        let cut = false;
+        let checkedView = false;
+        while (Date.now() - t0 < 14000 && !cut) {
+          const s = await page.evaluate(
+            ([crop, view]) => {
+              const frame = document.querySelector('.cam-frame')!;
+              const fr = frame.getBoundingClientRect();
+              const shot = frame.getAttribute('data-shot') ?? '';
+              // 底圖在框裡的位置：整張圖寬 = 框寬 / 裁切寬，往上、往左推裁切框的起點。
+              const insert = !!document.querySelector('.court-cam.insert');
+              const c = insert ? [0, 0, 1, 1] : crop;
+              const pw = fr.width / c[2];
+              const ph = pw * (9 / 16);
+              const rectOf = (r: number[]) => ({
+                left: pw * (r[0] - c[0]),
+                top: ph * (r[1] - c[1]),
+                right: pw * (r[0] + r[2] - c[0]),
+                bottom: ph * (r[1] + r[3] - c[1]),
+              });
+              const subs = [...document.querySelectorAll('.cam-sub')]
+                .filter(
+                  (e) =>
+                    getComputedStyle(e).visibility !== 'hidden' &&
+                    Number(getComputedStyle(e).opacity) > 0.9,
+                )
+                .map((e) => {
+                  const tx = e.querySelector('.tx') as HTMLElement;
+                  // 每個字的位置分行：看每一行是從哪個字開始的。
+                  const lineStarts: number[] = [];
+                  const walker = document.createTreeWalker(tx, NodeFilter.SHOW_TEXT);
+                  let off = 0;
+                  let lastTop = -1;
+                  for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+                    const t = (n as Text).data;
+                    for (let i = 0; i < t.length; i++) {
+                      if (/\s/.test(t[i])) {
+                        off++;
+                        continue;
+                      }
+                      const r = document.createRange();
+                      r.setStart(n, i);
+                      r.setEnd(n, i + 1);
+                      const top = Math.round(r.getBoundingClientRect().top);
+                      if (lastTop < 0 || Math.abs(top - lastTop) > 6) lineStarts.push(off);
+                      lastTop = top;
+                      off++;
+                    }
+                  }
+                  const b = e.getBoundingClientRect();
+                  return {
+                    text: tx.innerText.replace(/\s+/g, ' ').trim(),
+                    flat: tx.textContent!.replace(/\s+/g, ''),
+                    lineStarts,
+                    box: {
+                      left: b.left - fr.left,
+                      top: b.top - fr.top,
+                      right: b.right - fr.left,
+                      bottom: b.bottom - fr.top,
+                    },
+                    lines: lineStarts.length,
+                  };
+                });
+              // 還看得到的字幕（淡出到一半也算）：visibility 不是 hidden、opacity 大於 0。
+              const shownAny = [...document.querySelectorAll('.cam-sub')]
+                .filter(
+                  (e) =>
+                    getComputedStyle(e).visibility !== 'hidden' &&
+                    Number(getComputedStyle(e).opacity) > 0,
+                )
+                .map((e) => e.textContent!.replace(/\s+/g, ' ').trim());
+              return {
+                shot,
+                subs,
+                shownAny,
+                frame: { w: fr.width, h: fr.height },
+                tubes: rectOf(view.tubes),
+                clock: rectOf(view.clock),
+              };
+            },
+            [benchCam.crop239, benchCam.inView] as const,
+          );
+          if (s.shot === 'bench') {
+            if (!checkedView) {
+              checkedView = true;
+              // 燈管（含發光）與鐘整個在畫面裡，燈管頂離上緣 ≥4px。
+              if (width) {
+                expect(s.tubes.top, `${width}：燈管頂離上緣`).toBeGreaterThanOrEqual(4 - 0.5);
+                expect(s.tubes.left).toBeGreaterThanOrEqual(0);
+                expect(s.tubes.right).toBeLessThanOrEqual(s.frame.w + 0.5);
+                expect(s.tubes.bottom).toBeLessThanOrEqual(s.frame.h);
+                expect(s.clock.left).toBeGreaterThanOrEqual(0);
+                expect(s.clock.right).toBeLessThanOrEqual(s.frame.w + 0.5);
+                expect(s.clock.top).toBeGreaterThanOrEqual(0);
+                expect(s.clock.bottom).toBeLessThanOrEqual(s.frame.h);
+              }
+            }
+            for (const c of s.subs) {
+              if (!c.text) continue;
+              if (!texts.includes(c.text)) texts.push(c.text);
+              const tag = `${width || '手機'}・${scale * 100}%：「${c.text}」`;
+              expect(c.lines, `${tag} 最多兩行`).toBeLessThanOrEqual(2);
+              // 單字卡：沒收尾的一個字（「Counsel,」）。
+              const words = lang === 'en' ? c.text.split(' ').length : c.flat.length;
+              if (!/[。！？.!?」”’)）]$/.test(c.text))
+                expect(words, `${tag} 單字卡`).toBeGreaterThanOrEqual(lang === 'en' ? 2 : 3);
+              // 中文不斷在詞中間：換行的位置要是換行單位的邊界。
+              if (lang === 'zh' && c.lineStarts.length > 1) {
+                const marks = new Set<number>();
+                let pos = 0;
+                for (const u of proseUnits(c.flat, false)) marks.add((pos += u.length));
+                for (const at of c.lineStarts.slice(1))
+                  expect(marks.has(at), `${tag} 斷在詞中間（第 ${at} 字前）`).toBe(true);
+              }
+              // 字幕框不蓋燈管與鐘。
+              if (width)
+                for (const [name, r] of [
+                  ['燈管', s.tubes],
+                  ['鐘', s.clock],
+                ] as const)
+                  expect(
+                    c.box.top >= r.bottom ||
+                      c.box.bottom <= r.top ||
+                      c.box.left >= r.right ||
+                      c.box.right <= r.left,
+                    `${tag} 蓋到${name}`,
+                  ).toBe(true);
+            }
+          } else if (texts.length) {
+            cut = true;
+            // 切回證人的那一格，法官的字幕就收了（不留在證人的畫面上；關卡二 v92 #C）。
+            expect(
+              s.shownAny,
+              `${width || '手機'}・${scale * 100}% 切回證人後法官的字幕還在`,
+            ).toEqual([]);
+          }
+          await page.waitForTimeout(40);
+        }
+        expect(cut, '法官席要切回證人').toBe(true);
+        rounds.push(texts);
+        await expect(next).toBeVisible({ timeout: 8000 });
+      }
+      // 每一句都讀得到：100% 一句一張；150% 一句放不下兩行時在片語邊界切成幾張，合起來是原句。
+      const squash = (t: string) => t.replace(/\s+/g, '');
+      expect(rounds.map((r) => squash(r.join('')))).toEqual(
+        RULINGS[lang].map((r) => squash(r.join(''))),
+      );
+      // 100% 且鏡頭條夠寬：一句一張。
+      if (scale === 1 && width !== 1100)
+        expect(rounds.map((r) => r.length)).toEqual(RULINGS[lang].map((r) => r.length));
+    });
+  }
+
+/**
+ * 關卡 2 v92 #C（設計師 #299）：切回證人那一格，法官的字幕就收，不等自己的 CSS 計時。
+ * 原問題是卡頓時兩條時鐘（字幕的 CSS 動畫、鏡頭的 JS 計時）對不上；CI 不卡，所以用 CDP
+ * Animation.setPlaybackRate 把 CSS 動畫放慢（鏡頭的 JS 計時不受影響），字幕的計時一定比鏡頭晚。
+ * 舊碼（字幕自己的計時收）在這裡會紅：切回證人時法官的字幕還在。
+ */
+for (const lang of ['zh', 'en'] as const)
+  test(`切回證人那一格法官的字幕就收，CSS 動畫放慢也一樣（${lang}）`, async ({ page }, info) => {
+    test.skip(info.project.name !== 'desktop', '桌機鏡頭條');
+    test.setTimeout(90_000);
+    await page.setViewportSize({ width: 1530, height: 860 });
+    await page.addInitScript(
+      ([s, l]) => {
+        if (sessionStorage.getItem('seeded')) return;
+        sessionStorage.setItem('seeded', '1');
+        localStorage.clear();
+        localStorage.setItem('lawgame-ep-auto', s);
+        if (l === 'en') localStorage.setItem('lawgame-lang', 'en');
+      },
+      [
+        JSON.stringify({ version: 5, savedAt: Date.now(), label: 'x', progress: save.ep1 }),
+        lang,
+      ] as const,
+    );
+    await page.goto('/');
+    await page
+      .getByRole('button', { name: lang === 'en' ? /^Continue/ : /^繼續（/ })
+      .first()
+      .click();
+    const open = page.getByRole('button', { name: lang === 'en' ? 'Go to court' : '開庭' });
+    await open.or(page.locator('.court-cam')).first().waitFor();
+    if (await open.isVisible()) await open.click();
+    await expect(page.locator('.court-cam').first()).toBeVisible();
+    await page.waitForTimeout(1500);
+    await page.locator('button.primary.wide:not(.locked)').first().click();
+    const reason = page.locator('section.objection .row button').first();
+    await expect(reason).toBeVisible();
+    await reason.click();
+    const state = () =>
+      page.evaluate(() => ({
+        shot: document.querySelector('.cam-frame')?.getAttribute('data-shot') ?? '',
+        shown: [...document.querySelectorAll('.cam-sub')]
+          .filter(
+            (e) =>
+              getComputedStyle(e).visibility !== 'hidden' &&
+              Number(getComputedStyle(e).opacity) > 0,
+          )
+          .map((e) => e.textContent!.replace(/\s+/g, ' ').trim()),
+      }));
+    // 法官席上第一張字幕出現之後才放慢：之後字幕的收尾計時比鏡頭晚 4 倍。
+    const cdp = await page.context().newCDPSession(page);
+    await cdp.send('Animation.enable');
+    let slowed = false;
+    let cutAt: { shot: string; shown: string[] } | null = null;
+    const t0 = Date.now();
+    while (Date.now() - t0 < 20_000 && !cutAt) {
+      const s = await state();
+      if (!slowed) {
+        if (s.shot === 'bench' && s.shown.length) {
+          await cdp.send('Animation.setPlaybackRate', { playbackRate: 0.25 });
+          slowed = true;
+        }
+      } else if (s.shot !== 'bench') cutAt = s;
+      await page.waitForTimeout(16);
+    }
+    expect(slowed, '法官席上要有字幕').toBe(true);
+    expect(cutAt, '法官席要切回證人').not.toBeNull();
+    expect(cutAt!.shown, '切回證人那一格法官的字幕還在').toEqual([]);
+  });
+
+/**
+ * 關卡 2 v92 #C 的副作用（關卡 2 對 58fc5fb）：字幕改成切回證人就收之後，最後一張裁定字幕在切回證人前的黑場一開始就收，
+ * 少了一段閱讀時間；字幕靠 CSS 計時、鏡頭靠 setTimeout，瀏覽器忙時兩邊走散，最多少約 500ms。
+ * 每一張字幕要看得到的時間是「單位數 × --dur-sub-unit」（至少 SUB_MIN_UNITS 單位）；鏡頭要等到最後一張讀完才切回。
+ * 正常負載與 CPU 4 倍放慢（慢手機）各量一次。
+ */
+for (const lang of ['zh', 'en'] as const)
+  for (const slow of [1, 4] as const)
+    test(`切回證人前，最後一張裁定字幕讀得完（CPU ${slow}×・${lang}）`, async ({ page }, info) => {
+      test.skip(info.project.name !== 'desktop', '桌機鏡頭條');
+      test.setTimeout(90_000);
+      await page.setViewportSize({ width: 1530, height: 860 });
+      await page.addInitScript(
+        ([s, l]) => {
+          if (sessionStorage.getItem('seeded')) return;
+          sessionStorage.setItem('seeded', '1');
+          localStorage.clear();
+          localStorage.setItem('lawgame-ep-auto', s);
+          if (l === 'en') localStorage.setItem('lawgame-lang', 'en');
+        },
+        [
+          JSON.stringify({ version: 5, savedAt: Date.now(), label: 'x', progress: save.ep1 }),
+          lang,
+        ] as const,
+      );
+      await page.goto('/');
+      await page
+        .getByRole('button', { name: lang === 'en' ? /^Continue/ : /^繼續（/ })
+        .first()
+        .click();
+      const open = page.getByRole('button', { name: lang === 'en' ? 'Go to court' : '開庭' });
+      await open.or(page.locator('.court-cam')).first().waitFor();
+      if (await open.isVisible()) await open.click();
+      await expect(page.locator('.court-cam').first()).toBeVisible();
+      await page.waitForTimeout(1500);
+      await page.locator('button.primary.wide:not(.locked)').first().click();
+      const reason = page.locator('section.objection .row button').first();
+      await expect(reason).toBeVisible();
+      if (slow > 1) {
+        const cdp = await page.context().newCDPSession(page);
+        await cdp.send('Emulation.setCPUThrottlingRate', { rate: slow });
+      }
+      // 頁面裡逐格（rAF）記每張字幕完整看得到（opacity > 0.9、不是 hidden）的第一刻和最後一刻，到切回證人為止。
+      await page.evaluate(() => {
+        const seen: Record<string, [number, number]> = {};
+        const w = window as unknown as { __subs: typeof seen; __done: boolean };
+        w.__subs = seen;
+        w.__done = false;
+        let bench = false;
+        const tick = () => {
+          const shot = document.querySelector('.cam-frame')?.getAttribute('data-shot');
+          if (shot === 'bench') bench = true;
+          for (const e of document.querySelectorAll('.cam-sub')) {
+            const cs = getComputedStyle(e);
+            if (cs.visibility === 'hidden' || Number(cs.opacity) <= 0.9) continue;
+            const t = (e.querySelector('.tx') as HTMLElement)
+              .textContent!.replace(/\s+/g, ' ')
+              .trim();
+            const now = performance.now();
+            seen[t] = [seen[t]?.[0] ?? now, now];
+          }
+          if (bench && shot === 'witness') w.__done = true;
+          else requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(tick);
+      });
+      await reason.click();
+      await page.waitForFunction(() => (window as unknown as { __done: boolean }).__done, null, {
+        timeout: 30_000,
+      });
+      const { seen, unit } = await page.evaluate(() => ({
+        seen: (window as unknown as { __subs: Record<string, [number, number]> }).__subs,
+        unit: (() => {
+          const v = getComputedStyle(document.querySelector('.cam-subs')!)
+            .getPropertyValue('--dur-sub-unit')
+            .trim();
+          return parseFloat(v) * (v.endsWith('ms') ? 1 : 1000);
+        })(),
+      }));
+      const cards = Object.entries(seen).sort((a, b) => a[1][0] - b[1][0]);
+      expect(cards.length, '法官席上有字幕').toBeGreaterThan(0);
+      for (const [text, [from, to]] of cards) {
+        const need = Math.max(SUB_MIN_UNITS, readUnits(text)) * unit;
+        // 正常讀完要的時間；容許淡入（--dur-cut 42ms）與逐格取樣的 2 格，共 100ms。
+        expect(
+          to - from,
+          `「${text}」要看得到 ${need}ms，實際 ${Math.round(to - from)}ms`,
+        ).toBeGreaterThanOrEqual(need - 100);
+      }
+    });

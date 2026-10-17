@@ -1,4 +1,4 @@
-import { latinBreakAllowed, sentences, splitCards, type Card } from './court/subtitleSplit';
+import { canCut, sentencesOf, splitCards, type Card } from './court/subtitleSplit';
 import { markedCards, markedFor, twoLines, widthOf } from './plateBreaks';
 
 type Measure = ((t: string) => number) | undefined;
@@ -29,7 +29,7 @@ function phraseCards(text: string, em: number, measure: Measure, maxLines: numbe
       // 從放得進的最長一張往回找：切點合片語規則、剩下的至少 MIN_TAIL_WORDS 個字；都找不到，放寬到只要放得進。
       let max = a + 1;
       while (max < ws.length && fit(a, max + 1)) max++;
-      const ok = (c: number) => latinBreakAllowed(ws, c) && ws.length - c >= MIN_TAIL_WORDS;
+      const ok = (c: number) => canCut(ws, c) && ws.length - c >= MIN_TAIL_WORDS;
       b = -1;
       for (let c = max; c > a; c--)
         if (ok(c)) {
@@ -100,7 +100,7 @@ export function subCards(text: string, em: number, measure?: Measure, maxLines =
   const sents: string[] = [];
   const fitsOne = (s: string) => splitCards(s, em, maxLines, measure).length === 1;
   let carry = '';
-  for (const s of sentences(text).filter(Boolean)) {
+  for (const s of sentencesOf(text).filter(Boolean)) {
     if (carry) {
       // 前面有個一字句等著併進這一句。
       const m = join(carry, s);

@@ -11,11 +11,19 @@ import { useLang, useT } from '../../i18n';
 import { reducedMotion } from '../a11y';
 import { JUDGE } from '../../engine/episode/trial';
 import { benchNames } from './camNames';
+import { tokensFrom } from './beat';
 import { P_FROM, P_TO, climbCoef, easeOf } from './climb';
 import { useSettings } from '../../engine/settings';
 import { useScope } from '../lang';
 import type { Cue } from '../record';
-import { readUnits, splitCards, subEm, SUB_MIN_UNITS } from './subtitleSplit';
+import {
+  judgeCards,
+  readUnits,
+  splitCards,
+  subEm,
+  SUB_MIN_UNITS,
+  type Card,
+} from './subtitleSplit';
 import { measureOf } from './subtitleMeasure';
 import { castLook } from '../jury/cast';
 import { svg } from '../jury/silhouette';
@@ -57,6 +65,9 @@ interface Manifest {
   placeholder?: boolean;
   eye: number;
   crop239: [number, number, number, number];
+  /** 法官席鏡頭裁切後一定要看得見的東西（plate 比例 [x,y,w,h]）：燈管（含發光）、牆上的鐘。 */
+  inView?: Record<'tubes' | 'clock', [number, number, number, number]>;
+  /** 手機插入的 16:9 鏡頭用的裁切框；沒有就整張。 */
   standee: { x: number; y: number; w: number };
   slots?: Record<string, string>;
 }
@@ -419,8 +430,8 @@ function Stage({
   turn?: boolean;
 }) {
   const m = MANIFESTS[`./cam/${cam}.json`];
-  // 16:9 的機位圖放進框裡：照裁切框把整張圖往上、往左推（2.39:1 只露出 crop239 那一段，眼線仍在 1/3）。
-  const crop = mode === 'strip' && m ? m.crop239 : [0, 0, 1, 1];
+  // 16:9 的機位圖放進框裡：照裁切框把整張圖往上、往左推（2.39:1 只露出 crop239 那一段，手機插入露整張；眼線在上三分之一，設定集 RD-ART-0406）。
+  const crop = (mode === 'strip' ? m?.crop239 : null) ?? [0, 0, 1, 1];
   const width = frameW / crop[2];
   const target = resolve(cam, names);
   const look = castLook(who);
@@ -541,6 +552,8 @@ export function CourtCamera({
   mode,
   open = true,
   cues = [],
+  onJudgeRead,
+  onJudgeShown,
   ref,
 }: {
   shot: Shot;
@@ -555,6 +568,10 @@ export function CourtCamera({
   open?: boolean;
   /** 字幕列（設定集 10.1）：鏡頭裡的人說的話，由筆錄交出來。 */
   cues?: Cue[];
+  /** 有收掉時間的字幕（法官的裁定）全部讀完要多久（毫秒）；沒有就是 0。法庭畫面用它撐長法官席那一拍。 */
+  onJudgeRead?: (ms: number) => void;
+  /** 法官的第一張裁定字幕真的開始出現的那一刻（字幕靠 CSS 計時，瀏覽器忙時會比 JS 計時晚）；法庭畫面用它等字幕讀完才切回。 */
+  onJudgeShown?: () => void;
   /** 手機：筆錄要知道鏡頭蓋住它多少（最新那一行捲到鏡頭上面）。 */
   ref?: Ref<HTMLDivElement>;
 }) {
@@ -644,7 +661,12 @@ export function CourtCamera({
           frameW={width}
         />
         <div className="cam-black" />
-        <Subtitles cues={entered ? cues : []} />
+        <Subtitles
+          cues={entered ? cues : []}
+          onJudgeRead={onJudgeRead}
+          onJudgeShown={onJudgeShown}
+          away={shot === 'witness' || (shot === 'black' && last === 'bench')}
+        />
       </div>
     </div>
   );
@@ -656,7 +678,21 @@ export function CourtCamera({
  * 一批裡的每句疊在同一格：各自在 --at 出現、在下一句的 --at 收掉，時間跟筆錄同一張節拍表，不另開計時器。
  * 被蓋掉的話（異議成立、自紀錄刪除）只剩一條黑條，條裡寫原因（第 1 章「默」：黑條只在字幕列與筆錄）。
  */
-function Subtitles({ cues }: { cues: Cue[] }) {
+/** 立牌上算「頭」的部分：從立牌頂往下這一段（頭、頸），字幕框不能壓。 */
+const HEAD_ZONE = 0.4;
+
+function Subtitles({
+  cues,
+  onJudgeRead,
+  onJudgeShown,
+  away,
+}: {
+  cues: Cue[];
+  onJudgeRead?: (ms: number) => void;
+  onJudgeShown?: () => void;
+  /** 鏡頭已不在法官席（切回證人）：有收掉時間的句子（法官的裁定）跟著鏡頭同一格收，不等自己的計時。 */
+  away?: boolean;
+}) {
   const t = useT();
   const scope = useScope();
   const box = useRef<HTMLDivElement>(null);
@@ -664,7 +700,21 @@ function Subtitles({ cues }: { cues: Cue[] }) {
   const voScale = useSettings((s) => s.voScale);
   const voBox = useSettings((s) => s.voBox);
   // 一行放得下幾 em、一張放得下幾行：量框寬與實際字級；行數看「下巴線到框底」放得下幾行（最少 1、最多 2，設計師 #257）。
-  const [fit, setFit] = useState({ em: 30, emRaw: 32, lines: 2, insert: false, font: '' });
+  const [fit, setFit] = useState({
+    em: 30,
+    emRaw: 32,
+    lines: 2,
+    insert: false,
+    font: '',
+    px: 19,
+    who: 19.6,
+    h: 0,
+    headLimit: 0,
+    tubesBottom: 0,
+    clockLeft: 0,
+    clockBottom: 0,
+    frameW: 0,
+  });
   const shown = cues.length > 0;
   useLayoutEffect(() => {
     const el = box.current;
@@ -680,12 +730,41 @@ function Subtitles({ cues }: { cues: Cue[] }) {
       const room = h - 10 - h * (insert ? 0.7 : 0.47) - who - 10;
       // 手機插入鏡頭一律一行（設定集第 10 章 :12）；鏡頭還沒打開量不到高度時也不退回兩行（關卡二 #6）。
       const lines = insert ? 1 : h ? Math.max(1, Math.min(2, Math.floor(room / (px * 1.5)))) : 2;
+      // 法官立牌的頭（立牌頂往下 HEAD_ZONE）下緣：法官的字幕框頂要在它下面（設定集第 10 章，頭在上三分之一）。
+      const sd = frame?.querySelector('.cam-stage[data-cam="bench"] .cam-standee');
+      let headLimit = 0;
+      if (frame && sd) {
+        const fr = frame.getBoundingClientRect();
+        const sr = sd.getBoundingClientRect();
+        headLimit = sr.top - fr.top + sr.height * HEAD_ZONE + 4;
+      }
+      // 燈管（連發光）下緣：字幕框頂不能蓋到（manifest 的 inView，換算成這個框裡的位置）。
+      const bm = MANIFESTS['./cam/bench.json'];
+      let tubesBottom = 0;
+      let clockLeft = 0;
+      let clockBottom = 0;
+      if (bm?.inView) {
+        const c = insert ? [0, 0, 1, 1] : bm.crop239;
+        const ph = ((frame?.clientWidth ?? 0) / c[2]) * (9 / 16);
+        tubesBottom = ph * (bm.inView.tubes[1] + bm.inView.tubes[3] - c[1]) + 4;
+        clockLeft = ph * (16 / 9) * (bm.inView.clock[0] - c[0]) - 4;
+        clockBottom = ph * (bm.inView.clock[1] + bm.inView.clock[3] - c[1]) + 4;
+      }
+      const w = el.clientWidth;
       setFit({
-        em: subEm(el.clientWidth, px),
-        emRaw: Math.floor((Math.min(el.clientWidth - 32, 36 * px) - 24) / px),
+        em: subEm(w, px),
+        emRaw: Math.floor((Math.min(w - 32, 36 * px) - 24) / px),
         lines,
         insert,
         font: `500 ${px}px ${probeFamily(el)}`,
+        px,
+        who,
+        h,
+        headLimit,
+        tubesBottom,
+        clockLeft,
+        clockBottom,
+        frameW: frame?.clientWidth ?? 0,
       });
     };
     measure();
@@ -706,6 +785,9 @@ function Subtitles({ cues }: { cues: Cue[] }) {
       cue: string;
       next?: string;
       until?: string;
+      units?: number;
+      compact?: boolean;
+      shift?: number;
     }[] = [];
     for (const c of cues) {
       if (c.blank) {
@@ -719,12 +801,45 @@ function Subtitles({ cues }: { cues: Cue[] }) {
       // 英文用實際字型量過整行寬度，行寬不必再留估算用的餘裕：一行放得下就不切。
       // 法官的話（切到法官席時出現）桌機也只放一行，字幕框才不蓋住法官的頭（關卡二 #1）。
       const latin = !/[\p{Script=Han}]/u.test(c.text);
-      const parts = splitCards(
-        c.text,
-        latin ? fit.emRaw : fit.em,
-        c.who === JUDGE ? 1 : fit.lines,
-        latin ? measureOf(fit.font) : undefined,
-      );
+      const judge = c.who === JUDGE;
+      // 法官的話：一句一張、最多兩行；一行的框頂會碰到頭、併成一行（框貼低 4px）就碰不到時，併行（設計師 #290）。
+      const em = latin ? fit.emRaw : fit.em;
+      // 框頂（相對鏡頭條）：一般 = 下緣 - 名字一行 - 文字 n 行 - 內距。碰到頭或蓋到燈管就把名字併進第一行（少一行）；
+      // 頭的重疊量放在 README（設計師裁定可接受），燈管與鐘不能蓋。名字佔的寬度：中文每字一個字級，英文約 0.55。
+      const boxTop = (rows: number) => fit.h - 10 - (fit.who + fit.px * 1.5 * rows + 10);
+      const whoName = t(c.who, scope);
+      const whoPx = fit.who / 1.4;
+      const nameW =
+        [...whoName].reduce((n, ch) => n + (/\p{Script=Han}/u.test(ch) ? 1 : 0.55), 0) * whoPx;
+      const compact =
+        fit.headLimit > 0
+          ? {
+              lead: Math.ceil(((nameW + 0.6 * whoPx) / fit.px) * 2) / 2,
+              when: (rows: number) => boxTop(rows) < Math.max(fit.headLimit, fit.tubesBottom),
+              // 鐘靠框寬收窄閃開（下面），不算蓋住。
+              hits: (rows: number) => boxTop(rows) < fit.tubesBottom,
+            }
+          : null;
+      const meas = latin ? measureOf(fit.font) : undefined;
+      let parts: (Card & { compact?: boolean })[] = judge
+        ? judgeCards(c.text, em, compact, meas)
+        : splitCards(c.text, em, fit.lines, meas);
+      // 兩行的框頂會落進鐘的高度：框右緣收到鐘的左邊（框往左靠、寬度收窄，左緣仍留 16px），這句重排（鐘不能蓋，設計師 #290 第三輪）。
+      let shift = 0;
+      if (judge && fit.clockLeft > 0) {
+        const topOf = (p: Card & { compact?: boolean }) => {
+          const rows = p.lines?.length ?? 1;
+          return p.compact ? fit.h - 6 - (fit.px * 1.5 * rows + 10) : boxTop(rows);
+        };
+        if (parts.some((p) => topOf(p) < fit.clockBottom)) {
+          shift = Math.max(0, fit.frameW - 16 - fit.clockLeft);
+          const narrow = Math.max(
+            8,
+            Math.floor(((fit.clockLeft - 16 - 24) / fit.px) * (latin ? 1 : 0.92)),
+          );
+          if (narrow < em) parts = judgeCards(c.text, narrow, compact, meas);
+        }
+      }
       // 每張讀得完才換下一張：漢字 1 單位、其他 0.35，至少 10 單位；從這句出現的時間累計（字幕比筆錄慢，不閃過）。
       let read = 0;
       parts.forEach((p, k) => {
@@ -735,6 +850,9 @@ function Subtitles({ cues }: { cues: Cue[] }) {
           lines: p.lines,
           cue: c.key,
           until: c.until,
+          units: Math.max(SUB_MIN_UNITS, readUnits(p.text)),
+          compact: !!p.compact,
+          shift,
           at: read > 0 ? `calc(${c.at} + ${read} * var(--dur-sub-unit))` : c.at,
         });
         read += Math.max(SUB_MIN_UNITS, readUnits(p.text));
@@ -752,7 +870,14 @@ function Subtitles({ cues }: { cues: Cue[] }) {
       if (c.until) c.next = c.next ? `min(${c.next}, ${c.until})` : c.until;
     });
     return flat;
-  }, [cues, fit]);
+  }, [cues, fit, scope, t]);
+  // 有收掉時間的句子（法官的裁定）所有張數讀完要幾個單位；量完回報，法庭畫面照這個撐長法官席那一拍。
+  const judgeUnits = cards.reduce((n, c) => (c.until ? n + (c.units ?? 0) : n), 0);
+  useEffect(() => {
+    if (!onJudgeRead) return;
+    const unit = box.current ? tokensFrom(box.current)('sub-unit') : 0;
+    onJudgeRead(judgeUnits * unit);
+  }, [judgeUnits, onJudgeRead]);
   if (!cues.length) return null;
   return (
     <div
@@ -766,8 +891,23 @@ function Subtitles({ cues }: { cues: Cue[] }) {
           <p
             key={c.key}
             className="cam-sub"
-            style={{ '--at': c.at, '--next': c.next } as CSSProperties}
+            style={
+              {
+                '--at': c.at,
+                '--next': c.next,
+                ...(c.shift ? { marginRight: c.shift } : {}),
+              } as CSSProperties
+            }
+            data-compact={c.compact || undefined}
             data-last={(i === cards.length - 1 && !c.until) || undefined}
+            data-gone={(away && c.until) || undefined}
+            onAnimationStart={
+              c.until && c === cards.find((x) => x.until)
+                ? (e) =>
+                    (e.animationName === 'sub-show' || e.animationName === 'sub-fade-in') &&
+                    onJudgeShown?.()
+                : undefined
+            }
           >
             <span className="who">{t(c.who, scope)}</span>
             {c.redact ? (

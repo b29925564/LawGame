@@ -2,7 +2,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { afterAll, describe, expect, it } from 'vitest';
 import { parse } from 'yaml';
 import { install, reset, translate } from '../i18n';
-import { sentences } from './court/subtitleSplit';
+import { sentencesOf } from './court/subtitleSplit';
 import {
   markedCards,
   markedFor,
@@ -85,7 +85,7 @@ describe('底圖字幕的英文斷點', () => {
   for (const key of new Set(plates.map((p) => p.scene))) {
     const [ep, id] = key.split(':');
     for (const l of cardLines(scenes[ep].find((s) => s.id === id) as Node))
-      for (const s of sentences(translate(l.text, id)).filter(Boolean)) EN.push(s);
+      for (const s of sentencesOf(translate(l.text, id)).filter(Boolean)) EN.push(s);
   }
   const all = [...new Set(EN)];
   const emOf = (g: (typeof GEOMS)[number], k: number) =>

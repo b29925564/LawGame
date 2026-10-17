@@ -1,4 +1,4 @@
-import { latinBreakAllowed, type Card } from './court/subtitleSplit';
+import { canCut, type Card } from './court/subtitleSplit';
 
 /**
  * 底圖字幕的英文人工斷點（設計師 #296 字幕模式第二版）：字幕業的做法，不讓程式猜英文句子結構。
@@ -83,7 +83,7 @@ export function twoLines(ws: string[], em: number, measure: Measure): string[] |
   let best = -1;
   let score = Infinity;
   for (let c = 1; c < n; c++) {
-    if (!latinBreakAllowed(ws, c)) continue;
+    if (!canCut(ws, c)) continue;
     const l = wd(0, c);
     const r = wd(c, n);
     if (l > em || r > em) continue;
