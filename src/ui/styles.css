@@ -1083,7 +1083,6 @@ details summary {
   border-top: 1px solid var(--border);
   background: color-mix(in srgb, var(--surface) 55%, transparent);
   backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
 }
 /* 證據清單捲到底留 24，底緣淡出，看得出是刻意捲動，不是截在半列（桌機證據欄與手機抽屜一樣）。 */
 .sheet .sheet-list {
@@ -1099,7 +1098,6 @@ details summary {
   border-top: none;
   background: none;
   backdrop-filter: none;
-  -webkit-backdrop-filter: none;
 }
 .shell-foot .wide {
   flex: 1;
