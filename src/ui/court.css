@@ -3131,8 +3131,8 @@ html[lang='en'] .stamp.rec-stamp b {
 .cam-pose[data-on] {
   opacity: 1;
 }
-/* 底圖還沒載好解碼完，立牌不出現（不能只剩剪影）。 */
-.cam-layer:not([data-plate]) .cam-pose {
+/* 底圖還沒載好解碼完，底圖、立牌、前景一起不出現：同一格出現，不先露出空的證人席再跳出剪影（關卡二 v92 #C）。 */
+.cam-layer:not([data-plate]) :is(.cam-plate, .cam-pose, .cam-front) {
   visibility: hidden;
 }
 @media (prefers-reduced-motion: reduce) {
@@ -3185,6 +3185,17 @@ html[lang='en'] .stamp.rec-stamp b {
 /* 一張裡兩半各自放得進一行時，在句號後硬換行（subtitleSplit）。 */
 .cam-sub .ln {
   display: block;
+}
+/* 法官席：一行的框頂會碰到法官的頭（字幕放大）時，說話者名併進同一行、框貼低 4px，高度少一行（CourtCamera 量過才開）。 */
+.cam-sub[data-compact] {
+  margin-bottom: -4px;
+}
+.cam-sub[data-compact] .who {
+  display: inline;
+  margin-right: 0.6em;
+}
+.cam-sub[data-compact] .ln:first-child {
+  display: inline;
 }
 /*
  * 鏡頭層不跟主題，字幕底框跟（設定集 10 RD-ART-1001-L）：淺色主題是 HUD 淺色面板的表面、--text、--muted，

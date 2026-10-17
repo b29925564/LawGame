@@ -79,7 +79,7 @@ for (const lang of ['zh', 'en'] as const)
     if (await open.isVisible()) await open.click();
     const cam = page.locator('.court-cam.strip');
     await expect(cam).toBeVisible();
-    // 頁面裡：每一格，看得見的立牌都要有已載好的底圖；底圖沒好之前鏡頭不是 witness／bench。
+    // 頁面裡：每一格，看得見的立牌都要有已載好的底圖、看得見的底圖都要有立牌；底圖沒好之前鏡頭不是 witness／bench。
     await page.evaluate(() => {
       const w = window as unknown as { __bad: string[] };
       w.__bad = [];
@@ -92,6 +92,16 @@ for (const lang of ['zh', 'en'] as const)
           const pose = layer.querySelector('.cam-pose');
           if (pose && getComputedStyle(pose).visibility !== 'hidden' && !loaded)
             w.__bad.push('立牌看得見但底圖沒好');
+          // 反過來也不行：底圖先露出、立牌晚一格才跳出來（關卡二 v92 #C）。
+          const on = layer.querySelector('.cam-pose[data-on]');
+          if (
+            img &&
+            on &&
+            loaded &&
+            getComputedStyle(img).visibility !== 'hidden' &&
+            getComputedStyle(on).visibility === 'hidden'
+          )
+            w.__bad.push('底圖看得見但立牌還沒出現');
         }
         if (shot && shot !== 'black') {
           const on = f?.querySelector(
