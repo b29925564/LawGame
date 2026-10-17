@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { expect, test, type Page } from '@playwright/test';
 import { proseUnits } from '../src/ui/lineUnits';
+import { readUnits, SUB_MIN_UNITS } from '../src/ui/court/subtitleSplit';
 
 /**
  * 鏡頭條在異議那一拍裡不動（設計師 #247 第一輪）：一刀黑、法官席、落章、證人回答都在鏡頭條裡剪，
@@ -521,3 +522,94 @@ for (const lang of ['zh', 'en'] as const)
     expect(cutAt, '法官席要切回證人').not.toBeNull();
     expect(cutAt!.shown, '切回證人那一格法官的字幕還在').toEqual([]);
   });
+
+/**
+ * 關卡 2 v92 #C 的副作用（關卡 2 對 58fc5fb）：字幕改成切回證人就收之後，最後一張裁定字幕在切回證人前的黑場一開始就收，
+ * 少了一段閱讀時間；字幕靠 CSS 計時、鏡頭靠 setTimeout，瀏覽器忙時兩邊走散，最多少約 500ms。
+ * 每一張字幕要看得到的時間是「單位數 × --dur-sub-unit」（至少 SUB_MIN_UNITS 單位）；鏡頭要等到最後一張讀完才切回。
+ * 正常負載與 CPU 4 倍放慢（慢手機）各量一次。
+ */
+for (const lang of ['zh', 'en'] as const)
+  for (const slow of [1, 4] as const)
+    test(`切回證人前，最後一張裁定字幕讀得完（CPU ${slow}×・${lang}）`, async ({ page }, info) => {
+      test.skip(info.project.name !== 'desktop', '桌機鏡頭條');
+      test.setTimeout(90_000);
+      await page.setViewportSize({ width: 1530, height: 860 });
+      await page.addInitScript(
+        ([s, l]) => {
+          if (sessionStorage.getItem('seeded')) return;
+          sessionStorage.setItem('seeded', '1');
+          localStorage.clear();
+          localStorage.setItem('lawgame-ep-auto', s);
+          if (l === 'en') localStorage.setItem('lawgame-lang', 'en');
+        },
+        [
+          JSON.stringify({ version: 5, savedAt: Date.now(), label: 'x', progress: save.ep1 }),
+          lang,
+        ] as const,
+      );
+      await page.goto('/');
+      await page
+        .getByRole('button', { name: lang === 'en' ? /^Continue/ : /^繼續（/ })
+        .first()
+        .click();
+      const open = page.getByRole('button', { name: lang === 'en' ? 'Go to court' : '開庭' });
+      await open.or(page.locator('.court-cam')).first().waitFor();
+      if (await open.isVisible()) await open.click();
+      await expect(page.locator('.court-cam').first()).toBeVisible();
+      await page.waitForTimeout(1500);
+      await page.locator('button.primary.wide:not(.locked)').first().click();
+      const reason = page.locator('section.objection .row button').first();
+      await expect(reason).toBeVisible();
+      if (slow > 1) {
+        const cdp = await page.context().newCDPSession(page);
+        await cdp.send('Emulation.setCPUThrottlingRate', { rate: slow });
+      }
+      // 頁面裡逐格（rAF）記每張字幕完整看得到（opacity > 0.9、不是 hidden）的第一刻和最後一刻，到切回證人為止。
+      await page.evaluate(() => {
+        const seen: Record<string, [number, number]> = {};
+        const w = window as unknown as { __subs: typeof seen; __done: boolean };
+        w.__subs = seen;
+        w.__done = false;
+        let bench = false;
+        const tick = () => {
+          const shot = document.querySelector('.cam-frame')?.getAttribute('data-shot');
+          if (shot === 'bench') bench = true;
+          for (const e of document.querySelectorAll('.cam-sub')) {
+            const cs = getComputedStyle(e);
+            if (cs.visibility === 'hidden' || Number(cs.opacity) <= 0.9) continue;
+            const t = (e.querySelector('.tx') as HTMLElement)
+              .textContent!.replace(/\s+/g, ' ')
+              .trim();
+            const now = performance.now();
+            seen[t] = [seen[t]?.[0] ?? now, now];
+          }
+          if (bench && shot === 'witness') w.__done = true;
+          else requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(tick);
+      });
+      await reason.click();
+      await page.waitForFunction(() => (window as unknown as { __done: boolean }).__done, null, {
+        timeout: 30_000,
+      });
+      const { seen, unit } = await page.evaluate(() => ({
+        seen: (window as unknown as { __subs: Record<string, [number, number]> }).__subs,
+        unit: (() => {
+          const v = getComputedStyle(document.querySelector('.cam-subs')!)
+            .getPropertyValue('--dur-sub-unit')
+            .trim();
+          return parseFloat(v) * (v.endsWith('ms') ? 1 : 1000);
+        })(),
+      }));
+      const cards = Object.entries(seen).sort((a, b) => a[1][0] - b[1][0]);
+      expect(cards.length, '法官席上有字幕').toBeGreaterThan(0);
+      for (const [text, [from, to]] of cards) {
+        const need = Math.max(SUB_MIN_UNITS, readUnits(text)) * unit;
+        // 正常讀完要的時間；容許淡入（--dur-cut 42ms）與逐格取樣的 2 格，共 100ms。
+        expect(
+          to - from,
+          `「${text}」要看得到 ${need}ms，實際 ${Math.round(to - from)}ms`,
+        ).toBeGreaterThanOrEqual(need - 100);
+      }
+    });
