@@ -153,9 +153,9 @@
   overflow-wrap: anywhere;
   cursor: pointer;
 }
-/* 邊緣的卡不在字中間斷行（第二道關卡 v92d：「hypertensio／n」）：Cork.tsx 量最長的字，卡至少做到放得下它；
-   手機牌架的格子寬度固定，仍可斷。 */
-.cork-card:not(.rack) {
+/* 卡不在字中間斷行（第二道關卡 v92d：「hypertensio／n」）：邊緣的卡由 Cork.tsx 量最長的字，卡至少做到放得下它；
+   手機牌架的卡名由 RackName 照詞界排好每一行（「notificatio／n」「手錶通／知紀錄」是這條原本的 anywhere）。 */
+.cork-card {
   overflow-wrap: normal;
 }
 .cork-card {
@@ -599,6 +599,10 @@ body:has(.cork) .card .mini-btn[aria-pressed='true'] {
   max-height: 28px;
   /* 放不下的整行拿掉，不露出下一行的上緣（#300 拿掉邊緣卡的兩行上限時連這裡的 overflow 一起掉了）。 */
   overflow: hidden;
+}
+.cork-rack-line {
+  display: block;
+  white-space: nowrap;
 }
 .cork-card.rack.photo .cork-strip b {
   max-height: 14px;
