@@ -4,6 +4,8 @@ import {
   useLayoutEffect,
   useRef,
   useState,
+  useCallback,
+  useMemo,
   type CSSProperties,
   type ReactNode,
 } from 'react';
@@ -14,6 +16,7 @@ import { scrollPageTo } from './pageScroll';
 import { PhotoLogLine, type PhotoRecord } from './Dossier';
 import { useScope } from './lang';
 import { prose } from './prose';
+import { proseUnits } from './lineUnits';
 import './cork.css';
 import { JurySketch, type JuryCard } from './sketch/JurySketch';
 import { hasPrint, Print, printRatio } from './prints';
@@ -267,79 +270,200 @@ function Face({ item, bare }: { item: CorkItem; bare?: boolean }) {
   }
 }
 
-/** 牌架上的卡只放標題（設計師 #2 裁定 M1）：最多兩整行，放不下的整行拿掉，不加刪節號、不淡出。 */
-/** 一行放不下時，結尾不收在虛詞上（「Autopsy photo: the」→「Autopsy photo:」）。 */
+/** 牌架上的卡只放標題（設計師 #2 裁定 M1）：整詞、最多兩行（照片卡一行），放不下的整詞拿掉，不加刪節號、不淡出。 */
+/** 放不下被截短時，結尾不收在虛詞上（「Autopsy photo: the」→「Autopsy photo:」）。 */
 const TRAILING = new Set([
   ...'a an the of in on at to for and or by with from as is are was were his her their its'.split(
     ' ',
   ),
   ...'的 之 與 和 及 或 在 於 對 把 被 為 從 到 以 而 並'.split(' '),
 ]);
+/** 斷行單位：一個詞，加上黏在它後面的標點（標點不能落在下一行行首）。 */
+interface Unit {
+  w: string;
+  p: string;
+}
+const CJK = /[\u3000-\u9fff\uff00-\uffef]/;
+function unitsOf(text: string): Unit[] {
+  if (!CJK.test(text)) {
+    // 「No. 26-0315-088」的編號不跟「No.」拆開。
+    const ws = text.split(/(?<=\s)/).reduce<string[]>((acc, w) => {
+      if (/^No\.\s$/.test(acc[acc.length - 1] ?? '')) acc[acc.length - 1] += w;
+      else acc.push(w);
+      return acc;
+    }, []);
+    return ws.map((w) => ({ w, p: '' }));
+  }
+  // 中文用內文同一套斷詞（ICU 詞典加本作人名、固定詞；標點跟前一個詞，開括號跟後一個詞）。
+  return proseUnits(text, false, false).map((u) => {
+    const p = /[，。、；：！？…,.;:!?]+$/.exec(u)?.[0] ?? '';
+    return { w: u.slice(0, u.length - p.length), p };
+  });
+}
 let measureCtx: CanvasRenderingContext2D | null | undefined;
 /**
- * 手機牌架的照片卡：格子放不下兩行卡名（設計師 #2 2026-10-17 裁定只放一行）。取放得下的最長一段，
- * 整個字、整個詞（中文用詞切）；結尾不是虛詞；第一個字都放不下就整個不放。不加刪節號、不露半個字。
+ * 把卡名排進 width 寬、最多 maxLines 行：只在詞與詞之間斷（英文空白，中文 Intl.Segmenter 詞界），
+ * 放不下時取放得下的最長一段，結尾不是虛詞、不留逗號；不加刪節號、不露半個字。
+ * 第一個詞就放不下一行時：文字卡放能放的最長整詞（lastResort），照片卡什麼都不放（卡上只有照片）。
  */
-export function fitLine(text: string, width: number, font: string): string {
+export function fitLines(
+  text: string,
+  width: number,
+  font: string,
+  maxLines: number,
+  lastResort = true,
+): string[] {
   measureCtx ??= document.createElement('canvas').getContext('2d');
   const ctx = measureCtx;
-  if (!ctx || width <= 0) return text;
+  if (!ctx || width <= 0 || maxLines < 1) return maxLines < 1 ? [] : [text];
   ctx.font = font;
-  const cjk = /[\u3000-\u9fff\uff00-\uffef]/.test(text);
-  const parts: string[] = cjk
-    ? [...new Intl.Segmenter('zh-TW', { granularity: 'word' }).segment(text)].map((x) => x.segment)
-    : text.split(/(?<=\s)/);
-  const at = (k: number) => parts.slice(0, k).join('').trimEnd();
-  if (ctx.measureText(text).width <= width) return text;
-  let k = parts.length - 1;
-  while (k > 0 && ctx.measureText(at(k)).width > width) k--;
-  const last = (n: number) =>
-    parts[n - 1]
-      .trim()
-      .replace(/[:：,，、.。]+$/, '')
-      .toLowerCase();
-  while (k > 0 && TRAILING.has(last(k))) k--;
-  return at(k).replace(/[,，、]+$/, '');
+  const str = (us: Unit[]) => us.map((u) => u.w + u.p).join('');
+  const fits = (us: Unit[]) => ctx.measureText(str(us).trimEnd()).width <= width;
+  const units = unitsOf(text);
+  const lines: Unit[][] = [[]];
+  let cut = false;
+  for (const u of units) {
+    const cur = lines[lines.length - 1];
+    if (fits([...cur, u])) cur.push(u);
+    else if (cur.length && lines.length < maxLines && fits([u])) lines.push([u]);
+    else {
+      cut = true;
+      // 標點放不下就不放標點（「財物清單：」→「財物清單」）。
+      if (cur.length && u.p && fits([...cur, { w: u.w, p: '' }])) cur.push({ w: u.w, p: '' });
+      break;
+    }
+  }
+  if (cut) {
+    if (!lines[0].length) {
+      if (!lastResort) return [];
+      const best = units
+        .map((u) => ({ w: u.w, p: '' }))
+        .filter((u) => fits([u]))
+        .sort((x, y) => y.w.trim().length - x.w.trim().length)[0];
+      return best ? [best.w.trim()] : [];
+    }
+    const fn = (u: Unit) =>
+      TRAILING.has(
+        u.w
+          .trim()
+          .replace(/[:：,，、.。]+$/, '')
+          .toLowerCase(),
+      );
+    const trim = () => {
+      while (lines.length) {
+        const l = lines[lines.length - 1];
+        while (l.length && fn(l[l.length - 1])) l.pop();
+        if (l.length) break;
+        lines.pop();
+      }
+    };
+    trim();
+    // 括號開了沒關（「門禁紀錄（警方標」）：退回括號前面。
+    const unclosed = () => {
+      const all = lines.map(str).join('');
+      return (
+        (all.match(/[（(「『《〈【]/g)?.length ?? 0) > (all.match(/[）)」』》〉】]/g)?.length ?? 0)
+      );
+    };
+    while (lines.length && unclosed()) {
+      const l = lines[lines.length - 1];
+      l.pop();
+      if (!l.length) lines.pop();
+    }
+    trim();
+    const tail = lines[lines.length - 1]?.[lines[lines.length - 1].length - 1];
+    if (tail) {
+      tail.p = tail.p.replace(/[,，、]+$/, '');
+      if (!tail.p) tail.w = tail.w.replace(/[,，、]+(\s*)$/, '$1');
+    }
+  }
+  return lines.map((l, i) => (i === lines.length - 1 ? str(l).trimEnd() : str(l)));
 }
 
-/** 單行卡名：量格子寬度（字型載好、換語言、換尺寸都重量），只放得下的整個字。 */
-function OneLine({ text }: { text: string }) {
+/** 冒號後面那段（「Ethan's account: he called a ride」→「he called a ride」）；沒有冒號、冒號後沒字就是整個卡名。 */
+function tailOf(text: string) {
+  const at = text.search(/[:：]/);
+  const rest = at < 0 ? '' : text.slice(at + 1).trim();
+  return rest || text;
+}
+
+/**
+ * 牌架上的卡名：量格子寬度和高度（字型載好、換語言、換尺寸都重量），整詞排進放得下的行數。
+ * head 是照卡名開頭排的結果，回報給牌架；同一頁有兩張以上 head 一模一樣時，那幾張改排冒號後面那段（tail）。
+ */
+function RackName({
+  id,
+  text,
+  tail,
+  lines,
+  className,
+  onHead,
+}: {
+  id: string;
+  text: string;
+  tail: boolean;
+  /** 最多幾行；沒給就量格子放得下的行數，最多兩行。 */
+  lines?: number;
+  className?: string;
+  onHead: (id: string, head: string) => void;
+}) {
   const ref = useRef<HTMLElement>(null);
-  const [shown, setShown] = useState(text);
+  const [shown, setShown] = useState<string[]>([text]);
   useLayoutEffect(() => {
     const el = ref.current;
     const box = el?.parentElement;
-    if (!el || !box) return;
+    const card = el?.closest<HTMLElement>('.cork-card');
+    if (!el || !box || !card) return;
     const fit = () => {
       const cs = getComputedStyle(el);
-      setShown(
-        fitLine(
-          text,
-          box.clientWidth,
-          `${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`,
-        ),
-      );
+      const num = (v: string) => parseFloat(v) || 0;
+      const bs = getComputedStyle(box);
+      const width = box.clientWidth - num(bs.paddingLeft) - num(bs.paddingRight);
+      const font = `${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+      let n = lines ?? 2;
+      if (lines === undefined) {
+        const ks = getComputedStyle(card);
+        const room = card.clientHeight - num(ks.paddingTop) - num(ks.paddingBottom);
+        n = Math.min(2, Math.floor(room / (num(cs.lineHeight) || 16)));
+      }
+      const head = fitLines(text, width, font, n, lines === undefined);
+      onHead(id, head.join('').trim());
+      setShown(tail ? fitLines(tailOf(text), width, font, n, lines === undefined) : head);
     };
     fit();
     const ro = new ResizeObserver(fit);
     ro.observe(box);
+    ro.observe(card);
     document.fonts?.addEventListener('loadingdone', fit);
     return () => {
       ro.disconnect();
       document.fonts?.removeEventListener('loadingdone', fit);
     };
-  }, [text]);
+  }, [id, text, tail, lines, onHead]);
   return (
-    <b ref={ref} data-name={text}>
-      {shown}
+    <b ref={ref} className={className} data-name={text}>
+      {shown.map((l, i) => (
+        <span key={i} className="cork-rack-line">
+          {l}
+        </span>
+      ))}
     </b>
   );
 }
 
-function RackFace({ item }: { item: CorkItem }) {
+function RackFace({
+  item,
+  tail,
+  onHead,
+}: {
+  item: CorkItem;
+  tail: boolean;
+  onHead: (id: string, head: string) => void;
+}) {
   const t = useT();
   const scope = useScope();
-  const name = prose(t(item.name, scope));
+  const name = t(item.name, scope);
+  const nameProps = { id: item.id, text: name, tail, onHead };
   switch (look(item.kind)) {
     case 'photo':
       return (
@@ -354,20 +478,20 @@ function RackFace({ item }: { item: CorkItem }) {
             )}
           </span>
           <span className="cork-strip">
-            <OneLine text={t(item.name, scope)} />
+            <RackName {...nameProps} lines={1} />
           </span>
         </>
       );
     case 'index':
       return (
         <span className="cork-index-head">
-          <b>{name}</b>
+          <RackName {...nameProps} />
         </span>
       );
     case 'note':
-      return <b className="cork-hand">{name}</b>;
+      return <RackName {...nameProps} className="cork-hand" />;
     default:
-      return <b className="cork-doc-name">{name}</b>;
+      return <RackName {...nameProps} className="cork-doc-name" />;
   }
 }
 
@@ -722,6 +846,12 @@ export function Cork({
 }) {
   const t = useT();
   const scope = useScope();
+  // 牌架上每張卡照卡名開頭排出來的字（RackName 回報）：同一頁有兩張以上一模一樣時，那幾張改排冒號後面那段。
+  const [heads, setHeads] = useState<Record<string, string>>({});
+  const onHead = useCallback(
+    (id: string, head: string) => setHeads((p) => (p[id] === head ? p : { ...p, [id]: head })),
+    [],
+  );
   const [ref, h, w] = useSize();
   // 手機：每一次從牌架放卡，剛收到卡的那一格若落在答案列後面，就把頁面捲到看得到放進去的是哪張
   // （設計師 2026-10-16 審 #284、gate 2 v92b、v92c E）：不然點了卡，卡從牌架消失、去的地方在第一屏外。
@@ -826,6 +956,18 @@ export function Cork({
   const rackTop = RACK_PAD;
   const pinY = (PIN / Math.max(h, 1)) * 100;
   const rackPage = rackPages[page];
+  // 同一頁牌架上冒號前面一樣的卡（「Ethan's account:」好幾張），或排出來的字一模一樣的卡，改排冒號後面那段。
+  const tailIds = useMemo(() => {
+    const groups = new Map<string, string[]>();
+    const add = (key: string, id: string) => groups.set(key, [...(groups.get(key) ?? []), id]);
+    for (const { item } of rackPage) {
+      if (!item.card) continue;
+      const name = t(item.card.name, scope);
+      if (/[:：]/.test(name)) add(`p:${name.split(/[:：]/)[0].trim()}`, item.id);
+      if (heads[item.id]) add(`h:${heads[item.id]}`, item.id);
+    }
+    return new Set([...groups.values()].filter((ids) => ids.length > 1).flat());
+  }, [rackPage, heads, t, scope]);
   const rackStyle = { '--cell-h': `${cellH}px`, top: RACK_PAD } as CSSProperties;
 
   // 邊緣位置分配：先給連線（兩兩一組），再給黑條佔位（兩欄最下面那格優先），剩下的放其他卡。
@@ -1280,6 +1422,7 @@ export function Cork({
                 type="button"
                 tabIndex={-1}
                 aria-hidden
+                aria-label={t(card.name, scope)}
                 className={`cork-card rack ${look(card.kind)}`}
                 style={
                   {
@@ -1294,7 +1437,7 @@ export function Cork({
                   if (slot >= 0) scrollToSlot(slot);
                 }}
               >
-                <RackFace item={card} />
+                <RackFace item={card} tail={tailIds.has(id)} onHead={onHead} />
               </button>
             ) : null,
           )}
