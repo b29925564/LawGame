@@ -5,7 +5,6 @@ import {
   useRef,
   useState,
   useCallback,
-  useMemo,
   type CSSProperties,
   type ReactNode,
 } from 'react';
@@ -276,7 +275,10 @@ const TRAILING = new Set([
   ...'a an the of in on at to for and or by with from as is are was were his her their its'.split(
     ' ',
   ),
+  // 冒號後面不能只剩一個代名詞（「Sophie to police: I」「蘇菲陳述：他」）。
+  ...'i he she it they we you'.split(' '),
   ...'的 之 與 和 及 或 在 於 對 把 被 為 從 到 以 而 並'.split(' '),
+  ...'是 我 你 他 她 它'.split(' '),
 ]);
 /** 斷行單位：一個詞，加上黏在它後面的標點（標點不能落在下一行行首）。 */
 interface Unit {
@@ -295,10 +297,18 @@ function unitsOf(text: string): Unit[] {
     return ws.map((w) => ({ w, p: '' }));
   }
   // 中文用內文同一套斷詞（ICU 詞典加本作人名、固定詞；標點跟前一個詞，開括號跟後一個詞）。
-  return proseUnits(text, false, false).map((u) => {
+  const out: Unit[] = [];
+  for (const u of proseUnits(text, false, false)) {
     const p = /[，。、；：！？…,.;:!?]+$/.exec(u)?.[0] ?? '';
-    return { w: u.slice(0, u.length - p.length), p };
-  });
+    const w = u.slice(0, u.length - p.length);
+    const prev = out[out.length - 1];
+    // 「的」「之」黏前一個詞，不放行首。
+    if (prev && !prev.p && /^[的之]$/.test(w)) {
+      prev.w += w;
+      prev.p = p;
+    } else out.push({ w, p });
+  }
+  return out;
 }
 let measureCtx: CanvasRenderingContext2D | null | undefined;
 /**
@@ -352,6 +362,9 @@ export function fitLines(
     const trim = () => {
       while (lines.length) {
         const l = lines[lines.length - 1];
+        // 黏著「的」「之」的詞（「警方的」）被截在這裡時，把「的」「之」拿掉，詞還是詞（「警方」）。
+        const end = l[l.length - 1];
+        if (end && !end.p && /.[的之]$/.test(end.w)) end.w = end.w.slice(0, -1);
         while (l.length && fn(l[l.length - 1])) l.pop();
         if (l.length) break;
         lines.pop();
@@ -956,18 +969,19 @@ export function Cork({
   const rackTop = RACK_PAD;
   const pinY = (PIN / Math.max(h, 1)) * 100;
   const rackPage = rackPages[page];
-  // 同一頁牌架上冒號前面一樣的卡（「Ethan's account:」好幾張），或排出來的字一模一樣的卡，改排冒號後面那段。
-  const tailIds = useMemo(() => {
+  // 整個牌架上冒號前面一樣的卡（「Ethan's account:」好幾張，不論在哪一頁），或同一頁排出來一模一樣的卡，
+  // 改排冒號後面那段。
+  const tailIds = (() => {
     const groups = new Map<string, string[]>();
     const add = (key: string, id: string) => groups.set(key, [...(groups.get(key) ?? []), id]);
-    for (const { item } of rackPage) {
-      if (!item.card) continue;
-      const name = t(item.card.name, scope);
-      if (/[:：]/.test(name)) add(`p:${name.split(/[:：]/)[0].trim()}`, item.id);
-      if (heads[item.id]) add(`h:${heads[item.id]}`, item.id);
+    for (const { card } of rackItems) {
+      const name = card && t(card.name, scope);
+      if (card && name && /[:：]/.test(name)) add(`p:${name.split(/[:：]/)[0].trim()}`, card.id);
     }
+    for (const { item } of rackPage)
+      if (item.card && heads[item.id]) add(`h:${heads[item.id]}`, item.id);
     return new Set([...groups.values()].filter((ids) => ids.length > 1).flat());
-  }, [rackPage, heads, t, scope]);
+  })();
   const rackStyle = { '--cell-h': `${cellH}px`, top: RACK_PAD } as CSSProperties;
 
   // 邊緣位置分配：先給連線（兩兩一組），再給黑條佔位（兩欄最下面那格優先），剩下的放其他卡。

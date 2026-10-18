@@ -674,7 +674,15 @@ const FN_EN = [
   'by',
   'with',
   'from',
+  'i',
+  'he',
+  'she',
+  'it',
+  'they',
+  'we',
+  'you',
 ];
+const FN_ZH = [...'的之與和及或在於對把被為從到以而並是我你他她它'];
 for (const w of [412, 360, 320])
   for (const lang of ['zh-TW', 'en'])
     test(`手機 ${w}：牌架卡名整詞、同頁不重複、aria-label 是完整卡名（${lang}）`, async ({
@@ -692,6 +700,7 @@ for (const w of [412, 360, 320])
       const dots = page.locator('.cork-dots button');
       let seen = 0;
       let cut = 0;
+      const everyCard: { full: string; shown: string }[] = [];
       for (let k = 0; k < Math.max(1, await dots.count()); k++) {
         if (await dots.count()) await dots.nth(k).click();
         await settled(page);
@@ -735,6 +744,7 @@ for (const w of [412, 360, 320])
           if (!joined.trim()) continue;
           shownAll.push(joined.trim());
           const shown = joined.trim();
+          everyCard.push({ full: c.full, shown });
           const cjk = /[\u3000-\u9fff\uff00-\uffef]/.test(c.src);
           const wordsOf = (t: string) => (cjk ? proseUnits(t, false, false) : t.split(/\s+/));
           const whole = c.full.startsWith(shown);
@@ -749,6 +759,19 @@ for (const w of [412, 360, 320])
           if (shown === c.full || shown === c.src || lone) continue;
           cut++;
           const base = whole ? c.full : c.src;
+          // 冒號後面不能只剩一個代名詞或「是」（「Sophie to police: I」「蘇菲陳述：他」「論點 A：伊森是」）。
+          const colonAt = shown.search(/[:：]/);
+          const after = (colonAt < 0 ? shown : shown.slice(colonAt + 1)).trim();
+          if (after) {
+            const words = cjk ? [...after] : after.split(/\s+/).map((x) => x.toLowerCase());
+            expect(
+              words.every((x) => FN_ZH.includes(x) || FN_EN.includes(x)),
+              `${shown} 冒號後面只剩虛詞或代名詞`,
+            ).toBe(false);
+          }
+          // 「的」「之」黏前一個詞，不放行首。
+          for (const l of c.lines)
+            expect(/^[的之]/.test(l), `${l} 「的」「之」不放行首`).toBe(false);
           if (cjk) {
             // 中文只在詞界斷（內文同一套斷詞）；每一行的尾巴也是詞界，標點不放行首。
             const ends = new Set<number>();
@@ -795,6 +818,21 @@ for (const w of [412, 360, 320])
           shownAll.length,
         );
       }
+      // 冒號前面一樣的卡，整個牌架有兩張以上（不論在哪一頁），每一頁的這幾張都排冒號後面那段。
+      const byLabel = new Map<string, string[]>();
+      for (const c of everyCard) {
+        const at = c.full.search(/[:：]/);
+        if (at < 0) continue;
+        const label = c.full.slice(0, at).trim();
+        byLabel.set(label, [...(byLabel.get(label) ?? []), c.shown]);
+      }
+      for (const [label, shown] of byLabel)
+        if (shown.length > 1)
+          for (const x of shown)
+            expect(
+              x.startsWith(label) && x !== '',
+              `牌架上有 ${shown.length} 張「${label}」，每張都要排冒號後面那段：${x}`,
+            ).toBe(false);
       expect(seen, '牌架有卡').toBeGreaterThan(3);
       expect(cut, '有被縮短的卡').toBeGreaterThanOrEqual(0);
     });
