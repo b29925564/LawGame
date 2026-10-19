@@ -94,6 +94,7 @@ export function EvidenceDrawer({
   // 手機抽屜是對話框：開了把焦點移進來、Tab 繞在裡面、關了回到「證據」鈕。
   const tab = useRef<HTMLButtonElement>(null);
   const sheet = useRef<HTMLElement>(null);
+  const top = useRef<HTMLDivElement>(null);
   const was = useRef(false);
   const modal = open && !wide;
   useEffect(() => {
@@ -101,6 +102,15 @@ export function EvidenceDrawer({
     else if (was.current && !wide) tab.current?.focus({ preventScroll: true });
     was.current = modal;
   }, [modal, wide]);
+  // 頂列的高度給分組小標黏頂用（--tabs-h，跟證據板同一個做法）；只在矮視窗的 CSS 裡有用到。
+  useEffect(() => {
+    const bar = top.current;
+    const box = sheet.current;
+    if (!bar || !box || typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver(() => box.style.setProperty('--tabs-h', `${bar.offsetHeight}px`));
+    ro.observe(bar);
+    return () => ro.disconnect();
+  }, [open, wide]);
   const trap = (e: ReactKeyboardEvent) => {
     if (e.key !== 'Tab' || !sheet.current) return;
     const items = [
@@ -194,33 +204,36 @@ export function EvidenceDrawer({
         aria-label={t('證據抽屜')}
         {...(wide ? {} : { role: 'dialog', 'aria-modal': true, tabIndex: -1, onKeyDown: trap })}
       >
-        {!wide && (
-          <div
-            className="sheet-grip"
-            aria-hidden="true"
-            onPointerDown={gripDown}
-            onPointerMove={gripMove}
-            onPointerUp={gripUp}
-            onPointerCancel={gripUp}
-          />
-        )}
-        <div className="panel-head">
-          <Tabs
-            className="sheet-tabs"
-            label={t('抽屜')}
-            value={page}
-            onPick={setPage}
-            items={[
-              { id: 'cards' as const, label: t('證據 {n}', { n: items.length }) },
-              ...(noTimeline ? [] : [{ id: 'timeline' as const, label: t('時間軸') }]),
-              { id: 'terms' as const, label: t('法典') },
-            ]}
-          />
+        {/* 拉柄＋分頁列＋「關閉」是一組：矮視窗（橫向手機）抽屜整個捲動時，這一組黏在頂端。 */}
+        <div className="sheet-top" ref={top}>
           {!wide && (
-            <button className="link" onClick={() => toggle(false)}>
-              {t('關閉')}
-            </button>
+            <div
+              className="sheet-grip"
+              aria-hidden="true"
+              onPointerDown={gripDown}
+              onPointerMove={gripMove}
+              onPointerUp={gripUp}
+              onPointerCancel={gripUp}
+            />
           )}
+          <div className="panel-head">
+            <Tabs
+              className="sheet-tabs"
+              label={t('抽屜')}
+              value={page}
+              onPick={setPage}
+              items={[
+                { id: 'cards' as const, label: t('證據 {n}', { n: items.length }) },
+                ...(noTimeline ? [] : [{ id: 'timeline' as const, label: t('時間軸') }]),
+                { id: 'terms' as const, label: t('法典') },
+              ]}
+            />
+            {!wide && (
+              <button className="link" onClick={() => toggle(false)}>
+                {t('關閉')}
+              </button>
+            )}
+          </div>
         </div>
         {page === 'cards' && note && <p className="muted small sheet-note">{t(note, scope)}</p>}
         {/* 搜尋和種類篩選一組：矮視窗（橫向手機）併成一行，其餘照舊上下排。 */}

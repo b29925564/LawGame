@@ -44,6 +44,37 @@ async function openDrawer(page: Page, info: TestInfo, width: number, height: num
   );
 }
 
+/** 目前焦點元素的外框（含 outline-offset）四邊有沒有被某個祖先的 overflow 切掉。 */
+function ringClipped(page: Page) {
+  return page.evaluate(() => {
+    const el = document.activeElement as HTMLElement;
+    const cs = getComputedStyle(el);
+    const grow = parseFloat(cs.outlineWidth) + parseFloat(cs.outlineOffset);
+    const b = el.getBoundingClientRect();
+    const ring = { l: b.left - grow, t: b.top - grow, r: b.right + grow, b: b.bottom + grow };
+    const clipped: string[] = [];
+    for (let a = el.parentElement; a; a = a.parentElement) {
+      const ac = getComputedStyle(a);
+      if (ac.overflowX === 'visible' && ac.overflowY === 'visible') continue;
+      const ab = a.getBoundingClientRect();
+      const box = {
+        l: ab.left + a.clientLeft,
+        t: ab.top + a.clientTop,
+        r: ab.left + a.clientLeft + a.clientWidth,
+        b: ab.top + a.clientTop + a.clientHeight,
+      };
+      const out = [
+        ring.l < box.l - 0.5 && '左',
+        ring.t < box.t - 0.5 && '上',
+        ring.r > box.r + 0.5 && '右',
+        ring.b > box.b + 0.5 && '下',
+      ].filter(Boolean);
+      if (out.length) clipped.push(`${a.className}:${out.join('')}`);
+    }
+    return { tag: el.textContent, outline: cs.outlineStyle, clipped };
+  });
+}
+
 test.describe('證據抽屜（手機）', () => {
   test('右上角的點是遮罩：點下去關抽屜，不會打開選單', async ({ page }, info) => {
     await openDrawer(page, info, 412, 839);
@@ -117,8 +148,30 @@ test.describe('證據抽屜（手機）', () => {
       });
       expect(layers.list).toBeLessThanOrEqual(1);
       expect(layers.sheet).toBeGreaterThan(0);
-      // 捲到底：最後一張卡完整在畫面裡。
-      await page.locator('.sheet').evaluate((el) => (el.scrollTop = el.scrollHeight));
+      // 捲到中段和底：拉柄、分頁、「關閉」都還在畫面裡，頂列上沒有卡露出來；捲到底最後一張卡完整。
+      const sheetTop = (await page.locator('.sheet').boundingBox())!.y;
+      for (const to of [120, 1e6]) {
+        await page.locator('.sheet').evaluate((el, y) => (el.scrollTop = y), to);
+        for (const loc of [
+          page.locator('.sheet-grip'),
+          page.locator('.sheet .sheet-tabs button').first(),
+          page.locator('.sheet .panel-head .link'),
+        ]) {
+          const b = (await loc.boundingBox())!;
+          expect(b.y).toBeGreaterThanOrEqual(0);
+          expect(b.y + b.height).toBeLessThanOrEqual(360);
+        }
+        const barH = await page.evaluate(
+          () => document.querySelector('.sheet-top')!.getBoundingClientRect().height,
+        );
+        for (const dy of [2, barH / 2, barH - 2]) {
+          const hit = await page.evaluate(
+            ([x, y]) => !!document.elementFromPoint(x, y)?.closest('.sheet-list li'),
+            [431, sheetTop + dy],
+          );
+          expect(hit, `捲 ${to}，抽屜上緣往下 ${dy}px 是卡`).toBe(false);
+        }
+      }
       const last = (await page.locator('.sheet .sheet-list li').last().boundingBox())!;
       expect(last.y).toBeGreaterThanOrEqual(0);
       expect(last.y + last.height).toBeLessThanOrEqual(360);
@@ -146,38 +199,70 @@ test.describe('證據抽屜（手機）', () => {
   });
 
   for (const lang of ['zh', 'en'])
-    test(`分頁的焦點圈四邊都在，沒被祖先的 overflow 切掉（${lang}）`, async ({ page }, info) => {
+    test(`抽屜分頁的焦點圈四邊都在，沒被祖先的 overflow 切掉（${lang}）`, async ({
+      page,
+    }, info) => {
       await openDrawer(page, info, 412, 839, lang);
       await page.keyboard.press('Tab');
-      const r = await page.evaluate(() => {
-        const el = document.activeElement as HTMLElement;
-        const cs = getComputedStyle(el);
-        const grow = parseFloat(cs.outlineWidth) + parseFloat(cs.outlineOffset);
-        const b = el.getBoundingClientRect();
-        const ring = { l: b.left - grow, t: b.top - grow, r: b.right + grow, b: b.bottom + grow };
-        const clipped: string[] = [];
-        for (let a = el.parentElement; a; a = a.parentElement) {
-          const ac = getComputedStyle(a);
-          if (ac.overflowX === 'visible' && ac.overflowY === 'visible') continue;
-          const ab = a.getBoundingClientRect();
-          const box = {
-            l: ab.left + a.clientLeft,
-            t: ab.top + a.clientTop,
-            r: ab.left + a.clientLeft + a.clientWidth,
-            b: ab.top + a.clientTop + a.clientHeight,
-          };
-          const out = [
-            ring.l < box.l - 0.5 && '左',
-            ring.t < box.t - 0.5 && '上',
-            ring.r > box.r + 0.5 && '右',
-            ring.b > box.b + 0.5 && '下',
-          ].filter(Boolean);
-          if (out.length) clipped.push(`${a.className}:${out.join('')}`);
-        }
-        return { tag: el.textContent, outline: cs.outlineStyle, clipped };
-      });
+      const r = await ringClipped(page);
       expect(r.tag).toMatch(/^(證據|Evidence)/);
       expect(r.outline).toBe('solid');
       expect(r.clipped).toEqual([]);
     });
+
+  // 書桌的分頁列同一個 .apps：焦點圈也不能被切（設計師 #307 第二輪）。
+  for (const [width, height] of [
+    [412, 839],
+    [1440, 900],
+  ] as const)
+    for (const lang of ['zh', 'en'])
+      test(`書桌分頁列的焦點圈四邊都在（${width} 寬，${lang}）`, async ({ page }, info) => {
+        test.skip(info.project.name !== 'desktop', '自己設視窗，只跑一次');
+        await page.setViewportSize({ width, height });
+        await page.addInitScript(
+          ([l]) => {
+            if (sessionStorage.getItem('seeded')) return;
+            sessionStorage.setItem('seeded', '1');
+            localStorage.clear();
+            localStorage.setItem('lawgame-lang', l);
+            localStorage.setItem(
+              'lawgame-ep-auto',
+              JSON.stringify({
+                version: 5,
+                savedAt: Date.now(),
+                label: 'x',
+                progress: {
+                  episode: 'ep1',
+                  scene: 9,
+                  step: 0,
+                  choices: {},
+                  cards: ['watch-listed', 'heart-rate', 'chat-audit', 'watch-photo'],
+                  flags: [],
+                  ethics: [],
+                  scenes: {},
+                },
+              }),
+            );
+          },
+          [lang],
+        );
+        await page.goto('/');
+        await page
+          .getByRole('button', { name: /^(Continue|繼續)/ })
+          .first()
+          .click();
+        const tabs = page.locator('nav.apps:not(.sheet-tabs)').first();
+        await expect(tabs).toBeVisible();
+        // 鍵盤模式才有 :focus-visible：先按一下 Tab，再把焦點放到分頁上。
+        await page.keyboard.press('Tab');
+        await tabs.locator('button:not(.measure)').first().focus();
+        const r = await ringClipped(page);
+        expect(r.outline).toBe('solid');
+        expect(r.clipped).toEqual([]);
+        await page.screenshot({
+          path: process.env.RING_OUT
+            ? `${process.env.RING_OUT}/5-desk-tabs-focus-${width}-${lang}.png`
+            : undefined,
+        });
+      });
 });

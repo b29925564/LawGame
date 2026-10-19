@@ -1744,10 +1744,16 @@ html[lang='en'] .doc-record-box .record.doc-record {
   min-width: 0;
   border-bottom: none;
 }
-.sheet > .panel-head {
+.sheet-top {
+  display: contents;
+}
+.sheet-top > * {
+  flex-shrink: 0;
+}
+.sheet-top > .panel-head {
   flex-wrap: wrap;
 }
-.sheet > .panel-head > .link {
+.sheet-top > .panel-head > .link {
   margin-left: auto;
   min-height: 44px;
   min-width: 44px;
@@ -2491,6 +2497,20 @@ fieldset.relations.compact {
     max-height: calc(100dvh - 8px);
     overflow-y: auto;
     overscroll-behavior: contain;
+    /* 上緣的 30px 內距換成頂列自己的內距：頂列黏在最上面，捲上去的卡不會從內距裡露出來。 */
+    padding-top: 0;
+  }
+  .sheet .sheet-top {
+    display: block;
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    padding-top: 30px;
+    background: var(--surface);
+  }
+  /* 分組小標黏在頂列下面（頂列高度由 Evidence.tsx 量，寫進 --tabs-h）。 */
+  .sheet .group-head {
+    top: var(--tabs-h, var(--stick-top));
   }
   .sheet .sheet-note {
     display: none;
@@ -2514,8 +2534,8 @@ fieldset.relations.compact {
     mask-image: none;
   }
 }
-/* 分頁列自己 overflow-x: auto，會把 outline-offset: 2px 的焦點圈切掉三邊；抽屜的分頁把圈畫在按鈕裡面。 */
-.sheet-tabs button:focus-visible {
+/* 分頁列自己 overflow-x: auto，會把 outline-offset: 2px 的焦點圈切掉三邊；所有分頁列（抽屜、書桌）把圈畫在按鈕裡面。 */
+.apps button:focus-visible {
   outline-offset: -2px;
 }
 
