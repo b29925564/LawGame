@@ -149,7 +149,7 @@ for (const lang of ['zh-TW', 'en'])
     await expect(page.locator('.cork-focus.filled')).toHaveCount(1);
     // 抽屜自己也點得開。
     await tab.click();
-    await expect(page.getByRole('region', { name: /^(證據抽屜|Evidence drawer)/ })).toBeVisible();
+    await expect(page.getByRole('dialog', { name: /^(證據抽屜|Evidence drawer)/ })).toBeVisible();
   });
 
 test('1440：證據欄照舊常駐在右邊，空格還是「點右邊的卡片放上來」', async ({ page }) => {

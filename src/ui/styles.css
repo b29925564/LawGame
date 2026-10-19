@@ -1868,10 +1868,16 @@ html[lang='en'] .doc-record-box .record.doc-record {
   min-width: 0;
   border-bottom: none;
 }
-.sheet > .panel-head {
+.sheet-top {
+  display: contents;
+}
+.sheet-top > * {
+  flex-shrink: 0;
+}
+.sheet-top > .panel-head {
   flex-wrap: wrap;
 }
-.sheet > .panel-head > .link {
+.sheet-top > .panel-head > .link {
   margin-left: auto;
   min-height: 44px;
   min-width: 44px;
@@ -2537,7 +2543,8 @@ fieldset.relations.compact {
 .sheet-wrap {
   position: fixed;
   inset: 0;
-  z-index: var(--z-drawer);
+  /* 手機抽屜是對話框，遮罩要蓋住選單鈕：右上角的點是關抽屜，不是打開選單（體驗評測 v91）。 */
+  z-index: calc(var(--z-menu) + 1);
   display: flex;
   align-items: flex-end;
 }
@@ -2563,24 +2570,34 @@ fieldset.relations.compact {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  padding: 22px 16px calc(14px + env(safe-area-inset-bottom, 0px));
+  padding: 30px 16px calc(14px + env(safe-area-inset-bottom, 0px));
   background: var(--surface);
   border: 1px solid var(--border);
   border-bottom: none;
   border-radius: 14px 14px 0 0;
   box-shadow: none;
 }
-/* 拉把。 */
-.sheet::before {
+/* 拉把：整條頂邊都是抓手（touch-action 關掉，不然手指一拖就變成捲頁面），中間那條短線是畫的。 */
+.sheet-grip {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 30px;
+  cursor: grab;
+  touch-action: none;
+}
+.sheet-grip::before {
   content: '';
   position: absolute;
-  top: 8px;
+  top: 10px;
   left: 50%;
   width: 40px;
   height: 4px;
   margin-left: -20px;
   border-radius: 2px;
   background: var(--border-strong);
+}
+.sheet:focus {
+  outline: none;
 }
 .sheet h2 {
   margin: 0;
@@ -2590,6 +2607,60 @@ fieldset.relations.compact {
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
+}
+/*
+ * 橫向手機（863×360）：分頁、說明、搜尋、篩選各占一行，288px 的抽屜清單只剩 44px、看不到卡（體驗評測 v91）。
+ * ≤520px 高：不放說明句，搜尋和篩選併成一行，抽屜加高到只留 8px 上緣，只留一層捲動（抽屜自己捲，清單不另外捲）。
+ * 沒有 .sheet-find 的頁（時間軸、法典）照樣吃到後兩條。
+ */
+.sheet-find {
+  display: contents;
+}
+@media (max-height: 520px) {
+  .sheet {
+    max-height: calc(100dvh - 8px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    /* 上緣的 30px 內距換成頂列自己的內距：頂列黏在最上面，捲上去的卡不會從內距裡露出來。 */
+    padding-top: 0;
+  }
+  .sheet .sheet-top {
+    display: block;
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    padding-top: 30px;
+    background: var(--surface);
+  }
+  /* 分組小標黏在頂列下面（頂列高度由 Evidence.tsx 量，寫進 --tabs-h）。 */
+  .sheet .group-head {
+    top: var(--tabs-h, var(--stick-top));
+  }
+  .sheet .sheet-note {
+    display: none;
+  }
+  .sheet .sheet-find {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+  }
+  .sheet .sheet-find .find {
+    flex: 1 1 200px;
+    min-width: 0;
+  }
+  .sheet .sheet-find .chips.kinds {
+    flex: 0 1 auto;
+  }
+  .sheet .sheet-list {
+    flex: none;
+    overflow: visible;
+    mask-image: none;
+  }
+}
+/* 分頁列自己 overflow-x: auto，會把 outline-offset: 2px 的焦點圈切掉三邊；所有分頁列（抽屜、書桌）把圈畫在按鈕裡面。 */
+.apps button:focus-visible {
+  outline-offset: -2px;
 }
 
 /* ── 訪談：視訊通話 ── */
@@ -3813,9 +3884,6 @@ fieldset.relations.compact {
 @media (min-width: 1024px) {
   .side-wrap {
     top: 68px;
-  }
-  .sheet.side::before {
-    display: none;
   }
 }
 @media (min-width: 1024px) {

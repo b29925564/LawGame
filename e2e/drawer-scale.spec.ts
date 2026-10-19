@@ -42,7 +42,7 @@ for (const lang of ['zh-TW', 'en']) {
     await expect(tabs).toBeVisible();
     const buttons = await tabs.locator('button:not(.measure)').all();
     expect(buttons.length).toBe(3);
-    const close = (await page.locator('.sheet > .panel-head > .link').boundingBox())!;
+    const close = (await page.locator('.sheet-top > .panel-head > .link').boundingBox())!;
     const bar = (await tabs.boundingBox())!;
     // 分頁列不用左右捲就放得下，最後一個分頁完整落在分頁列裡。
     expect(await tabs.evaluate((e) => e.scrollWidth <= e.clientWidth + 1)).toBe(true);
