@@ -2479,18 +2479,44 @@ fieldset.relations.compact {
   overscroll-behavior: contain;
 }
 /*
- * 橫向手機（863×360）：分頁、說明、搜尋、篩選就占掉 288px 的抽屜，清單只剩 44px、看不到卡（體驗評測 v91）。
- * 抽屜加高到只留 8px，清單至少留兩張卡高；再放不下（字級放大）就整個抽屜一起捲。
+ * 橫向手機（863×360）：分頁、說明、搜尋、篩選各占一行，288px 的抽屜清單只剩 44px、看不到卡（體驗評測 v91）。
+ * ≤520px 高：不放說明句，搜尋和篩選併成一行，抽屜加高到只留 8px 上緣，只留一層捲動（抽屜自己捲，清單不另外捲）。
+ * 沒有 .sheet-find 的頁（時間軸、法典）照樣吃到後兩條。
  */
+.sheet-find {
+  display: contents;
+}
 @media (max-height: 520px) {
   .sheet {
     max-height: calc(100dvh - 8px);
     overflow-y: auto;
     overscroll-behavior: contain;
   }
-  .sheet .sheet-list {
-    min-height: 128px;
+  .sheet .sheet-note {
+    display: none;
   }
+  .sheet .sheet-find {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+  }
+  .sheet .sheet-find .find {
+    flex: 1 1 200px;
+    min-width: 0;
+  }
+  .sheet .sheet-find .chips.kinds {
+    flex: 0 1 auto;
+  }
+  .sheet .sheet-list {
+    flex: none;
+    overflow: visible;
+    mask-image: none;
+  }
+}
+/* 分頁列自己 overflow-x: auto，會把 outline-offset: 2px 的焦點圈切掉三邊；抽屜的分頁把圈畫在按鈕裡面。 */
+.sheet-tabs button:focus-visible {
+  outline-offset: -2px;
 }
 
 /* ── 訪談：視訊通話 ── */

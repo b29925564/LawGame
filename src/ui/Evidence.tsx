@@ -222,20 +222,23 @@ export function EvidenceDrawer({
             </button>
           )}
         </div>
-        {page === 'cards' && note && <p className="muted small">{t(note, scope)}</p>}
+        {page === 'cards' && note && <p className="muted small sheet-note">{t(note, scope)}</p>}
+        {/* 搜尋和種類篩選一組：矮視窗（橫向手機）併成一行，其餘照舊上下排。 */}
         {page !== 'timeline' && (
-          <input
-            className="find"
-            type="search"
-            value={q}
-            placeholder={page === 'terms' ? t('找名詞，例如「相關性」') : t('找卡片')}
-            aria-label={page === 'terms' ? t('找名詞') : t('找卡片')}
-            onChange={(e) => setQ(e.target.value)}
-          />
+          <div className="sheet-find">
+            <input
+              className="find"
+              type="search"
+              value={q}
+              placeholder={page === 'terms' ? t('找名詞，例如「相關性」') : t('找卡片')}
+              aria-label={page === 'terms' ? t('找名詞') : t('找卡片')}
+              onChange={(e) => setQ(e.target.value)}
+            />
+            {page === 'cards' && <KindFilter items={items} value={kind} onPick={setKind} />}
+          </div>
         )}
         {page === 'cards' && (
           <>
-            <KindFilter items={items} value={kind} onPick={setKind} />
             {/* 清單自己捲：能被鍵盤聚焦，卡片不能選的畫面也捲得到下面（無障礙審查第 3 條）。 */}
             <ul className="stack cards sheet-list" tabIndex={0} aria-label={t('證據清單')}>
               {motion

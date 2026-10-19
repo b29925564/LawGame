@@ -10,26 +10,26 @@ const save = JSON.parse(
   readFileSync(new URL('./fixtures/court-kowalski.json', import.meta.url), 'utf8'),
 ) as { ep1: unknown };
 
-async function openDrawer(page: Page, info: TestInfo, width: number, height: number) {
+async function openDrawer(page: Page, info: TestInfo, width: number, height: number, lang = 'en') {
   test.skip(info.project.name !== 'desktop', '自己設視窗，只跑一次');
   await page.setViewportSize({ width, height });
   await page.addInitScript(
-    (s) => {
+    ([s, l]) => {
       if (sessionStorage.getItem('seeded')) return;
       sessionStorage.setItem('seeded', '1');
       localStorage.clear();
       localStorage.setItem('lawgame-ep-auto', s);
-      localStorage.setItem('lawgame-lang', 'en');
+      localStorage.setItem('lawgame-lang', l);
       localStorage.setItem('lawgame-record-instant', '1');
     },
-    JSON.stringify({ version: 5, savedAt: Date.now(), label: 'x', progress: save.ep1 }),
+    [JSON.stringify({ version: 5, savedAt: Date.now(), label: 'x', progress: save.ep1 }), lang],
   );
   await page.goto('/');
   await page
-    .getByRole('button', { name: /^Continue/ })
+    .getByRole('button', { name: /^(Continue|繼續)/ })
     .first()
     .click();
-  const go = page.getByRole('button', { name: /^Go to court/ });
+  const go = page.getByRole('button', { name: /^(Go to court|開庭)/ });
   await go.or(page.locator('.record')).first().waitFor();
   if (await go.isVisible()) await go.click();
   await page.locator('.evidence-tab').click();
@@ -89,18 +89,40 @@ test.describe('證據抽屜（手機）', () => {
     await expect(page.locator('.sheet')).toHaveCount(0);
   });
 
-  test('橫向手機（863×360）：抽屜裡至少看得到兩張卡', async ({ page }, info) => {
-    await openDrawer(page, info, 863, 360);
-    const list = (await page.locator('.sheet .sheet-list').first().boundingBox())!;
-    expect(list.height).toBeGreaterThanOrEqual(120);
-    const cards = page.locator('.sheet .sheet-list > li');
-    let seen = 0;
-    for (let i = 0; i < 3; i++) {
-      const b = await cards.nth(i).boundingBox();
-      if (b && b.y >= 0 && b.y + b.height <= 360) seen++;
-    }
-    expect(seen).toBeGreaterThanOrEqual(2);
-  });
+  for (const lang of ['zh', 'en'])
+    test(`橫向手機（863×360，${lang}）：不捲就看得到三張完整的卡、只有一層捲動、捲到底看得到最後一張`, async ({
+      page,
+    }, info) => {
+      await openDrawer(page, info, 863, 360, lang);
+      // 搜尋和篩選併成一行，提示句不放。
+      const find = (await page.locator('.sheet .find').boundingBox())!;
+      const chip = (await page.locator('.sheet .chips.kinds button').first().boundingBox())!;
+      expect(Math.abs(find.y + find.height / 2 - (chip.y + chip.height / 2))).toBeLessThan(20);
+      await expect(page.locator('.sheet .sheet-note')).toBeHidden();
+      const cards = page.locator('.sheet .sheet-list > li');
+      let seen = 0;
+      for (let i = 0; i < 5; i++) {
+        const b = await cards.nth(i).boundingBox();
+        if (b && b.y >= 0 && b.y + b.height <= 360) seen++;
+      }
+      expect(seen).toBeGreaterThanOrEqual(3);
+      // 一層捲動：清單自己不捲，整個抽屜捲。
+      const layers = await page.evaluate(() => {
+        const list = document.querySelector('.sheet .sheet-list')!;
+        const sheet = document.querySelector('.sheet')!;
+        return {
+          list: list.scrollHeight - list.clientHeight,
+          sheet: sheet.scrollHeight - sheet.clientHeight,
+        };
+      });
+      expect(layers.list).toBeLessThanOrEqual(1);
+      expect(layers.sheet).toBeGreaterThan(0);
+      // 捲到底：最後一張卡完整在畫面裡。
+      await page.locator('.sheet').evaluate((el) => (el.scrollTop = el.scrollHeight));
+      const last = (await page.locator('.sheet .sheet-list li').last().boundingBox())!;
+      expect(last.y).toBeGreaterThanOrEqual(0);
+      expect(last.y + last.height).toBeLessThanOrEqual(360);
+    });
 
   test('焦點：開了進抽屜、Tab 繞不出去、關了回到「證據」鈕', async ({ page }, info) => {
     await openDrawer(page, info, 412, 839);
@@ -122,4 +144,40 @@ test.describe('證據抽屜（手機）', () => {
     await expect(page.locator('.sheet')).toHaveCount(0);
     await expect(page.locator('.evidence-tab')).toBeFocused();
   });
+
+  for (const lang of ['zh', 'en'])
+    test(`分頁的焦點圈四邊都在，沒被祖先的 overflow 切掉（${lang}）`, async ({ page }, info) => {
+      await openDrawer(page, info, 412, 839, lang);
+      await page.keyboard.press('Tab');
+      const r = await page.evaluate(() => {
+        const el = document.activeElement as HTMLElement;
+        const cs = getComputedStyle(el);
+        const grow = parseFloat(cs.outlineWidth) + parseFloat(cs.outlineOffset);
+        const b = el.getBoundingClientRect();
+        const ring = { l: b.left - grow, t: b.top - grow, r: b.right + grow, b: b.bottom + grow };
+        const clipped: string[] = [];
+        for (let a = el.parentElement; a; a = a.parentElement) {
+          const ac = getComputedStyle(a);
+          if (ac.overflowX === 'visible' && ac.overflowY === 'visible') continue;
+          const ab = a.getBoundingClientRect();
+          const box = {
+            l: ab.left + a.clientLeft,
+            t: ab.top + a.clientTop,
+            r: ab.left + a.clientLeft + a.clientWidth,
+            b: ab.top + a.clientTop + a.clientHeight,
+          };
+          const out = [
+            ring.l < box.l - 0.5 && '左',
+            ring.t < box.t - 0.5 && '上',
+            ring.r > box.r + 0.5 && '右',
+            ring.b > box.b + 0.5 && '下',
+          ].filter(Boolean);
+          if (out.length) clipped.push(`${a.className}:${out.join('')}`);
+        }
+        return { tag: el.textContent, outline: cs.outlineStyle, clipped };
+      });
+      expect(r.tag).toMatch(/^(證據|Evidence)/);
+      expect(r.outline).toBe('solid');
+      expect(r.clipped).toEqual([]);
+    });
 });
