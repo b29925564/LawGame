@@ -3,12 +3,15 @@ import { episodes } from '../content';
 import { batesAt, ownBates, totalPages } from '../engine/bates';
 import {
   END_TITLE,
+  branchContext,
   caseClosed,
   episodeOf,
   followingEpisode,
   sceneOf,
   useEpisode,
 } from '../engine/game';
+import { matches } from '../engine/episode/branch';
+import type { Scene } from '../engine/episode/schema';
 import { useSettings } from '../engine/settings';
 import { useGame } from '../engine/store';
 import { Board } from './Board';
@@ -27,6 +30,7 @@ import { Negotiation } from './Negotiation';
 import { Phone } from './Phone';
 import { ScenePhotos } from './ScenePhotos';
 import { Intro, VerdictScreen } from './Scenes';
+import { useScenePlate, useShown } from './scenePlate';
 import { Title } from './Title';
 import { Defense } from './Defense';
 import { Opening, Theory } from './Theory';
@@ -38,6 +42,12 @@ import { prose } from './prose';
 /** 不畫東西：審判前一場演著時，把審判第一個機位的圖預熱。 */
 function WarmCourt({ id, patience }: { id: string; patience: number }) {
   useEffect(() => warmCourt(id, patience), [id, patience]);
+  return null;
+}
+
+/** 不畫東西：後面幾場有底圖時，趁現在把圖載好解碼，進場不等。 */
+function WarmPlate({ episode, scene }: { episode: string; scene: Scene }) {
+  useShown(useScenePlate(episode, scene));
   return null;
 }
 
@@ -114,6 +124,10 @@ export function App() {
     !caseClosed(progress)
       ? upcoming
       : null;
+  // 後面三場裡有底圖、而且現在的分支會走到的：先載。
+  const ahead = ep.scenes
+    .slice(at + 1, at + 4)
+    .filter((x) => !('when' in x && x.when) || matches(x.when, branchContext(progress)));
   // 地點字卡：換了地點、前一場又不是幕卡（幕卡自己有場記）時，左下一行場記。
   const here = scene && 'place' in scene && scene.place ? scene.place : '';
   const hereRig = scene && 'rig' in scene ? scene.rig : undefined;
@@ -127,12 +141,16 @@ export function App() {
   return (
     <SceneScope.Provider value={scene?.id}>
       <Announcer />
+      {ahead.map((x) => (
+        <WarmPlate key={x.id} episode={progress.episode} scene={x} />
+      ))}
       {warmFor && <WarmCourt key={warmFor.id} id={warmFor.id} patience={warmFor.patience} />}
       <GameMenu />
       {beat && scene && (
         <PlaceBeat
           key={scene.id}
           id={scene.id}
+          episode={progress.episode}
           place={{ raw: here, text: t(here, scene.id), rig: hereRig }}
           onDone={() => setFramed(scene.id)}
         />

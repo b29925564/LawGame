@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { optionOpen, useEpisode, sceneChoices } from '../engine/game';
 import type { DialogueScene, Line } from '../engine/episode/schema';
 import { useT } from '../i18n';
@@ -5,12 +6,25 @@ import { useScope } from './lang';
 import { LucasStage, Speech } from './Portrait';
 import { Transcript } from './Shell';
 import { Recap, splitSlate } from './ActCard';
+import { SubActions, useSubs } from './SubCard';
+import {
+  OnPlate,
+  onPlateOf,
+  PlateEyebrow,
+  ScenePlate,
+  useScenePlate,
+  useShown,
+} from './scenePlate';
 
 /** 對話場景：一路往下讀，遇到選擇就停。之前的台詞留在畫面上，方便回頭看。 */
 export function Dialogue({ scene }: { scene: DialogueScene }) {
   const { progress, advance, choose } = useEpisode();
   const t = useT();
   const scope = useScope();
+  // 這一場有底圖就當背景（沒有的場景照舊）：台詞框貼底，讓出上半部給圖。
+  const shown = useShown(useScenePlate(progress.episode, scene));
+  // 有底圖的場景是字幕模式：畫面下三分之一只留最新一句（最多兩行），前面的台詞收進「筆錄」抽屜（設計師 #296）。
+  const [rec, setRec] = useState(false);
   const picks = sceneChoices(progress);
   const lines: Line[] = [];
   for (let i = 0; i <= progress.step && i < scene.steps.length; i++) {
@@ -28,6 +42,11 @@ export function Dialogue({ scene }: { scene: DialogueScene }) {
   const call = scene.call;
   // 打完最後一句：通話結束，螢幕上的通話時間停住。
   const ended = progress.step >= scene.steps.length - 1;
+  const latest = lines[lines.length - 1];
+  // 畫外字幕、記號、心聲不進字幕框：畫外字幕有自己的一層，記號是手的記號。
+  const card = latest && !latest.mark && !latest.thought && latest.voice !== 'off' ? latest : null;
+  // 一句拆成幾張時，「繼續」先翻完這一句的卡才往下走。
+  const subs = useSubs(shown ? card : null, lines.length, !rec, choosing);
   const action =
     choosing && step.do === 'choose' ? (
       <div
@@ -45,7 +64,13 @@ export function Dialogue({ scene }: { scene: DialogueScene }) {
         )}
       </div>
     ) : (
-      <button className={call ? 'cine-next' : 'primary next'} onClick={advance}>
+      <button
+        className={call ? 'cine-next' : 'primary next'}
+        onClick={() => {
+          if (shown && !rec && subs.step()) return;
+          advance();
+        }}
+      >
         {t('繼續')}
       </button>
     );
@@ -88,17 +113,34 @@ export function Dialogue({ scene }: { scene: DialogueScene }) {
     );
 
   return (
-    <main className="scene dialogue">
-      {/* 眉標和地點字卡左欄讀同一個欄位（設定集 11.3 裁定）。 */}
-      <p className="eyebrow">{splitSlate(t(scene.place, scope))[0]}</p>
-      <LucasStage lines={lines} />
-      <Transcript count={lines.length}>
-        <Recap />
-        {lines.map((l, i) => (
-          <Speech key={i} line={l} />
-        ))}
-      </Transcript>
-      {action}
-    </main>
+    <OnPlate.Provider value={onPlateOf(shown)}>
+      <main
+        className={
+          shown
+            ? rec
+              ? 'scene dialogue plated subs rec-open'
+              : 'scene dialogue plated subs'
+            : 'scene dialogue'
+        }
+      >
+        {/* 眉標和地點字卡左欄讀同一個欄位（設定集 11.3 裁定）。 */}
+        {shown ? (
+          <PlateEyebrow text={splitSlate(t(scene.place, scope))[0]} />
+        ) : (
+          <p className="eyebrow">{splitSlate(t(scene.place, scope))[0]}</p>
+        )}
+        {/* 有底圖時不放盧卡斯大圖：攝影棚光對不上底圖的光；他在畫面裡的位置由立牌負責（設計師 #296）。 */}
+        {!shown && <LucasStage lines={lines} />}
+        <Transcript count={lines.length} open={!shown || rec}>
+          <Recap />
+          {lines.map((l, i) => (
+            <Speech key={i} line={l} />
+          ))}
+        </Transcript>
+        {shown && !rec && subs.node}
+        {shown ? <SubActions action={action} rec={rec} onRec={() => setRec((v) => !v)} /> : action}
+        {shown && <ScenePlate shown={shown} />}
+      </main>
+    </OnPlate.Provider>
   );
 }

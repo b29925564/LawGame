@@ -41,13 +41,24 @@ export function Shell({
   );
 }
 
-/** 筆錄：新的話進來就捲過去，從這次的第一句開始看。 */
-export function Transcript({ count, children }: { count: number; children: ReactNode }) {
+/**
+ * 筆錄：新的話進來就捲過去，從這次的第一句開始看。
+ * open=false：收起來（底圖上的字幕模式，筆錄是玩家要看才打開的抽屜）；DOM 還在，台詞裡的畫外字幕照樣出得來。
+ */
+export function Transcript({
+  count,
+  open = true,
+  children,
+}: {
+  count: number;
+  open?: boolean;
+  children: ReactNode;
+}) {
   const box = useRef<HTMLDivElement>(null);
   const seen = useRef(0);
   useEffect(() => {
     const el = box.current;
-    if (!el) return;
+    if (!el || !open) return;
     // 一次進來好幾句時，捲到第一句新的；捲到底會把前面幾句藏在框外，看起來像沒出現。
     const first = el.children[seen.current] as HTMLElement | undefined;
     seen.current = el.children.length;
@@ -55,9 +66,14 @@ export function Transcript({ count, children }: { count: number; children: React
       ? el.scrollTop + first.getBoundingClientRect().top - el.getBoundingClientRect().top - 12
       : el.scrollHeight;
     el.scrollTop = Math.min(top, el.scrollHeight);
-  }, [count]);
+  }, [count, open]);
   return (
-    <div className="lines transcript" aria-live="polite" ref={box}>
+    <div
+      className="lines transcript"
+      aria-live="polite"
+      ref={box}
+      data-closed={open ? undefined : ''}
+    >
       {children}
     </div>
   );

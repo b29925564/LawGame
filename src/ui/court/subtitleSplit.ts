@@ -29,8 +29,8 @@ const TITLES = new Set(
   ),
 );
 
-/** 英文在第 b 個字前面切得開嗎（詞界規則）。 */
-function canCut(words: string[], b: number) {
+/** 英文在第 b 個字前面切得開嗎（詞界規則；字幕卡與底圖斷行共用）。 */
+export function canCut(words: string[], b: number) {
   const prev = words[b - 1];
   const next = words[b];
   if (NO_AFTER.has(norm(prev))) return false;
