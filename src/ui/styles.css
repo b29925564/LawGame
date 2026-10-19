@@ -2413,7 +2413,8 @@ fieldset.relations.compact {
 .sheet-wrap {
   position: fixed;
   inset: 0;
-  z-index: var(--z-drawer);
+  /* 手機抽屜是對話框，遮罩要蓋住選單鈕：右上角的點是關抽屜，不是打開選單（體驗評測 v91）。 */
+  z-index: calc(var(--z-menu) + 1);
   display: flex;
   align-items: flex-end;
 }
@@ -2439,24 +2440,34 @@ fieldset.relations.compact {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  padding: 22px 16px calc(14px + env(safe-area-inset-bottom, 0px));
+  padding: 30px 16px calc(14px + env(safe-area-inset-bottom, 0px));
   background: var(--surface);
   border: 1px solid var(--border);
   border-bottom: none;
   border-radius: 14px 14px 0 0;
   box-shadow: none;
 }
-/* 拉把。 */
-.sheet::before {
+/* 拉把：整條頂邊都是抓手（touch-action 關掉，不然手指一拖就變成捲頁面），中間那條短線是畫的。 */
+.sheet-grip {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 30px;
+  cursor: grab;
+  touch-action: none;
+}
+.sheet-grip::before {
   content: '';
   position: absolute;
-  top: 8px;
+  top: 10px;
   left: 50%;
   width: 40px;
   height: 4px;
   margin-left: -20px;
   border-radius: 2px;
   background: var(--border-strong);
+}
+.sheet:focus {
+  outline: none;
 }
 .sheet h2 {
   margin: 0;
@@ -2466,6 +2477,20 @@ fieldset.relations.compact {
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
+}
+/*
+ * 橫向手機（863×360）：分頁、說明、搜尋、篩選就占掉 288px 的抽屜，清單只剩 44px、看不到卡（體驗評測 v91）。
+ * 抽屜加高到只留 8px，清單至少留兩張卡高；再放不下（字級放大）就整個抽屜一起捲。
+ */
+@media (max-height: 520px) {
+  .sheet {
+    max-height: calc(100dvh - 8px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  .sheet .sheet-list {
+    min-height: 128px;
+  }
 }
 
 /* ── 訪談：視訊通話 ── */
@@ -3689,9 +3714,6 @@ fieldset.relations.compact {
 @media (min-width: 1024px) {
   .side-wrap {
     top: 68px;
-  }
-  .sheet.side::before {
-    display: none;
   }
 }
 @media (min-width: 1024px) {
