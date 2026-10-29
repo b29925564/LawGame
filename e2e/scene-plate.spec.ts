@@ -108,6 +108,8 @@ for (const lang of ['zh', 'en'] as const)
 
       // 切進那一場：台詞框貼底，圖的上半部沒有任何介面壓著，圖同一張。
       await page.locator('.place-beat').click();
+      // 底圖是共用一層，換場前後同一個節點：先等這一場的介面掛上來，再量。
+      await expect(page.locator('.scene.plated')).toBeVisible();
       const bg = page.locator('.plate-host .scene-plate');
       await expect(bg).toHaveAttribute('data-plate', c.plate[lang]);
       await expect(bg).toHaveAttribute('data-state', 'ok');
