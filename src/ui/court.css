@@ -3448,10 +3448,62 @@ html[lang='en'] .stamp.rec-stamp b {
 .objection .row {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
-/* 四欄放不下最長的理由（Speculation 約 5.8em）就改兩欄：字級放大或中欄窄時，字不再超出格子、也不撐出橫向捲動。 */
-@container (max-width: 25em) {
+/*
+ * 欄數跟著窗寬（em，所以字級放大也算進去）：四欄放不下最長的理由就改三欄，三欄也放不下才兩欄。
+ * 英文最長的 Speculation 約 5.8em：四欄要 25em、三欄要 18.5em；中文最長四個字約 4.6em：四欄 20em、三欄 15em。
+ * 三欄用六格：每顆佔兩格，最後一列只剩兩顆就各佔三格、只剩一顆就整列，不留半空的一列。
+ * 1280×800 兩欄四列會把陪審團第二排推出畫面，三欄三列放得下（體驗評測 g2-681548c）。
+ */
+@container (max-width: 20em) {
+  .objection .row {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+  .objection .row > button {
+    grid-column: span 2;
+  }
+  .objection .row > button:nth-child(3n + 1):nth-last-child(2),
+  .objection .row > button:nth-child(3n + 1):nth-last-child(2) + button {
+    grid-column: span 3;
+  }
+  .objection .row > button:nth-child(3n + 1):last-child {
+    grid-column: span 6;
+  }
+}
+@container (max-width: 15em) {
   .objection .row {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .objection .row > button,
+  .objection .row > button:nth-child(3n + 1):nth-last-child(2),
+  .objection .row > button:nth-child(3n + 1):nth-last-child(2) + button,
+  .objection .row > button:nth-child(3n + 1):last-child {
+    grid-column: auto;
+  }
+}
+@container (max-width: 25em) {
+  :root:lang(en) .objection .row {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+  :root:lang(en) .objection .row > button {
+    grid-column: span 2;
+  }
+  :root:lang(en) .objection .row > button:nth-child(3n + 1):nth-last-child(2),
+  :root:lang(en) .objection .row > button:nth-child(3n + 1):nth-last-child(2) + button {
+    grid-column: span 3;
+  }
+  :root:lang(en) .objection .row > button:nth-child(3n + 1):last-child {
+    grid-column: span 6;
+  }
+}
+@container (max-width: 18.5em) {
+  :root:lang(en) .objection .row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  :root:lang(en) .objection .row > button,
+  :root:lang(en) .objection .row > button:nth-child(3n + 1):nth-last-child(2),
+  :root:lang(en) .objection .row > button:nth-child(3n + 1):nth-last-child(2) + button,
+  :root:lang(en) .objection .row > button:nth-child(3n + 1):last-child {
+    grid-column: auto;
   }
 }
 .objection .row button {
@@ -3493,6 +3545,15 @@ html[lang='en'] .stamp.rec-stamp b {
   .objection .in-effect.foot {
     display: none;
   }
+  /* 窗窄（1100 寬、字級放大）時標題列夾不下「生效中」，會被擠成一兩個字寬的窄條；這時照舊放回理由下面。 */
+  @container (max-width: 20em) {
+    .objection .in-effect.head {
+      display: none;
+    }
+    .objection .in-effect.foot {
+      display: block;
+    }
+  }
 }
 /*
  * 理由按鈕中英文同一個字級 --fs-ui-row 15px、44px 高：行高 1.2，英文最長的（Lack of foundation、Violates the ruling）兩行剛好塞進 44px
@@ -3529,11 +3590,6 @@ html[lang='en'] .stamp.rec-stamp b {
 }
 .court-prompt-act > .locked {
   visibility: hidden;
-}
-@media (max-width: 380px) {
-  .objection .row {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
 }
 @media (min-width: 1024px) {
   /* 筆錄紙停在陪審團面板（左下）的上緣：交互詰問 2 / 5，主詰問（多一列給提示）2 / 6。 */
