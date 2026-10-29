@@ -51,9 +51,10 @@ const labels: Record<App, string> = {
 
 /** 第二幕的桌面：盧卡斯的工作電腦，每個 App 是一個系統入口（企劃書 6.1）。 */
 /**
- * 放進答案的發現：一般版兩行（卡名、關係）。矮版只有一行：關係完整放在最前面（它是這條發現在答什麼），
+ * 放進答案的發現：一般版兩行（卡名、關係）。矮版先試一行：關係完整放在最前面（它是這條發現在答什麼），
  * 卡名以一整張卡為單位接在後面，第二張放不下就連「×」整張不放，不在卡名中間截斷（設計師 PR #309 複審 2）。
- * 全文在按鈕的 aria-label 和發現清單。
+ * 連第一張都放不下（第二集英文卡名常比槽位寬）：關係後面接第一張的完整卡名，在詞與詞之間換行，
+ * 不再整個拿掉（v93 gate 2：只剩「Contradicts」）。全文在按鈕的 aria-label 和發現清單。
  */
 let slotCtx: CanvasRenderingContext2D | null | undefined;
 function SlotLine({
@@ -70,11 +71,13 @@ function SlotLine({
   const first = names[0];
   const full = `${first} × ${names[1]}`;
   const [line, setLine] = useState(full);
+  const [wrap, setWrap] = useState(false);
   useLayoutEffect(() => {
     const el = ref.current;
     const box = el?.parentElement;
     if (!tight || !el || !box || !rel.current) {
       setLine(full);
+      setWrap(false);
       return;
     }
     const fit = () => {
@@ -85,7 +88,8 @@ function SlotLine({
       const gap = parseFloat(getComputedStyle(box).columnGap) || 0;
       const room = box.clientWidth - rel.current.getBoundingClientRect().width - gap;
       const pick = [full, first].find((x) => slotCtx!.measureText(x).width <= room);
-      setLine(pick ?? '');
+      setLine(pick ?? first);
+      setWrap(!pick);
     };
     fit();
     const ro = new ResizeObserver(fit);
@@ -100,7 +104,9 @@ function SlotLine({
           {relation}
         </span>
       )}
-      <strong ref={ref}>{tight ? line : full}</strong>
+      <strong ref={ref} className={tight && wrap ? 'wrap' : undefined}>
+        {tight ? line : full}
+      </strong>
       {!tight && <span className="muted small">{relation}</span>}
     </>
   );
