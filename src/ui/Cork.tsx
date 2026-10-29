@@ -301,6 +301,50 @@ function unitsOf(text: string): Unit[] {
 }
 let measureCtx: CanvasRenderingContext2D | null | undefined;
 /**
+ * 一段要全部放出來、不能截的卡名（矮版答案列的槽位），自己排行：第一行寬 first（前面接著關係），之後每行 rest。
+ * 冒號前那段放得下第一行就斷在冒號後面；不然整詞往下排，行尾不留虛詞（TRAILING，和牌架同一套），
+ * 留到的虛詞挪到下一行。不靠 CSS 自動換行（text-wrap 不管虛詞；設計師 PR #310 審查）。
+ * 第一行連第一個詞都放不下時，第一行只留給關係（回傳的第一行是空字串）。
+ */
+export function wrapLines(text: string, first: number, rest: number, font: string): string[] {
+  measureCtx ??= document.createElement('canvas').getContext('2d');
+  const ctx = measureCtx;
+  if (!ctx || rest <= 0) return [text];
+  ctx.font = font;
+  const units = unitsOf(text);
+  const str = (us: Unit[]) => us.map((u) => u.w + u.p).join('');
+  const wide = (us: Unit[], line: number) =>
+    ctx.measureText(str(us).trimEnd()).width <= (line ? rest : first);
+  const fn = (u: Unit) =>
+    TRAILING.has(
+      u.w
+        .trim()
+        .replace(/[:：,，、.。]+$/, '')
+        .toLowerCase(),
+    );
+  const lines: Unit[][] = [];
+  let i = 0;
+  const colon = units.findIndex((u) => /[:：]\s*$/.test(u.w + u.p));
+  if (colon >= 0 && colon < units.length - 1 && wide(units.slice(0, colon + 1), 0)) {
+    lines.push(units.slice(0, colon + 1));
+    i = colon + 1;
+  } else if (units.length && !wide([units[0]], 0)) lines.push([]);
+  while (i < units.length) {
+    const n = lines.length;
+    const cur: Unit[] = [];
+    while (i < units.length && (!cur.length || wide([...cur, units[i]], n))) cur.push(units[i++]);
+    // 行尾是虛詞：連同前面連著的虛詞一起挪到下一行（整行只剩虛詞就不挪）。
+    if (i < units.length) {
+      let k = cur.length;
+      while (k > 1 && fn(cur[k - 1])) k--;
+      i -= cur.length - k;
+      cur.length = k;
+    }
+    lines.push(cur);
+  }
+  return lines.map((l) => str(l).trimEnd());
+}
+/**
  * 把卡名排進 width 寬、最多 maxLines 行：只在詞與詞之間斷（英文空白，中文 Intl.Segmenter 詞界），
  * 放不下時取放得下的最長一段，結尾不是虛詞、不留逗號；不加刪節號、不露半個字。
  * 第一個詞就放不下一行時：文字卡放能放的最長整詞（lastResort），照片卡什麼都不放（卡上只有照片）。

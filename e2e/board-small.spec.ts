@@ -49,10 +49,11 @@ async function open(
   found: string[] = [],
   cards: string[] = CARDS,
   where: [string, number] = ['ep1', 7],
+  key = 'investigate',
 ) {
   await page.goto('/');
   await page.evaluate(
-    ([lang, cards, desk, confirmed, found, where]) => {
+    ([lang, cards, desk, confirmed, found, where, key]) => {
       localStorage.setItem('lawgame-lang', lang as string);
       localStorage.setItem(
         'lawgame-ep-auto',
@@ -68,12 +69,12 @@ async function open(
             cards,
             flags: [],
             ethics: [],
-            scenes: { investigate: { ...(desk as object), confirmed, found } },
+            scenes: { [key as string]: { ...(desk as object), confirmed, found } },
           },
         }),
       );
     },
-    [lang, cards, desk, confirmed, found, where] as const,
+    [lang, cards, desk, confirmed, found, where, key] as const,
   );
   await page.reload();
   await page
@@ -1432,4 +1433,120 @@ for (const lang of ['en', 'zh-TW'])
     expect(['', names[0], `${names[0]} × ${names[1]}`]).toContain(nameText);
     if (process.env.SHOTS)
       await page.screenshot({ path: `${process.env.SHOTS}/answer-found-360x740-${lang}.png` });
+  });
+
+// v93 gate 2（681548c）：第二集英文卡名長，矮版答案列放了發現以後只剩「Contradicts」，一張卡名都沒有。
+// 設計師規則：關係完整、卡名整張（不在卡名中間截斷）、放不下的第二張連「×」一起不放；兩張長卡仍然完整露出。
+for (const [w, h] of [
+  [360, 740],
+  [320, 640],
+] as const)
+  test(`手機 ${w}×${h}（en）：第二集長卡名，矮版答案列放了發現，關係和第一張卡名都完整`, async ({
+    page,
+  }) => {
+    test.slow();
+    await page.setViewportSize({ width: w, height: h });
+    await open(
+      page,
+      'en',
+      [],
+      ['l-perjury'],
+      ['contract', 'voice-memo', 'rating-penalty', 'trevor-sworn', 'change-ticket', 'lock-spec'],
+      ['ep2', 10],
+      'pretrial',
+    );
+    await question(page);
+    await page.evaluate(() => document.fonts.ready);
+    await settled(page);
+    for (const nm of ['voice message', 'docked after death']) {
+      const card = page
+        .locator('.cork-rack:not(.marks) .cork-card')
+        .filter({ has: page.locator(`b[data-name*="${nm}"]`) });
+      const dots = page.locator('.cork-dots button');
+      for (let k = 0; !(await card.count()) && k < (await dots.count()); k++)
+        await dots.nth(k).click();
+      await card.first().click();
+      await settled(page);
+      await page.waitForTimeout(900);
+    }
+    await expect(page.locator('.answer-bar')).toHaveClass(/tight/);
+    await page.locator('.found-list .found').first().click();
+    const slot = page.locator('.answer-bar .slot-clear').first();
+    await expect(slot).toBeVisible();
+    await settled(page);
+    await page.waitForTimeout(600);
+    const m = await slot.evaluate((el) => {
+      const box = el.getBoundingClientRect();
+      // 槽位裡的關係和卡名（卡名可能用 <br> 分成幾行）。
+      const parts = [...el.children].filter(
+        (e): e is HTMLElement => getComputedStyle(e).display !== 'none',
+      );
+      return {
+        text: parts
+          .filter((e) => {
+            const r = e.getBoundingClientRect();
+            return r.width > 0 && r.bottom <= box.bottom + 1 && r.top >= box.top - 1;
+          })
+          .map((e) => e.innerText.replace(/\s+/g, ' ').trim())
+          .join(' '),
+        clipped: parts.some(
+          (e) => e.scrollWidth > e.clientWidth + 1 || e.scrollHeight > e.clientHeight + 1,
+        ),
+      };
+    });
+    expect(m.text, `槽位「${m.text}」要有關係`).toContain('Contradicts');
+    expect(m.text, `槽位「${m.text}」要有第一張卡的完整卡名`).toContain(
+      'Trevor under oath: the reminder was always there',
+    );
+    expect(m.clipped, `槽位「${m.text}」有字被切掉`).toBe(false);
+    expect(m.text.trim()).not.toMatch(/×$/);
+    // 每一行（照畫面上的位置分）的最後一個詞不是虛詞（和牌架同一套 TRAILING；設計師 PR #310 審查）。
+    const ends = await slot.evaluate((el) => {
+      const words: { t: string; top: number; left: number }[] = [];
+      const walk = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+      for (let n = walk.nextNode(); n; n = walk.nextNode()) {
+        for (const m of (n.textContent ?? '').matchAll(/\S+/g)) {
+          const r = document.createRange();
+          r.setStart(n, m.index);
+          r.setEnd(n, m.index + m[0].length);
+          const b = r.getBoundingClientRect();
+          words.push({ t: m[0], top: b.top + b.height / 2, left: b.left });
+        }
+      }
+      const lines: (typeof words)[] = [];
+      for (const w of words) {
+        const l = lines.find((x) => Math.abs(x[0].top - w.top) < 6);
+        if (l) l.push(w);
+        else lines.push([w]);
+      }
+      return lines
+        .sort((a, b) => a[0].top - b[0].top)
+        .map((l) => l.sort((a, b) => a.left - b.left).map((w) => w.t));
+    });
+    const TRAILING = new Set(
+      'a an the of in on at to for and or by with from as is are was were his her their its i he she it they we you'.split(
+        ' ',
+      ),
+    );
+    expect(ends.length, `槽位的行：${JSON.stringify(ends)}`).toBeGreaterThanOrEqual(2);
+    for (const l of ends.slice(0, -1)) {
+      const last = l[l.length - 1].replace(/[:,.]+$/, '').toLowerCase();
+      expect(TRAILING.has(last), `行「${l.join(' ')}」結尾是虛詞`).toBe(false);
+    }
+    // 點發現時頁面捲到發現清單；捲回板子（卡的上緣貼頂列），矮版答案列多了幾行以後，兩張卡仍要整張放得下
+    // （360×740；320 寬的長卡本來就要往下捲，已知問題）。
+    const g = await geometry(page);
+    const tallest = Math.max(...g.cards.map((c) => c.h));
+    if (w === 360)
+      expect(
+        tallest,
+        `卡高 ${tallest.toFixed(0)}，頂列到答案列 ${(g.barTop - g.headBottom).toFixed(0)}`,
+      ).toBeLessThanOrEqual(g.barTop - g.headBottom);
+    if (process.env.SHOTS) {
+      const top = Math.min(...g.cards.map((c) => c.top));
+      await page.evaluate((d) => scrollBy(0, d), top - g.headBottom - 8);
+      await page.waitForTimeout(400);
+    }
+    if (process.env.SHOTS)
+      await page.screenshot({ path: `${process.env.SHOTS}/answer-found-ep2-${w}x${h}-en.png` });
   });

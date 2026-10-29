@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+import { Fragment, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import * as desk from '../engine/episode/desk';
 import * as discovery from '../engine/episode/discovery';
@@ -26,7 +26,7 @@ import { prose } from './prose';
 import { useCardPick } from './pick';
 import { Speech } from './Portrait';
 import { RelationPicker } from './RelationPicker';
-import { Cork, type CorkItem } from './Cork';
+import { Cork, wrapLines, type CorkItem } from './Cork';
 import { Docket, EvidenceZoom } from './Dossier';
 import { Redaction } from './Redaction';
 import { TranscriptDoc } from './TranscriptDoc';
@@ -51,9 +51,10 @@ const labels: Record<App, string> = {
 
 /** 第二幕的桌面：盧卡斯的工作電腦，每個 App 是一個系統入口（企劃書 6.1）。 */
 /**
- * 放進答案的發現：一般版兩行（卡名、關係）。矮版只有一行：關係完整放在最前面（它是這條發現在答什麼），
+ * 放進答案的發現：一般版兩行（卡名、關係）。矮版先試一行：關係完整放在最前面（它是這條發現在答什麼），
  * 卡名以一整張卡為單位接在後面，第二張放不下就連「×」整張不放，不在卡名中間截斷（設計師 PR #309 複審 2）。
- * 全文在按鈕的 aria-label 和發現清單。
+ * 連第一張都放不下（第二集英文卡名常比槽位寬）：關係後面接第一張的完整卡名，在詞與詞之間換行，
+ * 不再整個拿掉（v93 gate 2：只剩「Contradicts」）。全文在按鈕的 aria-label 和發現清單。
  */
 let slotCtx: CanvasRenderingContext2D | null | undefined;
 function SlotLine({
@@ -70,11 +71,14 @@ function SlotLine({
   const first = names[0];
   const full = `${first} × ${names[1]}`;
   const [line, setLine] = useState(full);
+  // 第一張卡名一行放不下：自己排好的幾行（不靠 CSS 自動換行）。
+  const [wrap, setWrap] = useState<string[] | null>(null);
   useLayoutEffect(() => {
     const el = ref.current;
     const box = el?.parentElement;
     if (!tight || !el || !box || !rel.current) {
       setLine(full);
+      setWrap(null);
       return;
     }
     const fit = () => {
@@ -83,9 +87,15 @@ function SlotLine({
       const cs = getComputedStyle(el);
       slotCtx.font = `${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
       const gap = parseFloat(getComputedStyle(box).columnGap) || 0;
-      const room = box.clientWidth - rel.current.getBoundingClientRect().width - gap;
+      const relW = rel.current.getBoundingClientRect().width;
+      const room = box.clientWidth - relW - gap;
       const pick = [full, first].find((x) => slotCtx!.measureText(x).width <= room);
-      setLine(pick ?? '');
+      setLine(pick ?? first);
+      // 換行的版本裡關係和卡名之間是 .slot-rel 的右邊距（8px），不是欄距。
+      const lines = pick
+        ? null
+        : wrapLines(first, box.clientWidth - relW - 8, box.clientWidth, slotCtx.font);
+      setWrap((old) => (old?.join('\n') === lines?.join('\n') ? old : lines));
     };
     fit();
     const ro = new ResizeObserver(fit);
@@ -100,7 +110,18 @@ function SlotLine({
           {relation}
         </span>
       )}
-      <strong ref={ref}>{tight ? line : full}</strong>
+      <strong ref={ref} className={tight && wrap ? 'wrap' : undefined}>
+        {!tight
+          ? full
+          : wrap
+            ? wrap.map((l, k) => (
+                <Fragment key={k}>
+                  {k > 0 && <br />}
+                  {l}
+                </Fragment>
+              ))
+            : line}
+      </strong>
       {!tight && <span className="muted small">{relation}</span>}
     </>
   );
