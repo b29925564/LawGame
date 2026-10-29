@@ -43,7 +43,7 @@ test('換地點：先放一格場記（一行），演完才掛介面', async ({
   await expect(page.locator('.speech')).toHaveCount(0);
   await expect(page.locator('.place-slate')).toBeVisible();
   // 這一場有底圖：定場就是那張圖（沒有底圖的場景才放占位字，見 scene-plate.spec.ts）。
-  await expect(page.locator('.place-beat .scene-plate')).toHaveAttribute('data-state', 'ok');
+  await expect(page.locator('.plate-host .scene-plate')).toHaveAttribute('data-state', 'ok');
   const h = await page.locator('.place-slate').evaluate((e) => e.getBoundingClientRect().height);
   expect(h).toBeLessThan(40);
   await beat.click();

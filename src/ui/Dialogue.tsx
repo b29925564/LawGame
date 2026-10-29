@@ -7,14 +7,7 @@ import { LucasStage, Speech } from './Portrait';
 import { Transcript } from './Shell';
 import { Recap, splitSlate } from './ActCard';
 import { SubActions, useSubs } from './SubCard';
-import {
-  OnPlate,
-  onPlateOf,
-  PlateEyebrow,
-  ScenePlate,
-  useScenePlate,
-  useShown,
-} from './scenePlate';
+import { OnPlate, onPlateOf, PlateEyebrow, usePlate, useScenePlate, useShown } from './scenePlate';
 
 /** 對話場景：一路往下讀，遇到選擇就停。之前的台詞留在畫面上，方便回頭看。 */
 export function Dialogue({ scene }: { scene: DialogueScene }) {
@@ -23,6 +16,7 @@ export function Dialogue({ scene }: { scene: DialogueScene }) {
   const scope = useScope();
   // 這一場有底圖就當背景（沒有的場景照舊）：台詞框貼底，讓出上半部給圖。
   const shown = useShown(useScenePlate(progress.episode, scene));
+  usePlate(shown, 'scene');
   // 有底圖的場景是字幕模式：畫面下三分之一只留最新一句（最多兩行），前面的台詞收進「筆錄」抽屜（設計師 #296）。
   const [rec, setRec] = useState(false);
   const picks = sceneChoices(progress);
@@ -139,7 +133,6 @@ export function Dialogue({ scene }: { scene: DialogueScene }) {
         </Transcript>
         {shown && !rec && subs.node}
         {shown ? <SubActions action={action} rec={rec} onRec={() => setRec((v) => !v)} /> : action}
-        {shown && <ScenePlate shown={shown} />}
       </main>
     </OnPlate.Provider>
   );

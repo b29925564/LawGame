@@ -14,14 +14,7 @@ import { Speech } from './Portrait';
 import { SubActions, useSubs } from './SubCard';
 import { Transcript } from './Shell';
 import { Recap, splitSlate } from './ActCard';
-import {
-  OnPlate,
-  onPlateOf,
-  PlateEyebrow,
-  ScenePlate,
-  useScenePlate,
-  useShown,
-} from './scenePlate';
+import { OnPlate, onPlateOf, PlateEyebrow, usePlate, useScenePlate, useShown } from './scenePlate';
 
 /**
  * 案件理論（企劃書 6.9.2）：整集最大的策略決定，選了不能換。
@@ -38,6 +31,7 @@ export function Theory({ scene }: { scene: TheoryScene }) {
   const [pending, setPending] = useState<string | null>(null);
   // 這一場有底圖：開場那一頁當背景；選理論那一頁留著同一張，壓暗 58%（人還在同一間會議室），卡片照紙層不動。
   const shown = useShown(useScenePlate(progress.episode, scene));
+  usePlate(shown, 'scene', !intro);
   // 有底圖的開場頁是字幕模式（底圖上的對白一律如此）：一張卡一句，「繼續」翻完所有卡才進選理論那一頁。
   const [at, setAt] = useState(0);
   const [rec, setRec] = useState(false);
@@ -77,7 +71,6 @@ export function Theory({ scene }: { scene: TheoryScene }) {
               </button>
             }
           />
-          <ScenePlate shown={shown} />
         </main>
       </OnPlate.Provider>
     );
@@ -214,7 +207,6 @@ export function Theory({ scene }: { scene: TheoryScene }) {
           {t('繼續')}
         </button>
       )}
-      {shown && <ScenePlate shown={shown} dim />}
     </main>
   );
 }

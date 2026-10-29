@@ -85,7 +85,7 @@ for (const lang of ['zh', 'en'] as const)
   for (const c of CASES) {
     test(`${c.name}（${lang}）：定場是底圖，色溫讀燈組，手機用手機版`, async ({ page }, info) => {
       await open(page, c.scene, lang, c.deal);
-      const plate = page.locator('.place-beat .scene-plate');
+      const plate = page.locator('.plate-host .scene-plate');
       await expect(plate).toHaveAttribute('data-plate', c.plate[lang]);
       await expect(plate).toHaveAttribute('data-rig', c.rig);
       await expect(plate).toHaveAttribute('data-kelvin', String(rigs[c.rig].kelvin));
@@ -108,7 +108,7 @@ for (const lang of ['zh', 'en'] as const)
 
       // 切進那一場：台詞框貼底，圖的上半部沒有任何介面壓著，圖同一張。
       await page.locator('.place-beat').click();
-      const bg = page.locator('.scene.plated > .scene-plate');
+      const bg = page.locator('.plate-host .scene-plate');
       await expect(bg).toHaveAttribute('data-plate', c.plate[lang]);
       await expect(bg).toHaveAttribute('data-state', 'ok');
       const [w, h] = view;
@@ -170,7 +170,7 @@ for (const lang of ['zh', 'en'] as const)
     expect(Math.max(...maxes)).toBeLessThanOrEqual(3);
     // 圖到了：等待結束，場記出現，圖亮著。
     await expect(beat).not.toHaveClass(/waiting/, { timeout: 5000 });
-    await expect(page.locator('.place-beat .scene-plate')).toHaveAttribute('data-state', 'ok');
+    await expect(page.locator('.plate-host .scene-plate')).toHaveAttribute('data-state', 'ok');
     await expect(page.locator('.place-slate')).toBeVisible();
     expect(brightest(await page.screenshot({ clip }))).toBeGreaterThan(40);
   });
@@ -183,7 +183,7 @@ test('等圖的時候點一下可以跳過；進了場景，圖到之前也是�
   await open(page, 33, 'zh', 'o-probation');
   await expect(page.locator('.place-beat')).toHaveClass(/waiting/);
   await page.locator('.place-beat').click();
-  const bg = page.locator('.scene.plated > .scene-plate');
+  const bg = page.locator('.plate-host .scene-plate');
   await expect(page.locator('.scene.dialogue')).toBeVisible();
   await expect(bg).toBeVisible();
   const color = await bg.evaluate((e) => getComputedStyle(e).backgroundColor);
@@ -193,7 +193,7 @@ test('等圖的時候點一下可以跳過；進了場景，圖到之前也是�
 
 test('沒有底圖的場景照舊：定場放占位字，對話不貼底', async ({ page }) => {
   await open(page, 12, 'zh');
-  await expect(page.locator('.place-beat .scene-plate')).toHaveCount(0);
+  await expect(page.locator('.plate-host .scene-plate')).toHaveCount(0);
   await expect(page.locator('.place-tbd')).toContainText('待放 3D 機位');
   await page.locator('.place-beat').click();
   await expect(page.locator('.scene.dialogue')).toBeVisible();
@@ -204,7 +204,7 @@ test('沒有底圖的場景照舊：定場放占位字，對話不貼底', async
 test('案件理論：開場那一頁有底圖；選理論那一頁留著同一張，壓暗 58%，卡片照舊', async ({ page }) => {
   await open(page, 13, 'zh');
   await page.locator('.place-beat').click();
-  await expect(page.locator('.scene.plated > .scene-plate')).toHaveAttribute('data-plate', 's1-an');
+  await expect(page.locator('.plate-host .scene-plate')).toHaveAttribute('data-plate', 's1-an');
   // 開場頁是字幕模式：一張卡一句，翻到最後一張，按鈕才是「選擇案件理論」。
   const next = page.locator('.scene.plated .primary');
   for (
@@ -418,7 +418,7 @@ test('底圖上的畫外字幕：走鏡頭層，只壓暗圖、不用紙色蓋�
   ]);
   expect(veil).toBe('rgba(6, 8, 11, 0.58)');
   expect(hitBg).toBe('rgba(0, 0, 0, 0)');
-  await expect(page.locator('.scene.plated > .scene-plate')).toHaveAttribute('data-state', 'ok');
+  await expect(page.locator('.plate-host .scene-plate')).toHaveAttribute('data-state', 'ok');
   // 縫的光不跟主題（淺色主題也是鏡頭層）；字幕開著的時候這一句還沒進筆錄；提示屬於字幕，在進度細線下面。
   expect(await vo.evaluate((e) => getComputedStyle(e).colorScheme)).toBe('dark');
   await expect(page.locator('.scene.plated .vo-log')).toHaveCount(0);
@@ -494,7 +494,7 @@ for (const lang of ['zh', 'en'] as const)
     test(`${c.name}：立牌站在底圖上，位置跟著圖走（${lang}）`, async ({ page }) => {
       await open(page, c.scene, lang, c.deal);
       await page.locator('.place-beat').click();
-      const bg = page.locator('.scene.plated > .scene-plate');
+      const bg = page.locator('.plate-host .scene-plate');
       await expect(bg).toHaveAttribute('data-state', 'ok');
       const set = Object.values(STANDEES.sets).find((x) => x.plates.includes(c.plate[lang]))!;
       const phone = (page.viewportSize()?.width ?? 0) < 768;
@@ -505,14 +505,14 @@ for (const lang of ['zh', 'en'] as const)
           const r = e.getBoundingClientRect();
           return [r.x, r.y, r.width, r.height];
         };
-        const bgImg = document.querySelector<HTMLImageElement>('.scene.plated .plate-bg')!;
+        const bgImg = document.querySelector<HTMLImageElement>('.plate-host .plate-bg')!;
         return {
           vw: innerWidth,
           vh: innerHeight,
-          stage: rect(document.querySelector('.scene.plated .plate-stage')!),
+          stage: rect(document.querySelector('.plate-host .plate-stage')!),
           natural: [bgImg.naturalWidth, bgImg.naturalHeight],
           people: Object.fromEntries(
-            [...document.querySelectorAll('.scene.plated .standee')].map((e) => [
+            [...document.querySelectorAll('.plate-host .standee')].map((e) => [
               (e as HTMLElement).dataset.standee,
               { box: rect(e), loaded: (e as HTMLImageElement).complete },
             ]),
@@ -559,7 +559,7 @@ for (const lang of ['zh', 'en'] as const)
 test('沒有立牌的底圖（會議室夜）不放人', async ({ page }) => {
   await open(page, 13, 'zh');
   await page.locator('.place-beat').click();
-  await expect(page.locator('.scene.plated > .scene-plate')).toHaveAttribute('data-state', 'ok');
+  await expect(page.locator('.plate-host .scene-plate')).toHaveAttribute('data-state', 'ok');
   await expect(page.locator('.standee')).toHaveCount(0);
 });
 
@@ -578,13 +578,10 @@ for (const view of [
       await page.setViewportSize(view);
       await open(page, c.scene, 'zh', c.deal);
       await page.locator('.place-beat').click();
-      await expect(page.locator('.scene.plated > .scene-plate')).toHaveAttribute(
-        'data-state',
-        'ok',
-      );
+      await expect(page.locator('.plate-host .scene-plate')).toHaveAttribute('data-state', 'ok');
       const set = Object.values(STANDEES.sets).find((x) => x.plates.includes(c.plate.zh))!;
       const stage = await page
-        .locator('.scene.plated .plate-stage')
+        .locator('.plate-host .plate-stage')
         .evaluate((e) => e.getBoundingClientRect().toJSON() as { x: number; width: number });
       const [pw] = set.size.phone;
       const at = (px: number) => (stage.x + (px / pw) * stage.width) / view.width;
@@ -687,5 +684,79 @@ for (const [w, h] of [
           await go.click();
         }
         expect(seen.length).toBeGreaterThanOrEqual(3);
+      });
+    }
+
+// 第二道關卡 v93 第 1 處：底圖已經在畫面上的時候，換場（地點字卡→場景、理論開場→選理論）底圖不卸載、不黑一下、
+// 立牌不會單獨浮在黑底上。底圖是 App 掛的共用一層（PlateHost）：整段換場每一個畫格都是同一個元素、舞台不透明度 1。
+for (const [w, h] of [
+  [1440, 900],
+  [412, 839],
+] as const)
+  for (const lang of ['zh', 'en'] as const)
+    for (const c of CASES) {
+      test(`${c.name}（${lang}，${w}×${h}）：地點字卡進場景，底圖不卸載、每一格都亮著`, async ({
+        page,
+      }, info) => {
+        test.skip(info.project.name !== 'desktop', '自己設視窗，只跑一次');
+        await page.setViewportSize({ width: w, height: h });
+        await open(page, c.scene, lang, c.deal);
+        const plate = page.locator('.scene-plate');
+        await expect(plate).toHaveAttribute('data-state', 'ok');
+        // 定場亮起來（淡入結束）再開始錄每一格。
+        await page.waitForFunction(
+          () =>
+            Number(getComputedStyle(document.querySelector('.plate-stage')!).opacity) >=
+            0.99,
+        );
+        await page.evaluate(() => {
+          const w = window as unknown as { __frames: unknown[]; __stop: boolean; __el: Element };
+          w.__el = document.querySelector('.scene-plate')!;
+          w.__frames = [];
+          w.__stop = false;
+          const tick = () => {
+            const el = document.querySelector('.scene-plate');
+            const stage = document.querySelector('.plate-stage');
+            const imgs = [...document.querySelectorAll<HTMLImageElement>('.scene-plate img')];
+            w.__frames.push({
+              same: el === w.__el,
+              op: stage ? Number(getComputedStyle(stage).opacity) : -1,
+              imgs: imgs.length && imgs.every((i) => i.complete && i.naturalWidth > 0),
+            });
+            if (!w.__stop) requestAnimationFrame(tick);
+          };
+          requestAnimationFrame(tick);
+        });
+        await page.locator('.place-beat').click();
+        await expect(page.locator('.scene.plated .sub-card')).toBeVisible();
+        if (c.scene === 13) {
+          // 理論開場翻到最後一張，切到選理論那一頁：同一張底圖壓暗，不閃黑。
+          const next = page.locator('.scene.plated .primary');
+          for (
+            let i = 0;
+            i < 12 &&
+            !(await page
+              .getByRole('button', { name: /選擇案件理論|Choose case theory/ })
+              .count());
+            i++
+          )
+            await next.click();
+          await page.getByRole('button', { name: /選擇案件理論|Choose case theory/ }).click();
+          await expect(page.locator('.theory-card').first()).toBeVisible();
+        }
+        await page.waitForTimeout(500);
+        const frames = await page.evaluate(() => {
+          const w = window as unknown as {
+            __frames: { same: boolean; op: number; imgs: boolean }[];
+            __stop: boolean;
+          };
+          w.__stop = true;
+          return w.__frames;
+        });
+        expect(frames.length).toBeGreaterThan(20);
+        const bad = frames.filter((f) => !f.same || f.op < 0.99 || !f.imgs);
+        expect(bad.length, `${frames.length} 格裡有 ${bad.length} 格底圖不見、變淡或圖沒畫好`).toBe(
+          0,
+        );
       });
     }

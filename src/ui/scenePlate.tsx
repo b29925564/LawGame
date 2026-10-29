@@ -7,6 +7,7 @@ import {
   useRef,
   useState,
 } from 'react';
+import { create } from 'zustand';
 import { useLang, type Lang } from '../i18n';
 import plateData from './plates/plates.json';
 import standeeData from './plates/standees.json';
@@ -256,7 +257,23 @@ export function useShown(plate: Plate | null): Shown | null {
  * 燈組與色溫寫在 data 上（驗收截圖與 e2e 讀它，不讀圖檔）。
  */
 export function ScenePlate({ shown, dim }: { shown: Shown; dim?: boolean }) {
-  const { plate, url, state, phone } = shown;
+  const { plate, url, state: warm, phone } = shown;
+  // 畫面上這幾張 <img> 自己解碼完才亮：warmPlate 解碼的是另一個 Image 物件，這邊的元件掛上去時還沒畫，
+  // 小的立牌圖會先出來、底圖晚幾格（第二道關卡 v93 第 1 處：立牌單獨浮在黑底上）。底圖、立牌一起亮，從黑淡入。
+  const stage = useRef<HTMLDivElement>(null);
+  const [painted, setPainted] = useState(false);
+  useEffect(() => {
+    if (warm !== 'ok') return;
+    let live = true;
+    const imgs = [...(stage.current?.querySelectorAll('img') ?? [])];
+    void Promise.all(imgs.map((i) => i.decode().catch(() => undefined))).then(
+      () => live && setPainted(true),
+    );
+    return () => {
+      live = false;
+    };
+  }, [warm]);
+  const state: State = warm === 'ok' && !painted ? 'wait' : warm;
   const variant: Variant = phone ? 'phone' : 'desktop';
   const [w, h] = PLATE_PX[variant];
   const set = STANDEES.find((x) => x.plates.includes(plate.id));
@@ -272,6 +289,7 @@ export function ScenePlate({ shown, dim }: { shown: Shown; dim?: boolean }) {
       aria-hidden
     >
       <div
+        ref={stage}
         className="plate-stage"
         style={
           {
@@ -356,5 +374,38 @@ export function PlateEyebrow({ text }: { text: string }) {
         {short && en ? room.charAt(0).toUpperCase() + room.slice(1) : room}
       </span>
     </p>
+  );
+}
+
+/**
+ * 底圖是整個畫面共用的一層（PlateHost，App 掛一個），不跟著哪一場的介面掛上卸下：地點字卡→場景、理論開場→選理論，
+ * 同一張底圖整段不卸載，所以切換時不會黑一下、立牌不會單獨浮在黑底上（第二道關卡 v93 第 1 處）；換另一張底圖才重新掛、重新淡入。
+ * 場景自己的介面用 usePlate 說「我這一格要這張圖」：over='beat' 是定場（圖在場記後面、黑底的定場卡讓出來），
+ * over='scene' 是場景介面後面。
+ */
+type PlateLayer = { shown: Shown; dim: boolean; over: 'beat' | 'scene' };
+const usePlateStore = create<{ layer: PlateLayer | null }>(() => ({ layer: null }));
+
+export function usePlate(shown: Shown | null, over: 'beat' | 'scene', dim = false) {
+  const key = shown ? `${shown.url}|${shown.state}|${shown.scrim}` : '';
+  useLayoutEffect(() => {
+    if (!shown) return;
+    const mine: PlateLayer = { shown, dim, over };
+    usePlateStore.setState({ layer: mine });
+    return () => {
+      // 換場時舊的先卸、新的才掛（同一個 commit）：只清自己的，不蓋掉接手的那一層。
+      if (usePlateStore.getState().layer === mine) usePlateStore.setState({ layer: null });
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key, dim, over]);
+}
+
+export function PlateHost() {
+  const layer = usePlateStore((s) => s.layer);
+  if (!layer) return null;
+  return (
+    <div className="plate-host" data-over={layer.over}>
+      <ScenePlate key={layer.shown.url} shown={layer.shown} dim={layer.dim} />
+    </div>
   );
 }

@@ -30,7 +30,7 @@ import { Negotiation } from './Negotiation';
 import { Phone } from './Phone';
 import { ScenePhotos } from './ScenePhotos';
 import { Intro, VerdictScreen } from './Scenes';
-import { useScenePlate, useShown } from './scenePlate';
+import { PlateHost, useScenePlate, useShown } from './scenePlate';
 import { Title } from './Title';
 import { Defense } from './Defense';
 import { Opening, Theory } from './Theory';
@@ -141,6 +141,7 @@ export function App() {
   return (
     <SceneScope.Provider value={scene?.id}>
       <Announcer />
+      <PlateHost />
       {ahead.map((x) => (
         <WarmPlate key={x.id} episode={progress.episode} scene={x} />
       ))}

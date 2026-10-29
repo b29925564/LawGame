@@ -505,6 +505,9 @@ details summary {
 .scene.plated,
 .scene.backdrop {
   isolation: isolate;
+  /* 底圖是 App 掛的共用一層（PlateHost，z-index 0）：介面在它上面。 */
+  position: relative;
+  z-index: 1;
 }
 .scene.plated {
   justify-content: flex-end;

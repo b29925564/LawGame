@@ -6,7 +6,7 @@ import { prose } from './prose';
 import { reducedMotion } from './a11y';
 import { claimHand } from './hand';
 import { rigOf } from './rigs';
-import { ScenePlate, useScenePlate, useShown } from './scenePlate';
+import { usePlate, useScenePlate, useShown } from './scenePlate';
 import { useCaseTerms } from './terms';
 import './actcard.css';
 
@@ -100,8 +100,10 @@ function useHeld(on: boolean) {
 /** 選單開著時，幕卡不切走、按鍵也不跳過。 */
 const menuOpen = () => !!document.querySelector('dialog[open], [role="dialog"]');
 
-function useCut(onDone?: () => void, wait?: number, hold = false) {
-  const [black, setBlack] = useState(false);
+function useCut(onDone?: () => void, wait?: number, hold = false, plated = false) {
+  const [cut, setBlack] = useState(false);
+  // 底圖在的定場：下一場用的是同一張圖（PlateHost 不卸載），中間不黑那 83ms，直接接上（第二道關卡 v93 第 1 處）。
+  const black = cut && !plated;
   const done = useRef(onDone);
   useEffect(() => {
     done.current = onDone;
@@ -132,10 +134,10 @@ function useCut(onDone?: () => void, wait?: number, hold = false) {
     };
   }, [auto, wait, hold]);
   useEffect(() => {
-    if (!black) return;
-    const id = window.setTimeout(() => done.current?.(), CUT);
+    if (!cut) return;
+    const id = window.setTimeout(() => done.current?.(), plated ? 0 : CUT);
     return () => clearTimeout(id);
-  }, [black]);
+  }, [cut, plated]);
   return { black, skip: () => auto && setBlack(true) };
 }
 
@@ -343,18 +345,23 @@ export function PlaceBeat({
   // 有底圖就是定場鏡頭：圖解碼完才放場記、才開始計時；等的時候整格純黑（不放占位字、不放顆粒）。
   const shown = useShown(useScenePlate(episode, { id, rig: place.rig }));
   const waiting = shown?.state === 'wait';
-  const cut = useCut(onDone, wait, waiting);
+  // 底圖是共用的一層（scenePlate.tsx 的 PlateHost），定場只說「這一格要這張圖」。
+  usePlate(shown, 'beat');
+  const cut = useCut(onDone, wait, waiting, !!shown);
   return (
     <main
-      className={['act-stage place-beat', waiting && 'waiting', cut.black && 'cut']
+      className={[
+        'act-stage place-beat',
+        shown && 'plated',
+        waiting && 'waiting',
+        cut.black && 'cut',
+      ]
         .filter(Boolean)
         .join(' ')}
       onClick={cut.skip}
       data-auto=""
     >
-      {shown ? (
-        <ScenePlate shown={shown} />
-      ) : (
+      {!shown && (
         <span className="place-tbd">
           {t('待放 3D 機位')}
           {'\u3000'}
