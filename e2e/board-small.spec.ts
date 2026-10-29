@@ -1550,3 +1550,123 @@ for (const [w, h] of [
     if (process.env.SHOTS)
       await page.screenshot({ path: `${process.env.SHOTS}/answer-found-ep2-${w}x${h}-en.png` });
   });
+
+// v93 gate 2 第二輪（3f6629d）(a)：上一題在矮版答案列作答，按「下一題」以後，放卡時頁面要捲到看得到卡；
+// 矮版是上一題的版面，換題要從一般版重新量（不然放下的卡整張在答案列下面）。
+for (const [w, h] of [
+  [412, 839],
+  [360, 740],
+] as const)
+  test(`手機 ${w}×${h}（en）：上一題作答後兩格都還有卡，下一題放卡，新卡在頂列和答案列之間`, async ({
+    page,
+  }) => {
+    test.slow();
+    await page.setViewportSize({ width: w, height: h });
+    await open(page, 'en', [], ['l-called-msg'], [...GATE_CARDS, 'ethan-report']);
+    await question(page);
+    await page.evaluate(() => document.fonts.ready);
+    await settled(page);
+    // 板上放兩張長卡（不必是這題的答案）讓答案列換矮版，再放這題的發現作答。
+    for (const nm of [
+      'accused of embezzling',
+      w > 400 ? 'reported Voss first' : 'he called a ride',
+    ]) {
+      const card = page
+        .locator('.cork-rack:not(.marks) .cork-card')
+        .filter({ has: page.locator(`b[data-name*="${nm}"]`) });
+      const dots = page.locator('.cork-dots button');
+      for (let k = 0; !(await card.count()) && k < (await dots.count()); k++)
+        await dots.nth(k).click();
+      await card.first().click();
+      await settled(page);
+      await page.waitForTimeout(900);
+    }
+    const wasTight = await page.locator('.answer-bar.tight').count();
+    await page.locator('.found-list .found').first().click();
+    await page.getByRole('button', { name: /^Submit/ }).click();
+    await page.getByRole('button', { name: /^Next question/ }).click();
+    await question(page);
+    await settled(page);
+    const card = page
+      .locator('.cork-rack:not(.marks) .cork-card')
+      .filter({ has: page.locator('b[data-name*="health app"]') });
+    const dots = page.locator('.cork-dots button');
+    for (let k = 0; !(await card.count()) && k < (await dots.count()); k++)
+      await dots.nth(k).click();
+    await card.first().click();
+    await settled(page);
+    await page.waitForTimeout(900);
+    const g = await geometry(page);
+    const c = g.cards[0];
+    if (w < 400) expect(wasTight, '上一題是矮版（這條測試量的就是換題以後）').toBe(1);
+    expect(c, '下一題放了一張卡').toBeTruthy();
+    expect(
+      c.top,
+      `卡 ${c.top.toFixed(0)}–${c.bottom.toFixed(0)}，頂列下緣 ${g.headBottom.toFixed(0)}`,
+    ).toBeGreaterThanOrEqual(g.headBottom - 1);
+    expect(
+      c.bottom,
+      `卡 ${c.top.toFixed(0)}–${c.bottom.toFixed(0)}，答案列上緣 ${g.barTop.toFixed(0)}`,
+    ).toBeLessThanOrEqual(g.barTop + 1);
+  });
+
+// v93 gate 2 第二輪（3f6629d）(b)：第二集 360×740 英文，放第二張長卡、第一次換成矮版答案列時，
+// 兩張卡要整張在頂列和答案列之間（之前 B 卡的最後一行「0.3 points.」被蓋 24px）。
+for (const found of [[], ['l-perjury']])
+  for (const via of ['rack', 'sheet'] as const)
+    test(`手機 360×740（en）：第二集兩張長卡，第一次換矮版，兩張卡整張露出（${found.length ? '答案裡先放了發現' : '答案是空的'}，${via === 'rack' ? '從牌架' : '點空格從清單'}放卡）`, async ({
+      page,
+    }) => {
+      test.slow();
+      await page.setViewportSize({ width: 360, height: 740 });
+      await open(
+        page,
+        'en',
+        [],
+        found,
+        ['contract', 'voice-memo', 'rating-penalty', 'trevor-sworn', 'change-ticket', 'lock-spec'],
+        ['ep2', 10],
+        'pretrial',
+      );
+      await question(page);
+      await page.evaluate(() => document.fonts.ready);
+      await settled(page);
+      // 答案裡先放好發現（一般版答案列；點發現時頁面捲到發現清單，從那麼深的地方開始），再放卡。
+      if (found.length) {
+        await page.locator('.found-list .found').first().click();
+        await settled(page);
+      }
+      for (const nm of ['voice message', 'docked after death']) {
+        if (via === 'rack') {
+          const card = page
+            .locator('.cork-rack:not(.marks) .cork-card')
+            .filter({ has: page.locator(`b[data-name*="${nm}"]`) });
+          const dots = page.locator('.cork-dots button');
+          for (let k = 0; !(await card.count()) && k < (await dots.count()); k++)
+            await dots.nth(k).click();
+          await card.first().click();
+        } else {
+          // gate 2 的步驟：點空格（A、B），在證據清單裡挑。
+          await page.locator('button.cork-empty').first().click();
+          await page
+            .locator('.card-sheet .sheet-list button:not(:disabled)')
+            .filter({ hasText: nm })
+            .first()
+            .click();
+        }
+        await settled(page);
+        await page.waitForTimeout(900);
+      }
+      await expect(page.locator('.answer-bar')).toHaveClass(/tight/);
+      const g = await geometry(page);
+      for (const c of g.cards) {
+        expect(
+          c.top,
+          `卡上緣 ${c.top.toFixed(0)}，頂列下緣 ${g.headBottom.toFixed(0)}`,
+        ).toBeGreaterThanOrEqual(g.headBottom - 1);
+        expect(
+          c.bottom,
+          `卡下緣 ${c.bottom.toFixed(0)}，答案列上緣 ${g.barTop.toFixed(0)}`,
+        ).toBeLessThanOrEqual(g.barTop + 1);
+      }
+    });

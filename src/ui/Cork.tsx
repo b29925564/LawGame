@@ -1038,6 +1038,19 @@ export function Cork({
   const compact = phone || (w > 0 && w < ROOMY);
   // 拔掉卡（或重新整理後板上已經有卡）：沒有放卡的捲動可以等，在卡進出光圈的動畫之後再量一次，放得下就回一般版。
   const focusKey = focus.map((c) => c?.id ?? '').join();
+  // 放上新卡就捲到看得到它：不管是從牌架、點空格從證據清單挑，還是兩格都滿了換掉最早那張（新卡落在最後一格）。
+  // 只看「多了一張原本不在板上的卡」：拿下卡、換題時板上留著的卡、重新整理都不捲
+  // （v93 gate 2 第二輪：清單挑卡和兩格都滿時原本不捲，新卡整張或下緣落在答案列後面）。
+  const lastFocus = useRef<string[] | null>(null);
+  useEffect(() => {
+    const ids = focusKey.split(',');
+    const before = lastFocus.current;
+    lastFocus.current = ids;
+    if (!compact || !before) return;
+    const slot = ids.findIndex((id) => id && !before.includes(id));
+    if (slot >= 0) scrollToSlot(slot);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusKey, compact]);
   useEffect(() => {
     if (!compact || !onTight) return;
     const id = setTimeout(() => settleTight(0), 400);
@@ -1574,11 +1587,7 @@ export function Cork({
                     '--tilt': `${tilt(id, 1)}deg`,
                   } as CSSProperties
                 }
-                onClick={() => {
-                  const slot = focus.findIndex((c) => !c);
-                  onPick(id);
-                  if (slot >= 0) scrollToSlot(slot);
-                }}
+                onClick={() => onPick(id)}
               >
                 <RackFace item={card} tail={tailIds.has(id)} onHead={onHead} />
               </button>
