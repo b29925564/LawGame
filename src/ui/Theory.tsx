@@ -11,7 +11,17 @@ import { Lock } from './Lock';
 import { prose } from './prose';
 import { useScope } from './lang';
 import { Speech } from './Portrait';
-import { Recap } from './ActCard';
+import { SubActions, useSubs } from './SubCard';
+import { Transcript } from './Shell';
+import { Recap, splitSlate } from './ActCard';
+import {
+  OnPlate,
+  onPlateOf,
+  PlateEyebrow,
+  ScenePlate,
+  useScenePlate,
+  useShown,
+} from './scenePlate';
 
 /**
  * 案件理論（企劃書 6.9.2）：整集最大的策略決定，選了不能換。
@@ -26,6 +36,51 @@ export function Theory({ scene }: { scene: TheoryScene }) {
   const held = progress.cards;
   const [intro, setIntro] = useState(!theory.done(st));
   const [pending, setPending] = useState<string | null>(null);
+  // 這一場有底圖：開場那一頁當背景；選理論那一頁留著同一張，壓暗 58%（人還在同一間會議室），卡片照紙層不動。
+  const shown = useShown(useScenePlate(progress.episode, scene));
+  // 有底圖的開場頁是字幕模式（底圖上的對白一律如此）：一張卡一句，「繼續」翻完所有卡才進選理論那一頁。
+  const [at, setAt] = useState(0);
+  const [rec, setRec] = useState(false);
+  const cue = scene.intro[at];
+  const subs = useSubs(shown && intro ? cue : null, at, !rec);
+  const lastLine = at >= scene.intro.length - 1;
+
+  if (intro && shown)
+    return (
+      <OnPlate.Provider value={onPlateOf(shown)}>
+        <main
+          className={rec ? 'scene dialogue plated subs rec-open' : 'scene dialogue plated subs'}
+        >
+          <PlateEyebrow
+            text={`${t(scene.act, scope)}${t('・')}${splitSlate(t(scene.place, scope))[0]}`}
+          />
+          <Transcript count={at + 1} open={rec}>
+            <Recap />
+            {scene.intro.slice(0, at + 1).map((l, i) => (
+              <Speech key={i} line={l} wrap />
+            ))}
+          </Transcript>
+          {!rec && subs.node}
+          <SubActions
+            rec={rec}
+            onRec={() => setRec((v) => !v)}
+            action={
+              <button
+                className="primary next"
+                onClick={() => {
+                  if (!rec && subs.step()) return;
+                  if (!lastLine) setAt(at + 1);
+                  else setIntro(false);
+                }}
+              >
+                {subs.last && lastLine ? t('選擇案件理論') : t('繼續')}
+              </button>
+            }
+          />
+          <ScenePlate shown={shown} />
+        </main>
+      </OnPlate.Provider>
+    );
 
   if (intro)
     return (
@@ -79,7 +134,7 @@ export function Theory({ scene }: { scene: TheoryScene }) {
   const done = theory.done(st);
   // 三張並排的比較卡（UX 規格 decision-cost §二）：點卡片＝選中，底部定案列才真的選定。
   return (
-    <main className="scene theory-pick">
+    <main className={shown ? 'scene theory-pick backdrop' : 'scene theory-pick'}>
       <p className="eyebrow">{t('案件理論')}</p>
       {!done && <p className="muted">{t('點一張卡比較，再按下面的「以這個理論開庭」定案。')}</p>}
       <ul className="theory-grid">
@@ -159,6 +214,7 @@ export function Theory({ scene }: { scene: TheoryScene }) {
           {t('繼續')}
         </button>
       )}
+      {shown && <ScenePlate shown={shown} dim />}
     </main>
   );
 }

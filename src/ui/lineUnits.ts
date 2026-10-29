@@ -59,8 +59,8 @@ function words(text: string): string[] {
   return Array.from(seg.segment(text), (s) => s.segment);
 }
 
-/** 把字串切成「不換行的單位」：每個單位內部不斷開。 */
-export function proseUnits(text: string, tail = true): string[] {
+/** 把字串切成「不換行的單位」：每個單位內部不斷開。labels 關掉時開頭的標籤（「伊森的說法：」）不併成一個單位（牌架卡名要在標籤中間也能斷）。 */
+export function proseUnits(text: string, tail = true, labels = true): string[] {
   if (!HAN.test(text)) return [text];
   let u = words(text);
 
@@ -134,7 +134,7 @@ export function proseUnits(text: string, tail = true): string[] {
   // 標籤後面緊接的單字（「他／先」）併成一組，不讓一個字自己掛一行；末行的規則也不併進標籤，標籤後永遠可以斷。
   const colon = out.findIndex((x) => /[：:]$/.test(x));
   let label = 0;
-  if (colon > 0 && [...out.slice(0, colon + 1).join('')].length <= LABEL + 1) {
+  if (labels && colon > 0 && [...out.slice(0, colon + 1).join('')].length <= LABEL + 1) {
     out.splice(0, colon + 1, out.slice(0, colon + 1).join(''));
     label = 1;
     let j = 1;

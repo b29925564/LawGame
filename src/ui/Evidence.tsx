@@ -1,4 +1,12 @@
-import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import {
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type PointerEvent as ReactPointerEvent,
+  type ReactNode,
+} from 'react';
 import { createPortal } from 'react-dom';
 import { glossary } from '../content/glossary';
 import {
@@ -83,6 +91,72 @@ export function EvidenceDrawer({
     window.addEventListener('keydown', esc);
     return () => window.removeEventListener('keydown', esc);
   }, [open]);
+  // 手機抽屜是對話框：開了把焦點移進來、Tab 繞在裡面、關了回到「證據」鈕。
+  const tab = useRef<HTMLButtonElement>(null);
+  const sheet = useRef<HTMLElement>(null);
+  const top = useRef<HTMLDivElement>(null);
+  const was = useRef(false);
+  const modal = open && !wide;
+  useEffect(() => {
+    if (modal) sheet.current?.focus({ preventScroll: true });
+    else if (was.current && !wide) tab.current?.focus({ preventScroll: true });
+    was.current = modal;
+  }, [modal, wide]);
+  // 頂列的高度給分組小標黏頂用（--tabs-h，跟證據板同一個做法）；只在矮視窗的 CSS 裡有用到。
+  useEffect(() => {
+    const bar = top.current;
+    const box = sheet.current;
+    if (!bar || !box || typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver(() => box.style.setProperty('--tabs-h', `${bar.offsetHeight}px`));
+    ro.observe(bar);
+    return () => ro.disconnect();
+  }, [open, wide]);
+  const trap = (e: ReactKeyboardEvent) => {
+    if (e.key !== 'Tab' || !sheet.current) return;
+    const items = [
+      ...sheet.current.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), input, a[href], [tabindex]:not([tabindex="-1"])',
+      ),
+    ].filter((el) => el.offsetParent !== null);
+    const first = items[0];
+    const last = items[items.length - 1];
+    const now = document.activeElement;
+    // 焦點在抽屜本身（剛開）時，Shift+Tab 也繞到最後一個。
+    if (!first || !last) return;
+    if (e.shiftKey && (now === first || now === sheet.current)) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && now === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  };
+  // 拉柄：往下拖，抽屜跟著手指；放開時拖過三分之一高度或夠快就關，否則回原位。
+  const drag = useRef<{ y: number; t: number; id: number } | null>(null);
+  const pull = (dy: number) => {
+    const el = sheet.current;
+    // 用 translate，不動 transform：開場動畫（sheet-up）的 fill 會蓋掉 inline 的 transform。
+    if (el) el.style.translate = dy > 0 ? `0 ${dy}px` : '';
+  };
+  const gripDown = (e: ReactPointerEvent<HTMLDivElement>) => {
+    drag.current = { y: e.clientY, t: e.timeStamp, id: e.pointerId };
+    e.currentTarget.setPointerCapture(e.pointerId);
+    if (sheet.current) sheet.current.style.transition = 'none';
+  };
+  const gripMove = (e: ReactPointerEvent<HTMLDivElement>) => {
+    if (drag.current?.id === e.pointerId) pull(e.clientY - drag.current.y);
+  };
+  const gripUp = (e: ReactPointerEvent<HTMLDivElement>) => {
+    const d = drag.current;
+    drag.current = null;
+    const el = sheet.current;
+    if (!d || !el) return;
+    const dy = e.clientY - d.y;
+    const fast = dy > 40 && dy / Math.max(1, e.timeStamp - d.t) > 0.6;
+    el.style.transition = reducedMotion() ? 'none' : 'translate 0.24s var(--ease)';
+    if (dy > el.offsetHeight / 3 || fast) toggle(false);
+    else pull(0);
+  };
   const [kind, setKind, showKind] = useKindFilter();
   // 聲請時（有證物標籤）能出示的卡排最前面，第一屏就看得到（體驗評測 v88 重驗：候選卡夾在清單中段、尾端）。
   const { pool, pick, tags } = useCardPick();
@@ -119,43 +193,65 @@ export function EvidenceDrawer({
       {!wide && (
         <button
           className="sheet-back"
+          tabIndex={-1}
           aria-label={t('關閉證據抽屜')}
           onClick={() => toggle(false)}
         />
       )}
-      <section className={wide ? 'sheet side' : 'sheet'} aria-label={t('證據抽屜')}>
-        <div className="panel-head">
-          <Tabs
-            className="sheet-tabs"
-            label={t('抽屜')}
-            value={page}
-            onPick={setPage}
-            items={[
-              { id: 'cards' as const, label: t('證據 {n}', { n: items.length }) },
-              ...(noTimeline ? [] : [{ id: 'timeline' as const, label: t('時間軸') }]),
-              { id: 'terms' as const, label: t('法典') },
-            ]}
-          />
+      <section
+        ref={sheet}
+        className={wide ? 'sheet side' : 'sheet'}
+        aria-label={t('證據抽屜')}
+        {...(wide ? {} : { role: 'dialog', 'aria-modal': true, tabIndex: -1, onKeyDown: trap })}
+      >
+        {/* 拉柄＋分頁列＋「關閉」是一組：矮視窗（橫向手機）抽屜整個捲動時，這一組黏在頂端。 */}
+        <div className="sheet-top" ref={top}>
           {!wide && (
-            <button className="link" onClick={() => toggle(false)}>
-              {t('關閉')}
-            </button>
+            <div
+              className="sheet-grip"
+              aria-hidden="true"
+              onPointerDown={gripDown}
+              onPointerMove={gripMove}
+              onPointerUp={gripUp}
+              onPointerCancel={gripUp}
+            />
           )}
+          <div className="panel-head">
+            <Tabs
+              className="sheet-tabs"
+              label={t('抽屜')}
+              value={page}
+              onPick={setPage}
+              items={[
+                { id: 'cards' as const, label: t('證據 {n}', { n: items.length }) },
+                ...(noTimeline ? [] : [{ id: 'timeline' as const, label: t('時間軸') }]),
+                { id: 'terms' as const, label: t('法典') },
+              ]}
+            />
+            {!wide && (
+              <button className="link" onClick={() => toggle(false)}>
+                {t('關閉')}
+              </button>
+            )}
+          </div>
         </div>
-        {page === 'cards' && note && <p className="muted small">{t(note, scope)}</p>}
+        {page === 'cards' && note && <p className="muted small sheet-note">{t(note, scope)}</p>}
+        {/* 搜尋和種類篩選一組：矮視窗（橫向手機）併成一行，其餘照舊上下排。 */}
         {page !== 'timeline' && (
-          <input
-            className="find"
-            type="search"
-            value={q}
-            placeholder={page === 'terms' ? t('找名詞，例如「相關性」') : t('找卡片')}
-            aria-label={page === 'terms' ? t('找名詞') : t('找卡片')}
-            onChange={(e) => setQ(e.target.value)}
-          />
+          <div className="sheet-find">
+            <input
+              className="find"
+              type="search"
+              value={q}
+              placeholder={page === 'terms' ? t('找名詞，例如「相關性」') : t('找卡片')}
+              aria-label={page === 'terms' ? t('找名詞') : t('找卡片')}
+              onChange={(e) => setQ(e.target.value)}
+            />
+            {page === 'cards' && <KindFilter items={items} value={kind} onPick={setKind} />}
+          </div>
         )}
         {page === 'cards' && (
           <>
-            <KindFilter items={items} value={kind} onPick={setKind} />
             {/* 清單自己捲：能被鍵盤聚焦，卡片不能選的畫面也捲得到下面（無障礙審查第 3 條）。 */}
             <ul className="stack cards sheet-list" tabIndex={0} aria-label={t('證據清單')}>
               {motion
@@ -207,7 +303,12 @@ export function EvidenceDrawer({
   return (
     <>
       {!wide && (
-        <button className="evidence-tab" aria-expanded={open} onClick={() => toggle(true)}>
+        <button
+          ref={tab}
+          className="evidence-tab"
+          aria-expanded={open}
+          onClick={() => toggle(true)}
+        >
           {t('證據')} <strong>{items.length}</strong>
         </button>
       )}

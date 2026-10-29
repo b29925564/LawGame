@@ -1,0 +1,73 @@
+{
+  "id": "holding-door",
+  "frames_res": [2304, 1440],
+  "phone_crop_px": [633, 0, 1443, 1440],
+  "people": [
+    {
+      "name": "bailiff",
+      "fig": "bailiff",
+      "h": 1.82,
+      "feet_px": [1327.6, 970.8],
+      "crown_px": [1328.5, 510.5],
+      "body": "#07090c",
+      "lights": [
+        {
+          "dir": [0, -1],
+          "color": "#535b5d",
+          "width": 1.5,
+          "alpha": 0.8,
+          "soft": 0.3
+        }
+      ]
+    },
+    {
+      "name": "ethan",
+      "fig": "ethan_cuffed",
+      "h": 1.78,
+      "feet_px": [1247.6, 991.0],
+      "crown_px": [1248.1, 516.0],
+      "body": "#07090c",
+      "lights": [
+        {
+          "dir": [0, -1],
+          "color": "#535b5d",
+          "width": 1.5,
+          "alpha": 0.9,
+          "soft": 0.3
+        },
+        {
+          "part": "forearm",
+          "dir": [0, -1],
+          "color": "#535b5d",
+          "width": 1.3,
+          "alpha": 0.9,
+          "soft": 0.3
+        }
+      ]
+    },
+    {
+      "name": "lucas",
+      "fig": "lucas_back",
+      "h": 1.78,
+      "feet_px": [839.1, 1357.9],
+      "crown_px": [836.1, 431.1],
+      "body": "#07090c",
+      "lights": [
+        {
+          "dir": [-1, 0],
+          "color": "#fffef2",
+          "width": 2,
+          "alpha": 0.8,
+          "soft": 0.3
+        }
+      ]
+    }
+  ],
+  "plates": ["holding-door", "holding-door-zh"],
+  "fit": {
+    "phone": {
+      "edge": "right",
+      "margin": 0.02
+    }
+  }
+}

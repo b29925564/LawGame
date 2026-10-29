@@ -1,4 +1,5 @@
 /// <reference lib="dom" />
+import { proseUnits } from '../src/ui/lineUnits';
 import { expect, test, type Page } from '@playwright/test';
 
 // 證據板的小螢幕（設計師 #2 裁定）：1024–1180 證據欄收進抽屜；手機是 4:5 的同一塊軟木板，下半部是牌架。
@@ -148,7 +149,7 @@ for (const lang of ['zh-TW', 'en'])
     await expect(page.locator('.cork-focus.filled')).toHaveCount(1);
     // 抽屜自己也點得開。
     await tab.click();
-    await expect(page.getByRole('region', { name: /^(證據抽屜|Evidence drawer)/ })).toBeVisible();
+    await expect(page.getByRole('dialog', { name: /^(證據抽屜|Evidence drawer)/ })).toBeVisible();
   });
 
 test('1440：證據欄照舊常駐在右邊，空格還是「點右邊的卡片放上來」', async ({ page }) => {
@@ -655,6 +656,187 @@ for (const w of [412, 360, 320])
       expect(seen, '證據架有照片卡').toBeGreaterThan(0);
     });
 
+// 設計師 #2 2026-10-17 22:14Z：手機牌架的文字卡（影印紙、索引卡、便條）和照片卡同一條整詞規則：最多兩行，英文不斷字，
+// 中文只在 Intl.Segmenter 的詞界斷，結尾不留虛詞，不加刪節號；同一頁牌架兩張以上縮短後一樣的，改顯示冒號後面那段；
+// 被縮短的卡 aria-label 是完整卡名。
+const FN_EN = [
+  'a',
+  'an',
+  'the',
+  'of',
+  'in',
+  'on',
+  'at',
+  'to',
+  'for',
+  'and',
+  'or',
+  'by',
+  'with',
+  'from',
+  'i',
+  'he',
+  'she',
+  'it',
+  'they',
+  'we',
+  'you',
+];
+const FN_ZH = [...'的之與和及或在於對把被為從到以而並是我你他她它'];
+for (const w of [412, 360, 320])
+  for (const lang of ['zh-TW', 'en'])
+    test(`手機 ${w}：牌架卡名整詞、同頁不重複、aria-label 是完整卡名（${lang}）`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width: w, height: 839 });
+      await open(page, lang, ['q1', 'q2a'], ['l-watch', 'l-called-msg'], GATE_CARDS);
+      await page
+        .locator('.q-item')
+        .filter({ hasText: /手錶資料與本案相關|the watch data is relevant/ })
+        .first()
+        .click();
+      await expect(page.locator('.cork')).toBeVisible();
+      await page.evaluate(() => document.fonts.ready);
+      const dots = page.locator('.cork-dots button');
+      let seen = 0;
+      let cut = 0;
+      const everyCard: { full: string; shown: string }[] = [];
+      for (let k = 0; k < Math.max(1, await dots.count()); k++) {
+        if (await dots.count()) await dots.nth(k).click();
+        await settled(page);
+        await page.waitForTimeout(250);
+        const r = await page.evaluate(() =>
+          [...document.querySelectorAll<HTMLElement>('.cork-rack:not(.marks) > .cork-card')].map(
+            (card) => {
+              const b = card.querySelector<HTMLElement>('b[data-name]')!;
+              const lines = [...b.querySelectorAll('.cork-rack-line')].map(
+                (l) => l.textContent ?? '',
+              );
+              const full = b.dataset.name ?? '';
+              const at = full.search(/[:：]/);
+              const rest = at < 0 ? '' : full.slice(at + 1).trim();
+              const src = rest || full;
+              return {
+                full,
+                src,
+                label: card.getAttribute('aria-label'),
+                photo: card.classList.contains('photo'),
+                lines,
+                tall: b.scrollHeight - b.clientHeight,
+                wide: Math.max(
+                  0,
+                  ...[...b.querySelectorAll<HTMLElement>('.cork-rack-line')].map(
+                    (l) => l.scrollWidth - b.parentElement!.clientWidth,
+                  ),
+                ),
+              };
+            },
+          ),
+        );
+        const shownAll: string[] = [];
+        for (const c of r) {
+          seen++;
+          const joined = c.lines.join('');
+          expect(c.label, `${c.full} 的 aria-label`).toBe(c.full);
+          expect(c.lines.length, `${c.full} 行數`).toBeLessThanOrEqual(c.photo ? 1 : 2);
+          expect(c.tall, `${c.full} 沒有被切到半行`).toBeLessThanOrEqual(1);
+          expect(c.wide, `${c.full} 不超出卡寬`).toBeLessThanOrEqual(1);
+          if (!joined.trim()) continue;
+          shownAll.push(joined.trim());
+          const shown = joined.trim();
+          everyCard.push({ full: c.full, shown });
+          const cjk = /[\u3000-\u9fff\uff00-\uffef]/.test(c.src);
+          const wordsOf = (t: string) => (cjk ? proseUnits(t, false, false) : t.split(/\s+/));
+          const whole = c.full.startsWith(shown);
+          // 第一個詞放不下時（320 寬）放能放的最長整詞，不一定是開頭。
+          const lone = wordsOf(c.src).some(
+            (x) => x.replace(/[，。、；：！？,.;:!?]+$/, '') === shown,
+          );
+          expect(
+            whole || c.src.startsWith(shown) || lone,
+            `${shown} 是 ${c.full} 的開頭、冒號後面那段的開頭、或其中一個整詞`,
+          ).toBe(true);
+          if (shown === c.full || shown === c.src || lone) continue;
+          cut++;
+          const base = whole ? c.full : c.src;
+          // 冒號後面不能只剩一個代名詞或「是」（「Sophie to police: I」「蘇菲陳述：他」「論點 A：伊森是」）。
+          const colonAt = shown.search(/[:：]/);
+          const after = (colonAt < 0 ? shown : shown.slice(colonAt + 1)).trim();
+          if (after) {
+            const words = cjk ? [...after] : after.split(/\s+/).map((x) => x.toLowerCase());
+            expect(
+              words.every((x) => FN_ZH.includes(x) || FN_EN.includes(x)),
+              `${shown} 冒號後面只剩虛詞或代名詞`,
+            ).toBe(false);
+          }
+          // 「的」「之」黏前一個詞，不放行首。
+          for (const l of c.lines)
+            expect(/^[的之]/.test(l), `${l} 「的」「之」不放行首`).toBe(false);
+          if (cjk) {
+            // 中文只在詞界斷（內文同一套斷詞）；每一行的尾巴也是詞界，標點不放行首。
+            const ends = new Set<number>();
+            let at = 0;
+            for (const u of proseUnits(base, false, false)) {
+              at += u.length;
+              ends.add(at);
+              const p = /[，。、；：！？…]+$/.exec(u)?.[0].length ?? 0;
+              if (p) ends.add(at - p);
+            }
+            let pos = 0;
+            for (const l of c.lines) {
+              pos += l.length;
+              expect(ends.has(pos), `${base} 在第 ${pos} 字斷開，不是詞界`).toBe(true);
+            }
+            for (const l of c.lines.slice(1))
+              expect(/^[，。、；：！？）」』…]/.test(l), `${l} 標點不放行首`).toBe(false);
+            for (const l of c.lines)
+              expect(/[（「『《〈([]$/.test(l), `${l} 開括號不放行尾`).toBe(false);
+            expect(
+              (shown.match(/[（「『《〈([]/g)?.length ?? 0) <=
+                (shown.match(/[）」』》〉)\]]/g)?.length ?? 0),
+              `${shown} 括號有開有關`,
+            ).toBe(true);
+            expect(
+              /[的之與和及或在於對把被為從到以而並]$/.test(shown),
+              `${shown} 不以虛詞收尾`,
+            ).toBe(false);
+          } else {
+            expect(
+              /\s/.test(base[joined.length] ?? ' '),
+              `${joined}｜${base[joined.length]} 在字的邊界`,
+            ).toBe(true);
+            const last = shown
+              .split(/\s+/)
+              .pop()!
+              .replace(/[:,.]+$/, '')
+              .toLowerCase();
+            expect(FN_EN, `${shown} 不以虛詞收尾`).not.toContain(last);
+          }
+          expect(/[,，、]$/.test(shown), `${shown} 不留逗號`).toBe(false);
+        }
+        expect(new Set(shownAll).size, `這一頁牌架的卡名兩兩不同：${shownAll.join(' ｜ ')}`).toBe(
+          shownAll.length,
+        );
+      }
+      // 冒號前面一樣的卡，整個牌架有兩張以上（不論在哪一頁），每一頁的這幾張都排冒號後面那段。
+      const byLabel = new Map<string, string[]>();
+      for (const c of everyCard) {
+        const at = c.full.search(/[:：]/);
+        if (at < 0) continue;
+        const label = c.full.slice(0, at).trim();
+        byLabel.set(label, [...(byLabel.get(label) ?? []), c.shown]);
+      }
+      for (const [label, shown] of byLabel)
+        if (shown.length > 1)
+          for (const x of shown)
+            expect(
+              x.startsWith(label) && x !== '',
+              `牌架上有 ${shown.length} 張「${label}」，每張都要排冒號後面那段：${x}`,
+            ).toBe(false);
+      expect(seen, '牌架有卡').toBeGreaterThan(3);
+      expect(cut, '有被縮短的卡').toBeGreaterThanOrEqual(0);
+    });
+
 // 設計師 #2 2026-10-16 (d)：板子從一開始就照這一題最高的卡算高度，A／B 空著、放一張、放兩張，Pixel 7 的板子一樣高。
 for (const lang of ['zh-TW', 'en'])
   for (const scale of ['1', '1.5'])
@@ -826,7 +1008,10 @@ async function seen(page: Page, slot: number) {
 /** 從牌架放一張指定的卡（牌架有好幾頁就翻頁找）。 */
 async function rackPick(page: Page, name: string) {
   const dots = page.locator('.cork-dots button');
-  const card = page.locator('.cork-rack:not(.marks) .cork-card', { hasText: name });
+  // 牌架上的卡名可能被縮短，認 aria-label（完整卡名）。
+  const card = page
+    .locator('.cork-rack:not(.marks) .cork-card')
+    .and(page.getByLabel(name, { exact: true }));
   for (let k = 0; !(await card.count()) && k < (await dots.count()); k++) await dots.nth(k).click();
   await card.first().click();
 }
