@@ -3442,8 +3442,17 @@ html[lang='en'] .stamp.rec-stamp b {
   margin-left: auto;
   min-width: 7em;
 }
+.objection {
+  container-type: inline-size;
+}
 .objection .row {
   grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+/* 四欄放不下最長的理由（Speculation 約 5.8em）就改兩欄：字級放大或中欄窄時，字不再超出格子、也不撐出橫向捲動。 */
+@container (max-width: 25em) {
+  .objection .row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 .objection .row button {
   padding-inline: 4px;
