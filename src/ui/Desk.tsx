@@ -50,6 +50,62 @@ const labels: Record<App, string> = {
 };
 
 /** 第二幕的桌面：盧卡斯的工作電腦，每個 App 是一個系統入口（企劃書 6.1）。 */
+/**
+ * 放進答案的發現：一般版兩行（卡名、關係）。矮版只有一行：關係完整放在最前面（它是這條發現在答什麼），
+ * 卡名以一整張卡為單位接在後面，第二張放不下就連「×」整張不放，不在卡名中間截斷（設計師 PR #309 複審 2）。
+ * 全文在按鈕的 aria-label 和發現清單。
+ */
+let slotCtx: CanvasRenderingContext2D | null | undefined;
+function SlotLine({
+  names,
+  relation,
+  tight,
+}: {
+  names: readonly [string, string];
+  relation: string;
+  tight: boolean;
+}) {
+  const ref = useRef<HTMLElement>(null);
+  const rel = useRef<HTMLSpanElement>(null);
+  const first = names[0];
+  const full = `${first} × ${names[1]}`;
+  const [line, setLine] = useState(full);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    const box = el?.parentElement;
+    if (!tight || !el || !box || !rel.current) {
+      setLine(full);
+      return;
+    }
+    const fit = () => {
+      slotCtx ??= document.createElement('canvas').getContext('2d');
+      if (!slotCtx || !rel.current) return;
+      const cs = getComputedStyle(el);
+      slotCtx.font = `${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+      const gap = parseFloat(getComputedStyle(box).columnGap) || 0;
+      const room = box.clientWidth - rel.current.getBoundingClientRect().width - gap;
+      const pick = [full, first].find((x) => slotCtx!.measureText(x).width <= room);
+      setLine(pick ?? '');
+    };
+    fit();
+    const ro = new ResizeObserver(fit);
+    ro.observe(box);
+    void document.fonts?.ready.then(fit);
+    return () => ro.disconnect();
+  }, [full, first, tight]);
+  return (
+    <>
+      {tight && (
+        <span ref={rel} className="slot-rel muted small">
+          {relation}
+        </span>
+      )}
+      <strong ref={ref}>{tight ? line : full}</strong>
+      {!tight && <span className="muted small">{relation}</span>}
+    </>
+  );
+}
+
 export function Desk({ scene }: { scene: DeskScene }) {
   const { progress, advance, clearReport, resolveTwist, wrapDesk } = useEpisode();
   const t = useT();
@@ -539,6 +595,8 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
   const nameOf = (id: string) => pool.find((c) => c.id === id)?.name ?? id;
   // 光圈裡的照片或證物袋按「放大」：完整的照片紀錄表與保管鏈（設計師 P2-6）。
   const [zoomed, setZoomed] = useState<string | null>(null);
+  // 答案列的矮版（Cork.tsx 量到放好的長卡比一般版答案列上面的空間高時換）。
+  const [tight, setTight] = useState(false);
   const zoomCard = scene.cards.find((c) => c.id === zoomed);
   const found = desk.findings(scene, st).map((l, i) => ({
     id: l.id,
@@ -799,6 +857,8 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
           onZoom={setZoomed}
           misses={st.badLinks}
           onMissDone={settle}
+          tight={tight}
+          onTight={setTight}
         />
         {zoomCard && (
           <EvidenceZoom item={zoomCard} progress={progress} onClose={() => setZoomed(null)} />
@@ -954,12 +1014,16 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
             {/* 工作台順序＝動作順序：連線 → 發現 → 答案；答案列釘在底部（UX 規格）。 */}
             <section
               className={
-                done ? 'panel step answer answer-bar done' : 'panel step answer answer-bar'
+                done
+                  ? 'panel step answer answer-bar done'
+                  : tight
+                    ? 'panel step answer answer-bar tight'
+                    : 'panel step answer answer-bar'
               }
             >
               <h3 className="step-head">
                 <span className="step-num">3</span>
-                {t('答案')}
+                <span className="step-label">{t('答案')}</span>
               </h3>
               {done ? (
                 // 結果卡：確認了什麼、得到哪張論點，旁邊直接去下一題。
@@ -993,8 +1057,11 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
                               onClick={() => toggleCard(q.id, c.id)}
                               aria-label={t('從答案拿下 {name}', { name: t(c.name, scope) })}
                             >
-                              <strong>{showPair(c.pair)}</strong>
-                              <span className="muted small">{t(c.relation)}</span>
+                              <SlotLine
+                                names={[t(c.pair[0], scope), t(c.pair[1], scope)]}
+                                relation={t(c.relation)}
+                                tight={tight}
+                              />
                             </button>
                           ) : (
                             // 連起來之後下一步要點發現再提交（體驗評測：沒有提示，會以為連起來就解完了）。

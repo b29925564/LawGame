@@ -1,4 +1,19 @@
 /* ── 場景底圖（scenePlate.tsx）：釘在視窗後面的一整張鏡頭，介面住在它上面 ── */
+/* 底圖是 App 掛的共用一層（PlateHost）：不跟著場景的介面卸載。場景介面在它上面（styles.css 的 .scene.plated）。 */
+.plate-host {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+/* 定場（地點字卡）：圖在黑底的定場卡該在的位置，場記疊在上面；定場卡自己的底（.plated）讓出來。 */
+.plate-host[data-over='beat'] {
+  z-index: calc(var(--z-popover) - 1);
+}
+.plate-host > .scene-plate {
+  position: absolute;
+  z-index: auto;
+}
 .scene-plate {
   position: fixed;
   inset: 0;
@@ -49,16 +64,13 @@
     transition: opacity 0.35s var(--ease-light, ease-out);
   }
 }
-/* 定場那一格：圖是鏡頭本身，在場記後面（場記 z-index 40，自己帶底色）。 */
-.place-beat .scene-plate {
-  z-index: 0;
+/* 定場那一格：圖是鏡頭本身（PlateHost 在它後面一層），定場卡自己不畫底，場記疊在圖上（場記 z-index 40，自己帶底色）。
+   圖還沒解碼完的時候（waiting）圖層是純黑，定場卡也是黑底。 */
+.place-beat.plated {
+  background: transparent;
 }
 .place-beat.waiting {
   background: #000;
-}
-/* 場景自己的 fade-in 不套在底圖上：切進來那一格就是整張圖。 */
-.scene > .scene-plate {
-  animation: none;
 }
 /* 壓暗：選案件理論那一頁，圖留著但退後（和畫外字幕的鏡頭層同一個 58%），卡片照紙層不動。 */
 .scene-plate[data-dim]::after {

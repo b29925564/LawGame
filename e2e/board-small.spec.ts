@@ -1,5 +1,5 @@
 /// <reference lib="dom" />
-import { proseUnits } from '../src/ui/lineUnits';
+import { nameUnits, proseUnits } from '../src/ui/lineUnits';
 import { expect, test, type Page } from '@playwright/test';
 
 // 證據板的小螢幕（設計師 #2 裁定）：1024–1180 證據欄收進抽屜；手機是 4:5 的同一塊軟木板，下半部是牌架。
@@ -776,11 +776,12 @@ for (const w of [412, 360, 320])
             // 中文只在詞界斷（內文同一套斷詞）；每一行的尾巴也是詞界，標點不放行首。
             const ends = new Set<number>();
             let at = 0;
-            for (const u of proseUnits(base, false, false)) {
-              at += u.length;
+            for (const { w, p } of nameUnits(base)) {
+              at += w.length + p.length;
               ends.add(at);
-              const p = /[，。、；：！？…]+$/.exec(u)?.[0].length ?? 0;
-              if (p) ends.add(at - p);
+              if (p) ends.add(at - p.length);
+              // 黏著「的」「之」的詞被截在行尾時，Cork.tsx 把「的」拿掉（「警方的」→「警方」），詞還是詞。
+              if (/[的之]$/.test(w)) ends.add(at - p.length - 1);
             }
             let pos = 0;
             for (const l of c.lines) {
@@ -1253,3 +1254,182 @@ test('字級 1.5：放大檢視的標題、說明、出處、Bates 都放大，�
   if (base.bates) expect(big.bates / base.bates, 'Bates 跟著字級').toBeCloseTo(1.5, 1);
   expect(big.cut, '放大後沒有被切掉的字').toBe(0);
 });
+
+// 第二道關卡 v93 第 3 處：360 英文「Indictment」格內寬 67.0、字 66.2，只差 0.8 px，字型渲染差一點就判放不下而空白。
+// 單一個詞在 12px 只剩不到 2px 邊際時改排 11px：邊際夠，字一定在。
+test('手機 360 英文：牌架上「Indictment」有字，而且邊際 ≥2px（或退到 11px）', async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 740 });
+  await open(page, 'en', ['q1', 'q2a'], ['l-watch', 'l-called-msg'], GATE_CARDS);
+  await page
+    .locator('.q-item')
+    .filter({ hasText: /the watch data is relevant/ })
+    .first()
+    .click();
+  await expect(page.locator('.cork')).toBeVisible();
+  await page.evaluate(() => document.fonts.ready);
+  await page.locator('.cork-dots button').nth(1).click();
+  await settled(page);
+  await page.waitForTimeout(250);
+  const r = await page.evaluate(() => {
+    const b = [
+      ...document.querySelectorAll<HTMLElement>('.cork-rack:not(.marks) b[data-name]'),
+    ].find((e) => e.dataset.name === 'Indictment')!;
+    const cs = getComputedStyle(b);
+    const box = b.parentElement!;
+    const bs = getComputedStyle(box);
+    const ctx = document.createElement('canvas').getContext('2d')!;
+    ctx.font = `${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+    const line = b.querySelector('.cork-rack-line')?.textContent ?? '';
+    return {
+      line,
+      size: cs.fontSize,
+      margin:
+        box.clientWidth -
+        parseFloat(bs.paddingLeft) -
+        parseFloat(bs.paddingRight) -
+        ctx.measureText(line).width,
+    };
+  });
+  expect(r.line).toBe('Indictment');
+  expect(r.size === '11px' || r.margin >= 2, `字級 ${r.size}，邊際 ${r.margin}px`).toBe(true);
+});
+
+// 第二道關卡 v93 第 4 處：360×740 英文放兩張長索引卡，卡比頂列到答案列的空間高，下半張被答案列蓋住 10–40%。
+// 答案列換矮版（拿掉「答案」小標、槽位一行）以後，兩張都完整在頂列和答案列之間；放得下的尺寸維持一般版。
+async function placeTwo(page: Page, lang: string, w: number, h: number, found: string[] = []) {
+  await page.setViewportSize({ width: w, height: h });
+  await open(page, lang, ['q1'], found);
+  await question(page);
+  await page.evaluate(() => document.fonts.ready);
+  await settled(page);
+  const picks =
+    lang === 'en' ? ['accused of embezzling', 'he called a ride'] : ['被指控盜用', '他叫了車'];
+  for (const nm of picks) {
+    await page
+      .locator('.cork-rack:not(.marks) > .cork-card')
+      .filter({ has: page.locator(`b[data-name*="${nm}"]`) })
+      .first()
+      .click();
+    await settled(page);
+    await page.waitForTimeout(900);
+  }
+}
+const geometry = (page: Page) =>
+  page.evaluate(() => {
+    const bar = document.querySelector('.answer-bar')!;
+    const head = document.querySelector('.wb-head')!.getBoundingClientRect();
+    const cards = [...document.querySelectorAll('.cork-focus.filled')].map((e) => {
+      const r = e.getBoundingClientRect();
+      return { top: r.top, bottom: r.bottom, h: r.height };
+    });
+    const slot = document.querySelector('.answer-bar .slot-card')!.getBoundingClientRect();
+    return {
+      tight: bar.classList.contains('tight'),
+      barTop: bar.getBoundingClientRect().top,
+      barH: bar.getBoundingClientRect().height,
+      headBottom: head.bottom,
+      cards,
+      slotH: slot.height,
+      label: getComputedStyle(document.querySelector('.answer-bar .step-label')!).display,
+      num: !!document.querySelector('.answer-bar .step-num'),
+    };
+  });
+for (const lang of ['en', 'zh-TW'])
+  test(`手機 360×740（${lang}）：放兩張長卡，兩張都完整在頂列和答案列之間（答案列放不下就換矮版）`, async ({
+    page,
+  }) => {
+    await placeTwo(page, lang, 360, 740);
+    const g = await geometry(page);
+    expect(g.cards.length).toBe(2);
+    for (const c of g.cards) {
+      expect(c.bottom, `卡的下緣 ${c.bottom}，答案列上緣 ${g.barTop}：被蓋住`).toBeLessThanOrEqual(
+        g.barTop + 0.5,
+      );
+      expect(c.top).toBeGreaterThanOrEqual(g.headBottom - 0.5);
+    }
+    if (lang === 'en') {
+      expect(g.tight).toBe(true);
+      expect(g.label).toBe('none');
+      expect(g.num).toBe(true);
+      expect(g.slotH).toBeGreaterThanOrEqual(44);
+      expect(g.barH).toBeLessThan(150);
+    }
+  });
+
+test('手機 Pixel 7（412×839）：卡放得下，答案列維持一般版', async ({ page }) => {
+  await placeTwo(page, 'en', 412, 839);
+  const g = await geometry(page);
+  expect(g.tight).toBe(false);
+  expect(g.label).not.toBe('none');
+  for (const c of g.cards) expect(c.bottom).toBeLessThanOrEqual(g.barTop + 0.5);
+});
+
+test('手機 360×740：把卡拿掉、放得下了，答案列回到一般版', async ({ page }) => {
+  await placeTwo(page, 'en', 360, 740);
+  expect((await geometry(page)).tight).toBe(true);
+  // 兩張都拿掉（點光圈裡的卡 = 退回牌架）。
+  for (let i = 0; i < 2; i++) {
+    await page.locator('.cork-focus.filled .cork-pick').first().click();
+    await page.waitForTimeout(700);
+  }
+  await page.waitForTimeout(800);
+  const g = await geometry(page);
+  expect(g.cards.length).toBe(0);
+  expect(g.tight).toBe(false);
+});
+
+// 設計師 PR #309 複審 2：矮版答案列放了發現以後，一行裡先完整放關係，再放卡名；卡名以整張卡為單位，
+// 放不下的那張連「×」一起不放，不截在卡名中間（例如所有格「Ethan's」）。
+for (const lang of ['en', 'zh-TW'])
+  test(`手機 360×740（${lang}）：矮版答案列放了發現，看得到關係，卡名整張放或整張不放`, async ({
+    page,
+  }) => {
+    test.slow();
+    await placeTwo(page, lang, 360, 740, ['l-called-msg']);
+    // 英文兩張長卡一定換矮版；中文卡短，可能還是一般版（一般版兩行，規則一樣）。
+    if (lang === 'en') await expect(page.locator('.answer-bar')).toHaveClass(/tight/);
+    await page.locator('.found-list .found').first().click();
+    const slot = page.locator('.answer-bar .slot-clear').first();
+    await expect(slot).toBeVisible();
+    await page.waitForTimeout(400);
+    const rel = lang === 'en' ? 'Supports' : '支持';
+    const names =
+      lang === 'en'
+        ? ['Watch notification log', "Ethan's account: the message was unsent"]
+        : ['手錶通知紀錄', '伊森的說法：訊息被收回'];
+    const m = await slot.evaluate((el) => {
+      const box = el.getBoundingClientRect();
+      // 看得見的字：每個字元的方框在按鈕裡、而且沒被 overflow 切掉的元素。
+      const seen = [...el.querySelectorAll<HTMLElement>('*')]
+        .filter((e) => e.children.length === 0 && getComputedStyle(e).display !== 'none')
+        .map((e) => {
+          const r = e.getBoundingClientRect();
+          return {
+            text: e.textContent ?? '',
+            inside: r.width > 0 && r.left >= box.left - 1 && r.right <= box.right + 1,
+            clipped: e.scrollWidth > e.clientWidth + 1,
+          };
+        });
+      return { seen, bar: document.querySelector('.answer-bar')!.classList.contains('tight') };
+    });
+    if (lang === 'en') expect(m.bar).toBe(true);
+    const shown = m.seen.filter((x) => x.inside && x.text);
+    const all = shown.map((x) => x.text).join(' ');
+    expect(all, `槽位「${all}」要看得到關係`).toContain(rel);
+    expect(
+      shown.every((x) => !x.clipped),
+      `槽位「${all}」有字被切掉`,
+    ).toBe(true);
+    const tail = all.trim();
+    expect(tail, '不以「×」結尾').not.toMatch(/×$/);
+    expect(tail, '不以所有格結尾').not.toMatch(/['’]s$/);
+    // 卡名是一整張一整張的：放出來的卡名部分等於第一張，或兩張加「×」。
+    const nameText = shown
+      .filter((x) => x.text !== rel)
+      .map((x) => x.text)
+      .join('')
+      .trim();
+    expect(['', names[0], `${names[0]} × ${names[1]}`]).toContain(nameText);
+    if (process.env.SHOTS)
+      await page.screenshot({ path: `${process.env.SHOTS}/answer-found-360x740-${lang}.png` });
+  });

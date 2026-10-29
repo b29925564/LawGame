@@ -1,6 +1,6 @@
 /// <reference lib="dom" />
 import { readFileSync } from 'node:fs';
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Locator, type Page } from '@playwright/test';
 import { parse } from 'yaml';
 import { brightest } from './png';
 
@@ -85,7 +85,7 @@ for (const lang of ['zh', 'en'] as const)
   for (const c of CASES) {
     test(`${c.name}（${lang}）：定場是底圖，色溫讀燈組，手機用手機版`, async ({ page }, info) => {
       await open(page, c.scene, lang, c.deal);
-      const plate = page.locator('.place-beat .scene-plate');
+      const plate = page.locator('.plate-host .scene-plate');
       await expect(plate).toHaveAttribute('data-plate', c.plate[lang]);
       await expect(plate).toHaveAttribute('data-rig', c.rig);
       await expect(plate).toHaveAttribute('data-kelvin', String(rigs[c.rig].kelvin));
@@ -108,7 +108,9 @@ for (const lang of ['zh', 'en'] as const)
 
       // 切進那一場：台詞框貼底，圖的上半部沒有任何介面壓著，圖同一張。
       await page.locator('.place-beat').click();
-      const bg = page.locator('.scene.plated > .scene-plate');
+      // 底圖是共用一層，換場前後同一個節點：先等這一場的介面掛上來，再量。
+      await expect(page.locator('.scene.plated')).toBeVisible();
+      const bg = page.locator('.plate-host .scene-plate');
       await expect(bg).toHaveAttribute('data-plate', c.plate[lang]);
       await expect(bg).toHaveAttribute('data-state', 'ok');
       const [w, h] = view;
@@ -170,7 +172,7 @@ for (const lang of ['zh', 'en'] as const)
     expect(Math.max(...maxes)).toBeLessThanOrEqual(3);
     // 圖到了：等待結束，場記出現，圖亮著。
     await expect(beat).not.toHaveClass(/waiting/, { timeout: 5000 });
-    await expect(page.locator('.place-beat .scene-plate')).toHaveAttribute('data-state', 'ok');
+    await expect(page.locator('.plate-host .scene-plate')).toHaveAttribute('data-state', 'ok');
     await expect(page.locator('.place-slate')).toBeVisible();
     expect(brightest(await page.screenshot({ clip }))).toBeGreaterThan(40);
   });
@@ -183,7 +185,7 @@ test('等圖的時候點一下可以跳過；進了場景，圖到之前也是�
   await open(page, 33, 'zh', 'o-probation');
   await expect(page.locator('.place-beat')).toHaveClass(/waiting/);
   await page.locator('.place-beat').click();
-  const bg = page.locator('.scene.plated > .scene-plate');
+  const bg = page.locator('.plate-host .scene-plate');
   await expect(page.locator('.scene.dialogue')).toBeVisible();
   await expect(bg).toBeVisible();
   const color = await bg.evaluate((e) => getComputedStyle(e).backgroundColor);
@@ -193,7 +195,7 @@ test('等圖的時候點一下可以跳過；進了場景，圖到之前也是�
 
 test('沒有底圖的場景照舊：定場放占位字，對話不貼底', async ({ page }) => {
   await open(page, 12, 'zh');
-  await expect(page.locator('.place-beat .scene-plate')).toHaveCount(0);
+  await expect(page.locator('.plate-host .scene-plate')).toHaveCount(0);
   await expect(page.locator('.place-tbd')).toContainText('待放 3D 機位');
   await page.locator('.place-beat').click();
   await expect(page.locator('.scene.dialogue')).toBeVisible();
@@ -204,7 +206,7 @@ test('沒有底圖的場景照舊：定場放占位字，對話不貼底', async
 test('案件理論：開場那一頁有底圖；選理論那一頁留著同一張，壓暗 58%，卡片照舊', async ({ page }) => {
   await open(page, 13, 'zh');
   await page.locator('.place-beat').click();
-  await expect(page.locator('.scene.plated > .scene-plate')).toHaveAttribute('data-plate', 's1-an');
+  await expect(page.locator('.plate-host .scene-plate')).toHaveAttribute('data-plate', 's1-an');
   // 開場頁是字幕模式：一張卡一句，翻到最後一張，按鈕才是「選擇案件理論」。
   const next = page.locator('.scene.plated .primary');
   for (
@@ -256,6 +258,11 @@ test('底圖上的字幕模式：只留最新一句，筆錄抽屜才有前面�
   expect(box.y).toBeGreaterThan(vh * 0.6);
   const lh = await card.locator('.tx').evaluate((e) => parseFloat(getComputedStyle(e).lineHeight));
   expect((await card.locator('.tx').boundingBox())!.height).toBeLessThanOrEqual(lh * 2 + 1);
+  // 字幕要兩行長度相近（balance）：court.css 的內文通則是 pretty，字幕卡自己的規則要壓過它（旁白和對白都是）。
+  const wrapOf = (l: Locator) =>
+    l.evaluate((e) => getComputedStyle(e).getPropertyValue('text-wrap-style'));
+  expect(await wrapOf(card)).toBe('balance');
+  expect(await wrapOf(card.locator('.tx'))).toBe('balance');
   // 一張卡一句：旁白兩句是兩張，「繼續」先翻卡，不跳到下一個人。
   await expect(card).not.toContainText('他走到一半停下來');
   await page.locator('.scene.plated .primary').click();
@@ -267,6 +274,8 @@ test('底圖上的字幕模式：只留最新一句，筆錄抽屜才有前面�
   await expect(card).not.toContainText('伊森的姊姊在等他');
   const who = card.locator('.who');
   await expect(who).toHaveText('伊森・蕭');
+  expect(await wrapOf(card)).toBe('balance');
+  expect(await wrapOf(card.locator('.tx'))).toBe('balance');
   expect(await who.evaluate((e) => getComputedStyle(e).color)).not.toMatch(
     /^rgb\(2[0-9]{2}, 1[5-9]/,
   );
@@ -278,6 +287,8 @@ test('底圖上的字幕模式：只留最新一句，筆錄抽屜才有前面�
   await expect(log).toBeVisible();
   await expect(log).toContainText('伊森的姊姊在等他');
   await expect(log).toContainText('謝謝你');
+  // 筆錄裡的台詞是內文，照 court.css 的通則 pretty（只有字幕卡是 balance）。
+  expect(await wrapOf(log.locator('.speech').first())).toBe('pretty');
   const st = await log.evaluate((e) => {
     const c = getComputedStyle(e);
     return { blur: c.backdropFilter, mask: c.maskImage, bg: c.backgroundColor };
@@ -409,7 +420,7 @@ test('底圖上的畫外字幕：走鏡頭層，只壓暗圖、不用紙色蓋�
   ]);
   expect(veil).toBe('rgba(6, 8, 11, 0.58)');
   expect(hitBg).toBe('rgba(0, 0, 0, 0)');
-  await expect(page.locator('.scene.plated > .scene-plate')).toHaveAttribute('data-state', 'ok');
+  await expect(page.locator('.plate-host .scene-plate')).toHaveAttribute('data-state', 'ok');
   // 縫的光不跟主題（淺色主題也是鏡頭層）；字幕開著的時候這一句還沒進筆錄；提示屬於字幕，在進度細線下面。
   expect(await vo.evaluate((e) => getComputedStyle(e).colorScheme)).toBe('dark');
   await expect(page.locator('.scene.plated .vo-log')).toHaveCount(0);
@@ -485,7 +496,7 @@ for (const lang of ['zh', 'en'] as const)
     test(`${c.name}：立牌站在底圖上，位置跟著圖走（${lang}）`, async ({ page }) => {
       await open(page, c.scene, lang, c.deal);
       await page.locator('.place-beat').click();
-      const bg = page.locator('.scene.plated > .scene-plate');
+      const bg = page.locator('.plate-host .scene-plate');
       await expect(bg).toHaveAttribute('data-state', 'ok');
       const set = Object.values(STANDEES.sets).find((x) => x.plates.includes(c.plate[lang]))!;
       const phone = (page.viewportSize()?.width ?? 0) < 768;
@@ -496,14 +507,14 @@ for (const lang of ['zh', 'en'] as const)
           const r = e.getBoundingClientRect();
           return [r.x, r.y, r.width, r.height];
         };
-        const bgImg = document.querySelector<HTMLImageElement>('.scene.plated .plate-bg')!;
+        const bgImg = document.querySelector<HTMLImageElement>('.plate-host .plate-bg')!;
         return {
           vw: innerWidth,
           vh: innerHeight,
-          stage: rect(document.querySelector('.scene.plated .plate-stage')!),
+          stage: rect(document.querySelector('.plate-host .plate-stage')!),
           natural: [bgImg.naturalWidth, bgImg.naturalHeight],
           people: Object.fromEntries(
-            [...document.querySelectorAll('.scene.plated .standee')].map((e) => [
+            [...document.querySelectorAll('.plate-host .standee')].map((e) => [
               (e as HTMLElement).dataset.standee,
               { box: rect(e), loaded: (e as HTMLImageElement).complete },
             ]),
@@ -550,7 +561,7 @@ for (const lang of ['zh', 'en'] as const)
 test('沒有立牌的底圖（會議室夜）不放人', async ({ page }) => {
   await open(page, 13, 'zh');
   await page.locator('.place-beat').click();
-  await expect(page.locator('.scene.plated > .scene-plate')).toHaveAttribute('data-state', 'ok');
+  await expect(page.locator('.plate-host .scene-plate')).toHaveAttribute('data-state', 'ok');
   await expect(page.locator('.standee')).toHaveCount(0);
 });
 
@@ -569,13 +580,10 @@ for (const view of [
       await page.setViewportSize(view);
       await open(page, c.scene, 'zh', c.deal);
       await page.locator('.place-beat').click();
-      await expect(page.locator('.scene.plated > .scene-plate')).toHaveAttribute(
-        'data-state',
-        'ok',
-      );
+      await expect(page.locator('.plate-host .scene-plate')).toHaveAttribute('data-state', 'ok');
       const set = Object.values(STANDEES.sets).find((x) => x.plates.includes(c.plate.zh))!;
       const stage = await page
-        .locator('.scene.plated .plate-stage')
+        .locator('.plate-host .plate-stage')
         .evaluate((e) => e.getBoundingClientRect().toJSON() as { x: number; width: number });
       const [pw] = set.size.phone;
       const at = (px: number) => (stage.x + (px / pw) * stage.width) / view.width;
@@ -591,3 +599,230 @@ for (const view of [
       }
     });
   }
+
+// 第二道關卡 v93 設計師判定 (b)：手機橫向（≤520 高）字幕卡不蓋在畫面正中間：
+// 「繼續」「筆錄」直排在字幕卡右邊，卡和按鈕共用最下面一條，卡片寬度 ≥480。
+for (const [w, h] of [
+  [863, 360],
+  [844, 390],
+] as const)
+  for (const lang of ['zh', 'en'] as const)
+    for (const c of CASES.slice(1)) {
+      test(`手機橫向 ${w}×${h}（${lang}，${c.name}）：字幕卡在下三分之一，按鈕直排在卡右邊`, async ({
+        page,
+      }, info) => {
+        test.skip(info.project.name !== 'desktop', '自己設視窗，只跑一次');
+        await page.setViewportSize({ width: w, height: h });
+        await open(page, c.scene, lang, c.deal);
+        await page.locator('.place-beat').click();
+        await expect(page.locator('.scene.plated > .sub-card')).toBeVisible();
+        const seen: string[] = [];
+        for (let i = 0; i < 14; i++) {
+          const card = page.locator('.scene.plated > .sub-card');
+          if (!(await card.count())) break;
+          await page.waitForTimeout(120);
+          const m = await page.evaluate(() => {
+            const r = (e: Element | null) => e?.getBoundingClientRect();
+            const card = document.querySelector('.scene.plated > .sub-card')!;
+            const tx = card.querySelector('.tx')!;
+            const lh = parseFloat(getComputedStyle(tx).lineHeight);
+            const next = document.querySelector<HTMLElement>('.scene.plated .sub-actions .primary');
+            const rec = document.querySelector<HTMLElement>(
+              '.scene.plated .sub-actions .rec-toggle',
+            );
+            const eye = r(document.querySelector('.scene.plated > .eyebrow'));
+            const menu = r(document.querySelector('.menu-toggle'));
+            const c = r(card)!;
+            return {
+              top: c.top,
+              bottom: c.bottom,
+              left: c.left,
+              right: c.right,
+              width: c.width,
+              named: !!card.querySelector('.who'),
+              lines: Math.round(r(tx)!.height / lh),
+              next: r(next) && {
+                t: r(next)!.top,
+                b: r(next)!.bottom,
+                l: r(next)!.left,
+                w: r(next)!.width,
+                h: r(next)!.height,
+              },
+              rec: r(rec) && {
+                t: r(rec)!.top,
+                b: r(rec)!.bottom,
+                l: r(rec)!.left,
+                h: r(rec)!.height,
+              },
+              eye: eye && { b: eye.bottom, r: eye.right },
+              menu: menu && { l: menu.left, t: menu.top, b: menu.bottom },
+              vh: innerHeight,
+              vw: innerWidth,
+            };
+          });
+          const tag = `${m.named ? '名字＋' : ''}${m.lines} 行，上緣 ${(m.top / m.vh).toFixed(3)}`;
+          seen.push(tag);
+          // 一行卡整張落在下三分之一；有名字的卡上緣 ≥60%（兩行帶名字的卡本身就約 117px，塞不進三分之一）。
+          expect(m.top / m.vh, `${tag} 的卡`).toBeGreaterThanOrEqual(
+            m.named || m.lines > 1 ? 0.6 : 2 / 3,
+          );
+          expect(m.bottom, `${tag} 卡的下緣貼著安全邊距`).toBeGreaterThan(m.vh - 24);
+          expect(m.bottom).toBeLessThanOrEqual(m.vh - 8);
+          expect(m.width).toBeGreaterThanOrEqual(480);
+          // 按鈕直排在卡右邊：「繼續」在上、「筆錄」在下，高度 ≥44，下面那顆和卡共用最下面一條。
+          expect(m.next).toBeTruthy();
+          expect(m.next!.h).toBeGreaterThanOrEqual(44);
+          expect(m.rec!.h).toBeGreaterThanOrEqual(44);
+          expect(m.next!.l).toBeGreaterThanOrEqual(m.right);
+          expect(Math.abs(m.next!.l - m.rec!.l)).toBeLessThanOrEqual(1);
+          expect(m.next!.b).toBeLessThanOrEqual(m.rec!.t + 1);
+          expect(Math.abs(m.rec!.b - m.bottom)).toBeLessThanOrEqual(1);
+          // 不蓋到左上的地點眉標和「選單」鈕。
+          expect(m.top).toBeGreaterThanOrEqual(m.eye!.b);
+          expect(m.right <= m.menu!.l || m.top >= m.menu!.b).toBe(true);
+          expect(m.next!.l + m.next!.w).toBeLessThanOrEqual(m.vw);
+          const go = page.locator('.scene.plated .sub-actions .primary');
+          if (!(await go.count())) break;
+          await go.click();
+        }
+        expect(seen.length).toBeGreaterThanOrEqual(3);
+      });
+    }
+
+// 設計師複審 1（PR #309）：手機橫向打開「筆錄」，筆錄在自己的框裡捲，台詞不畫到玻璃框外面疊在底圖上；打開時最新一句在框裡。
+for (const [w, h] of [
+  [863, 360],
+  [844, 390],
+] as const)
+  for (const lang of ['zh', 'en'] as const)
+    test(`手機橫向 ${w}×${h}（${lang}）：筆錄比框高時打開，字都在框裡，最新一句看得到`, async ({
+      page,
+    }, info) => {
+      test.skip(info.project.name !== 'desktop', '自己設視窗，只跑一次');
+      const c = CASES[1];
+      await page.setViewportSize({ width: w, height: h });
+      await open(page, c.scene, lang, c.deal);
+      await page.locator('.place-beat').click();
+      await expect(page.locator('.scene.plated > .sub-card')).toBeVisible();
+      // 翻到筆錄裡有 3 段以上、比框高（筆錄收著時 DOM 還在；一段是一個步驟，可能好幾句）。
+      const said = page.locator('.scene.plated > .transcript > *');
+      // 筆錄打開時才量得到框高：先翻到 3 段，打開量，不夠高就收起來再翻。
+      const rec = page.locator('.scene.plated .sub-actions .rec-toggle');
+      const box = page.locator('.scene.plated > .transcript');
+      for (let i = 0; i < 14; i++) {
+        if ((await said.count()) >= 3) {
+          await rec.click();
+          const tall = await box.evaluate((el) => el.scrollHeight > el.clientHeight + 4);
+          await rec.click();
+          if (tall) break;
+        }
+        await page.locator('.scene.plated .sub-actions .primary').click();
+        await page.waitForTimeout(150);
+      }
+      await rec.click();
+      await expect(box).toBeVisible();
+      await page.waitForTimeout(600);
+      const m = await box.evaluate((el) => {
+        const b = el.getBoundingClientRect();
+        const kids = [...el.children].map((k) => k.getBoundingClientRect());
+        return {
+          n: kids.length,
+          taller: el.scrollHeight > el.clientHeight + 4,
+          overflow: getComputedStyle(el).overflowY,
+          top: b.top,
+          bottom: b.bottom,
+          vh: innerHeight,
+          last: kids.at(-1)!,
+          // 框外的字：框不捲（visible）時，超出框的台詞就直接畫在底圖上。
+          outside: kids.filter((k) => k.bottom > b.bottom + 1 || k.top < b.top - 1).length,
+        };
+      });
+      expect(m.n, '筆錄至少 3 段').toBeGreaterThanOrEqual(3);
+      expect(m.taller, '筆錄比框高（這條測試量的就是放不下的時候）').toBe(true);
+      expect(m.bottom).toBeLessThanOrEqual(m.vh);
+      expect(
+        m.outside === 0 || ['auto', 'scroll', 'hidden'].includes(m.overflow),
+        `${m.outside} 句超出框（overflow-y: ${m.overflow}），畫在底圖上`,
+      ).toBe(true);
+      // 打開時最新一句整句在框裡。
+      expect(m.last.bottom).toBeLessThanOrEqual(m.bottom + 1);
+      expect(m.last.top).toBeGreaterThanOrEqual(m.top - 1);
+      if (process.env.SHOTS) {
+        await page.screenshot({ path: `${process.env.SHOTS}/rec-${w}-${lang}-open.png` });
+        await box.evaluate((el) => {
+          el.style.scrollBehavior = 'auto';
+          el.scrollTop = 0;
+        });
+        await page.screenshot({ path: `${process.env.SHOTS}/rec-${w}-${lang}-top.png` });
+      }
+    });
+
+// 第二道關卡 v93 第 1 處：底圖已經在畫面上的時候，換場（地點字卡→場景、理論開場→選理論）底圖不卸載、不黑一下、
+// 立牌不會單獨浮在黑底上。底圖是 App 掛的共用一層（PlateHost）：整段換場每一個畫格都是同一個元素、舞台不透明度 1。
+for (const [w, h] of [
+  [1440, 900],
+  [412, 839],
+] as const)
+  for (const lang of ['zh', 'en'] as const)
+    for (const c of CASES) {
+      test(`${c.name}（${lang}，${w}×${h}）：地點字卡進場景，底圖不卸載、每一格都亮著`, async ({
+        page,
+      }, info) => {
+        test.skip(info.project.name !== 'desktop', '自己設視窗，只跑一次');
+        await page.setViewportSize({ width: w, height: h });
+        await open(page, c.scene, lang, c.deal);
+        const plate = page.locator('.scene-plate');
+        await expect(plate).toHaveAttribute('data-state', 'ok');
+        // 定場亮起來（淡入結束）再開始錄每一格。
+        await page.waitForFunction(
+          () => Number(getComputedStyle(document.querySelector('.plate-stage')!).opacity) >= 0.99,
+        );
+        await page.evaluate(() => {
+          const w = window as unknown as { __frames: unknown[]; __stop: boolean; __el: Element };
+          w.__el = document.querySelector('.scene-plate')!;
+          w.__frames = [];
+          w.__stop = false;
+          const tick = () => {
+            const el = document.querySelector('.scene-plate');
+            const stage = document.querySelector('.plate-stage');
+            const imgs = [...document.querySelectorAll<HTMLImageElement>('.scene-plate img')];
+            w.__frames.push({
+              same: el === w.__el,
+              op: stage ? Number(getComputedStyle(stage).opacity) : -1,
+              imgs: imgs.length && imgs.every((i) => i.complete && i.naturalWidth > 0),
+            });
+            if (!w.__stop) requestAnimationFrame(tick);
+          };
+          requestAnimationFrame(tick);
+        });
+        await page.locator('.place-beat').click();
+        await expect(page.locator('.scene.plated .sub-card')).toBeVisible();
+        if (c.scene === 13) {
+          // 理論開場翻到最後一張，切到選理論那一頁：同一張底圖壓暗，不閃黑。
+          const next = page.locator('.scene.plated .primary');
+          for (
+            let i = 0;
+            i < 12 &&
+            !(await page.getByRole('button', { name: /選擇案件理論|Choose case theory/ }).count());
+            i++
+          )
+            await next.click();
+          await page.getByRole('button', { name: /選擇案件理論|Choose case theory/ }).click();
+          await expect(page.locator('.theory-card').first()).toBeVisible();
+        }
+        await page.waitForTimeout(500);
+        const frames = await page.evaluate(() => {
+          const w = window as unknown as {
+            __frames: { same: boolean; op: number; imgs: boolean }[];
+            __stop: boolean;
+          };
+          w.__stop = true;
+          return w.__frames;
+        });
+        expect(frames.length).toBeGreaterThan(20);
+        const bad = frames.filter((f) => !f.same || f.op < 0.99 || !f.imgs);
+        expect(bad.length, `${frames.length} 格裡有 ${bad.length} 格底圖不見、變淡或圖沒畫好`).toBe(
+          0,
+        );
+      });
+    }

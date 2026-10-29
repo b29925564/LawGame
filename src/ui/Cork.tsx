@@ -15,7 +15,7 @@ import { scrollPageTo } from './pageScroll';
 import { PhotoLogLine, type PhotoRecord } from './Dossier';
 import { useScope } from './lang';
 import { prose } from './prose';
-import { proseUnits } from './lineUnits';
+import { nameUnits } from './lineUnits';
 import './cork.css';
 import { JurySketch, type JuryCard } from './sketch/JurySketch';
 import { hasPrint, Print, printRatio } from './prints';
@@ -296,19 +296,8 @@ function unitsOf(text: string): Unit[] {
     }, []);
     return ws.map((w) => ({ w, p: '' }));
   }
-  // 中文用內文同一套斷詞（ICU 詞典加本作人名、固定詞；標點跟前一個詞，開括號跟後一個詞）。
-  const out: Unit[] = [];
-  for (const u of proseUnits(text, false, false)) {
-    const p = /[，。、；：！？…,.;:!?]+$/.exec(u)?.[0] ?? '';
-    const w = u.slice(0, u.length - p.length);
-    const prev = out[out.length - 1];
-    // 「的」「之」黏前一個詞，不放行首。
-    if (prev && !prev.p && /^[的之]$/.test(w)) {
-      prev.w += w;
-      prev.p = p;
-    } else out.push({ w, p });
-  }
-  return out;
+  // 中文用內文同一套斷詞（ICU 詞典加本作人名、固定詞），再把被切成單字的複合詞黏回去（nameUnits）。
+  return nameUnits(text);
 }
 let measureCtx: CanvasRenderingContext2D | null | undefined;
 /**
@@ -393,6 +382,31 @@ export function fitLines(
   return lines.map((l, i) => (i === lines.length - 1 ? str(l).trimEnd() : str(l)));
 }
 
+/**
+ * 文字卡名在 12px 放不下第一個詞、或第一個詞只差 2px 就放不下（字型渲染差半個像素就會空白）時，字級退到 11px
+ * （照片卡標題本來就是 11px）再排；退了還是比較好才用。small 回報有沒有退。
+ */
+function fitName(
+  text: string,
+  width: number,
+  font: string,
+  n: number,
+  lastResort: boolean,
+): { lines: string[]; small: boolean } {
+  const lines = fitLines(text, width, font, n, lastResort);
+  if (!lastResort) return { lines, small: false };
+  const first = lines[0]?.trim() ?? '';
+  const whole = !!first && text.trimStart().startsWith(first);
+  const lone = lines.length === 1 && !/\s/.test(first) && !CJK.test(first);
+  const tight = lone && !!measureCtx && measureCtx.measureText(first).width > width - 2;
+  if (whole && !tight) return { lines, small: false };
+  const small = fitLines(text, width, font.replace(/\d+(?:\.\d+)?px/, '11px'), n, lastResort);
+  const next = small[0]?.trim() ?? '';
+  if (next && (!whole || text.trimStart().startsWith(next)) && next.length >= first.length)
+    return { lines: small, small: true };
+  return { lines, small: false };
+}
+
 /** 冒號後面那段（「Ethan's account: he called a ride」→「he called a ride」）；沒有冒號、冒號後沒字就是整個卡名。 */
 function tailOf(text: string) {
   const at = text.search(/[:：]/);
@@ -422,39 +436,56 @@ function RackName({
 }) {
   const ref = useRef<HTMLElement>(null);
   const [shown, setShown] = useState<string[]>([text]);
+  const [small, setSmall] = useState(false);
   useLayoutEffect(() => {
     const el = ref.current;
     const box = el?.parentElement;
     const card = el?.closest<HTMLElement>('.cork-card');
     if (!el || !box || !card) return;
     const fit = () => {
+      // 退到 11px 時 <b> 上有內聯字級：量字寬要用 CSS 原本的字級，不然 12px／11px 會來回跳。
+      const inline = el.style.fontSize;
+      el.style.fontSize = '';
       const cs = getComputedStyle(el);
       const num = (v: string) => parseFloat(v) || 0;
       const bs = getComputedStyle(box);
       const width = box.clientWidth - num(bs.paddingLeft) - num(bs.paddingRight);
       const font = `${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+      const lineH = num(cs.lineHeight) || 16;
+      el.style.fontSize = inline;
       let n = lines ?? 2;
       if (lines === undefined) {
         const ks = getComputedStyle(card);
         const room = card.clientHeight - num(ks.paddingTop) - num(ks.paddingBottom);
-        n = Math.min(2, Math.floor(room / (num(cs.lineHeight) || 16)));
+        n = Math.min(2, Math.floor(room / lineH));
       }
-      const head = fitLines(text, width, font, n, lines === undefined);
-      onHead(id, head.join('').trim());
-      setShown(tail ? fitLines(tailOf(text), width, font, n, lines === undefined) : head);
+      const head = fitName(text, width, font, n, lines === undefined);
+      onHead(id, head.lines.join('').trim());
+      const mine = tail ? fitName(tailOf(text), width, font, n, lines === undefined) : head;
+      setShown(mine.lines);
+      setSmall(mine.small);
     };
     fit();
     const ro = new ResizeObserver(fit);
     ro.observe(box);
     ro.observe(card);
     document.fonts?.addEventListener('loadingdone', fit);
+    // 字型在這之前就載完時 loadingdone 不會再來：用後備字型量的結果（更寬或更窄）要在字型就緒後重排。
+    let live = true;
+    void document.fonts?.ready.then(() => live && fit());
     return () => {
+      live = false;
       ro.disconnect();
       document.fonts?.removeEventListener('loadingdone', fit);
     };
   }, [id, text, tail, lines, onHead]);
   return (
-    <b ref={ref} className={className} data-name={text}>
+    <b
+      ref={ref}
+      className={className}
+      data-name={text}
+      style={small ? { fontSize: 11 } : undefined}
+    >
       {shown.map((l, i) => (
         <span key={i} className="cork-rack-line">
           {l}
@@ -833,6 +864,8 @@ export function Cork({
   onZoom,
   misses = 0,
   onMissDone,
+  tight = false,
+  onTight,
 }: {
   /** A、B 槽裡的卡（沒放就是 undefined）。 */
   focus: [CorkItem | undefined, CorkItem | undefined];
@@ -856,6 +889,9 @@ export function Cork({
   /** 連錯的次數：一變多就演「線沒釘住」，演完叫 onMissDone 把兩張卡放回原位。 */
   misses?: number;
   onMissDone?: () => void;
+  /** 答案列現在是不是矮版（Desk.tsx 換 class）；放好的長卡比頂列到答案列的空間高時 Cork 要它換矮版（onTight）。 */
+  tight?: boolean;
+  onTight?: (tight: boolean) => void;
 }) {
   const t = useT();
   const scope = useScope();
@@ -872,8 +908,43 @@ export function Cork({
   // 標籤和卡名在答案列上面，下半張還是被蓋住（gate 2 v92c E 蓋了 27–46%），所以整張放得下就捲到整張都在
   // 頂列和答案列之間（捲最少），放不下就卡的上緣貼到頂列下面，能看多少看多少。都看得到就不捲；
   // 玩家自己捲動、按鍵會中止（pageScroll.ts）。
+  const tightNow = useRef(tight);
+  useEffect(() => {
+    tightNow.current = tight;
+  }, [tight]);
+  const fullBar = useRef(0);
+  /**
+   * 放好的卡加槽位標籤，比頂列到（一般版）答案列之間的空間高，答案列就換矮版（設計師 v93 第二道關卡第 4 處選 A）。
+   * 兩個門檻之間留 8px 緩衝，不在臨界值來回跳；只在放卡完成、拔卡之後量，拖曳中不動。回傳有沒有換。
+   */
+  const settleTight = (slot: number) => {
+    const board = ref.current;
+    const bar = document.querySelector<HTMLElement>('.answer-bar');
+    if (!onTight || !board || !bar) return false;
+    if (!tightNow.current) fullBar.current = bar.offsetHeight;
+    if (!fullBar.current) return false;
+    const filled = focusEls.current.filter(
+      (f): f is HTMLDivElement =>
+        !!f?.classList.contains('filled') && !f.classList.contains('away'),
+    );
+    const el = focusEls.current[slot] ?? filled[0];
+    let want = false;
+    if (el && filled.length) {
+      const tag = board.querySelectorAll('.slot-tag')[slot]?.getBoundingClientRect().top;
+      const lead = tag === undefined ? 0 : Math.max(0, el.getBoundingClientRect().top - tag);
+      const need = Math.max(...filled.map((f) => f.offsetHeight)) + lead;
+      const head = document.querySelector('.wb-head')?.getBoundingClientRect().height ?? 0;
+      const room = innerHeight - fullBar.current - head - 2 * SEE_GAP;
+      want = need > room - (tightNow.current ? 8 : 0);
+    }
+    if (want === tightNow.current) return false;
+    tightNow.current = want;
+    onTight(want);
+    return true;
+  };
   const scrollToSlot = (slot: number) => {
     let tries = 0;
+    let swapped = false;
     const run = () => {
       const board = ref.current;
       const el = focusEls.current[slot];
@@ -881,6 +952,12 @@ export function Cork({
       // 剛放上的卡先畫在原位一兩格（away），內文還沒展開、高度不是最後的：等它進到光圈再量。
       if (el.classList.contains('away') && tries++ < 12) {
         requestAnimationFrame(run);
+        return;
+      }
+      // 答案列換版以後它的位置才是對的：等兩格畫面再量一次（只換一次）。
+      if (!swapped && settleTight(slot)) {
+        swapped = true;
+        requestAnimationFrame(() => requestAnimationFrame(run));
         return;
       }
       const barTop =
@@ -915,6 +992,14 @@ export function Cork({
   };
   // 板子窄到光圈卡上放不下圖釘兩側的小籤（1350px 以下的桌機視窗），也改用手機的板面。
   const compact = phone || (w > 0 && w < ROOMY);
+  // 拔掉卡（或重新整理後板上已經有卡）：沒有放卡的捲動可以等，在卡進出光圈的動畫之後再量一次，放得下就回一般版。
+  const focusKey = focus.map((c) => c?.id ?? '').join();
+  useEffect(() => {
+    if (!compact || !onTight) return;
+    const id = setTimeout(() => settleTight(0), 400);
+    return () => clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [compact, focusKey, w, h]);
   // 比對位兩格的卡高（在原位的不算）：卡高變了（換卡、換語言、字型載入）就重量。兩格上緣對齊，取高的那張置中。
   const focusEls = useRef<(HTMLDivElement | null)[]>([]);
   const [slotH, setSlotH] = useState([0, 0]);

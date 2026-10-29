@@ -505,6 +505,9 @@ details summary {
 .scene.plated,
 .scene.backdrop {
   isolation: isolate;
+  /* 底圖是 App 掛的共用一層（PlateHost，z-index 0）：介面在它上面。 */
+  position: relative;
+  z-index: 1;
 }
 .scene.plated {
   justify-content: flex-end;
@@ -604,6 +607,13 @@ details summary {
 .sub-card.narration .tx {
   color: var(--muted);
 }
+/* 字幕卡（對白和旁白）兩行長度相近：court.css 對 .speech／.narration 的內文通則是 pretty，權重和 .sub-card.narration 一樣、
+   載入在後面，把旁白卡蓋成 pretty（第二道關卡 v93）；這裡的權重高過它，court.css 那條不動（法庭、理論卡、結辯本來就該 pretty）。 */
+.scene.plated.subs > .sub-card,
+.scene.plated.subs > .sub-card.narration,
+.scene.plated.subs > .sub-card .tx {
+  text-wrap: balance;
+}
 .sub-actions {
   display: flex;
   align-items: flex-start;
@@ -621,6 +631,69 @@ details summary {
   }
   .sub-card .who {
     font-size: calc(13px * var(--sub-scale));
+  }
+}
+/* 手機橫向（≤520 高）：字幕卡不蓋在畫面正中間（設計師 v93 第二道關卡 (b)）。
+   「繼續」「筆錄」直排在字幕卡右邊，卡和按鈕共用最下面一條，卡的下緣貼著畫面下緣的安全邊距；卡寬是剩下的寬度（不小於 480）。
+   640 寬以下（卡放不下 480）維持原本上下排。 */
+@media (max-height: 520px) and (orientation: landscape) and (min-width: 640px) {
+  .scene.plated.subs {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    column-gap: 12px;
+    row-gap: 8px;
+    max-width: none;
+    padding-inline: max(16px, env(safe-area-inset-left)) max(16px, env(safe-area-inset-right));
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
+  }
+  .scene.plated.subs > .eyebrow:first-child,
+  .scene.plated.subs > .transcript {
+    grid-column: 1 / -1;
+  }
+  .scene.plated.subs > .eyebrow:first-child {
+    grid-row: 1;
+    margin-bottom: 0;
+  }
+  /* 筆錄打開時在中間那一列裡自己捲（≤560 高的通則是整頁捲、.lines 不另外捲，那條在這裡會讓台詞畫到玻璃框外面，
+     疊在底圖上；設計師複審 1）。場景鎖一個視窗高，筆錄才有框可以捲。 */
+  .scene.plated.subs {
+    height: 100dvh;
+    min-height: 0;
+  }
+  .scene.plated.subs > .transcript {
+    grid-row: 2;
+    align-self: end;
+    min-height: 0;
+    max-height: 100%;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  .scene.plated.subs > .sub-card {
+    grid-column: 1;
+    grid-row: 3;
+    width: auto;
+    min-width: min(480px, 100%);
+    align-self: end;
+  }
+  .scene.plated.subs > .sub-actions {
+    grid-column: 2;
+    grid-row: 3;
+    width: auto;
+    flex-direction: column;
+    align-items: stretch;
+    align-self: end;
+    gap: 8px;
+  }
+  .scene.plated.subs > .sub-actions > button {
+    min-height: 44px;
+    margin: 0;
+  }
+  /* 選項（多個按鈕）放不進窄欄：整條拉到卡下面。 */
+  .scene.plated.subs > .sub-actions:has(.choices) {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    align-items: flex-start;
   }
 }
 /* 捲動區裡的東西不准被壓扁：清單外框有 overflow: hidden，彈性版面會把它擠成一條。 */
@@ -2631,10 +2704,18 @@ fieldset.relations.compact {
     z-index: 3;
     padding-top: 30px;
     background: var(--surface);
+    /* 抽屜置中在小數 x（863 寬是 21.5）：頂列底色和下面卡片的 1px 框四捨五入不一樣時，卡框會從頂列旁邊透出來。
+       左右各多畫 1px 底色（第二道關卡 v93 第 6 處）。 */
+    box-shadow:
+      -1px 0 0 var(--surface),
+      1px 0 0 var(--surface);
   }
   /* 分組小標黏在頂列下面（頂列高度由 Evidence.tsx 量，寫進 --tabs-h）。 */
   .sheet .group-head {
     top: var(--tabs-h, var(--stick-top));
+    box-shadow:
+      -1px 0 0 var(--surface),
+      1px 0 0 var(--surface);
   }
   .sheet .sheet-note {
     display: none;
@@ -2661,6 +2742,12 @@ fieldset.relations.compact {
 /* 分頁列自己 overflow-x: auto，會把 outline-offset: 2px 的焦點圈切掉三邊；所有分頁列（抽屜、書桌）把圈畫在按鈕裡面。 */
 .apps button:focus-visible {
   outline-offset: -2px;
+  /* 選中分頁的底線（::after）是有自己圖層的絕對定位，會畫在按鈕的外框上面、蓋掉焦點圈的底邊：
+     按鈕自己開一個疊層，底線退到按鈕背景和內容之間（位置不動），外框在最上面（設計師 v93 第二道關卡 第 5 處）。 */
+  z-index: 0;
+}
+.apps button:focus-visible::after {
+  z-index: -1;
 }
 
 /* ── 訪談：視訊通話 ── */
@@ -5684,6 +5771,65 @@ button.iou[aria-pressed='true'] {
   font-weight: 700;
   color: var(--text);
 }
+/*
+ * 答案列的矮版（設計師 v93 第二道關卡第 4 處選 A）：放好的長卡比頂列到答案列的空間還高時，Cork.tsx 量出來換成這個版面。
+ * 「答案」小標拿掉，步驟圓圈「3」留著放在槽位同一行最前面；槽位一行（≥44px），發現只放第一行、整詞截斷；
+ * 三個點和「提交」那一列不動。內文不收（手寫內文是玩家判斷連線的依據）。
+ */
+.answer-bar.tight {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  column-gap: 10px;
+  row-gap: 8px;
+  padding-block: 8px;
+}
+.answer-bar.tight .step-head {
+  grid-column: 1;
+  grid-row: 1;
+}
+.answer-bar.tight .step-label {
+  display: none;
+}
+.answer-bar.tight .answer-slots {
+  grid-column: 2;
+  grid-row: 1;
+  flex-wrap: nowrap;
+}
+.answer-bar.tight .answer-slots .slot-card {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 44px;
+  padding: 4px 12px;
+}
+.answer-bar.tight .slot-hint {
+  min-height: 0;
+  padding: 0;
+  white-space: nowrap;
+}
+.answer-bar.tight .slot-clear {
+  min-height: 36px;
+  flex-direction: row;
+  align-items: baseline;
+  align-content: center;
+  flex-wrap: wrap;
+  column-gap: 8px;
+}
+.answer-bar.tight .slot-clear strong {
+  flex: 1 1 0;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+}
+/* 關係（支持／矛盾…）一定整個看得到，放在卡名前面。 */
+.answer-bar.tight .slot-rel {
+  flex: none;
+  white-space: nowrap;
+}
+.answer-bar.tight .answer-foot {
+  grid-column: 1 / -1;
+  grid-row: 2;
+}
 /* 答案列：工作台怎麼捲都看得到，點發現時立刻看到它進答案（UX 規格）。 */
 .answer-bar {
   position: sticky;
@@ -6485,6 +6631,16 @@ button.found:hover:not(:disabled) {
   color: var(--bg);
   font-weight: 700;
 }
+/* 外框 overflow: hidden 會把 offset 2px 的焦點圈切掉三邊：圈畫在按鈕裡面，有焦點的那格疊在鄰格上面。 */
+.lang-switch button:focus-visible {
+  position: relative;
+  z-index: 1;
+  outline-offset: -2px;
+}
+/* 選中那格底是實心墨色，焦點色畫在上面看不到：外圈 --focus，內圈 --bg，兩層（對相鄰的顏色都 ≥3:1）。 */
+.lang-switch button[aria-pressed='true']:focus-visible {
+  box-shadow: inset 0 0 0 4px var(--bg);
+}
 
 /* 英文模式：視覺設計師定的字體配對；行距收到 1.5，數字等寬。手寫在英文也用 LXGW WenKai TC（它有拉丁字母；設計師 #225 審查），所以不覆寫 --font-hand。 */
 :root:lang(en) {
@@ -6610,6 +6766,9 @@ button.found:hover:not(:disabled) {
   .board-one .answer-bar {
     margin-inline: -2px;
     padding-bottom: max(12px, env(safe-area-inset-bottom));
+  }
+  .board-one .answer-bar.tight {
+    padding-bottom: max(8px, env(safe-area-inset-bottom));
   }
 }
 

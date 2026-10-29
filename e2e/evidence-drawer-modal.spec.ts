@@ -75,6 +75,51 @@ function ringClipped(page: Page) {
   });
 }
 
+type Rgb = [number, number, number];
+/** 螢幕上一個像素（CSS px，desktop 專案 DPR 1）的顏色：量焦點圈真的畫出來的顏色，不是 CSS 寫了什麼。 */
+async function pixel(page: Page, x: number, y: number): Promise<Rgb> {
+  const buf = await page.screenshot({
+    clip: { x: Math.floor(x), y: Math.floor(y), width: 1, height: 1 },
+  });
+  return page.evaluate(async (b64) => {
+    const img = new Image();
+    img.src = `data:image/png;base64,${b64}`;
+    await img.decode();
+    const c = document.createElement('canvas');
+    c.width = c.height = 1;
+    const g = c.getContext('2d')!;
+    g.drawImage(img, 0, 0);
+    const d = g.getImageData(0, 0, 1, 1).data;
+    return [d[0], d[1], d[2]] as Rgb;
+  }, buf.toString('base64'));
+}
+const rgbOf = (css: string): Rgb => (css.match(/[\d.]+/g) ?? []).slice(0, 3).map(Number) as Rgb;
+const near = (a: Rgb, b: Rgb, tol = 12) => a.every((v, i) => Math.abs(v - b[i]) <= tol);
+const lum = (c: Rgb) => {
+  const [r, g, b] = c.map((v) => {
+    const x = v / 255;
+    return x <= 0.04045 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+};
+const contrast = (a: Rgb, b: Rgb) => {
+  const [hi, lo] = [lum(a), lum(b)].sort((x, y) => y - x);
+  return (hi + 0.05) / (lo + 0.05);
+};
+/** 焦點元素外框底邊中點那一格的顏色（外框畫在按鈕裡面，離底邊 1px）和外框的設定色。 */
+async function ringBottom(page: Page) {
+  const r = await page.evaluate(() => {
+    const el = document.activeElement as HTMLElement;
+    const b = el.getBoundingClientRect();
+    return {
+      x: b.left + b.width / 2,
+      y: b.bottom,
+      color: getComputedStyle(el).outlineColor,
+    };
+  });
+  return { want: rgbOf(r.color), got: await pixel(page, r.x, r.y - 1) };
+}
+
 test.describe('證據抽屜（手機）', () => {
   test('右上角的點是遮罩：點下去關抽屜，不會打開選單', async ({ page }, info) => {
     await openDrawer(page, info, 412, 839);
@@ -265,4 +310,155 @@ test.describe('證據抽屜（手機）', () => {
             : undefined,
         });
       });
+});
+
+// 第二道關卡 v93 第 5 處：選中分頁的焦點圈底邊被選中底線蓋掉；語言切換的焦點圈被 overflow: hidden 切掉。
+test.describe('焦點圈：選中分頁和語言切換', () => {
+  for (const lang of ['zh', 'en'])
+    test(`抽屜選中分頁有焦點：外框底邊在底線上面（${lang}）`, async ({ page }, info) => {
+      await openDrawer(page, info, 412, 839, lang);
+      await page.keyboard.press('Tab');
+      const sel = await page.evaluate(
+        () => document.activeElement?.getAttribute('aria-current') === 'true',
+      );
+      expect(sel).toBe(true);
+      const { want, got } = await ringBottom(page);
+      expect(near(got, want), `底邊是 ${got}，外框是 ${want}（被選中底線蓋掉了）`).toBe(true);
+    });
+
+  for (const [width, height] of [
+    [412, 839],
+    [1440, 900],
+  ] as const)
+    for (const lang of ['zh', 'en'])
+      test(`書桌選中分頁有焦點：外框底邊在底線上面（${width}，${lang}）`, async ({
+        page,
+      }, info) => {
+        test.skip(info.project.name !== 'desktop', '自己設視窗，只跑一次');
+        await page.setViewportSize({ width, height });
+        await page.addInitScript(
+          ([l]) => {
+            if (sessionStorage.getItem('seeded')) return;
+            sessionStorage.setItem('seeded', '1');
+            localStorage.clear();
+            localStorage.setItem('lawgame-lang', l);
+            localStorage.setItem(
+              'lawgame-ep-auto',
+              JSON.stringify({
+                version: 5,
+                savedAt: Date.now(),
+                label: 'x',
+                progress: {
+                  episode: 'ep1',
+                  scene: 9,
+                  step: 0,
+                  choices: {},
+                  cards: ['watch-listed', 'heart-rate', 'chat-audit', 'watch-photo'],
+                  flags: [],
+                  ethics: [],
+                  scenes: {},
+                },
+              }),
+            );
+          },
+          [lang],
+        );
+        await page.goto('/');
+        await page
+          .getByRole('button', { name: /^(Continue|繼續)/ })
+          .first()
+          .click();
+        const tabs = page.locator('nav.apps:not(.sheet-tabs)').first();
+        await expect(tabs).toBeVisible();
+        await page.keyboard.press('Tab');
+        await tabs.locator('button[aria-current="true"]').focus();
+        // 底線的縮放過場結束再量。
+        await page.waitForTimeout(400);
+        const { want, got } = await ringBottom(page);
+        expect(near(got, want), `底邊是 ${got}，外框是 ${want}（被選中底線蓋掉了）`).toBe(true);
+      });
+
+  for (const [width, height] of [
+    [412, 839],
+    [1440, 900],
+  ] as const)
+    for (const lang of ['zh', 'en'])
+      for (const pressed of [false, true])
+        test(`語言切換${pressed ? '選中' : '未選中'}那格有焦點：四邊都在、對比 ≥3:1（${width}，${lang}）`, async ({
+          page,
+        }, info) => {
+          test.skip(info.project.name !== 'desktop', '自己設視窗，只跑一次');
+          await page.setViewportSize({ width, height });
+          await page.addInitScript(
+            ([l]) => {
+              if (sessionStorage.getItem('seeded')) return;
+              sessionStorage.setItem('seeded', '1');
+              localStorage.clear();
+              localStorage.setItem('lawgame-lang', l);
+            },
+            [lang],
+          );
+          await page.goto('/');
+          await page.keyboard.press('Tab');
+          const btn = page.locator(`.lang-switch button[aria-pressed="${pressed}"]`).first();
+          await btn.focus();
+          // 標題畫面淡入、焦點圈的過渡都結束再取像素。
+          await page.waitForFunction(() =>
+            document.getAnimations().every((a) => a.playState !== 'running'),
+          );
+          await page.waitForTimeout(200);
+          const r = await ringClipped(page);
+          expect(r.outline).toBe('solid');
+          expect(r.clipped).toEqual([]);
+          const geo = await page.evaluate(() => {
+            const el = document.activeElement as HTMLElement;
+            const b = el.getBoundingClientRect();
+            return {
+              x: b.left + b.width / 2,
+              y: b.top + b.height / 2,
+              left: b.left,
+              right: b.right,
+              top: b.top,
+              bottom: b.bottom,
+              color: getComputedStyle(el).outlineColor,
+            };
+          });
+          const ring = rgbOf(geo.color);
+          // 四邊離邊 1px 的那一格都是外框色。
+          for (const [x, y] of [
+            [geo.x, geo.top + 1],
+            [geo.x, geo.bottom - 1],
+            [geo.left + 1, geo.y],
+            [geo.right - 1, geo.y],
+          ])
+            expect(
+              near(await pixel(page, x, y), ring),
+              `(${x}, ${y}) 是 ${await pixel(page, x, y)}，外框 ${ring}`,
+            ).toBe(true);
+          // 外框對它裡面那一圈（選中：--bg 內圈；未選中：按鈕底）、對外面（外框 overflow 裁掉的那邊是鄰格或面板）都 ≥3:1。
+          const inner = await pixel(page, geo.x, geo.top + 3);
+          expect(contrast(ring, inner)).toBeGreaterThanOrEqual(3);
+          const outer = await pixel(page, geo.x, geo.top - 3);
+          expect(contrast(ring, outer)).toBeGreaterThanOrEqual(3);
+        });
+});
+
+// 第二道關卡 v93 第 6 處：863 寬時抽屜置中在 21.5px，黏頂列的底色和下面卡片的 1px 框四捨五入不同，卡框從頂列旁邊透出來。
+test.describe('橫向手機的黏頂列兩側', () => {
+  for (const lang of ['zh', 'en'])
+    test(`863×360（${lang}）：捲動後黏頂列左右緣沒有卡框透出來`, async ({ page }, info) => {
+      await openDrawer(page, info, 863, 360, lang);
+      await page.locator('.sheet').evaluate((el) => (el.scrollTop = 120));
+      await page.waitForTimeout(200);
+      const g = await page.evaluate(() => {
+        const bar = document.querySelector('.sheet-top')!.getBoundingClientRect();
+        const bg = getComputedStyle(document.querySelector('.sheet')!).backgroundColor;
+        return { l: bar.left, r: bar.right, t: bar.top, b: bar.bottom, bg };
+      });
+      // 頂列上緣的 30px 內距（沒有字）的左右緣：頂列自己的底色之外一格、之內一格都要是抽屜底色。
+      const bg = rgbOf(g.bg);
+      for (const y of [g.t + 8, g.t + 20])
+        for (const x of [g.l - 1, g.l, g.l + 1, g.r - 2, g.r - 1, g.r])
+          expect(near(await pixel(page, x, y), bg, 4), `(${x}, ${y}) 不是抽屜底色`).toBe(true);
+    });
 });

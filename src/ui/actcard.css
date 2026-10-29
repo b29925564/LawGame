@@ -413,18 +413,37 @@
   bottom: max(var(--s5), env(safe-area-inset-bottom));
   z-index: 40;
   display: flex;
-  align-items: center;
-  gap: 10px;
+  /* 黃短槓對齊第一行（兩行時不跑到中間）。 */
+  align-items: flex-start;
+  --ps-gap: 10px;
+  gap: var(--ps-gap);
   max-width: calc(100vw - 2 * var(--s5));
   margin: 0;
   padding: 6px 12px;
   background: var(--cine-bg);
   color: var(--cine-text);
   font: 500 13px / 1.4 var(--font-mono);
-  letter-spacing: 0.06em;
+  --ps-ls: 0.06em;
+  letter-spacing: var(--ps-ls);
   pointer-events: none;
   opacity: 0;
   animation: place-slate 2860ms linear both;
+}
+/* 地點和日子時刻色溫放在同一個框裡：窄螢幕放不下時整組換到第二行，第二行的左緣就是地點文字的左緣（不從黃短槓底下開始）。 */
+.place-slate .ps-text {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  /* 日子和地點之間原本是文字裡的空白（英文兩格、中文一個全形空格）：改成欄距，換到第二行時行首才不會縮進去。
+     空白字元還留在 DOM（讀屏和文字比對照舊），版面上不佔位（.ps-sp）。 */
+  gap: 2px calc(var(--ps-gap) + 1em + var(--ps-ls));
+  min-width: 0;
+}
+.place-slate.en .ps-text {
+  column-gap: calc(var(--ps-gap) + 2ch + 2 * var(--ps-ls));
+}
+.place-slate .ps-sp {
+  display: none;
 }
 /* 手機一行：地點太長就整段拿掉場所名（不在字中間省略），日子、時刻、色溫不縮（設計師 #225）。 */
 .place-slate > span {
@@ -452,6 +471,14 @@
   order: 1;
   flex: none;
 }
+/* 拿掉場所名之後不佔寬度（讀屏照樣讀得到）：地點和日子的距離和有場所名時一樣（設計師 PR #309 複審 3）。 */
+.place-slate .ps-where.short .ps-lead {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
 /* 定場那一格還沒有鏡頭：左上標占位（和法庭鏡頭條同一種標法），鏡頭進來就拿掉。 */
 .place-tbd {
   position: absolute;
@@ -477,6 +504,8 @@
   flex: none;
   width: 14px;
   height: 2px;
+  /* 第一行（行高 1.4em）的正中間。 */
+  margin-top: calc(0.7em - 1px);
   background: var(--hl);
 }
 @keyframes place-slate {
@@ -500,19 +529,15 @@
     bottom: calc(max(var(--s4), env(safe-area-inset-bottom)) + 88px);
     max-width: calc(100vw - 2 * var(--s4));
     font-size: 12px;
-    letter-spacing: 0.02em;
-    gap: 8px;
+    --ps-ls: 0.02em;
+    --ps-gap: 8px;
     padding: 6px 10px;
   }
 }
 @media (max-width: 380px) {
-  /* 360 寬的英文連房間加日子時刻都放不下：日子、時刻、色溫掉到下一行，房間不被切。 */
-  .place-slate {
+  /* 360 寬的英文連房間加日子時刻都放不下：日子、時刻、色溫整組掉到下一行，房間不被切；第二行和地點文字左緣對齊。 */
+  .place-slate .ps-text {
     flex-wrap: wrap;
-    row-gap: 2px;
-  }
-  .place-slate .ps-where {
-    max-width: calc(100% - 22px);
   }
 }
 @media (prefers-reduced-motion: reduce) {
