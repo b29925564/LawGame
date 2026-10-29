@@ -56,9 +56,18 @@ export function Transcript({
 }) {
   const box = useRef<HTMLDivElement>(null);
   const seen = useRef(0);
+  const wasOpen = useRef(open);
   useEffect(() => {
     const el = box.current;
+    const opened = open && !wasOpen.current;
+    wasOpen.current = open;
     if (!el || !open) return;
+    // 收著的筆錄被打開：字幕讓位給筆錄，最新那一句要在框裡（設計師 v93 第二道關卡複審 1）。
+    if (opened) {
+      seen.current = el.children.length;
+      el.scrollTop = el.scrollHeight;
+      return;
+    }
     // 一次進來好幾句時，捲到第一句新的；捲到底會把前面幾句藏在框外，看起來像沒出現。
     const first = el.children[seen.current] as HTMLElement | undefined;
     seen.current = el.children.length;

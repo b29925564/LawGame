@@ -655,8 +655,19 @@ details summary {
     grid-row: 1;
     margin-bottom: 0;
   }
+  /* 筆錄打開時在中間那一列裡自己捲（≤560 高的通則是整頁捲、.lines 不另外捲，那條在這裡會讓台詞畫到玻璃框外面，
+     疊在底圖上；設計師複審 1）。場景鎖一個視窗高，筆錄才有框可以捲。 */
+  .scene.plated.subs {
+    height: 100dvh;
+    min-height: 0;
+  }
   .scene.plated.subs > .transcript {
     grid-row: 2;
+    align-self: end;
+    min-height: 0;
+    max-height: 100%;
+    overflow-y: auto;
+    overscroll-behavior: contain;
   }
   .scene.plated.subs > .sub-card {
     grid-column: 1;

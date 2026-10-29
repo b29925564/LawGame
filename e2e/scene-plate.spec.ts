@@ -689,6 +689,74 @@ for (const [w, h] of [
       });
     }
 
+// 設計師複審 1（PR #309）：手機橫向打開「筆錄」，筆錄在自己的框裡捲，台詞不畫到玻璃框外面疊在底圖上；打開時最新一句在框裡。
+for (const [w, h] of [
+  [863, 360],
+  [844, 390],
+] as const)
+  for (const lang of ['zh', 'en'] as const)
+    test(`手機橫向 ${w}×${h}（${lang}）：筆錄比框高時打開，字都在框裡，最新一句看得到`, async ({
+      page,
+    }, info) => {
+      test.skip(info.project.name !== 'desktop', '自己設視窗，只跑一次');
+      const c = CASES[1];
+      await page.setViewportSize({ width: w, height: h });
+      await open(page, c.scene, lang, c.deal);
+      await page.locator('.place-beat').click();
+      await expect(page.locator('.scene.plated > .sub-card')).toBeVisible();
+      // 翻到筆錄裡有 3 段以上、比框高（筆錄收著時 DOM 還在；一段是一個步驟，可能好幾句）。
+      const said = page.locator('.scene.plated > .transcript > *');
+      // 筆錄打開時才量得到框高：先翻到 3 段，打開量，不夠高就收起來再翻。
+      const rec = page.locator('.scene.plated .sub-actions .rec-toggle');
+      const box = page.locator('.scene.plated > .transcript');
+      for (let i = 0; i < 14; i++) {
+        if ((await said.count()) >= 3) {
+          await rec.click();
+          const tall = await box.evaluate((el) => el.scrollHeight > el.clientHeight + 4);
+          await rec.click();
+          if (tall) break;
+        }
+        await page.locator('.scene.plated .sub-actions .primary').click();
+        await page.waitForTimeout(150);
+      }
+      await rec.click();
+      await expect(box).toBeVisible();
+      await page.waitForTimeout(600);
+      const m = await box.evaluate((el) => {
+        const b = el.getBoundingClientRect();
+        const kids = [...el.children].map((k) => k.getBoundingClientRect());
+        return {
+          n: kids.length,
+          taller: el.scrollHeight > el.clientHeight + 4,
+          overflow: getComputedStyle(el).overflowY,
+          top: b.top,
+          bottom: b.bottom,
+          vh: innerHeight,
+          last: kids.at(-1)!,
+          // 框外的字：框不捲（visible）時，超出框的台詞就直接畫在底圖上。
+          outside: kids.filter((k) => k.bottom > b.bottom + 1 || k.top < b.top - 1).length,
+        };
+      });
+      expect(m.n, '筆錄至少 3 段').toBeGreaterThanOrEqual(3);
+      expect(m.taller, '筆錄比框高（這條測試量的就是放不下的時候）').toBe(true);
+      expect(m.bottom).toBeLessThanOrEqual(m.vh);
+      expect(
+        m.outside === 0 || ['auto', 'scroll', 'hidden'].includes(m.overflow),
+        `${m.outside} 句超出框（overflow-y: ${m.overflow}），畫在底圖上`,
+      ).toBe(true);
+      // 打開時最新一句整句在框裡。
+      expect(m.last.bottom).toBeLessThanOrEqual(m.bottom + 1);
+      expect(m.last.top).toBeGreaterThanOrEqual(m.top - 1);
+      if (process.env.SHOTS) {
+        await page.screenshot({ path: `${process.env.SHOTS}/rec-${w}-${lang}-open.png` });
+        await box.evaluate((el) => {
+          el.style.scrollBehavior = 'auto';
+          el.scrollTop = 0;
+        });
+        await page.screenshot({ path: `${process.env.SHOTS}/rec-${w}-${lang}-top.png` });
+      }
+    });
+
 // 第二道關卡 v93 第 1 處：底圖已經在畫面上的時候，換場（地點字卡→場景、理論開場→選理論）底圖不卸載、不黑一下、
 // 立牌不會單獨浮在黑底上。底圖是 App 掛的共用一層（PlateHost）：整段換場每一個畫格都是同一個元素、舞台不透明度 1。
 for (const [w, h] of [
