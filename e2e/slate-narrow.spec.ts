@@ -56,6 +56,15 @@ for (const [ep, scene] of [
             ),
             rightEdge: r(s).right,
             height: r(s).height,
+            // 日子、時刻、色溫換到第二行時，左緣要和地點文字左緣對齊（不從黃短槓底下開始）。
+            wrapped: s.querySelector('.ps-when')
+              ? r(s.querySelector('.ps-when')!).top > r(where).top + 4
+              : false,
+            whenLeft: s.querySelector('.ps-when') ? r(s.querySelector('.ps-when')!).left : 0,
+            whereLeft: r(where).left,
+            gap: s.querySelector('.ps-when')
+              ? r(s.querySelector('.ps-when')!).left - r(where).right
+              : 0,
           };
         });
         expect(m.ellipsis).toBe(false);
@@ -63,5 +72,6 @@ for (const [ep, scene] of [
         expect(m.rightEdge).toBeLessThanOrEqual(w);
         // 放得下就一行；360 寬的英文放不下時，日子、時刻掉到下一行，房間還是完整的。
         expect(m.height).toBeLessThan(w >= 390 ? 40 : 70);
+        if (m.wrapped) expect(Math.abs(m.whenLeft - m.whereLeft)).toBeLessThanOrEqual(1);
       });
     }

@@ -304,17 +304,19 @@ export function PlaceSlate({ id, place }: { id?: string; place: Place | null }) 
   }, [live, id]);
   if (!place || !live) return null;
   return (
-    <p key={id} className="place-slate" role="status">
-      <span className="ps-where">
-        {lead && <span className="ps-lead">{lead}</span>}
-        <span className="ps-room">{room}</span>
-      </span>
-      {right && (
-        <span className="ps-when">
-          {en ? '  ' : '\u3000'}
-          {right}
+    <p key={id} className={en ? 'place-slate en' : 'place-slate'} role="status">
+      <span className="ps-text">
+        <span className="ps-where">
+          {lead && <span className="ps-lead">{lead}</span>}
+          <span className="ps-room">{room}</span>
         </span>
-      )}
+        {right && (
+          <span className="ps-when">
+            <span className="ps-sp">{en ? '  ' : '\u3000'}</span>
+            {right}
+          </span>
+        )}
+      </span>
     </p>
   );
 }
