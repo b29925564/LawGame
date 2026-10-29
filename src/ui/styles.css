@@ -2631,10 +2631,18 @@ fieldset.relations.compact {
     z-index: 3;
     padding-top: 30px;
     background: var(--surface);
+    /* 抽屜置中在小數 x（863 寬是 21.5）：頂列底色和下面卡片的 1px 框四捨五入不一樣時，卡框會從頂列旁邊透出來。
+       左右各多畫 1px 底色（第二道關卡 v93 第 6 處）。 */
+    box-shadow:
+      -1px 0 0 var(--surface),
+      1px 0 0 var(--surface);
   }
   /* 分組小標黏在頂列下面（頂列高度由 Evidence.tsx 量，寫進 --tabs-h）。 */
   .sheet .group-head {
     top: var(--tabs-h, var(--stick-top));
+    box-shadow:
+      -1px 0 0 var(--surface),
+      1px 0 0 var(--surface);
   }
   .sheet .sheet-note {
     display: none;

@@ -431,11 +431,34 @@ test.describe('焦點圈：選中分頁和語言切換', () => {
             [geo.left + 1, geo.y],
             [geo.right - 1, geo.y],
           ])
-            expect(near(await pixel(page, x, y), ring), `(${x}, ${y}) 是 ${await pixel(page, x, y)}，外框 ${ring}`).toBe(true);
+            expect(
+              near(await pixel(page, x, y), ring),
+              `(${x}, ${y}) 是 ${await pixel(page, x, y)}，外框 ${ring}`,
+            ).toBe(true);
           // 外框對它裡面那一圈（選中：--bg 內圈；未選中：按鈕底）、對外面（外框 overflow 裁掉的那邊是鄰格或面板）都 ≥3:1。
           const inner = await pixel(page, geo.x, geo.top + 3);
           expect(contrast(ring, inner)).toBeGreaterThanOrEqual(3);
           const outer = await pixel(page, geo.x, geo.top - 3);
           expect(contrast(ring, outer)).toBeGreaterThanOrEqual(3);
         });
+});
+
+// 第二道關卡 v93 第 6 處：863 寬時抽屜置中在 21.5px，黏頂列的底色和下面卡片的 1px 框四捨五入不同，卡框從頂列旁邊透出來。
+test.describe('橫向手機的黏頂列兩側', () => {
+  for (const lang of ['zh', 'en'])
+    test(`863×360（${lang}）：捲動後黏頂列左右緣沒有卡框透出來`, async ({ page }, info) => {
+      await openDrawer(page, info, 863, 360, lang);
+      await page.locator('.sheet').evaluate((el) => (el.scrollTop = 120));
+      await page.waitForTimeout(200);
+      const g = await page.evaluate(() => {
+        const bar = document.querySelector('.sheet-top')!.getBoundingClientRect();
+        const bg = getComputedStyle(document.querySelector('.sheet')!).backgroundColor;
+        return { l: bar.left, r: bar.right, t: bar.top, b: bar.bottom, bg };
+      });
+      // 頂列上緣的 30px 內距（沒有字）的左右緣：頂列自己的底色之外一格、之內一格都要是抽屜底色。
+      const bg = rgbOf(g.bg);
+      for (const y of [g.t + 8, g.t + 20])
+        for (const x of [g.l - 1, g.l, g.l + 1, g.r - 2, g.r - 1, g.r])
+          expect(near(await pixel(page, x, y), bg, 4), `(${x}, ${y}) 不是抽屜底色`).toBe(true);
+    });
 });
