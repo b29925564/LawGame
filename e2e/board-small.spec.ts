@@ -1477,8 +1477,9 @@ for (const [w, h] of [
     await page.waitForTimeout(600);
     const m = await slot.evaluate((el) => {
       const box = el.getBoundingClientRect();
-      const parts = [...el.querySelectorAll<HTMLElement>('*')].filter(
-        (e) => e.children.length === 0 && getComputedStyle(e).display !== 'none',
+      // 槽位裡的關係和卡名（卡名可能用 <br> 分成幾行）。
+      const parts = [...el.children].filter(
+        (e): e is HTMLElement => getComputedStyle(e).display !== 'none',
       );
       return {
         text: parts
@@ -1486,7 +1487,7 @@ for (const [w, h] of [
             const r = e.getBoundingClientRect();
             return r.width > 0 && r.bottom <= box.bottom + 1 && r.top >= box.top - 1;
           })
-          .map((e) => e.textContent ?? '')
+          .map((e) => e.innerText.replace(/\s+/g, ' ').trim())
           .join(' '),
         clipped: parts.some(
           (e) => e.scrollWidth > e.clientWidth + 1 || e.scrollHeight > e.clientHeight + 1,
@@ -1499,6 +1500,39 @@ for (const [w, h] of [
     );
     expect(m.clipped, `槽位「${m.text}」有字被切掉`).toBe(false);
     expect(m.text.trim()).not.toMatch(/×$/);
+    // 每一行（照畫面上的位置分）的最後一個詞不是虛詞（和牌架同一套 TRAILING；設計師 PR #310 審查）。
+    const ends = await slot.evaluate((el) => {
+      const words: { t: string; top: number; left: number }[] = [];
+      const walk = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+      for (let n = walk.nextNode(); n; n = walk.nextNode()) {
+        for (const m of (n.textContent ?? '').matchAll(/\S+/g)) {
+          const r = document.createRange();
+          r.setStart(n, m.index);
+          r.setEnd(n, m.index + m[0].length);
+          const b = r.getBoundingClientRect();
+          words.push({ t: m[0], top: b.top + b.height / 2, left: b.left });
+        }
+      }
+      const lines: (typeof words)[] = [];
+      for (const w of words) {
+        const l = lines.find((x) => Math.abs(x[0].top - w.top) < 6);
+        if (l) l.push(w);
+        else lines.push([w]);
+      }
+      return lines
+        .sort((a, b) => a[0].top - b[0].top)
+        .map((l) => l.sort((a, b) => a.left - b.left).map((w) => w.t));
+    });
+    const TRAILING = new Set(
+      'a an the of in on at to for and or by with from as is are was were his her their its i he she it they we you'.split(
+        ' ',
+      ),
+    );
+    expect(ends.length, `槽位的行：${JSON.stringify(ends)}`).toBeGreaterThanOrEqual(2);
+    for (const l of ends.slice(0, -1)) {
+      const last = l[l.length - 1].replace(/[:,.]+$/, '').toLowerCase();
+      expect(TRAILING.has(last), `行「${l.join(' ')}」結尾是虛詞`).toBe(false);
+    }
     // 點發現時頁面捲到發現清單；捲回板子（卡的上緣貼頂列），矮版答案列多了幾行以後，兩張卡仍要整張放得下
     // （360×740；320 寬的長卡本來就要往下捲，已知問題）。
     const g = await geometry(page);

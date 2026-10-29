@@ -5826,16 +5826,16 @@ button.iou[aria-pressed='true'] {
   flex: none;
   white-space: nowrap;
 }
-/* 第一張卡名比一行還長：關係和卡名排成一段文字，卡名在詞與詞之間換行（不截、不加刪節號）。 */
+/* 第一張卡名比一行還長：關係和卡名排成一段文字，卡名照 wrapLines 排好的行（<br>）換行，不截、不加刪節號；
+   不讓瀏覽器自己折（text-wrap 不管行尾虛詞）。 */
 .answer-bar.tight .slot-clear:has(> strong.wrap) {
   display: block;
   padding-block: 4px;
 }
 .answer-bar.tight .slot-clear > strong.wrap {
   display: inline;
-  white-space: normal;
+  white-space: nowrap;
   overflow: visible;
-  text-wrap: pretty;
 }
 .answer-bar.tight .slot-clear:has(> strong.wrap) > .slot-rel {
   margin-right: 8px;
