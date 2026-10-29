@@ -1,5 +1,5 @@
 /// <reference lib="dom" />
-import { proseUnits } from '../src/ui/lineUnits';
+import { nameUnits, proseUnits } from '../src/ui/lineUnits';
 import { expect, test, type Page } from '@playwright/test';
 
 // 證據板的小螢幕（設計師 #2 裁定）：1024–1180 證據欄收進抽屜；手機是 4:5 的同一塊軟木板，下半部是牌架。
@@ -776,11 +776,12 @@ for (const w of [412, 360, 320])
             // 中文只在詞界斷（內文同一套斷詞）；每一行的尾巴也是詞界，標點不放行首。
             const ends = new Set<number>();
             let at = 0;
-            for (const u of proseUnits(base, false, false)) {
-              at += u.length;
+            for (const { w, p } of nameUnits(base)) {
+              at += w.length + p.length;
               ends.add(at);
-              const p = /[，。、；：！？…]+$/.exec(u)?.[0].length ?? 0;
-              if (p) ends.add(at - p);
+              if (p) ends.add(at - p.length);
+              // 黏著「的」「之」的詞被截在行尾時，Cork.tsx 把「的」拿掉（「警方的」→「警方」），詞還是詞。
+              if (/[的之]$/.test(w)) ends.add(at - p.length - 1);
             }
             let pos = 0;
             for (const l of c.lines) {
@@ -1252,4 +1253,43 @@ test('字級 1.5：放大檢視的標題、說明、出處、Bates 都放大，�
     expect(big[key] / base[key], `放大檢視的 ${key} 跟著字級`).toBeCloseTo(1.5, 1);
   if (base.bates) expect(big.bates / base.bates, 'Bates 跟著字級').toBeCloseTo(1.5, 1);
   expect(big.cut, '放大後沒有被切掉的字').toBe(0);
+});
+
+// 第二道關卡 v93 第 3 處：360 英文「Indictment」格內寬 67.0、字 66.2，只差 0.8 px，字型渲染差一點就判放不下而空白。
+// 單一個詞在 12px 只剩不到 2px 邊際時改排 11px：邊際夠，字一定在。
+test('手機 360 英文：牌架上「Indictment」有字，而且邊際 ≥2px（或退到 11px）', async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 740 });
+  await open(page, 'en', ['q1', 'q2a'], ['l-watch', 'l-called-msg'], GATE_CARDS);
+  await page
+    .locator('.q-item')
+    .filter({ hasText: /the watch data is relevant/ })
+    .first()
+    .click();
+  await expect(page.locator('.cork')).toBeVisible();
+  await page.evaluate(() => document.fonts.ready);
+  await page.locator('.cork-dots button').nth(1).click();
+  await settled(page);
+  await page.waitForTimeout(250);
+  const r = await page.evaluate(() => {
+    const b = [
+      ...document.querySelectorAll<HTMLElement>('.cork-rack:not(.marks) b[data-name]'),
+    ].find((e) => e.dataset.name === 'Indictment')!;
+    const cs = getComputedStyle(b);
+    const box = b.parentElement!;
+    const bs = getComputedStyle(box);
+    const ctx = document.createElement('canvas').getContext('2d')!;
+    ctx.font = `${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+    const line = b.querySelector('.cork-rack-line')?.textContent ?? '';
+    return {
+      line,
+      size: cs.fontSize,
+      margin:
+        box.clientWidth -
+        parseFloat(bs.paddingLeft) -
+        parseFloat(bs.paddingRight) -
+        ctx.measureText(line).width,
+    };
+  });
+  expect(r.line).toBe('Indictment');
+  expect(r.size === '11px' || r.margin >= 2, `字級 ${r.size}，邊際 ${r.margin}px`).toBe(true);
 });

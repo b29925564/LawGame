@@ -20,7 +20,12 @@ function cardNames(): string[] {
 
 describe('牌架中文卡名的斷行單位（第二道關卡 v93 第 2 處）', () => {
   it('字一個不少，單位的字串接回去就是卡名', () => {
-    for (const n of cardNames()) expect(nameUnits(n).map((u) => u.w + u.p).join('')).toBe(n);
+    for (const n of cardNames())
+      expect(
+        nameUnits(n)
+          .map((u) => u.w + u.p)
+          .join(''),
+      ).toBe(n);
   });
 
   it('複合詞不在中間斷開：派單、規格書、變更單、領過、說法', () => {

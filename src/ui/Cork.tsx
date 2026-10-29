@@ -15,7 +15,7 @@ import { scrollPageTo } from './pageScroll';
 import { PhotoLogLine, type PhotoRecord } from './Dossier';
 import { useScope } from './lang';
 import { prose } from './prose';
-import { nameUnits, proseUnits } from './lineUnits';
+import { nameUnits } from './lineUnits';
 import './cork.css';
 import { JurySketch, type JuryCard } from './sketch/JurySketch';
 import { hasPrint, Print, printRatio } from './prints';
@@ -382,6 +382,31 @@ export function fitLines(
   return lines.map((l, i) => (i === lines.length - 1 ? str(l).trimEnd() : str(l)));
 }
 
+/**
+ * 文字卡名在 12px 放不下第一個詞、或第一個詞只差 2px 就放不下（字型渲染差半個像素就會空白）時，字級退到 11px
+ * （照片卡標題本來就是 11px）再排；退了還是比較好才用。small 回報有沒有退。
+ */
+function fitName(
+  text: string,
+  width: number,
+  font: string,
+  n: number,
+  lastResort: boolean,
+): { lines: string[]; small: boolean } {
+  const lines = fitLines(text, width, font, n, lastResort);
+  if (!lastResort) return { lines, small: false };
+  const first = lines[0]?.trim() ?? '';
+  const whole = !!first && text.trimStart().startsWith(first);
+  const lone = lines.length === 1 && !/\s/.test(first) && !CJK.test(first);
+  const tight = lone && !!measureCtx && measureCtx.measureText(first).width > width - 2;
+  if (whole && !tight) return { lines, small: false };
+  const small = fitLines(text, width, font.replace(/\d+(?:\.\d+)?px/, '11px'), n, lastResort);
+  const next = small[0]?.trim() ?? '';
+  if (next && (!whole || text.trimStart().startsWith(next)) && next.length >= first.length)
+    return { lines: small, small: true };
+  return { lines, small: false };
+}
+
 /** 冒號後面那段（「Ethan's account: he called a ride」→「he called a ride」）；沒有冒號、冒號後沒字就是整個卡名。 */
 function tailOf(text: string) {
   const at = text.search(/[:：]/);
@@ -411,39 +436,56 @@ function RackName({
 }) {
   const ref = useRef<HTMLElement>(null);
   const [shown, setShown] = useState<string[]>([text]);
+  const [small, setSmall] = useState(false);
   useLayoutEffect(() => {
     const el = ref.current;
     const box = el?.parentElement;
     const card = el?.closest<HTMLElement>('.cork-card');
     if (!el || !box || !card) return;
     const fit = () => {
+      // 退到 11px 時 <b> 上有內聯字級：量字寬要用 CSS 原本的字級，不然 12px／11px 會來回跳。
+      const inline = el.style.fontSize;
+      el.style.fontSize = '';
       const cs = getComputedStyle(el);
       const num = (v: string) => parseFloat(v) || 0;
       const bs = getComputedStyle(box);
       const width = box.clientWidth - num(bs.paddingLeft) - num(bs.paddingRight);
       const font = `${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+      const lineH = num(cs.lineHeight) || 16;
+      el.style.fontSize = inline;
       let n = lines ?? 2;
       if (lines === undefined) {
         const ks = getComputedStyle(card);
         const room = card.clientHeight - num(ks.paddingTop) - num(ks.paddingBottom);
-        n = Math.min(2, Math.floor(room / (num(cs.lineHeight) || 16)));
+        n = Math.min(2, Math.floor(room / lineH));
       }
-      const head = fitLines(text, width, font, n, lines === undefined);
-      onHead(id, head.join('').trim());
-      setShown(tail ? fitLines(tailOf(text), width, font, n, lines === undefined) : head);
+      const head = fitName(text, width, font, n, lines === undefined);
+      onHead(id, head.lines.join('').trim());
+      const mine = tail ? fitName(tailOf(text), width, font, n, lines === undefined) : head;
+      setShown(mine.lines);
+      setSmall(mine.small);
     };
     fit();
     const ro = new ResizeObserver(fit);
     ro.observe(box);
     ro.observe(card);
     document.fonts?.addEventListener('loadingdone', fit);
+    // 字型在這之前就載完時 loadingdone 不會再來：用後備字型量的結果（更寬或更窄）要在字型就緒後重排。
+    let live = true;
+    void document.fonts?.ready.then(() => live && fit());
     return () => {
+      live = false;
       ro.disconnect();
       document.fonts?.removeEventListener('loadingdone', fit);
     };
   }, [id, text, tail, lines, onHead]);
   return (
-    <b ref={ref} className={className} data-name={text}>
+    <b
+      ref={ref}
+      className={className}
+      data-name={text}
+      style={small ? { fontSize: 11 } : undefined}
+    >
       {shown.map((l, i) => (
         <span key={i} className="cork-rack-line">
           {l}
