@@ -5809,14 +5809,22 @@ button.iou[aria-pressed='true'] {
 }
 .answer-bar.tight .slot-clear {
   min-height: 36px;
-  justify-content: center;
+  flex-direction: row;
+  align-items: baseline;
+  align-content: center;
+  flex-wrap: wrap;
+  column-gap: 8px;
 }
 .answer-bar.tight .slot-clear strong {
+  flex: 1 1 0;
+  min-width: 0;
   white-space: nowrap;
   overflow: hidden;
 }
-.answer-bar.tight .slot-clear > span {
-  display: none;
+/* 關係（支持／矛盾…）一定整個看得到，放在卡名前面。 */
+.answer-bar.tight .slot-rel {
+  flex: none;
+  white-space: nowrap;
 }
 .answer-bar.tight .answer-foot {
   grid-column: 1 / -1;

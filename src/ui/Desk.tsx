@@ -26,7 +26,7 @@ import { prose } from './prose';
 import { useCardPick } from './pick';
 import { Speech } from './Portrait';
 import { RelationPicker } from './RelationPicker';
-import { Cork, fitLines, type CorkItem } from './Cork';
+import { Cork, type CorkItem } from './Cork';
 import { Docket, EvidenceZoom } from './Dossier';
 import { Redaction } from './Redaction';
 import { TranscriptDoc } from './TranscriptDoc';
@@ -50,29 +50,60 @@ const labels: Record<App, string> = {
 };
 
 /** 第二幕的桌面：盧卡斯的工作電腦，每個 App 是一個系統入口（企劃書 6.1）。 */
-/** 矮版答案列的槽位只放第一行：整詞截斷、不加刪節號（和牌架卡名同一套 fitLines）；全文在按鈕的 aria-label 和發現清單。 */
-function SlotLine({ text, tight }: { text: string; tight: boolean }) {
+/**
+ * 放進答案的發現：一般版兩行（卡名、關係）。矮版只有一行：關係完整放在最前面（它是這條發現在答什麼），
+ * 卡名以一整張卡為單位接在後面，第二張放不下就連「×」整張不放，不在卡名中間截斷（設計師 PR #309 複審 2）。
+ * 全文在按鈕的 aria-label 和發現清單。
+ */
+let slotCtx: CanvasRenderingContext2D | null | undefined;
+function SlotLine({
+  names,
+  relation,
+  tight,
+}: {
+  names: readonly [string, string];
+  relation: string;
+  tight: boolean;
+}) {
   const ref = useRef<HTMLElement>(null);
-  const [line, setLine] = useState(text);
+  const rel = useRef<HTMLSpanElement>(null);
+  const first = names[0];
+  const full = `${first} × ${names[1]}`;
+  const [line, setLine] = useState(full);
   useLayoutEffect(() => {
     const el = ref.current;
     const box = el?.parentElement;
-    if (!tight || !el || !box) {
-      setLine(text);
+    if (!tight || !el || !box || !rel.current) {
+      setLine(full);
       return;
     }
     const fit = () => {
+      slotCtx ??= document.createElement('canvas').getContext('2d');
+      if (!slotCtx || !rel.current) return;
       const cs = getComputedStyle(el);
-      const font = `${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
-      setLine(fitLines(text, box.clientWidth, font, 1, true)[0] ?? text);
+      slotCtx.font = `${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+      const gap = parseFloat(getComputedStyle(box).columnGap) || 0;
+      const room = box.clientWidth - rel.current.getBoundingClientRect().width - gap;
+      const pick = [full, first].find((x) => slotCtx!.measureText(x).width <= room);
+      setLine(pick ?? '');
     };
     fit();
     const ro = new ResizeObserver(fit);
     ro.observe(box);
     void document.fonts?.ready.then(fit);
     return () => ro.disconnect();
-  }, [text, tight]);
-  return <strong ref={ref}>{tight ? line : text}</strong>;
+  }, [full, first, tight]);
+  return (
+    <>
+      {tight && (
+        <span ref={rel} className="slot-rel muted small">
+          {relation}
+        </span>
+      )}
+      <strong ref={ref}>{tight ? line : full}</strong>
+      {!tight && <span className="muted small">{relation}</span>}
+    </>
+  );
 }
 
 export function Desk({ scene }: { scene: DeskScene }) {
@@ -1026,8 +1057,11 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
                               onClick={() => toggleCard(q.id, c.id)}
                               aria-label={t('從答案拿下 {name}', { name: t(c.name, scope) })}
                             >
-                              <SlotLine text={showPair(c.pair)} tight={tight} />
-                              <span className="muted small">{t(c.relation)}</span>
+                              <SlotLine
+                                names={[t(c.pair[0], scope), t(c.pair[1], scope)]}
+                                relation={t(c.relation)}
+                                tight={tight}
+                              />
                             </button>
                           ) : (
                             // 連起來之後下一步要點發現再提交（體驗評測：沒有提示，會以為連起來就解完了）。

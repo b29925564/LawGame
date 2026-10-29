@@ -1296,9 +1296,9 @@ test('手機 360 英文：牌架上「Indictment」有字，而且邊際 ≥2px�
 
 // 第二道關卡 v93 第 4 處：360×740 英文放兩張長索引卡，卡比頂列到答案列的空間高，下半張被答案列蓋住 10–40%。
 // 答案列換矮版（拿掉「答案」小標、槽位一行）以後，兩張都完整在頂列和答案列之間；放得下的尺寸維持一般版。
-async function placeTwo(page: Page, lang: string, w: number, h: number) {
+async function placeTwo(page: Page, lang: string, w: number, h: number, found: string[] = []) {
   await page.setViewportSize({ width: w, height: h });
-  await open(page, lang, ['q1']);
+  await open(page, lang, ['q1'], found);
   await question(page);
   await page.evaluate(() => document.fonts.ready);
   await settled(page);
@@ -1377,3 +1377,59 @@ test('手機 360×740：把卡拿掉、放得下了，答案列回到一般版',
   expect(g.cards.length).toBe(0);
   expect(g.tight).toBe(false);
 });
+
+// 設計師 PR #309 複審 2：矮版答案列放了發現以後，一行裡先完整放關係，再放卡名；卡名以整張卡為單位，
+// 放不下的那張連「×」一起不放，不截在卡名中間（例如所有格「Ethan's」）。
+for (const lang of ['en', 'zh-TW'])
+  test(`手機 360×740（${lang}）：矮版答案列放了發現，看得到關係，卡名整張放或整張不放`, async ({
+    page,
+  }) => {
+    test.slow();
+    await placeTwo(page, lang, 360, 740, ['l-called-msg']);
+    // 英文兩張長卡一定換矮版；中文卡短，可能還是一般版（一般版兩行，規則一樣）。
+    if (lang === 'en') await expect(page.locator('.answer-bar')).toHaveClass(/tight/);
+    await page.locator('.found-list .found').first().click();
+    const slot = page.locator('.answer-bar .slot-clear').first();
+    await expect(slot).toBeVisible();
+    await page.waitForTimeout(400);
+    const rel = lang === 'en' ? 'Supports' : '支持';
+    const names =
+      lang === 'en'
+        ? ['Watch notification log', "Ethan's account: the message was unsent"]
+        : ['手錶通知紀錄', '伊森的說法：訊息被收回'];
+    const m = await slot.evaluate((el) => {
+      const box = el.getBoundingClientRect();
+      // 看得見的字：每個字元的方框在按鈕裡、而且沒被 overflow 切掉的元素。
+      const seen = [...el.querySelectorAll<HTMLElement>('*')]
+        .filter((e) => e.children.length === 0 && getComputedStyle(e).display !== 'none')
+        .map((e) => {
+          const r = e.getBoundingClientRect();
+          return {
+            text: e.textContent ?? '',
+            inside: r.width > 0 && r.left >= box.left - 1 && r.right <= box.right + 1,
+            clipped: e.scrollWidth > e.clientWidth + 1,
+          };
+        });
+      return { seen, bar: document.querySelector('.answer-bar')!.classList.contains('tight') };
+    });
+    if (lang === 'en') expect(m.bar).toBe(true);
+    const shown = m.seen.filter((x) => x.inside && x.text);
+    const all = shown.map((x) => x.text).join(' ');
+    expect(all, `槽位「${all}」要看得到關係`).toContain(rel);
+    expect(
+      shown.every((x) => !x.clipped),
+      `槽位「${all}」有字被切掉`,
+    ).toBe(true);
+    const tail = all.trim();
+    expect(tail, '不以「×」結尾').not.toMatch(/×$/);
+    expect(tail, '不以所有格結尾').not.toMatch(/['’]s$/);
+    // 卡名是一整張一整張的：放出來的卡名部分等於第一張，或兩張加「×」。
+    const nameText = shown
+      .filter((x) => x.text !== rel)
+      .map((x) => x.text)
+      .join('')
+      .trim();
+    expect(['', names[0], `${names[0]} × ${names[1]}`]).toContain(nameText);
+    if (process.env.SHOTS)
+      await page.screenshot({ path: `${process.env.SHOTS}/answer-found-360x740-${lang}.png` });
+  });
