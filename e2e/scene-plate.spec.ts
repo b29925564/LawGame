@@ -600,3 +600,92 @@ for (const view of [
       }
     });
   }
+
+// 第二道關卡 v93 設計師判定 (b)：手機橫向（≤520 高）字幕卡不蓋在畫面正中間：
+// 「繼續」「筆錄」直排在字幕卡右邊，卡和按鈕共用最下面一條，卡片寬度 ≥480。
+for (const [w, h] of [
+  [863, 360],
+  [844, 390],
+] as const)
+  for (const lang of ['zh', 'en'] as const)
+    for (const c of CASES.slice(1)) {
+      test(`手機橫向 ${w}×${h}（${lang}，${c.name}）：字幕卡在下三分之一，按鈕直排在卡右邊`, async ({
+        page,
+      }, info) => {
+        test.skip(info.project.name !== 'desktop', '自己設視窗，只跑一次');
+        await page.setViewportSize({ width: w, height: h });
+        await open(page, c.scene, lang, c.deal);
+        await page.locator('.place-beat').click();
+        await expect(page.locator('.scene.plated > .sub-card')).toBeVisible();
+        const seen: string[] = [];
+        for (let i = 0; i < 14; i++) {
+          const card = page.locator('.scene.plated > .sub-card');
+          if (!(await card.count())) break;
+          await page.waitForTimeout(120);
+          const m = await page.evaluate(() => {
+            const r = (e: Element | null) => e?.getBoundingClientRect();
+            const card = document.querySelector('.scene.plated > .sub-card')!;
+            const tx = card.querySelector('.tx')!;
+            const lh = parseFloat(getComputedStyle(tx).lineHeight);
+            const next = document.querySelector<HTMLElement>('.scene.plated .sub-actions .primary');
+            const rec = document.querySelector<HTMLElement>(
+              '.scene.plated .sub-actions .rec-toggle',
+            );
+            const eye = r(document.querySelector('.scene.plated > .eyebrow'));
+            const menu = r(document.querySelector('.menu-toggle'));
+            const c = r(card)!;
+            return {
+              top: c.top,
+              bottom: c.bottom,
+              left: c.left,
+              right: c.right,
+              width: c.width,
+              named: !!card.querySelector('.who'),
+              lines: Math.round(r(tx)!.height / lh),
+              next: r(next) && {
+                t: r(next)!.top,
+                b: r(next)!.bottom,
+                l: r(next)!.left,
+                w: r(next)!.width,
+                h: r(next)!.height,
+              },
+              rec: r(rec) && {
+                t: r(rec)!.top,
+                b: r(rec)!.bottom,
+                l: r(rec)!.left,
+                h: r(rec)!.height,
+              },
+              eye: eye && { b: eye.bottom, r: eye.right },
+              menu: menu && { l: menu.left, t: menu.top, b: menu.bottom },
+              vh: innerHeight,
+              vw: innerWidth,
+            };
+          });
+          const tag = `${m.named ? '名字＋' : ''}${m.lines} 行，上緣 ${(m.top / m.vh).toFixed(3)}`;
+          seen.push(tag);
+          // 一行卡整張落在下三分之一；有名字的卡上緣 ≥60%（兩行帶名字的卡本身就約 117px，塞不進三分之一）。
+          expect(m.top / m.vh, `${tag} 的卡`).toBeGreaterThanOrEqual(
+            m.named || m.lines > 1 ? 0.6 : 2 / 3,
+          );
+          expect(m.bottom, `${tag} 卡的下緣貼著安全邊距`).toBeGreaterThan(m.vh - 24);
+          expect(m.bottom).toBeLessThanOrEqual(m.vh - 8);
+          expect(m.width).toBeGreaterThanOrEqual(480);
+          // 按鈕直排在卡右邊：「繼續」在上、「筆錄」在下，高度 ≥44，下面那顆和卡共用最下面一條。
+          expect(m.next).toBeTruthy();
+          expect(m.next!.h).toBeGreaterThanOrEqual(44);
+          expect(m.rec!.h).toBeGreaterThanOrEqual(44);
+          expect(m.next!.l).toBeGreaterThanOrEqual(m.right);
+          expect(Math.abs(m.next!.l - m.rec!.l)).toBeLessThanOrEqual(1);
+          expect(m.next!.b).toBeLessThanOrEqual(m.rec!.t + 1);
+          expect(Math.abs(m.rec!.b - m.bottom)).toBeLessThanOrEqual(1);
+          // 不蓋到左上的地點眉標和「選單」鈕。
+          expect(m.top).toBeGreaterThanOrEqual(m.eye!.b);
+          expect(m.right <= m.menu!.l || m.top >= m.menu!.b).toBe(true);
+          expect(m.next!.l + m.next!.w).toBeLessThanOrEqual(m.vw);
+          const go = page.locator('.scene.plated .sub-actions .primary');
+          if (!(await go.count())) break;
+          await go.click();
+        }
+        expect(seen.length).toBeGreaterThanOrEqual(3);
+      });
+    }
