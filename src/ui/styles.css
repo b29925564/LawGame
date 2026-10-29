@@ -604,6 +604,13 @@ details summary {
 .sub-card.narration .tx {
   color: var(--muted);
 }
+/* 字幕卡（對白和旁白）兩行長度相近：court.css 對 .speech／.narration 的內文通則是 pretty，權重和 .sub-card.narration 一樣、
+   載入在後面，把旁白卡蓋成 pretty（第二道關卡 v93）；這裡的權重高過它，court.css 那條不動（法庭、理論卡、結辯本來就該 pretty）。 */
+.scene.plated.subs > .sub-card,
+.scene.plated.subs > .sub-card.narration,
+.scene.plated.subs > .sub-card .tx {
+  text-wrap: balance;
+}
 .sub-actions {
   display: flex;
   align-items: flex-start;

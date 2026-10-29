@@ -1,6 +1,6 @@
 /// <reference lib="dom" />
 import { readFileSync } from 'node:fs';
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Locator, type Page } from '@playwright/test';
 import { parse } from 'yaml';
 import { brightest } from './png';
 
@@ -256,6 +256,11 @@ test('底圖上的字幕模式：只留最新一句，筆錄抽屜才有前面�
   expect(box.y).toBeGreaterThan(vh * 0.6);
   const lh = await card.locator('.tx').evaluate((e) => parseFloat(getComputedStyle(e).lineHeight));
   expect((await card.locator('.tx').boundingBox())!.height).toBeLessThanOrEqual(lh * 2 + 1);
+  // 字幕要兩行長度相近（balance）：court.css 的內文通則是 pretty，字幕卡自己的規則要壓過它（旁白和對白都是）。
+  const wrapOf = (l: Locator) =>
+    l.evaluate((e) => getComputedStyle(e).getPropertyValue('text-wrap-style'));
+  expect(await wrapOf(card)).toBe('balance');
+  expect(await wrapOf(card.locator('.tx'))).toBe('balance');
   // 一張卡一句：旁白兩句是兩張，「繼續」先翻卡，不跳到下一個人。
   await expect(card).not.toContainText('他走到一半停下來');
   await page.locator('.scene.plated .primary').click();
@@ -267,6 +272,8 @@ test('底圖上的字幕模式：只留最新一句，筆錄抽屜才有前面�
   await expect(card).not.toContainText('伊森的姊姊在等他');
   const who = card.locator('.who');
   await expect(who).toHaveText('伊森・蕭');
+  expect(await wrapOf(card)).toBe('balance');
+  expect(await wrapOf(card.locator('.tx'))).toBe('balance');
   expect(await who.evaluate((e) => getComputedStyle(e).color)).not.toMatch(
     /^rgb\(2[0-9]{2}, 1[5-9]/,
   );
@@ -278,6 +285,8 @@ test('底圖上的字幕模式：只留最新一句，筆錄抽屜才有前面�
   await expect(log).toBeVisible();
   await expect(log).toContainText('伊森的姊姊在等他');
   await expect(log).toContainText('謝謝你');
+  // 筆錄裡的台詞是內文，照 court.css 的通則 pretty（只有字幕卡是 balance）。
+  expect(await wrapOf(log.locator('.speech').first())).toBe('pretty');
   const st = await log.evaluate((e) => {
     const c = getComputedStyle(e);
     return { blur: c.backdropFilter, mask: c.maskImage, bg: c.backgroundColor };
