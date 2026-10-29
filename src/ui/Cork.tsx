@@ -15,7 +15,7 @@ import { scrollPageTo } from './pageScroll';
 import { PhotoLogLine, type PhotoRecord } from './Dossier';
 import { useScope } from './lang';
 import { prose } from './prose';
-import { proseUnits } from './lineUnits';
+import { nameUnits, proseUnits } from './lineUnits';
 import './cork.css';
 import { JurySketch, type JuryCard } from './sketch/JurySketch';
 import { hasPrint, Print, printRatio } from './prints';
@@ -296,19 +296,8 @@ function unitsOf(text: string): Unit[] {
     }, []);
     return ws.map((w) => ({ w, p: '' }));
   }
-  // 中文用內文同一套斷詞（ICU 詞典加本作人名、固定詞；標點跟前一個詞，開括號跟後一個詞）。
-  const out: Unit[] = [];
-  for (const u of proseUnits(text, false, false)) {
-    const p = /[，。、；：！？…,.;:!?]+$/.exec(u)?.[0] ?? '';
-    const w = u.slice(0, u.length - p.length);
-    const prev = out[out.length - 1];
-    // 「的」「之」黏前一個詞，不放行首。
-    if (prev && !prev.p && /^[的之]$/.test(w)) {
-      prev.w += w;
-      prev.p = p;
-    } else out.push({ w, p });
-  }
-  return out;
+  // 中文用內文同一套斷詞（ICU 詞典加本作人名、固定詞），再把被切成單字的複合詞黏回去（nameUnits）。
+  return nameUnits(text);
 }
 let measureCtx: CanvasRenderingContext2D | null | undefined;
 /**

@@ -156,3 +156,73 @@ export function proseUnits(text: string, tail = true, labels = true): string[] {
   }
   return out;
 }
+
+/** 牌架卡名的斷行單位：標點跟前一個詞（不放行首），沒有標點的單位。 */
+export interface NameUnit {
+  w: string;
+  p: string;
+}
+/** 單獨一個字也可以當斷點的虛詞：牌架卡名裡其他的單字都是複合詞被 ICU 切開的碎片，要黏回去。 */
+const FUNC = /^[的之與和及是在被他她它我你對都也就把給]$/;
+/** 黏著前一個詞、不放行首的字。 */
+const STICK = /^[的之了]$/;
+
+/**
+ * 牌架卡名（中文）的換行單位：proseUnits 的詞，加上
+ * - 「的」「之」「了」黏前一個詞；
+ * - ICU 把複合詞切成單字（派｜單、規格｜書、變更｜單、領｜過、起｜訴狀、費｜雪）：連續的單字（虛詞除外）併成一個詞；
+ *   只剩一個單字的，黏後面那個詞（起訴狀），後面沒有或它自己帶標點（書：）就黏前面那個詞（規格書：）；
+ * - 最後一個單字（疲勞鎖、一直都在）不自己掛一行，黏前一個詞。
+ * 一個單位內部不斷開；字一個不少。
+ */
+export function nameUnits(text: string): NameUnit[] {
+  const us: NameUnit[] = [];
+  for (const u of proseUnits(text, false, false)) {
+    const p = /[，。、；：！？…,.;:!?]+$/.exec(u)?.[0] ?? '';
+    const w = u.slice(0, u.length - p.length);
+    const prev = us[us.length - 1];
+    if (prev && !prev.p && STICK.test(w)) {
+      prev.w += w;
+      prev.p = p;
+    } else us.push({ w, p });
+  }
+  const one = (u: NameUnit) => [...u.w].length === 1 && HAN.test(u.w);
+  const loose = (u: NameUnit) => one(u) && !FUNC.test(u.w);
+  const out: NameUnit[] = [];
+  for (let i = 0; i < us.length; i++) {
+    if (!loose(us[i])) {
+      out.push({ ...us[i] });
+      continue;
+    }
+    // 一串連續的單字（標點結束這一串）。
+    let j = i;
+    while (j < us.length - 1 && loose(us[j]) && !us[j].p && loose(us[j + 1])) j++;
+    const grp = us.slice(i, j + 1);
+    const g: NameUnit = { w: grp.map((x) => x.w).join(''), p: grp[grp.length - 1].p };
+    i = j;
+    if (grp.length === 1) {
+      const next = us[i + 1];
+      if (!g.p && next) {
+        out.push({ w: g.w + next.w, p: next.p });
+        i++;
+        continue;
+      }
+      const prev = out[out.length - 1];
+      if (prev && !prev.p) {
+        prev.w += g.w;
+        prev.p = g.p;
+        continue;
+      }
+    }
+    out.push(g);
+  }
+  // 最後一個單字（含虛詞）黏前一個詞。
+  const last = out[out.length - 1];
+  const before = out[out.length - 2];
+  if (last && before && !before.p && one(last)) {
+    before.w += last.w;
+    before.p = last.p;
+    out.pop();
+  }
+  return out;
+}
