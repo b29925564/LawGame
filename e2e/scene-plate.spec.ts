@@ -705,9 +705,7 @@ for (const [w, h] of [
         await expect(plate).toHaveAttribute('data-state', 'ok');
         // 定場亮起來（淡入結束）再開始錄每一格。
         await page.waitForFunction(
-          () =>
-            Number(getComputedStyle(document.querySelector('.plate-stage')!).opacity) >=
-            0.99,
+          () => Number(getComputedStyle(document.querySelector('.plate-stage')!).opacity) >= 0.99,
         );
         await page.evaluate(() => {
           const w = window as unknown as { __frames: unknown[]; __stop: boolean; __el: Element };
@@ -735,9 +733,7 @@ for (const [w, h] of [
           for (
             let i = 0;
             i < 12 &&
-            !(await page
-              .getByRole('button', { name: /選擇案件理論|Choose case theory/ })
-              .count());
+            !(await page.getByRole('button', { name: /選擇案件理論|Choose case theory/ }).count());
             i++
           )
             await next.click();
