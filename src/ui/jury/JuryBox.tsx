@@ -141,6 +141,12 @@ export function JuryBox({
   const scope = useScope();
   const { showNumbers, set } = useSettings();
   const [open, setOpen] = useState(!collapsible);
+  // 能不能收合會跟著視窗高度變（法庭桌機放不下整片時才收）；變了就回到那個狀態的預設。
+  const [wasCollapsible, setWasCollapsible] = useState(collapsible);
+  if (wasCollapsible !== collapsible) {
+    setWasCollapsible(collapsible);
+    setOpen(!collapsible);
+  }
 
   // 事件：這一步的 deltas 一次性觸發點頭與 J4（照「由 props 推導狀態」寫法，句數變了才算一次）。
   const [ev, setEv] = useState({

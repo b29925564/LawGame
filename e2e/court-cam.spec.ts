@@ -606,10 +606,11 @@ for (const lang of ['zh', 'en'] as const)
       expect(cards.length, '法官席上有字幕').toBeGreaterThan(0);
       for (const [text, [from, to]] of cards) {
         const need = Math.max(SUB_MIN_UNITS, readUnits(text)) * unit;
-        // 正常讀完要的時間；容許淡入（--dur-cut 42ms）與逐格取樣的 2 格，共 100ms。
+        // 正常讀完要的時間；容許淡入（--dur-cut 42ms）與逐格取樣的誤差，共 150ms。
+        // CPU 4× 節流又和其他測試並行時取樣會掉格，100ms 偶發差不到 1ms（gate 1：1579.2 對 1580）。
         expect(
           to - from,
           `「${text}」要看得到 ${need}ms，實際 ${Math.round(to - from)}ms`,
-        ).toBeGreaterThanOrEqual(need - 100);
+        ).toBeGreaterThanOrEqual(need - 150);
       }
     });

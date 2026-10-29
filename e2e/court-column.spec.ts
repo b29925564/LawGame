@@ -5,7 +5,8 @@ import { expect, test, type Page } from '@playwright/test';
  * 法庭異議窗放得下（v93，體驗評測 g2-ce2218f、g2-681548c）：
  * - 理由按鈕的字不超出格子，中欄不橫向溢出（1100 英文 150% 原本四欄每格 78px，Speculation 要 113px）。
  * - 標題列的「生效中」不被擠成一兩個字寬的窄條（1100 英文 150% 原本 25px 寬）。
- * - 1280×800 窗開著時陪審團第二排還在畫面裡（兩欄四列原本把它推出 17–28px）。
+ * - 窗開著時陪審團還在畫面裡：整片 2×6 放不下就收成刻痕條（字級 130–150% 原本推出 48–189px）。
+ * - 「要異議嗎？」不斷在詞中；320 寬「不異議」不超出窗、頁面不橫向捲。
  */
 const save = JSON.parse(
   readFileSync(new URL('./fixtures/court-kowalski.json', import.meta.url), 'utf8'),
@@ -48,7 +49,7 @@ async function openObjection(page: Page) {
   await page.waitForTimeout(2000);
 }
 
-for (const [width, height, scale, lang, juryFits = true] of [
+for (const [width, height, scale, lang] of [
   [1100, 860, 1.5, 'en'],
   [1100, 860, 1.3, 'en'],
   [1100, 860, 1.5, 'zh'],
@@ -56,15 +57,22 @@ for (const [width, height, scale, lang, juryFits = true] of [
   [1366, 860, 1, 'en'],
   [1366, 860, 1.5, 'en'],
   [1530, 860, 1, 'en'],
-  // 1280 寬 150%：陪審團是整片 2×6，三欄放不下（14.7em），兩欄四列會把它推出 63px——#303 改兩欄後就有，交設計師，這裡只驗按鈕。
-  [1280, 860, 1.5, 'en', false],
+  [1530, 860, 1.5, 'en'],
+  [1280, 860, 1.5, 'en'],
+  [1280, 860, 1.5, 'zh'],
   [1100, 800, 1.5, 'en'],
   [1100, 800, 1.3, 'en'],
   [1100, 800, 1.5, 'zh'],
   [1280, 800, 1, 'en'],
   [1280, 800, 1, 'zh'],
+  [1280, 800, 1.3, 'en'],
+  [1280, 800, 1.5, 'en'],
   [1366, 768, 1, 'en'],
-] as [number, number, number, string, boolean?][]) {
+  [1366, 768, 1.5, 'en'],
+  [360, 740, 1.5, 'zh'],
+  [320, 640, 1.5, 'zh'],
+  [320, 640, 1.5, 'en'],
+] as [number, number, number, string][]) {
   test(`異議窗放得下（${width}×${height}・${scale * 100}%・${lang}）`, async ({ page }, info) => {
     test.skip(info.project.name !== 'desktop', '桌機版面');
     await openCourt(page, width, height, scale, lang);
@@ -95,13 +103,30 @@ for (const [width, height, scale, lang, juryFits = true] of [
         head: head && head.offsetWidth ? +(head.offsetWidth / fs).toFixed(1) : null,
         juryOver: Math.round(jury.bottom - innerHeight),
         docScroll: doc.scrollHeight - doc.clientHeight,
+        docWide: doc.scrollWidth - doc.clientWidth,
+        collapsed: document.querySelector('.jurybox')!.classList.contains('collapsed'),
+        titleLines: (() => {
+          const h2 = document.querySelector('section.objection h2') as HTMLElement;
+          return Math.round(h2.offsetHeight / parseFloat(getComputedStyle(h2).lineHeight));
+        })(),
+        passOut: (() => {
+          const sec = document.querySelector('section.objection')!.getBoundingClientRect();
+          const p = document.querySelector('section.objection .pass')!.getBoundingClientRect();
+          return Math.round(p.right - sec.right);
+        })(),
       };
     });
     expect(m.bad, '按鈕字被切').toEqual([]);
     expect(m.scroll).toBeLessThanOrEqual(0);
     // 標題列夾著「生效中」時至少要 6em 寬（原本 1100 英文 150% 只剩 1.1em，一行一兩個字）。
     if (m.head !== null) expect(m.head, '「生效中」被擠成窄條').toBeGreaterThanOrEqual(6);
-    // 頁面不捲：陪審團整個在畫面裡。
-    if (juryFits && m.docScroll <= 0) expect(m.juryOver, '陪審團被推出畫面').toBeLessThanOrEqual(0);
+    // 桌機：陪審團整個在畫面裡（頁面就算多出幾 px 能捲，也捲不到被推出去的那段）。
+    if (width >= 1024) expect(m.juryOver, '陪審團被推出畫面').toBeLessThanOrEqual(0);
+    // 100% 放得下整片的尺寸照舊展開（只在放不下時才收）。
+    if (scale === 1 && width >= 1180) expect(m.collapsed, '陪審團被誤收').toBe(false);
+    // 「要異議嗎？」一行，不斷在詞中（「要異／議嗎？」）；放不下時是「不異議」換到下一行。
+    expect(m.titleLines, '標題斷行').toBe(1);
+    expect(m.docWide, '頁面橫向可捲').toBeLessThanOrEqual(0);
+    expect(m.passOut, '「不異議」超出窗').toBeLessThanOrEqual(0);
   });
 }
