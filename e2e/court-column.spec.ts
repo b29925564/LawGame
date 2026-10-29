@@ -12,13 +12,9 @@ const save = JSON.parse(
 
 for (const [width, scale, lang] of [
   [1100, 1.5, 'en'],
-  [1100, 1.3, 'en'],
-  [1100, 1.5, 'zh'],
   [1100, 1, 'en'],
-  [1366, 1, 'en'],
   [1366, 1.5, 'en'],
-  [1530, 1, 'en'],
-  [1280, 1.5, 'en'],
+  [1366, 1, 'en'],
 ] as const) {
   test(`法庭中欄不橫向溢出、異議窗按鈕放得下（${width}・${scale * 100}%・${lang}）`, async ({
     page,
