@@ -2661,6 +2661,12 @@ fieldset.relations.compact {
 /* 分頁列自己 overflow-x: auto，會把 outline-offset: 2px 的焦點圈切掉三邊；所有分頁列（抽屜、書桌）把圈畫在按鈕裡面。 */
 .apps button:focus-visible {
   outline-offset: -2px;
+  /* 選中分頁的底線（::after）是有自己圖層的絕對定位，會畫在按鈕的外框上面、蓋掉焦點圈的底邊：
+     按鈕自己開一個疊層，底線退到按鈕背景和內容之間（位置不動），外框在最上面（設計師 v93 第二道關卡 第 5 處）。 */
+  z-index: 0;
+}
+.apps button:focus-visible::after {
+  z-index: -1;
 }
 
 /* ── 訪談：視訊通話 ── */
@@ -6484,6 +6490,16 @@ button.found:hover:not(:disabled) {
   box-shadow: none;
   color: var(--bg);
   font-weight: 700;
+}
+/* 外框 overflow: hidden 會把 offset 2px 的焦點圈切掉三邊：圈畫在按鈕裡面，有焦點的那格疊在鄰格上面。 */
+.lang-switch button:focus-visible {
+  position: relative;
+  z-index: 1;
+  outline-offset: -2px;
+}
+/* 選中那格底是實心墨色，焦點色畫在上面看不到：外圈 --focus，內圈 --bg，兩層（對相鄰的顏色都 ≥3:1）。 */
+.lang-switch button[aria-pressed='true']:focus-visible {
+  box-shadow: inset 0 0 0 4px var(--bg);
 }
 
 /* 英文模式：視覺設計師定的字體配對；行距收到 1.5，數字等寬。手寫在英文也用 LXGW WenKai TC（它有拉丁字母；設計師 #225 審查），所以不覆寫 --font-hand。 */
