@@ -56,6 +56,8 @@ function CourtJury({
   const t = useT();
   const episode = useEpisode((s) => s.progress.episode);
   const over = scene.jurors.filter((j) => (jury[j.id] ?? 0) >= scene.threshold).length;
+  // 在面板自己的元件裡量：掛上之後才找得到它和上面那幾列。
+  const tooTall = useJuryTooTall(!collapsible);
   return (
     <JuryBox
       episode={episode}
@@ -64,7 +66,7 @@ function CourtJury({
       deltas={deltas}
       eventKey={eventKey}
       threshold={scene.threshold}
-      collapsible={collapsible}
+      collapsible={collapsible || tooTall}
       summary={t('{over} / {total} 傾向{yes}', {
         over,
         total: scene.jurors.length,
@@ -92,6 +94,41 @@ const useNarrow = () => useQuery('(max-width: 1023px)');
 
 /** 左欄放不下 2×6、56×70 的陪審團面板（376 寬）的寬度：收成刻痕條，點開用 48×60（設定集第 10 章 :16）。 */
 const useCompactJury = () => useQuery('(max-width: 1179px)');
+
+/**
+ * 桌機高度放不下整片 2×6 也收成刻痕條：字級放大或異議窗變高時，陪審團那一列會被推出畫面而且捲不到
+ * （體驗評測 g2-3f6629d：1280×800 英文 150% 推出 122px、1366×768 189px）。
+ * 陪審團那一列的頂端由上面幾列決定，收不收合都不變，所以拿「頂端＋展開時的高度」跟視窗高比，不會來回跳。
+ */
+function useJuryTooTall(on: boolean) {
+  const [tall, setTall] = useState(false);
+  useEffect(() => {
+    if (!on) return;
+    let full = 0;
+    let frame = 0;
+    const check = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const jb = document.querySelector<HTMLElement>('.shell-tabs > .jurybox');
+        if (!jb) return;
+        if (!jb.classList.contains('collapsed'))
+          full = jb.offsetHeight + parseFloat(getComputedStyle(jb).marginBottom || '0');
+        if (full) setTall(jb.getBoundingClientRect().top + full > innerHeight + 0.5);
+      });
+    };
+    const ro = new ResizeObserver(check);
+    for (const sel of ['.shell', '.court-slot', '.court-cam', '.shell-tabs > .jurybox'])
+      document.querySelectorAll(sel).forEach((e) => ro.observe(e));
+    addEventListener('resize', check);
+    check();
+    return () => {
+      cancelAnimationFrame(frame);
+      ro.disconnect();
+      removeEventListener('resize', check);
+    };
+  }, [on]);
+  return on && tall;
+}
 
 /** 異議窗：預設回合制，設定裡可以改成限時（企劃書 6.9.5 與 6.14 的輔助選項）。 */
 function ObjectionWindow({

@@ -3442,6 +3442,16 @@ html[lang='en'] .stamp.rec-stamp b {
   margin-left: auto;
   min-width: 7em;
 }
+/*
+ * 「要異議嗎？」不斷行：窗窄（字級放大、手機）時原本「不異議」的 7em 把標題擠成「要異／議嗎？」；
+ * 現在標題整句留在一行，放不下時是「不異議」換到下一行（靠右）。
+ */
+.objection .panel-head {
+  flex-wrap: wrap;
+}
+.objection .panel-head > h2 {
+  white-space: nowrap;
+}
 .objection {
   container-type: inline-size;
 }
@@ -3480,6 +3490,13 @@ html[lang='en'] .stamp.rec-stamp b {
     grid-column: auto;
   }
 }
+/* 兩欄也放不下（320 寬字級 150%）就一欄，最長的理由照樣整個字放得下。 */
+@container (max-width: 9.7em) {
+  .objection .row,
+  :root:lang(en) .objection .row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
 @container (max-width: 25em) {
   :root:lang(en) .objection .row {
     grid-template-columns: repeat(6, minmax(0, 1fr));
@@ -3504,6 +3521,11 @@ html[lang='en'] .stamp.rec-stamp b {
   :root:lang(en) .objection .row > button:nth-child(3n + 1):nth-last-child(2) + button,
   :root:lang(en) .objection .row > button:nth-child(3n + 1):last-child {
     grid-column: auto;
+  }
+}
+@container (max-width: 12.2em) {
+  :root:lang(en) .objection .row {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 .objection .row button {
