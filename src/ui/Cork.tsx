@@ -864,6 +864,8 @@ export function Cork({
   onZoom,
   misses = 0,
   onMissDone,
+  tight = false,
+  onTight,
 }: {
   /** A、B 槽裡的卡（沒放就是 undefined）。 */
   focus: [CorkItem | undefined, CorkItem | undefined];
@@ -887,6 +889,9 @@ export function Cork({
   /** 連錯的次數：一變多就演「線沒釘住」，演完叫 onMissDone 把兩張卡放回原位。 */
   misses?: number;
   onMissDone?: () => void;
+  /** 答案列現在是不是矮版（Desk.tsx 換 class）；放好的長卡比頂列到答案列的空間高時 Cork 要它換矮版（onTight）。 */
+  tight?: boolean;
+  onTight?: (tight: boolean) => void;
 }) {
   const t = useT();
   const scope = useScope();
@@ -903,8 +908,43 @@ export function Cork({
   // 標籤和卡名在答案列上面，下半張還是被蓋住（gate 2 v92c E 蓋了 27–46%），所以整張放得下就捲到整張都在
   // 頂列和答案列之間（捲最少），放不下就卡的上緣貼到頂列下面，能看多少看多少。都看得到就不捲；
   // 玩家自己捲動、按鍵會中止（pageScroll.ts）。
+  const tightNow = useRef(tight);
+  useEffect(() => {
+    tightNow.current = tight;
+  }, [tight]);
+  const fullBar = useRef(0);
+  /**
+   * 放好的卡加槽位標籤，比頂列到（一般版）答案列之間的空間高，答案列就換矮版（設計師 v93 第二道關卡第 4 處選 A）。
+   * 兩個門檻之間留 8px 緩衝，不在臨界值來回跳；只在放卡完成、拔卡之後量，拖曳中不動。回傳有沒有換。
+   */
+  const settleTight = (slot: number) => {
+    const board = ref.current;
+    const bar = document.querySelector<HTMLElement>('.answer-bar');
+    if (!onTight || !board || !bar) return false;
+    if (!tightNow.current) fullBar.current = bar.offsetHeight;
+    if (!fullBar.current) return false;
+    const filled = focusEls.current.filter(
+      (f): f is HTMLDivElement =>
+        !!f?.classList.contains('filled') && !f.classList.contains('away'),
+    );
+    const el = focusEls.current[slot] ?? filled[0];
+    let want = false;
+    if (el && filled.length) {
+      const tag = board.querySelectorAll('.slot-tag')[slot]?.getBoundingClientRect().top;
+      const lead = tag === undefined ? 0 : Math.max(0, el.getBoundingClientRect().top - tag);
+      const need = Math.max(...filled.map((f) => f.offsetHeight)) + lead;
+      const head = document.querySelector('.wb-head')?.getBoundingClientRect().height ?? 0;
+      const room = innerHeight - fullBar.current - head - 2 * SEE_GAP;
+      want = need > room - (tightNow.current ? 8 : 0);
+    }
+    if (want === tightNow.current) return false;
+    tightNow.current = want;
+    onTight(want);
+    return true;
+  };
   const scrollToSlot = (slot: number) => {
     let tries = 0;
+    let swapped = false;
     const run = () => {
       const board = ref.current;
       const el = focusEls.current[slot];
@@ -912,6 +952,12 @@ export function Cork({
       // 剛放上的卡先畫在原位一兩格（away），內文還沒展開、高度不是最後的：等它進到光圈再量。
       if (el.classList.contains('away') && tries++ < 12) {
         requestAnimationFrame(run);
+        return;
+      }
+      // 答案列換版以後它的位置才是對的：等兩格畫面再量一次（只換一次）。
+      if (!swapped && settleTight(slot)) {
+        swapped = true;
+        requestAnimationFrame(() => requestAnimationFrame(run));
         return;
       }
       const barTop =
@@ -946,6 +992,14 @@ export function Cork({
   };
   // 板子窄到光圈卡上放不下圖釘兩側的小籤（1350px 以下的桌機視窗），也改用手機的板面。
   const compact = phone || (w > 0 && w < ROOMY);
+  // 拔掉卡（或重新整理後板上已經有卡）：沒有放卡的捲動可以等，在卡進出光圈的動畫之後再量一次，放得下就回一般版。
+  const focusKey = focus.map((c) => c?.id ?? '').join();
+  useEffect(() => {
+    if (!compact || !onTight) return;
+    const id = setTimeout(() => settleTight(0), 400);
+    return () => clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [compact, focusKey, w, h]);
   // 比對位兩格的卡高（在原位的不算）：卡高變了（換卡、換語言、字型載入）就重量。兩格上緣對齊，取高的那張置中。
   const focusEls = useRef<(HTMLDivElement | null)[]>([]);
   const [slotH, setSlotH] = useState([0, 0]);

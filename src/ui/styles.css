@@ -5757,6 +5757,57 @@ button.iou[aria-pressed='true'] {
   font-weight: 700;
   color: var(--text);
 }
+/*
+ * 答案列的矮版（設計師 v93 第二道關卡第 4 處選 A）：放好的長卡比頂列到答案列的空間還高時，Cork.tsx 量出來換成這個版面。
+ * 「答案」小標拿掉，步驟圓圈「3」留著放在槽位同一行最前面；槽位一行（≥44px），發現只放第一行、整詞截斷；
+ * 三個點和「提交」那一列不動。內文不收（手寫內文是玩家判斷連線的依據）。
+ */
+.answer-bar.tight {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  column-gap: 10px;
+  row-gap: 8px;
+  padding-block: 8px;
+}
+.answer-bar.tight .step-head {
+  grid-column: 1;
+  grid-row: 1;
+}
+.answer-bar.tight .step-label {
+  display: none;
+}
+.answer-bar.tight .answer-slots {
+  grid-column: 2;
+  grid-row: 1;
+  flex-wrap: nowrap;
+}
+.answer-bar.tight .answer-slots .slot-card {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 44px;
+  padding: 4px 12px;
+}
+.answer-bar.tight .slot-hint {
+  min-height: 0;
+  padding: 0;
+  white-space: nowrap;
+}
+.answer-bar.tight .slot-clear {
+  min-height: 36px;
+  justify-content: center;
+}
+.answer-bar.tight .slot-clear strong {
+  white-space: nowrap;
+  overflow: hidden;
+}
+.answer-bar.tight .slot-clear > span {
+  display: none;
+}
+.answer-bar.tight .answer-foot {
+  grid-column: 1 / -1;
+  grid-row: 2;
+}
 /* 答案列：工作台怎麼捲都看得到，點發現時立刻看到它進答案（UX 規格）。 */
 .answer-bar {
   position: sticky;
@@ -6693,6 +6744,9 @@ button.found:hover:not(:disabled) {
   .board-one .answer-bar {
     margin-inline: -2px;
     padding-bottom: max(12px, env(safe-area-inset-bottom));
+  }
+  .board-one .answer-bar.tight {
+    padding-bottom: max(8px, env(safe-area-inset-bottom));
   }
 }
 

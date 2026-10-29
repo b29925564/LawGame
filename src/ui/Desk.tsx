@@ -26,7 +26,7 @@ import { prose } from './prose';
 import { useCardPick } from './pick';
 import { Speech } from './Portrait';
 import { RelationPicker } from './RelationPicker';
-import { Cork, type CorkItem } from './Cork';
+import { Cork, fitLines, type CorkItem } from './Cork';
 import { Docket, EvidenceZoom } from './Dossier';
 import { Redaction } from './Redaction';
 import { TranscriptDoc } from './TranscriptDoc';
@@ -50,6 +50,31 @@ const labels: Record<App, string> = {
 };
 
 /** 第二幕的桌面：盧卡斯的工作電腦，每個 App 是一個系統入口（企劃書 6.1）。 */
+/** 矮版答案列的槽位只放第一行：整詞截斷、不加刪節號（和牌架卡名同一套 fitLines）；全文在按鈕的 aria-label 和發現清單。 */
+function SlotLine({ text, tight }: { text: string; tight: boolean }) {
+  const ref = useRef<HTMLElement>(null);
+  const [line, setLine] = useState(text);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    const box = el?.parentElement;
+    if (!tight || !el || !box) {
+      setLine(text);
+      return;
+    }
+    const fit = () => {
+      const cs = getComputedStyle(el);
+      const font = `${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+      setLine(fitLines(text, box.clientWidth, font, 1, true)[0] ?? text);
+    };
+    fit();
+    const ro = new ResizeObserver(fit);
+    ro.observe(box);
+    void document.fonts?.ready.then(fit);
+    return () => ro.disconnect();
+  }, [text, tight]);
+  return <strong ref={ref}>{tight ? line : text}</strong>;
+}
+
 export function Desk({ scene }: { scene: DeskScene }) {
   const { progress, advance, clearReport, resolveTwist, wrapDesk } = useEpisode();
   const t = useT();
@@ -539,6 +564,8 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
   const nameOf = (id: string) => pool.find((c) => c.id === id)?.name ?? id;
   // 光圈裡的照片或證物袋按「放大」：完整的照片紀錄表與保管鏈（設計師 P2-6）。
   const [zoomed, setZoomed] = useState<string | null>(null);
+  // 答案列的矮版（Cork.tsx 量到放好的長卡比一般版答案列上面的空間高時換）。
+  const [tight, setTight] = useState(false);
   const zoomCard = scene.cards.find((c) => c.id === zoomed);
   const found = desk.findings(scene, st).map((l, i) => ({
     id: l.id,
@@ -799,6 +826,8 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
           onZoom={setZoomed}
           misses={st.badLinks}
           onMissDone={settle}
+          tight={tight}
+          onTight={setTight}
         />
         {zoomCard && (
           <EvidenceZoom item={zoomCard} progress={progress} onClose={() => setZoomed(null)} />
@@ -954,12 +983,16 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
             {/* 工作台順序＝動作順序：連線 → 發現 → 答案；答案列釘在底部（UX 規格）。 */}
             <section
               className={
-                done ? 'panel step answer answer-bar done' : 'panel step answer answer-bar'
+                done
+                  ? 'panel step answer answer-bar done'
+                  : tight
+                    ? 'panel step answer answer-bar tight'
+                    : 'panel step answer answer-bar'
               }
             >
               <h3 className="step-head">
                 <span className="step-num">3</span>
-                {t('答案')}
+                <span className="step-label">{t('答案')}</span>
               </h3>
               {done ? (
                 // 結果卡：確認了什麼、得到哪張論點，旁邊直接去下一題。
@@ -993,7 +1026,7 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
                               onClick={() => toggleCard(q.id, c.id)}
                               aria-label={t('從答案拿下 {name}', { name: t(c.name, scope) })}
                             >
-                              <strong>{showPair(c.pair)}</strong>
+                              <SlotLine text={showPair(c.pair)} tight={tight} />
                               <span className="muted small">{t(c.relation)}</span>
                             </button>
                           ) : (

@@ -1293,3 +1293,87 @@ test('手機 360 英文：牌架上「Indictment」有字，而且邊際 ≥2px�
   expect(r.line).toBe('Indictment');
   expect(r.size === '11px' || r.margin >= 2, `字級 ${r.size}，邊際 ${r.margin}px`).toBe(true);
 });
+
+// 第二道關卡 v93 第 4 處：360×740 英文放兩張長索引卡，卡比頂列到答案列的空間高，下半張被答案列蓋住 10–40%。
+// 答案列換矮版（拿掉「答案」小標、槽位一行）以後，兩張都完整在頂列和答案列之間；放得下的尺寸維持一般版。
+async function placeTwo(page: Page, lang: string, w: number, h: number) {
+  await page.setViewportSize({ width: w, height: h });
+  await open(page, lang, ['q1']);
+  await question(page);
+  await page.evaluate(() => document.fonts.ready);
+  await settled(page);
+  const picks =
+    lang === 'en' ? ['accused of embezzling', 'he called a ride'] : ['被指控盜用', '他叫了車'];
+  for (const nm of picks) {
+    await page
+      .locator('.cork-rack:not(.marks) > .cork-card')
+      .filter({ has: page.locator(`b[data-name*="${nm}"]`) })
+      .first()
+      .click();
+    await settled(page);
+    await page.waitForTimeout(900);
+  }
+}
+const geometry = (page: Page) =>
+  page.evaluate(() => {
+    const bar = document.querySelector('.answer-bar')!;
+    const head = document.querySelector('.wb-head')!.getBoundingClientRect();
+    const cards = [...document.querySelectorAll('.cork-focus.filled')].map((e) => {
+      const r = e.getBoundingClientRect();
+      return { top: r.top, bottom: r.bottom, h: r.height };
+    });
+    const slot = document.querySelector('.answer-bar .slot-card')!.getBoundingClientRect();
+    return {
+      tight: bar.classList.contains('tight'),
+      barTop: bar.getBoundingClientRect().top,
+      barH: bar.getBoundingClientRect().height,
+      headBottom: head.bottom,
+      cards,
+      slotH: slot.height,
+      label: getComputedStyle(document.querySelector('.answer-bar .step-label')!).display,
+      num: !!document.querySelector('.answer-bar .step-num'),
+    };
+  });
+for (const lang of ['en', 'zh-TW'])
+  test(`手機 360×740（${lang}）：放兩張長卡，兩張都完整在頂列和答案列之間（答案列放不下就換矮版）`, async ({
+    page,
+  }) => {
+    await placeTwo(page, lang, 360, 740);
+    const g = await geometry(page);
+    expect(g.cards.length).toBe(2);
+    for (const c of g.cards) {
+      expect(c.bottom, `卡的下緣 ${c.bottom}，答案列上緣 ${g.barTop}：被蓋住`).toBeLessThanOrEqual(
+        g.barTop + 0.5,
+      );
+      expect(c.top).toBeGreaterThanOrEqual(g.headBottom - 0.5);
+    }
+    if (lang === 'en') {
+      expect(g.tight).toBe(true);
+      expect(g.label).toBe('none');
+      expect(g.num).toBe(true);
+      expect(g.slotH).toBeGreaterThanOrEqual(44);
+      expect(g.barH).toBeLessThan(150);
+    }
+  });
+
+test('手機 Pixel 7（412×839）：卡放得下，答案列維持一般版', async ({ page }) => {
+  await placeTwo(page, 'en', 412, 839);
+  const g = await geometry(page);
+  expect(g.tight).toBe(false);
+  expect(g.label).not.toBe('none');
+  for (const c of g.cards) expect(c.bottom).toBeLessThanOrEqual(g.barTop + 0.5);
+});
+
+test('手機 360×740：把卡拿掉、放得下了，答案列回到一般版', async ({ page }) => {
+  await placeTwo(page, 'en', 360, 740);
+  expect((await geometry(page)).tight).toBe(true);
+  // 兩張都拿掉（點光圈裡的卡 = 退回牌架）。
+  for (let i = 0; i < 2; i++) {
+    await page.locator('.cork-focus.filled .cork-pick').first().click();
+    await page.waitForTimeout(700);
+  }
+  await page.waitForTimeout(800);
+  const g = await geometry(page);
+  expect(g.cards.length).toBe(0);
+  expect(g.tight).toBe(false);
+});
