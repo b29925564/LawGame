@@ -1,4 +1,11 @@
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from 'react';
 import { episodeOf, useEpisode } from '../engine/game';
 import { useLang, useT } from '../i18n';
 import { straight } from '../i18n/curly';
@@ -292,6 +299,25 @@ export function PlaceSlate({ id, place }: { id?: string; place: Place | null }) 
   const room = cut > 0 ? where.slice(cut + (en ? 2 : 1)) : where;
   const [done, setDone] = useState<string>();
   const live = !!place && done !== id;
+  // 場所名放不下（被擠到看不見的第二行）時整段拿掉，地點的寬度只算房間名：
+  // 不然被拿掉的場所名還佔著寬度，地點和日子中間空一大段（設計師 PR #309 複審 3）。
+  const whereRef = useRef<HTMLSpanElement>(null);
+  const [short, setShort] = useState(false);
+  useLayoutEffect(() => {
+    const el = whereRef.current;
+    if (!el || !lead) return;
+    const fit = () => {
+      // 先放回整段量：放得下就留著；量完把 class 放回去（狀態沒變時 React 不會重畫這個屬性）。
+      el.classList.remove('short');
+      const over = el.scrollHeight > el.clientHeight + 1;
+      el.classList.toggle('short', over);
+      setShort(over);
+    };
+    fit();
+    void document.fonts?.ready.then(fit);
+    addEventListener('resize', fit);
+    return () => removeEventListener('resize', fit);
+  }, [lead, room, right, live]);
   useEffect(() => {
     if (!live) return;
     const release = claimHand('slate');
@@ -308,7 +334,7 @@ export function PlaceSlate({ id, place }: { id?: string; place: Place | null }) 
   return (
     <p key={id} className={en ? 'place-slate en' : 'place-slate'} role="status">
       <span className="ps-text">
-        <span className="ps-where">
+        <span ref={whereRef} className={short ? 'ps-where short' : 'ps-where'}>
           {lead && <span className="ps-lead">{lead}</span>}
           <span className="ps-room">{room}</span>
         </span>

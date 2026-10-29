@@ -75,3 +75,80 @@ for (const [ep, scene] of [
         if (m.wrapped) expect(Math.abs(m.whenLeft - m.whereLeft)).toBeLessThanOrEqual(1);
       });
     }
+
+// 設計師 PR #309 複審 3：手機一行、拿掉場所名的時候，房間名到日子的距離就是設計的欄距（被拿掉的場所名不佔寬度）。
+// 手機（≤640）的欄距和字距本來就比桌機小一點（8px＋0.02em，桌機 10px＋0.06em），所以和「這個寬度設計的欄距」比，
+// 不直接和 1440 的數字比；1440 那張也照同一條量。
+async function slateGap(
+  page: import('@playwright/test').Page,
+  ep: string,
+  scene: number,
+  w: number,
+) {
+  await page.setViewportSize({ width: w, height: 800 });
+  await page.goto('/');
+  await page.evaluate(
+    ([ep, scene]) => {
+      localStorage.setItem('lawgame-lang', 'en');
+      localStorage.setItem(
+        'lawgame-ep-auto',
+        JSON.stringify({
+          version: 5,
+          savedAt: Date.now(),
+          label: 'x',
+          progress: {
+            episode: ep,
+            scene,
+            step: 0,
+            choices: {},
+            cards: [],
+            flags: [],
+            ethics: [],
+            scenes: {},
+          },
+        }),
+      );
+    },
+    [ep, scene] as const,
+  );
+  await page.reload();
+  await page
+    .getByRole('button', { name: /^Continue/ })
+    .first()
+    .click();
+  const slate = page.locator('.place-slate');
+  await expect(slate).toBeVisible();
+  await page.evaluate(() => document.fonts.ready);
+  await page.waitForTimeout(100);
+  return slate.evaluate((s) => {
+    const r = (e: Element) => e.getBoundingClientRect();
+    const room = r(s.querySelector('.ps-room')!);
+    const when = r(s.querySelector('.ps-when')!);
+    return {
+      gap: when.left - room.right,
+      want: parseFloat(getComputedStyle(s.querySelector('.ps-text')!).columnGap),
+      oneLine: Math.abs(when.top - room.top) < 4,
+    };
+  });
+}
+for (const [ep, scene] of [
+  ['ep2', 9],
+  ['ep2', 30],
+  ['ep1', 13],
+] as const)
+  test(`地點字卡（英文）拿掉場所名時，房間名到日子就是設計的欄距：${ep}-${scene}`, async ({
+    page,
+  }, info) => {
+    test.skip(info.project.name !== 'desktop', '自己設視窗，只跑一次');
+    let lines = 0;
+    for (const w of [1440, 412, 390]) {
+      const m = await slateGap(page, ep, scene, w);
+      if (!m.oneLine) continue;
+      lines++;
+      expect(
+        Math.abs(m.gap - m.want),
+        `${w} 寬：房間名到日子 ${m.gap.toFixed(1)}px，設計的欄距 ${m.want.toFixed(1)}px`,
+      ).toBeLessThanOrEqual(2);
+    }
+    expect(lines).toBeGreaterThanOrEqual(2);
+  });

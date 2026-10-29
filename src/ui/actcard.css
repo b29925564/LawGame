@@ -471,6 +471,14 @@
   order: 1;
   flex: none;
 }
+/* 拿掉場所名之後不佔寬度（讀屏照樣讀得到）：地點和日子的距離和有場所名時一樣（設計師 PR #309 複審 3）。 */
+.place-slate .ps-where.short .ps-lead {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
 /* 定場那一格還沒有鏡頭：左上標占位（和法庭鏡頭條同一種標法），鏡頭進來就拿掉。 */
 .place-tbd {
   position: absolute;
