@@ -299,6 +299,41 @@
         "phone": 0
       },
       "source": "project-files art-bible/scenes/holding-door (holding_door.py, finish_hd.py id=holding-door-zh exp=2.65); review designer-review-v6.md"
+    },
+    {
+      "id": "31f-2249",
+      "scene": "ep1:cold-open",
+      "rig": "ep1-31f-fri",
+      "card_kelvin": 4100,
+      "date": "2026-03-13 22:49",
+      "episode": 1,
+      "step_note": "冷開場是一場手機戲，底圖屬於其中一格（do: caption 的 22:49）：照場景 id＋那一格的 rig 找",
+      "files": {
+        "desktop": {
+          "file": "31f-2249-desktop.jpg",
+          "bytes": 54274
+        },
+        "phone": {
+          "file": "31f-2249-phone.jpg",
+          "bytes": 44816
+        }
+      },
+      "frames_res": [2304, 1440],
+      "phone_cx": 0.44,
+      "phone_crop_px": [609, 0, 1419, 1440],
+      "key": "corridor",
+      "fill": ["corr_fill"],
+      "target": "10:1",
+      "measured_ratio": 10.0,
+      "floor_L": {
+        "desktop": 3.85,
+        "phone": 4.7
+      },
+      "yellow_final_violations": {
+        "desktop": 0,
+        "phone": 0
+      },
+      "source": "project-files art-bible/scenes/0505-31f（RD-ART-0505 v4，delivery-v4.md、manifest.json）；floor_L 是介面與操作 #3 在交付的 jpg 上重量的（最暗 0.5% 的平均 L*）"
     }
   ]
 }

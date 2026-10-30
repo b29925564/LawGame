@@ -56,7 +56,10 @@ describe('背景底圖', () => {
         const [ep, id] = p.scene.split(':');
         const scene = (episodes[ep] ?? []).find((s) => s.id === id);
         expect(scene, `${p.scene} 不在劇本裡`).toBeTruthy();
-        expect(scene?.rig).toBe(p.rig);
+        // 手機戲（冷開場）的底圖屬於其中一格：那一格的 rig 要一樣。
+        const steps = (scene?.steps ?? []) as Node[];
+        const rigs = [scene?.rig, ...steps.map((s) => s.rig)];
+        expect(rigs).toContain(p.rig);
       });
 
       it('檔案都在，大小和 manifest 一樣', () => {

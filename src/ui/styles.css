@@ -3391,6 +3391,8 @@ fieldset.relations.compact {
   border-color: #8e99a7;
 }
 
+/* 手機外面是鏡頭層的夜（和冷開場的字卡同一個黑），不跟主題：淺色主題也不會變成淺灰的桌面（設計師 v93 審查）。
+   手機螢幕裡面照舊跟主題。 */
 .phone-stage {
   min-height: 100dvh;
   display: flex;
@@ -3398,13 +3400,8 @@ fieldset.relations.compact {
   justify-content: center;
   padding: 16px;
   background:
-    var(--grain),
-    radial-gradient(
-      60% 50% at 50% 40%,
-      light-dark(rgb(255 255 255 / 60%), rgb(62 80 104 / 20%)),
-      transparent 70%
-    ),
-    var(--bg);
+    var(--grain), radial-gradient(60% 50% at 50% 40%, rgb(62 80 104 / 20%), transparent 70%),
+    var(--cine-bg);
 }
 .phone {
   position: relative;
@@ -3598,7 +3595,12 @@ fieldset.relations.compact {
 .badge .primary {
   align-self: stretch;
 }
+/* 門口這一格是鏡頭層的夜：按鈕用深色的權杖（淺色主題的墨色字放在黑底上讀不到；設計師 v93 審查）。
+   權杖在 :root 就解成淺色值，這裡只寫 color-scheme 換不掉，要直接蓋。 */
 .door {
+  --text: #e7eaee;
+  --border-strong: #3a4757;
+  --surface-2: #19202a;
   justify-content: center;
   margin-top: -40px;
   padding-top: 52px;
@@ -4214,6 +4216,12 @@ fieldset.relations.compact {
   background: transparent;
   color: var(--text);
   border: 1px solid var(--border-strong);
+}
+/* 冷開場的底圖上（22:49）：主按鈕一樣是白框、沒有黃，但底下墊和字幕框同一層玻璃——透明的框放在暗圖上，
+   淺色主題的墨色字會看不到。 */
+[data-hand='coldopen'] .scene.plated .sub-actions > button.primary {
+  background: var(--panel-glass);
+  backdrop-filter: blur(8px);
 }
 /* 滑鼠停在按鈕上（剛按完上一頁，游標還在原處）也不能把黃叫回來。 */
 [data-hand='slate'] button.primary:hover:not(:disabled),
