@@ -110,7 +110,8 @@ function useJuryTooTall(on: boolean) {
       cancelAnimationFrame(frame);
       frame = requestAnimationFrame(() => {
         const jb = document.querySelector<HTMLElement>('.shell-tabs > .jurybox');
-        if (!jb) return;
+        // 點開成浮層時不在格子裡，量到的位置不算數；維持收合判斷，不然會一開就被收回去。
+        if (!jb || jb.classList.contains('popped')) return;
         if (!jb.classList.contains('collapsed'))
           full = jb.offsetHeight + parseFloat(getComputedStyle(jb).marginBottom || '0');
         if (full) setTall(jb.getBoundingClientRect().top + full > innerHeight + 0.5);

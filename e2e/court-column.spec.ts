@@ -130,3 +130,69 @@ for (const [width, height, scale, lang] of [
     expect(m.passOut, '「不異議」超出窗').toBeLessThanOrEqual(0);
   });
 }
+
+/**
+ * 收成刻痕條之後點開看臉（體驗評測 g2-8592d60）：展開的陪審團要整個在畫面裡，不能看得到卻捲不到。
+ * 原本字級 130–150% 時框超出下緣 24–86px，最嚴重只剩「Jury ▾」。
+ */
+for (const [width, height, scale, lang] of [
+  [1280, 800, 1.3, 'en'],
+  [1280, 800, 1.5, 'en'],
+  [1366, 768, 1.5, 'en'],
+  [1366, 768, 1.5, 'zh'],
+  [1280, 860, 1.5, 'zh'],
+  [1530, 860, 1.5, 'en'],
+  [1100, 860, 1.5, 'en'],
+  [1100, 860, 1.5, 'zh'],
+  [320, 640, 1.5, 'en'],
+  [320, 640, 1, 'zh'],
+] as [number, number, number, string][]) {
+  test(`點開看臉的陪審團整個在畫面裡（${width}×${height}・${scale * 100}%・${lang}）`, async ({
+    page,
+  }, info) => {
+    test.skip(info.project.name !== 'desktop', '桌機版面');
+    await openCourt(page, width, height, scale, lang);
+    await openObjection(page);
+    const strip = page.locator('.jb-strip');
+    await expect(strip, '陪審團收成刻痕條').toBeVisible();
+    await strip.click();
+    await expect(page.locator('.jurybox .jb-grid')).toBeVisible();
+    await page.waitForTimeout(300);
+    const m = await page.evaluate(() => {
+      const pop = document.querySelector('.jurybox .jb-pop')!;
+      const box = getComputedStyle(pop).display === 'contents' ? pop.parentElement! : pop;
+      const jb = box.getBoundingClientRect();
+      const rec = document.querySelector('.record')!.getBoundingClientRect();
+      const doc = document.scrollingElement!;
+      return {
+        // 浮層留在左欄：左右緣和筆錄紙對齊，不蓋到中間的異議窗和鏡頭條。
+        side: Math.round(Math.max(rec.left - jb.left, jb.right - rec.right)),
+        // 框裡的東西不超出框（1100 寬一排六張會凸出右緣）。
+        spill: Math.round(
+          Math.max(
+            ...[...box.querySelectorAll('.jb-grid, .jb-head')].map(
+              (e) => e.getBoundingClientRect().right - jb.right,
+            ),
+          ),
+        ),
+        titleLines: (() => {
+          const h = box.querySelector('.jb-head h2') as HTMLElement;
+          return Math.round(h.offsetHeight / parseFloat(getComputedStyle(h).lineHeight));
+        })(),
+        top: Math.round(jb.top),
+        over: Math.round(jb.bottom - innerHeight),
+        docWide: doc.scrollWidth - doc.clientWidth,
+      };
+    });
+    expect(m.docWide, '頁面橫向可捲').toBeLessThanOrEqual(0);
+    if (width >= 1024) {
+      expect(m.over, '展開的陪審團超出下緣').toBeLessThanOrEqual(0);
+      expect(m.top, '展開的陪審團超出上緣').toBeGreaterThanOrEqual(0);
+      expect(m.side, '浮層超出左欄').toBeLessThanOrEqual(1);
+      expect(m.spill, '臉凸出浮層').toBeLessThanOrEqual(0);
+      expect(m.titleLines, '「陪審團 ▾」斷行').toBe(1);
+      // 異議窗和鏡頭條不被擠動：窗還在、理由按得到。
+      await expect(page.locator('section.objection .row button').first()).toBeVisible();
+    }
+  });
+}

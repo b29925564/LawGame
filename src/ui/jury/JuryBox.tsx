@@ -215,64 +215,69 @@ export function JuryBox({
     );
 
   return (
-    <section className="jurybox" aria-label={t('陪審團')}>
-      <div className="jb-head">
-        <h2>
-          {collapsible ? (
-            <button type="button" className="link" aria-expanded onClick={() => setOpen(false)}>
-              {t('陪審團')} ▾
-            </button>
-          ) : (
-            t('陪審團')
-          )}
-          {showNumbers && summary && <span className="muted"> {summary}</span>}
-        </h2>
-        {/* 「顯示數值」跟圖例同一列：法庭中欄還要放鏡頭條，陪審團面板不多佔一列（設計師 P3 裁定 5）。 */}
-        <span className="jb-tools">
-          <Legend />
-          {toggle}
-        </span>
-      </div>
-      <Tbd row>
-        <ul className="jb-grid">
-          {jurors.map((j, i) => {
-            const v = jury[j.id] ?? 0;
-            const over = v >= threshold;
-            return (
-              <li key={j.id} className="jb-cell" title={name(j.label)}>
-                <JurorFace
-                  look={lookOf(episode, j.id)}
-                  v={v}
-                  seat={seat(i)}
-                  notes={writing(j.id)}
-                  nod={nods[j.id]}
-                />
-                <span
-                  className={showNumbers ? (over ? 'jb-track th over' : 'jb-track th') : 'jb-track'}
-                  style={
-                    { '--tick': showNumbers ? v : tick(v), '--th': threshold } as CSSProperties
-                  }
-                  aria-hidden
-                />
-                {showNumbers && (
-                  <span className={over ? 'jb-num over' : 'jb-num'}>
-                    {over && '▲'}
-                    {v}
+    <section className={collapsible ? 'jurybox popped' : 'jurybox'} aria-label={t('陪審團')}>
+      {/* 浮層的框：桌機收合後點開時往上長（court.css .jb-pop）；其他時候 display: contents，不多一層。 */}
+      <div className="jb-pop">
+        <div className="jb-head">
+          <h2>
+            {collapsible ? (
+              <button type="button" className="link" aria-expanded onClick={() => setOpen(false)}>
+                {t('陪審團')} ▾
+              </button>
+            ) : (
+              t('陪審團')
+            )}
+            {showNumbers && summary && <span className="muted"> {summary}</span>}
+          </h2>
+          {/* 「顯示數值」跟圖例同一列：法庭中欄還要放鏡頭條，陪審團面板不多佔一列（設計師 P3 裁定 5）。 */}
+          <span className="jb-tools">
+            <Legend />
+            {toggle}
+          </span>
+        </div>
+        <Tbd row>
+          <ul className="jb-grid">
+            {jurors.map((j, i) => {
+              const v = jury[j.id] ?? 0;
+              const over = v >= threshold;
+              return (
+                <li key={j.id} className="jb-cell" title={name(j.label)}>
+                  <JurorFace
+                    look={lookOf(episode, j.id)}
+                    v={v}
+                    seat={seat(i)}
+                    notes={writing(j.id)}
+                    nod={nods[j.id]}
+                  />
+                  <span
+                    className={
+                      showNumbers ? (over ? 'jb-track th over' : 'jb-track th') : 'jb-track'
+                    }
+                    style={
+                      { '--tick': showNumbers ? v : tick(v), '--th': threshold } as CSSProperties
+                    }
+                    aria-hidden
+                  />
+                  {showNumbers && (
+                    <span className={over ? 'jb-num over' : 'jb-num'}>
+                      {over && '▲'}
+                      {v}
+                    </span>
+                  )}
+                  <span className="sr-only">
+                    {t('{seat} 號 {name}：{posture}', {
+                      seat: seat(i),
+                      name: name(j.label),
+                      posture: t(POSTURE[writing(j.id) ? 'J4' : poseFor(v)]),
+                    })}
+                    {showNumbers && `，${v}`}
                   </span>
-                )}
-                <span className="sr-only">
-                  {t('{seat} 號 {name}：{posture}', {
-                    seat: seat(i),
-                    name: name(j.label),
-                    posture: t(POSTURE[writing(j.id) ? 'J4' : poseFor(v)]),
-                  })}
-                  {showNumbers && `，${v}`}
-                </span>
-              </li>
-            );
-          })}
-        </ul>
-      </Tbd>
+                </li>
+              );
+            })}
+          </ul>
+        </Tbd>
+      </div>
     </section>
   );
 }

@@ -2805,6 +2805,9 @@ html[lang='en'] .stamp.rec-stamp b {
   color: var(--bad);
   font-weight: 700;
 }
+.jb-pop {
+  display: contents;
+}
 .jurybox.collapsed {
   justify-content: stretch;
   max-width: 358px;
@@ -2886,6 +2889,12 @@ html[lang='en'] .stamp.rec-stamp b {
   .jf-face {
     width: 48px;
     height: 60px;
+  }
+}
+/* 360 以下一排六張 48 寬加間距要 328px，放不下（320 寬頁面橫捲 5–36px，體驗評測 g2-8592d60）：改三排四張，卡片照舊 48×60。 */
+@media (max-width: 359px) {
+  .jb-grid {
+    grid-template-columns: repeat(4, 48px);
   }
 }
 
@@ -3342,6 +3351,36 @@ html[lang='en'] .stamp.rec-stamp b {
   .shell:has(> .shell-tabs > .record):has(> .shell-body > .court-slot) > .shell-tabs > .jurybox {
     grid-row: 6;
   }
+  /*
+   * 收成刻痕條後點開看臉（體驗評測 g2-8592d60）：那一列放不下整片才收的，展開時改成往上長的浮層，
+   * 底邊留在原處，蓋住筆錄紙下半（多半是空行）；鏡頭條和異議窗不動，整片都在畫面裡。
+   * 實心 --surface、不投影（規格 v2.0 裁定 14）。面板本身留在那一格（同寬、高 0、貼底），框以它為準往上長。
+   */
+  .shell:has(> .shell-tabs > .record) > .shell-tabs > .jurybox.popped {
+    align-self: end;
+    position: relative;
+    height: 0;
+  }
+  .shell:has(> .shell-tabs > .record) > .shell-tabs > .jurybox.popped > .jb-pop {
+    display: grid;
+    gap: 8px;
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 2;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+  }
+  /* 字級放大時「陪審團 ▾」不斷成兩行：放不下就讓圖例和「顯示數值」換到下一行。 */
+  .jurybox.popped .jb-head {
+    flex-wrap: wrap;
+  }
+  .jurybox.popped .jb-head h2 {
+    white-space: nowrap;
+  }
   /* 筆錄紙跨好幾列：不讓它 25 行的內容高度撐大陪審團那一列（紙的高度由格子給，內容自己捲）。 */
   .shell:has(> .shell-body > .court-slot) > .shell-tabs > .record {
     contain: size;
@@ -3362,6 +3401,10 @@ html[lang='en'] .stamp.rec-stamp b {
   .shell:has(> .shell-tabs > .record) .jb-grid {
     grid-template-columns: repeat(6, 48px);
     gap: 12px 6px;
+  }
+  /* 點開的浮層在 320 寬的左欄裡：一排六張 48 寬加框要 330 以上，放不下就三排四張（卡片不縮）。 */
+  .shell:has(> .shell-tabs > .record) .jurybox.popped .jb-grid {
+    grid-template-columns: repeat(4, 48px);
   }
   .shell:has(> .shell-tabs > .record) .jf-face {
     width: 48px;
