@@ -315,7 +315,7 @@
         },
         "phone": {
           "file": "31f-2249-phone.jpg",
-          "bytes": 44816
+          "bytes": 64102
         }
       },
       "frames_res": [2304, 1440],
@@ -327,7 +327,7 @@
       "measured_ratio": 10.0,
       "floor_L": {
         "desktop": 3.85,
-        "phone": 4.7
+        "phone": 3.95
       },
       "yellow_final_violations": {
         "desktop": 0,
