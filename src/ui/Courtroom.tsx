@@ -46,12 +46,14 @@ function CourtJury({
   deltas,
   eventKey,
   collapsible,
+  onPop,
 }: {
   scene: TrialScene;
   jury: Jury;
   deltas: Jury;
   eventKey: number;
   collapsible?: boolean;
+  onPop?: (el: HTMLDivElement | null) => void;
 }) {
   const t = useT();
   const episode = useEpisode((s) => s.progress.episode);
@@ -67,6 +69,7 @@ function CourtJury({
       eventKey={eventKey}
       threshold={scene.threshold}
       collapsible={collapsible || tooTall}
+      onPop={onPop}
       summary={t('{over} / {total} 傾向{yes}', {
         over,
         total: scene.jurors.length,
@@ -110,9 +113,10 @@ function useJuryTooTall(on: boolean) {
       cancelAnimationFrame(frame);
       frame = requestAnimationFrame(() => {
         const jb = document.querySelector<HTMLElement>('.shell-tabs > .jurybox');
-        // 點開成浮層時不在格子裡，量到的位置不算數；維持收合判斷，不然會一開就被收回去。
-        if (!jb || jb.classList.contains('popped')) return;
-        if (!jb.classList.contains('collapsed'))
+        if (!jb) return;
+        // 點開成浮層時面板撐滿那一格、頂邊還是格子的頂：位置照量，高度沿用上次整片展開時量到的
+        // （量浮層會量到 0，一開就被收回去）。視窗變大放得下了就回到一般面板（設計師 gate 2 第三輪條件 4）。
+        if (!jb.classList.contains('collapsed') && !jb.classList.contains('popped'))
           full = jb.offsetHeight + parseFloat(getComputedStyle(jb).marginBottom || '0');
         if (full) setTall(jb.getBoundingClientRect().top + full > innerHeight + 0.5);
       });
@@ -342,6 +346,8 @@ function CourtroomScreen({ scene: raw }: { scene: TrialScene }) {
   const compactJury = useCompactJury();
   const [beat, startBeat, onJudgeRead, onJudgeShown] = useObjectionBeat();
   const [insert, setInsert] = useState<HTMLDivElement | null>(null);
+  // 桌機陪審團收合後點開的浮層：蓋在筆錄紙下半，最新一句要捲到它上面（設計師 gate 2 第三輪第 1 項）。
+  const [pop, setPop] = useState<HTMLDivElement | null>(null);
   const [cues, setCues] = useState<Cue[]>([]);
 
   // 手上確認過的論點，用來對質。論點的強度與標籤定義在調查那一幕的疑問裡。
@@ -564,6 +570,7 @@ function CourtroomScreen({ scene: raw }: { scene: TrialScene }) {
               onBeat={startBeat}
               beat={!!beat}
               cover={narrow && beat ? insert : null}
+              overlay={narrow ? null : pop}
               onCues={setCues}
             />
             {!narrow && <CourtCamera mode="strip" {...camera} />}
@@ -573,6 +580,7 @@ function CourtroomScreen({ scene: raw }: { scene: TrialScene }) {
               deltas={st.deltas}
               eventKey={st.said ?? st.log.length}
               collapsible={compactJury}
+              onPop={setPop}
             />
             {st.stage === 'cross' && (
               <Tabs

@@ -196,3 +196,127 @@ for (const [width, height, scale, lang] of [
     }
   });
 }
+
+/**
+ * 點開的陪審團浮層不能蓋住正在被異議的那一句（設計師 gate 2 第三輪第 1 項 A 的條件）：
+ * 筆錄寫到第 20 行以後再展開，最新一行要在浮層上緣之上、看得到；Escape 和「陪審團 ▾」都收得起來，
+ * 收起後焦點回到「點開看臉」；異議窗關掉後不留浮層。
+ */
+for (const [width, height, scale, lang] of [
+  [1280, 800, 1.5, 'en'],
+  [1366, 768, 1.25, 'en'],
+  [1280, 800, 1.5, 'zh'],
+  // 中文 1366×768 125% 整片放得下、不收合，沒有浮層；改驗 150%。
+  [1366, 768, 1.5, 'zh'],
+] as [number, number, number, string][]) {
+  test(`點開的陪審團不蓋住最新一句（${width}×${height}・${scale * 100}%・${lang}）`, async ({
+    page,
+  }, info) => {
+    test.skip(info.project.name !== 'desktop', '桌機版面');
+    test.setTimeout(120_000);
+    await openCourt(page, width, height, scale, lang);
+    const rows = () => page.locator('.record .rec-row[data-row]').count();
+    // 一路「不異議」聽下去，寫到第 20 行以後、異議窗開著的那一刻停下。
+    for (let i = 0; i < 16; i++) {
+      const obj = page.locator('section.objection .row button').first();
+      if (await obj.isVisible()) {
+        if ((await rows()) >= 20) break;
+        await page.locator('section.objection .pass').click();
+      } else {
+        await page.locator('button.primary.wide:not(.locked)').first().click();
+      }
+      await page.waitForTimeout(2500);
+    }
+    expect(await rows(), '筆錄還沒寫到第 20 行').toBeGreaterThanOrEqual(20);
+    await expect(page.locator('section.objection .row button').first()).toBeVisible();
+
+    const strip = page.locator('.jb-strip');
+    await expect(strip, '陪審團收成刻痕條').toBeVisible();
+    await strip.click();
+    await expect(page.locator('.jurybox.popped .jb-grid')).toBeVisible();
+    await page.waitForTimeout(400);
+    const m = await page.evaluate(() => {
+      const all = [...document.querySelectorAll('.record .rec-row[data-row]')];
+      const last = all.reduce((a, b) =>
+        Number(b.getAttribute('data-row')) > Number(a.getAttribute('data-row')) ? b : a,
+      );
+      const r = last.getBoundingClientRect();
+      const pop = document.querySelector('.jurybox .jb-pop')!.getBoundingClientRect();
+      const box = document.querySelector('.record .rec-scroll')!.getBoundingClientRect();
+      // 最新一行的上緣、中間、下緣（各取左中右）都要是筆錄紙本身，不落在陪審團裡。
+      const hits = [r.top + 1, r.top + r.height / 2, r.bottom - 1].map((y) =>
+        [0.1, 0.5, 0.9].every((f) => {
+          const e = document.elementFromPoint(r.left + r.width * f, y);
+          return !!e && !e.closest('.jurybox') && !!e.closest('.record');
+        }),
+      );
+      const at = (sel: string) => {
+        const b = document.querySelector(sel)!.getBoundingClientRect();
+        const e = document.elementFromPoint(b.left + b.width / 2, b.top + b.height / 2);
+        return !!e && !e.closest('.jb-pop');
+      };
+      const st = getComputedStyle(document.querySelector('.jurybox .jb-pop')!);
+      return {
+        hits,
+        gap: Math.round(pop.top - r.bottom),
+        inBox: r.top >= box.top - 0.5,
+        objection: at('section.objection'),
+        cam: at('.court-cam'),
+        bg: st.backgroundColor,
+        border: st.borderTopWidth,
+      };
+    });
+    if (process.env.SHOTS)
+      await page.screenshot({
+        path: `${process.env.SHOTS}/r4-juryopen-${width}x${height}-${scale * 100}-${lang}.png`,
+      });
+    expect(m.hits, '最新一行被浮層蓋住').toEqual([true, true, true]);
+    expect(m.gap, '最新一行掉到浮層上緣以下').toBeGreaterThanOrEqual(0);
+    expect(m.inBox, '最新一行捲出紙的上緣').toBe(true);
+    expect(m.objection, '浮層蓋到異議窗').toBe(true);
+    expect(m.cam, '浮層蓋到鏡頭條').toBe(true);
+    expect(m.bg, '浮層透明').not.toMatch(/rgba\(.*, 0\)|transparent/);
+    expect(m.border).toBe('1px');
+
+    // Escape 收起，焦點回到「點開看臉」。
+    await page.keyboard.press('Escape');
+    await expect(strip).toBeVisible();
+    await expect(strip, 'Escape 後焦點沒回到刻痕條').toBeFocused();
+    // 再點開：焦點在「Jury ▾」；按它收起，焦點一樣回到刻痕條。
+    await strip.click();
+    await expect(strip).toHaveCount(0);
+    const fold = page.locator('.jurybox.popped .jb-head button');
+    await expect(fold).toBeFocused();
+    await expect(fold).toHaveAttribute('aria-expanded', 'true');
+    await fold.click();
+    await expect(strip).toBeFocused();
+    await expect(strip).toHaveAttribute('aria-expanded', 'false');
+
+    // 點開著關掉異議窗：不留浮層；放得下就回到一般的整片面板（和 #312 同一套判斷）。
+    await strip.click();
+    await expect(page.locator('.jurybox.popped .jb-grid')).toBeVisible();
+    await page.locator('section.objection .pass').click();
+    await page.waitForTimeout(2500);
+    const after = await page.evaluate(() => {
+      const jb = document.querySelector('.jurybox')!;
+      const r = jb.getBoundingClientRect();
+      return {
+        cls: jb.className,
+        over: Math.round(r.bottom - innerHeight),
+      };
+    });
+    expect(after.over, '陪審團被推出畫面').toBeLessThanOrEqual(0);
+    // 這兩個尺寸窗關掉後那一格仍撐著同樣高（#312），整片還是放不下：維持使用者點開的浮層。
+    expect(after.cls).toContain('popped');
+    // 視窗拉高、放得下了：回到一般的整片面板，不再是浮層或刻痕條。
+    await page.setViewportSize({ width, height: 1400 });
+    await expect(page.locator('.jurybox:not(.popped):not(.collapsed) .jb-grid')).toBeVisible();
+    // 再縮回去：照樣收成刻痕條，整個在畫面裡。
+    await page.setViewportSize({ width, height });
+    await expect(strip).toBeVisible();
+    const back = await page.evaluate(
+      () => document.querySelector('.jurybox')!.getBoundingClientRect().bottom - innerHeight,
+    );
+    expect(back, '縮回後陪審團被推出畫面').toBeLessThanOrEqual(0);
+  });
+}
