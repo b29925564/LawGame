@@ -12,10 +12,17 @@ const save = JSON.parse(
   readFileSync(new URL('./fixtures/court-kowalski.json', import.meta.url), 'utf8'),
 ) as { ep1: unknown };
 
-async function openCourt(page: Page, width: number, height: number, scale: number, lang: string) {
+async function openCourt(
+  page: Page,
+  width: number,
+  height: number,
+  scale: number,
+  lang: string,
+  settings: Record<string, unknown> = {},
+) {
   await page.setViewportSize({ width, height });
   await page.addInitScript(
-    ([s, l, sc]) => {
+    ([s, l, sc, more]) => {
       if (sessionStorage.getItem('seeded')) return;
       sessionStorage.setItem('seeded', '1');
       localStorage.clear();
@@ -23,13 +30,14 @@ async function openCourt(page: Page, width: number, height: number, scale: numbe
       if (l === 'en') localStorage.setItem('lawgame-lang', 'en');
       localStorage.setItem(
         'lawgame-settings',
-        JSON.stringify({ state: { textScale: sc }, version: 1 }),
+        JSON.stringify({ state: { textScale: sc, ...JSON.parse(more) }, version: 1 }),
       );
     },
     [
       JSON.stringify({ version: 5, savedAt: Date.now(), label: 'x', progress: save.ep1 }),
       lang,
       scale,
+      JSON.stringify(settings),
     ] as const,
   );
   await page.goto('/');
@@ -318,5 +326,59 @@ for (const [width, height, scale, lang] of [
       () => document.querySelector('.jurybox')!.getBoundingClientRect().bottom - innerHeight,
     );
     expect(back, '縮回後陪審團被推出畫面').toBeLessThanOrEqual(0);
+  });
+}
+
+/**
+ * 手機從刻痕條點開陪審團，「陪審團 ▾」一行（體驗評測 g2-466083b）：
+ * 原本 320 寬中文 150% 斷成「陪審／團 ▾」，英文 100／150%「▾」單獨掉到下一行。
+ * 「顯示數值」開著時後面的摘要可以換行，但不撐出框。
+ */
+for (const [scale, lang, numbers] of [
+  [1.5, 'zh', false],
+  [1.5, 'zh', true],
+  [1, 'en', false],
+  [1, 'en', true],
+  [1.5, 'en', false],
+  [1.5, 'en', true],
+] as [number, string, boolean][]) {
+  test(`手機點開的「陪審團 ▾」一行（320×640・${scale * 100}%・${lang}・${numbers ? '顯示數值' : '不顯示數值'}）`, async ({
+    page,
+  }, info) => {
+    test.skip(info.project.name !== 'desktop', '固定 320 寬');
+    await openCourt(page, 320, 640, scale, lang, { showNumbers: numbers });
+    const strip = page.locator('.jb-strip');
+    await strip.scrollIntoViewIfNeeded();
+    await strip.click();
+    const fold = page.locator('.jurybox .jb-head h2 > button');
+    await expect(fold).toBeVisible();
+    const m = await page.evaluate(() => {
+      const b = document.querySelector('.jurybox .jb-head h2 > button') as HTMLElement;
+      const r = document.createRange();
+      r.selectNodeContents(b);
+      const tops = new Set([...r.getClientRects()].map((x) => Math.round(x.top)));
+      const lh = parseFloat(getComputedStyle(b).lineHeight);
+      const cs = getComputedStyle(b);
+      const inner = b.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+      const box = document.querySelector('.jurybox')!.getBoundingClientRect();
+      const head = [...document.querySelectorAll('.jurybox .jb-head, .jurybox .jb-head > *')].map(
+        (e) => e.getBoundingClientRect().right - box.right,
+      );
+      const doc = document.scrollingElement!;
+      return {
+        lines: tops.size,
+        rows: Math.round(inner / lh),
+        spill: Math.round(Math.max(...head)),
+        docWide: doc.scrollWidth - doc.clientWidth,
+      };
+    });
+    if (process.env.SHOTS)
+      await page.locator('.jurybox').screenshot({
+        path: `${process.env.SHOTS}/r5-jury320-${scale * 100}-${lang}-${numbers ? 'num' : 'plain'}.png`,
+      });
+    expect(m.lines, '「陪審團 ▾」斷行').toBe(1);
+    expect(m.rows, '按鈕高度不是一行').toBe(1);
+    expect(m.spill, '標題列撐出框').toBeLessThanOrEqual(0);
+    expect(m.docWide, '頁面橫向可捲').toBeLessThanOrEqual(0);
   });
 }

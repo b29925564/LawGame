@@ -2682,12 +2682,18 @@ html[lang='en'] .stamp.rec-stamp b {
 }
 .jb-head {
   display: flex;
+  /* 放不下時圖例和「顯示數值」整組換到下一行，不擠標題（體驗評測 g2-466083b：320 寬「陪審/團 ▾」）。 */
+  flex-wrap: wrap;
   align-items: baseline;
   justify-content: space-between;
   gap: 12px;
 }
 .jb-head h2 {
   margin: 0;
+}
+/* 「陪審團 ▾」每種寬度都是一行，▾ 不單獨掉行；後面的摘要（顯示數值時）照常換行。 */
+.jb-head h2 > button {
+  white-space: nowrap;
 }
 .jb-head h2 .muted {
   font-size: var(--fs-ui-meta);
@@ -3376,13 +3382,6 @@ html[lang='en'] .stamp.rec-stamp b {
     border-radius: var(--radius);
     box-shadow: var(--inset-hi);
     padding: 12px 14px;
-  }
-  /* 字級放大時「陪審團 ▾」不斷成兩行：放不下就讓圖例和「顯示數值」換到下一行。 */
-  .jurybox.popped .jb-head {
-    flex-wrap: wrap;
-  }
-  .jurybox.popped .jb-head h2 {
-    white-space: nowrap;
   }
   /* 筆錄紙跨好幾列：不讓它 25 行的內容高度撐大陪審團那一列（紙的高度由格子給，內容自己捲）。 */
   .shell:has(> .shell-body > .court-slot) > .shell-tabs > .record {
