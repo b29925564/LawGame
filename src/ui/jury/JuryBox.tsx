@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import type { Jury } from '../../engine/jury';
 import { useSettings } from '../../engine/settings';
 import { useT } from '../../i18n';
@@ -115,6 +115,7 @@ export interface JuryMember {
  * 每張卡下一條刻痕軌道（五格量化）；「顯示數值」才出數字，過門檻粗體＋▲＋軌道填滿＋門檻線。
  * 不顯示百分比，沒有紅綠表情。
  * collapsible：手機上收成 358×44 的刻痕條，整條點開。
+ * onPop：桌機收合後點開的浮層（.jb-pop）掛上／拿掉時交出去，筆錄紙據此把最新一句捲到浮層上緣之上。
  */
 export function JuryBox({
   episode,
@@ -125,6 +126,7 @@ export function JuryBox({
   threshold,
   summary,
   collapsible = false,
+  onPop,
 }: {
   episode: string;
   jurors: readonly JuryMember[];
@@ -136,6 +138,7 @@ export function JuryBox({
   /** 標題列右邊的一句（「0 / 12 傾向有罪」只在顯示數值時出現）。 */
   summary?: string;
   collapsible?: boolean;
+  onPop?: (el: HTMLDivElement | null) => void;
 }) {
   const t = useT();
   const scope = useScope();
@@ -147,6 +150,32 @@ export function JuryBox({
     setWasCollapsible(collapsible);
     setOpen(!collapsible);
   }
+
+  // 收合鈕和 Escape 都能收起；收起後焦點回到「點開看臉」，點開時焦點放在「陪審團 ▾」（不攔焦點，Tab 照常走出去）。
+  const strip = useRef<HTMLButtonElement>(null);
+  const fold = useRef<HTMLButtonElement>(null);
+  const moved = useRef(false);
+  const toggleOpen = (v: boolean) => {
+    moved.current = true;
+    setOpen(v);
+  };
+  useEffect(() => {
+    if (!moved.current) return;
+    moved.current = false;
+    (open ? fold : strip).current?.focus();
+  }, [open]);
+  const popped = collapsible && open;
+  useEffect(() => {
+    if (!popped) return;
+    const onKey = (e: KeyboardEvent) => {
+      // 抽屜或對話框開著時 Escape 是它們的。
+      if (e.key !== 'Escape' || e.defaultPrevented || document.querySelector('[aria-modal="true"]'))
+        return;
+      toggleOpen(false);
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [popped]);
 
   // 事件：這一步的 deltas 一次性觸發點頭與 J4（照「由 props 推導狀態」寫法，句數變了才算一次）。
   const [ev, setEv] = useState({
@@ -201,7 +230,8 @@ export function JuryBox({
           className="jb-strip"
           aria-expanded={false}
           aria-label={t('陪審團（收合）・點開看臉')}
-          onClick={() => setOpen(true)}
+          ref={strip}
+          onClick={() => toggleOpen(true)}
         >
           {jurors.map((j) => (
             <span
@@ -215,64 +245,75 @@ export function JuryBox({
     );
 
   return (
-    <section className="jurybox" aria-label={t('陪審團')}>
-      <div className="jb-head">
-        <h2>
-          {collapsible ? (
-            <button type="button" className="link" aria-expanded onClick={() => setOpen(false)}>
-              {t('陪審團')} ▾
-            </button>
-          ) : (
-            t('陪審團')
-          )}
-          {showNumbers && summary && <span className="muted"> {summary}</span>}
-        </h2>
-        {/* 「顯示數值」跟圖例同一列：法庭中欄還要放鏡頭條，陪審團面板不多佔一列（設計師 P3 裁定 5）。 */}
-        <span className="jb-tools">
-          <Legend />
-          {toggle}
-        </span>
-      </div>
-      <Tbd row>
-        <ul className="jb-grid">
-          {jurors.map((j, i) => {
-            const v = jury[j.id] ?? 0;
-            const over = v >= threshold;
-            return (
-              <li key={j.id} className="jb-cell" title={name(j.label)}>
-                <JurorFace
-                  look={lookOf(episode, j.id)}
-                  v={v}
-                  seat={seat(i)}
-                  notes={writing(j.id)}
-                  nod={nods[j.id]}
-                />
-                <span
-                  className={showNumbers ? (over ? 'jb-track th over' : 'jb-track th') : 'jb-track'}
-                  style={
-                    { '--tick': showNumbers ? v : tick(v), '--th': threshold } as CSSProperties
-                  }
-                  aria-hidden
-                />
-                {showNumbers && (
-                  <span className={over ? 'jb-num over' : 'jb-num'}>
-                    {over && '▲'}
-                    {v}
+    <section className={popped ? 'jurybox popped' : 'jurybox'} aria-label={t('陪審團')}>
+      {/* 浮層的框：桌機收合後點開時往上長（court.css .jb-pop）；其他時候 display: contents，不多一層。 */}
+      <div className="jb-pop" ref={popped ? onPop : undefined}>
+        <div className="jb-head">
+          <h2>
+            {collapsible ? (
+              <button
+                type="button"
+                className="link"
+                aria-expanded
+                ref={fold}
+                onClick={() => toggleOpen(false)}
+              >
+                {t('陪審團')} ▾
+              </button>
+            ) : (
+              t('陪審團')
+            )}
+            {showNumbers && summary && <span className="muted"> {summary}</span>}
+          </h2>
+          {/* 「顯示數值」跟圖例同一列：法庭中欄還要放鏡頭條，陪審團面板不多佔一列（設計師 P3 裁定 5）。 */}
+          <span className="jb-tools">
+            <Legend />
+            {toggle}
+          </span>
+        </div>
+        <Tbd row>
+          <ul className="jb-grid">
+            {jurors.map((j, i) => {
+              const v = jury[j.id] ?? 0;
+              const over = v >= threshold;
+              return (
+                <li key={j.id} className="jb-cell" title={name(j.label)}>
+                  <JurorFace
+                    look={lookOf(episode, j.id)}
+                    v={v}
+                    seat={seat(i)}
+                    notes={writing(j.id)}
+                    nod={nods[j.id]}
+                  />
+                  <span
+                    className={
+                      showNumbers ? (over ? 'jb-track th over' : 'jb-track th') : 'jb-track'
+                    }
+                    style={
+                      { '--tick': showNumbers ? v : tick(v), '--th': threshold } as CSSProperties
+                    }
+                    aria-hidden
+                  />
+                  {showNumbers && (
+                    <span className={over ? 'jb-num over' : 'jb-num'}>
+                      {over && '▲'}
+                      {v}
+                    </span>
+                  )}
+                  <span className="sr-only">
+                    {t('{seat} 號 {name}：{posture}', {
+                      seat: seat(i),
+                      name: name(j.label),
+                      posture: t(POSTURE[writing(j.id) ? 'J4' : poseFor(v)]),
+                    })}
+                    {showNumbers && `，${v}`}
                   </span>
-                )}
-                <span className="sr-only">
-                  {t('{seat} 號 {name}：{posture}', {
-                    seat: seat(i),
-                    name: name(j.label),
-                    posture: t(POSTURE[writing(j.id) ? 'J4' : poseFor(v)]),
-                  })}
-                  {showNumbers && `，${v}`}
-                </span>
-              </li>
-            );
-          })}
-        </ul>
-      </Tbd>
+                </li>
+              );
+            })}
+          </ul>
+        </Tbd>
+      </div>
     </section>
   );
 }

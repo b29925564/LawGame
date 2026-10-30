@@ -253,6 +253,7 @@ export function CourtRecord({
   onBeat,
   beat: beatOn = false,
   cover = null,
+  overlay = null,
   onCues,
 }: {
   entries: readonly RecordEntry[];
@@ -265,6 +266,8 @@ export function CourtRecord({
   onBeat?: (beat: ObjectionBeat, read: (tok: Tok) => number) => void;
   beat?: boolean;
   cover?: HTMLElement | null;
+  /** 桌機蓋在紙下半的浮層（點開的陪審團）：只影響捲到哪，紙不收邊。 */
+  overlay?: HTMLElement | null;
   onCues?: (cues: Cue[]) => void;
 }) {
   const t = useT();
@@ -316,6 +319,20 @@ export function CourtRecord({
       ),
     );
   }, [cover, size]);
+
+  // 桌機陪審團浮層蓋住紙的下半時：紙底下墊一段一樣高的空白，最新一行才捲得到浮層上緣之上（設計師 gate 2 第三輪）。
+  const [spare, setSpare] = useState(0);
+  useLayoutEffect(() => {
+    const el = box.current;
+    setSpare(
+      overlay && el
+        ? Math.max(
+            0,
+            Math.ceil(el.getBoundingClientRect().bottom - overlay.getBoundingClientRect().top),
+          )
+        : 0,
+    );
+  }, [overlay, size]);
 
   // 這一批新進來的話從第幾句開始（掛載時已經有的話不重播），以及這一次才被蓋上黑條的句子
   // （刪除證詞：之前沒蓋的，依序蓋上；設定集 7-3）。照 React 的「由 props 推導狀態」寫法，
@@ -442,18 +459,23 @@ export function CourtRecord({
     const lastEl = el.querySelector(`[data-row="${last.index}"]`);
     let target = headEl ? y(headEl) - size.row - padT : 0;
     if (lastEl) {
-      // 鏡頭插進來時，框底被蓋住的那段不算看得到。
+      // 鏡頭插進來或陪審團浮層蓋上時，框底被蓋住的那段不算看得到。
       const bottom = y(lastEl) + size.row;
-      const hidden = cover
-        ? Math.max(0, el.getBoundingClientRect().bottom - cover.getBoundingClientRect().top)
+      const under = cover ?? overlay;
+      const hidden = under
+        ? Math.max(0, el.getBoundingClientRect().bottom - under.getBoundingClientRect().top)
         : 0;
       const seen = el.clientHeight - padB - hidden;
       if (bottom > target + seen) target = bottom - seen;
+      el.scrollTop = Math.max(0, target);
+      // 紙按行吸附：被蓋住時吸到上一行會讓最後一行掉進浮層或鏡頭底下，改吸下一行。
+      if (hidden > 0 && el.scrollTop < target - 0.5) el.scrollTop += size.row;
+      return;
     }
     el.scrollTop = Math.max(0, target);
     // 只在句數、框或鏡頭變了的時候翻頁，不搶使用者往回翻的捲動位置。
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [entries.length, live, size?.row, size?.h, cover]);
+  }, [entries.length, live, size?.row, size?.h, cover, spare]);
 
   // 頁首、行號、Bates 是紙上印好的東西：用屬性交給 CSS 畫，不進文字內容，報讀與搜尋都只讀到證詞本身。
   // 每張頁首都帶卷、頁、Bates；手機上每張都黏在框頂，下一頁的頁首捲上來時蓋掉上一張，
@@ -642,6 +664,7 @@ export function CourtRecord({
             </span>
           )}
         </div>
+        {spare > 0 && <div className="rec-spare" aria-hidden style={{ height: spare }} />}
       </div>
     </div>
   );
