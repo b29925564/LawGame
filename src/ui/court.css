@@ -2822,7 +2822,8 @@ html[lang='en'] .stamp.rec-stamp b {
   display: inline-flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: flex-end;
+  /* 和標題同一列時靠右是 .jb-head 的 space-between 給的；被擠到下一列、自己又換成兩列時每列都靠左，中英一致（設計師 #315）。 */
+  justify-content: flex-start;
   gap: 4px 16px;
 }
 .jb-tools > .toggle {
