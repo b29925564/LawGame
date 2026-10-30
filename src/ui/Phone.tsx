@@ -1,18 +1,77 @@
+import { useEffect, useState } from 'react';
 import { phoneView, type PhoneView } from '../engine/episode/phone';
-import type { PhoneScene } from '../engine/episode/schema';
+import type { Line, PhoneScene } from '../engine/episode/schema';
 import { sceneChoices, useEpisode } from '../engine/game';
-import { useT } from '../i18n';
+import { useLang, useT } from '../i18n';
+import { PlaceBeat } from './ActCard';
 import { useScope } from './lang';
 import { useHand } from './Marks';
 import { Redaction } from './Redaction';
+import { OnPlate, onPlateOf, plateFor, usePlate, useShown, warmPlate } from './scenePlate';
+import { useSubs } from './SubCard';
 
 /** 冷開場：伊森的手機畫面。 */
 export function Phone({ scene }: { scene: PhoneScene }) {
   const { progress, advance, choose } = useEpisode();
   const t = useT();
   const scope = useScope();
+  const lang = useLang((s) => s.lang);
   const v = phoneView(scene, progress.step, sceneChoices(progress));
   useHand('coldopen', !scene.epilogue);
+  // 有定場鏡頭的那一格（do: caption 帶 place＋rig）：底圖照「場景 id＋那一格的 rig」找。
+  // 先演定場（圖＋左下場記），再把那一格的字當旁白字幕放在同一張圖上（和其他有底圖的場一樣，設計師 #296）。
+  const cap = v.step.do === 'caption' && v.step.rig && v.step.place ? v.step : null;
+  const plate = cap ? plateFor(progress.episode, { id: scene.id, rig: cap.rig }, lang) : null;
+  const shown = useShown(plate);
+  const [framed, setFramed] = useState<number | null>(null);
+  const slated = !!shown && framed === progress.step;
+  usePlate(slated ? shown : null, 'scene');
+  const narr: Line | null = cap
+    ? { who: '旁白', text: cap.text, mood: '平', thought: false }
+    : null;
+  const subs = useSubs(slated ? narr : null, progress.step, true);
+  // 下一格有底圖就先載，進那一格時不用等。
+  const ahead = scene.steps.slice(progress.step + 1).find((s) => s.do === 'caption' && s.rig);
+  const next =
+    ahead && ahead.do === 'caption' && ahead.rig
+      ? plateFor(progress.episode, { id: scene.id, rig: ahead.rig }, lang)
+      : null;
+  const [nextDesk, nextPhone] = [next?.desktop, next?.phone];
+  useEffect(() => {
+    for (const url of [nextDesk, nextPhone]) if (url) void warmPlate(url);
+  }, [nextDesk, nextPhone]);
+
+  if (cap && shown && !slated)
+    return (
+      <PlaceBeat
+        key={progress.step}
+        id={scene.id}
+        episode={progress.episode}
+        place={{ raw: cap.place ?? '', text: t(cap.place ?? '', scope), rig: cap.rig }}
+        onDone={() => setFramed(progress.step)}
+        cold
+      />
+    );
+
+  if (cap && slated)
+    return (
+      <OnPlate.Provider value={onPlateOf(shown)}>
+        <main className="scene dialogue plated subs cold-plated" aria-live="polite">
+          {subs.node}
+          <div className="sub-actions">
+            <button
+              className="primary next"
+              onClick={() => {
+                if (subs.step()) return;
+                advance();
+              }}
+            >
+              {t('繼續')}
+            </button>
+          </div>
+        </main>
+      </OnPlate.Provider>
+    );
 
   if (v.screen === 'caption' && v.step.do === 'caption')
     return (

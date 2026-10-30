@@ -290,7 +290,16 @@ const SLATE_HOLD = 2500;
  * 短黃線算那一格唯一的黃：字卡在的時候認領 slate（hand.ts），主按鈕先退成白框；開始淡出時把黃還給主按鈕，
  * 淡完整行拿掉，不留一個透明的字卡在畫面上（第一道關卡 N3）。
  */
-export function PlaceSlate({ id, place }: { id?: string; place: Place | null }) {
+export function PlaceSlate({
+  id,
+  place,
+  cold = false,
+}: {
+  id?: string;
+  place: Place | null;
+  /** 冷開場：整段不出現黃（11.5），短槓退成灰，也不認領 slate（主按鈕維持冷開場的白框）。 */
+  cold?: boolean;
+}) {
   const en = useLang((s) => s.lang) === 'en';
   const [where, right] = useSlate(place ?? undefined);
   // 窄的時候先省略事務所名、場所名，留住房間（房間才是這一場的資訊）。
@@ -320,7 +329,7 @@ export function PlaceSlate({ id, place }: { id?: string; place: Place | null }) 
   }, [lead, room, right, live]);
   useEffect(() => {
     if (!live) return;
-    const release = claimHand('slate');
+    const release = cold ? () => {} : claimHand('slate');
     const still = reducedMotion();
     const back = setTimeout(release, still ? SLATE_HOLD : SLATE_FADE + SLATE_HOLD);
     const gone = setTimeout(() => setDone(id), still ? SLATE_HOLD : 2 * SLATE_FADE + SLATE_HOLD);
@@ -329,10 +338,14 @@ export function PlaceSlate({ id, place }: { id?: string; place: Place | null }) 
       clearTimeout(gone);
       release();
     };
-  }, [live, id]);
+  }, [live, id, cold]);
   if (!place || !live) return null;
   return (
-    <p key={id} className={en ? 'place-slate en' : 'place-slate'} role="status">
+    <p
+      key={id}
+      className={['place-slate', en && 'en', cold && 'cold'].filter(Boolean).join(' ')}
+      role="status"
+    >
       <span className="ps-text">
         <span ref={whereRef} className={short ? 'ps-where short' : 'ps-where'}>
           {lead && <span className="ps-lead">{lead}</span>}
@@ -360,11 +373,14 @@ export function PlaceBeat({
   episode,
   place,
   onDone,
+  cold = false,
 }: {
   id: string;
   episode: string;
   place: Place;
   onDone: () => void;
+  /** 冷開場的定場：場記的短槓不用黃（PlaceSlate 的 cold）。 */
+  cold?: boolean;
 }) {
   const t = useT();
   const wait = reducedMotion() ? SLATE_HOLD : 2 * SLATE_FADE + SLATE_HOLD;
@@ -394,7 +410,7 @@ export function PlaceBeat({
           {t('定場')}
         </span>
       )}
-      {!waiting && <PlaceSlate id={id} place={place} />}
+      {!waiting && <PlaceSlate id={id} place={place} cold={cold} />}
     </main>
   );
 }

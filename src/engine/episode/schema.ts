@@ -88,7 +88,14 @@ const when = z.object({
  * 除了 choose、ride、badge、door 要玩家做特定操作，其餘步驟點「繼續」往下。
  */
 const phoneStep = z.discriminatedUnion('do', [
-  z.object({ do: z.literal('caption'), time: time.optional(), text: z.string() }),
+  z.object({
+    do: z.literal('caption'),
+    time: time.optional(),
+    text: z.string(),
+    /** 這一格有定場鏡頭（場景底圖）：地點是場記左欄、rig 是燈組（rigs.yaml）；底圖照「場景 id＋rig」找。 */
+    place: z.string().optional(),
+    rig: z.string().optional(),
+  }),
   z.object({ do: z.literal('notify'), time: time.optional(), message }),
   z.object({ do: z.literal('say'), time: time.optional(), message }),
   z.object({

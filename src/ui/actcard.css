@@ -508,6 +508,10 @@
   margin-top: calc(0.7em - 1px);
   background: var(--hl);
 }
+/* 冷開場整段沒有黃（11.5：第一道黃留給片頭 0:29）：短槓還在（場記的形狀不變），顏色退成場記灰。 */
+.place-slate.cold::before {
+  background: var(--cine-muted);
+}
 @keyframes place-slate {
   0% {
     opacity: 0;

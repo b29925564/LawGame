@@ -29,6 +29,11 @@ court-verdict:
 # 和算圖 manifest 的 card_kelvin 同一個值。label、time 要等於地點裡寫的日子與時刻（rigs.test.ts 會擋）。
 # 盧卡斯的辦公室有窗（使用者 2026-10-10 定：港灣側朝西南 225°），白天三處是窗外天光 --k-daylight 5600（日照表第 21、30、31 行：
 # 西南窗上午沒有直射，只有天光）。6500 是螢幕和手機的色溫，不用在房間。
+# 冷開場 22:49，31 樓財務長辦公室：門縫外走廊的燈管（第 3 章第 2 格，RD-ART-0505 manifest 的 corridor 層 4100K）。
+ep1-31f-fri:
+  label: 週五
+  time: '22:49'
+  kelvin: 4100
 # 大廳晨光（第 5 章場景光表）。
 ep1-firm-lobby-mon:
   label: 週一
