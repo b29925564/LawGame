@@ -420,20 +420,29 @@ function CourtroomScreen({ scene: raw }: { scene: TrialScene }) {
             bates={bates}
             className="full"
           />
-          <dl className="stats">
-            <dt>{t('成功彈劾')}</dt>
-            <dd>
-              {st.impeachments} / {scene.witness.claims.length}
-            </dd>
+          {/* 一列一組（div 包 dt＋dd）：窄螢幕放不下時數值整個換到標籤下一行，不在字中間斷（第二道關卡 7075839 舊問題 9）。 */}
+          <dl className="stats recess-stats">
+            <div>
+              <dt>{t('成功彈劾')}</dt>
+              <dd>
+                {st.impeachments} / {scene.witness.claims.length}
+              </dd>
+            </div>
             {/* 成立的異議（問題塗黑、證人沒答）和整段刪除的證詞都算：數的是筆錄上的黑條。 */}
-            <dt>{t('筆錄上的黑條')}</dt>
-            <dd>{t('{n} 處', { n: st.struck })}</dd>
-            <dt>{t('剩餘法官耐心')}</dt>
-            <dd>
-              {Math.max(0, st.patience)} / {scene.patience}
-            </dd>
-            <dt>{t('調查花掉的工時')}</dt>
-            <dd>{deskDone && deskScene ? `${deskDone.spent} / ${deskScene.hours}` : '—'}</dd>
+            <div>
+              <dt>{t('筆錄上的黑條')}</dt>
+              <dd>{t('{n} 處', { n: st.struck })}</dd>
+            </div>
+            <div>
+              <dt>{t('剩餘法官耐心')}</dt>
+              <dd>
+                {Math.max(0, st.patience)} / {scene.patience}
+              </dd>
+            </div>
+            <div>
+              <dt>{t('調查花掉的工時')}</dt>
+              <dd>{deskDone && deskScene ? `${deskDone.spent} / ${deskScene.hours}` : '—'}</dd>
+            </div>
           </dl>
           <CourtJury scene={scene} jury={st.jury} deltas={{}} eventKey={0} />
           <div className="lines">

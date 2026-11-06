@@ -2052,6 +2052,21 @@ html[lang='en'] .vform .fh .c {
   background: var(--surface);
   box-shadow: 0 8px 0 var(--surface);
 }
+/*
+ * 手機：「打電話請示」放在底部行動列的第一列，整列寬（Negotiation.tsx）。捲動的內容區底緣就是按鈕上緣，
+ * 條件階梯捲到哪裡都不會壓在按鈕底下（第二道關卡 7075839 舊問題 8；設計師 v93 裁定 一之 4）。
+ */
+.shell-foot:has(> .nego-pin) {
+  flex-wrap: wrap;
+}
+.shell-foot > .nego-pin {
+  flex: 1 0 100%;
+  display: grid;
+}
+/* 「−1 回合」「−1 round」整個放一行：放不下就整個換到下一行，不在字中間斷、底色不斷開。 */
+.nego-pin .cost {
+  white-space: nowrap;
+}
 /* 調解的條件階梯：每一檔信心門檻對應的條件，目前這一檔用螢光標示。 */
 .nego-ladder {
   /* 價和標記不要隔半個畫面（體驗評測 v89）。 */

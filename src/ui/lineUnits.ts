@@ -43,6 +43,8 @@ const KEEP = [
   ...['維多莉亞', '惠特洛克', '海爾', '莫羅', '潔德', '戴文', '奧卡福', '丹尼爾', '亞瑟', '凱瑟琳'],
   ...['崔佛', '林肯', '瑪莉索', '米爾斯', '維加', '艾德勒', '蘿莎', '赫克托', '卡爾德', '柯瓦斯基'],
   ...['普莉亞', '布魯克斯', '旁白', '語音', '法官', '法院系統', '卡爾德快遞'],
+  // 第二道關卡 7075839 舊問題 6：冷開場黑底字卡裡被拆開的詞（「財務長｜辦公室」「儀｜表板」「稽｜核部」）。
+  ...['財務長辦公室', '財務長', '儀表板', '稽核部', '開走'],
 ];
 /** 開頭的「誰的說法：」「驗屍照片：」這種標籤，冒號前面不超過這麼多字就整組不拆，要斷斷在冒號後（#246 r8）。 */
 const LABEL = 8;
@@ -224,5 +226,84 @@ export function nameUnits(text: string): NameUnit[] {
     before.p = last.p;
     out.pop();
   }
+  return out;
+}
+
+/** 虛詞（介詞、連詞、助詞、副詞）與代名詞：後面沒有標點時，fitLine 不讓它留在行尾。 */
+const TRAIL = /[的之與和及或在於對把被為從到以而並是我你他她它了著過沒不又也都就還再很]$/;
+/** 行尾可以停的地方：標點或空白。 */
+const STOP = /[\p{P}\s]$/u;
+/** 書名號、篇名號裡的一整段（〈給稽核部的說明_v3〉）不拆，字數上限。 */
+const TITLE_MAX = 12;
+/** 最後一行至少幾個字（標點不算）。 */
+const MIN_LAST = 3;
+const letters = (s: string) => [...s].filter((c) => /[\p{L}\p{N}]/u.test(c)).length;
+
+/** 方位詞與助詞（「桌上」「門前」「登出的」「打了」）：單獨一個字時黏前一個詞。 */
+const BACK = /^[上下裡內外前後中的之了著過]\p{P}*$/u;
+/** 單獨一個漢字的單位（後面可以帶標點）。 */
+const SINGLE = /^\p{Script=Han}\p{P}*$/u;
+
+/**
+ * fitLine 的換行單位（黑底字卡；設計師 v93 第二道關卡裁定 一之 2）。從 proseUnits 的詞（Intl.Segmenter 斷詞、本作的固定詞）開始：
+ * - 方位詞、助詞（上、前、的、了、著）單獨一個字時黏前一個詞（「儀表板上」「電腦前」「打了」）；
+ * - ICU 切碎的單字：連續的併成一個詞（「廂型車」）；只剩一個的，帶標點就黏前一個詞（「方向盤。」），不然黏後一個詞（「沒登出」「小公寓」）；
+ * - 行尾不留虛詞：以虛詞或代名詞收尾、後面沒有標點的單位，連同後面的空白黏下一個單位（「沒有｜」「按了｜1」「他｜拿出」都不會出現）；
+ * - 〈〉《》裡的篇名整段不拆（十二個字以內）；
+ * - 最後一行至少 3 個字（標點不算）：最後幾個單位黏成一組，不剩「袋。」這種孤字。
+ * 一個單位內部不斷開；字一個不少。沒有漢字的字串（英文）原樣回傳。
+ */
+export function fitLineUnits(text: string): string[] {
+  if (!HAN.test(text)) return [text];
+  const glued = (prev: string | undefined) => !!prev && !STOP.test(prev);
+  const a: string[] = [];
+  for (const u of proseUnits(text, false, false)) {
+    if (BACK.test(u) && glued(a[a.length - 1])) a[a.length - 1] += u;
+    else a.push(u);
+  }
+  // 切碎的單字：一串連續的（標點結束這一串）併成一個；只剩一個的找鄰居黏。
+  const us: string[] = [];
+  for (let i = 0; i < a.length; i++) {
+    if (!SINGLE.test(a[i])) {
+      us.push(a[i]);
+      continue;
+    }
+    let j = i;
+    while (j < a.length - 1 && !STOP.test(a[j]) && SINGLE.test(a[j + 1])) j++;
+    const g = a.slice(i, j + 1).join('');
+    if (j === i && !STOP.test(g) && i < a.length - 1 && a[i + 1].trim()) {
+      us.push(g + a[i + 1]);
+      i++;
+    } else if (j === i && STOP.test(g) && glued(us[us.length - 1])) us[us.length - 1] += g;
+    else us.push(g);
+    i = Math.max(i, j);
+  }
+  // 篇名：從開的〈《到收的〉》，整段併成一個。
+  for (let i = 0; i < us.length; i++) {
+    if (!/^[〈《]/.test(us[i])) continue;
+    let j = i;
+    while (j < us.length - 1 && !/[〉》]/.test(us[j])) j++;
+    const all = us.slice(i, j + 1).join('');
+    if (j > i && /[〉》]/.test(us[j]) && [...all].length <= TITLE_MAX + 2)
+      us.splice(i, j - i + 1, all);
+  }
+  const out: string[] = [];
+  let carry = '';
+  for (const u of us) {
+    const w = carry + u;
+    // 虛詞收尾（或虛詞後面的空白）：黏到下一個單位。
+    if (!u.trim() ? !!carry : !STOP.test(w) && TRAIL.test(w)) carry = w;
+    else {
+      out.push(w);
+      carry = '';
+    }
+  }
+  if (carry) {
+    if (out.length) out[out.length - 1] += carry;
+    else out.push(carry);
+  }
+  let k = out.length - 1;
+  while (k > 0 && letters(out.slice(k).join('')) < MIN_LAST) k--;
+  if (k < out.length - 1) out.splice(k, out.length - k, out.slice(k).join(''));
   return out;
 }
