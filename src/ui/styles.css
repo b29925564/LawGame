@@ -138,7 +138,9 @@
    不是白底亮鈕壓在黑卡上（設計師 v93 第二道關卡裁定三-5）。 */
 :root:has(.cold-scope),
 :root:has(.title-intro),
-:root:has(.act-stage) {
+:root:has(.act-stage),
+:root:has(.vbench),
+:root:has(.vdict:not([data-stage='done'])) {
   color-scheme: dark;
 }
 
