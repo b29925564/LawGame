@@ -405,8 +405,31 @@
   .act-card.latin .act-big {
     writing-mode: horizontal-tb;
   }
+  /* 英文幕名先在完整的字之間換行（不斷字、不加連字號），換了還放不下才由 fitPortrait 縮字（設計師 v93 第二道關卡裁定 一之 3）。 */
   .act-card.latin .act-big {
-    font-size: min(56px, calc(1100 * var(--u) / var(--n, 2)));
+    font-size: 56px;
+    max-width: calc(100cqw - 52 * var(--u));
+    overflow-wrap: normal;
+    word-break: normal;
+    hyphens: manual;
+    text-wrap: balance;
+  }
+  /*
+   * 幕序與幕名放在標題欄（含案號）下緣和場記線上緣之間（ActCard.tsx 的 fitPortrait 量好寫進 --ah-top／--ah-bottom）：
+   * 標題欄 14px、場記 12px 的下限在窄卡上會比 420u 的比例高，照比例放的幕名會疊上去（第二道關卡 7075839 舊問題 7）。
+   * 直排的中文幕名一行最長就是這一段的高，放不下在詞界換到下一行。
+   */
+  .act-card[data-fit] .act-head {
+    top: var(--ah-top);
+    bottom: var(--ah-bottom);
+    transform: none;
+    align-items: center;
+  }
+  .act-card.latin[data-fit] .act-head {
+    justify-content: center;
+  }
+  .act-card:not(.latin)[data-fit] .act-big {
+    max-height: var(--ah-h);
   }
 }
 

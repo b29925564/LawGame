@@ -96,6 +96,11 @@
   --fs-ui-label: calc(12px * var(--text-scale));
   --fs-ui-meta: calc(13px * var(--text-scale));
   --fs-ui-cap: calc(14px * var(--text-scale));
+  /*
+   * 頂列右邊讓給選單鈕的寬：鈕右緣離視窗 8、鈕寬（左右內距 28＋框 2＋「Menu」約 3 個 --fs-ui-cap）、再隔 ≥8。
+   * 字級 100% 時是原本的 84px；放大時跟著鈕一起變寬，頂列的字才不會伸進鈕裡（第二道關卡 7075839 舊問題 10）。
+   */
+  --menu-room: calc(42px + 3 * var(--fs-ui-cap));
   --fs-ui-row: calc(15px * var(--text-scale));
   --fs-ui-body: calc(15px * var(--text-scale));
   --fs-ui-head: calc(17px * var(--text-scale));
@@ -1345,8 +1350,8 @@ details summary {
   align-items: center;
   gap: 4px 12px;
   flex-wrap: wrap;
-  /* 右上角的選單鈕會蓋住這一列，留出它的寬度。 */
-  padding: 0 84px 0 2px;
+  /* 右上角的選單鈕會蓋住這一列，留出它的寬度；字放不下就換到下一行，不用省略號。 */
+  padding: 0 var(--menu-room) 0 2px;
 }
 .taskbar {
   flex-wrap: nowrap;
@@ -1372,6 +1377,16 @@ details summary {
   line-height: 1.35;
   font-size: var(--fs-ui-meta);
   letter-spacing: var(--track-label);
+}
+@media (max-width: 1023px) {
+  /* 手機：期限字在工時旁邊放不下 5.5em 寬時，整段換到第二列（靠右），不擠成一字一行（第二道關卡 7075839 舊問題 10）。 */
+  .taskbar {
+    flex-wrap: wrap;
+  }
+  .taskbar > .muted {
+    flex: 1 1 0;
+    min-width: 5.5em;
+  }
 }
 .bench .eyebrow,
 .bench .patience {
@@ -3003,6 +3018,38 @@ fieldset.relations.compact {
   text-align: right;
 }
 
+/*
+ * 休庭的統計表：數值是短的分數與次數，整個放一行，不換行也不被切；標籤照完整的字換行。
+ * 一列放不下「標籤最長的那個字＋數值」時，數值整個換到標籤下一行、靠右（第二道關卡 7075839 舊問題 9：
+ * 320 英文 150%「0 passages」被拆開、右緣切出畫面；設計師 v93 裁定 一之 5）。
+ */
+.stats.recess-stats {
+  display: block;
+}
+.recess-stats > div {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px var(--s3);
+  padding: 10px 14px;
+}
+.recess-stats > div + div {
+  border-top: 1px solid var(--border);
+}
+.recess-stats dt,
+.recess-stats dd {
+  padding: 0;
+}
+.recess-stats dt {
+  flex: 1 1 0;
+  min-width: min-content;
+}
+.recess-stats dd {
+  flex: 0 0 auto;
+  margin-left: auto;
+  white-space: nowrap;
+}
+
 /* 陪審團：12 枚小頭像。 */
 .jurors {
   list-style: none;
@@ -3248,8 +3295,10 @@ fieldset.relations.compact {
   max-width: 560px;
   margin-inline: auto;
 }
+/* 時刻與正文只歸零上下的 margin：左右要留給 .cine > * 的 auto 置中，不然寬於 608 時字貼左、「繼續」在置中欄右緣
+   （第二道關卡 7075839 舊問題 5）。 */
 .cine-time {
-  margin: 0;
+  margin-block: 0;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -3266,7 +3315,7 @@ fieldset.relations.compact {
   background: var(--cine-line);
 }
 .cine-text {
-  margin: 0;
+  margin-block: 0;
   font-family: var(--font-doc);
   font-size: calc(20px * var(--text-scale));
   line-height: 2;
@@ -7047,7 +7096,7 @@ button.found:hover:not(:disabled) {
     min-height: 44px;
     display: flex;
     align-items: center;
-    padding-right: 84px;
+    padding-right: var(--menu-room);
   }
 }
 /* 結辯的論點要整段看得到，不截成「……」（體驗評測）。 */

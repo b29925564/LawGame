@@ -5,7 +5,7 @@ import type { NegotiationScene } from '../engine/episode/schema';
 import { closingArgs, negoState, trialRisk, useEpisode } from '../engine/game';
 import { useMoney, useT } from '../i18n';
 import { CommitBar } from './Commit';
-import { CardPick, EvidenceDrawer } from './Evidence';
+import { CardPick, EvidenceDrawer, useWide } from './Evidence';
 import { useScope } from './lang';
 import { Speech } from './Portrait';
 import { Shell, Tabs, Transcript } from './Shell';
@@ -28,6 +28,7 @@ export function Negotiation({ scene }: { scene: NegotiationScene }) {
   // 定案樣式（UX 規格 decision-cost 三）：接受與離席都是選了就不能改，先選再看帳。
   const [choice, setChoice] = useState<'take' | 'walk' | null>(null);
   const client = t(scene.client.name, scope);
+  const wide = useWide();
   const opp = t(scene.opponent.name, scope);
   // 攤牌、虛張聲勢之前記下信心和條件，出手後才講得出「有沒有用」（體驗評測 v88：攤牌後開價沒動時毫無回饋）。
   // 打電話也記：電話換到了什麼（上限、附帶條款）要留在畫面上，手機上授權那列常在畫面外（體驗評測 v89）。
@@ -153,6 +154,25 @@ export function Negotiation({ scene }: { scene: NegotiationScene }) {
       </main>
     );
 
+  // 「打電話請示」：這一頁唯一的主按鈕。
+  // 桌機直接放在框裡：框比畫面長時黏在框底，永遠看得到（設計師第三輪）。
+  // 手機的內容區只有三百多 px 高，黏在框底會蓋住條件階梯（第二道關卡 7075839 舊問題 8）：改放到底部的行動列，
+  // 內容區的底就在按鈕上緣，捲到哪裡都不蓋住內容（設計師 v93 裁定 一之 4）。
+  const pin = tab === 'offer' && !ok && nego.canCall(scene, st) && (
+    <div className="nego-pin">
+      <button
+        className="wide primary"
+        onClick={() => {
+          snap(true);
+          callClient();
+        }}
+      >
+        {t('打電話請示 {name}', { name: t(scene.client.name, scope) })}
+        <span className="cost">{t('−1 回合')}</span>
+      </button>
+    </div>
+  );
+
   return (
     <Shell
       resetKey={tab}
@@ -201,6 +221,7 @@ export function Negotiation({ scene }: { scene: NegotiationScene }) {
       }
       foot={
         <>
+          {!wide && pin}
           <EvidenceDrawer />
           <button
             className="wide"
@@ -268,21 +289,7 @@ export function Negotiation({ scene }: { scene: NegotiationScene }) {
             <Speech key={i} line={l} wrap />
           ))}
           {moveNote}
-          {/* 主按鈕直接放在框裡：框比畫面長時黏在框底，永遠看得到（設計師第三輪）。 */}
-          {!ok && nego.canCall(scene, st) && (
-            <div className="nego-pin">
-              <button
-                className="wide primary"
-                onClick={() => {
-                  snap(true);
-                  callClient();
-                }}
-              >
-                {t('打電話請示 {name}', { name: t(scene.client.name, scope) })}
-                <span className="cost">{t('−1 回合')}</span>
-              </button>
-            </div>
-          )}
+          {wide && pin}
           <div className="stack nego-actions">
             <button
               className="wide"

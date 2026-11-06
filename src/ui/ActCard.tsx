@@ -9,7 +9,7 @@ import {
 import { episodeOf, useEpisode } from '../engine/game';
 import { useLang, useT } from '../i18n';
 import { straight } from '../i18n/curly';
-import { prose } from './prose';
+import { fitLine, prose } from './prose';
 import { reducedMotion } from './a11y';
 import { claimHand } from './hand';
 import { rigOf } from './rigs';
@@ -148,6 +148,59 @@ function useCut(onDone?: () => void, wait?: number, hold = false, plated = false
   return { black, skip: () => auto && setBlack(true) };
 }
 
+/** 9:16 直排版：幕名區上下各離標題欄、場記線多遠（px）；幕名最小縮到多少（px）。 */
+const HEAD_GAP = 12;
+const BIG_MIN = 14;
+
+/**
+ * 9:16 直排版的幕序與幕名（設計師 v93 第二道關卡裁定 一之 3）：放在標題欄（含案號）下緣和場記線上緣之間，
+ * 三者互不重疊、都在卡裡。標題欄與場記照 11.3 的 px 下限（14／12），窄卡上比例算出來的位置會疊在一起，所以量實際的方框。
+ * 幕名先換行（中文在 fitLine 的詞界、英文在完整的字之間），換了還放不下才一次縮 1px，最小 14px。
+ * 寬版（2.35:1）照 1360u 的比例，不動。
+ */
+function fitPortrait(card: HTMLElement) {
+  const head = card.querySelector<HTMLElement>('.act-head');
+  const big = card.querySelector<HTMLElement>('.act-big');
+  const caption = card.querySelector<HTMLElement>('.act-caption');
+  const below = card.querySelector<HTMLElement>('.act-slate') ?? card.querySelector('.act-foot');
+  if (!head || !big || !caption) return;
+  big.style.fontSize = '';
+  delete card.dataset.fit;
+  for (const v of ['--ah-top', '--ah-bottom', '--ah-h']) card.style.removeProperty(v);
+  if (card.clientWidth >= card.clientHeight) return;
+  const c = card.getBoundingClientRect();
+  const top = caption.getBoundingClientRect().bottom - c.top + HEAD_GAP;
+  const bottom = (below ? c.bottom - below.getBoundingClientRect().top : 0) + HEAD_GAP;
+  card.style.setProperty('--ah-top', `${top}px`);
+  card.style.setProperty('--ah-bottom', `${bottom}px`);
+  card.style.setProperty('--ah-h', `${Math.max(0, c.height - top - bottom)}px`);
+  card.dataset.fit = '';
+  // 左右留 26u（和標題欄、場記同一條邊）。
+  const side = (c.width * 26) / 420;
+  // 量字實際佔的範圍（Range）：一個長字比幕名的寬度上限還長時，會撐出方框外，方框本身量不到。
+  const parts = [big, ...card.querySelectorAll<HTMLElement>('.act-kick')].map((e) => {
+    const r = document.createRange();
+    r.selectNodeContents(e);
+    return r;
+  });
+  const fits = () => {
+    const h = head.getBoundingClientRect();
+    return parts.every((p) => {
+      const r = p.getBoundingClientRect();
+      return (
+        r.top >= h.top - 0.5 &&
+        r.bottom <= h.bottom + 0.5 &&
+        r.left >= c.left + side - 0.5 &&
+        r.right <= c.right - side + 0.5
+      );
+    });
+  };
+  for (let px = parseFloat(getComputedStyle(big).fontSize); !fits() && px > BIG_MIN;) {
+    px = Math.max(BIG_MIN, px - 1);
+    big.style.fontSize = `${px}px`;
+  }
+}
+
 /**
  * 幕卡（設定集 11.3 RD-ART-1103A）：一份訴狀的案件標題欄，被一根燈管照著。2.35:1 黑底，卡寬窄於 900px 切 9:16。
  * 進場：燈管兩次脈衝 900ms，接著黑條每 83ms 抽走一條（標題欄前三行 → 後兩行 → 案號 → 幕序 → 幕名 → 場記左 → 場記右）。
@@ -182,6 +235,22 @@ export function ActCard({
   const { plaintiff, defendant, caseNo } = useCaseTerms();
   const [where, right] = useSlate(place);
   const d = (n: number) => ({ '--d': n }) as CSSProperties;
+  const cardRef = useRef<HTMLElement>(null);
+  useLayoutEffect(() => {
+    const card = cardRef.current;
+    if (!card) return;
+    let live = true;
+    const fit = () => live && fitPortrait(card);
+    fit();
+    // 卡的大小只跟視窗走（字不會撐開卡）：卡變大小、字型載完都重量一次。
+    const ro = new ResizeObserver(fit);
+    ro.observe(card);
+    void document.fonts?.ready.then(fit);
+    return () => {
+      live = false;
+      ro.disconnect();
+    };
+  }, [headline.kicker, headline.title, where, right, en]);
   const [comma, stop] = en ? [',', '.'] : ['，', '。'];
   // 案件標題欄五行：當事人、身分（縮排）、「訴」；黑條前三行一起抽、後兩行一起抽。
   const rows: [string, boolean, number][] = [
@@ -199,6 +268,7 @@ export function ActCard({
     >
       <div className="act-wrap">
         <section
+          ref={cardRef}
           className={[
             'act-card',
             !CJK.test(headline.title) && 'latin',
@@ -245,7 +315,7 @@ export function ActCard({
             <h1 className="act-title">
               <span className="rd" style={d(5)}>
                 <span className="act-big" style={{ '--n': width(headline.title) } as CSSProperties}>
-                  {headline.title}
+                  {fitLine(headline.title)}
                 </span>
               </span>
             </h1>
