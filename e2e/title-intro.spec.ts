@@ -292,3 +292,18 @@ test('減少動態：第二集 0:23 提醒卡直接消失，「已略過」直�
     'none',
   );
 });
+
+test('0:29 輪廓光照實際光向：西窗在畫面左邊，光在左肩和後腦左側', async ({ page }) => {
+  await open(page);
+  for (const [, ms] of ORDER.slice(0, 4)) await page.clock.fastForward(ms);
+  await expect(page.locator('.title-intro')).toHaveAttribute('data-shot', 'lucas');
+  const [rim, body] = await Promise.all(
+    ['.ti-back-rim', '.ti-back-body'].map((s) =>
+      page.locator(s).evaluate((e) => {
+        const r = e.getBoundingClientRect();
+        return { left: r.left, right: r.right, mid: r.left + r.width / 2 };
+      }),
+    ),
+  );
+  expect(rim.right).toBeLessThan(body.mid);
+});

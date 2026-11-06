@@ -238,7 +238,7 @@
   font-style: normal;
   color: var(--redact-label);
 }
-/* 盧卡斯的背影：無臉替身剪影（立牌色 #07090c），右肩一道西窗輪廓光。待放 AI 立繪。 */
+/* 盧卡斯的背影：無臉替身剪影（立牌色 #07090c），西窗在畫面左邊，左肩和後腦左側一道輪廓光。待放 AI 立繪。 */
 .ti-back {
   position: absolute;
   left: 14%;

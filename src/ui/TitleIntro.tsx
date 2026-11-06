@@ -246,14 +246,14 @@ function Lucas() {
     <>
       <Plate desk={courtDesk40} phone={courtPhone40} className="rack" />
       <svg className="ti-back" viewBox="0 0 200 220" preserveAspectRatio="xMidYMax meet">
-        {/* 後腦、碎髮、脖子、兩肩：無臉替身，只有剪影。右緣一道西窗輪廓光。 */}
+        {/* 後腦、碎髮、脖子、兩肩：無臉替身，只有剪影。西窗在畫面左邊：輪廓光在左肩和後腦左側。 */}
         <path
           className="ti-back-body"
           d="M100 18c-24 0-40 18-40 42 0 16 6 28 15 36l-3 20c-22 4-48 12-60 26-8 10-12 40-12 78h200c0-38-4-68-12-78-12-14-38-22-60-26l-3-20c9-8 15-20 15-36 0-24-16-42-40-42z"
         />
         <path
           className="ti-back-rim"
-          d="M128 34c8 8 12 18 12 26 0 16-6 28-15 36M131 120c21 5 40 12 50 24 6 8 9 30 10 66"
+          d="M72 34c-8 8-12 18-12 26 0 16 6 28 15 36M69 120c-21 5-40 12-50 24-6 8-9 30-10 66"
         />
       </svg>
       <div className="ti-page">
