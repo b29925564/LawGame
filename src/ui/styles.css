@@ -132,8 +132,10 @@
   color-scheme: dark;
 }
 /* 冷開場整段是鏡頭層，不跟主題（設定集第 2 章、11.5 ③）：在畫面上的時候整頁照深色解，
-   手機螢幕、字幕框、選單鈕都和深色主題一樣（設計師 #316 審查 2）。只限冷開場（.cold-scope），尾聲的手機戲不算。 */
-:root:has(.cold-scope) {
+   手機螢幕、字幕框、選單鈕都和深色主題一樣（設計師 #316 審查 2）。只限冷開場（.cold-scope），尾聲的手機戲不算。
+   片頭（.title-intro）也是鏡頭層：選單鈕照深色解（白框）。 */
+:root:has(.cold-scope),
+:root:has(.title-intro) {
   color-scheme: dark;
 }
 
