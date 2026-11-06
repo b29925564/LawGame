@@ -6,6 +6,7 @@ import { canCut, type Card } from './court/subtitleSplit';
  * 記號和法庭的 judgeBreaks.ts（#290）同一套，標記取代原本的空白，字串本身不帶記號：
  *   |  分張點，第一優先（先只用這些；整句每一段都放得進兩行就夠了）
  *   ¦  分張點，第二優先（第一優先用完還有段放不進兩行，才再加這些）
+ *   ‖  分張點，第三優先（只給最窄的手機加大字級：前兩級都用上還放不進兩行，才再加這些）
  *   /  只換行（不分張）
  *   ~  勉強的換行點（只有 / 與分張點都放不進才用）
  * 沒有用到的分張點，在合成一張時當換行點用。
@@ -20,23 +21,28 @@ export const PLATE_BREAKS: readonly string[] = [
   'Halfway down he stops|and looks back/at Lucas.',
   "And it has to stand|on the arguments/you've actually got.",
   "His hands are cuffed/in front of him;|he can't offer one.",
-  'At the door the bailiff/pauses long enough|for Ethan to look back.',
+  'At the door¦the bailiff/pauses long enough|for Ethan/to look back.',
   "On the courthouse/steps,|Ethan's sister/is waiting for him.",
-  'Change the story/halfway|and all they remember/is that you changed it.',
-  // ── 冷開場 22:49（31 樓）：介面與操作 #3 先標，待設計師確認 ──
-  'Ethan kneels¦and feels for a pulse/at the neck.',
-  'When he stands,/there is blood on his cuff¦and a crystal trophy/in his hand.',
+  'Change the story/halfway|and all they remember¦is that/you changed it.',
+  // ── 冷開場 22:49（31 樓）：體驗評測 v93 關卡 2 重標，最窄 320 寬加 150% 也照這裡斷 ──
+  // 「Nothing.」接在前一句後面同一個單位（subCards.ts unitsOf），不併進下一句。
+  'Voss is on the carpet‖beside his desk.',
+  'Ethan kneels and feels for a pulse¦at the neck. Nothing.',
+  'When he stands,‖there is blood on his cuff¦and a crystal trophy in his hand.',
 ];
 
 /**
- * 勉強的換行點（~）用到的組合：只有「最窄手機（卡內寬 296px）加字幕 150%」，每一個都要設計師確認（#290 同一個規矩）。
+ * 勉強的換行點（~）用到的組合：只有最窄的手機（卡內寬 296px 加 150%、268px 加 125／150%），每一個都要設計師確認（#290 同一個規矩）。
  * 單元測試釘住這份清單；多一處都要再給設計師看。
  */
 export const WEAK_USED: readonly string[] = [
   'The side door of the~sentencing courtroom leads to the holding cells. @296px/150%',
+  // 最窄的手機（320 寬，卡內寬 268px）：同一處，125% 起就用到（體驗評測 v93 關卡 2 補量 320）。
+  'The side door of the~sentencing courtroom leads to the holding cells. @268px/125%',
+  'The side door of the~sentencing courtroom leads to the holding cells. @268px/150%',
 ];
 
-export type MarkKind = '1' | '2' | 'L' | 'W';
+export type MarkKind = '1' | '2' | '3' | 'L' | 'W';
 
 export interface Marked {
   words: string[];
@@ -50,9 +56,10 @@ export function parseMarked(src: string): Marked {
   const words: string[] = [];
   const kinds: ('' | MarkKind)[] = [];
   let kind: '' | MarkKind = '';
-  for (const tok of src.split(/([|¦/~ ])/)) {
+  for (const tok of src.split(/([|¦‖/~ ])/)) {
     if (tok === '|') kind = '1';
     else if (tok === '¦') kind = '2';
+    else if (tok === '‖') kind = '3';
     else if (tok === '/') kind = 'L';
     else if (tok === '~') kind = 'W';
     else if (tok === ' ' || tok === '') continue;
@@ -79,6 +86,12 @@ export const widthOf = (t: string, measure: Measure) => (measure ? measure(t) : 
  * 沒有標換行點的一張卡排成一行或兩行：放得下一行就一行；不然只在合片語規則的地方換行（冠詞、介系詞、稱謂後面不換），
  * 兩半都不比框寬（不放寬），取兩半最勻的，一個字的行排在最後（沒有別的選擇才用）。排不進兩行回傳 null。
  */
+const PHRASE_START = new Set(
+  'and but or so because when while if which who that in on at to of from for with by into onto beside under over about through between after before'.split(
+    ' ',
+  ),
+);
+
 export function twoLines(ws: string[], em: number, measure: Measure): string[] | null {
   const wd = (a: number, b: number) => widthOf(ws.slice(a, b).join(' '), measure);
   const n = ws.length;
@@ -90,7 +103,9 @@ export function twoLines(ws: string[], em: number, measure: Measure): string[] |
     const l = wd(0, c);
     const r = wd(c, n);
     if (l > em || r > em) continue;
-    const sc = Math.abs(l - r) + (c === 1 || n - c === 1 ? 1000 : 0);
+    // 切在介系詞、連接詞前面（片語的開頭）優先：差 0.15 行寬以內就選它，不切開「a crystal／trophy」這種名詞片語。
+    const lead = PHRASE_START.has(ws[c].toLowerCase().replace(/[^a-z']/g, '')) ? 0.15 * em : 0;
+    const sc = Math.abs(l - r) - lead + (c === 1 || n - c === 1 ? 1000 : 0);
     if (sc < score) {
       best = c;
       score = sc;
@@ -108,7 +123,7 @@ export function markedCards(m: Marked, em: number, measure: Measure): Card[] | n
   // 標的位置都放不進，才用片語規則（lineBreaks）排，而且每一行都不能比框寬。
   const layout = (a: number, b: number): string[] | null => {
     if (wd(a, b) <= em) return [text(a, b)];
-    for (const group of [['L'], ['1', '2'], ['W']]) {
+    for (const group of [['L'], ['1', '2', '3'], ['W']]) {
       let best = -1;
       let gap = Infinity;
       for (let c = a + 1; c < b; c++) {
@@ -125,7 +140,7 @@ export function markedCards(m: Marked, em: number, measure: Measure): Card[] | n
     }
     return twoLines(words.slice(a, b), em, measure);
   };
-  for (const cutKinds of [['1'], ['1', '2']]) {
+  for (const cutKinds of [['1'], ['1', '2'], ['1', '2', '3']]) {
     const cuts = [0];
     for (let c = 1; c < words.length; c++)
       if (kinds[c] && cutKinds.includes(kinds[c])) cuts.push(c);

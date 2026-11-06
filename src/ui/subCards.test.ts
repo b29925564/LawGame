@@ -83,7 +83,7 @@ describe('字幕卡（有底圖的場景）', () => {
               expect(cards.length).toBeGreaterThan(0);
               expect(cards.map((c) => c.text).join(lang === 'zh' ? '' : ' ')).toBe(text);
               for (const c of cards) {
-                expect(lineBreaks(c.text, em).length, c.text).toBeLessThanOrEqual(2);
+                expect((c.lines ?? lineBreaks(c.text, em)).length, c.text).toBeLessThanOrEqual(2);
                 // 一張只放一個句子；例外只有「一個字的句子」併進旁邊那句。
                 const inCard = sentencesOf(c.text).filter(Boolean);
                 expect(inCard.filter((x) => !oneWord(x)).length, c.text).toBeLessThanOrEqual(1);
@@ -141,8 +141,25 @@ describe('字幕卡（有底圖的場景）', () => {
     expect(cards[0].lines).toEqual(['法警在門口停了一下，', '讓伊森回頭。']);
     // 放得進一行就不硬換。
     expect(subCards('法警在門口停了一下，讓伊森回頭。', 34)[0].lines).toBeUndefined();
-    // 沒有一個逗號兩半都放得進一行：不硬換，交給瀏覽器折。
-    expect(subCards('手銬扣在他身前他沒辦法伸手也沒辦法回頭，嗯嗯。', 14)[0].lines).toBeUndefined();
+  });
+
+  it('中文沒有逗號能換成兩行：在逗號分張；沒有逗號在詞與詞之間換行，不交給瀏覽器（體驗評測 v93：「沾了／血」）', () => {
+    const cards = subCards('他站起來的時候，袖口沾了血，手裡多了一座水晶獎盃。', 13);
+    expect(cards.map((c) => c.lines ?? [c.text])).toEqual([
+      ['他站起來的時候，', '袖口沾了血，'],
+      ['手裡多了一座水晶獎盃。'],
+    ]);
+    // 只有一個逗號、前半一行放不下：前半在詞與詞之間換行，最勻的那一處。
+    const w = subCards('伊森跪下去摸他的脖子，摸不到脈搏。', 9);
+    expect(w.map((c) => c.lines ?? [c.text])).toEqual([
+      ['伊森跪下去', '摸他的脖子，'],
+      ['摸不到脈搏。'],
+    ]);
+    // 方位詞不放行首：「沃斯倒在辦公桌／旁的地毯上」換成「沃斯倒在／辦公桌旁的地毯上」。
+    expect(subCards('沃斯倒在辦公桌旁的地毯上。', 10)[0].lines).toEqual([
+      '沃斯倒在',
+      '辦公桌旁的地毯上。',
+    ]);
   });
 
   it('沒標斷點的英文句：片語規則、每行不比框寬、接續卡至少三個字', () => {

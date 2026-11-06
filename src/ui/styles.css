@@ -640,6 +640,14 @@ details summary {
     font-size: calc(13px * var(--sub-scale));
   }
 }
+/* 最窄的手機（320 寬）：字幕卡左右內距收到 10px，卡內寬 268px。16px 時只有 256px，字幕 150% 一行放不下
+   「sentencing courtroom」「and all they remember」這種不能拆的片語，只好切成很碎的卡（體驗評測 v93 關卡 2）。 */
+@media (max-width: 359px) {
+  .sub-card,
+  .sub-card.narration {
+    padding-inline: 10px;
+  }
+}
 /* 手機橫向（≤520 高）：字幕卡不蓋在畫面正中間（設計師 v93 第二道關卡 (b)）。
    「繼續」「筆錄」直排在字幕卡右邊，卡和按鈕共用最下面一條，卡的下緣貼著畫面下緣的安全邊距；卡寬是剩下的寬度（不小於 480）。
    640 寬以下（卡放不下 480）維持原本上下排。 */
