@@ -5218,34 +5218,47 @@ button.iou[aria-pressed='true'] {
    * 分格動畫（steps(n, end)）的最後一格一律從 99.9% 就停住，終值寫明：
    * - Chrome 在某些「延遲＋長度」組合下，算到結尾的進度是 0.9999999999999989，steps(4) 會停在 3/4
    *   （例：167ms steps(4) 延遲 3000ms 停在 scale 0.75；延遲 0／600／1600ms 正常）。
-   * - 剪裁從 inset() 到 none 不能內插，只會在一半時整段跳出來；終值寫成 inset(0 0 0 0)，才真的一格一格寫出來、劃過去。
+   * - 剪裁從 inset() 到 none 不能內插，只會在一半時整段跳出來；99.9% 寫成 inset(0 0 0 0)，才真的一格一格寫出來、劃過去。
+   *   最後才回到 none（不剪），手寫字超出字框的筆畫、螢光的邊和原本一樣，一 px 都不少。
    * e2e/steps-end.spec.ts 檢查每個用 steps() 的動畫都有這一格。
    */
   @keyframes write {
     from {
       clip-path: inset(0 100% 0 0);
     }
-    99.9%,
-    to {
+    99.9% {
       clip-path: inset(0 0 0 0);
+      /* 最後這一小段不分格：steps(1) 也會走到 none。 */
+      animation-timing-function: linear;
+    }
+    to {
+      clip-path: none;
     }
   }
   @keyframes swipe {
     from {
       clip-path: inset(0 100% 0 0);
     }
-    99.9%,
-    to {
+    99.9% {
       clip-path: inset(0 0 0 0);
+      /* 最後這一小段不分格：steps(1) 也會走到 none。 */
+      animation-timing-function: linear;
+    }
+    to {
+      clip-path: none;
     }
   }
   @keyframes swipe-y {
     from {
       clip-path: inset(0 0 100% 0);
     }
-    99.9%,
-    to {
+    99.9% {
       clip-path: inset(0 0 0 0);
+      /* 最後這一小段不分格：steps(1) 也會走到 none。 */
+      animation-timing-function: linear;
+    }
+    to {
+      clip-path: none;
     }
   }
   /* 蓋章只把墨色從 60% 拉到 100%，不縮放（設定集第 10.2 章 --dur-stamp）。 */

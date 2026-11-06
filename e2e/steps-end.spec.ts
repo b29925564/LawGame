@@ -73,7 +73,7 @@ const STEPPED = (() => {
 
 test('每個分格動畫的終值從 99.9% 就寫明', () => {
   expect(STEPPED).toEqual([...EXPECTED].sort());
-  const missing = STEPPED.filter((n) => !/99\.9%\s*,\s*(to|100%)\s*\{/.test(KEYFRAMES[n]));
+  const missing = STEPPED.filter((n) => !/(^|[\s,}])99\.9%\s*[,{]/.test(KEYFRAMES[n]));
   expect(missing).toEqual([]);
 });
 
