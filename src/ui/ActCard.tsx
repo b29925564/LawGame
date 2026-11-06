@@ -171,8 +171,8 @@ function inkOf(e: HTMLElement) {
  *    （320 寬時「第二集」比這一段高，以前會自己折成兩欄，連帶把幕名縮到下限）。
  * 2. 再放幕名：中文從不照字數縮的字級起算（英文照設定的字級），先換行（中文在詞界換欄、英文在完整的字之間），換了還放不下才一次縮 1px，最小 14px。
  * 3. 中文幕名不到幕序的兩倍時，幕序再縮（不低於 14px），把位置讓給幕名，幕名重放一次。
- * 4. 還是不到兩倍，幕名一個單位裡還有詞界（「已｜收回的」，prose.tsx 的 titleLine 標成 .split）就也在那裡換欄，再放一次
- *    （320 寬時「已收回的訊息」照「已收回的｜訊息」換只放得下 22px，四個字比這一段高）。
+ *    還是不到兩倍（320 寬的「已收回的｜訊息」：每一欄都是不能拆的詞，四個字只放得下約 24px），就照這樣放，
+ *    不為了兩倍把「已」拆成單獨一欄（設計師 #324：這種情形放寬到 1.6 倍）。
  * 寬版（2.35:1）照 1360u 的比例，不動。
  */
 function fitPortrait(card: HTMLElement) {
@@ -183,7 +183,7 @@ function fitPortrait(card: HTMLElement) {
   const below = card.querySelector<HTMLElement>('.act-slate') ?? card.querySelector('.act-foot');
   if (!head || !big || !caption) return;
   big.style.fontSize = '';
-  delete big.dataset.loose;
+  big.style.height = '';
   if (kick) {
     kick.style.fontSize = '';
     kick.style.letterSpacing = '';
@@ -239,16 +239,14 @@ function fitPortrait(card: HTMLElement) {
     }
   };
   fitBig();
-  if (!kick || latin) return;
-  const short = () => px(big) < BIG_OVER_KICK * px(kick);
-  while (short() && px(kick) > KICK_MIN) {
+  if (latin) return;
+  while (kick && px(big) < BIG_OVER_KICK * px(kick) && px(kick) > KICK_MIN) {
     kick.style.fontSize = `${px(kick) - 1}px`;
     fitBig();
   }
-  if (short() && big.querySelector('.split')) {
-    big.dataset.loose = '';
-    fitBig();
-  }
+  // 換成兩欄以上時，直排幕名的方框會撐滿幕名區的高，各欄頂端對齊後整組就貼在上緣。
+  // 方框縮到最長那一欄（斷欄的位置不變：每一欄本來就放不下下一個詞），整組才在幕名區置中。
+  big.style.height = `${Math.ceil(b.getBoundingClientRect().height) + 1}px`;
 }
 
 /**
@@ -296,9 +294,12 @@ export function ActCard({
     const ro = new ResizeObserver(fit);
     ro.observe(card);
     void document.fonts?.ready.then(fit);
+    // 粗體、斜體等字重是用到才載：ready 先到、字型後到時，載完再量一次（英文幕名字級才不會每次差 1–2px）。
+    document.fonts?.addEventListener?.('loadingdone', fit);
     return () => {
       live = false;
       ro.disconnect();
+      document.fonts?.removeEventListener?.('loadingdone', fit);
     };
   }, [headline.kicker, headline.title, where, right, en]);
   const [comma, stop] = en ? [',', '.'] : ['，', '。'];

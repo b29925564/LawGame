@@ -437,9 +437,9 @@
   .act-card:not(.latin)[data-fit] :is(.act-title, .act-kick, .act-title > .rd, .act-kick > .rd) {
     display: flex;
   }
-  /* 幕名照單位換欄還是不到幕序的兩倍時（fitPortrait 設 data-loose），單位裡的詞界（「已｜收回的」）也可以換欄。 */
-  .act-card .act-big[data-loose] .split {
-    white-space: normal;
+  /* 直排幕名換成兩欄以上時，每一欄都從同一個高度開始（頂端對齊，不是每欄各自置中；設計師 #324）。 */
+  .act-card:not(.latin)[data-fit] .act-big {
+    text-align: start;
   }
 }
 
