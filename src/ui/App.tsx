@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { type ReactNode, useEffect, useState } from 'react';
 import { episodes } from '../content';
 import { batesAt, ownBates, totalPages } from '../engine/bates';
 import {
@@ -25,6 +25,7 @@ import { Dialogue } from './Dialogue';
 import { GameMenu } from './GameMenu';
 import { Interview } from './Interview';
 import { ActCard, PlaceBeat, Recap, splitHeadline } from './ActCard';
+import { introOn, TitleIntro } from './TitleIntro';
 import { Announcer } from './Marks';
 import { Negotiation } from './Negotiation';
 import { Phone } from './Phone';
@@ -138,6 +139,7 @@ export function App() {
   // 換了地點：場記先占一格鏡頭，演完才掛這一場的介面（只在場景開頭；讀檔回到中途不重演）。
   const beat = !!scene && moved && progress.step === 0 && framed !== scene.id;
   const page = ending ? ownBates(ep.number, totalPages(ep)) : batesAt(ep, at);
+
   return (
     <SceneScope.Provider value={scene?.id}>
       <Announcer />
@@ -175,7 +177,9 @@ export function App() {
       {!beat && scene?.type === 'opening' && <Opening key={scene.id} scene={scene} />}
       {!beat && scene?.type === 'closing' && <Closing key={scene.id} scene={scene} />}
       {scene?.type === 'card' && !last && progress.step === 0 && (
-        <ActCard key={scene.id} headline={headline} place={slate} bates={page} onDone={advance} />
+        <IntroThen key={scene.id} episode={opening ? progress.episode : null}>
+          <ActCard headline={headline} place={slate} bates={page} onDone={advance} />
+        </IntroThen>
       )}
       {(!scene || last) && (
         <ActCard
@@ -219,6 +223,17 @@ export function App() {
       )}
     </SceneScope.Provider>
   );
+}
+
+/**
+ * 片頭（設定集 11.1）：「片頭」那張卡先播 38 秒的片頭，播完（或跳過）才是集名卡。
+ * 跟著卡掛載：離開這張卡再回來（新遊戲從頭開始）就再播一次。
+ */
+function IntroThen({ episode, children }: { episode: string | null; children: ReactNode }) {
+  // 開關預設關（佔位圖不進玩家版）：關的時候和 main 一樣，直接是幕卡。
+  const [played, setPlayed] = useState(() => !introOn());
+  if (episode && !played) return <TitleIntro episode={episode} onDone={() => setPlayed(true)} />;
+  return children;
 }
 
 function Prototype() {
