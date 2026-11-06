@@ -257,6 +257,7 @@
     animation: act-rise var(--dur-rm) linear both;
   }
 }
+/* 分格動畫（steps）的最後一格從 99.9% 就停住：Chrome 結尾進度可能是 0.9999…，steps(1, end) 會停在前一格（燈管停在暗的那一閃）。 */
 @keyframes act-ignite {
   0% {
     opacity: 0;
@@ -273,6 +274,7 @@
   66% {
     opacity: 0.15;
   }
+  99.9%,
   100% {
     opacity: 1;
   }
@@ -293,6 +295,7 @@
   66% {
     filter: brightness(0.2);
   }
+  99.9%,
   100% {
     filter: brightness(1);
   }
@@ -301,6 +304,7 @@
   from {
     transform: scaleX(1);
   }
+  99.9%,
   to {
     transform: scaleX(0);
   }
@@ -553,6 +557,7 @@
     0% {
       opacity: 1;
     }
+    99.9%,
     100% {
       opacity: 0;
     }

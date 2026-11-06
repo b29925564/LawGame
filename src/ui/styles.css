@@ -5214,19 +5214,38 @@ button.iou[aria-pressed='true'] {
       scale: 1.03;
     }
   }
+  /*
+   * 分格動畫（steps(n, end)）的最後一格一律從 99.9% 就停住，終值寫明：
+   * - Chrome 在某些「延遲＋長度」組合下，算到結尾的進度是 0.9999999999999989，steps(4) 會停在 3/4
+   *   （例：167ms steps(4) 延遲 3000ms 停在 scale 0.75；延遲 0／600／1600ms 正常）。
+   * - 剪裁從 inset() 到 none 不能內插，只會在一半時整段跳出來；終值寫成 inset(0 0 0 0)，才真的一格一格寫出來、劃過去。
+   * e2e/steps-end.spec.ts 檢查每個用 steps() 的動畫都有這一格。
+   */
   @keyframes write {
     from {
       clip-path: inset(0 100% 0 0);
+    }
+    99.9%,
+    to {
+      clip-path: inset(0 0 0 0);
     }
   }
   @keyframes swipe {
     from {
       clip-path: inset(0 100% 0 0);
     }
+    99.9%,
+    to {
+      clip-path: inset(0 0 0 0);
+    }
   }
   @keyframes swipe-y {
     from {
       clip-path: inset(0 0 100% 0);
+    }
+    99.9%,
+    to {
+      clip-path: inset(0 0 0 0);
     }
   }
   /* 蓋章只把墨色從 60% 拉到 100%，不縮放（設定集第 10.2 章 --dur-stamp）。 */
@@ -5259,8 +5278,13 @@ button.iou[aria-pressed='true'] {
     from {
       scale: 0 1;
     }
+    99.9%,
+    to {
+      scale: 1 1;
+    }
   }
   @keyframes bar-out {
+    99.9%,
     to {
       scale: 0 1;
       transform-origin: right;
