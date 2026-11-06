@@ -757,6 +757,17 @@ details summary {
     width: auto;
     align-self: end;
   }
+  /* 手機橫拿：按鈕在字幕卡右邊那一欄，讓開門縫光時只移字幕卡，按鈕留在自己那一欄（第二道關卡 25376da 第 1 項）。 */
+  .scene.plated.subs.cold-plated[data-avoid='above'][data-shift] > .sub-card {
+    margin-left: var(--avoid-left);
+    width: auto;
+    min-width: 0;
+  }
+  .scene.plated.subs.cold-plated[data-avoid='above'][data-shift] > .sub-actions {
+    margin-left: 0;
+    width: auto;
+    align-self: end;
+  }
 }
 /* 捲動區裡的東西不准被壓扁：清單外框有 overflow: hidden，彈性版面會把它擠成一條。 */
 .stack > *,

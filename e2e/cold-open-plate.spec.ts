@@ -505,13 +505,16 @@ for (const [w, h, max] of [
   [1530, 860, 0.05],
   [1440, 900, 0.05],
   [1366, 768, 0.05],
+  [1280, 720, 0.05],
+  [1280, 800, 0.05],
   [1100, 700, 0.05],
+  [863, 360, 0.05],
   [844, 390, 0.05],
   [412, 915, 0.23],
   [360, 740, 0.3],
   [320, 640, 0.35],
 ] as const)
-  test(`22:49 字幕和按鈕不蓋門縫光（≤${max * 100}%），也不蓋主體：${w}×${h}，中英，字級 100／125／150%`, async ({
+  test(`22:49 字幕和按鈕不蓋門縫光（≤${max * 100}%）、不蓋主體、彼此不疊、換卡位置不跳：${w}×${h}，中英，字級 100／125／150%`, async ({
     page,
   }, info) => {
     test.skip(info.project.name !== 'desktop', '自己設視窗大小，桌機那一組跑就好');
@@ -524,9 +527,21 @@ for (const [w, h, max] of [
         await expect(card).toBeVisible();
         await page.evaluate(() => document.fonts.ready);
         const next = page.locator('.cold-plated .sub-actions .primary');
+        const spots: string[] = [];
         for (let i = 0; i < 8 && (await card.count()); i++) {
           const text = (await card.innerText()).trim();
           const at = `${lang} ${scale * 100}% 第${i + 1}張「${text}」`;
+          // 字幕卡和「繼續」不疊（第二道關卡 25376da 第 1 項：863×360「繼續」壓在字幕上）；記下卡的左緣、下緣。
+          const lay = await page.evaluate(() => {
+            const [c, a] = ['.cold-plated > .sub-card', '.cold-plated > .sub-actions'].map((q) =>
+              document.querySelector(q)!.getBoundingClientRect(),
+            );
+            const x = Math.max(0, Math.min(c.right, a.right) - Math.max(c.left, a.left));
+            const y = Math.max(0, Math.min(c.bottom, a.bottom) - Math.max(c.top, a.top));
+            return { both: x * y, spot: `${Math.round(c.left)},${Math.round(c.bottom)}` };
+          });
+          expect(lay.both, `${at} 字幕卡和「繼續」重疊的面積`).toBe(0);
+          spots.push(lay.spot);
           for (const r of await hidden(page))
             expect(r.hidden, `${at} ${r.id} 看不到的比例`).toBeLessThanOrEqual(r.cover + 0.001);
           const lit = await page.evaluate(
@@ -566,5 +581,10 @@ for (const [w, h, max] of [
             .poll(async () => ((await card.count()) ? (await card.innerText()).trim() : ''))
             .not.toBe(text);
         }
+        // 同一個鏡頭裡字幕不跑來跑去：每一張卡的左緣、下緣都一樣（第 2 項：1280 英文 150% 第 1 張在獎盃上方、第 2 張跳到右下）。
+        expect(
+          new Set(spots).size,
+          `${lang} ${scale * 100}% 每張卡的位置：${spots.join(' ／ ')}`,
+        ).toBe(1);
       }
   });

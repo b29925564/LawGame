@@ -530,8 +530,10 @@ export function useAvoidSubjects(
       const lights = (soft ?? []).map(place);
       const ui = () =>
         [...el.querySelectorAll(':scope > .sub-card, :scope > .sub-actions')].map(rect);
+      // 主體不蓋，而且字幕卡和按鈕彼此不疊（第二道關卡 25376da 第 1 項：手機橫拿「繼續」壓在字幕上）。
       const clear = () => {
         const u = ui();
+        if (u.length > 1 && overlap(u[0], u[1]) > 0.5) return false;
         return boxes.every((x) => hiddenShare(x.r, u, view) <= x.cover + 1e-3);
       };
       // 亮處被介面蓋掉的比例（只算介面，不算跑出視窗的部分）。
@@ -547,8 +549,23 @@ export function useAvoidSubjects(
         );
       };
       const ok = (x: number) => lights.every((y) => x <= y.cover + 1e-3);
-      const card = el.querySelector(':scope > .sub-card');
-      const lines0 = card?.getBoundingClientRect().height ?? 0;
+      const card = el.querySelector<HTMLElement>(':scope > .sub-card');
+      // 位置只看版面、不看這一張卡有幾行：試的時候字幕卡一律當兩行高（字幕最多兩行），同一句的每一張卡挑到同一個位置，
+      // 換卡時字幕不跳（第二道關卡 25376da 第 2 項：1280 英文 150% 第 1 張在獎盃上方、第 2 張跳到右下）。
+      if (card) {
+        const tx = card.querySelector('.tx') ?? card;
+        const cc = getComputedStyle(card);
+        const lh = parseFloat(getComputedStyle(tx).lineHeight) || 0;
+        const who = card.querySelector('.who')?.getBoundingClientRect().height ?? 0;
+        const h =
+          2 * lh +
+          who +
+          parseFloat(cc.paddingTop) +
+          parseFloat(cc.paddingBottom) +
+          parseFloat(cc.borderTopWidth) +
+          parseFloat(cc.borderBottomWidth);
+        card.style.minHeight = `${h}px`;
+      }
       const cs = getComputedStyle(el);
       const pad0 = parseFloat(cs.paddingBottom);
       const box0 = el.getBoundingClientRect();
@@ -577,7 +594,9 @@ export function useAvoidSubjects(
           const edge = Math.max(...boxes.map((x) => x.r.r)) + AVOID_GAP;
           if (r - edge < SIDE_MIN) return false;
           el.style.setProperty('--avoid-left', `${edge - l}px`);
-          return (card?.getBoundingClientRect().height ?? 0) <= lines0 + 1;
+          // 窄了放不下兩行也沒關係：字幕卡照實際寬度重新分張（SubCard 量卡寬），每張仍是最多兩行。
+          // 但字幕卡本身至少要 SIDE_MIN 寬（手機橫拿時按鈕佔掉右邊一欄，卡會被擠到一百多 px）。
+          return (card?.getBoundingClientRect().width ?? 0) >= SIDE_MIN - 1;
         },
         () => {
           lift();
@@ -619,6 +638,7 @@ export function useAvoidSubjects(
       reset();
       // 都蓋到主體（不該發生）：照舊抬到主體上面。
       tries[best < 0 ? 2 : best]();
+      if (card) card.style.removeProperty('min-height');
     };
     run();
     addEventListener('resize', run);

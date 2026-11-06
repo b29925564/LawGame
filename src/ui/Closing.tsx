@@ -22,7 +22,7 @@ import { JurorFace, lookOf } from './jury/JuryBox';
 import { JuryStart } from './JuryStart';
 import { Tally } from './Marks';
 import { Speech } from './Portrait';
-import { prose } from './prose';
+import { prose, fitLine } from './prose';
 import { Shell, Tabs } from './Shell';
 import { useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { inkUnits, pen } from './court/hand';
@@ -140,9 +140,8 @@ function ClosingScreen({ scene }: { scene: ClosingScene }) {
       head={
         <header className="panel-head bench closing-head">
           <p className="eyebrow">
-            {t(scene.act, scope)}
-            {t('・')}
-            {t(scene.place, scope)}
+            {/* 包成一段：eyebrow 是 flex，fitLine 的每個詞會各自變成一格。 */}
+            <span>{fitLine(`${t(scene.act, scope)}${t('・')}${t(scene.place, scope)}`)}</span>
           </p>
           <p className="patience">
             {t('論點')}{' '}
@@ -153,14 +152,16 @@ function ClosingScreen({ scene }: { scene: ClosingScene }) {
           </p>
           {need < scene.picks && (
             <p className="court-warn small">
-              {t('手上的論點不夠，結辯會空 {n} 格，{other}的說法沒人反駁。', {
-                n: scene.picks - need,
-                other: t(terms.other, scope),
-              })}
+              {fitLine(
+                t('手上的論點不夠，結辯會空 {n} 格，{other}的說法沒人反駁。', {
+                  n: scene.picks - need,
+                  other: t(terms.other, scope),
+                }),
+              )}
             </p>
           )}
           {!promisesOf(progress).theory && (
-            <p className="court-warn small">{t('沒有案件理論，論點說服力打七折。')}</p>
+            <p className="court-warn small">{fitLine(t('沒有案件理論，論點說服力打七折。'))}</p>
           )}
           {/* 你帶進評議室的東西：理論的代價是選擇，不是失誤，用中性色（UX 規格 decision-cost §二）。 */}
           {th && (
