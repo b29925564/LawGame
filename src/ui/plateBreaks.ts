@@ -23,6 +23,9 @@ export const PLATE_BREAKS: readonly string[] = [
   'At the door the bailiff/pauses long enough|for Ethan to look back.',
   "On the courthouse/steps,|Ethan's sister/is waiting for him.",
   'Change the story/halfway|and all they remember/is that you changed it.',
+  // ── 冷開場 22:49（31 樓）：介面與操作 #3 先標，待設計師確認 ──
+  'Ethan kneels¦and feels for a pulse/at the neck.',
+  'When he stands,/there is blood on his cuff¦and a crystal trophy/in his hand.',
 ];
 
 /**

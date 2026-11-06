@@ -46,6 +46,11 @@ function cardLines(scene: Node): L[] {
   const intro = (scene.intro as L[] | undefined) ?? [];
   const out: L[] = [...intro];
   for (const s of (scene.steps as Node[] | undefined) ?? []) {
+    // 手機戲（冷開場）：只有帶底圖的那幾格（caption＋rig）是字幕卡，其他是手機畫面。
+    if (scene.type === 'phone') {
+      if (s.do === 'caption' && s.rig) out.push({ who: '旁白', text: s.text as string });
+      continue;
+    }
     if (s.do === 'say') out.push(s as unknown as L);
     if (s.do === 'choose')
       for (const o of s.options as { text: string; then: L[] }[])

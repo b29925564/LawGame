@@ -20,6 +20,10 @@ test('冷開場：看過的訊息被收回，換場自動存檔，可從標題�
   await next();
   await page.getByRole('button', { name: '感應員工證' }).click();
   await page.getByRole('button', { name: '推開門' }).click();
+  // 22:49 有定場鏡頭（31 樓的底圖）：點一下跳過場記，旁白一句一張字幕（三句三張）。
+  await page.locator('.place-beat').click();
+  await next();
+  await next();
   await next();
   await next();
   await next();
