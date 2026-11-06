@@ -1,6 +1,7 @@
 /// <reference lib="dom" />
 import { expect, test, type Page } from '@playwright/test';
 import { proseUnits } from '../src/ui/lineUnits';
+import { endsBanned } from '../src/ui/plateBreaks';
 
 /**
  * 冷開場的黑底字卡（.cine）：第二道關卡 7075839 舊問題 5、6（設計師裁定 v93 一之 1、2）。
@@ -214,16 +215,18 @@ for (const w of [360, 320])
           if (lang === 'en' && card.episode === 'ep2' && card.step === 0) {
             const rows = await page.evaluate(() => {
               const el = document.querySelector('.cine .cine-text')!;
+              const tops: number[] = [];
               const walk = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
-              for (let n = walk.nextNode(); n; n = walk.nextNode()) {
-                const i = n.textContent!.indexOf('Calder');
-                if (i < 0) continue;
-                const r = document.createRange();
-                r.setStart(n, i);
-                r.setEnd(n, i + 'Calder Harbor'.length);
-                return new Set([...r.getClientRects()].map((x) => Math.round(x.top))).size;
-              }
-              return -1;
+              for (let n = walk.nextNode(); n; n = walk.nextNode())
+                for (const word of ['Calder', 'Harbor']) {
+                  const at = n.textContent!.indexOf(word);
+                  if (at < 0) continue;
+                  const r = document.createRange();
+                  r.setStart(n, at);
+                  r.setEnd(n, at + word.length);
+                  tops.push(Math.round(r.getBoundingClientRect().top));
+                }
+              return tops.length === 2 ? new Set(tops).size : -1;
             });
             expect.soft(rows, `${tag}「Calder Harbor」排成幾行`).toBe(1);
           }
@@ -256,3 +259,67 @@ test('窄手機字卡捲到底，選單鈕還在原位（320・150%・中英）'
   // 至少有一張真的要捲，這條才量得到東西。
   expect(scrolled).toBeGreaterThan(0);
 });
+
+/**
+ * 英文黑底字卡的行尾（設計師 #326 審查）：行尾不是 a／an／the／of／to…（plateBreaks.ts 的表），沒有只有一個字的行，
+ * 地名不拆（「Tuesday evening, ⏎ east ⏎ Calder Harbor. A ⏎ white van…」）。
+ * 320 寬 150% 一行只放得下十七、八個字母，下面這幾行怎麼排都會違反一條（行尾虛詞或單字行），讓單字行：
+ * 「A small apartment」「a document: “Note」「for Voss’s message.」「east Calder Harbor.」都放不進一行（實測，回報設計師）。
+ * 第 2 集第一張讓的是「Tuesday」：地名「Calder Harbor」不拆、「east」不單獨一行。
+ */
+const FORCED_ONE: Record<string, string[]> = {
+  '320 150': ['apartment', '“Note', 'message.', 'Tuesday'],
+};
+for (const w of [320, 360])
+  for (const scale of [1.25, 1.5])
+    test(`英文黑底字卡：行尾沒有虛詞、沒有單字行（${w}・${scale * 100}%）`, async ({
+      page,
+    }, info) => {
+      test.skip(info.project.name !== 'chromium', '自己設視窗大小，手機那一組跑就好');
+      await page.setViewportSize({ width: w, height: 740 });
+      for (const card of CARDS) {
+        await open(page, card, 'en', scale);
+        const drawn = await page.locator('.cine .cine-text').evaluate((el) => {
+          const out: string[] = [];
+          const rg = document.createRange();
+          let cur = '';
+          let top: number | null = null;
+          const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+          for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+            const s = n.textContent!;
+            for (let i = 0; i < s.length; i++) {
+              rg.setStart(n, i);
+              rg.setEnd(n, i + 1);
+              const q = rg.getClientRects()[0];
+              if (q && q.width && top !== null && q.top > top + 4) {
+                out.push(cur);
+                cur = '';
+              }
+              if (q && q.width) top = q.top;
+              cur += s[i];
+            }
+          }
+          out.push(cur);
+          return {
+            rows: out.map((x) => x.replace(/\u00a0/g, ' ').trim()).filter(Boolean),
+            breaks: el.querySelectorAll('br').length,
+          };
+        });
+        const { rows } = drawn;
+        const tag = `${card.episode} 第 ${card.step} 步：${rows.join(' ⏎ ')}`;
+        // 排好的行，瀏覽器沒有在行內再折一次。
+        expect.soft(rows.length, `${tag}\n畫出來的行數`).toBe(drawn.breaks + 1);
+        const forced = FORCED_ONE[`${w} ${scale * 100}`] ?? [];
+        rows.forEach((r, i) => {
+          const words = r.split(/\s+/);
+          if (!forced.includes(r))
+            expect
+              .soft(words.length, `${tag}\n第 ${i + 1} 行只有一個字「${r}」`)
+              .toBeGreaterThan(1);
+          if (i < rows.length - 1)
+            expect
+              .soft(endsBanned(r), `${tag}\n第 ${i + 1} 行的行尾「${words[words.length - 1]}」`)
+              .toBe(false);
+        });
+      }
+    });
