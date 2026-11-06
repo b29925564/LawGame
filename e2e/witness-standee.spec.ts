@@ -15,6 +15,7 @@ const witness = JSON.parse(
 
 for (const [width, height] of [
   [1530, 860],
+  [1366, 768],
   [1100, 860],
 ] as [number, number][])
   test(`證人席立牌的底邊藏在前板後面（${width}×${height}）`, async ({ page }, info) => {
@@ -56,10 +57,12 @@ for (const [width, height] of [
       const g = stage.querySelector('.cam-pose[data-on] .silhouette')!.getBoundingClientRect();
       return { bottom: +((g.bottom - top) / ph).toFixed(3) };
     }, witness.crop239);
-    expect(m.bottom, '剪影底邊露在欄杆和前板之間').toBeGreaterThanOrEqual(0.75);
     if (process.env.SHOTS)
       await page
         .locator('.court-cam')
         .first()
-        .screenshot({ path: `${process.env.SHOTS}/after-${width}-witness.png` });
+        .screenshot({
+          path: `${process.env.SHOTS}/${process.env.SHOT_TAG ?? 'after'}-${width}-witness.png`,
+        });
+    expect(m.bottom, '剪影底邊露在欄杆和前板之間').toBeGreaterThanOrEqual(0.75);
   });
