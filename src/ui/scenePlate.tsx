@@ -2,6 +2,7 @@ import {
   createContext,
   useContext,
   type CSSProperties,
+  type RefObject,
   useEffect,
   useLayoutEffect,
   useRef,
@@ -28,7 +29,17 @@ type Entry = {
   rig: string;
   lang?: Lang;
   files: Record<'desktop' | 'phone', { file: string }>;
+  focus?: { y?: number };
+  /** 窄視窗裁左右時：圖上的 at（圖寬比例）落在視窗寬的 to 處（和立牌組的 anchor 同一個意思）。 */
+  anchor?: Partial<Record<'desktop' | 'phone', { at: number; to: number }>>;
+  subjects?: Record<'desktop' | 'phone', Subject[]>;
 };
+
+/**
+ * 圖上不能被介面蓋住的東西（主體框，圖寬高的比例 [x0, y0, x1, y1]）：cover 是最多可以被蓋掉的面積比例
+ * （0＝整個要露出來）。字幕框和按鈕照這個避開（useAvoidSubjects）。
+ */
+export type Subject = { id: string; box: [number, number, number, number]; cover: number };
 
 const ENTRIES = (plateData as { plates: Entry[] }).plates;
 const urls = import.meta.glob<string>('./plates/*.jpg', {
@@ -80,6 +91,10 @@ export type Plate = {
   kelvin: number;
   desktop: string;
   phone: string;
+  /** 視窗比圖扁、要裁上下時，圖上 y 這一點對齊視窗的同一個比例（0.5＝置中，1＝對齊底部）。 */
+  focusY: number;
+  anchor?: Entry['anchor'];
+  subjects?: Record<Variant, Subject[]>;
 };
 
 /** 手機版：窄螢幕，或直放（直放的裝置用 9:16 那張，不從橫圖裡切中間一條）。 */
@@ -98,7 +113,16 @@ export function plateFor(
   const url = (f: { file: string }) => urls[`./plates/${f.file}`];
   const [desktop, phone] = [url(hit.files.desktop), url(hit.files.phone)];
   return desktop && phone
-    ? { id: hit.id, rig: scene.rig, kelvin: rig.kelvin, desktop, phone }
+    ? {
+        id: hit.id,
+        rig: scene.rig,
+        kelvin: rig.kelvin,
+        desktop,
+        phone,
+        focusY: hit.focus?.y ?? 0.5,
+        anchor: hit.anchor,
+        subjects: hit.subjects,
+      }
     : null;
 }
 
@@ -286,6 +310,7 @@ export function ScenePlate({ shown, dim }: { shown: Shown; dim?: boolean }) {
       data-kelvin={plate.kelvin}
       data-state={state}
       data-dim={dim ? '' : undefined}
+      data-subjects={plate.subjects ? JSON.stringify(plate.subjects[variant]) : undefined}
       aria-hidden
     >
       <div
@@ -294,8 +319,10 @@ export function ScenePlate({ shown, dim }: { shown: Shown; dim?: boolean }) {
         style={
           {
             '--ar': `${w} / ${h}`,
-            '--f': set?.anchor[variant].at ?? 0.5,
-            '--a': set?.anchor[variant].to ?? 0.5,
+            '--hw': h / w,
+            '--fy': plate.focusY,
+            '--f': (set?.anchor[variant] ?? plate.anchor?.[variant])?.at ?? 0.5,
+            '--a': (set?.anchor[variant] ?? plate.anchor?.[variant])?.to ?? 0.5,
           } as CSSProperties
         }
       >
@@ -408,4 +435,110 @@ export function PlateHost() {
       <ScenePlate key={layer.shown.url} shown={layer.shown} dim={layer.dim} />
     </div>
   );
+}
+
+/** 字幕框、按鈕和主體框之間留的距離。 */
+const AVOID_GAP = 12;
+/** 放到主體旁邊時字幕框至少要這麼寬，不然改放到主體上面。 */
+const SIDE_MIN = 320;
+
+type Box = { l: number; t: number; r: number; b: number };
+const overlap = (a: Box, b: Box) =>
+  Math.max(0, Math.min(a.r, b.r) - Math.max(a.l, b.l)) *
+  Math.max(0, Math.min(a.b, b.b) - Math.max(a.t, b.t));
+/**
+ * 主體框 a 看不到的比例：跑出視窗的部分，加上被每一個介面框蓋住的部分（介面框彼此不重疊；重疊時算多了，偏嚴）。
+ * e2e/cold-open-plate.spec.ts 用同一個算法驗收。
+ */
+export const hiddenShare = (a: Box, ui: Box[], view: Box) => {
+  const area = Math.max(1, (a.r - a.l) * (a.b - a.t));
+  const seen: Box = {
+    l: Math.max(a.l, view.l),
+    t: Math.max(a.t, view.t),
+    r: Math.min(a.r, view.r),
+    b: Math.min(a.b, view.b),
+  };
+  const vis = overlap(a, view) - ui.reduce((n, u) => n + overlap(seen, u), 0);
+  return 1 - Math.max(0, vis) / area;
+};
+
+/**
+ * 字幕框和按鈕避開圖上的主體（獎盃、手指、手；設計師 #316 審查 1）。圖已經照 focus／anchor 先擺過了，還是蓋到時：
+ * 先把字幕框和按鈕整組移到主體右邊（還在下三分之一）；右邊不夠寬就整組抬到主體上面。
+ * 直接改 DOM 的屬性（不經過 React 的 state），量、決定、套用在同一個畫格裡，不會先蓋上去再跳開。
+ */
+export function useAvoidSubjects(
+  shown: Shown | null,
+  token: unknown,
+): RefObject<HTMLElement | null> {
+  const main = useRef<HTMLElement>(null);
+  const subjects = shown?.plate.subjects?.[shown.phone ? 'phone' : 'desktop'];
+  useLayoutEffect(() => {
+    const el = main.current;
+    if (!el || !subjects?.length) return;
+    const rect = (e: Element): Box => {
+      const r = e.getBoundingClientRect();
+      return { l: r.left, t: r.top, r: r.right, b: r.bottom };
+    };
+    const run = () => {
+      delete el.dataset.avoid;
+      el.style.removeProperty('--avoid-left');
+      el.style.removeProperty('--avoid-pad');
+      const host = document.querySelector('.plate-host .plate-stage');
+      if (!host) return;
+      const stage = host.getBoundingClientRect();
+      const view: Box = { l: 0, t: 0, r: innerWidth, b: innerHeight };
+      const boxes = subjects.map((x) => ({
+        cover: x.cover,
+        r: {
+          l: stage.left + x.box[0] * stage.width,
+          t: stage.top + x.box[1] * stage.height,
+          r: stage.left + x.box[2] * stage.width,
+          b: stage.top + x.box[3] * stage.height,
+        },
+      }));
+      const ui = () =>
+        [...el.querySelectorAll(':scope > .sub-card, :scope > .sub-actions')].map(rect);
+      const clear = () => {
+        const u = ui();
+        return boxes.every((x) => hiddenShare(x.r, u, view) <= x.cover + 1e-3);
+      };
+      if (clear()) return;
+      const card = el.querySelector(':scope > .sub-card');
+      const lines0 = card?.getBoundingClientRect().height ?? 0;
+      const cs = getComputedStyle(el);
+      // 放到主體右邊：場景先放開最大寬度（整個視窗寬），量主體右緣到內容右緣夠不夠寬。
+      // 移過去以後字幕卡不准變高（多折一行就不算放得下），而且要真的不蓋。
+      el.dataset.avoid = 'side';
+      const box = el.getBoundingClientRect();
+      const left = box.left + parseFloat(cs.paddingLeft);
+      const right = box.right - parseFloat(cs.paddingRight);
+      const edge = Math.max(...boxes.map((x) => x.r.r)) + AVOID_GAP;
+      if (right - edge >= SIDE_MIN) {
+        el.style.setProperty('--avoid-left', `${edge - left}px`);
+        const lines = card?.getBoundingClientRect().height ?? 0;
+        if (lines <= lines0 + 1 && clear()) return;
+        el.style.removeProperty('--avoid-left');
+      }
+      delete el.dataset.avoid;
+      // 抬到主體上面：加大下內距。版面不一定一比一跟著動（最小高度、格線），量了再補，最多三次。
+      const top = Math.min(...boxes.map((x) => x.r.t)) - AVOID_GAP;
+      el.dataset.avoid = 'above';
+      let pad = parseFloat(cs.paddingBottom);
+      for (let i = 0; i < 3; i++) {
+        const over = Math.max(...ui().map((u) => u.b)) - top;
+        if (over <= 0.5) break;
+        pad += over;
+        el.style.setProperty('--avoid-pad', `${pad}px`);
+      }
+    };
+    run();
+    addEventListener('resize', run);
+    void document.fonts?.ready.then(run);
+    return () => {
+      removeEventListener('resize', run);
+      delete el.dataset.avoid;
+    };
+  }, [subjects, token]);
+  return main;
 }

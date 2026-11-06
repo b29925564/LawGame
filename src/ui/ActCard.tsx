@@ -394,6 +394,7 @@ export function PlaceBeat({
     <main
       className={[
         'act-stage place-beat',
+        cold && 'cold-scope',
         shown && 'plated',
         waiting && 'waiting',
         cut.black && 'cut',

@@ -7,7 +7,15 @@ import { PlaceBeat } from './ActCard';
 import { useScope } from './lang';
 import { useHand } from './Marks';
 import { Redaction } from './Redaction';
-import { OnPlate, onPlateOf, plateFor, usePlate, useShown, warmPlate } from './scenePlate';
+import {
+  OnPlate,
+  onPlateOf,
+  plateFor,
+  useAvoidSubjects,
+  usePlate,
+  useShown,
+  warmPlate,
+} from './scenePlate';
 import { useSubs } from './SubCard';
 
 /** 冷開場：伊森的手機畫面。 */
@@ -30,6 +38,11 @@ export function Phone({ scene }: { scene: PhoneScene }) {
     ? { who: '旁白', text: cap.text, mood: '平', thought: false }
     : null;
   const subs = useSubs(slated ? narr : null, progress.step, true);
+  // 字幕框和按鈕不蓋圖上的主體（獎盃、手）：每換一張卡重量一次。
+  const platedMain = useAvoidSubjects(
+    slated ? shown : null,
+    `${progress.step}|${subs.ix}|${subs.text}`,
+  );
   // 下一格有底圖就先載，進那一格時不用等。
   const ahead = scene.steps.slice(progress.step + 1).find((s) => s.do === 'caption' && s.rig);
   const next =
@@ -56,7 +69,11 @@ export function Phone({ scene }: { scene: PhoneScene }) {
   if (cap && slated)
     return (
       <OnPlate.Provider value={onPlateOf(shown)}>
-        <main className="scene dialogue plated subs cold-plated" aria-live="polite">
+        <main
+          ref={platedMain}
+          className="scene dialogue plated subs cold-plated cold-scope"
+          aria-live="polite"
+        >
           {subs.node}
           <div className="sub-actions">
             <button
@@ -75,7 +92,7 @@ export function Phone({ scene }: { scene: PhoneScene }) {
 
   if (v.screen === 'caption' && v.step.do === 'caption')
     return (
-      <main className="cine" aria-live="polite">
+      <main className={scene.epilogue ? 'cine' : 'cine cold-scope'} aria-live="polite">
         {v.time && <p className="cine-time">{t(v.time, scope)}</p>}
         <p className="cine-text">{t(v.step.text, scope)}</p>
         <button className="cine-next" onClick={advance}>
@@ -85,7 +102,7 @@ export function Phone({ scene }: { scene: PhoneScene }) {
     );
 
   return (
-    <main className="phone-stage">
+    <main className={scene.epilogue ? 'phone-stage' : 'phone-stage cold-scope'}>
       <div
         className="phone"
         role="region"

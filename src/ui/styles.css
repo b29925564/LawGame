@@ -131,6 +131,11 @@
 :root[data-theme='dark'] {
   color-scheme: dark;
 }
+/* 冷開場整段是鏡頭層，不跟主題（設定集第 2 章、11.5 ③）：在畫面上的時候整頁照深色解，
+   手機螢幕、字幕框、選單鈕都和深色主題一樣（設計師 #316 審查 2）。只限冷開場（.cold-scope），尾聲的手機戲不算。 */
+:root:has(.cold-scope) {
+  color-scheme: dark;
+}
 
 /* ── 基礎 ── */
 * {
@@ -694,6 +699,32 @@ details summary {
     grid-column: 1 / -1;
     flex-direction: row;
     align-items: flex-start;
+  }
+}
+/* 冷開場 22:49 的字幕不蓋圖上的主體（獎盃、手；scenePlate.tsx 的 useAvoidSubjects 量過才設）：
+   side＝字幕框和按鈕整組移到主體右邊，還在下三分之一；above＝整組抬到主體上面。 */
+.scene.plated.subs.cold-plated[data-avoid='side'] {
+  max-width: none;
+}
+.scene.plated.subs.cold-plated[data-avoid='side'] > .sub-card,
+.scene.plated.subs.cold-plated[data-avoid='side'] > .sub-actions {
+  align-self: flex-start;
+  margin-left: var(--avoid-left);
+  width: min(760px, calc(100% - var(--avoid-left)));
+}
+.scene.plated.subs.cold-plated[data-avoid='above'] {
+  padding-bottom: var(--avoid-pad);
+}
+@media (max-height: 520px) and (orientation: landscape) and (min-width: 640px) {
+  .scene.plated.subs.cold-plated[data-avoid='side'] > .sub-card {
+    margin-left: var(--avoid-left);
+    width: auto;
+    min-width: 0;
+  }
+  .scene.plated.subs.cold-plated[data-avoid='side'] > .sub-actions {
+    margin-left: 0;
+    width: auto;
+    align-self: end;
   }
 }
 /* 捲動區裡的東西不准被壓扁：清單外框有 overflow: hidden，彈性版面會把它擠成一條。 */
@@ -3595,12 +3626,7 @@ fieldset.relations.compact {
 .badge .primary {
   align-self: stretch;
 }
-/* 門口這一格是鏡頭層的夜：按鈕用深色的權杖（淺色主題的墨色字放在黑底上讀不到；設計師 v93 審查）。
-   權杖在 :root 就解成淺色值，這裡只寫 color-scheme 換不掉，要直接蓋。 */
 .door {
-  --text: #e7eaee;
-  --border-strong: #3a4757;
-  --surface-2: #19202a;
   justify-content: center;
   margin-top: -40px;
   padding-top: 52px;

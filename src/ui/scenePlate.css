@@ -39,10 +39,15 @@
     calc(var(--a, 0.5) * 100cqw - var(--f, 0.5) * var(--sw)),
     0px
   );
-  top: 50%;
+  /* 上下也一樣：視窗比圖扁要裁上下時，圖上 --fy 的那一點對齊視窗同一個比例（預設 0.5＝置中；
+     主體在下緣的圖用 1，裁掉的是上面）。 */
+  top: clamp(
+    calc(100cqh - var(--sw) * var(--hw)),
+    calc(var(--fy, 0.5) * (100cqh - var(--sw) * var(--hw))),
+    0px
+  );
   width: var(--sw);
   aspect-ratio: var(--ar);
-  translate: 0 -50%;
   opacity: 0;
 }
 .scene-plate[data-state='ok'] .plate-stage {

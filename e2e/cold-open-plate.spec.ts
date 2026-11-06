@@ -10,11 +10,15 @@ import { expect, test, type Page } from '@playwright/test';
 const STEP_DOOR = 9;
 const STEP_2249 = 10;
 
-async function open(page: Page, step: number, lang: 'zh' | 'en' = 'zh') {
+async function open(page: Page, step: number, lang: 'zh' | 'en' = 'zh', scale = 1) {
   await page.goto('/');
   await page.evaluate(
-    ([step, lang]) => {
+    ([step, lang, scale]) => {
       localStorage.setItem('lawgame-lang', lang as string);
+      localStorage.setItem(
+        'lawgame-settings',
+        JSON.stringify({ state: { voScale: scale }, version: 1 }),
+      );
       localStorage.setItem(
         'lawgame-ep-auto',
         JSON.stringify({
@@ -34,7 +38,7 @@ async function open(page: Page, step: number, lang: 'zh' | 'en' = 'zh') {
         }),
       );
     },
-    [step, lang] as const,
+    [step, lang, scale] as const,
   );
   await page.reload();
   await page
@@ -129,3 +133,99 @@ for (const scheme of ['light', 'dark'] as const)
     const door = page.getByRole('button', { name: '推開門' });
     expect(await door.evaluate((e) => getComputedStyle(e).color)).toBe('rgb(231, 234, 238)');
   });
+
+/**
+ * 字幕框和按鈕不蓋獎盃和手（設計師 #316 審查 1）。主體框寫在 plates.json（以 2249-*.jpg 量的比例）。
+ * 門檻（看不到＝跑出視窗＋被字幕框、按鈕蓋住）：獎盃 0、手指 0；整隻手（手背＋手指）最多 45%，也就是最少剩手指。
+ */
+const SIZES = [
+  [1440, 900],
+  [1366, 768],
+  [412, 915],
+  [360, 740],
+  [844, 390],
+] as const;
+
+async function hidden(page: Page) {
+  return page.evaluate(() => {
+    type Box = { l: number; t: number; r: number; b: number };
+    const overlap = (a: Box, b: Box) =>
+      Math.max(0, Math.min(a.r, b.r) - Math.max(a.l, b.l)) *
+      Math.max(0, Math.min(a.b, b.b) - Math.max(a.t, b.t));
+    const host = document.querySelector('.plate-host .scene-plate') as HTMLElement;
+    const stage = document.querySelector('.plate-host .plate-stage')!.getBoundingClientRect();
+    const subjects = JSON.parse(host.dataset.subjects!) as {
+      id: string;
+      box: [number, number, number, number];
+      cover: number;
+    }[];
+    const view = { l: 0, t: 0, r: innerWidth, b: innerHeight };
+    const ui = [
+      ...document.querySelectorAll('.cold-plated > .sub-card, .cold-plated > .sub-actions'),
+    ]
+      .map((e) => e.getBoundingClientRect())
+      .filter((r) => r.width && r.height)
+      .map((r) => ({ l: r.left, t: r.top, r: r.right, b: r.bottom }));
+    return subjects.map((s) => {
+      const a = {
+        l: stage.left + s.box[0] * stage.width,
+        t: stage.top + s.box[1] * stage.height,
+        r: stage.left + s.box[2] * stage.width,
+        b: stage.top + s.box[3] * stage.height,
+      };
+      const seen = {
+        l: Math.max(a.l, 0),
+        t: Math.max(a.t, 0),
+        r: Math.min(a.r, view.r),
+        b: Math.min(a.b, view.b),
+      };
+      const vis = overlap(a, view) - ui.reduce((n, u) => n + overlap(seen, u), 0);
+      const share = 1 - Math.max(0, vis) / ((a.r - a.l) * (a.b - a.t));
+      return { id: s.id, cover: s.cover, hidden: Math.round(share * 1000) / 1000 };
+    });
+  });
+}
+
+for (const [w, h] of SIZES)
+  test(`字幕框和按鈕不蓋獎盃和手：${w}×${h}，中英，字級 100／125%，每一張卡`, async ({
+    page,
+  }, info) => {
+    test.skip(info.project.name !== 'desktop', '自己設視窗大小，桌機那一組跑就好');
+    await page.setViewportSize({ width: w, height: h });
+    for (const lang of ['zh', 'en'] as const)
+      for (const scale of [1, 1.25]) {
+        await open(page, STEP_2249, lang, scale);
+        await page.locator('.place-beat').click();
+        const card = page.locator('.cold-plated > .sub-card');
+        await expect(card).toBeVisible();
+        await page.evaluate(() => document.fonts.ready);
+        const next = page.locator('.cold-plated .sub-actions .primary');
+        for (let i = 0; i < 6 && (await card.count()); i++) {
+          const text = (await card.innerText()).trim();
+          for (const r of await hidden(page))
+            expect(
+              r.hidden,
+              `${lang} ${scale} 第${i + 1}張「${text}」${r.id} 看不到的比例`,
+            ).toBeLessThanOrEqual(r.cover + 0.001);
+          await next.click();
+          await expect
+            .poll(async () => ((await card.count()) ? (await card.innerText()).trim() : ''))
+            .not.toBe(text);
+        }
+      }
+  });
+
+test('淺色主題下冷開場的字幕框也是深色玻璃、鏡頭層的字（和深色主題一樣）', async ({ page }) => {
+  const look = async (scheme: 'light' | 'dark') => {
+    await page.emulateMedia({ colorScheme: scheme });
+    await open(page, STEP_2249);
+    await page.locator('.place-beat').click();
+    const card = page.locator('.cold-plated > .sub-card');
+    await expect(card).toBeVisible();
+    return card.evaluate((e) => {
+      const tx = e.querySelector('.tx')!;
+      return [getComputedStyle(e).backgroundColor, getComputedStyle(tx).color];
+    });
+  };
+  expect(await look('light')).toEqual(await look('dark'));
+});
