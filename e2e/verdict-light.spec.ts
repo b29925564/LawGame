@@ -49,14 +49,20 @@ for (const [ep, verdict] of [
     await page.emulateMedia({ colorScheme: 'light', reducedMotion: 'no-preference' });
     const progress = structuredClone(seeds[ep]);
     progress.scenes.closing.verdict = verdict;
-    await page.addInitScript((save) => {
-      if (sessionStorage.getItem('seeded')) return;
-      sessionStorage.setItem('seeded', '1');
-      localStorage.clear();
-      localStorage.setItem('lawgame-ep-auto', save);
-    }, JSON.stringify({ version: 5, savedAt: Date.now(), label: 'x', progress }));
+    await page.addInitScript(
+      (save) => {
+        if (sessionStorage.getItem('seeded')) return;
+        sessionStorage.setItem('seeded', '1');
+        localStorage.clear();
+        localStorage.setItem('lawgame-ep-auto', save);
+      },
+      JSON.stringify({ version: 5, savedAt: Date.now(), label: 'x', progress }),
+    );
     await page.goto('/');
-    await page.getByRole('button', { name: /^繼續（/ }).first().click();
+    await page
+      .getByRole('button', { name: /^繼續（/ })
+      .first()
+      .click();
 
     const night = async (k: string) => {
       // 每一拍都是夜：平均亮度遠低於淺色頁（淺色頁約 232；裁決書在深色桌面上約 34／手機 61）。
