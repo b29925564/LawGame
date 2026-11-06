@@ -328,7 +328,8 @@ const BREAKS_150: Record<string, string[]> = {
     'and looks back at Lucas.',
   ],
   羈押室門口: [
-    'The side door of the sentencing courtroom',
+    'The side door',
+    'of the sentencing courtroom',
     'leads to the holding cells.',
     'At the door the bailiff pauses long enough',
     'for Ethan to look back.',
@@ -340,13 +341,13 @@ const BREAKS_150: Record<string, string[]> = {
 for (const lang of ['zh', 'en'] as const)
   for (const scale of [1, 1.25, 1.5])
     for (const c of CASES)
-      for (const narrow of [false, true])
-        test(`字幕卡一句一張、不超過兩行：${c.name}（${lang}）${scale * 100}%${narrow ? ' 最窄手機 360' : ''}`, async ({
+      for (const narrow of [0, 360, 320])
+        test(`字幕卡一句一張、不超過兩行：${c.name}（${lang}）${scale * 100}%${narrow ? ` 窄手機 ${narrow}` : ''}`, async ({
           page,
         }, info) => {
-          // 手機另外在最窄的 360 寬再跑一次（預設的是 412）。
-          test.skip(narrow && info.project.name !== 'chromium', '只有手機專案');
-          if (narrow) await page.setViewportSize({ width: 360, height: 800 });
+          // 手機另外在 360、最窄的 320 寬再跑一次（預設的是 412）。
+          test.skip(!!narrow && info.project.name !== 'chromium', '只有手機專案');
+          if (narrow) await page.setViewportSize({ width: narrow, height: 800 });
           await open(page, c.scene, lang, c.deal, scale);
           await page.locator('.place-beat').click();
           const card = page.locator('.scene.plated > .sub-card');
@@ -375,8 +376,34 @@ for (const lang of ['zh', 'en'] as const)
                 left: r.left,
                 right: r.right,
                 rows: rows.size,
+                // 每一行最後一個字（量每個字的位置，下一個字往下掉就是換行）。
+                ends: (() => {
+                  const out: string[] = [];
+                  const rg = document.createRange();
+                  let last = '';
+                  let top: number | null = null;
+                  const walker = document.createTreeWalker(x, NodeFilter.SHOW_TEXT);
+                  for (let n = walker.nextNode(); n; n = walker.nextNode())
+                    for (const mt of n.textContent!.matchAll(/\S+/g)) {
+                      rg.setStart(n, mt.index!);
+                      rg.setEnd(n, mt.index! + mt[0].length);
+                      const q = rg.getClientRects()[0];
+                      if (!q) continue;
+                      if (top !== null && q.top > top + 4) out.push(last);
+                      top = q.top;
+                      last = mt[0];
+                    }
+                  out.push(last);
+                  return out;
+                })(),
               };
             });
+            // 行尾不留冠詞、介系詞（設計師 v93 第二道關卡 #322 審查）：全部有底圖的字幕，每一張、每一行。
+            if (lang === 'en')
+              for (const w of m.ends)
+                expect(w.toLowerCase().replace(/[^a-z']/g, ''), `行尾是虛詞：${text}`).not.toMatch(
+                  /^(a|an|the|of|to|in|on|at|for|with|by|from)$/,
+                );
             // 英文的句子只要在這個寬度、字級斷成多張，就要是手標的斷點（plateBreaks.ts），不准程式猜。
             if (lang === 'en' && m.of) expect(m.marked, `沒標斷點：${text}`).toBe(true);
             // 設定集 10.1：字幕是無襯線 500（旁白也一樣，不用明體）。
@@ -399,7 +426,7 @@ for (const lang of ['zh', 'en'] as const)
           expect(seen.length).toBeGreaterThanOrEqual(3);
           expect(seen.length).toBeLessThan(16);
           // 最窄手機＋150% 的英文：照設計師的斷點表斷（plateBreaks.ts），卡裡的換行也是表上的位置。
-          if (narrow && scale === 1.5 && lang === 'en') {
+          if (narrow === 360 && scale === 1.5 && lang === 'en') {
             const flat = seen.map((x) => x.replace(/\s+/g, ' ').replace(/[’‘]/g, "'").trim());
             for (const want of BREAKS_150[c.name]) expect(flat, want).toContain(want);
           }

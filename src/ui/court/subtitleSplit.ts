@@ -34,6 +34,10 @@ export function canCut(words: string[], b: number) {
   const prev = words[b - 1];
   const next = words[b];
   if (NO_AFTER.has(norm(prev))) return false;
+  // 對等連接詞不放行尾（「…on his cuff and／a crystal trophy」，體驗評測 v93 關卡 2）：要切切在它前面。
+  if (/^(and|but|or|nor)$/.test(norm(prev))) return false;
+  // 存在句的 there 和後面的 be 動詞不拆（「When he stands, there／is blood」，體驗評測 v93 關卡 2）。
+  if (norm(prev) === 'there' && /^(is|was|are|were|'s)$/.test(norm(next))) return false;
   if (TITLES.has(norm(prev)) && isCap(next)) return false;
   if (/^[\d$%.,-]+$/.test(prev)) return false;
   if (/\w-\w/.test(prev)) return false;

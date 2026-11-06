@@ -443,6 +443,21 @@ const AVOID_GAP = 12;
 const SIDE_MIN = 320;
 
 type Box = { l: number; t: number; r: number; b: number };
+
+/** 這張底圖的主體方框（plates.json subjects），換成現在視窗裡的座標；沒有主體或圖還沒擺好回傳空的。 */
+export function subjectRects(shown: Shown | null): Box[] {
+  const subjects = shown?.plate.subjects?.[shown.phone ? 'phone' : 'desktop'];
+  const host = document.querySelector('.plate-host .plate-stage');
+  if (!subjects?.length || !host) return [];
+  const stage = host.getBoundingClientRect();
+  return subjects.map((x) => ({
+    l: stage.left + x.box[0] * stage.width,
+    t: stage.top + x.box[1] * stage.height,
+    r: stage.left + x.box[2] * stage.width,
+    b: stage.top + x.box[3] * stage.height,
+  }));
+}
+
 const overlap = (a: Box, b: Box) =>
   Math.max(0, Math.min(a.r, b.r) - Math.max(a.l, b.l)) *
   Math.max(0, Math.min(a.b, b.b) - Math.max(a.t, b.t));

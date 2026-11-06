@@ -2,7 +2,6 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { afterAll, describe, expect, it } from 'vitest';
 import { parse } from 'yaml';
 import { install, reset, translate } from '../i18n';
-import { sentencesOf } from './court/subtitleSplit';
 import {
   markedCards,
   markedFor,
@@ -10,8 +9,9 @@ import {
   PLATE_BREAKS,
   plainOf,
   WEAK_USED,
+  endsBanned,
 } from './plateBreaks';
-import { MIN_TAIL_WORDS, subCards } from './subCards';
+import { MIN_TAIL_WORDS, subCards, unitsOf } from './subCards';
 
 /**
  * 底圖字幕的英文斷點（設計師 #296 第二版）：有底圖的英文句，只要在任何寬度或字級會斷成兩張以上，就要在 plateBreaks.ts 手標；
@@ -61,11 +61,12 @@ function cardLines(scene: Node): L[] {
   );
 }
 
-// 桌機卡內寬 728px、20px 字；手機 412 寬卡內寬 346px、360 寬 296px、17px 字；字級乘 1／1.25／1.5。
+// 桌機卡內寬 728px、20px 字；手機 412 寬卡內寬 346px、360 寬 296px、320 寬 268px（內距 10px）、17px 字；字級乘 1／1.25／1.5。
 const GEOMS = [
   { inner: 728, px: 20 },
   { inner: 346, px: 17 },
   { inner: 296, px: 17 },
+  { inner: 268, px: 17 },
 ];
 const SCALES = [1, 1.25, 1.5];
 // 英文平均字寬（em）：Plex Sans 500 在這幾句上實測 0.435–0.478；0.5 是偏寬的保守值，只用來找「可能會斷張」的句子。
@@ -90,7 +91,7 @@ describe('底圖字幕的英文斷點', () => {
   for (const key of new Set(plates.map((p) => p.scene))) {
     const [ep, id] = key.split(':');
     for (const l of cardLines(scenes[ep].find((s) => s.id === id) as Node))
-      for (const s of sentencesOf(translate(l.text, id)).filter(Boolean)) EN.push(s);
+      for (const s of unitsOf(translate(l.text, id))) EN.push(s);
   }
   const all = [...new Set(EN)];
   const emOf = (g: (typeof GEOMS)[number], k: number) =>
@@ -110,8 +111,11 @@ describe('底圖字幕的英文斷點', () => {
             for (const c of cards) {
               for (const ln of c.lines ?? [c.text])
                 if (c.lines) expect(measure(ln), `${where} ${ln}`).toBeLessThanOrEqual(em + 0.01);
-              const rows = c.lines ? c.lines.length : wrap(c.text, em, measure).length;
-              expect(rows, `${where} ${c.text}`).toBeLessThanOrEqual(2);
+              const rows = c.lines ?? wrap(c.text, em, measure);
+              expect(rows.length, `${where} ${c.text}`).toBeLessThanOrEqual(2);
+              // 行尾不留冠詞、介系詞（設計師 v93 第二道關卡 #322 審查）。
+              for (const ln of rows)
+                expect(endsBanned(ln), `${where} 行尾是虛詞：${ln}`).toBe(false);
             }
             if (cards.length > 1) {
               const m = markedFor(s);
@@ -150,7 +154,7 @@ describe('底圖字幕的英文斷點', () => {
             const measure = (t: string) => t.length * f;
             const a = markedCards(m, em, measure);
             if (JSON.stringify(a) !== JSON.stringify(markedCards(noWeak, em, measure)))
-              used.add(`${b.replace(/[|¦/]/g, ' ')} @${g.inner}px/${k * 100}%`);
+              used.add(`${b.replace(/[|¦‖/]/g, ' ')} @${g.inner}px/${k * 100}%`);
           }
     }
     expect([...used].map((x) => x.replace(/ {2,}/g, ' ')).sort()).toEqual([...WEAK_USED].sort());
@@ -173,7 +177,7 @@ describe('底圖字幕的英文斷點', () => {
   it('標記的分張點、換行點都落在字之間，字串本身不帶記號', () => {
     for (const b of PLATE_BREAKS) {
       const m = parseMarked(b);
-      expect(plainOf(m)).not.toMatch(/[|¦/~]/);
+      expect(plainOf(m)).not.toMatch(/[|¦‖/~]/);
       expect(m.words.length).toBeGreaterThan(3);
     }
   });

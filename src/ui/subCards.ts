@@ -1,4 +1,5 @@
 import { canCut, sentencesOf, splitCards, type Card } from './court/subtitleSplit';
+import { proseUnits } from './lineUnits';
 import { markedCards, markedFor, twoLines, widthOf } from './plateBreaks';
 
 type Measure = ((t: string) => number) | undefined;
@@ -86,38 +87,91 @@ function zhLines(card: Card, em: number): Card {
   return best < 0 ? card : { ...card, lines: [card.text.slice(0, best), card.text.slice(best)] };
 }
 
+/** 中文沒有逗號可換行：在詞與詞之間（proseUnits，不拆詞、不讓標點起頭）找兩行最勻的一處；兩行都放得進才換。 */
+function zhWordLines(card: Card, em: number): Card {
+  const units = proseUnits(card.text);
+  let best = -1;
+  let gap = Infinity;
+  let at = 0;
+  for (let i = 0; i < units.length - 1; i++) {
+    at += units[i].length;
+    const l = zhW(card.text.slice(0, at));
+    const r = zhW(card.text.slice(at));
+    const rest = card.text.slice(at);
+    if (l > em || r > em || /^[，。、；：！？」』）…—]/u.test(rest)) continue;
+    // 方位詞、助詞不放行首（「辦公桌／旁的地毯上」）：有別的位置就不選這裡。
+    const d = Math.abs(l - r) + (/^[旁上下裡內外中的了著過]/u.test(rest) ? em : 0);
+    if (d < gap) {
+      best = at;
+      gap = d;
+    }
+  }
+  return best < 0 ? card : { ...card, lines: [card.text.slice(0, best), card.text.slice(best)] };
+}
+
+/**
+ * 中文一張要兩行、又沒有一個逗號能把它分成兩行時，不交給瀏覽器折（會折出「袖口沾了／血」）：
+ * 改在最靠中間的逗號分成兩張，每張再照同樣規則排。沒有逗號才在詞與詞之間換行。
+ */
+function zhFit(card: Card, em: number): Card[] {
+  const c = zhLines(card, em);
+  if (c.lines || zhW(c.text) <= em) return [c];
+  let best = -1;
+  let gap = Infinity;
+  for (const m of c.text.matchAll(/[，、；：]/g)) {
+    const at = (m.index ?? 0) + 1;
+    if (at >= c.text.length) continue;
+    const d = Math.abs(zhW(c.text.slice(0, at)) - zhW(c.text.slice(at)));
+    if (d < gap) {
+      best = at;
+      gap = d;
+    }
+  }
+  if (best < 0) return [zhWordLines(c, em)];
+  return [
+    ...zhFit({ text: c.text.slice(0, best), from: c.from }, em),
+    ...zhFit({ text: c.text.slice(best), from: c.from + best }, em),
+  ];
+}
+
 /** 一張字幕卡：of ＝ 這一句一共分成幾張；marked ＝ 這一句的斷點是人手標的（plateBreaks.ts）。 */
 export type Sub = Card & { of: number; marked: boolean };
 const tag = (cards: Card[], marked: boolean): Sub[] =>
   cards.map((c) => ({ ...c, of: cards.length, marked }));
 
 /**
- * 底圖上的字幕（設定集 10.1）：一張卡一個完整的句子，最多兩行。
- * 先依句號、問號、驚嘆號分句；一句放不下兩行，才分成幾張：英文照人工斷點（plateBreaks.ts），沒標的才退回切分器（逗號、片語規則），
- * 中文在逗號、再不行在詞界（splitCards）。只有一個字的句子併進前一句（沒有前一句就併進後一句），放得進兩行才併。
+ * 字幕的單位：一般是一句。只有一個字的句子（「Nothing.」「是。」）不單獨成一張，接在前一句後面當同一個單位
+ * （「…at the neck. Nothing.」）；沒有前一句才接到後一句前面（「No. I never saw him go in.」）。
+ * 不看寬度：同一句台詞在每個寬度都是同樣的單位，不會一下往前併、一下往後併（體驗評測 v93 關卡 2：
+ * 「Nothing.」被併進下一句，變成一張卡兩句）。
  */
-export function subCards(text: string, em: number, measure?: Measure, maxLines = 2): Sub[] {
-  const sents: string[] = [];
-  const fitsOne = (s: string) => splitCards(s, em, maxLines, measure).length === 1;
+export function unitsOf(text: string): string[] {
+  const units: string[] = [];
   let carry = '';
   for (const s of sentencesOf(text).filter(Boolean)) {
     if (carry) {
-      // 前面有個一字句等著併進這一句。
-      const m = join(carry, s);
-      if (fitsOne(m)) sents.push(m);
-      else sents.push(carry, s);
+      units.push(join(carry, s));
       carry = '';
     } else if (tiny(s)) {
-      const prev = sents[sents.length - 1];
-      if (prev && fitsOne(join(prev, s))) sents[sents.length - 1] = join(prev, s);
+      if (units.length) units[units.length - 1] = join(units[units.length - 1], s);
       else carry = s;
-    } else sents.push(s);
+    } else units.push(s);
   }
-  if (carry) sents.push(carry);
+  if (carry) units.push(carry);
+  return units;
+}
+
+/**
+ * 底圖上的字幕（設定集 10.1）：一張卡一個完整的句子，最多兩行。
+ * 先分成單位（unitsOf：一句，一字句接在旁邊那句）；一個單位放不下兩行，才分成幾張：英文照人工斷點（plateBreaks.ts），
+ * 沒標的才退回切分器（逗號、片語規則），中文在逗號、再不行在詞界（splitCards）。
+ */
+export function subCards(text: string, em: number, measure?: Measure, maxLines = 2): Sub[] {
+  const sents = unitsOf(text);
   return sents.flatMap((s) => {
     if (zh(s))
       return tag(
-        splitCards(s, em, maxLines, measure).map((c) => zhLines(c, em)),
+        splitCards(s, em, maxLines, measure).flatMap((c) => zhFit(c, em)),
         false,
       );
     const m = markedFor(s);
