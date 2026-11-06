@@ -10,7 +10,7 @@ import { useT } from '../../i18n';
 import { reducedMotion } from '../a11y';
 import { beatsOf, landingAt, LANDING, readTokens, type Verdict } from './verdictBeats';
 
-export type Phase = 'form' | 'cut' | 'record' | 'card' | 'cut2' | 'light' | 'done';
+export type Phase = 'form' | 'cut' | 'record' | 'card' | 'cut2' | 'light' | 'end' | 'done';
 
 /** 裁決書上現場寫的最後一筆（讀 pen() 排進 style 的 CSS 變數）：字數、提筆次數、有沒有寫。 */
 function handEnd(root: Element) {
@@ -36,8 +36,10 @@ export function useVerdictRun(
   /** done：前面法官席那一格已經按了略過。 */
   start: 'form' | 'done' = 'form',
 ) {
+  // 四拍和法官席都是鏡頭段（淺色主題也照深色解）；回到結論頁（淺色）之前先切黑 --dur-cut-black，和離開冷開場同一套（end）。
+  // 減少動態：法官席之後本來就切黑了，直接到結論。
   const [phase, setPhase] = useState<Phase>(() =>
-    start === 'done' || reducedMotion() ? 'done' : 'form',
+    reducedMotion() ? 'done' : start === 'done' ? 'end' : 'form',
   );
   const [pull, setPull] = useState(false);
   const [recover, setRecover] = useState(false);
@@ -49,7 +51,7 @@ export function useVerdictRun(
   };
   const skip = useCallback(() => {
     clear();
-    setPhase('done');
+    setPhase((p) => (p === 'done' ? p : 'end'));
   }, []);
 
   useLayoutEffect(() => {
@@ -64,13 +66,19 @@ export function useVerdictRun(
     at(b.card[1], () => setPhase('cut2'));
     at(b.light, () => setPhase('light'));
     at(b.lightLanded, () => setLanded(true));
-    at(b.done, () => setPhase('done'));
+    at(b.done, () => setPhase('end'));
     return clear;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
-    if (phase === 'done') return;
+    if (phase !== 'end') return;
+    const id = window.setTimeout(() => setPhase('done'), readTokens().cutBlack);
+    return () => window.clearTimeout(id);
+  }, [phase]);
+
+  useEffect(() => {
+    if (phase === 'done' || phase === 'end') return;
     const key = (e: KeyboardEvent) => {
       if (e.key === 'Tab' || e.key === 'Shift' || e.metaKey || e.ctrlKey || e.altKey) return;
       skip();
