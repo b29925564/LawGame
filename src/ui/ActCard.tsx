@@ -9,7 +9,7 @@ import {
 import { episodeOf, useEpisode } from '../engine/game';
 import { useLang, useT } from '../i18n';
 import { straight } from '../i18n/curly';
-import { fitLine, prose } from './prose';
+import { prose, titleLine } from './prose';
 import { reducedMotion } from './a11y';
 import { claimHand } from './hand';
 import { rigOf } from './rigs';
@@ -148,56 +148,106 @@ function useCut(onDone?: () => void, wait?: number, hold = false, plated = false
   return { black, skip: () => auto && setBlack(true) };
 }
 
-/** 9:16 直排版：幕名區上下各離標題欄、場記線多遠（px）；幕名最小縮到多少（px）。 */
+/** 9:16 直排版：幕名區上下各離標題欄、場記線多遠（px）；幕名、幕序最小縮到多少（px，11.3 的下限）。 */
 const HEAD_GAP = 12;
 const BIG_MIN = 14;
+const KICK_MIN = 14;
+/** 幕序收字距時一次收多少（em）。 */
+const KICK_STEP = 0.05;
+/** 中文幕名至少是幕序字級的幾倍（設計師 #324：幕名永遠比幕序大，320 寬時至少兩倍）。 */
+const BIG_OVER_KICK = 2;
+
+/** 一段字實際佔的範圍（Range）：字撐出方框時（長字、不換行的幕序），方框本身量不到。 */
+function inkOf(e: HTMLElement) {
+  const r = document.createRange();
+  r.selectNodeContents(e);
+  return r;
+}
 
 /**
  * 9:16 直排版的幕序與幕名（設計師 v93 第二道關卡裁定 一之 3）：放在標題欄（含案號）下緣和場記線上緣之間，
  * 三者互不重疊、都在卡裡。標題欄與場記照 11.3 的 px 下限（14／12），窄卡上比例算出來的位置會疊在一起，所以量實際的方框。
- * 幕名先換行（中文在 fitLine 的詞界、英文在完整的字之間），換了還放不下才一次縮 1px，最小 14px。
+ * 1. 先放幕序：只排一欄（直排）或一行（英文），放不下先收字距、再縮字，最小 14px
+ *    （320 寬時「第二集」比這一段高，以前會自己折成兩欄，連帶把幕名縮到下限）。
+ * 2. 再放幕名：中文從不照字數縮的字級起算（英文照設定的字級），先換行（中文在詞界換欄、英文在完整的字之間），換了還放不下才一次縮 1px，最小 14px。
+ * 3. 中文幕名不到幕序的兩倍時，幕序再縮（不低於 14px），把位置讓給幕名，幕名重放一次。
+ * 4. 還是不到兩倍，幕名一個單位裡還有詞界（「已｜收回的」，prose.tsx 的 titleLine 標成 .split）就也在那裡換欄，再放一次
+ *    （320 寬時「已收回的訊息」照「已收回的｜訊息」換只放得下 22px，四個字比這一段高）。
  * 寬版（2.35:1）照 1360u 的比例，不動。
  */
 function fitPortrait(card: HTMLElement) {
   const head = card.querySelector<HTMLElement>('.act-head');
   const big = card.querySelector<HTMLElement>('.act-big');
+  const kick = card.querySelector<HTMLElement>('.act-kick');
   const caption = card.querySelector<HTMLElement>('.act-caption');
   const below = card.querySelector<HTMLElement>('.act-slate') ?? card.querySelector('.act-foot');
   if (!head || !big || !caption) return;
   big.style.fontSize = '';
+  delete big.dataset.loose;
+  if (kick) {
+    kick.style.fontSize = '';
+    kick.style.letterSpacing = '';
+  }
   delete card.dataset.fit;
   for (const v of ['--ah-top', '--ah-bottom', '--ah-h']) card.style.removeProperty(v);
   if (card.clientWidth >= card.clientHeight) return;
   const c = card.getBoundingClientRect();
-  const top = caption.getBoundingClientRect().bottom - c.top + HEAD_GAP;
-  const bottom = (below ? c.bottom - below.getBoundingClientRect().top : 0) + HEAD_GAP;
+  // top／bottom 從卡的內框（扣掉邊框）算起，幕名區的高才和 .act-head 一樣，不會比它高出邊框那 2px。
+  const inTop = c.top + card.clientTop;
+  const inBottom = inTop + card.clientHeight;
+  const top = caption.getBoundingClientRect().bottom - inTop + HEAD_GAP;
+  const bottom = (below ? inBottom - below.getBoundingClientRect().top : 0) + HEAD_GAP;
   card.style.setProperty('--ah-top', `${top}px`);
   card.style.setProperty('--ah-bottom', `${bottom}px`);
-  card.style.setProperty('--ah-h', `${Math.max(0, c.height - top - bottom)}px`);
+  card.style.setProperty('--ah-h', `${Math.max(0, card.clientHeight - top - bottom)}px`);
   card.dataset.fit = '';
   // 左右留 26u（和標題欄、場記同一條邊）。
   const side = (c.width * 26) / 420;
-  // 量字實際佔的範圍（Range）：一個長字比幕名的寬度上限還長時，會撐出方框外，方框本身量不到。
-  const parts = [big, ...card.querySelectorAll<HTMLElement>('.act-kick')].map((e) => {
-    const r = document.createRange();
-    r.selectNodeContents(e);
-    return r;
-  });
-  const fits = () => {
+  const inside = (p: Range) => {
     const h = head.getBoundingClientRect();
-    return parts.every((p) => {
-      const r = p.getBoundingClientRect();
-      return (
-        r.top >= h.top - 0.5 &&
-        r.bottom <= h.bottom + 0.5 &&
-        r.left >= c.left + side - 0.5 &&
-        r.right <= c.right - side + 0.5
-      );
-    });
+    const r = p.getBoundingClientRect();
+    return (
+      r.top >= h.top - 0.5 &&
+      r.bottom <= h.bottom + 0.5 &&
+      r.left >= c.left + side - 0.5 &&
+      r.right <= c.right - side + 0.5
+    );
   };
-  for (let px = parseFloat(getComputedStyle(big).fontSize); !fits() && px > BIG_MIN;) {
-    px = Math.max(BIG_MIN, px - 1);
-    big.style.fontSize = `${px}px`;
+  const px = (e: HTMLElement) => parseFloat(getComputedStyle(e).fontSize);
+  const k = kick && inkOf(kick);
+  if (kick && k) {
+    const ls = parseFloat(getComputedStyle(kick).letterSpacing) / px(kick) || 0;
+    for (let em = ls; !inside(k) && em > 0;) {
+      em = Math.max(0, em - KICK_STEP);
+      kick.style.letterSpacing = `${em}em`;
+    }
+    for (let n = px(kick); !inside(k) && n > KICK_MIN;) {
+      n = Math.max(KICK_MIN, n - 1);
+      kick.style.fontSize = `${n}px`;
+    }
+  }
+  const b = inkOf(big);
+  // 中文幕名的 CSS 字級照字數縮成一欄放得下（--n）；這裡會在詞界換欄，所以從不照字數縮的字級（max(56px, 72u)）起算，
+  // 一次縮 1px，第一個放得下的就是最大的字級。英文照 CSS 的 56px 起算。
+  const latin = card.classList.contains('latin');
+  const start = latin ? px(big) : Math.max(px(big), 56, (72 * c.width) / 420);
+  const fitBig = () => {
+    big.style.fontSize = `${start}px`;
+    for (let n = start; !(inside(b) && (!k || inside(k))) && n > BIG_MIN;) {
+      n = Math.max(BIG_MIN, n - 1);
+      big.style.fontSize = `${n}px`;
+    }
+  };
+  fitBig();
+  if (!kick || latin) return;
+  const short = () => px(big) < BIG_OVER_KICK * px(kick);
+  while (short() && px(kick) > KICK_MIN) {
+    kick.style.fontSize = `${px(kick) - 1}px`;
+    fitBig();
+  }
+  if (short() && big.querySelector('.split')) {
+    big.dataset.loose = '';
+    fitBig();
   }
 }
 
@@ -315,7 +365,7 @@ export function ActCard({
             <h1 className="act-title">
               <span className="rd" style={d(5)}>
                 <span className="act-big" style={{ '--n': width(headline.title) } as CSSProperties}>
-                  {fitLine(headline.title)}
+                  {titleLine(headline.title)}
                 </span>
               </span>
             </h1>

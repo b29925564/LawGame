@@ -98,6 +98,41 @@ for (const scale of [1, 1.5])
     });
     expect(hits, '按鈕蓋住條件階梯').toEqual([]);
 
+    // 捲到最底（設計師 #324：360 英文 150%）：內容區最後一塊（條件階梯下面還有授權額度、對方的話、選項）整塊看得到、
+    // 在按鈕上面；每一階和每一個選項都沒有被內容區下緣或按鈕切掉半截。最後一階本身捲到底的情形見下面「每一階都捲得到」的第 4 階。
+    const end = await page.evaluate(async () => {
+      const body = document.querySelector('.shell-body')!;
+      body.scrollTop = body.scrollHeight;
+      await new Promise((r) => requestAnimationFrame(r));
+      const fr = body.getBoundingClientRect();
+      const btn = [...document.querySelectorAll('button')].find((b) =>
+        /Call Arthur Calder for approval/.test(b.textContent ?? ''),
+      )!;
+      const b = btn.getBoundingClientRect();
+      const items = [...body.querySelectorAll('.nego-ladder li, button')];
+      const last = items[items.length - 1].getBoundingClientRect();
+      return {
+        atBottom: Math.abs(body.scrollTop - (body.scrollHeight - body.clientHeight)) <= 1,
+        lastWhole: last.top >= fr.top - 0.5 && last.bottom <= fr.bottom + 0.5,
+        lastAboveButton: last.bottom <= b.top + 0.5,
+        cut: items
+          .filter((e) => {
+            const r = e.getBoundingClientRect();
+            return (
+              (r.top < fr.bottom - 0.5 && r.bottom > fr.bottom + 0.5) ||
+              (r.top < b.top - 0.5 && r.bottom > b.top + 0.5)
+            );
+          })
+          .map((e) => e.textContent),
+      };
+    });
+    expect(end, '捲到最底').toEqual({
+      atBottom: true,
+      lastWhole: true,
+      lastAboveButton: true,
+      cut: [],
+    });
+
     // 每一階都捲得到：捲到那一階貼著內容區底部時，整階在內容區裡、不在按鈕底下。
     const steps = page.locator('.nego-ladder li');
     for (let i = 0; i < 4; i++) {

@@ -370,6 +370,8 @@
     padding: 0;
     font: 500 max(15px, calc(18 * var(--u))) / 1.4 var(--font-doc);
     letter-spacing: 0.4em;
+    /* 幕序只排一欄（英文一行），不折成兩欄；放不下由 ActCard.tsx 的 fitPortrait 先收字距、再縮字。 */
+    white-space: nowrap;
   }
   .act-card .act-big {
     margin: 0;
@@ -417,7 +419,7 @@
   /*
    * 幕序與幕名放在標題欄（含案號）下緣和場記線上緣之間（ActCard.tsx 的 fitPortrait 量好寫進 --ah-top／--ah-bottom）：
    * 標題欄 14px、場記 12px 的下限在窄卡上會比 420u 的比例高，照比例放的幕名會疊上去（第二道關卡 7075839 舊問題 7）。
-   * 直排的中文幕名一行最長就是這一段的高，放不下在詞界換到下一行。
+   * 直排的中文幕名一欄最長就是這一段的高，放不下在詞界換到下一欄（「的」「之」「了」跟著前一個詞）。
    */
   .act-card[data-fit] .act-head {
     top: var(--ah-top);
@@ -430,6 +432,14 @@
   }
   .act-card:not(.latin)[data-fit] .act-big {
     max-height: var(--ah-h);
+  }
+  /* 直排的幕序、幕名不坐在橫排的行框裡：行框底下留給下伸部的那一截會把字往上推，放大時頂出幕名區的上緣。 */
+  .act-card:not(.latin)[data-fit] :is(.act-title, .act-kick, .act-title > .rd, .act-kick > .rd) {
+    display: flex;
+  }
+  /* 幕名照單位換欄還是不到幕序的兩倍時（fitPortrait 設 data-loose），單位裡的詞界（「已｜收回的」）也可以換欄。 */
+  .act-card .act-big[data-loose] .split {
+    white-space: normal;
   }
 }
 
