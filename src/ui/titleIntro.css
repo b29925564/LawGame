@@ -217,6 +217,22 @@
   transform-origin: left;
   scale: 0 1;
 }
+.ti-skipped {
+  position: absolute;
+  left: 50%;
+  top: 34%;
+  width: min(480px, 80vw);
+  translate: -50% 0;
+  margin: 0;
+  padding: 12px 14px;
+  font: 400 12px / 1.4 var(--font-mono);
+  letter-spacing: 0.04em;
+  color: var(--cine-muted);
+  opacity: 0;
+}
+.ti-skipped time {
+  margin-left: 1em;
+}
 .ti-msg-bar em {
   font: 400 12px / 1 var(--font-mono, monospace);
   font-style: normal;
@@ -376,6 +392,15 @@
   .ti-note {
     animation: ti-rise var(--dur-ui) var(--ease-light) 1000ms both;
   }
+  /* 第二集：讀完以後像被手指按掉，往右滑出畫面（和黑條同一種節拍，不彈、不淡），原位留「已略過」。 */
+  .ti-note {
+    animation:
+      ti-rise var(--dur-ui) var(--ease-light) 1000ms both,
+      ti-swipe var(--dur-redact-in) steps(4, end) 3000ms both;
+  }
+  .ti-skipped {
+    animation: ti-show 1ms steps(1, start) calc(3000ms + var(--dur-redact-in)) both;
+  }
   .ti-msg-bar {
     animation: ti-bar var(--dur-redact-in) steps(4, end) 3000ms both;
   }
@@ -416,6 +441,12 @@
   .ti-msg-bar {
     animation: ti-bar 1ms steps(1, start) 3000ms both;
   }
+  .ti-note {
+    animation: ti-gone 1ms steps(1, start) 3000ms both;
+  }
+  .ti-skipped {
+    animation: ti-show 1ms steps(1, start) 3000ms both;
+  }
   .ti-line.hl::before {
     animation: ti-bar 1ms steps(1, start) 1600ms both;
   }
@@ -443,10 +474,13 @@
     scale: 1 0;
   }
 }
+/* 分格動畫（steps(n, end)）的最後一格從 99.9% 就停住：Chrome 算到結尾時進度是 0.9999999999999989，
+   steps(4, end) 會停在 3/4（黑條只蓋到四分之三、提醒卡滑不出畫面）。 */
 @keyframes ti-on {
   from {
     opacity: 0.12;
   }
+  99.9%,
   to {
     opacity: 1;
   }
@@ -455,6 +489,7 @@
   from {
     scale: 0 1;
   }
+  99.9%,
   to {
     scale: 1 1;
   }
@@ -463,6 +498,7 @@
   from {
     scale: 1 1;
   }
+  99.9%,
   to {
     scale: 0 1;
   }
@@ -501,6 +537,20 @@
   }
   to {
     opacity: 1;
+  }
+}
+@keyframes ti-swipe {
+  from {
+    transform: none;
+  }
+  99.9%,
+  to {
+    transform: translateX(100vw);
+  }
+}
+@keyframes ti-gone {
+  to {
+    visibility: hidden;
   }
 }
 @keyframes ti-rise {

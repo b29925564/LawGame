@@ -148,9 +148,17 @@ test('第二集換 0:10 和 0:23：百葉窗亮的是另一條縫，證人席是
   await page.clock.fastForward(6000);
   await expect(intro).toHaveAttribute('data-shot', 'witness');
   await expect(page.locator('.ti-note')).toContainText('您已連續上線 10 小時');
-  // 他自己按掉的（不是被藏、被刪）：黑條上是「已略過」。
-  await expect(page.locator('.ti-note .ti-msg-bar')).toHaveText('已略過');
+  // 他自己按掉的（不是藏、刪、默）：沒有黑條，提醒卡往右滑出畫面，原位留「已略過」和時間，沒有黃。
+  await expect(page.locator('.ti-msg-bar')).toHaveCount(0);
   await expect(page.locator('.ti-bubble')).toHaveCount(0);
+  // 動畫走真實時間（假時鐘停著，鏡頭不會換）：等它自己滑完。
+  const vw = page.viewportSize()!.width;
+  await expect
+    .poll(async () => (await page.locator('.ti-note').boundingBox())!.x, { timeout: 10_000 })
+    .toBeGreaterThanOrEqual(vw);
+  await expect(page.locator('.ti-skipped')).toHaveText('已略過18:09');
+  await expect(page.locator('.ti-skipped')).toHaveCSS('opacity', '1');
+  expect(await yellows(page)).toEqual([]);
 
   await open(page, { episode: 'ep1' });
   await page.clock.fastForward(10000);
@@ -158,6 +166,7 @@ test('第二集換 0:10 和 0:23：百葉窗亮的是另一條縫，證人席是
   await page.clock.fastForward(7000);
   await expect(page.locator('.title-intro')).toHaveAttribute('data-shot', 'court');
   await page.clock.fastForward(6000);
+  await expect(page.locator('.ti-skipped')).toHaveCount(0);
   await expect(page.locator('.ti-bubble')).toContainText('我們私下解決');
   await expect(page.locator('.ti-msg-bar')).toContainText('此訊息已被收回');
 });
@@ -239,6 +248,13 @@ test('0:05 黑條節奏：第 2、3 條各隔 333ms，其餘 25 條各隔 83ms',
   expect(Math.round(delays[0])).toBe(5000);
   const gaps = delays.slice(1).map((d, i) => Math.round(d - delays[i]));
   expect(gaps).toEqual([333, 333, ...Array(25).fill(83)]);
+  // 播完每一條都蓋滿整行（Chrome 結尾進度 0.9999…，steps(4) 曾停在 3/4）。
+  await page.evaluate(() => document.getAnimations().forEach((a) => a.finish()));
+  expect(
+    new Set(
+      await page.locator('.ti-bar').evaluateAll((b) => b.map((x) => getComputedStyle(x).scale)),
+    ),
+  ).toEqual(new Set(['1']));
 });
 
 test('0:34 黃線：字的左側、6px、和四個字同高、距字 0.3 字（設定集 11.4）', async ({ page }) => {
@@ -261,4 +277,18 @@ test('0:34 黃線：字的左側、6px、和四個字同高、距字 0.3 字（�
   expect(Math.abs(m.left - m.hl.right - 0.3 * m.fs)).toBeLessThan(1.5);
   expect(Math.abs(m.hl.top - m.top)).toBeLessThan(1.5);
   expect(Math.abs(m.hl.bottom - m.bottom)).toBeLessThan(1.5);
+});
+
+test('減少動態：第二集 0:23 提醒卡直接消失，「已略過」直接出現', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await open(page, { episode: 'ep2' });
+  for (const ms of [10000, 7000, 6000]) await page.clock.fastForward(ms);
+  await expect(page.locator('.title-intro')).toHaveAttribute('data-shot', 'witness');
+  await page.evaluate(() => document.getAnimations().forEach((a) => a.finish()));
+  await expect(page.locator('.ti-note')).toBeHidden();
+  await expect(page.locator('.ti-skipped')).toBeVisible();
+  // 沒有滑：卡留在原位，只是不見了。
+  expect(await page.locator('.ti-note').evaluate((e) => getComputedStyle(e).transform)).toBe(
+    'none',
+  );
 });

@@ -211,16 +211,20 @@ function Witness({ ep2 }: { ep2: boolean }) {
     <>
       <Plate desk={witnessStand} phone={witnessStand} className="still" />
       {ep2 ? (
-        <div className="ti-note">
-          <b>{t('卡爾德快遞', 'cold-open')}</b>
-          <span className="ti-msg">
-            {t('您已連續上線 10 小時。休息將使今日評分下降。', 'cold-open')}
-            {/* 不是藏也不是刪：他自己按了「略過」，61 次紀錄都在（劇本與內容 #2，ep2.yaml:57–62）。 */}
-            <i className="ti-msg-bar">
-              <em>{t('已略過')}</em>
-            </i>
-          </span>
-        </div>
+        <>
+          {/* 不是藏、刪、默（黑條的三種意思），是他自己按掉的：61 次紀錄都在（ep2.yaml app-log）。
+              提醒卡像被手指按掉一樣往右滑出，原位留一行「已略過」和那一次的時間（設計師 #319）。 */}
+          <div className="ti-note">
+            <b>{t('卡爾德快遞', 'cold-open')}</b>
+            <span className="ti-msg">
+              {t('您已連續上線 10 小時。休息將使今日評分下降。', 'cold-open')}
+            </span>
+          </div>
+          <p className="ti-skipped">
+            {t('已略過')}
+            <time>18:09</time>
+          </p>
+        </>
       ) : (
         <div className="ti-bubble">
           <b>{t('葛蘭特・沃斯', 'cold-open')}</b>
