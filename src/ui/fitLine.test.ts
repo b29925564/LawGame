@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { episodes } from '../content';
-import { fitLineUnits } from './lineUnits';
+import { fitLineUnits, glueTail } from './lineUnits';
 
 /** 兩集手機戲裡的黑底字卡（do: caption）正文。 */
 const captions = Object.values(episodes).flatMap((ep) =>
@@ -39,5 +39,19 @@ describe('黑底字卡的 fitLine 換行單位（設計師 v93 第二道關卡�
 
   it('沒有漢字的英文原樣不動', () => {
     expect(fitLineUnits('The lobby gate.')).toEqual(['The lobby gate.']);
+  });
+});
+
+describe('glueTail：英文頂列期限的黏字（設計師裁定 25376da）', () => {
+  const NB = ' ';
+  it('數字和單位黏住，最後兩個字黏住', () => {
+    expect(glueTail('Pretrial hearing in three weeks')).toBe(`Pretrial hearing in three${NB}weeks`);
+    expect(glueTail('Discovery deadline: two weeks')).toBe(`Discovery deadline: two${NB}weeks`);
+    expect(glueTail('Mediation: one week')).toBe(`Mediation: one${NB}week`);
+    expect(glueTail('Trial in 3 days now')).toBe(`Trial in 3${NB}days${NB}now`);
+  });
+  it('中文、單字不動', () => {
+    expect(glueTail('開庭　三天後')).toBe('開庭　三天後');
+    expect(glueTail('Trial')).toBe('Trial');
   });
 });

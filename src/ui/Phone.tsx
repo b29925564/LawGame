@@ -4,7 +4,7 @@ import type { Line, PhoneScene } from '../engine/episode/schema';
 import { sceneChoices, useEpisode } from '../engine/game';
 import { useLang, useT } from '../i18n';
 import { PlaceBeat } from './ActCard';
-import { FitLine } from './prose';
+import { FitLine, fitLine } from './prose';
 import { useScope } from './lang';
 import { useHand } from './Marks';
 import { Redaction } from './Redaction';
@@ -145,7 +145,7 @@ function Screen({
           >
             <span className="notif-app">{t('聊天')}</span>
             <strong>{t(s.message.from, scope)}</strong>
-            <span>{t(s.message.text, scope)}</span>
+            <span>{fitLine(t(s.message.text, scope))}</span>
           </button>
           <span className="notif-hint" aria-hidden>
             {t('點一下查看')}
@@ -168,7 +168,7 @@ function Screen({
                 {b.retracted ? (
                   <Redaction label={t('此訊息已被收回')} meta={b.retractedAt} />
                 ) : (
-                  t(b.text, scope)
+                  fitLine(t(b.text, scope))
                 )}
               </li>
             ))}
@@ -177,7 +177,7 @@ function Screen({
             <div className="replies" role="group" aria-label={t('回覆')}>
               {s.options.map((o, i) => (
                 <button key={i} onClick={() => choose(i)}>
-                  {t(o.text, scope)}
+                  {fitLine(t(o.text, scope))}
                 </button>
               ))}
             </div>
@@ -192,9 +192,9 @@ function Screen({
           <header className="chat-head">{t('叫車')}</header>
           <dl className="ride-route">
             <dt>{t('上車')}</dt>
-            <dd>{t(s.from, scope)}</dd>
+            <dd>{fitLine(t(s.from, scope))}</dd>
             <dt>{t('下車')}</dt>
-            <dd>{t(s.to, scope)}</dd>
+            <dd>{fitLine(t(s.to, scope))}</dd>
           </dl>
           <p className="muted">
             {t('最近的司機：{driver}，2 分鐘', { driver: t(s.driver, scope) })}
@@ -207,7 +207,7 @@ function Screen({
     case 'badge':
       return (
         <div className="phone-body badge">
-          <p className="muted">{t(s.place, scope)}</p>
+          <p className="muted">{fitLine(t(s.place, scope))}</p>
           <div className="reader" aria-hidden>
             ◉
           </div>
@@ -219,7 +219,7 @@ function Screen({
     case 'door':
       return (
         <div className="phone-body door">
-          <p>{t(s.text, scope)}</p>
+          <p>{fitLine(t(s.text, scope))}</p>
           <button className="primary" onClick={advance}>
             {t(s.action, scope)}
           </button>
@@ -233,7 +233,8 @@ function Screen({
         {v.talk.map((l, i) => (
           <li key={i} className={l.who === owner ? 'own' : ''}>
             <strong>{t(l.who, scope)}</strong>
-            {t(l.text, scope)}
+            {/* li 是 flex：包成一段，fitLine 的每個詞才不會各自變成一格。 */}
+            <span>{fitLine(t(l.text, scope))}</span>
           </li>
         ))}
       </ol>

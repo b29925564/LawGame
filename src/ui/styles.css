@@ -148,6 +148,24 @@
 :root:has(.vdict:not([data-stage='done'])) {
   color-scheme: dark;
 }
+/* 監獄來電的房間也是鏡頭層的黑，但下面的對白框跟主題：整頁不換，只把選單鈕換成深色款（設計師裁定 25376da）。
+   :root 的 light-dark() 權杖在根就算好了，只改這裡的 color-scheme 不夠：選單用到的權杖照深色那一邊釘住。 */
+:root:has(.call-screen) .game-menu {
+  color-scheme: dark;
+  --bg: #0b0e13;
+  --surface: #131920;
+  --surface-2: #19202a;
+  --surface-3: #212a35;
+  --border: #252f3c;
+  --border-strong: #3a4757;
+  --text: #e7eaee;
+  --muted: #8e99a7;
+  --faint: #8a95a2;
+  --focus: #f4c53d;
+  --accent: #f4c53d;
+  --hl: #f4c53d;
+  --inset-hi: inset 0 1px 0 rgb(255 255 255 / 4%);
+}
 
 /* ── 基礎 ── */
 * {
@@ -1185,6 +1203,11 @@ details summary {
    */
   .game-menu {
     position: absolute;
+  }
+  /* 黑底字卡（.cine）上沒有分頁列可蓋：選單鈕釘住不捲，字從實心的按鈕底下捲過去
+     （設計師裁定 25376da：字卡放不下要捲時，按鈕跟著捲走、頂邊只剩半個）。 */
+  :root:has(main.cine) .game-menu {
+    position: fixed;
   }
 }
 .menu-panel {
@@ -3528,6 +3551,21 @@ fieldset.relations.compact {
   background:
     var(--grain), radial-gradient(60% 50% at 50% 40%, rgb(62 80 104 / 20%), transparent 70%),
     var(--cine-bg);
+}
+/* 手機寬度：手機框和右上角選單鈕左右重疊，框的上緣放到選單鈕下緣再下 8px（第二道關卡 25376da 第 6 項：
+   320 寬時選單鈕蓋到手機狀態列；和 .cine 的上內距同一條算式）。 */
+@media (max-width: 767px) {
+  .phone-stage {
+    --phone-top: max(
+      16px,
+      calc(max(8px, env(safe-area-inset-top)) + max(40px, 14px + 1.65 * var(--fs-ui-cap)) + 8px)
+    );
+    padding-top: var(--phone-top);
+    align-items: flex-start;
+  }
+  .phone-stage > .phone {
+    height: min(740px, calc(100dvh - var(--phone-top) - 16px));
+  }
 }
 .phone {
   position: relative;

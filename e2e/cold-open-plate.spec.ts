@@ -430,63 +430,68 @@ test('集名卡和定場上的選單鈕：淺色主題也是深色那一款', as
  * （第二道關卡 e771fcf 第 6 項：button 通用的顏色 transition 讓它停在淺色約 48ms、再花 180ms 淡成深色）。
  * 在淺色的審前桌面上掛一層 .act-stage（和地點字卡同一個 class），逐格讀選單鈕的底色。
  */
-test('淺色場景切進鏡頭層：第一格選單鈕就是深色款，不淡過去', async ({ page }) => {
-  await page.emulateMedia({ colorScheme: 'light' });
-  await page.goto('/');
-  await page.evaluate(() => {
-    localStorage.setItem(
-      'lawgame-ep-auto',
-      JSON.stringify({
-        version: 5,
-        savedAt: Date.now(),
-        label: 'x',
-        progress: {
-          episode: 'ep1',
-          scene: 9,
-          step: 0,
-          choices: {},
-          cards: [],
-          flags: [],
-          ethics: [],
-          scenes: {},
-        },
-      }),
+// 監獄來電（.call-screen）：設計師裁定 25376da，房間是鏡頭層，選單鈕一樣用深色款。
+for (const layerClass of ['act-stage', 'cine call-screen'])
+  test(`淺色場景切進鏡頭層（${layerClass}）：第一格選單鈕就是深色款，不淡過去`, async ({
+    page,
+  }) => {
+    await page.emulateMedia({ colorScheme: 'light' });
+    await page.goto('/');
+    await page.evaluate(() => {
+      localStorage.setItem(
+        'lawgame-ep-auto',
+        JSON.stringify({
+          version: 5,
+          savedAt: Date.now(),
+          label: 'x',
+          progress: {
+            episode: 'ep1',
+            scene: 9,
+            step: 0,
+            choices: {},
+            cards: [],
+            flags: [],
+            ethics: [],
+            scenes: {},
+          },
+        }),
+      );
+    });
+    await page.reload();
+    await page.getByRole('button', { name: /^繼續/ }).first().click();
+    const beat = page.locator('.place-beat');
+    await page.waitForTimeout(300);
+    if (await beat.count()) await beat.click({ timeout: 5000 }).catch(() => {});
+    await expect(page.locator('.taskbar')).toBeVisible();
+    await expect(beat).toHaveCount(0);
+    const menu = page.locator('.menu-toggle');
+    // 回到淺色、選單鈕淡完。
+    await expect.poll(() => menu.evaluate((e) => getComputedStyle(e).colorScheme)).not.toBe('dark');
+    await page.waitForTimeout(600);
+    const light = await menu.evaluate((e) => getComputedStyle(e).backgroundColor);
+    const frames = await menu.evaluate(
+      (e, cls) =>
+        new Promise<string[]>((done) => {
+          const layer = document.createElement('div');
+          layer.className = cls;
+          document.body.appendChild(layer);
+          const out: string[] = [];
+          const tick = () => {
+            out.push(getComputedStyle(e).backgroundColor);
+            if (out.length < 20) requestAnimationFrame(tick);
+            else {
+              layer.remove();
+              done(out);
+            }
+          };
+          tick();
+        }),
+      layerClass,
     );
+    const dark = frames[frames.length - 1];
+    expect(dark, '鏡頭層上選單鈕應該換成深色款').not.toBe(light);
+    expect(frames, `每一格：${frames.join(' → ')}`).toEqual(frames.map(() => dark));
   });
-  await page.reload();
-  await page.getByRole('button', { name: /^繼續/ }).first().click();
-  const beat = page.locator('.place-beat');
-  await page.waitForTimeout(300);
-  if (await beat.count()) await beat.click({ timeout: 5000 }).catch(() => {});
-  await expect(page.locator('.taskbar')).toBeVisible();
-  await expect(beat).toHaveCount(0);
-  const menu = page.locator('.menu-toggle');
-  // 回到淺色、選單鈕淡完。
-  await expect.poll(() => menu.evaluate((e) => getComputedStyle(e).colorScheme)).not.toBe('dark');
-  await page.waitForTimeout(600);
-  const light = await menu.evaluate((e) => getComputedStyle(e).backgroundColor);
-  const frames = await menu.evaluate(
-    (e) =>
-      new Promise<string[]>((done) => {
-        const layer = document.createElement('div');
-        layer.className = 'act-stage';
-        document.body.appendChild(layer);
-        const out: string[] = [];
-        const tick = () => {
-          out.push(getComputedStyle(e).backgroundColor);
-          if (out.length < 20) requestAnimationFrame(tick);
-          else {
-            layer.remove();
-            done(out);
-          }
-        };
-        tick();
-      }),
-  );
-  const dark = frames[frames.length - 1];
-  expect(dark, '鏡頭層上選單鈕應該換成深色款').not.toBe(light);
-  expect(frames, `每一格：${frames.join(' → ')}`).toEqual(frames.map(() => dark));
-});
 
 /** 門縫光的方框（桌機、手機兩張圖）：直接讀 plates.json，舊版沒有這個欄位也照樣量。 */
 const DOORS = (
@@ -538,9 +543,22 @@ for (const [w, h, max] of [
             );
             const x = Math.max(0, Math.min(c.right, a.right) - Math.max(c.left, a.left));
             const y = Math.max(0, Math.min(c.bottom, a.bottom) - Math.max(c.top, a.top));
-            return { both: x * y, spot: `${Math.round(c.left)},${Math.round(c.bottom)}` };
+            return {
+              both: x * y,
+              below: a.top - c.bottom,
+              beside: a.left - c.right,
+              spot: `${Math.round(c.left)},${Math.round(c.bottom)}`,
+            };
           });
           expect(lay.both, `${at} 字幕卡和「繼續」重疊的面積`).toBe(0);
+          // 按鈕在卡下方、間距 ≥8 px（設計師裁定 25376da 第 4 項）；手機橫拿是設計師定的右欄版面，在卡右邊、間距 ≥8 px。
+          if (h > 520)
+            expect(lay.below, `${at} 「繼續」在字幕卡下方的間距`).toBeGreaterThanOrEqual(7.5);
+          else
+            expect(
+              Math.max(lay.below, lay.beside),
+              `${at} 「繼續」和字幕卡的間距`,
+            ).toBeGreaterThanOrEqual(7.5);
           spots.push(lay.spot);
           for (const r of await hidden(page))
             expect(r.hidden, `${at} ${r.id} 看不到的比例`).toBeLessThanOrEqual(r.cover + 0.001);

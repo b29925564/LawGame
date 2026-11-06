@@ -106,10 +106,13 @@ const FN = new Set([...'的之與和及或在於對把被為從到以而並是�
 const PUNCT = /[\s，。、；：！？）」』〉》…—,.;:!?)\]]/u;
 const WORD = /[\p{L}\p{N}]/u;
 
-for (const [label, w, h] of [
-  ['Pixel 7', 0, 0],
-  ['360', 360, 740],
-  ['1530', 1530, 900],
+// 320 寬 150%：第二道關卡 25376da 第 5 項（「卡爾德｜港東區」）。
+for (const [label, w, h, scale] of [
+  ['Pixel 7', 0, 0, 1],
+  ['360', 360, 740, 1],
+  ['1530', 1530, 900, 1],
+  ['320', 320, 640, 1],
+  ['320 150%', 320, 640, 1.5],
 ] as const)
   test(`黑底字卡的中文照 fitLine 斷行：詞界、行尾沒有虛詞、末行至少 3 個字（${label}）`, async ({
     page,
@@ -120,7 +123,7 @@ for (const [label, w, h] of [
     );
     if (w) await page.setViewportSize({ width: w, height: h });
     for (const card of CARDS) {
-      await open(page, card, 'zh');
+      await open(page, card, 'zh', scale);
       // 每一個字的位置：換行的地方是新一行第一個字在全文裡的位置（空白不算行首）。
       const got = await page.locator('.cine .cine-text').evaluate((el) => {
         const text = el.textContent ?? '';
@@ -207,5 +210,49 @@ for (const w of [360, 320])
           expect.soft(m.page, `${tag} 頁面被撐寬`).toBeLessThanOrEqual(m.view);
           expect.soft(m.over, `${tag} 字超出正文欄`).toBeLessThanOrEqual(1);
           expect.soft(m.clip, `${tag} 正文欄內容比欄寬`).toBeLessThanOrEqual(1);
+          // 地名不拆（第二道關卡 25376da 第 5 項："east Calder ⏎ Harbor"）。
+          if (lang === 'en' && card.episode === 'ep2' && card.step === 0) {
+            const rows = await page.evaluate(() => {
+              const el = document.querySelector('.cine .cine-text')!;
+              const walk = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+              for (let n = walk.nextNode(); n; n = walk.nextNode()) {
+                const i = n.textContent!.indexOf('Calder');
+                if (i < 0) continue;
+                const r = document.createRange();
+                r.setStart(n, i);
+                r.setEnd(n, i + 'Calder Harbor'.length);
+                return new Set([...r.getClientRects()].map((x) => Math.round(x.top))).size;
+              }
+              return -1;
+            });
+            expect.soft(rows, `${tag}「Calder Harbor」排成幾行`).toBe(1);
+          }
         }
       });
+
+/**
+ * 手機上字卡放不下要捲時，選單鈕釘在原位不跟著捲走（設計師裁定 25376da：捲到底時頂邊只剩半個）。
+ */
+test('窄手機字卡捲到底，選單鈕還在原位（320・150%・中英）', async ({ page }, info) => {
+  test.skip(info.project.name !== 'chromium', '自己設視窗大小，手機那一組跑就好');
+  await page.setViewportSize({ width: 320, height: 568 });
+  let scrolled = 0;
+  for (const lang of ['zh', 'en'] as const)
+    for (const card of CARDS) {
+      await open(page, card, lang, 1.5);
+      const menu = page.locator('.menu-toggle');
+      const before = await menu.boundingBox();
+      const moved = await page.evaluate(() => {
+        scrollTo(0, document.documentElement.scrollHeight);
+        return scrollY;
+      });
+      if (moved > 0) scrolled++;
+      const after = await menu.boundingBox();
+      expect(
+        after?.y,
+        `${lang} ${card.episode} 第 ${card.step} 步 捲了 ${moved}px，選單鈕的上緣`,
+      ).toBe(before?.y);
+    }
+  // 至少有一張真的要捲，這條才量得到東西。
+  expect(scrolled).toBeGreaterThan(0);
+});

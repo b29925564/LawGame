@@ -23,6 +23,7 @@ import { MarkLines } from './Marks';
 import { ExhibitRef, ExhibitTag, exhibitNo, FilingThumb, Pleading, Written } from './Pleading';
 import { useScope } from './lang';
 import { fitLine, prose } from './prose';
+import { glueTail } from './lineUnits';
 import { useCardPick } from './pick';
 import { Speech } from './Portrait';
 import { RelationPicker } from './RelationPicker';
@@ -293,7 +294,7 @@ export function Desk({ scene }: { scene: DeskScene }) {
             <Swap value={st.hours} /> {t('工時')}
           </span>
           {/* 中文只在詞與詞之間換行（「開庭｜三天後」，不折成「開庭三天｜後」：第二道關卡 e771fcf 第 5 項）。 */}
-          <span className="muted small">{fitLine(t(scene.deadline, scope))}</span>
+          <span className="muted small">{fitLine(glueTail(t(scene.deadline, scope)))}</span>
         </header>
       }
       tabs={<Tabs label={t('應用程式')} value={app} onPick={pickApp} items={apps} />}

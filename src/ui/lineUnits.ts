@@ -45,6 +45,10 @@ const KEEP = [
   ...['普莉亞', '布魯克斯', '旁白', '語音', '法官', '法院系統', '卡爾德快遞'],
   // 第二道關卡 7075839 舊問題 6：冷開場黑底字卡裡被拆開的詞（「財務長｜辦公室」「儀｜表板」「稽｜核部」）。
   ...['財務長辦公室', '財務長', '儀表板', '稽核部', '開走'],
+  // 第二道關卡 25376da 第 5 項：第 2 集第一張黑底字卡「卡爾德｜港東區」。
+  ...['卡爾德港東區', '卡爾德港'],
+  // 同上第 6 項：冷開場手機框「電梯｜廳」。
+  '電梯廳',
 ];
 /** 開頭的「誰的說法：」「驗屍照片：」這種標籤，冒號前面不超過這麼多字就整組不拆，要斷斷在冒號後（#246 r8）。 */
 const LABEL = 8;
@@ -306,4 +310,17 @@ export function fitLineUnits(text: string, titles = true): string[] {
   while (k > 0 && letters(out.slice(k).join('')) < MIN_LAST) k--;
   if (k < out.length - 1) out.splice(k, out.length - k, out.slice(k).join(''));
   return out;
+}
+
+const NUM_EN = /^(?:\d+|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)$/i;
+/**
+ * 英文短標（頂列期限）：數字和後面的單位黏住（three weeks），最後兩個字也黏住，最後一行不會只剩一個字
+ * （設計師裁定 25376da：「Pretrial｜hearing in｜three｜weeks」）。用不斷行空格，中文沒有半形空白，原樣不動。
+ */
+export function glueTail(text: string): string {
+  const w = text.split(' ');
+  if (w.length < 2) return text;
+  return w.reduce((out, x, i) =>
+    i === 0 ? x : out + (NUM_EN.test(w[i - 1]) || i === w.length - 1 ? '\u00a0' : ' ') + x,
+  );
 }

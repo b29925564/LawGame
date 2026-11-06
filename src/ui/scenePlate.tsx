@@ -497,6 +497,9 @@ export function useAvoidSubjects(
   const variant = shown?.phone ? 'phone' : 'desktop';
   const subjects = shown?.plate.subjects?.[variant];
   const soft = shown?.plate.clear?.[variant];
+  // 同一個鏡頭只挑一次位置（設計師裁定 25376da 第 4 項）：記下這張圖、這個視窗大小、這個字級挑到第幾個位置，換卡直接套用。
+  const picked = useRef<{ key: string; best: number } | null>(null);
+  const url = shown?.url;
   useLayoutEffect(() => {
     const el = main.current;
     if (!el || !subjects?.length) return;
@@ -550,6 +553,7 @@ export function useAvoidSubjects(
       };
       const ok = (x: number) => lights.every((y) => x <= y.cover + 1e-3);
       const card = el.querySelector<HTMLElement>(':scope > .sub-card');
+      const key = `${url}|${innerWidth}x${innerHeight}|${card ? getComputedStyle(card).fontSize : ''}|${document.documentElement.lang}`;
       // 位置只看版面、不看這一張卡有幾行：試的時候字幕卡一律當兩行高（字幕最多兩行），同一句的每一張卡挑到同一個位置，
       // 換卡時字幕不跳（第二道關卡 25376da 第 2 項：1280 英文 150% 第 1 張在獎盃上方、第 2 張跳到右下）。
       if (card) {
@@ -623,9 +627,10 @@ export function useAvoidSubjects(
           return true;
         },
       ];
-      let best = -1;
+      const done = picked.current?.key === key;
+      let best = done ? picked.current!.best : -1;
       let bestLit = Infinity;
-      for (let i = 0; i < tries.length; i++) {
+      for (let i = 0; !done && i < tries.length; i++) {
         reset();
         if (!tries[i]() || !clear()) continue;
         const x = lit();
@@ -637,16 +642,22 @@ export function useAvoidSubjects(
       }
       reset();
       // 都蓋到主體（不該發生）：照舊抬到主體上面。
-      tries[best < 0 ? 2 : best]();
+      if (best < 0) best = 2;
+      picked.current = { key, best };
+      tries[best]();
       if (card) card.style.removeProperty('min-height');
     };
     run();
     addEventListener('resize', run);
-    void document.fonts?.ready.then(run);
+    // 字型載入後重挑一次（行高、卡寬可能變了）。
+    void document.fonts?.ready.then(() => {
+      picked.current = null;
+      run();
+    });
     return () => {
       removeEventListener('resize', run);
       reset();
     };
-  }, [subjects, soft, token]);
+  }, [subjects, soft, token, url]);
   return main;
 }
