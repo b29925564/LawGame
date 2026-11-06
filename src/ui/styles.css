@@ -140,7 +140,9 @@
    手機螢幕、字幕框、選單鈕都和深色主題一樣（設計師 #316 審查 2）。只限冷開場（.cold-scope），尾聲的手機戲不算。
    片頭（.title-intro）也是鏡頭層：選單鈕照深色解（白框）。 */
 :root:has(.cold-scope),
-:root:has(.title-intro) {
+:root:has(.title-intro),
+:root:has(.vbench),
+:root:has(.vdict:not([data-stage='done'])) {
   color-scheme: dark;
 }
 
