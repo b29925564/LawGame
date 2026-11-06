@@ -1,14 +1,25 @@
 import { useEffect, useRef, useState } from 'react';
+import { create } from 'zustand';
 import { useEpisode } from '../engine/game';
 import { useT } from '../i18n';
 import { SLOTS, type Slot } from '../engine/save';
 import { SettingsPanel } from './Settings';
 import { SlotList } from './Title';
 
+type Tab = null | 'save' | 'load' | 'options';
+/** 選單開著沒有、開在哪一頁。片頭（TitleIntro）讀它來暫停，按 Esc 也從這裡打開。 */
+export const useMenu = create<{ open: Tab; setOpen: (open: Tab) => void }>((set) => ({
+  open: null,
+  setOpen: (open) => set({ open }),
+}));
+
 /** 遊戲中隨時可開的選單：手動存檔 3 格、讀檔、回標題（企劃書 6.14「隨時存檔」）。 */
 export function GameMenu() {
   const { save, load, toTitle } = useEpisode();
-  const [open, setOpen] = useState<null | 'save' | 'load' | 'options'>(null);
+  const open = useMenu((s) => s.open);
+  const setOpen = useMenu((s) => s.setOpen);
+  // 選單跟著遊戲畫面掛載：離開（回標題）就收起來，下次進來不是開著的。
+  useEffect(() => () => useMenu.getState().setOpen(null), []);
   const [note, setNote] = useState('');
   const t = useT();
   const box = useRef<HTMLDivElement>(null);
@@ -25,7 +36,7 @@ export function GameMenu() {
       document.removeEventListener('pointerdown', away);
       window.removeEventListener('keydown', esc);
     };
-  }, [open]);
+  }, [open, setOpen]);
   const onSave = (slot: Slot) => setNote(save(slot) ? t('已存檔。') : t('這個瀏覽器不允許存檔。'));
   const onLoad = (slot: Slot) => {
     if (!load(slot)) return;

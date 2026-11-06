@@ -6,7 +6,8 @@
 .title-intro {
   position: fixed;
   inset: 0;
-  z-index: 30;
+  /* 選單（--z-menu）在片頭上面：右上角照樣按得到。 */
+  z-index: calc(var(--z-menu) - 1);
   overflow: hidden;
   background: var(--cine-bg);
   color: var(--cine-text);
@@ -42,6 +43,13 @@
 }
 .ti-skip:hover {
   border-color: var(--cine-text);
+}
+
+/* 選單打開時片頭暫停：計時器停（TitleIntro.tsx），鏡頭裡的動態也停。 */
+.title-intro[data-paused] *,
+.title-intro[data-paused] *::before,
+.title-intro[data-paused] *::after {
+  animation-play-state: paused !important;
 }
 
 /* ── 0:00–0:10 紙 ── */
@@ -313,6 +321,7 @@
   font-weight: 900;
   font-size: min(17dvh, 24vw);
   line-height: 1.04;
+  gap: 0.04em;
 }
 .ti-ch {
   position: relative;
@@ -327,11 +336,12 @@
   transform-origin: right;
 }
 .ti-hl {
+  /* 設定集 11.4：字的左側一條 6px --hl 直線，和四個字同高，距字 0.3 字。 */
   position: absolute;
-  right: -0.22em;
-  bottom: 0.08em;
-  width: max(3px, 0.05em);
-  height: 0.9em;
+  top: 0;
+  bottom: 0;
+  left: calc(-0.3em - 6px);
+  width: 6px;
   background: var(--hl);
   opacity: 0;
 }
@@ -351,7 +361,7 @@
   }
   .ti-bar {
     animation: ti-bar var(--dur-redact-in) steps(4, end) both;
-    animation-delay: calc(5000ms + var(--b) * 133ms);
+    animation-delay: calc(5000ms + var(--bd));
   }
   .ti-slats {
     animation: ti-pull 7s var(--ease-camera) both;
@@ -401,7 +411,7 @@
   }
   .ti-bar {
     animation: ti-bar 1ms steps(1, start) both;
-    animation-delay: calc(5000ms + var(--b) * 133ms);
+    animation-delay: calc(5000ms + var(--bd));
   }
   .ti-msg-bar {
     animation: ti-bar 1ms steps(1, start) 3000ms both;

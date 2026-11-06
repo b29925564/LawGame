@@ -25,7 +25,7 @@ import { Dialogue } from './Dialogue';
 import { GameMenu } from './GameMenu';
 import { Interview } from './Interview';
 import { ActCard, PlaceBeat, Recap, splitHeadline } from './ActCard';
-import { TitleIntro } from './TitleIntro';
+import { introOn, TitleIntro } from './TitleIntro';
 import { Announcer } from './Marks';
 import { Negotiation } from './Negotiation';
 import { Phone } from './Phone';
@@ -230,7 +230,8 @@ export function App() {
  * 跟著卡掛載：離開這張卡再回來（新遊戲從頭開始）就再播一次。
  */
 function IntroThen({ episode, children }: { episode: string | null; children: ReactNode }) {
-  const [played, setPlayed] = useState(false);
+  // 開關預設關（佔位圖不進玩家版）：關的時候和 main 一樣，直接是幕卡。
+  const [played, setPlayed] = useState(() => !introOn());
   if (episode && !played) return <TitleIntro episode={episode} onDone={() => setPlayed(true)} />;
   return children;
 }

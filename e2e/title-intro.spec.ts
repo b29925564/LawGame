@@ -4,6 +4,7 @@ import { expect, test, type Page } from '@playwright/test';
 /**
  * 片頭 40 秒（設定集 11.1）：冷開場之後、第一幕之前。七個鏡頭依序，0:38 是原本的集名卡（幕卡）。
  * 第二次播起才有「跳過」，跳到集名卡；每一集分開記。讀檔讀到片頭之後不播。全片第一道黃在 0:29。
+ * 正式圖到齊前開關預設關（玩家版不播佔位片頭）：這裡用開發設定 rd.dev.intro 打開。
  */
 const ORDER = [
   ['paper', 10000],
@@ -16,15 +17,17 @@ const ORDER = [
 
 async function open(
   page: Page,
-  { episode = 'ep1', scene = 1, seen = [] as string[], lang = 'zh' } = {},
+  { episode = 'ep1', scene = 1, seen = [] as string[], lang = 'zh', on = true } = {},
 ) {
   // 時鐘一開始就停住，之後只靠快轉走（真實時間不算進片頭的時間軸）。
   await page.clock.install({ time: 1_800_000_000_000 });
   await page.clock.pauseAt(1_800_000_000_000 + 1000);
   await page.goto('/');
   await page.evaluate(
-    ([episode, scene, seen, lang]) => {
+    ([episode, scene, seen, lang, on]) => {
       localStorage.setItem('lawgame-lang', lang as string);
+      if (on) localStorage.setItem('rd.dev.intro', '1');
+      else localStorage.removeItem('rd.dev.intro');
       localStorage.setItem(
         'lawgame-settings',
         JSON.stringify({
@@ -51,7 +54,7 @@ async function open(
         }),
       );
     },
-    [episode, scene, seen, lang] as const,
+    [episode, scene, seen, lang, on] as const,
   );
   await page.reload();
   await page
@@ -75,6 +78,16 @@ const yellows = (page: Page) =>
       }
     return hits;
   });
+
+test('開關預設關：正式圖到齊前直接是集名卡，和 main 一樣；?intro=1 打開', async ({ page }) => {
+  await open(page, { on: false });
+  await expect(page.getByRole('heading', { name: '已收回的訊息' })).toBeVisible();
+  await expect(page.locator('.title-intro')).toHaveCount(0);
+
+  await page.goto('/?intro=1');
+  await page.getByRole('button', { name: /^繼續/ }).first().click();
+  await expect(page.locator('.title-intro')).toHaveAttribute('data-shot', 'paper');
+});
 
 test('第一次播：七個鏡頭照時間軸，沒有跳過；0:38 是集名卡，之後切進第一幕', async ({ page }) => {
   await open(page);
@@ -180,4 +193,70 @@ test('減少動態：鏡頭不動、鏡頭之間不插黑格', async ({ page }) 
   await expect(page.locator('.ti-shot.shot-paper')).toHaveCount(1);
   await page.clock.fastForward(60);
   await expect(page.locator('.ti-shot.shot-blind')).toHaveCount(1);
+});
+
+test('片頭期間看得到「選單」：打開時片頭暫停，關上接著播；Escape 也能開', async ({ page }) => {
+  await open(page);
+  const intro = page.locator('.title-intro');
+  const menu = page.getByRole('button', { name: '選單' });
+  await expect(menu).toBeVisible();
+  // 選單鈕在片頭上面（點得到，不被片頭蓋住）。
+  await page.clock.fastForward(4000);
+  await menu.click();
+  await expect(intro).toHaveAttribute('data-paused', '');
+  // 選單開著：時間怎麼走都不換鏡頭。
+  await page.clock.fastForward(20000);
+  await expect(intro).toHaveAttribute('data-shot', 'paper');
+  expect(
+    await page.locator('.ti-sheet').evaluate((e) => getComputedStyle(e).animationPlayState),
+  ).toContain('paused');
+  await menu.click();
+  await expect(intro).not.toHaveAttribute('data-paused');
+  // 關上後接著播：紙這一格剩下 6 秒。
+  await page.clock.fastForward(5800);
+  await expect(intro).toHaveAttribute('data-shot', 'paper');
+  await page.clock.fastForward(300);
+  await expect(intro).toHaveAttribute('data-shot', 'blind');
+
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('dialog', { name: '選單' })).toBeVisible();
+  await expect(intro).toHaveAttribute('data-paused', '');
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('dialog', { name: '選單' })).toHaveCount(0);
+  await expect(intro).not.toHaveAttribute('data-paused');
+});
+
+test('0:05 黑條節奏：第 2、3 條各隔 333ms，其餘 25 條各隔 83ms', async ({ page }) => {
+  await open(page);
+  const delays = await page
+    .locator('.ti-bar')
+    .evaluateAll((bars) =>
+      bars.map((b) => parseFloat(getComputedStyle(b).animationDelay) * 1000).sort((a, b) => a - b),
+    );
+  expect(delays).toHaveLength(28);
+  expect(Math.round(delays[0])).toBe(5000);
+  const gaps = delays.slice(1).map((d, i) => Math.round(d - delays[i]));
+  expect(gaps).toEqual([333, 333, ...Array(25).fill(83)]);
+});
+
+test('0:34 黃線：字的左側、6px、和四個字同高、距字 0.3 字（設定集 11.4）', async ({ page }) => {
+  await open(page);
+  for (const [, ms] of ORDER.slice(0, -1)) await page.clock.fastForward(ms);
+  await expect(page.locator('.title-intro')).toHaveAttribute('data-shot', 'mark');
+  await page.evaluate(() => document.getAnimations().forEach((a) => a.finish()));
+  const m = await page.locator('.ti-mark h1').evaluate((h) => {
+    const chars = [...h.querySelectorAll('.ti-ch')].map((c) => c.getBoundingClientRect());
+    const hl = h.querySelector('.ti-hl')!.getBoundingClientRect();
+    return {
+      fs: parseFloat(getComputedStyle(h).fontSize),
+      left: Math.min(...chars.map((c) => c.left)),
+      top: chars[0].top,
+      bottom: chars[chars.length - 1].bottom,
+      hl: { left: hl.left, right: hl.right, top: hl.top, bottom: hl.bottom, width: hl.width },
+    };
+  });
+  expect(m.hl.width).toBeCloseTo(6, 0);
+  expect(Math.abs(m.left - m.hl.right - 0.3 * m.fs)).toBeLessThan(1.5);
+  expect(Math.abs(m.hl.top - m.top)).toBeLessThan(1.5);
+  expect(Math.abs(m.hl.bottom - m.bottom)).toBeLessThan(1.5);
 });

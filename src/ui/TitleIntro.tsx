@@ -1,7 +1,8 @@
-import { type CSSProperties, useEffect, useState } from 'react';
+import { type CSSProperties, useEffect, useRef, useState } from 'react';
 import { useSettings } from '../engine/settings';
 import { useT } from '../i18n';
 import { reducedMotion } from './a11y';
+import { useMenu } from './GameMenu';
 import courtDesk40 from './court/court-desktop-40.webp';
 import courtDesk55 from './court/court-desktop-55.webp';
 import courtPhone40 from './court/court-phone-40.webp';
@@ -22,6 +23,9 @@ import './titleIntro.css';
  * - 減少動態：推軌、後拉改成不動，黑條直接出現，每個鏡頭 120ms 淡入，鏡頭之間不插黑格。
  * - 光敏安全：0:34 燈管兩次脈衝改單次 700ms 漸亮（titleIntro.css 讀 html[data-photosafe]）。
  * - 沒有音樂（音效另外提案）。
+ * - 片頭期間右上角照樣有「選單」（第一次不能跳過，玩家要能去改光敏安全、減少動態）；選單打開時片頭暫停，Esc 也能打開。
+ * - **正式圖到齊前玩家版不播**（設計師 #319 審查 1）：預設關，走原本的片頭幕卡。審查、關卡用網址 `?intro=1`
+ *   （只在那一頁）或 localStorage['rd.dev.intro']＝'1' 打開。圖換上、設計師通過後把 INTRO_DEFAULT 改成 true。
  */
 
 type ShotId = 'paper' | 'blind' | 'court' | 'witness' | 'lucas' | 'mark';
@@ -40,40 +44,79 @@ export const INTRO_MS = SHOTS.reduce((n, [, ms]) => n + ms, 0);
 /** 鏡頭之間的硬切：2 格黑（--dur-cut-black），從前一個鏡頭的尾巴扣，總長不變。 */
 const CUT_BLACK = 83;
 
+/** 玩家版播不播片頭：正式圖到齊、設計師通過以前是 false。 */
+const INTRO_DEFAULT = false;
+export function introOn() {
+  try {
+    const q = new URLSearchParams(location.search).get('intro');
+    if (q === '1' || q === '0') return q === '1';
+    const v = localStorage.getItem('rd.dev.intro');
+    if (v === '1' || v === '0') return v === '1';
+  } catch {
+    // 讀不到就照預設。
+  }
+  return INTRO_DEFAULT;
+}
+
 export function TitleIntro({ episode, onDone }: { episode: string; onDone: () => void }) {
   const t = useT();
   // 第二次播起才能跳過：看的是開始播的那一刻，這一次播到一半不會冒出按鈕。
   const [canSkip] = useState(() => !!useSettings.getState().introSeen[episode]);
   const [at, setAt] = useState(0);
   const [black, setBlack] = useState(false);
+  const paused = useMenu((m) => m.open !== null);
+  /** 這個鏡頭已經播了多久（暫停前播掉的）。 */
+  const spent = useRef(0);
   useEffect(() => {
     const seen = useSettings.getState().introSeen;
     if (!seen[episode]) useSettings.getState().set({ introSeen: { ...seen, [episode]: true } });
   }, [episode]);
+  // Esc 打開選單（開著的時候 Esc 由選單自己收起來）：在捕獲階段先接，選單的 Esc 不會同時把它關掉。
   useEffect(() => {
-    const rm = reducedMotion();
-    const ms = SHOTS[at][1];
-    const last = at === SHOTS.length - 1;
-    const timers: number[] = [];
-    if (last || rm) {
-      timers.push(window.setTimeout(() => (last ? onDone() : setAt(at + 1)), ms));
-    } else {
-      timers.push(
-        window.setTimeout(() => setBlack(true), ms - CUT_BLACK),
-        window.setTimeout(() => {
-          setBlack(false);
-          setAt(at + 1);
-        }, ms),
-      );
-    }
-    return () => timers.forEach((id) => window.clearTimeout(id));
-    // onDone 每次 render 都是新的：計時只看鏡頭換了沒有。
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const esc = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape' || useMenu.getState().open) return;
+      e.stopImmediatePropagation();
+      useMenu.getState().setOpen('save');
+    };
+    window.addEventListener('keydown', esc, true);
+    return () => window.removeEventListener('keydown', esc, true);
+  }, []);
+  useEffect(() => {
+    spent.current = 0;
   }, [at]);
+  useEffect(() => {
+    if (paused) return;
+    const rm = reducedMotion();
+    const last = at === SHOTS.length - 1;
+    const left = SHOTS[at][1] - spent.current;
+    const start = Date.now();
+    const timers: number[] = [];
+    if (!last && !rm)
+      timers.push(window.setTimeout(() => setBlack(true), Math.max(0, left - CUT_BLACK)));
+    timers.push(
+      window.setTimeout(() => {
+        setBlack(false);
+        if (last) onDone();
+        else setAt(at + 1);
+      }, left),
+    );
+    return () => {
+      spent.current += Date.now() - start;
+      timers.forEach((id) => window.clearTimeout(id));
+    };
+    // onDone 每次 render 都是新的：計時只看鏡頭換了沒有、停了沒有。
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [at, paused]);
   const [shot] = SHOTS[at];
   const ep2 = episode === 'ep2';
   return (
-    <main className="title-intro" data-shot={shot} data-episode={episode} aria-label={t('片頭')}>
+    <main
+      className="title-intro"
+      data-shot={shot}
+      data-episode={episode}
+      data-paused={paused ? '' : undefined}
+      aria-label={t('片頭')}
+    >
       {!black && (
         <div key={shot} className={`ti-shot shot-${shot}`} aria-hidden>
           {shot === 'paper' && <Paper />}
@@ -94,7 +137,12 @@ export function TitleIntro({ episode, onDone }: { episode: string; onDone: () =>
 }
 
 const ROWS = 28;
-/** 0:05 的黑條順序：第一條蓋第 11 行，之後跳著蓋，整頁塗黑。 */
+/**
+ * 0:05 的黑條：先慢後快（設計師 #319 審查 4，24 格／秒）。第 1 條蓋第 11 行；第 2、3 條各隔 8 格（333ms）；
+ * 其餘 25 條各隔 2 格（83ms），跳著蓋。每條 167ms steps(4)。最後一條 0:07.9 蓋完，停到 0:10。
+ */
+export const barDelay = (i: number) => (i < 3 ? i * 333 : 2 * 333 + (i - 2) * 83);
+/** 每一行是第幾條黑條（0 起）。 */
 const BAR_ORDER = (() => {
   const rest = Array.from({ length: ROWS }, (_, n) => n).filter((n) => n !== 10);
   rest.sort((a, b) => ((a * 11) % ROWS) - ((b * 11) % ROWS));
@@ -118,7 +166,10 @@ function Paper() {
           <div key={n} className="ti-row" style={{ '--n': n } as CSSProperties}>
             <span className="ti-no">{n + 1}</span>
             <span className="ti-ink" style={{ '--w': w } as CSSProperties} />
-            <span className="ti-bar" style={{ '--b': BAR_ORDER[n] } as CSSProperties} />
+            <span
+              className="ti-bar"
+              style={{ '--bd': `${barDelay(BAR_ORDER[n])}ms` } as CSSProperties}
+            />
           </div>
         ))}
       </div>
