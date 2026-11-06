@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useLang, useT } from '../../i18n';
 import { useScope } from '../lang';
-import { CourtCamera } from './CourtCamera';
+import { CourtCamera, type Crop } from './CourtCamera';
 import { verdictSlot, type VerdictOutcome } from './camNames';
 import { readTokens } from './verdictBeats';
 
@@ -11,6 +11,13 @@ const ENTRY_CAP = 8000;
 const MIN_HOLD = 1500;
 /** 判決時的耐心燈管：結辯沒有耐心，庭審最後一刻燈管是滿的（耐心每場重來）。 */
 const VERDICT_PATIENCE = 5;
+
+/**
+ * 手機 ≤767 的裁切（設計師 11-06 第二輪）：原圖全高，橫向只取法官、桌燈到掛鐘那一段，讓鐘讀得出時刻。
+ * 左緣放在第二、三根燈管（連燈座）之間的空隙：實量 1920 寬原圖上第二根燈座到 x 555、第三根從 x 572 開始（六格、耐心 0–5 都一樣），
+ * 取正中 563.5；右緣 x 1901，掛鐘（到 x 1881）右邊留一點牆。這樣只露右邊三根燈管，每根都整根在框裡。
+ */
+export const PHONE_CROP: Crop = [563.5 / 1920, 0, (1901 - 563.5) / 1920, 1];
 
 /** 地點只留房間名（中文取最後一個全形空格後面，「…高等法院」後的「第三法庭」；英文取最後一個逗號後面）。 */
 export function roomOf(place: string, en: boolean) {
@@ -102,12 +109,21 @@ export function VerdictBench({
           patience={VERDICT_PATIENCE}
           scene={slot}
           mode={phone ? 'insert' : 'strip'}
+          crop={phone ? PHONE_CROP : undefined}
           onShown={() => setPhase((p) => (p === 'wait' ? 'hold' : p))}
         />
       </div>
       {phase === 'hold' && (
-        <p className="vbench-slate" role="status">
-          {roomOf(t(place, scope), en)}
+        // 和定場場記同一個版型（短槓＋地點），但不淡入淡出、短槓用 --cine-muted：這一格沒有黃。內容只寫地點（10-17 裁定）。
+        <p
+          className={en ? 'place-slate en vbench-slate' : 'place-slate vbench-slate'}
+          role="status"
+        >
+          <span className="ps-text">
+            <span className="ps-where">
+              <span className="ps-room">{roomOf(t(place, scope), en)}</span>
+            </span>
+          </span>
         </p>
       )}
       <button type="button" className="vstage-skip" onClick={() => finish(true)}>

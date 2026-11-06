@@ -3712,7 +3712,7 @@ html[lang='en'] .stamp.rec-stamp b {
 }
 /*
  * 判決頁開頭的法官席那一格（設計師 11-06）：純黑底，鏡頭置中；桌機是 2.39:1 的鏡頭條（和庭上同一個裁切，五根燈管和掛鐘都在框裡），
- * 手機 ≤767 整張 16:9 放進來（直的裁切會切掉右邊的掛鐘）。等圖時、切黑那 --dur-cut-black 都是純黑。
+ * 手機 ≤767 原圖全高、橫向只取法官到掛鐘那一段。等圖時、切黑那 --dur-cut-black 都是純黑。
  */
 .vbench {
   position: fixed;
@@ -3730,35 +3730,22 @@ html[lang='en'] .stamp.rec-stamp b {
   position: static;
   opacity: 1;
 }
+/* 手機：原圖全高、橫向裁一段（VerdictBench 的 PHONE_CROP，長寬比約 1.24），讓掛鐘讀得出時刻。 */
 @media (max-width: 767px) {
   .vbench-cam {
-    width: min(calc(100vw - 16px), calc((100vh - 160px) * 16 / 9));
+    width: min(calc(100vw - 16px), calc((100vh - 200px) * 1.238));
   }
 }
 .vbench[data-phase='black'] .vbench-cam {
   visibility: hidden;
 }
-/* 場記只寫房間：和定場場記同一種框與字，但不動、沒有黃短槓（這一格沒有黃）。 */
-.vbench-slate {
-  position: fixed;
-  left: max(var(--s5), env(safe-area-inset-left));
-  bottom: max(var(--s5), env(safe-area-inset-bottom));
-  margin: 0;
-  padding: 6px 12px;
-  background: var(--cine-bg);
-  color: var(--cine-text);
-  font: 500 13px / 1.4 var(--font-mono);
-  letter-spacing: 0.06em;
-  pointer-events: none;
+/* 場記：定場場記（.place-slate）同一個版型，只是不動，短槓用 --cine-muted（這一格沒有黃）。 */
+.place-slate.vbench-slate {
+  opacity: 1;
+  animation: none;
 }
-@media (max-width: 640px) {
-  .vbench-slate {
-    left: var(--s4);
-    bottom: max(var(--s4), env(safe-area-inset-bottom));
-    font-size: 12px;
-    letter-spacing: 0.02em;
-    padding: 6px 10px;
-  }
+.place-slate.vbench-slate::before {
+  background: var(--cine-muted);
 }
 /* 筆錄頁：紙（兩個主題同色）、Courier 13、行號在左；黑條上緣 1px --cine-line、零圓角。 */
 .vs-page {

@@ -64,12 +64,26 @@ for (const c of CASES)
     await expect(bench).toHaveAttribute('data-slot', c.slot);
     await expect(bench).toHaveAttribute('data-phase', 'hold');
     await expect(plateSrc(page)).toHaveAttribute('src', new RegExp(`bench-${c.slot}-p5[-.]`));
-    // 場記只寫房間，沒有時刻，也沒有黃短槓。
+    // 場記和定場場記同一個版型（短槓＋地點），只寫房間；短槓是 --cine-muted，不是黃。
     const slate = page.locator('.vbench-slate');
     await expect(slate).toHaveText(ROOM.zh[c.ep]);
-    expect(await slate.evaluate((el) => getComputedStyle(el, '::before').content)).toMatch(
-      /^(none|normal)$/,
-    );
+    const bar = await slate.evaluate((el) => {
+      const probe = document.createElement('i');
+      probe.style.color = 'var(--cine-muted)';
+      el.append(probe);
+      const muted = getComputedStyle(probe).color;
+      probe.remove();
+      const b = getComputedStyle(el, '::before');
+      return {
+        content: b.content,
+        bg: b.backgroundColor,
+        muted,
+        anim: getComputedStyle(el).animationName,
+      };
+    });
+    expect(bar.content).toBe('""');
+    expect(bar.bg).toBe(bar.muted);
+    expect(bar.anim).toBe('none');
     if (process.env.SHOTS) {
       const dir = '/mnt/project-files/qa/court-ui/2026-11-06-verdict-bench';
       await page.screenshot({ path: `${dir}/${info.project.name}-${c.slot}-zh.png` });
@@ -128,3 +142,49 @@ test('判決法官席：減少動態照樣出這一格，之後直接是結論',
     });
   await expect(page.locator('.vdict')).toHaveAttribute('data-stage', 'done');
 });
+
+/** 第二、三根燈座在 1920 寬原圖上的邊（實量，六格、耐心 0–5 都一樣）：手機裁切的左緣在這中間。 */
+const TUBE2_END = 555;
+const TUBE3_START = 572;
+/** 掛鐘直徑（bench.json inView.clock 的寬，原圖比例）。 */
+const CLOCK_W = 0.0542;
+
+for (const [w, h] of [
+  [412, 915],
+  [360, 740],
+] as const)
+  test(`判決法官席：手機 ${w} 寬，掛鐘讀得出來，裁切邊不切過燈管`, async ({ page }, info) => {
+    test.skip(info.project.name !== 'chromium', '手機版面');
+    await page.setViewportSize({ width: w, height: h });
+    await open(page, 'ep1', '有罪', 'zh');
+    await expect(page.locator('.vbench')).toHaveAttribute('data-phase', 'hold');
+    const m = await page.evaluate(() => {
+      const f = document.querySelector('.vbench .cam-frame')!.getBoundingClientRect();
+      const st = document
+        .querySelector('.vbench .cam-stage[data-cam="bench"]')!
+        .getBoundingClientRect();
+      const s = st.width / 1920;
+      return {
+        s,
+        left: (f.left - st.left) / s,
+        right: (f.right - st.left) / s,
+        top: f.top - st.top,
+        bottom: st.bottom - f.bottom,
+        inView: f.right <= innerWidth && f.left >= 0,
+      };
+    });
+    // 原圖全高；框在螢幕裡。
+    expect(Math.abs(m.top)).toBeLessThan(1);
+    expect(Math.abs(m.bottom)).toBeLessThan(1);
+    expect(m.inView).toBe(true);
+    // 掛鐘直徑 ≥ 20 CSS px，整個在框裡。
+    expect(CLOCK_W * 1920 * m.s).toBeGreaterThanOrEqual(20);
+    expect(m.right).toBeGreaterThanOrEqual((0.9255 + CLOCK_W) * 1920);
+    // 左緣在第二、三根燈座之間，兩邊都留空（兩根燈座之間原圖只有 16 px，見 PR 說明）。
+    expect((m.left - TUBE2_END) * m.s).toBeGreaterThanOrEqual(2);
+    expect((TUBE3_START - m.left) * m.s).toBeGreaterThanOrEqual(2);
+    if (process.env.SHOTS)
+      await page.screenshot({
+        path: `/mnt/project-files/qa/court-ui/2026-11-06-verdict-bench/phone-${w}-verdict-e1-164845-zh.png`,
+      });
+  });
