@@ -241,19 +241,19 @@ const letters = (s: string) => [...s].filter((c) => /[\p{L}\p{N}]/u.test(c)).len
 
 /** 方位詞與助詞（「桌上」「門前」「登出的」「打了」）：單獨一個字時黏前一個詞。 */
 const BACK = /^[上下裡內外前後中的之了著過]\p{P}*$/u;
-/** 單獨一個漢字的單位（後面可以帶標點）。 */
-const SINGLE = /^\p{Script=Han}\p{P}*$/u;
+/** 單獨一個漢字的單位（後面可以帶標點；前面可以帶開的括號，「〈給」黏後面的「稽核部」，不單獨留在行尾）。 */
+const SINGLE = /^[〈《「『（]?\p{Script=Han}\p{P}*$/u;
 
 /**
  * fitLine 的換行單位（黑底字卡；設計師 v93 第二道關卡裁定 一之 2）。從 proseUnits 的詞（Intl.Segmenter 斷詞、本作的固定詞）開始：
  * - 方位詞、助詞（上、前、的、了、著）單獨一個字時黏前一個詞（「儀表板上」「電腦前」「打了」）；
  * - ICU 切碎的單字：連續的併成一個詞（「廂型車」）；只剩一個的，帶標點就黏前一個詞（「方向盤。」），不然黏後一個詞（「沒登出」「小公寓」）；
  * - 行尾不留虛詞：以虛詞或代名詞收尾、後面沒有標點的單位，連同後面的空白黏下一個單位（「沒有｜」「按了｜1」「他｜拿出」都不會出現）；
- * - 〈〉《》裡的篇名整段不拆（十二個字以內）；
+ * - 〈〉《》裡的篇名整段不拆（十二個字以內；titles=false 時照一般的詞界拆，給整段放不進一行的時候用）；
  * - 最後一行至少 3 個字（標點不算）：最後幾個單位黏成一組，不剩「袋。」這種孤字。
  * 一個單位內部不斷開；字一個不少。沒有漢字的字串（英文）原樣回傳。
  */
-export function fitLineUnits(text: string): string[] {
+export function fitLineUnits(text: string, titles = true): string[] {
   if (!HAN.test(text)) return [text];
   const glued = (prev: string | undefined) => !!prev && !STOP.test(prev);
   const a: string[] = [];
@@ -279,7 +279,7 @@ export function fitLineUnits(text: string): string[] {
     i = Math.max(i, j);
   }
   // 篇名：從開的〈《到收的〉》，整段併成一個。
-  for (let i = 0; i < us.length; i++) {
+  for (let i = 0; titles && i < us.length; i++) {
     if (!/^[〈《]/.test(us[i])) continue;
     let j = i;
     while (j < us.length - 1 && !/[〉》]/.test(us[j])) j++;

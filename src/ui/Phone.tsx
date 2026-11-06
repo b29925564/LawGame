@@ -4,7 +4,7 @@ import type { Line, PhoneScene } from '../engine/episode/schema';
 import { sceneChoices, useEpisode } from '../engine/game';
 import { useLang, useT } from '../i18n';
 import { PlaceBeat } from './ActCard';
-import { fitLine } from './prose';
+import { FitLine } from './prose';
 import { useScope } from './lang';
 import { useHand } from './Marks';
 import { Redaction } from './Redaction';
@@ -95,7 +95,7 @@ export function Phone({ scene }: { scene: PhoneScene }) {
     return (
       <main className={scene.epilogue ? 'cine' : 'cine cold-scope'} aria-live="polite">
         {v.time && <p className="cine-time">{t(v.time, scope)}</p>}
-        <p className="cine-text">{fitLine(t(v.step.text, scope))}</p>
+        <FitLine className="cine-text" text={t(v.step.text, scope)} />
         <button className="cine-next" onClick={advance}>
           {t('繼續')}
         </button>

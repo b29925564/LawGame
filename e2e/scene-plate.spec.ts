@@ -396,8 +396,44 @@ for (const lang of ['zh', 'en'] as const)
                   out.push(last);
                   return out;
                 })(),
+                // 每一行的字（一個字一個字量位置，中文用）。
+                rowText: (() => {
+                  const out: string[] = [];
+                  const rg = document.createRange();
+                  let cur = '';
+                  let top: number | null = null;
+                  const walker = document.createTreeWalker(x, NodeFilter.SHOW_TEXT);
+                  for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+                    const s = n.textContent!;
+                    for (let i = 0; i < s.length; i++) {
+                      rg.setStart(n, i);
+                      rg.setEnd(n, i + 1);
+                      const q = rg.getClientRects()[0];
+                      if (q && top !== null && q.top > top + 4) {
+                        out.push(cur);
+                        cur = '';
+                      }
+                      if (q) top = q.top;
+                      cur += s[i];
+                    }
+                  }
+                  out.push(cur);
+                  return out.map((r) => r.trim()).filter(Boolean);
+                })(),
               };
             });
+            // 中文行尾不留虛詞、代名詞，行首不放方位詞、助詞（第二道關卡 e771fcf 第 3、4 項：「沃斯倒在｜」「手上的｜論點」）。
+            if (lang === 'zh')
+              m.rowText.forEach((r, k) => {
+                if (k < m.rowText.length - 1)
+                  expect(r, `行尾是虛詞：${m.rowText.join('｜')}`).not.toMatch(
+                    /[的之與和及或在於對把被為從到以而並是了著過沒不又也都就還再很我你他她它]$/u,
+                  );
+                if (k > 0)
+                  expect(r, `行首是方位詞或助詞：${m.rowText.join('｜')}`).not.toMatch(
+                    /^[旁上下裡內外中的了著過，。、；：！？]/u,
+                  );
+              });
             // 行尾不留冠詞、介系詞（設計師 v93 第二道關卡 #322 審查）：全部有底圖的字幕，每一張、每一行。
             if (lang === 'en')
               for (const w of m.ends)
@@ -425,6 +461,9 @@ for (const lang of ['zh', 'en'] as const)
           // 每個場景至少一張，而且翻到頭（對話走完才換下一個畫面）。
           expect(seen.length).toBeGreaterThanOrEqual(3);
           expect(seen.length).toBeLessThan(16);
+          // 會議室夜中文：整句在詞與詞之間排得成兩行就一張放完，不先在逗號拆張（第二道關卡 e771fcf 第 4 項：360 150% 5→7 張）。
+          if (c.name === '會議室夜' && lang === 'zh' && narrow !== 320)
+            expect(seen.length, seen.join('｜')).toBeLessThanOrEqual(5);
           // 最窄手機＋150% 的英文：照設計師的斷點表斷（plateBreaks.ts），卡裡的換行也是表上的位置。
           if (narrow === 360 && scale === 1.5 && lang === 'en') {
             const flat = seen.map((x) => x.replace(/\s+/g, ' ').replace(/[’‘]/g, "'").trim());

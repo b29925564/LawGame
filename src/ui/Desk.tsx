@@ -22,7 +22,7 @@ import { ExhibitSticker } from './ExhibitSticker';
 import { MarkLines } from './Marks';
 import { ExhibitRef, ExhibitTag, exhibitNo, FilingThumb, Pleading, Written } from './Pleading';
 import { useScope } from './lang';
-import { prose } from './prose';
+import { fitLine, prose } from './prose';
 import { useCardPick } from './pick';
 import { Speech } from './Portrait';
 import { RelationPicker } from './RelationPicker';
@@ -292,7 +292,8 @@ export function Desk({ scene }: { scene: DeskScene }) {
           <span className="hours" aria-label={t('剩餘工時 {n} 小時', { n: st.hours })}>
             <Swap value={st.hours} /> {t('工時')}
           </span>
-          <span className="muted small">{t(scene.deadline, scope)}</span>
+          {/* 中文只在詞與詞之間換行（「開庭｜三天後」，不折成「開庭三天｜後」：第二道關卡 e771fcf 第 5 項）。 */}
+          <span className="muted small">{fitLine(t(scene.deadline, scope))}</span>
         </header>
       }
       tabs={<Tabs label={t('應用程式')} value={app} onPick={pickApp} items={apps} />}

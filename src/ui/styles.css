@@ -735,6 +735,17 @@ details summary {
 .scene.plated.subs.cold-plated[data-avoid='above'] {
   padding-bottom: var(--avoid-pad);
 }
+/* 抬到主體上面以後，再讓開圖上的亮處（門縫光）：整組只用亮處右邊或左邊那一段寬度。 */
+.scene.plated.subs.cold-plated[data-avoid='above'][data-shift] {
+  max-width: none;
+}
+.scene.plated.subs.cold-plated[data-avoid='above'][data-shift] > .sub-card,
+.scene.plated.subs.cold-plated[data-avoid='above'][data-shift] > .sub-actions {
+  align-self: flex-start;
+  margin-left: var(--avoid-left);
+  width: min(760px, var(--avoid-width));
+  min-width: 0;
+}
 @media (max-height: 520px) and (orientation: landscape) and (min-width: 640px) {
   .scene.plated.subs.cold-plated[data-avoid='side'] > .sub-card {
     margin-left: var(--avoid-left);
@@ -1152,6 +1163,9 @@ details summary {
   letter-spacing: 0.1em;
   /* 實心：半透明時底下的分頁字會透出來（體驗評測 v88）。 */
   background: var(--surface);
+  /* 選單鈕跨場景常駐：切進黑底鏡頭層（color-scheme 換成 dark）那一格就換成深色款，不用 button 通用的顏色過場淡過去
+     （否則黑底上先白 48ms 再淡 180ms：第二道關卡 e771fcf 第 6 項）。只留按下去的位移。 */
+  transition: transform var(--dur-rm) var(--ease);
 }
 @media (max-width: 1023px) {
   /*
@@ -3299,7 +3313,13 @@ fieldset.relations.compact {
   flex-direction: column;
   justify-content: center;
   gap: 20px;
-  padding: 24px 24px 56px;
+  /* 上緣至少在右上角選單鈕的下緣再下 8px（選單鈕：上 max(8px, 安全區)、高 max(40px, 上下內距與框 14px＋一行 1.65em)）。
+     內容比視窗高時整頁捲動，不往上擠到選單鈕那一排（設計師 #325 審查：320 中文 150% 的 22:33）。 */
+  padding: max(
+      24px,
+      calc(max(8px, env(safe-area-inset-top)) + max(40px, 14px + 1.65 * var(--fs-ui-cap)) + 8px)
+    )
+    24px 56px;
   max-width: none;
   color-scheme: dark;
 }

@@ -155,11 +155,53 @@ describe('字幕卡（有底圖的場景）', () => {
       ['伊森跪下去', '摸他的脖子，'],
       ['摸不到脈搏。'],
     ]);
-    // 方位詞不放行首：「沃斯倒在辦公桌／旁的地毯上」換成「沃斯倒在／辦公桌旁的地毯上」。
-    expect(subCards('沃斯倒在辦公桌旁的地毯上。', 10)[0].lines).toEqual([
-      '沃斯倒在',
-      '辦公桌旁的地毯上。',
+    // 方位詞不放行首（「沃斯倒在辦公桌／旁的地毯上」），虛詞不放行尾（「沃斯倒在／辦公桌旁」，第二道關卡 e771fcf 第 3 項）。
+    expect(subCards('沃斯倒在辦公桌旁的地毯上。', 11)[0].lines).toEqual([
+      '沃斯',
+      '倒在辦公桌旁的地毯上。',
     ]);
+    // 「的」不放行尾（「手上的／論點」，第 4 項）；代名詞也不放行尾（「靠你／手上的」）。
+    expect(subCards('故事要靠你手上的論點撐起來。', 11)[0].lines).toEqual([
+      '故事要靠',
+      '你手上的論點撐起來。',
+    ]);
+    // 數量詞不放行尾：「你要告訴陪審團一個／故事」換成「你要告訴陪審團／一個故事，一個就好。」
+    expect(subCards('你要告訴陪審團一個故事，一個就好。', 11)[0].lines).toEqual([
+      '你要告訴陪審團',
+      '一個故事，一個就好。',
+    ]);
+  });
+
+  it('中文整句在詞與詞之間排得成兩行就一張，不先在逗號拆成兩張（第二道關卡 e771fcf 第 4 項：卡數 5→7）', () => {
+    expect(
+      subCards('中途改口，陪審團只會記得你改過口。', 10).map((c) => c.lines ?? [c.text]),
+    ).toEqual([['中途改口，陪審團', '只會記得你改過口。']]);
+    // 排不成兩行（沒有好位置）才在逗號拆張。
+    expect(
+      subCards('你要告訴陪審團一個故事，一個就好。', 9).map((c) => c.lines ?? [c.text]),
+    ).toEqual([['你要告訴陪審團', '一個故事，'], ['一個就好。']]);
+  });
+
+  it('字幕卡的中文每一行：行尾不是虛詞、行首不是方位詞或助詞（所有有底圖的場景、兩種寬度、三種字級）', () => {
+    const END = /[的之與和及或在於對把被為從到以而並是了著過沒不又也都就還再很我你他她它]$/u;
+    const START = /^[旁上下裡內外中的了著過，。、；：！？]/u;
+    const bad: string[] = [];
+    for (const key of [...new Set(plates.map((p) => p.scene))]) {
+      const [ep, id] = key.split(':');
+      const scene = scenes[ep].find((s) => s.id === id) as Node;
+      for (const l of lines(scene))
+        for (const w of [...WIDTHS, { name: '320', inner: 266, px: 17 }])
+          for (const k of SCALES) {
+            const em = Math.floor((w.inner / (w.px * k)) * 0.95);
+            for (const c of subCards(l.text, em)) {
+              const ls = c.lines ?? [c.text];
+              ls.slice(0, -1).forEach((x, i) => {
+                if (END.test(x) || START.test(ls[i + 1])) bad.push(`${em}：${ls.join('／')}`);
+              });
+            }
+          }
+    }
+    expect(bad).toEqual([]);
   });
 
   it('沒標斷點的英文句：片語規則、每行不比框寬、接續卡至少三個字', () => {

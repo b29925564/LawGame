@@ -1,4 +1,5 @@
 /// <reference lib="dom" />
+import { readFileSync } from 'node:fs';
 import { expect, test, type Page } from '@playwright/test';
 
 /**
@@ -78,7 +79,9 @@ for (const lang of ['zh', 'en'] as const)
     const card = page.locator('.scene.plated > .sub-card.narration');
     await expect(card).toBeVisible();
     await expect(plate).toHaveAttribute('data-state', 'ok');
-    await expect(card).toContainText(lang === 'zh' ? '沃斯倒在辦公桌旁的地毯上。' : 'Voss is on');
+    await expect(card).toContainText(
+      lang === 'zh' ? '沃斯倒在地毯上，就在辦公桌旁。' : 'Voss is on',
+    );
     const view = page.viewportSize()!;
     expect((await card.boundingBox())!.y / view.height).toBeGreaterThan(0.5);
     const next = page.locator('.scene.plated .sub-actions .primary');
@@ -292,7 +295,7 @@ for (const [w, h] of [
         // 拼回來是整段原文：沒有漏字。
         expect(cards.flat().join(lang === 'zh' ? '' : ' '), at).toBe(
           lang === 'zh'
-            ? '沃斯倒在辦公桌旁的地毯上。伊森跪下去摸他的脖子，摸不到脈搏。他站起來的時候，袖口沾了血，手裡多了一座水晶獎盃。'
+            ? '沃斯倒在地毯上，就在辦公桌旁。伊森跪下去摸他的脖子，摸不到脈搏。他站起來的時候，袖口沾了血，手裡多了一座水晶獎盃。'
             : 'Voss is on the carpet beside his desk. Ethan kneels and feels for a pulse at the neck. Nothing. When he stands, there is blood on his cuff and a crystal trophy in his hand.',
         );
         for (const rows of cards) {
@@ -309,6 +312,11 @@ for (const [w, h] of [
           } else {
             for (const r of rows.slice(1))
               expect(r, `${at} 行首`).not.toMatch(/^[，。、；：！？旁上下裡的了著過]/u);
+            // 行尾不留虛詞、代名詞（第二道關卡 e771fcf 第 3 項：「沃斯倒在｜辦公桌旁」）。
+            for (const r of rows.slice(0, -1))
+              expect(r, `${at} 行尾`).not.toMatch(
+                /[的之與和及或在於對把被為從到以而並是了著過沒不又也都就還再很我你他她它]$/u,
+              );
             expect(t, at).not.toMatch(/沾了 血|袖口沾 了/);
           }
         }
@@ -416,3 +424,147 @@ test('集名卡和定場上的選單鈕：淺色主題也是深色那一款', as
   // 第 1 集第 1 場是集名卡（片頭卡）。
   expect(await look('light', 0, 1)).toEqual(await look('dark', 0, 1));
 });
+
+/**
+ * 淺色場景切進黑底鏡頭層（地點字卡、集名卡…）的那一格，選單鈕就是深色款，不先白一下再淡過去
+ * （第二道關卡 e771fcf 第 6 項：button 通用的顏色 transition 讓它停在淺色約 48ms、再花 180ms 淡成深色）。
+ * 在淺色的審前桌面上掛一層 .act-stage（和地點字卡同一個 class），逐格讀選單鈕的底色。
+ */
+test('淺色場景切進鏡頭層：第一格選單鈕就是深色款，不淡過去', async ({ page }) => {
+  await page.emulateMedia({ colorScheme: 'light' });
+  await page.goto('/');
+  await page.evaluate(() => {
+    localStorage.setItem(
+      'lawgame-ep-auto',
+      JSON.stringify({
+        version: 5,
+        savedAt: Date.now(),
+        label: 'x',
+        progress: {
+          episode: 'ep1',
+          scene: 9,
+          step: 0,
+          choices: {},
+          cards: [],
+          flags: [],
+          ethics: [],
+          scenes: {},
+        },
+      }),
+    );
+  });
+  await page.reload();
+  await page.getByRole('button', { name: /^繼續/ }).first().click();
+  const beat = page.locator('.place-beat');
+  await page.waitForTimeout(300);
+  if (await beat.count()) await beat.click({ timeout: 5000 }).catch(() => {});
+  await expect(page.locator('.taskbar')).toBeVisible();
+  await expect(beat).toHaveCount(0);
+  const menu = page.locator('.menu-toggle');
+  // 回到淺色、選單鈕淡完。
+  await expect.poll(() => menu.evaluate((e) => getComputedStyle(e).colorScheme)).not.toBe('dark');
+  await page.waitForTimeout(600);
+  const light = await menu.evaluate((e) => getComputedStyle(e).backgroundColor);
+  const frames = await menu.evaluate(
+    (e) =>
+      new Promise<string[]>((done) => {
+        const layer = document.createElement('div');
+        layer.className = 'act-stage';
+        document.body.appendChild(layer);
+        const out: string[] = [];
+        const tick = () => {
+          out.push(getComputedStyle(e).backgroundColor);
+          if (out.length < 20) requestAnimationFrame(tick);
+          else {
+            layer.remove();
+            done(out);
+          }
+        };
+        tick();
+      }),
+  );
+  const dark = frames[frames.length - 1];
+  expect(dark, '鏡頭層上選單鈕應該換成深色款').not.toBe(light);
+  expect(frames, `每一格：${frames.join(' → ')}`).toEqual(frames.map(() => dark));
+});
+
+/** 門縫光的方框（桌機、手機兩張圖）：直接讀 plates.json，舊版沒有這個欄位也照樣量。 */
+const DOORS = (
+  JSON.parse(readFileSync(new URL('../src/ui/plates/plates.json', import.meta.url), 'utf8')) as {
+    plates: { id: string; clear: Record<'desktop' | 'phone', { box: number[] }[]> }[];
+  }
+).plates.find((p) => p.id === '31f-2249')!.clear;
+
+/**
+ * 22:49 的門縫光（plates.json clear）：主體先不蓋，再挑蓋門縫光最少的位置（設計師 e771fcf 舊問題裁定 2：≤5%）。
+ * 桌機和手機橫向都做得到 0。直放手機門縫光從頂端一路到 0.68H、獎盃上緣在 0.73H，字幕卡一定橫過門縫：
+ * 設計師裁定 v93 接受、v94 重算手機版構圖；上限暫定實測值＋2%，不准再變糟。
+ */
+for (const [w, h, max] of [
+  [1920, 1080, 0.05],
+  [1530, 860, 0.05],
+  [1440, 900, 0.05],
+  [1366, 768, 0.05],
+  [1100, 700, 0.05],
+  [844, 390, 0.05],
+  [412, 915, 0.23],
+  [360, 740, 0.3],
+  [320, 640, 0.35],
+] as const)
+  test(`22:49 字幕和按鈕不蓋門縫光（≤${max * 100}%），也不蓋主體：${w}×${h}，中英，字級 100／125／150%`, async ({
+    page,
+  }, info) => {
+    test.skip(info.project.name !== 'desktop', '自己設視窗大小，桌機那一組跑就好');
+    await page.setViewportSize({ width: w, height: h });
+    for (const lang of ['zh', 'en'] as const)
+      for (const scale of [1, 1.25, 1.5]) {
+        await open(page, STEP_2249, lang, scale);
+        await page.locator('.place-beat').click();
+        const card = page.locator('.cold-plated > .sub-card');
+        await expect(card).toBeVisible();
+        await page.evaluate(() => document.fonts.ready);
+        const next = page.locator('.cold-plated .sub-actions .primary');
+        for (let i = 0; i < 8 && (await card.count()); i++) {
+          const text = (await card.innerText()).trim();
+          const at = `${lang} ${scale * 100}% 第${i + 1}張「${text}」`;
+          for (const r of await hidden(page))
+            expect(r.hidden, `${at} ${r.id} 看不到的比例`).toBeLessThanOrEqual(r.cover + 0.001);
+          const lit = await page.evaluate(
+            (boxes) => {
+              type Box = { l: number; t: number; r: number; b: number };
+              const ov = (a: Box, b: Box) =>
+                Math.max(0, Math.min(a.r, b.r) - Math.max(a.l, b.l)) *
+                Math.max(0, Math.min(a.b, b.b) - Math.max(a.t, b.t));
+              const st = document
+                .querySelector('.plate-host .plate-stage')!
+                .getBoundingClientRect();
+              const ui = [
+                ...document.querySelectorAll(
+                  '.cold-plated > .sub-card, .cold-plated > .sub-actions',
+                ),
+              ]
+                .map((e) => e.getBoundingClientRect())
+                .filter((r) => r.width && r.height)
+                .map((r) => ({ l: r.left, t: r.top, r: r.right, b: r.bottom }));
+              return Math.max(
+                ...boxes.map(({ box }) => {
+                  const d = {
+                    l: st.left + box[0] * st.width,
+                    t: st.top + box[1] * st.height,
+                    r: st.left + box[2] * st.width,
+                    b: st.top + box[3] * st.height,
+                  };
+                  return ui.reduce((n, u) => n + ov(d, u), 0) / ((d.r - d.l) * (d.b - d.t));
+                }),
+              );
+            },
+            DOORS[w <= 767 ? 'phone' : 'desktop'],
+          );
+          expect(lit, `${at} 門縫光被蓋掉的比例`).toBeLessThanOrEqual(max);
+          await next.click();
+          await expect
+            .poll(async () => ((await card.count()) ? (await card.innerText()).trim() : ''))
+            .not.toBe(text);
+        }
+      }
+  });

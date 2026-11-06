@@ -87,8 +87,21 @@ function zhLines(card: Card, em: number): Card {
   return best < 0 ? card : { ...card, lines: [card.text.slice(0, best), card.text.slice(best)] };
 }
 
-/** 中文沒有逗號可換行：在詞與詞之間（proseUnits，不拆詞、不讓標點起頭）找兩行最勻的一處；兩行都放得進才換。 */
-function zhWordLines(card: Card, em: number): Card {
+/**
+ * 中文沒有逗號可換行：在詞與詞之間（proseUnits，不拆詞、不讓標點起頭）找兩行最勻的一處；兩行都放得進才換。
+ * 不好的位置（第二道關卡 e771fcf 第 3、4 項）照多不好加權，有別的位置就不選：
+ * - 2：虛詞、助詞放行尾（「沃斯倒在｜辦公桌旁」「手上的｜論點」，和黑底字卡 fitLine 同一組字）；方位詞、助詞放行首（「辦公桌｜旁的」）。
+ * - 1：代名詞放行尾（「故事要靠你｜手上的」）。
+ * - 0.5：數量詞放行尾（「一個｜故事」）。
+ */
+const END_FN = /[的之與和及或在於對把被為從到以而並是了著過沒不又也都就還再很]$/u;
+const END_PRON = /[我你他她它]$/u;
+const END_MEASURE = /[一二兩三四五六七八九十幾這那每某][個座份張位件條本次句間台輛杯]$/u;
+const START_BAD = /^[旁上下裡內外中的了著過]/u;
+const badness = (l: string, r: string) =>
+  (END_FN.test(l) ? 2 : END_PRON.test(l) ? 1 : END_MEASURE.test(l) ? 0.5 : 0) +
+  (START_BAD.test(r) ? 2 : 0);
+function wordLines(card: Card, em: number): { lines: string[]; bad: number } | null {
   const units = proseUnits(card.text);
   let best = -1;
   let gap = Infinity;
@@ -99,23 +112,41 @@ function zhWordLines(card: Card, em: number): Card {
     const r = zhW(card.text.slice(at));
     const rest = card.text.slice(at);
     if (l > em || r > em || /^[，。、；：！？」』）…—]/u.test(rest)) continue;
-    // 方位詞、助詞不放行首（「辦公桌／旁的地毯上」）：有別的位置就不選這裡。
-    const d = Math.abs(l - r) + (/^[旁上下裡內外中的了著過]/u.test(rest) ? em : 0);
+    const d = Math.abs(l - r) + badness(card.text.slice(0, at), rest) * em;
     if (d < gap) {
       best = at;
       gap = d;
     }
   }
-  return best < 0 ? card : { ...card, lines: [card.text.slice(0, best), card.text.slice(best)] };
+  if (best < 0) return null;
+  const lines = [card.text.slice(0, best), card.text.slice(best)];
+  return { lines, bad: badness(lines[0], lines[1]) };
+}
+
+function zhWordLines(card: Card, em: number): Card {
+  const w = wordLines(card, em);
+  return w ? { ...card, lines: w.lines } : card;
 }
 
 /**
  * 中文一張要兩行、又沒有一個逗號能把它分成兩行時，不交給瀏覽器折（會折出「袖口沾了／血」）：
  * 改在最靠中間的逗號分成兩張，每張再照同樣規則排。沒有逗號才在詞與詞之間換行。
  */
-function zhFit(card: Card, em: number): Card[] {
+/**
+ * 一張放得完就一張：一行放得下、在逗號換得成兩行、或在詞與詞之間排得成兩行而且沒有不好的位置（行尾虛詞、行首方位詞…）。
+ * 不先在逗號拆成兩張（會議室夜「你要告訴陪審團／一個故事，一個就好。」，第二道關卡 e771fcf 第 4 項：卡數 5→7）。
+ */
+function zhOne(card: Card, em: number): Card | null {
   const c = zhLines(card, em);
-  if (c.lines || zhW(c.text) <= em) return [c];
+  if (c.lines || zhW(c.text) <= em) return c;
+  const w = wordLines(c, em);
+  return w && !w.bad ? { ...c, lines: w.lines } : null;
+}
+
+function zhFit(card: Card, em: number): Card[] {
+  const one = zhOne(card, em);
+  if (one) return [one];
+  const c = card;
   let best = -1;
   let gap = Infinity;
   for (const m of c.text.matchAll(/[，、；：]/g)) {
@@ -169,11 +200,13 @@ export function unitsOf(text: string): string[] {
 export function subCards(text: string, em: number, measure?: Measure, maxLines = 2): Sub[] {
   const sents = unitsOf(text);
   return sents.flatMap((s) => {
-    if (zh(s))
+    if (zh(s)) {
+      const one = maxLines === 2 ? zhOne({ text: s, from: 0 }, em) : null;
       return tag(
-        splitCards(s, em, maxLines, measure).flatMap((c) => zhFit(c, em)),
+        one ? [one] : splitCards(s, em, maxLines, measure).flatMap((c) => zhFit(c, em)),
         false,
       );
+    }
     const m = markedFor(s);
     const marked = m && markedCards(m, em, measure);
     if (marked) return tag(marked, true);

@@ -33,6 +33,8 @@ type Entry = {
   /** 窄視窗裁左右時：圖上的 at（圖寬比例）落在視窗寬的 to 處（和立牌組的 anchor 同一個意思）。 */
   anchor?: Partial<Record<'desktop' | 'phone', { at: number; to: number }>>;
   subjects?: Record<'desktop' | 'phone', Subject[]>;
+  /** 盡量不蓋的亮處（22:49 的門縫光）：主體先不蓋，再挑蓋這些最少的位置；cover 是目標，做不到時取最少。 */
+  clear?: Record<'desktop' | 'phone', Subject[]>;
 };
 
 /**
@@ -95,6 +97,7 @@ export type Plate = {
   focusY: number;
   anchor?: Entry['anchor'];
   subjects?: Record<Variant, Subject[]>;
+  clear?: Record<Variant, Subject[]>;
 };
 
 /** 手機版：窄螢幕，或直放（直放的裝置用 9:16 那張，不從橫圖裡切中間一條）。 */
@@ -122,6 +125,7 @@ export function plateFor(
         focusY: hit.focus?.y ?? 0.5,
         anchor: hit.anchor,
         subjects: hit.subjects,
+        clear: hit.clear,
       }
     : null;
 }
@@ -311,6 +315,7 @@ export function ScenePlate({ shown, dim }: { shown: Shown; dim?: boolean }) {
       data-state={state}
       data-dim={dim ? '' : undefined}
       data-subjects={plate.subjects ? JSON.stringify(plate.subjects[variant]) : undefined}
+      data-clear={plate.clear ? JSON.stringify(plate.clear[variant]) : undefined}
       aria-hidden
     >
       <div
@@ -478,8 +483,10 @@ export const hiddenShare = (a: Box, ui: Box[], view: Box) => {
 };
 
 /**
- * 字幕框和按鈕避開圖上的主體（獎盃、手指、手；設計師 #316 審查 1）。圖已經照 focus／anchor 先擺過了，還是蓋到時：
- * 先把字幕框和按鈕整組移到主體右邊（還在下三分之一）；右邊不夠寬就整組抬到主體上面。
+ * 字幕框和按鈕避開圖上的主體（獎盃、手指、手；設計師 #316 審查 1），再盡量不蓋亮處（門縫光；設計師 e771fcf 舊問題裁定 2）。
+ * 圖已經照 focus／anchor 先擺過了。依序試幾個位置，主體不蓋（cover 以內）的才算數，挑蓋亮處最少的；一樣少取先試的：
+ * 1. 原位；2. 整組移到主體右邊（還在下三分之一，字幕卡不准因此變高）；3. 整組抬到主體上面；
+ * 4. 抬到主體上面、再移到亮處右邊；5. 抬到主體上面、只用亮處左邊那一段寬度。4、5 的寬度至少 SIDE_MIN。
  * 直接改 DOM 的屬性（不經過 React 的 state），量、決定、套用在同一個畫格裡，不會先蓋上去再跳開。
  */
 export function useAvoidSubjects(
@@ -487,7 +494,9 @@ export function useAvoidSubjects(
   token: unknown,
 ): RefObject<HTMLElement | null> {
   const main = useRef<HTMLElement>(null);
-  const subjects = shown?.plate.subjects?.[shown.phone ? 'phone' : 'desktop'];
+  const variant = shown?.phone ? 'phone' : 'desktop';
+  const subjects = shown?.plate.subjects?.[variant];
+  const soft = shown?.plate.clear?.[variant];
   useLayoutEffect(() => {
     const el = main.current;
     if (!el || !subjects?.length) return;
@@ -495,15 +504,20 @@ export function useAvoidSubjects(
       const r = e.getBoundingClientRect();
       return { l: r.left, t: r.top, r: r.right, b: r.bottom };
     };
-    const run = () => {
+    const reset = () => {
       delete el.dataset.avoid;
+      delete el.dataset.shift;
       el.style.removeProperty('--avoid-left');
+      el.style.removeProperty('--avoid-width');
       el.style.removeProperty('--avoid-pad');
+    };
+    const run = () => {
+      reset();
       const host = document.querySelector('.plate-host .plate-stage');
       if (!host) return;
       const stage = host.getBoundingClientRect();
       const view: Box = { l: 0, t: 0, r: innerWidth, b: innerHeight };
-      const boxes = subjects.map((x) => ({
+      const place = (x: Subject) => ({
         cover: x.cover,
         r: {
           l: stage.left + x.box[0] * stage.width,
@@ -511,49 +525,108 @@ export function useAvoidSubjects(
           r: stage.left + x.box[2] * stage.width,
           b: stage.top + x.box[3] * stage.height,
         },
-      }));
+      });
+      const boxes = subjects.map(place);
+      const lights = (soft ?? []).map(place);
       const ui = () =>
         [...el.querySelectorAll(':scope > .sub-card, :scope > .sub-actions')].map(rect);
       const clear = () => {
         const u = ui();
         return boxes.every((x) => hiddenShare(x.r, u, view) <= x.cover + 1e-3);
       };
-      if (clear()) return;
+      // 亮處被介面蓋掉的比例（只算介面，不算跑出視窗的部分）。
+      const lit = () => {
+        const u = ui();
+        return Math.max(
+          0,
+          ...lights.map(
+            (x) =>
+              u.reduce((n, b) => n + overlap(x.r, b), 0) /
+              Math.max(1, (x.r.r - x.r.l) * (x.r.b - x.r.t)),
+          ),
+        );
+      };
+      const ok = (x: number) => lights.every((y) => x <= y.cover + 1e-3);
       const card = el.querySelector(':scope > .sub-card');
       const lines0 = card?.getBoundingClientRect().height ?? 0;
       const cs = getComputedStyle(el);
-      // 放到主體右邊：場景先放開最大寬度（整個視窗寬），量主體右緣到內容右緣夠不夠寬。
-      // 移過去以後字幕卡不准變高（多折一行就不算放得下），而且要真的不蓋。
-      el.dataset.avoid = 'side';
-      const box = el.getBoundingClientRect();
-      const left = box.left + parseFloat(cs.paddingLeft);
-      const right = box.right - parseFloat(cs.paddingRight);
-      const edge = Math.max(...boxes.map((x) => x.r.r)) + AVOID_GAP;
-      if (right - edge >= SIDE_MIN) {
-        el.style.setProperty('--avoid-left', `${edge - left}px`);
-        const lines = card?.getBoundingClientRect().height ?? 0;
-        if (lines <= lines0 + 1 && clear()) return;
-        el.style.removeProperty('--avoid-left');
-      }
-      delete el.dataset.avoid;
+      const pad0 = parseFloat(cs.paddingBottom);
+      const box0 = el.getBoundingClientRect();
+      const left = box0.left + parseFloat(cs.paddingLeft);
+      const right = box0.right - parseFloat(cs.paddingRight);
       // 抬到主體上面：加大下內距。版面不一定一比一跟著動（最小高度、格線），量了再補，最多三次。
-      const top = Math.min(...boxes.map((x) => x.r.t)) - AVOID_GAP;
-      el.dataset.avoid = 'above';
-      let pad = parseFloat(cs.paddingBottom);
-      for (let i = 0; i < 3; i++) {
-        const over = Math.max(...ui().map((u) => u.b)) - top;
-        if (over <= 0.5) break;
-        pad += over;
-        el.style.setProperty('--avoid-pad', `${pad}px`);
+      const lift = () => {
+        const top = Math.min(...boxes.map((x) => x.r.t)) - AVOID_GAP;
+        el.dataset.avoid = 'above';
+        let pad = pad0;
+        for (let i = 0; i < 3; i++) {
+          const over = Math.max(...ui().map((u) => u.b)) - top;
+          if (over <= 0.5) break;
+          pad += over;
+          el.style.setProperty('--avoid-pad', `${pad}px`);
+        }
+      };
+      const tries: (() => boolean)[] = [
+        () => true,
+        () => {
+          // 主體右邊：場景先放開最大寬度（整個視窗寬），量主體右緣到內容右緣夠不夠寬；移過去字幕卡不准變高。
+          el.dataset.avoid = 'side';
+          const b = el.getBoundingClientRect();
+          const l = b.left + parseFloat(cs.paddingLeft);
+          const r = b.right - parseFloat(cs.paddingRight);
+          const edge = Math.max(...boxes.map((x) => x.r.r)) + AVOID_GAP;
+          if (r - edge < SIDE_MIN) return false;
+          el.style.setProperty('--avoid-left', `${edge - l}px`);
+          return (card?.getBoundingClientRect().height ?? 0) <= lines0 + 1;
+        },
+        () => {
+          lift();
+          return true;
+        },
+        () => {
+          if (!lights.length) return false;
+          const edge = Math.max(...lights.map((x) => x.r.r)) + AVOID_GAP;
+          if (right - edge < SIDE_MIN) return false;
+          el.dataset.shift = '';
+          el.style.setProperty('--avoid-left', `${edge - left}px`);
+          el.style.setProperty('--avoid-width', `${right - edge}px`);
+          lift();
+          return true;
+        },
+        () => {
+          if (!lights.length) return false;
+          const edge = Math.min(...lights.map((x) => x.r.l)) - AVOID_GAP;
+          if (edge - left < SIDE_MIN) return false;
+          el.dataset.shift = '';
+          el.style.setProperty('--avoid-left', '0px');
+          el.style.setProperty('--avoid-width', `${edge - left}px`);
+          lift();
+          return true;
+        },
+      ];
+      let best = -1;
+      let bestLit = Infinity;
+      for (let i = 0; i < tries.length; i++) {
+        reset();
+        if (!tries[i]() || !clear()) continue;
+        const x = lit();
+        if (x < bestLit - 1e-3) {
+          best = i;
+          bestLit = x;
+        }
+        if (ok(x)) break;
       }
+      reset();
+      // 都蓋到主體（不該發生）：照舊抬到主體上面。
+      tries[best < 0 ? 2 : best]();
     };
     run();
     addEventListener('resize', run);
     void document.fonts?.ready.then(run);
     return () => {
       removeEventListener('resize', run);
-      delete el.dataset.avoid;
+      reset();
     };
-  }, [subjects, token]);
+  }, [subjects, soft, token]);
   return main;
 }

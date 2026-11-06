@@ -78,8 +78,35 @@ for (const [w, h] of [
           // scrollWidth／scrollHeight 是整數，行高有小數時會多 1。
           clipped: el.scrollWidth > el.clientWidth + 1 || el.scrollHeight > el.clientHeight + 1,
           ellipsis: cs.textOverflow === 'ellipsis',
+          // 每一行的字（一個字一個字量位置）。
+          rows: (() => {
+            const out: string[] = [];
+            const rg = document.createRange();
+            let cur = '';
+            let top: number | null = null;
+            const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+            for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+              const s = n.textContent!;
+              for (let i = 0; i < s.length; i++) {
+                rg.setStart(n, i);
+                rg.setEnd(n, i + 1);
+                const q = rg.getClientRects()[0];
+                if (q && top !== null && q.top > top + 4) {
+                  out.push(cur);
+                  cur = '';
+                }
+                if (q) top = q.top;
+                cur += s[i];
+              }
+            }
+            out.push(cur);
+            return out.map((x) => x.trim()).filter(Boolean);
+          })(),
         };
       });
+      // 中文只在詞與詞之間換行：「開庭｜三天後」，不出現「開庭三天｜後」（第二道關卡 e771fcf 第 5 項，360 中文 150%）。
+      if (lang === 'zh')
+        expect([['開庭　三天後'], ['開庭', '三天後']], m.rows.join('｜')).toContainEqual(m.rows);
       expect(m.text).toBe(lang === 'en' ? 'Trial in three days' : '開庭　三天後');
       expect(
         m.menu.l - m.right,
