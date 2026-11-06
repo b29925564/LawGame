@@ -21,6 +21,8 @@ export interface Settings {
   voScale: number;
   /** 畫外字幕底框（字幕帶太亮時更好讀）。 */
   voBox: boolean;
+  /** 片頭看過的集（設定集 11.1：第二次播起可以跳過）。key 是集 id（ep1、ep2）。 */
+  introSeen: Record<string, boolean>;
   set: (patch: Partial<Omit<Settings, 'set'>>) => void;
 }
 
@@ -38,6 +40,7 @@ export const useSettings = create<Settings>()(
       voAuto: true,
       voScale: 1,
       voBox: false,
+      introSeen: {},
       set: (patch) => set(patch),
     }),
     { name: 'lawgame-settings', version: 1 },

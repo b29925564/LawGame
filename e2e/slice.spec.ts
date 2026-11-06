@@ -134,6 +134,12 @@ async function until(page: Page, target: ReturnType<Page['getByRole']>, limit = 
 
 /** 自動通關：冷開場 → 第一幕 → 調查 → 庭審，玩到瑞秋的第三項證詞（論點 D）為止。 */
 async function playToRachelLast(page: Page) {
+  // 片頭看過了（第二次起可以跳過，設定集 11.1）：這裡只走劇情。
+  await page.addInitScript(() => {
+    const s = JSON.parse(localStorage.getItem('lawgame-settings') ?? '{"state":{},"version":1}');
+    s.state.introSeen = { ep1: true, ep2: true };
+    localStorage.setItem('lawgame-settings', JSON.stringify(s));
+  });
   await page.goto('/');
   await page.getByRole('button', { name: '新遊戲' }).click();
   await page.getByRole('button', { name: /^第 1 集/ }).click();
@@ -156,7 +162,8 @@ async function playToRachelLast(page: Page) {
   await next(page);
   await expect(page.getByText('此訊息已被收回')).toBeVisible();
   await next(page);
-  await next(page); // 片頭
+  await page.getByRole('button', { name: '跳過' }).click(); // 片頭
+  await next(page); // 集名卡
 
   // 第一幕：事務所與看守所來電
   await until(page, page.getByRole('button', { name: '慢慢說。從你收到訊息開始。' }));
