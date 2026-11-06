@@ -3710,6 +3710,56 @@ html[lang='en'] .stamp.rec-stamp b {
   color: var(--cine-muted);
   font: 400 14px/1 var(--font);
 }
+/*
+ * 判決頁開頭的法官席那一格（設計師 11-06）：純黑底，鏡頭置中；桌機是 2.39:1 的鏡頭條（和庭上同一個裁切，五根燈管和掛鐘都在框裡），
+ * 手機 ≤767 整張 16:9 放進來（直的裁切會切掉右邊的掛鐘）。等圖時、切黑那 --dur-cut-black 都是純黑。
+ */
+.vbench {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  background: #000;
+}
+.vbench-cam {
+  width: min(calc(100vw - 32px), calc((100vh - 160px) * 2.39));
+}
+.vbench .vbench-cam .court-cam.insert {
+  display: flex;
+  position: static;
+  opacity: 1;
+}
+@media (max-width: 767px) {
+  .vbench-cam {
+    width: min(calc(100vw - 16px), calc((100vh - 160px) * 16 / 9));
+  }
+}
+.vbench[data-phase='black'] .vbench-cam {
+  visibility: hidden;
+}
+/* 場記只寫房間：和定場場記同一種框與字，但不動、沒有黃短槓（這一格沒有黃）。 */
+.vbench-slate {
+  position: fixed;
+  left: max(var(--s5), env(safe-area-inset-left));
+  bottom: max(var(--s5), env(safe-area-inset-bottom));
+  margin: 0;
+  padding: 6px 12px;
+  background: var(--cine-bg);
+  color: var(--cine-text);
+  font: 500 13px / 1.4 var(--font-mono);
+  letter-spacing: 0.06em;
+  pointer-events: none;
+}
+@media (max-width: 640px) {
+  .vbench-slate {
+    left: var(--s4);
+    bottom: max(var(--s4), env(safe-area-inset-bottom));
+    font-size: 12px;
+    letter-spacing: 0.02em;
+    padding: 6px 10px;
+  }
+}
 /* 筆錄頁：紙（兩個主題同色）、Courier 13、行號在左；黑條上緣 1px --cine-line、零圓角。 */
 .vs-page {
   width: min(560px, calc(100vw - 32px));

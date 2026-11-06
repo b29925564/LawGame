@@ -352,7 +352,8 @@ const layerUrls = (l: Layer | null) => {
 
 /** 這一場在這個狀態下，兩個機位各要哪幾層圖。CourtCamera 和進場前的預熱用同一個函式，網址集合不會分叉。 */
 export function shotUrls(scene: string, state: WitnessState, patience: number, en: boolean) {
-  const slot = MANIFESTS['./cam/bench.json']?.slots?.[scene];
+  // 判決那一格直接給格名（verdict-e1-164845 之類，verdictSlot 算出來的）；其餘照場戲找時段。
+  const slot = scene.startsWith('verdict-') ? scene : MANIFESTS['./cam/bench.json']?.slots?.[scene];
   const witnessNames = [`witness-${state}`, 'witness-default'];
   const benchPick = benchNames(slot, patience, en);
   return {
@@ -560,6 +561,7 @@ export function CourtCamera({
   cues = [],
   onJudgeRead,
   onJudgeShown,
+  onShown,
   ref,
 }: {
   shot: Shot;
@@ -578,6 +580,8 @@ export function CourtCamera({
   onJudgeRead?: (ms: number) => void;
   /** 法官的第一張裁定字幕真的開始出現的那一刻（字幕靠 CSS 計時，瀏覽器忙時會比 JS 計時晚）；法庭畫面用它等字幕讀完才切回。 */
   onJudgeShown?: () => void;
+  /** 這個機位的每一層都解碼好、真的切進畫面的那一刻（判決那一格從這裡開始算停多久）。 */
+  onShown?: () => void;
   /** 手機：筆錄要知道鏡頭蓋住它多少（最新那一行捲到鏡頭上面）。 */
   ref?: Ref<HTMLDivElement>;
 }) {
@@ -617,6 +621,14 @@ export function CourtCamera({
   const [entered, setEntered] = useState(ready);
   if (seen !== shot && ready) setSeen(shot);
   if (!entered && seen === shot) setEntered(true);
+  const onShownRef = useRef(onShown);
+  useLayoutEffect(() => {
+    onShownRef.current = onShown;
+  });
+  const showing = shot !== 'black' && seen === shot;
+  useEffect(() => {
+    if (showing) onShownRef.current?.();
+  }, [showing]);
   useLayoutEffect(() => {
     if (seen === shot || ready) return;
     let dead = false;

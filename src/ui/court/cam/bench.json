@@ -11,7 +11,17 @@
     "y": 0.5793,
     "w": 0.053
   },
-  "slots_available": ["d1-am", "d2-pm", "d3-ov", "verdict"],
+  "slots_available": [
+    "d1-am",
+    "d2-pm",
+    "d3-ov",
+    "verdict-e1-1640",
+    "verdict-e1-164845",
+    "verdict-e1-1701",
+    "verdict-e2-1610",
+    "verdict-e2-1640",
+    "verdict-e2-1734"
+  ],
   "slots": {
     "court-kowalski": "d1-am",
     "court-marisol": "d1-am",

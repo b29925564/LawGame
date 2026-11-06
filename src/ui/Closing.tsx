@@ -27,6 +27,7 @@ import { Shell, Tabs } from './Shell';
 import { useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { inkUnits, pen } from './court/hand';
 import { useVerdictRun, VerdictStage } from './court/VerdictStage';
+import { VerdictBench } from './court/VerdictBench';
 import type { Verdict as VerdictKind } from './court/verdictBeats';
 import { CourtCast, CourtFace } from './jury/CourtFace';
 import { castLook } from './jury/cast';
@@ -50,6 +51,8 @@ function ClosingScreen({ scene }: { scene: ClosingScene }) {
   const exposed = exposedArgs(progress);
   const args = closingArgs(progress);
   const [tab, setTab] = useState<'args' | 'tone'>('args');
+  // 判決頁開頭先是法官席那一格（設計師 11-06），切黑之後才是裁決書；在那一格按略過，四拍一起跳過。
+  const [bench, setBench] = useState<'bench' | 'form' | 'done'>('bench');
   const need = closing.needed(scene, args.length);
   const th = promisesOf(progress).theory;
   const cost = th?.jury?.note;
@@ -106,9 +109,19 @@ function ClosingScreen({ scene }: { scene: ClosingScene }) {
     punitive: t('懲罰性賠償看的是被告隱瞞了什麼，開示和證據要先處理。'),
   };
 
+  if (st.verdict && bench === 'bench')
+    return (
+      <VerdictBench
+        episode={progress.episode}
+        outcome={st.verdict}
+        place={scene.place}
+        onDone={(skipped) => setBench(skipped ? 'done' : 'form')}
+      />
+    );
   if (st.verdict)
     return (
       <Verdict
+        start={bench === 'done' ? 'done' : 'form'}
         scene={scene}
         st={st}
         rules={rules}
@@ -305,6 +318,7 @@ function Pips({ ours }: { ours: boolean[] }) {
  * 玩家兩集都是辯方：心證沒過門檻的陪審員才是「站你這邊」。
  */
 function Verdict({
+  start,
   scene,
   st,
   rules,
@@ -315,6 +329,8 @@ function Verdict({
   tips,
   onNext,
 }: {
+  /** 法官席那一格按了略過：四拍不演，直接到結論。 */
+  start: 'form' | 'done';
   scene: ClosingScene;
   st: closing.ClosingState;
   rules?: Rules;
@@ -406,7 +422,7 @@ function Verdict({
   const root = useRef<HTMLElement>(null);
   const kind: VerdictKind =
     v === '無罪' || v === '無責' ? '無罪' : v === '陪審團僵局' ? '陪審團僵局' : '有罪';
-  const run = useVerdictRun(kind, root);
+  const run = useVerdictRun(kind, root, start);
   const written = run.phase !== 'form';
   const caption = useCaseTerms();
 
