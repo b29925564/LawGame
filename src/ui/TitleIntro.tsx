@@ -215,7 +215,10 @@ function Witness({ ep2 }: { ep2: boolean }) {
           <b>{t('卡爾德快遞', 'cold-open')}</b>
           <span className="ti-msg">
             {t('您已連續上線 10 小時。休息將使今日評分下降。', 'cold-open')}
-            <i className="ti-msg-bar" />
+            {/* 不是藏也不是刪：他自己按了「略過」，61 次紀錄都在（劇本與內容 #2，ep2.yaml:57–62）。 */}
+            <i className="ti-msg-bar">
+              <em>{t('已略過')}</em>
+            </i>
           </span>
         </div>
       ) : (

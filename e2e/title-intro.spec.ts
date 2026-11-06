@@ -148,6 +148,8 @@ test('第二集換 0:10 和 0:23：百葉窗亮的是另一條縫，證人席是
   await page.clock.fastForward(6000);
   await expect(intro).toHaveAttribute('data-shot', 'witness');
   await expect(page.locator('.ti-note')).toContainText('您已連續上線 10 小時');
+  // 他自己按掉的（不是被藏、被刪）：黑條上是「已略過」。
+  await expect(page.locator('.ti-note .ti-msg-bar')).toHaveText('已略過');
   await expect(page.locator('.ti-bubble')).toHaveCount(0);
 
   await open(page, { episode: 'ep1' });
