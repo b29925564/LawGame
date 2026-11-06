@@ -133,3 +133,83 @@ for (const w of [320, 360])
           expect.soft(m.spill, `${at} 字跑出視窗`).toEqual([]);
         }
       });
+
+/**
+ * 黑底字卡的時刻列（「22:33」和後面那條細線）不碰右上角的選單鈕：內容上緣至少在選單鈕下緣再下 8px，放不下就捲動
+ * （設計師 #325 審查：320 中文 150%，22:33 那張多兩行，整塊被推到選單鈕那一排）。
+ */
+const CINE: [string, number][] = [
+  ['ep1', 0],
+  ['ep1', 1],
+  ['ep1', 11],
+  ['ep1', 12],
+  ['ep1', 14],
+  ['ep2', 0],
+  ['ep2', 5],
+  ['ep2', 6],
+];
+for (const [w, h] of [
+  [320, 640],
+  [360, 740],
+] as const)
+  for (const scale of [1.25, 1.5])
+    for (const lang of ['zh', 'en'] as const)
+      test(`黑底字卡的時刻列不碰選單鈕：${w}×${h}・${scale * 100}%・${lang}`, async ({
+        page,
+      }, info) => {
+        test.skip(info.project.name !== 'chromium', '自己設視窗大小，手機那一組跑就好');
+        test.setTimeout(120_000);
+        await page.setViewportSize({ width: w, height: h });
+        for (const [ep, step] of CINE) {
+          await page.goto('/');
+          await page.evaluate(
+            ([ep, step, lang, scale]) => {
+              localStorage.clear();
+              localStorage.setItem('lawgame-lang', lang as string);
+              localStorage.setItem(
+                'lawgame-settings',
+                JSON.stringify({ state: { textScale: scale }, version: 1 }),
+              );
+              localStorage.setItem(
+                'lawgame-ep-auto',
+                JSON.stringify({
+                  version: 5,
+                  savedAt: Date.now(),
+                  label: 'x',
+                  progress: {
+                    episode: ep,
+                    scene: 0,
+                    step,
+                    choices: { 'cold-open': ep === 'ep1' ? { 3: 0, 6: 1 } : { 4: 1 } },
+                    cards: [],
+                    flags: [],
+                    ethics: [],
+                    scenes: {},
+                  },
+                }),
+              );
+            },
+            [ep, step, lang, scale] as const,
+          );
+          await page.reload();
+          await page
+            .getByRole('button', { name: /^(繼續|Continue)/ })
+            .first()
+            .click();
+          await expect(page.locator('.cine .cine-time')).toBeVisible();
+          await page.evaluate(() => document.fonts.ready);
+          await page.waitForTimeout(700);
+          const m = await page.evaluate(() => {
+            const a = document.querySelector('.cine .cine-time')!.getBoundingClientRect();
+            const b = document.querySelector('.menu-toggle')!.getBoundingClientRect();
+            return {
+              time: a.top,
+              menu: b.bottom,
+              text: document.querySelector('.cine-time')!.textContent,
+            };
+          });
+          expect
+            .soft(m.time - m.menu, `${ep} 第 ${step} 步（${m.text}）時刻列上緣到選單鈕下緣`)
+            .toBeGreaterThanOrEqual(8);
+        }
+      });

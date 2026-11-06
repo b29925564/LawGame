@@ -3313,7 +3313,13 @@ fieldset.relations.compact {
   flex-direction: column;
   justify-content: center;
   gap: 20px;
-  padding: 24px 24px 56px;
+  /* 上緣至少在右上角選單鈕的下緣再下 8px（選單鈕：上 max(8px, 安全區)、高 max(40px, 上下內距與框 14px＋一行 1.65em)）。
+     內容比視窗高時整頁捲動，不往上擠到選單鈕那一排（設計師 #325 審查：320 中文 150% 的 22:33）。 */
+  padding: max(
+      24px,
+      calc(max(8px, env(safe-area-inset-top)) + max(40px, 14px + 1.65 * var(--fs-ui-cap)) + 8px)
+    )
+    24px 56px;
   max-width: none;
   color-scheme: dark;
 }
