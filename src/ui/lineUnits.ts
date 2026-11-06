@@ -311,16 +311,3 @@ export function fitLineUnits(text: string, titles = true): string[] {
   if (k < out.length - 1) out.splice(k, out.length - k, out.slice(k).join(''));
   return out;
 }
-
-const NUM_EN = /^(?:\d+|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)$/i;
-/**
- * 英文短標（頂列期限）：數字和後面的單位黏住（three weeks），最後兩個字也黏住，最後一行不會只剩一個字
- * （設計師裁定 25376da：「Pretrial｜hearing in｜three｜weeks」）。用不斷行空格，中文沒有半形空白，原樣不動。
- */
-export function glueTail(text: string): string {
-  const w = text.split(' ');
-  if (w.length < 2) return text;
-  return w.reduce((out, x, i) =>
-    i === 0 ? x : out + (NUM_EN.test(w[i - 1]) || i === w.length - 1 ? '\u00a0' : ' ') + x,
-  );
-}

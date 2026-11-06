@@ -1,5 +1,6 @@
 /// <reference lib="dom" />
 import { expect, test } from '@playwright/test';
+import { endsBanned } from '../src/ui/plateBreaks';
 
 /**
  * 桌面頂列（第二道關卡 7075839 舊問題 10；設計師 v93 裁定 一之 6）：英文 150%、寬 ≤412 時「Trial in three days」伸進「選單」鈕。
@@ -207,6 +208,10 @@ for (const [ep, scene] of [
           rows[rows.length - 1].split(' ').length,
           `${at} 最後一行的字數`,
         ).toBeGreaterThanOrEqual(2);
+        // 行尾不留 a／in／of…（設計師 #326 審查：「Pretrial hearing in ⏎ three weeks」「Trial in ⏎ three days」）。
+        rows
+          .slice(0, -1)
+          .forEach((r) => expect(endsBanned(r), `${at} 行尾「${r.split(' ').pop()}」`).toBe(false));
         for (const r of rows)
           expect(r, `${at} 數字和單位拆開`).not.toMatch(/(?:^|\s)(?:one|two|three|\d+)$/i);
       }

@@ -208,3 +208,20 @@ export function titleLine(text: string): ReactNode {
   }
   return nameUnits(text).map(({ w, p }, i) => ([...(w + p)].length > 1 ? kw(w + p, i) : w + p));
 }
+
+const NUM_EN = /^(?:\d+|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)$/i;
+/**
+ * 英文短標（頂列期限）：數字和後面的單位黏住（three weeks），a／in／of…（endsBanned）黏住下一個字，最後兩個字也黏住：
+ * 行尾不留虛詞、最後一行不會只剩一個字（設計師裁定 25376da、#326 審查：「Pretrial｜hearing in｜three｜weeks」）。
+ * 用不斷行空格，中文沒有半形空白，原樣不動。欄的最小寬度不小於黏住的最長一段（styles.css .due-text），所以不會凸出欄外。
+ */
+export function glueTail(text: string): string {
+  const w = text.split(' ');
+  if (w.length < 2) return text;
+  return w.reduce((out, x, i) => {
+    if (i === 0) return x;
+    const prev = w[i - 1];
+    const glue = NUM_EN.test(prev) || endsBanned(prev) || i === w.length - 1;
+    return out + (glue ? '\u00a0' : ' ') + x;
+  });
+}
