@@ -15,9 +15,9 @@ import { canCut, type Card } from './court/subtitleSplit';
  */
 export const PLATE_BREAKS: readonly string[] = [
   // ── 設計師 #296 字幕模式第二版（83b3c40）的斷點，照無襯線 500（Plex Sans）的實測字寬重排 ──
-  // 最窄手機（360）加 150%：卡內寬 11.4em。「sentencing courtroom」不能拆、「of the」要黏在名詞前面，整個名詞片語兩行放不下，
-  // 只好在 the 後面勉強換行（~，要設計師確認，見 WEAK_USED）。
-  'The side door/of the~sentencing courtroom|leads/to the holding cells.',
+  // 最窄手機（360 加 150%、320 加 125／150%）：「of the sentencing courtroom」一行放不下，整句兩行也放不下。
+  // 不在 the 後面勉強換行（行尾不留虛詞，設計師 v93 第二道關卡 #322 審查），改在 door 後面分張：「The side door」｜「of the sentencing courtroom」。
+  'The side door‖of the sentencing courtroom|leads/to the holding cells.',
   'Halfway down he stops|and looks back/at Lucas.',
   "And it has to stand|on the arguments/you've actually got.",
   "His hands are cuffed/in front of him;|he can't offer one.",
@@ -36,11 +36,16 @@ export const PLATE_BREAKS: readonly string[] = [
  * 單元測試釘住這份清單；多一處都要再給設計師看。
  */
 export const WEAK_USED: readonly string[] = [
-  'The side door of the~sentencing courtroom leads to the holding cells. @296px/150%',
-  // 最窄的手機（320 寬，卡內寬 268px）：同一處，125% 起就用到（體驗評測 v93 關卡 2 補量 320）。
-  'The side door of the~sentencing courtroom leads to the holding cells. @268px/125%',
-  'The side door of the~sentencing courtroom leads to the holding cells. @268px/150%',
+  // 原本 S6 側門那句在最窄的手機用「of the~sentencing」，行尾留 the，設計師 #322 審查不准；改在 door 後面分張，現在沒有地方用到。
 ];
+
+/**
+ * 行尾不留虛詞（設計師 v93 第二道關卡 #322 審查）：手標的換行點、分張點用上以後，前一行最後一個字是冠詞或介系詞，就不採用這個點，
+ * 改找下一個合法的點。只看這張清單；that、and 這類連接詞另有規則（canCut）。
+ */
+export const LINE_END_BANNED = new Set('a an the of to in on at for with by from'.split(' '));
+export const endsBanned = (line: string) =>
+  LINE_END_BANNED.has((line.trim().split(/\s+/).pop() ?? '').toLowerCase().replace(/[^a-z']/g, ''));
 
 export type MarkKind = '1' | '2' | '3' | 'L' | 'W';
 
@@ -128,6 +133,7 @@ export function markedCards(m: Marked, em: number, measure: Measure): Card[] | n
       let gap = Infinity;
       for (let c = a + 1; c < b; c++) {
         if (!kinds[c] || !group.includes(kinds[c])) continue;
+        if (endsBanned(words[c - 1])) continue;
         const l = wd(a, c);
         const r = wd(c, b);
         if (l > em || r > em) continue;

@@ -303,7 +303,7 @@ for (const [w, h] of [
           if (lang === 'en') {
             for (const r of rows)
               expect(r, `${at} 行尾是虛詞`).not.toMatch(
-                /\b(and|or|but|a|an|the|of|on|in|at|to|for|his)$/,
+                /\b(and|or|but|a|an|the|of|on|in|at|to|for|with|by|from|his)$/,
               );
             expect(t.split(' ').length, `${at}「${t}」太短`).toBeGreaterThanOrEqual(3);
           } else {

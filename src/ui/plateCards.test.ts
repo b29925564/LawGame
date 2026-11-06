@@ -9,6 +9,7 @@ import {
   PLATE_BREAKS,
   plainOf,
   WEAK_USED,
+  endsBanned,
 } from './plateBreaks';
 import { MIN_TAIL_WORDS, subCards, unitsOf } from './subCards';
 
@@ -110,8 +111,11 @@ describe('底圖字幕的英文斷點', () => {
             for (const c of cards) {
               for (const ln of c.lines ?? [c.text])
                 if (c.lines) expect(measure(ln), `${where} ${ln}`).toBeLessThanOrEqual(em + 0.01);
-              const rows = c.lines ? c.lines.length : wrap(c.text, em, measure).length;
-              expect(rows, `${where} ${c.text}`).toBeLessThanOrEqual(2);
+              const rows = c.lines ?? wrap(c.text, em, measure);
+              expect(rows.length, `${where} ${c.text}`).toBeLessThanOrEqual(2);
+              // 行尾不留冠詞、介系詞（設計師 v93 第二道關卡 #322 審查）。
+              for (const ln of rows)
+                expect(endsBanned(ln), `${where} 行尾是虛詞：${ln}`).toBe(false);
             }
             if (cards.length > 1) {
               const m = markedFor(s);
