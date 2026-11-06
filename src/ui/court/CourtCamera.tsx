@@ -61,6 +61,8 @@ const MANIFESTS = import.meta.glob('./cam/{bench,witness}.json', {
   import: 'default',
 }) as Record<string, Manifest>;
 
+export type Crop = readonly [number, number, number, number];
+
 interface Manifest {
   placeholder?: boolean;
   eye: number;
@@ -352,7 +354,8 @@ const layerUrls = (l: Layer | null) => {
 
 /** 這一場在這個狀態下，兩個機位各要哪幾層圖。CourtCamera 和進場前的預熱用同一個函式，網址集合不會分叉。 */
 export function shotUrls(scene: string, state: WitnessState, patience: number, en: boolean) {
-  const slot = MANIFESTS['./cam/bench.json']?.slots?.[scene];
+  // 判決那一格直接給格名（verdict-e1-164845 之類，verdictSlot 算出來的）；其餘照場戲找時段。
+  const slot = scene.startsWith('verdict-') ? scene : MANIFESTS['./cam/bench.json']?.slots?.[scene];
   const witnessNames = [`witness-${state}`, 'witness-default'];
   const benchPick = benchNames(slot, patience, en);
   return {
@@ -425,6 +428,7 @@ function Stage({
   mode,
   frameW,
   turn = false,
+  cropTo,
 }: {
   cam: Cam;
   who: string;
@@ -434,10 +438,12 @@ function Stage({
   frameW: number;
   /** 援引緘默權：立牌換成轉頭的剪影（機位審查 review-v1 第 2 條）。 */
   turn?: boolean;
+  /** 另給的裁切框（比例，[x, y, w, h]），蓋過 mode 的預設。 */
+  cropTo?: Crop;
 }) {
   const m = MANIFESTS[`./cam/${cam}.json`];
   // 16:9 的機位圖放進框裡：照裁切框把整張圖往上、往左推（2.39:1 只露出 crop239 那一段，手機插入露整張；眼線在上三分之一，設定集 RD-ART-0406）。
-  const crop = (mode === 'strip' ? m?.crop239 : null) ?? [0, 0, 1, 1];
+  const crop = cropTo ?? (mode === 'strip' ? m?.crop239 : null) ?? [0, 0, 1, 1];
   const width = frameW / crop[2];
   const target = resolve(cam, names);
   const look = castLook(who);
@@ -560,6 +566,8 @@ export function CourtCamera({
   cues = [],
   onJudgeRead,
   onJudgeShown,
+  onShown,
+  crop,
   ref,
 }: {
   shot: Shot;
@@ -578,6 +586,10 @@ export function CourtCamera({
   onJudgeRead?: (ms: number) => void;
   /** 法官的第一張裁定字幕真的開始出現的那一刻（字幕靠 CSS 計時，瀏覽器忙時會比 JS 計時晚）；法庭畫面用它等字幕讀完才切回。 */
   onJudgeShown?: () => void;
+  /** 另給的裁切框（16:9 原圖上的比例 [x, y, w, h]）：框的長寬比跟著它，蓋過 mode 的預設裁切。 */
+  crop?: Crop;
+  /** 這個機位的每一層都解碼好、真的切進畫面的那一刻（判決那一格從這裡開始算停多久）。 */
+  onShown?: () => void;
   /** 手機：筆錄要知道鏡頭蓋住它多少（最新那一行捲到鏡頭上面）。 */
   ref?: Ref<HTMLDivElement>;
 }) {
@@ -617,6 +629,14 @@ export function CourtCamera({
   const [entered, setEntered] = useState(ready);
   if (seen !== shot && ready) setSeen(shot);
   if (!entered && seen === shot) setEntered(true);
+  const onShownRef = useRef(onShown);
+  useLayoutEffect(() => {
+    onShownRef.current = onShown;
+  });
+  const showing = shot !== 'black' && seen === shot;
+  useEffect(() => {
+    if (showing) onShownRef.current?.();
+  }, [showing]);
   useLayoutEffect(() => {
     if (seen === shot || ready) return;
     let dead = false;
@@ -648,7 +668,12 @@ export function CourtCamera({
           <span>{t(LABEL[cam])}</span>
         </span>
       )}
-      <div className="cam-frame" ref={frame} data-shot={seen}>
+      <div
+        className="cam-frame"
+        ref={frame}
+        data-shot={seen}
+        style={crop ? { aspectRatio: `${crop[2] * 16} / ${crop[3] * 9}` } : undefined}
+      >
         <Stage
           cam="witness"
           who={witness}
@@ -657,6 +682,7 @@ export function CourtCamera({
           mode={mode}
           frameW={width}
           turn={state === 'fifth'}
+          cropTo={crop}
         />
         <Stage
           cam="bench"
@@ -665,6 +691,7 @@ export function CourtCamera({
           on={seen === 'bench'}
           mode={mode}
           frameW={width}
+          cropTo={crop}
         />
         <div className="cam-black" />
         <Subtitles

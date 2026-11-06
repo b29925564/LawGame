@@ -30,8 +30,15 @@ function handEnd(root: Element) {
  * 判決四拍的導演（設定集 10.5）：裁決書手寫 → 切黑 → 筆錄頁黑條 → 黑底字卡 → 窗光 → 才出現結論帶與評議欄。
  * 時間來自 beatsOf（權杖拼出來）；減少動態時沒有四拍，直接到最後；點一下、按鍵（Tab 除外）、Esc 跳到最後。
  */
-export function useVerdictRun(v: Verdict, root: React.RefObject<HTMLElement | null>) {
-  const [phase, setPhase] = useState<Phase>(() => (reducedMotion() ? 'done' : 'form'));
+export function useVerdictRun(
+  v: Verdict,
+  root: React.RefObject<HTMLElement | null>,
+  /** done：前面法官席那一格已經按了略過。 */
+  start: 'form' | 'done' = 'form',
+) {
+  const [phase, setPhase] = useState<Phase>(() =>
+    start === 'done' || reducedMotion() ? 'done' : 'form',
+  );
   const [pull, setPull] = useState(false);
   const [recover, setRecover] = useState(false);
   const [landed, setLanded] = useState(false);
