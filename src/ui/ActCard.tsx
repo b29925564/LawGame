@@ -13,7 +13,7 @@ import { prose, titleLine } from './prose';
 import { reducedMotion } from './a11y';
 import { claimHand } from './hand';
 import { rigOf } from './rigs';
-import { usePlate, useScenePlate, useShown } from './scenePlate';
+import { subjectRects, usePlate, useScenePlate, useShown } from './scenePlate';
 import { useCaseTerms } from './terms';
 import './actcard.css';
 
@@ -403,6 +403,8 @@ export function ActCard({
 /** 地點字卡的時間（actcard.css 的 place-slate 動畫 2860ms＝淡入 180＋停 2500＋淡出 180）。 */
 const SLATE_FADE = 180;
 const SLATE_HOLD = 2500;
+/** 場記改放左上時離左緣的距離（設計師 v93 第二道關卡裁定二）。 */
+const SLATE_EDGE = 16;
 
 /**
  * 地點字卡（設定集 11.3）：換地點但沒有幕卡時，鏡頭左下一行場記，前面一段 14×2 的黃短槓。
@@ -510,8 +512,34 @@ export function PlaceBeat({
   // 底圖是共用的一層（scenePlate.tsx 的 PlateHost），定場只說「這一格要這張圖」。
   usePlate(shown, 'beat');
   const cut = useCut(onDone, wait, waiting, !!shown);
+  // 場記放左下，但不蓋底圖的主體（plates.json subjects）：會蓋到就改放左上，不碰右上的「選單」
+  // （設計師 v93 第二道關卡裁定二：#316 字幕讓開主體的例外，場記也一樣）。
+  const stage = useRef<HTMLElement>(null);
+  useLayoutEffect(() => {
+    const el = stage.current;
+    if (!el || !shown || waiting) return;
+    const place = () => {
+      const slate = el.querySelector<HTMLElement>('.place-slate');
+      if (!slate) return;
+      delete slate.dataset.pos;
+      slate.style.removeProperty('--ps-max');
+      const s = slate.getBoundingClientRect();
+      const hit = subjectRects(shown).some(
+        (b) => s.left < b.r && b.l < s.right && s.top < b.b && b.t < s.bottom,
+      );
+      if (!hit) return;
+      slate.dataset.pos = 'top';
+      const menu = document.querySelector('.menu-toggle')?.getBoundingClientRect();
+      if (menu) slate.style.setProperty('--ps-max', `${menu.left - SLATE_EDGE - 8}px`);
+    };
+    place();
+    void document.fonts?.ready.then(place);
+    addEventListener('resize', place);
+    return () => removeEventListener('resize', place);
+  }, [shown, waiting]);
   return (
     <main
+      ref={stage}
       className={[
         'act-stage place-beat',
         cold && 'cold-scope',

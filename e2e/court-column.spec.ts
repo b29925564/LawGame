@@ -429,3 +429,21 @@ for (const [width, height, scale, lang, numbers] of [
     else expect(m.right, '工具組和標題同一列時沒有靠右').toBeLessThanOrEqual(1);
   });
 }
+
+/** 陪審團浮層和遊戲選單同時開著：Esc 一次只關最上面那一層（選單），第二次才收陪審團（設計師 v93 第二道關卡裁定三-6）。 */
+test('陪審團浮層和選單都開著：Esc 一次關一層', async ({ page }, info) => {
+  test.skip(info.project.name !== 'desktop', '桌機版面');
+  await openCourt(page, 1280, 800, 1.5, 'en');
+  await openObjection(page);
+  await page.locator('.jb-strip').click();
+  await expect(page.locator('.jurybox .jb-grid')).toBeVisible();
+  await page.getByRole('button', { name: 'Menu' }).click();
+  const menu = page.getByRole('dialog', { name: 'Menu' });
+  await expect(menu).toBeVisible();
+  await expect(menu).toHaveAttribute('aria-modal', 'true');
+  await page.keyboard.press('Escape');
+  await expect(menu).toHaveCount(0);
+  await expect(page.locator('.jurybox .jb-grid'), '第一次 Esc 連陪審團也收了').toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page.locator('.jb-strip')).toBeVisible();
+});
