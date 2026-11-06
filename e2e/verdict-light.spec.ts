@@ -4,6 +4,7 @@ import { expect, test, type Page } from '@playwright/test';
 /**
  * 淺色主題下判決不白閃（第二道關卡 11-06）：法官席 → 切黑 → 裁決書 → 切黑 → 筆錄……都是鏡頭段，
  * 設定集說淺色主題的鏡頭層仍然是夜。四拍播完前整頁照深色解，到結論頁才回淺色：整段只暗一次、亮一次。
+ * 選單鈕在鏡頭段是深色那款（第二道關卡「黑底鏡頭層上的選單鈕」）；回淺色前先切黑 --dur-cut-black，和離開冷開場同一套（設計師 11-06）。
  */
 const seeds = JSON.parse(
   readFileSync(new URL('./fixtures/hung-jury.json', import.meta.url), 'utf8'),
@@ -28,6 +29,18 @@ async function luma(page: Page) {
   }, png);
 }
 
+/** 選單鈕的底色和字色亮度（0–255）。 */
+async function menu(page: Page) {
+  return page.locator('.menu-toggle').evaluate((b) => {
+    const y = (c: string) => {
+      const [r, g, bl] = c.match(/[\d.]+/g)!.map(Number);
+      return 0.299 * r + 0.587 * g + 0.114 * bl;
+    };
+    const cs = getComputedStyle(b);
+    return { bg: y(cs.backgroundColor), ink: y(cs.color) };
+  });
+}
+
 for (const [ep, verdict] of [
   ['ep1', '有罪'],
   ['ep2', '有責'],
@@ -45,17 +58,38 @@ for (const [ep, verdict] of [
     await page.goto('/');
     await page.getByRole('button', { name: /^繼續（/ }).first().click();
 
-    const dark: Record<string, number> = {};
+    const night = async (k: string) => {
+      // 每一拍都是夜：平均亮度遠低於淺色頁（淺色頁約 232；裁決書在深色桌面上約 34／手機 61）。
+      expect(await luma(page), k).toBeLessThan(96);
+      const m = await menu(page);
+      expect(m.bg, `${k} 選單鈕底`).toBeLessThan(60);
+      expect(m.ink, `${k} 選單鈕字`).toBeGreaterThan(160);
+    };
     await expect(page.locator('.vbench')).toHaveAttribute('data-phase', 'hold');
-    dark.bench = await luma(page);
+    await night('bench');
     await expect(page.locator('.vbench')).toHaveCount(0, { timeout: 10_000 });
     await expect(page.locator('.vdict')).toHaveAttribute('data-stage', 'form');
-    dark.form = await luma(page);
+    await night('form');
     await expect(page.locator('.vstage[data-phase="record"]')).toBeVisible({ timeout: 10_000 });
-    dark.record = await luma(page);
-    // 每一拍都是夜：平均亮度遠低於淺色頁（淺色頁約 232；裁決書在深色桌面上約 34／手機 61）。
-    for (const [k, v] of Object.entries(dark)) expect(v, k).toBeLessThan(96);
+    await night('record');
+    await expect(page.locator('.vstage[data-phase="light"]')).toBeVisible({ timeout: 10_000 });
+    await night('light');
 
-    await expect(page.locator('.vdict')).toHaveAttribute('data-stage', 'done', { timeout: 30_000 });
+    // 窗光之後先切黑一格（--dur-cut-black），才是淺色的結論頁。
+    const seen = await page.evaluate(
+      () =>
+        new Promise<{ end: number; done: number }>((ok) => {
+          const v = document.querySelector('.vdict')!;
+          const t: Record<string, number> = {};
+          new MutationObserver(() => {
+            const s = v.getAttribute('data-stage')!;
+            if (!(s in t)) t[s] = performance.now();
+            if (s === 'done') ok({ end: t.end ?? NaN, done: t.done });
+          }).observe(v, { attributes: true });
+        }),
+    );
+    expect(seen.done - seen.end).toBeGreaterThanOrEqual(83 - 20);
     expect(await luma(page)).toBeGreaterThan(180);
+    const m = await menu(page);
+    expect(m.bg).toBeGreaterThan(180);
   });
