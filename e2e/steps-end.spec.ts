@@ -24,6 +24,14 @@ const EXPECTED = [
   'act-pull',
   'place-slate-cut',
   'tube-spent',
+  // 片頭（#319）
+  'ti-bar',
+  'ti-gone',
+  'ti-lit',
+  'ti-on',
+  'ti-out',
+  'ti-show',
+  'ti-swipe',
 ];
 
 /** 原始碼的樣式表（打包後 steps(1, end) 會被縮成 step-end、簡寫裡有 var() 時 CSSOM 也讀不出來，所以讀原始碼）。 */
