@@ -80,21 +80,32 @@ export function Hl({
   );
 }
 
-/** 手寫的字：重點詞畫鉛筆底線，逐字寫出來。 */
+/**
+ * 手寫的字：重點詞畫鉛筆底線，逐字寫出來。
+ * 每個字一個 span，各自在自己的那一格出現（設定集：一格一字）：不用整行剪裁，每一格都只有完整的字，
+ * 英文的比例字寬、字級放大也一樣。--chars 留給版面讀（總字數）。
+ */
 function Hand({ text, word }: { text: string; word?: string }) {
   const style = { '--chars': [...text].length } as CSSProperties;
+  let k = 0;
+  const chars = (s: string) =>
+    [...s].map((c) => (
+      <span key={k} className="hw-c" style={{ '--i': k++ } as CSSProperties}>
+        {c}
+      </span>
+    ));
   if (!word || !text.includes(word))
     return (
       <p className="hand" style={style}>
-        {text}
+        {chars(text)}
       </p>
     );
   const i = text.indexOf(word);
   return (
     <p className="hand" style={style}>
-      {text.slice(0, i)}
-      <u>{word}</u>
-      {text.slice(i + word.length)}
+      {chars(text.slice(0, i))}
+      <u>{chars(word)}</u>
+      {chars(text.slice(i + word.length))}
     </p>
   );
 }

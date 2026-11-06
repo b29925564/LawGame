@@ -11,7 +11,7 @@ import { expect, test } from '@playwright/test';
 /** 現在用 steps() 停在終值的動畫：全部都要找得到，免得檢查漏掉。 */
 const EXPECTED = [
   'dk-swipe',
-  'write',
+  'hand-char',
   'swipe',
   'swipe-y',
   'bar-in',
