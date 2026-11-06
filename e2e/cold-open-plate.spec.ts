@@ -229,3 +229,57 @@ test('淺色主題下冷開場的字幕框也是深色玻璃、鏡頭層的字�
   };
   expect(await look('light')).toEqual(await look('dark'));
 });
+
+test('冷開場的鎖定畫面沒有黃：左上光暈是螢幕的冷灰藍（設計師 v93 第二道關卡裁定三-1）', async ({
+  page,
+}) => {
+  // 第 3 格（step 2）是葛蘭特的通知，出現在鎖定畫面上。
+  await open(page, 2);
+  const lock = page.locator('.phone .lock');
+  await expect(lock).toBeVisible();
+  const bg = await lock.evaluate((e) => getComputedStyle(e).backgroundImage);
+  expect(bg).not.toMatch(/244, 197, 61|255, 208, 46/);
+  expect(bg).toContain('185, 204, 255');
+});
+
+/** 黑底的鏡頭層（集名卡、幕卡、日卡、定場）上，淺色主題的選單鈕和深色主題的一樣（設計師 v93 第二道關卡裁定三-5）。 */
+test('集名卡和定場上的選單鈕：淺色主題也是深色那一款', async ({ page }) => {
+  const look = async (scheme: 'light' | 'dark', step: number, scene: number) => {
+    await page.emulateMedia({ colorScheme: scheme });
+    await page.goto('/');
+    await page.evaluate(
+      ([scene, step]) =>
+        localStorage.setItem(
+          'lawgame-ep-auto',
+          JSON.stringify({
+            version: 5,
+            savedAt: Date.now(),
+            label: 'x',
+            progress: {
+              episode: 'ep1',
+              scene,
+              step,
+              choices: {},
+              cards: [],
+              flags: [],
+              ethics: [],
+              scenes: {},
+            },
+          }),
+        ),
+      [scene, step] as const,
+    );
+    await page.reload();
+    await page.getByRole('button', { name: /^繼續/ }).first().click();
+    await expect(page.locator('.act-stage')).toBeVisible();
+    return page
+      .locator('.menu-toggle')
+      .evaluate((e) => [
+        getComputedStyle(e).backgroundColor,
+        getComputedStyle(e).color,
+        getComputedStyle(e).borderTopColor,
+      ]);
+  };
+  // 第 1 集第 1 場是集名卡（片頭卡）。
+  expect(await look('light', 0, 1)).toEqual(await look('dark', 0, 1));
+});
