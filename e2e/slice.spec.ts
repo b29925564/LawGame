@@ -157,6 +157,10 @@ async function playToRachelLast(page: Page) {
   await next(page);
   await page.getByRole('button', { name: '感應員工證' }).click();
   await page.getByRole('button', { name: '推開門' }).click();
+  // 22:49 有定場鏡頭（31 樓的底圖）：next 先點掉場記（data-auto 的那一格），旁白一句一張字幕（三句三張）。
+  await next(page);
+  await next(page);
+  await next(page);
   await next(page);
   await next(page);
   await next(page);

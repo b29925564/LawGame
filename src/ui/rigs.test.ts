@@ -10,13 +10,16 @@ import { RIGS, rigOf } from './rigs';
 type Node = Record<string, unknown>;
 type Hit = { at: string; place?: string; rig?: string };
 
-/** 劇本裡寫了 place 或 rig 的物件（場景、聲請反轉的選項、法庭日卡）。手機裡的刷卡畫面（do: badge）的 place 是門禁機上的字，不是場記。 */
+/**
+ * 劇本裡寫了 place 或 rig 的物件（場景、聲請反轉的選項、法庭日卡、冷開場有定場鏡頭的那一格）。
+ * 手機裡的刷卡畫面（do: badge）的 place 是門禁機上的字，不是場記。
+ */
 function hits(raw: unknown, at: string, acc: Hit[]) {
   if (Array.isArray(raw)) raw.forEach((x, i) => hits(x, `${at}[${i}]`, acc));
   else if (raw && typeof raw === 'object') {
     const o = raw as Node;
     const where = o.id ? `${at}(${String(o.id)})` : at;
-    if (!('do' in o) && ('place' in o || 'rig' in o))
+    if (o.do !== 'badge' && ('place' in o || 'rig' in o))
       acc.push({ at: where, place: o.place as string, rig: o.rig as string });
     for (const [k, v] of Object.entries(o)) hits(v, `${where}.${k}`, acc);
   }

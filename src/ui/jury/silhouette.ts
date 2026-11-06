@@ -1030,6 +1030,7 @@ export function svg(
     turn = false,
     stretch = 1,
     catchSize = 5,
+    below = 0,
   }: {
     v?: number;
     pose?: Pose;
@@ -1042,6 +1043,11 @@ export function svg(
     stretch?: number;
     /** 眼神光那一點的邊長（卡面單位）。鏡頭條裡照顯示寬度換算，畫面上至少 2×2 px（設計師轉頭審查）。 */
     catchSize?: number;
+    /**
+     * 軀幹在卡面底邊以下再往下延伸幾個卡面單位（同寬、同剪影色，不受光）。鏡頭裡的立牌只畫到肩膀，
+     * 證人席欄杆和前板之間會露出平切的底邊（v93 關卡 1）；延伸段藏到前板後面。陪審員卡不用。
+     */
+    below?: number;
   } = {},
 ) {
   pose = pose || poseFor(v);
@@ -1054,6 +1060,21 @@ export function svg(
   const key = 10 + 46 * tt,
     rimTop = 225 - 135 * tt; // 第 8.4 章 keyWidth、rimTop
   const sil = s.fill.map((q) => `<path d="${d(q)}"/>`).join(''); // 每塊各自一條 path：合成一條會因繞向相反挖出洞
+  // 卡面底邊上的剪影寬度：延伸段從這裡接下去，左右緣和肩線連續，沒有轉折。
+  // 照坐著的人：先往外鼓到手肘（上臂，每邊多肩寬的 2%，合計約 4%），再收回肩寬，直直接到前板後面（設計師 2026-11-06）。
+  const foot = s.fill.flat().filter(([, y]) => y >= 498);
+  const footX = foot.map(([x]) => x);
+  const tail = (() => {
+    if (below <= 0 || !foot.length) return '';
+    const l = Math.min(...footX),
+      r = Math.max(...footX),
+      bulge = (r - l) * 0.02,
+      elbow = 500 + Math.min(130, below * 0.6),
+      end = 500 + below,
+      f = (n: number) => n.toFixed(1);
+    // 二次曲線的控制點往外推 2 倍，曲線最外側剛好多出 bulge；起點略高於 500，和卡面重疊一點，不留縫。
+    return `<path d="M${f(l)} 498Q${f(l - 2 * bulge)} ${f((498 + elbow) / 2)} ${f(l)} ${f(elbow)}L${f(l)} ${f(end)}L${f(r)} ${f(end)}L${f(r)} ${f(elbow)}Q${f(r + 2 * bulge)} ${f((498 + elbow) / 2)} ${f(r)} 498Z"/>`;
+  })();
   const rects = (rs: Rect[]) =>
     rs.map((r) => `<rect x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}"/>`).join('');
   // 受光區：剪影減去往光的方向平移的自己；平光不平移，整顆頭臉均勻染色（頭以下不染）。
@@ -1087,7 +1108,7 @@ export function svg(
       )
       .join('');
   const wide = stretch !== 1;
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${+(400 * stretch).toFixed(2)} 500" class="juror-svg" data-pose="${pose}"${turn ? ' data-turn=""' : ''} aria-hidden="true" focusable="false">${wide ? `<g transform="scale(${+stretch.toFixed(4)} 1)">` : ''}
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${+(400 * stretch).toFixed(2)} 500"${tail ? ' overflow="visible"' : ''} class="juror-svg" data-pose="${pose}"${turn ? ' data-turn=""' : ''} aria-hidden="true" focusable="false">${wide ? `<g transform="scale(${+stretch.toFixed(4)} 1)">` : ''}
 <defs>
  <mask id="lit-${uid}"><rect width="400" height="500" fill="#000"/><g fill="#fff">${sil}</g>${unlit}</mask>
  ${rimFilter(`rim-${uid}`, hex(K), side === 'left' ? -2 : side === 'right' ? 2 : 0)}
@@ -1095,7 +1116,7 @@ export function svg(
  <clipPath id="armclip-${uid}">${armClip}</clipPath>${extra ? `<clipPath id="xclip-${uid}">${rects(extra.rim)}</clipPath>${rimFilter(`xrim-${uid}`, hex(extra.k), 0)}` : ''}
 </defs>
 ${bg ? '<rect width="400" height="500" fill="var(--cine-bg,#06080b)"/>' : ''}
-${part !== 'light' ? `<g class="silhouette" fill="${SIL}">${sil}</g>` : ''}
+${part !== 'light' ? `<g class="silhouette" fill="${SIL}">${sil}${tail}</g>` : ''}
 ${
   part !== 'body'
     ? `<rect width="400" height="500" fill="var(${K})" opacity="${L?.flat ? '.06' : '.10'}" mask="url(#lit-${uid})"/>

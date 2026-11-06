@@ -178,6 +178,9 @@ function CamLayer({
         catchSize,
         turn: t,
         uid: `cam-${layer.name}-${look.id}${t ? '-turn' : ''}`,
+        // 證人席：卡底（原圖 y 645）在黃銅欄杆（537–589）下面，前板的前景要到 y 800 才開始擋。
+        // 軀幹往下補 220 個卡面單位（約 197 px，到 y 842），補到前板後面，不再露出肩膀的平切邊。
+        below: cam === 'witness' ? WITNESS_BELOW : 0,
       };
       return {
         turn: t,
@@ -226,6 +229,9 @@ function CamLayer({
     </div>
   );
 }
+
+/** 證人席立牌軀幹往下補的長度（卡面單位，卡面 400×500）。 */
+export const WITNESS_BELOW = 220;
 
 function maskId(name: string) {
   return `cam-climb-${name}`;

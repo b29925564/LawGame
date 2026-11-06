@@ -99,7 +99,7 @@ export function useSubs(line: Line | null, token: number, active: boolean, atEnd
     setAt({ token, ix: ix + 1 });
     return true;
   };
-  return { node, step, last: ix >= count - 1 };
+  return { node, step, last: ix >= count - 1, ix, text: card?.text };
 }
 
 /** 字幕模式的操作列：主要按鈕（繼續／選項）和「筆錄」抽屜鈕。 */

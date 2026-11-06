@@ -299,6 +299,56 @@
         "phone": 0
       },
       "source": "project-files art-bible/scenes/holding-door (holding_door.py, finish_hd.py id=holding-door-zh exp=2.65); review designer-review-v6.md"
+    },
+    {
+      "id": "31f-2249",
+      "scene": "ep1:cold-open",
+      "rig": "ep1-31f-fri",
+      "card_kelvin": 4100,
+      "date": "2026-03-13 22:49",
+      "episode": 1,
+      "step_note": "冷開場是一場手機戲，底圖屬於其中一格（do: caption 的 22:49）：照場景 id＋那一格的 rig 找",
+      "files": {
+        "desktop": {
+          "file": "31f-2249-desktop.jpg",
+          "bytes": 54274
+        },
+        "phone": {
+          "file": "31f-2249-phone.jpg",
+          "bytes": 64102
+        }
+      },
+      "frames_res": [2304, 1440],
+      "phone_cx": 0.44,
+      "phone_crop_px": [609, 0, 1419, 1440],
+      "focus_note": "圖貼底（獎盃和手在下三分之一）；手機版窄視窗把獎盃右緣對齊視窗右緣，手指整個露出。字幕框和按鈕避開主體框（設計師 #316 審查 1）：cover＝主體框最多可以看不到的比例（跑出視窗＋被介面蓋住）。獎盃、手指 0；手（手背＋手指）0.45＝最多只剩手指",
+      "focus": { "y": 1 },
+      "anchor": { "phone": { "at": 0.868, "to": 1 } },
+      "subjects": {
+        "desktop": [
+          { "id": "trophy", "box": [0.378, 0.731, 0.573, 0.842], "cover": 0 },
+          { "id": "fingers", "box": [0.28, 0.828, 0.358, 0.886], "cover": 0 },
+          { "id": "hand", "box": [0.208, 0.828, 0.358, 0.886], "cover": 0.45 }
+        ],
+        "phone": [
+          { "id": "trophy", "box": [0.326, 0.734, 0.868, 0.841], "cover": 0 },
+          { "id": "fingers", "box": [0.07, 0.829, 0.262, 0.886], "cover": 0 },
+          { "id": "hand", "box": [0, 0.829, 0.262, 0.886], "cover": 0.45 }
+        ]
+      },
+      "key": "corridor",
+      "fill": ["corr_fill"],
+      "target": "10:1",
+      "measured_ratio": 10.0,
+      "floor_L": {
+        "desktop": 3.85,
+        "phone": 3.95
+      },
+      "yellow_final_violations": {
+        "desktop": 0,
+        "phone": 0
+      },
+      "source": "project-files art-bible/scenes/0505-31f（RD-ART-0505 v4，delivery-v4.md、manifest.json）；floor_L 是介面與操作 #3 在交付的 jpg 上重量的（最暗 0.5% 的平均 L*）"
     }
   ]
 }
