@@ -1444,8 +1444,15 @@ details summary {
   .taskbar {
     flex-wrap: wrap;
   }
+  /* 最窄不小於 5.5em，也不小於黏住的「three weeks」：英文期限的數字和單位黏成一段（glueTail），欄比它窄時字會凸出欄外
+     （#326 CI：360 英文 150% 欄 109px、「three days」107～110px）。最小寬度交給裡面的 inline-block，
+     它的最小內容寬就是 max(5.5em, 最長那一段)，放不下就整段換到第二列。 */
   .taskbar > .muted {
     flex: 1 1 0;
+    min-width: auto;
+  }
+  .taskbar > .muted > .due-text {
+    display: inline-block;
     min-width: 5.5em;
   }
 }

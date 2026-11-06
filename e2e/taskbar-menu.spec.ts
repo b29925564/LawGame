@@ -176,6 +176,7 @@ for (const [ep, scene] of [
         const due = page.locator('.taskbar > .muted');
         await expect(due).toBeVisible();
         await page.evaluate(() => document.fonts.ready);
+        const clipped = await due.evaluate((el) => el.scrollWidth > el.clientWidth + 1);
         const rows = await due.evaluate((el) => {
           const out: string[] = [];
           const rg = document.createRange();
@@ -200,6 +201,7 @@ for (const [ep, scene] of [
           return out.map((x) => x.replace(/\u00a0/g, ' ').trim()).filter(Boolean);
         });
         const at = `${w}・${scale * 100}%：${rows.join('｜')}`;
+        expect(clipped, `${at} 期限字凸出欄外`).toBe(false);
         expect(rows.length, `${at} 折成幾行`).toBeLessThanOrEqual(3);
         expect(
           rows[rows.length - 1].split(' ').length,
