@@ -133,9 +133,12 @@
 }
 /* 冷開場整段是鏡頭層，不跟主題（設定集第 2 章、11.5 ③）：在畫面上的時候整頁照深色解，
    手機螢幕、字幕框、選單鈕都和深色主題一樣（設計師 #316 審查 2）。只限冷開場（.cold-scope），尾聲的手機戲不算。
-   片頭（.title-intro）也是鏡頭層：選單鈕照深色解（白框）。 */
+   片頭（.title-intro）也是鏡頭層：選單鈕照深色解（白框）。
+   集名卡、幕卡、日卡、集尾卡和定場（.act-stage）也是黑底的鏡頭層：淺色主題下選單鈕一樣用深色那一款，
+   不是白底亮鈕壓在黑卡上（設計師 v93 第二道關卡裁定三-5）。 */
 :root:has(.cold-scope),
-:root:has(.title-intro) {
+:root:has(.title-intro),
+:root:has(.act-stage) {
   color-scheme: dark;
 }
 
@@ -3487,8 +3490,9 @@ fieldset.relations.compact {
   color: #f2f4f7;
   margin: -40px 0 0;
   padding-top: 52px;
+  /* 冷開場零黃（設定集 11.5）：左上的光暈原本是 18% 的黃，改成螢幕的冷灰藍（--k-screen；設計師 v93 第二道關卡裁定三-1）。 */
   background:
-    radial-gradient(90% 60% at 20% 10%, rgb(244 197 61 / 18%), transparent 60%),
+    radial-gradient(90% 60% at 20% 10%, rgb(185 204 255 / 12%), transparent 60%),
     radial-gradient(80% 60% at 90% 90%, rgb(70 100 150 / 40%), transparent 70%), #0c1118;
 }
 .phone:has(.lock) .phone-status {

@@ -29,12 +29,18 @@ export function GameMenu() {
     const away = (e: PointerEvent) => {
       if (!box.current?.contains(e.target as Node)) setOpen(null);
     };
-    const esc = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(null);
+    // 選單在最上層：Esc 只關選單，不往下傳給底下的陪審團浮層、證據抽屜（捕獲階段先接住；設計師 v93 第二道關卡裁定三-6）。
+    const esc = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      setOpen(null);
+    };
     document.addEventListener('pointerdown', away);
-    window.addEventListener('keydown', esc);
+    window.addEventListener('keydown', esc, true);
     return () => {
       document.removeEventListener('pointerdown', away);
-      window.removeEventListener('keydown', esc);
+      window.removeEventListener('keydown', esc, true);
     };
   }, [open, setOpen]);
   const onSave = (slot: Slot) => setNote(save(slot) ? t('已存檔。') : t('這個瀏覽器不允許存檔。'));
@@ -57,7 +63,7 @@ export function GameMenu() {
         {t('選單')}
       </button>
       {open && (
-        <div className="menu-panel panel" role="dialog" aria-label={t('選單')}>
+        <div className="menu-panel panel" role="dialog" aria-modal="true" aria-label={t('選單')}>
           <div className="row" role="tablist">
             <button role="tab" aria-selected={open === 'save'} onClick={() => setOpen('save')}>
               {t('存檔')}
