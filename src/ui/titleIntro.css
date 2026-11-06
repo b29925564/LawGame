@@ -509,6 +509,7 @@
   }
 }
 @keyframes ti-lit {
+  99.9%,
   to {
     opacity: 1;
   }
@@ -535,6 +536,7 @@
   from {
     opacity: 0;
   }
+  99.9%,
   to {
     opacity: 1;
   }
@@ -549,6 +551,7 @@
   }
 }
 @keyframes ti-gone {
+  99.9%,
   to {
     visibility: hidden;
   }

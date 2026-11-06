@@ -125,9 +125,15 @@
     animation: dk-swipe var(--dur-hl) steps(8) both;
   }
 }
+/* 分格動畫（steps）最後一格從 99.9% 就停住：Chrome 某些「延遲＋長度」組合算到結尾的進度是 0.9999999999999989，
+   steps(8) 會停在 7/8（styles.css 動態區有完整說明）。 */
 @keyframes dk-swipe {
   from {
     background-size: 0% 100%;
+  }
+  99.9%,
+  to {
+    background-size: 100% 100%;
   }
 }
 /* 「展開全部」只在手機出現。 */

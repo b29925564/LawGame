@@ -5169,9 +5169,10 @@ button.iou[aria-pressed='true'] {
   .sticky.enter {
     animation: stick var(--dur-sticker) var(--ease) both;
   }
-  .sticky.enter .hand {
-    animation: write calc(var(--chars, 6) * var(--dur-write)) steps(var(--chars, 6))
-      calc(var(--dur-sticker) + var(--delay, 0ms)) both;
+  /* 一格一字：第 i 個字在第 i+1 格出現（每格 --dur-write），整個字一起出來，不會露出半個字。 */
+  .sticky.enter .hand .hw-c {
+    animation: hand-char var(--dur-write) step-end
+      calc(var(--dur-sticker) + var(--delay, 0ms) + var(--i) * var(--dur-write)) both;
   }
   mark.hl.enter::before {
     animation: swipe var(--dur-hl) steps(8) both;
@@ -5216,19 +5217,47 @@ button.iou[aria-pressed='true'] {
       scale: 1.03;
     }
   }
-  @keyframes write {
+  /*
+   * 分格動畫（steps(n, end)）的最後一格一律從 99.9% 就停住，終值寫明：
+   * - Chrome 在某些「延遲＋長度」組合下，算到結尾的進度是 0.9999999999999989，steps(4) 會停在 3/4
+   *   （例：167ms steps(4) 延遲 3000ms 停在 scale 0.75；延遲 0／600／1600ms 正常）。
+   * - 剪裁從 inset() 到 none 不能內插，只會在一半時整段跳出來；螢光 99.9% 寫成 inset(0 0 0 0)，才真的一格一格劃過去，
+   *   最後才回到 none（不剪），邊和原本一樣，一 px 都不少。手寫不用剪裁，一個字一個 span（hand-char）。
+   * e2e/steps-end.spec.ts 檢查每個用 steps() 的動畫都有這一格。
+   */
+  @keyframes hand-char {
     from {
-      clip-path: inset(0 100% 0 0);
+      opacity: 0;
+    }
+    99.9%,
+    to {
+      opacity: 1;
     }
   }
   @keyframes swipe {
     from {
       clip-path: inset(0 100% 0 0);
     }
+    99.9% {
+      clip-path: inset(0 0 0 0);
+      /* 最後這一小段不分格：steps(1) 也會走到 none。 */
+      animation-timing-function: linear;
+    }
+    to {
+      clip-path: none;
+    }
   }
   @keyframes swipe-y {
     from {
       clip-path: inset(0 0 100% 0);
+    }
+    99.9% {
+      clip-path: inset(0 0 0 0);
+      /* 最後這一小段不分格：steps(1) 也會走到 none。 */
+      animation-timing-function: linear;
+    }
+    to {
+      clip-path: none;
     }
   }
   /* 蓋章只把墨色從 60% 拉到 100%，不縮放（設定集第 10.2 章 --dur-stamp）。 */
@@ -5261,8 +5290,13 @@ button.iou[aria-pressed='true'] {
     from {
       scale: 0 1;
     }
+    99.9%,
+    to {
+      scale: 1 1;
+    }
   }
   @keyframes bar-out {
+    99.9%,
     to {
       scale: 0 1;
       transform-origin: right;

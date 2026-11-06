@@ -1980,6 +1980,7 @@ html[lang='en'] .vform .fh .c {
   html[data-photosafe='1'] .patience .pip.spent {
     transition-duration: 900ms;
   }
+  /* 最後一格從 99.9% 就停住：Chrome 結尾進度可能是 0.9999…，step-end 會停在 75% 那一格（燈管熄不掉）。 */
   @keyframes tube-spent {
     25%,
     75% {
@@ -1988,6 +1989,7 @@ html[lang='en'] .vform .fh .c {
     }
     0%,
     50%,
+    99.9%,
     100% {
       background-color: transparent;
       border-color: var(--border-strong);
@@ -2502,12 +2504,18 @@ html[lang='en'] .stamp.rec-stamp b {
       rec-wait 0s var(--ats) backwards,
       rec-stamp var(--dur-stamp) ease-in var(--ats) both;
   }
+  /* 分格動畫最後一格從 99.9% 就停住（Chrome 結尾進度 0.9999…，steps(4) 會停在 3/4；styles.css 動態區有完整說明）。 */
   @keyframes rec-redact {
     from {
       scale: 0 1;
     }
+    99.9%,
+    to {
+      scale: 1 1;
+    }
   }
   @keyframes rec-unbar {
+    99.9%,
     to {
       scale: 0 1;
     }
@@ -3895,9 +3903,14 @@ html[lang='en'] .stamp.rec-stamp b {
     animation: hand-fade var(--dur-theme) linear both;
   }
 }
+/* 最後一格從 99.9% 就停住（Chrome 結尾進度 0.9999…，steps(4) 會停在 3/4）。 */
 @keyframes v-cover {
   from {
     clip-path: inset(0 100% 0 0);
+  }
+  99.9%,
+  to {
+    clip-path: inset(0 0 0 0);
   }
 }
 
