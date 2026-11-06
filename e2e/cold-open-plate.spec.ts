@@ -316,3 +316,49 @@ for (const [w, h] of [
         expect(cards.length, at).toBeLessThanOrEqual(lang === 'en' ? 6 : 5);
       }
   });
+
+// 設計師 v93 第二道關卡裁定二：定場場記不蓋底圖的主體（手指、手、獎盃）；左下會蓋到就改放左上，不碰「選單」。
+for (const [w, h] of [
+  [412, 915],
+  [360, 740],
+  [320, 640],
+] as const)
+  for (const lang of ['zh', 'en'] as const)
+    test(`22:49 定場場記不蓋主體：${w}×${h}（${lang}）`, async ({ page }, info) => {
+      test.skip(info.project.name !== 'desktop', '自己設視窗大小，桌機那一組跑就好');
+      await page.setViewportSize({ width: w, height: h });
+      await open(page, STEP_2249, lang);
+      const slate = page.locator('.place-slate');
+      await expect(slate).toBeVisible();
+      await page.evaluate(() => document.fonts.ready);
+      const m = await page.evaluate(() => {
+        const box = (r: DOMRect) => ({ l: r.left, t: r.top, r: r.right, b: r.bottom });
+        const host = document.querySelector('.plate-host .scene-plate') as HTMLElement;
+        const stage = document.querySelector('.plate-host .plate-stage')!.getBoundingClientRect();
+        const subjects = (
+          JSON.parse(host.dataset.subjects!) as { id: string; box: number[] }[]
+        ).map((s) => ({
+          id: s.id,
+          l: stage.left + s.box[0] * stage.width,
+          t: stage.top + s.box[1] * stage.height,
+          r: stage.left + s.box[2] * stage.width,
+          b: stage.top + s.box[3] * stage.height,
+        }));
+        return {
+          slate: box(document.querySelector('.place-slate')!.getBoundingClientRect()),
+          menu: box(document.querySelector('.menu-toggle')!.getBoundingClientRect()),
+          subjects,
+          pos: (document.querySelector('.place-slate') as HTMLElement).dataset.pos ?? 'bottom',
+        };
+      });
+      type B = { l: number; t: number; r: number; b: number };
+      const meet = (a: B, b: B) => a.l < b.r && b.l < a.r && a.t < b.b && b.t < a.b;
+      expect(m.subjects.length).toBeGreaterThan(0);
+      for (const s of m.subjects) expect(meet(m.slate, s), `場記蓋到 ${s.id}`).toBe(false);
+      expect(meet(m.slate, m.menu), '場記碰到選單').toBe(false);
+      expect(m.slate.t).toBeGreaterThanOrEqual(0);
+      expect(m.slate.r).toBeLessThanOrEqual(w);
+      // 手機上 22:49 的主體在下三分之一：場記在左上，左緣 16px。
+      expect(m.pos).toBe('top');
+      expect(m.slate.l).toBeCloseTo(16, 0);
+    });

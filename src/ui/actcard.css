@@ -434,6 +434,14 @@
   animation: place-slate 2860ms linear both;
 }
 /* 地點和日子時刻色溫放在同一個框裡：窄螢幕放不下時整組換到第二行，第二行的左緣就是地點文字的左緣（不從黃短槓底下開始）。 */
+/* 左下會蓋到底圖主體（手、獎盃）時改放左上（ActCard.tsx PlaceBeat）：左緣 16px、上緣在安全區內，
+   寬度到「選單」左邊為止，不相交。內容和淡入、停、淡出都不變（設計師 v93 第二道關卡裁定二）。 */
+.place-slate[data-pos='top'] {
+  top: max(16px, env(safe-area-inset-top));
+  bottom: auto;
+  left: max(16px, env(safe-area-inset-left));
+  max-width: var(--ps-max, calc(100vw - 32px));
+}
 .place-slate .ps-text {
   display: flex;
   flex-wrap: nowrap;
