@@ -166,6 +166,7 @@ async function playToRachelLast(page: Page) {
   await next(page);
   await expect(page.getByText('此訊息已被收回')).toBeVisible();
   await next(page);
+  await next(page); // 冷開場最後一格
   await page.getByRole('button', { name: '跳過' }).click(); // 片頭
   await next(page); // 集名卡
 
