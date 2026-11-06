@@ -1152,6 +1152,9 @@ details summary {
   letter-spacing: 0.1em;
   /* 實心：半透明時底下的分頁字會透出來（體驗評測 v88）。 */
   background: var(--surface);
+  /* 選單鈕跨場景常駐：切進黑底鏡頭層（color-scheme 換成 dark）那一格就換成深色款，不用 button 通用的顏色過場淡過去
+     （否則黑底上先白 48ms 再淡 180ms：第二道關卡 e771fcf 第 6 項）。只留按下去的位移。 */
+  transition: transform var(--dur-rm) var(--ease);
 }
 @media (max-width: 1023px) {
   /*

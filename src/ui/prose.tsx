@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { fitLineUnits, nameUnits, proseUnits } from './lineUnits';
 import { endsBanned } from './plateBreaks';
 
@@ -22,9 +22,53 @@ export function prose(text: string, tail = true): ReactNode {
 }
 
 /** 黑底字卡的正文（fitLine 規則，lineUnits.ts 的 fitLineUnits）：每個單位包成不換行的 span。英文照常在空白斷。 */
-export function fitLine(text: string): ReactNode {
+export function fitLine(text: string, titles = true): ReactNode {
   if (!HAN.test(text)) return text;
-  return fitLineUnits(text).map((w, i) => ([...w].length > 1 && w.trim() ? kw(w, i) : w));
+  return fitLineUnits(text, titles).map((w, i) =>
+    [...w].length > 1 && w.trim() ? (
+      <span key={i} className={titles && /^[〈《]/.test(w) ? 'kw kw-title' : 'kw'}>
+        {w}
+      </span>
+    ) : (
+      w
+    ),
+  );
+}
+
+/**
+ * 黑底字卡的正文段落：fitLine，但篇名（〈給稽核部的說明_v3〉。）比正文欄還寬時不整段不拆，改在篇名裡的詞界斷
+ * （第二道關卡 e771fcf 第 1 項：窄手機 150% 整段 351px、欄只有 312px，頁面被撐寬）。
+ * 篇名整段的寬度用 em 記下來，換字級、換視窗寬度時拿來比，放得進就再整段不拆。
+ */
+export function FitLine({ text, className }: { text: string; className?: string }) {
+  const ref = useRef<HTMLParagraphElement>(null);
+  const [split, setSplit] = useState<string | null>(null);
+  const whole = useRef<{ text: string; em: number } | null>(null);
+  const isSplit = split === text;
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el || !HAN.test(text)) return;
+    const check = () => {
+      const cs = getComputedStyle(el);
+      const px = parseFloat(cs.fontSize) || 16;
+      const room = el.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+      const titles = [...el.querySelectorAll<HTMLElement>('.kw-title')];
+      if (titles.length)
+        whole.current = { text, em: Math.max(...titles.map((t) => t.offsetWidth)) / px };
+      const w = whole.current?.text === text ? whole.current.em * px : 0;
+      setSplit(w > room + 0.5 ? text : null);
+    };
+    check();
+    const ro = new ResizeObserver(check);
+    ro.observe(el);
+    void document.fonts?.ready.then(check);
+    return () => ro.disconnect();
+  }, [text, isSplit]);
+  return (
+    <p ref={ref} className={className}>
+      {fitLine(text, !isSplit)}
+    </p>
+  );
 }
 
 /**

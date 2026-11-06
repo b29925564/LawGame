@@ -17,6 +17,9 @@ export const PLATE_BREAKS: readonly string[] = [
   // ── 設計師 #296 字幕模式第二版（83b3c40）的斷點，照無襯線 500（Plex Sans）的實測字寬重排 ──
   // 最窄手機（360 加 150%、320 加 125／150%）：「of the sentencing courtroom」一行放不下，整句兩行也放不下。
   // 不在 the 後面勉強換行（行尾不留虛詞，設計師 v93 第二道關卡 #322 審查），改在 door 後面分張：「The side door」｜「of the sentencing courtroom」。
+  // 這一張在最窄手機也放不下一行，只能排成「of the sentencing ⏎ courtroom」：行尾不留虛詞就沒有別的排法
+  //（「of the ⏎ sentencing courtroom」行尾是 the）。設計師 #322 審查接受：第二行只剩一個名詞可以，不要再拆成四張。
+  // 第三張「leads ⏎ to the holding cells.」同理（「leads to ⏎ the…」「leads to the ⏎ holding…」行尾都是虛詞）。
   'The side door‖of the sentencing courtroom|leads/to the holding cells.',
   'Halfway down he stops|and looks back/at Lucas.',
   "And it has to stand|on the arguments/you've actually got.",

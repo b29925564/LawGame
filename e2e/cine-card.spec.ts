@@ -21,12 +21,16 @@ const CARDS: Card[] = [
 ];
 const CHOICES = { ep1: { 3: 0, 6: 1 }, ep2: { 4: 1 } };
 
-async function open(page: Page, card: Card, lang: 'zh' | 'en') {
+async function open(page: Page, card: Card, lang: 'zh' | 'en', scale = 1) {
   await page.goto('/');
   await page.evaluate(
-    ([card, lang, choices]) => {
+    ([card, lang, choices, scale]) => {
       localStorage.clear();
       localStorage.setItem('lawgame-lang', lang);
+      localStorage.setItem(
+        'lawgame-settings',
+        JSON.stringify({ state: { textScale: scale }, version: 1 }),
+      );
       localStorage.setItem(
         'lawgame-ep-auto',
         JSON.stringify({
@@ -46,7 +50,7 @@ async function open(page: Page, card: Card, lang: 'zh' | 'en') {
         }),
       );
     },
-    [card, lang, CHOICES[card.episode]] as const,
+    [card, lang, CHOICES[card.episode], scale] as const,
   );
   await page.reload();
   await page
@@ -168,3 +172,40 @@ for (const [label, w, h] of [
         .toBeGreaterThanOrEqual(3);
     }
   });
+
+/**
+ * 窄手機放大字級：字卡不能把頁面撐寬，每個字都在正文欄裡（第二道關卡 e771fcf 第 1 項：
+ * 「〈給稽核部的說明_v3〉。」整段不拆，360 中文 150% 寬 351px、欄只有 312px，頁面被撐到 376px）。
+ * 篇名放得進一行才整段不拆；放不進就在篇名裡的詞界斷。
+ */
+for (const w of [360, 320])
+  for (const scale of [1.25, 1.5])
+    for (const lang of ['zh', 'en'] as const)
+      test(`黑底字卡在窄手機放大字級不溢出（${w}・${scale * 100}%・${lang}）`, async ({
+        page,
+      }, info) => {
+        test.skip(info.project.name !== 'chromium', '自己設視窗大小，手機那一組跑就好');
+        await page.setViewportSize({ width: w, height: 740 });
+        for (const card of CARDS) {
+          await open(page, card, lang, scale);
+          const m = await page.evaluate(() => {
+            const el = document.querySelector('.cine .cine-text') as HTMLElement;
+            const box = el.getBoundingClientRect();
+            const r = document.createRange();
+            r.selectNodeContents(el);
+            let right = 0;
+            for (const x of r.getClientRects()) right = Math.max(right, x.right);
+            return {
+              text: el.textContent,
+              page: document.documentElement.scrollWidth,
+              view: document.documentElement.clientWidth,
+              over: right - box.right,
+              clip: el.scrollWidth - el.clientWidth,
+            };
+          });
+          const tag = `${card.episode} 第 ${card.step} 步「${m.text}」`;
+          expect.soft(m.page, `${tag} 頁面被撐寬`).toBeLessThanOrEqual(m.view);
+          expect.soft(m.over, `${tag} 字超出正文欄`).toBeLessThanOrEqual(1);
+          expect.soft(m.clip, `${tag} 正文欄內容比欄寬`).toBeLessThanOrEqual(1);
+        }
+      });

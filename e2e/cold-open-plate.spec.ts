@@ -78,7 +78,9 @@ for (const lang of ['zh', 'en'] as const)
     const card = page.locator('.scene.plated > .sub-card.narration');
     await expect(card).toBeVisible();
     await expect(plate).toHaveAttribute('data-state', 'ok');
-    await expect(card).toContainText(lang === 'zh' ? '沃斯倒在辦公桌旁的地毯上。' : 'Voss is on');
+    await expect(card).toContainText(
+      lang === 'zh' ? '沃斯倒在地毯上，就在辦公桌旁。' : 'Voss is on',
+    );
     const view = page.viewportSize()!;
     expect((await card.boundingBox())!.y / view.height).toBeGreaterThan(0.5);
     const next = page.locator('.scene.plated .sub-actions .primary');
@@ -292,7 +294,7 @@ for (const [w, h] of [
         // 拼回來是整段原文：沒有漏字。
         expect(cards.flat().join(lang === 'zh' ? '' : ' '), at).toBe(
           lang === 'zh'
-            ? '沃斯倒在辦公桌旁的地毯上。伊森跪下去摸他的脖子，摸不到脈搏。他站起來的時候，袖口沾了血，手裡多了一座水晶獎盃。'
+            ? '沃斯倒在地毯上，就在辦公桌旁。伊森跪下去摸他的脖子，摸不到脈搏。他站起來的時候，袖口沾了血，手裡多了一座水晶獎盃。'
             : 'Voss is on the carpet beside his desk. Ethan kneels and feels for a pulse at the neck. Nothing. When he stands, there is blood on his cuff and a crystal trophy in his hand.',
         );
         for (const rows of cards) {
@@ -309,6 +311,11 @@ for (const [w, h] of [
           } else {
             for (const r of rows.slice(1))
               expect(r, `${at} 行首`).not.toMatch(/^[，。、；：！？旁上下裡的了著過]/u);
+            // 行尾不留虛詞、代名詞（第二道關卡 e771fcf 第 3 項：「沃斯倒在｜辦公桌旁」）。
+            for (const r of rows.slice(0, -1))
+              expect(r, `${at} 行尾`).not.toMatch(
+                /[的之與和及或在於對把被為從到以而並是了著過沒不又也都就還再很我你他她它]$/u,
+              );
             expect(t, at).not.toMatch(/沾了 血|袖口沾 了/);
           }
         }
@@ -415,4 +422,67 @@ test('集名卡和定場上的選單鈕：淺色主題也是深色那一款', as
   };
   // 第 1 集第 1 場是集名卡（片頭卡）。
   expect(await look('light', 0, 1)).toEqual(await look('dark', 0, 1));
+});
+
+/**
+ * 淺色場景切進黑底鏡頭層（地點字卡、集名卡…）的那一格，選單鈕就是深色款，不先白一下再淡過去
+ * （第二道關卡 e771fcf 第 6 項：button 通用的顏色 transition 讓它停在淺色約 48ms、再花 180ms 淡成深色）。
+ * 在淺色的審前桌面上掛一層 .act-stage（和地點字卡同一個 class），逐格讀選單鈕的底色。
+ */
+test('淺色場景切進鏡頭層：第一格選單鈕就是深色款，不淡過去', async ({ page }) => {
+  await page.emulateMedia({ colorScheme: 'light' });
+  await page.goto('/');
+  await page.evaluate(() => {
+    localStorage.setItem(
+      'lawgame-ep-auto',
+      JSON.stringify({
+        version: 5,
+        savedAt: Date.now(),
+        label: 'x',
+        progress: {
+          episode: 'ep1',
+          scene: 9,
+          step: 0,
+          choices: {},
+          cards: [],
+          flags: [],
+          ethics: [],
+          scenes: {},
+        },
+      }),
+    );
+  });
+  await page.reload();
+  await page.getByRole('button', { name: /^繼續/ }).first().click();
+  const beat = page.locator('.place-beat');
+  await page.waitForTimeout(300);
+  if (await beat.count()) await beat.click({ timeout: 5000 }).catch(() => {});
+  await expect(page.locator('.taskbar')).toBeVisible();
+  await expect(beat).toHaveCount(0);
+  const menu = page.locator('.menu-toggle');
+  // 回到淺色、選單鈕淡完。
+  await expect.poll(() => menu.evaluate((e) => getComputedStyle(e).colorScheme)).not.toBe('dark');
+  await page.waitForTimeout(600);
+  const light = await menu.evaluate((e) => getComputedStyle(e).backgroundColor);
+  const frames = await menu.evaluate(
+    (e) =>
+      new Promise<string[]>((done) => {
+        const layer = document.createElement('div');
+        layer.className = 'act-stage';
+        document.body.appendChild(layer);
+        const out: string[] = [];
+        const tick = () => {
+          out.push(getComputedStyle(e).backgroundColor);
+          if (out.length < 20) requestAnimationFrame(tick);
+          else {
+            layer.remove();
+            done(out);
+          }
+        };
+        tick();
+      }),
+  );
+  const dark = frames[frames.length - 1];
+  expect(dark, '鏡頭層上選單鈕應該換成深色款').not.toBe(light);
+  expect(frames, `每一格：${frames.join(' → ')}`).toEqual(frames.map(() => dark));
 });
