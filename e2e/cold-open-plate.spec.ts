@@ -1,4 +1,5 @@
 /// <reference lib="dom" />
+import { readFileSync } from 'node:fs';
 import { expect, test, type Page } from '@playwright/test';
 
 /**
@@ -486,3 +487,73 @@ test('淺色場景切進鏡頭層：第一格選單鈕就是深色款，不淡�
   expect(dark, '鏡頭層上選單鈕應該換成深色款').not.toBe(light);
   expect(frames, `每一格：${frames.join(' → ')}`).toEqual(frames.map(() => dark));
 });
+
+/** 門縫光的方框（桌機那張圖；這裡的尺寸都是桌機版）：直接讀 plates.json，舊版沒有這個欄位也照樣量。 */
+const DOOR = (
+  JSON.parse(readFileSync(new URL('../src/ui/plates/plates.json', import.meta.url), 'utf8')) as {
+    plates: { id: string; clear: { desktop: { box: number[] }[] } }[];
+  }
+).plates.find((p) => p.id === '31f-2249')!.clear.desktop;
+
+/**
+ * 22:49 的門縫光（plates.json clear）：主體先不蓋，再挑蓋門縫光最少的位置（設計師 e771fcf 舊問題裁定 2：≤5%）。
+ * 桌機和手機橫向都做得到 0；直放手機門縫光從頂端一路到 0.68H、獎盃上緣在 0.73H，字幕卡一定橫過門縫，這裡不驗（等設計師裁定）。
+ */
+for (const [w, h] of [
+  [1920, 1080],
+  [1530, 860],
+  [1440, 900],
+  [1366, 768],
+  [1100, 700],
+  [844, 390],
+] as const)
+  test(`22:49 字幕和按鈕不蓋門縫光（≤5%），也不蓋主體：${w}×${h}，中英，字級 100／125／150%`, async ({
+    page,
+  }, info) => {
+    test.skip(info.project.name !== 'desktop', '自己設視窗大小，桌機那一組跑就好');
+    await page.setViewportSize({ width: w, height: h });
+    for (const lang of ['zh', 'en'] as const)
+      for (const scale of [1, 1.25, 1.5]) {
+        await open(page, STEP_2249, lang, scale);
+        await page.locator('.place-beat').click();
+        const card = page.locator('.cold-plated > .sub-card');
+        await expect(card).toBeVisible();
+        await page.evaluate(() => document.fonts.ready);
+        const next = page.locator('.cold-plated .sub-actions .primary');
+        for (let i = 0; i < 8 && (await card.count()); i++) {
+          const text = (await card.innerText()).trim();
+          const at = `${lang} ${scale * 100}% 第${i + 1}張「${text}」`;
+          for (const r of await hidden(page))
+            expect(r.hidden, `${at} ${r.id} 看不到的比例`).toBeLessThanOrEqual(r.cover + 0.001);
+          const lit = await page.evaluate((boxes) => {
+            type Box = { l: number; t: number; r: number; b: number };
+            const ov = (a: Box, b: Box) =>
+              Math.max(0, Math.min(a.r, b.r) - Math.max(a.l, b.l)) *
+              Math.max(0, Math.min(a.b, b.b) - Math.max(a.t, b.t));
+            const st = document.querySelector('.plate-host .plate-stage')!.getBoundingClientRect();
+            const ui = [
+              ...document.querySelectorAll('.cold-plated > .sub-card, .cold-plated > .sub-actions'),
+            ]
+              .map((e) => e.getBoundingClientRect())
+              .filter((r) => r.width && r.height)
+              .map((r) => ({ l: r.left, t: r.top, r: r.right, b: r.bottom }));
+            return Math.max(
+              ...boxes.map(({ box }) => {
+                const d = {
+                  l: st.left + box[0] * st.width,
+                  t: st.top + box[1] * st.height,
+                  r: st.left + box[2] * st.width,
+                  b: st.top + box[3] * st.height,
+                };
+                return ui.reduce((n, u) => n + ov(d, u), 0) / ((d.r - d.l) * (d.b - d.t));
+              }),
+            );
+          }, DOOR);
+          expect(lit, `${at} 門縫光被蓋掉的比例`).toBeLessThanOrEqual(0.05);
+          await next.click();
+          await expect
+            .poll(async () => ((await card.count()) ? (await card.innerText()).trim() : ''))
+            .not.toBe(text);
+        }
+      }
+  });

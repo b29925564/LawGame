@@ -735,6 +735,17 @@ details summary {
 .scene.plated.subs.cold-plated[data-avoid='above'] {
   padding-bottom: var(--avoid-pad);
 }
+/* 抬到主體上面以後，再讓開圖上的亮處（門縫光）：整組只用亮處右邊或左邊那一段寬度。 */
+.scene.plated.subs.cold-plated[data-avoid='above'][data-shift] {
+  max-width: none;
+}
+.scene.plated.subs.cold-plated[data-avoid='above'][data-shift] > .sub-card,
+.scene.plated.subs.cold-plated[data-avoid='above'][data-shift] > .sub-actions {
+  align-self: flex-start;
+  margin-left: var(--avoid-left);
+  width: min(760px, var(--avoid-width));
+  min-width: 0;
+}
 @media (max-height: 520px) and (orientation: landscape) and (min-width: 640px) {
   .scene.plated.subs.cold-plated[data-avoid='side'] > .sub-card {
     margin-left: var(--avoid-left);
