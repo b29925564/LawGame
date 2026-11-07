@@ -434,7 +434,7 @@ async function ink(page: Page, clip: { x: number; y: number; width: number; heig
   }, png);
 }
 
-test('0:00 紙三拍（設定集 11.1）：空白頁 → 行號（每 83ms 兩行）→ 全文整頁淡入；第 11 行停留 ≥2.5 秒才被黑條蓋', async ({
+test('0:00 紙三拍（設定集 11.1）：空白頁 → 行號（一拍二，每 83ms 一行）→ 全文整頁淡入；第 11 行停留 ≥2.5 秒才被黑條蓋', async ({
   page,
 }) => {
   await page.emulateMedia({ reducedMotion: 'no-preference' });
@@ -446,12 +446,22 @@ test('0:00 紙三拍（設定集 11.1）：空白頁 → 行號（每 83ms 兩�
       .evaluateAll((r) =>
         r.map((x) => Math.round(parseFloat(getComputedStyle(x).animationDelay) * 1000)),
       );
-    expect(on).toEqual(Array.from({ length: 28 }, (_, n) => 400 + Math.floor(n / 2) * 83));
+    // 一拍二：底圖裡看得到的行號由上往下每 83ms 一行（設計師 11-07 更正）；出框的行跟著最近的那一行。
+    const cam = page.viewportSize()!.width <= 767 ? 'phone' : 'desktop';
+    const { size, rows } = PAPER[cam];
+    const seen = rows.map((r) => {
+      const q = r.number!;
+      const [x, y] = [(q[0][0] + q[2][0]) / 2, (q[0][1] + q[2][1]) / 2];
+      return x > 0 && x < size[0] && y > 0 && y < size[1];
+    });
+    const shown = on.filter((_, n) => seen[n]);
+    expect(shown.length).toBeGreaterThanOrEqual(12);
+    expect(shown).toEqual(shown.map((_, i) => 400 + i * 83));
     const [fullOn, fullFade] = await page.locator('.ti-full').evaluate((e) => {
       const cs = getComputedStyle(e);
       return [parseFloat(cs.animationDelay) * 1000, parseFloat(cs.animationDuration) * 1000];
     });
-    expect(fullOn).toBeGreaterThanOrEqual(Math.max(...on) + 83);
+    expect(fullOn).toBe(Math.max(...on) + 83);
     expect(fullFade).toBeGreaterThanOrEqual(300);
     expect(fullFade).toBeLessThanOrEqual(400);
     const bar11 = await page
@@ -470,8 +480,9 @@ test('0:00 紙三拍（設定集 11.1）：空白頁 → 行號（每 83ms 兩�
     const r = row11(page.viewportSize()!, lang);
     await at(200);
     const blank = { number: await ink(page, r.number), text: await ink(page, r.text) };
-    // 第 2 拍中段：行號亮完一半多（第 11 行已亮），還沒有字。
-    await at(1000);
+    // 第 2 拍中段：第 11 行的行號已亮，還沒有字。
+    const on11 = on[10];
+    await at(Math.round((on11 + fullOn) / 2));
     const mid = { number: await ink(page, r.number), text: await ink(page, r.text) };
     await at(fullOn + fullFade + 100);
     const after = { number: await ink(page, r.number), text: await ink(page, r.text) };

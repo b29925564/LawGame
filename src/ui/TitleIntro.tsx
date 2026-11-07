@@ -218,11 +218,13 @@ const PHONE = '(max-width: 767px)';
 
 /**
  * 設定集 11.1 的三拍（設計師 11-07 審 #332）：空白頁 → 行號 → 字。
- * - 第 n 行（0 起）的行號亮起的時間：0.4 秒起，每 2 格（83ms）亮兩行。
- * - 行號全部亮完，全文整頁一起淡入（不逐行）。第 11 行從淡入完到 5 秒的黑條，完整停留 3 秒以上（設計師要 ≥2.5 秒）。
+ * - 行號 0.4 秒起一拍二（24 格／秒，每 2 格＝83ms 亮一行），由上往下，只算底圖裡看得到的行號
+ *   （桌機 12 行、手機 17 行）；底圖外的行號跟著最近的那一行。
+ * - 行號全部亮完，全文整頁一起淡入（不逐行）：桌機約 1.75 秒、手機約 2.2 秒淡入完，
+ *   第 11 行到 5 秒的黑條還完整停留 2.8 秒以上（設計師要 ≥2.5 秒）。
  */
-const rowOn = (n: number) => 400 + Math.floor(n / 2) * 83;
-export const FULL_ON = 1600;
+const NUM_START = 400;
+const BEAT = 83;
 export const FULL_FADE = 350;
 /** 對焦在第 11 行。離得越遠越糊：在全文底圖上量，每隔一行約多 4.5 px 的高斯（底圖像素）。 */
 const dof = (n: number) => Math.min(4.5 * Math.abs(n - 10), 36);
@@ -271,6 +273,16 @@ function paperLayout(cam: Cam, lang: 'zh' | 'en') {
       onImage: !!text && (text[0][1] + text[2][1]) / 2 > 0 && (text[0][1] + text[2][1]) / 2 < H,
     };
   });
+  // 行號：底圖裡看得到的行，由上往下每 83ms 一行；上面出框的跟第一行一起，下面出框的跟最後一行一起。
+  const mid = (q: Quad) => [(q[0][0] + q[2][0]) / 2, (q[0][1] + q[2][1]) / 2];
+  const seen = cam.rows.map((r) => {
+    const [x, y] = mid(r.number);
+    return x > 0 && x < W && y > 0 && y < H;
+  });
+  const first = seen.indexOf(true);
+  const shown = seen.filter(Boolean).length;
+  const on = cam.rows.map((_, n) => NUM_START + Math.min(Math.max(n - first, 0), shown - 1) * BEAT);
+  const fullOn = NUM_START + shown * BEAT;
   // 黑條只蓋畫面裡有字的行。第一條蓋第 11 行，其餘跳著蓋。
   const barred = rows.filter((r) => r.onImage).map((r) => r.n);
   const rest = barred.filter((n) => n !== 10).sort((a, b) => ((a * 11) % 28) - ((b * 11) % 28));
@@ -288,12 +300,12 @@ function paperLayout(cam: Cam, lang: 'zh' | 'en') {
   ];
   // 紅邊線往下畫：第 n 行亮起的那一格，畫到第 n 行行號的底。
   const bottom = (n: number) => Math.max(cam.rows[n].number[2][1], cam.rows[n].number[3][1]);
-  const first = cam.rows[0].number[0][1] - (cam.rows[1].number[0][1] - cam.rows[0].number[0][1]);
-  const dur = rowOn(cam.rows.length);
+  const top = cam.rows[first].number[0][1] - (bottom(first) - cam.rows[first].number[0][1]);
+  const dur = fullOn;
   const stops: [number, number][] = [
-    [0, first],
-    ...cam.rows.map((_, n) => [rowOn(n), bottom(n)] as [number, number]),
-    [dur, bottom(cam.rows.length - 1) + H],
+    [0, top],
+    ...cam.rows.flatMap((_, n) => (seen[n] ? [[on[n], bottom(n)] as [number, number]] : [])),
+    [dur, 2 * H],
   ];
   const wipe = stops
     .map(([t, y]) => `${((t / dur) * 100).toFixed(2)}%{transform:translateY(${y.toFixed(1)}px)}`)
@@ -305,6 +317,8 @@ function paperLayout(cam: Cam, lang: 'zh' | 'en') {
     rows,
     order,
     band,
+    on,
+    fullOn,
     wipe: { css: wipe, dur, x: Math.min(...band.map((p) => p[0])) - 20 },
     origin: [(origin[0][0] + origin[2][0]) / 2, (origin[0][1] + origin[2][1]) / 2] as Pt,
   };
@@ -401,7 +415,7 @@ function Paper() {
                     key={r.n}
                     className="ti-prow"
                     data-row={r.n + 1}
-                    style={{ '--on': `${rowOn(r.n)}ms` } as CSSProperties}
+                    style={{ '--on': `${L.on[r.n]}ms` } as CSSProperties}
                     points={pts(r.number)}
                     fill="#fff"
                   />
@@ -465,7 +479,7 @@ function Paper() {
               height={L.H}
               mask={`url(#${id}r)`}
               style={
-                { '--full-on': `${FULL_ON}ms`, '--full-fade': `${FULL_FADE}ms` } as CSSProperties
+                { '--full-on': `${L.fullOn}ms`, '--full-fade': `${FULL_FADE}ms` } as CSSProperties
               }
             />
             <image
