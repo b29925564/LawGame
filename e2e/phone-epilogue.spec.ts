@@ -5,6 +5,7 @@ import { expect, test, type Page } from '@playwright/test';
 /**
  * 設計師 #328 審查：
  * 1. 第 2 集尾聲的手機戲是黑底的鏡頭層，淺色主題下每一步的選單鈕都是深色款（原本只有幕卡那一步是，手機那幾步換回白底亮鈕）。
+ *    第一步的黑底字卡（main.cine）也是（第二道關卡 72a9003 第 1 項）。
  * 2. 手機對話出現選項時，對話捲到最底，最後一個泡泡整個看得到
  *    （第 2 集派單 320 寬 150%：「You have been online for 10 hours…」只露出前兩行，下緣被選項區切掉）。
  */
@@ -53,6 +54,14 @@ for (const lang of ['zh', 'en'])
     await page.emulateMedia({ colorScheme: 'light' });
     for (let step = 0; step <= 6; step++) {
       await open(page, { ...seeds.ep2, scene: 30, step }, lang);
+      // 讀檔進場先放場記那一格（深色）；點掉以後才是這一步本身。第 0 步就是黑底字卡「23:40 港灣大道一號……」
+      // （第二道關卡 72a9003 第 1 項：原本停在場記那一格就量，字卡的淺色鈕沒量到）。
+      const beat = page.locator('.place-beat');
+      if (await beat.count()) {
+        await beat.click();
+        await expect(beat).toHaveCount(0);
+      }
+      if (step === 0) await expect(page.locator('main.cine .cine-text')).toBeVisible();
       const btn = await page.locator('.menu-toggle').evaluate((e) => {
         const cs = getComputedStyle(e);
         return { bg: cs.backgroundColor, fg: cs.color };

@@ -516,6 +516,17 @@
   order: 1;
   flex: none;
 }
+/* 只剩房間也放不下一行時（ActCard.tsx PlaceSlate 加 .wrap）：房間在詞界換行，場記長高，不把字切掉（不出框第一）。 */
+.place-slate .ps-where.wrap {
+  height: auto;
+}
+.place-slate .ps-where.wrap .ps-room {
+  flex: 0 1 auto;
+  min-width: 0;
+  white-space: normal;
+  /* 兩行排得一樣長，不留一個字的第二行（"…mediation ⏎ room"）。 */
+  text-wrap: balance;
+}
 /* 拿掉場所名之後不佔寬度（讀屏照樣讀得到）：地點和日子的距離和有場所名時一樣（設計師 PR #309 複審 3）。 */
 .place-slate .ps-where.short .ps-lead {
   position: absolute;

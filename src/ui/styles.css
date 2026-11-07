@@ -152,8 +152,9 @@
    :root 的 light-dark() 權杖在根就算好了，只改這裡的 color-scheme 不夠：選單鈕用到的權杖照深色那一邊釘住。
    只釘按鈕本身：打開的選單面板照主題（第二道關卡 a26de2b 第 1 項：釘在 .game-menu 上，面板變深色、
    「選項」頁的標籤卻還是淺色主題的深字，對比 1.05:1）。 */
-/* 尾聲的手機戲（.phone-stage，不帶 .cold-scope）也一樣：黑底的鏡頭層上，選單鈕用深色款（設計師 #328 審查 1）。 */
+/* 尾聲的手機戲（.phone-stage）和黑底字卡（main.cine），都不帶 .cold-scope，也一樣：黑底的鏡頭層上，選單鈕用深色款（設計師 #328 審查 1、第二道關卡 72a9003 第 1 項）。 */
 :root:has(.call-screen) .menu-toggle,
+:root:has(main.cine) .menu-toggle,
 :root:has(.phone-stage) .menu-toggle {
   color-scheme: dark;
   --bg: #0b0e13;

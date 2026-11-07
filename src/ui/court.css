@@ -916,7 +916,8 @@ details.earlier[open] > .lines {
 button.cand {
   width: 100%;
   display: grid;
-  grid-template-columns: 22px 40px minmax(0, 1fr) auto;
+  /* 號碼欄至少 22px，大字級時跟著 .no 的兩位數寬度長（第二道關卡 72a9003 第 3 項：150% 的「12」出框 3.6px）。 */
+  grid-template-columns: minmax(22px, auto) 40px minmax(0, 1fr) auto;
   column-gap: var(--s3);
   align-items: center;
   min-height: 64px;
@@ -936,6 +937,8 @@ button.cand {
   }
 }
 .cand .no {
+  /* 每一列都留兩位數的寬（等寬字），1 到 12 號的頭像對齊在同一條線上。 */
+  min-width: 2ch;
   font: 600 var(--fs-ui-label) / 1 var(--font-mono);
   color: var(--muted);
   text-align: right;
@@ -1381,7 +1384,7 @@ button.cand[aria-pressed='true'],
 }
 @media (max-width: 520px) {
   button.cand {
-    grid-template-columns: 18px 40px minmax(0, 1fr) auto;
+    grid-template-columns: minmax(18px, auto) 40px minmax(0, 1fr) auto;
     column-gap: 10px;
     padding-inline: 9px 12px;
   }
