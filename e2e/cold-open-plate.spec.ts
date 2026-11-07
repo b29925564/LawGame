@@ -649,8 +649,8 @@ for (const lang of ['zh', 'en'] as const)
       seen.push((await card.innerText()).trim());
       await next.click();
     }
-    // 一句一張：中文兩句兩張；英文第二句在兩行裡放不下，照手標斷點（plateBreaks.ts）在 scrolls up, 後面再分一張。
-    expect(seen.length).toBe(lang === 'zh' ? 2 : 3);
+    // 一句一張：中英都是兩句兩張（設計師 #330 審查 3：英文第二句兩行放得下，不拆）。
+    expect(seen.length).toBe(2);
     // 收回：回到手機，底圖收掉。
     await expect(
       page.getByText(lang === 'zh' ? '此訊息已被收回' : 'This message was unsent'),
@@ -675,6 +675,74 @@ for (const lang of ['zh', 'en'] as const)
       .poll(() => top.evaluate((e) => Number(getComputedStyle(e).opacity)), { timeout: 6000 })
       .toBe(1);
   });
+
+/** 只留底圖層（字幕、按鈕、選單、場記都藏起來）的整頁平均亮度（0–255）：截圖交給瀏覽器解碼再算。 */
+async function plateLuma(page: Page) {
+  const png = (await page.screenshot({ scale: 'css' })).toString('base64');
+  return page.evaluate(async (b64) => {
+    const img = new Image();
+    img.src = `data:image/png;base64,${b64}`;
+    await img.decode();
+    const c = document.createElement('canvas');
+    c.width = img.width;
+    c.height = img.height;
+    const g = c.getContext('2d')!;
+    g.drawImage(img, 0, 0);
+    const d = g.getImageData(0, 0, c.width, c.height).data;
+    let s = 0;
+    for (let i = 0; i < d.length; i += 4) s += 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+    return s / (d.length / 4);
+  }, png);
+}
+const onlyPlate = (page: Page) =>
+  page.addStyleTag({
+    content:
+      '* { visibility: hidden !important; } .plate-host, .plate-host * { visibility: visible !important; }',
+  });
+
+test('23:14 a → b 淡入中間不先暗下去：每一格的亮度都在 a、b 之間', async ({ page }) => {
+  // a：第一格（定場點掉、字幕出來、圖亮好）。
+  await open(page, STEP_2314);
+  await page.locator('.place-beat').click();
+  await expect(page.locator('.plate-host .plate-stage')).toHaveCSS('opacity', '1');
+  await onlyPlate(page);
+  const a = await plateLuma(page);
+  // 淡入那一格：a 在下面硬切回來，b 疊在上面從 0 淡到 1（設計師 #330 審查 1：中段量到手機 24、桌機 15，比 a、b 都暗一半）。
+  await open(page, STEP_2314_BUS);
+  await onlyPlate(page);
+  const plates = page.locator('.plate-host .scene-plate');
+  await expect(plates).toHaveCount(2);
+  await expect(plates.nth(0)).toHaveAttribute('data-state', 'ok');
+  const top = plates.nth(1).locator('.plate-stage');
+  // 淡入是 CSS transition：抓到它就停住，逐點拉到 0、¼、½、¾ 量（不靠截圖的速度追 3 秒）。
+  await expect
+    .poll(() => top.evaluate((e) => e.getAnimations().length), { timeout: 3000 })
+    .toBeGreaterThan(0);
+  const mid: { o: number; y: number }[] = [];
+  for (const f of [0, 0.25, 0.5, 0.75, 1]) {
+    const o = await top.evaluate((e, f) => {
+      for (const an of e.getAnimations()) {
+        an.pause();
+        const d = Number(an.effect?.getComputedTiming().duration ?? 0);
+        an.currentTime = f * d;
+      }
+      return Number(getComputedStyle(e).opacity);
+    }, f);
+    mid.push({ o, y: await plateLuma(page) });
+  }
+  expect(mid[2].o).toBeCloseTo(0.5, 1);
+  await top.evaluate((e) => e.getAnimations().forEach((an) => an.finish()));
+  await expect(top).toHaveCSS('opacity', '1');
+  const b = await plateLuma(page);
+  const lo = Math.min(a, b) - 1;
+  const hi = Math.max(a, b) + 1;
+  for (const m of mid)
+    expect(
+      m.y,
+      `淡入 ${m.o.toFixed(2)}：a ${a.toFixed(1)}、b ${b.toFixed(1)}`,
+    ).toBeGreaterThanOrEqual(lo);
+  for (const m of mid) expect(m.y).toBeLessThanOrEqual(hi);
+});
 
 test('23:14 公車開走：減少動態時不淡入，直接是 b 版', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
@@ -712,18 +780,24 @@ for (const [w, h] of SIZES)
               )
               .toBe(true);
           const next = page.locator('.cold-plated .sub-actions .primary');
+          // 一個鏡頭只有一個字幕位置（設計師 #330 審查 2）：每張卡的左右緣、下緣都一樣。
+          const spots = new Set<string>();
           for (let i = 0; i < 6 && (await card.count()); i++) {
             const text = (await card.innerText()).trim();
+            const bx = (await card.boundingBox())!;
+            spots.add(
+              `${Math.round(bx.x)}–${Math.round(bx.x + bx.width)}／${Math.round(bx.y + bx.height)}`,
+            );
             for (const r of await hidden(page))
               expect(
                 r.hidden,
                 `${lang} ${scale} 第${i + 1}張「${text}」${r.id} 看不到的比例`,
               ).toBeLessThanOrEqual(r.cover + 0.001);
-            if (step === STEP_2314_BUS) break;
             await next.click();
             await expect
               .poll(async () => ((await card.count()) ? (await card.innerText()).trim() : ''))
               .not.toBe(text);
           }
+          expect([...spots], `${lang} ${scale} step ${step}`).toHaveLength(1);
         }
   });

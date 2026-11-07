@@ -293,11 +293,14 @@ export function ScenePlate({
   shown,
   dim,
   fade,
+  from,
 }: {
   shown: Shown;
   dim?: boolean;
   /** 疊在另一張上面慢慢淡入（交叉淡化）。 */
   fade?: boolean;
+  /** 交叉淡化的起點：硬切出來、不淡入。 */
+  from?: boolean;
 }) {
   const { plate, url, state: warm, phone } = shown;
   // 畫面上這幾張 <img> 自己解碼完才亮：warmPlate 解碼的是另一個 Image 物件，這邊的元件掛上去時還沒畫，
@@ -329,6 +332,7 @@ export function ScenePlate({
       data-state={state}
       data-dim={dim ? '' : undefined}
       data-fade={fade ? '' : undefined}
+      data-from={from ? '' : undefined}
       data-subjects={plate.subjects ? JSON.stringify(plate.subjects[variant]) : undefined}
       data-clear={plate.clear ? JSON.stringify(plate.clear[variant]) : undefined}
       aria-hidden
@@ -461,7 +465,7 @@ export function PlateHost() {
   return (
     <div className="plate-host" data-over={layer.over}>
       {layer.from && (
-        <ScenePlate key={`from:${layer.from.url}`} shown={layer.from} dim={layer.dim} />
+        <ScenePlate key={`from:${layer.from.url}`} shown={layer.from} dim={layer.dim} from />
       )}
       <ScenePlate key={layer.shown.url} shown={layer.shown} dim={layer.dim} fade={!!layer.from} />
     </div>

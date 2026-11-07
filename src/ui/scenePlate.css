@@ -69,12 +69,21 @@
     transition: opacity 0.35s var(--ease-light, ease-out);
   }
 }
-/* 交叉淡化（23:14 的「漸暗」：手機光 a → 55% 的 b）：下面那張照常亮著，上面這張用 --dur-dim 慢慢淡入。
+/* 交叉淡化（23:14 的「漸暗」：手機光 a → 55% 的 b）：下面那張（data-from）收回之後硬切回來、一直不透明，
+   上面這張用 --dur-dim 從 0 淡到 1，中間每一格的亮度都在 a、b 之間（設計師 #330 審查 1：不先暗下去）。
+   上面這層自己不鋪黑底（不然一開始就把 a 蓋成黑的，淡入中段只剩 b 的一半亮）；a 還沒解碼完之前 b 也不開始淡。
    減少動態時程式不給起點，直接是 b。 */
 .plate-host > .scene-plate[data-fade] {
   z-index: 1;
+  background: transparent;
+}
+.plate-host > .scene-plate:not([data-state='ok']) + .scene-plate[data-fade] .plate-stage {
+  opacity: 0;
 }
 @media (prefers-reduced-motion: no-preference) {
+  .scene-plate[data-from] .plate-stage {
+    transition: none;
+  }
   .scene-plate[data-fade] .plate-stage {
     transition: opacity var(--dur-dim, 3s) linear;
   }

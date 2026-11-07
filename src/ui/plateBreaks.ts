@@ -33,7 +33,8 @@ export const PLATE_BREAKS: readonly string[] = [
   'Ethan kneels and feels for a pulse¦at the neck. Nothing.',
   'When he stands,‖there is blood on his cuff¦and a crystal trophy in his hand.',
   // ── 冷開場 23:14（港邊公車亭）──
-  "He opens the chat¦and scrolls up,|looking/for Voss's message.",
+  // 一整句：桌機一行、手機兩行就放得下，不分張（設計師 #330 審查 3：一句一張）；只有真的超過兩行才在 ¦ 分。
+  "He opens the chat¦and scrolls up,¦looking/for Voss's message.",
 ];
 
 /**
