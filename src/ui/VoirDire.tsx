@@ -13,7 +13,7 @@ import { Speech } from './Portrait';
 import { Shell, Tabs } from './Shell';
 import { CourtCast } from './jury/CourtFace';
 import { Recap } from './ActCard';
-import { fitLine } from './prose';
+import { FitLine, fitLine } from './prose';
 
 type Filter = 'all' | 'seated' | 'unasked';
 
@@ -38,6 +38,16 @@ function useMedia(q: string) {
  * 額度釘在上面、決定按鈕釘在下面。
  */
 /** 法庭畫面：說話者頭像是剪影替身（P4-2）。 */
+/** 譯名的每一段（「葛蘿莉亞・」「桑契斯」）各是一個不拆的單位，放不下時斷在「・」後面；英文照 fitLine。 */
+const nameUnits = (name: string) =>
+  name.includes('・')
+    ? name.split(/(?<=・)/).map((p, i) => (
+        <span key={i} className="fl">
+          {p}
+        </span>
+      ))
+    : fitLine(name);
+
 export function VoirDire({ scene }: { scene: VoirDireScene }) {
   return (
     <CourtCast>
@@ -166,10 +176,12 @@ function VoirDireScreen({ scene }: { scene: VoirDireScene }) {
                 <IdPhoto who={c.name} size={40} look={lookOf(episode, c.id)} />
                 <span className="txt">
                   <strong>
-                    {t(c.name, scope)}
-                    <span>{t(c.job, scope)}</span>
+                    {/* 名字放不下時斷在「・」（「茱蒂絲・柯｜恩」不行）。 */}
+                    {nameUnits(t(c.name, scope))}
+                    <FitLine as="span" strictShort className="job" text={t(c.job, scope)} />
                   </strong>
-                  <span className="line">{t(c.sheet, scope)}</span>
+                  {/* 介紹和黑底字卡一樣排行：詞不拆、每一行至少 3 個字、量詞不留在行尾（設計師 關卡 72a9003：「安全檢｜查。」）。 */}
+                  <FitLine as="span" strictShort className="line" text={t(c.sheet, scope)} />
                 </span>
                 <span className="st">
                   {by ? (
@@ -197,9 +209,7 @@ function VoirDireScreen({ scene }: { scene: VoirDireScene }) {
       <div>
         <h3>{t(picked.name, scope)}</h3>
         <p className="sub">
-          {t(picked.job, scope)}
-          {t('・')}
-          {t(picked.sheet, scope)}
+          {fitLine(`${t(picked.job, scope)}${t('・')}${t(picked.sheet, scope)}`)}
         </p>
         {/* 剩幾題、剩幾次只寫在頂列和按鈕上；人物卡只在人已經不在名單上時說明（設計師 關卡 2 第 18 條）。 */}
         {goneBy(picked.id) && <p className="sub">{goneBy(picked.id)}</p>}

@@ -15,6 +15,7 @@ import { claimHand } from './hand';
 import { rigOf } from './rigs';
 import { subjectRects, usePlate, useScenePlate, useShown } from './scenePlate';
 import { useCaseTerms } from './terms';
+import { fitUnits } from './fitUnits';
 import './actcard.css';
 
 export type Headline = { kicker: string; title: string; day?: string };
@@ -437,12 +438,18 @@ export function PlaceSlate({
   const [short, setShort] = useState(false);
   useLayoutEffect(() => {
     const el = whereRef.current;
-    if (!el || !lead) return;
+    if (!el) return;
     const fit = () => {
       // 先放回整段量：放得下就留著；量完把 class 放回去（狀態沒變時 React 不會重畫這個屬性）。
-      el.classList.remove('short');
-      const over = el.scrollHeight > el.clientHeight + 1;
+      el.classList.remove('short', 'wrap');
+      const over = !!lead && el.scrollHeight > el.clientHeight + 1;
       el.classList.toggle('short', over);
+      // 只剩房間也放不下一行（320 寬、大字級的英文 "hallway outside the mediation room"）：
+      // 不出框第一，房間在詞界換行（fitLine 的單位照樣不拆），場記長成兩行（第二道關卡 72a9003 第 2 項）。
+      const room = el.querySelector<HTMLElement>('.ps-room');
+      const wide = !!room && room.scrollWidth > el.clientWidth + 0.5;
+      el.classList.toggle('wrap', wide);
+      if (wide) fitUnits(el);
       setShort(over);
     };
     fit();
@@ -472,7 +479,7 @@ export function PlaceSlate({
       <span className="ps-text">
         <span ref={whereRef} className={short ? 'ps-where short' : 'ps-where'}>
           {lead && <span className="ps-lead">{lead}</span>}
-          <span className="ps-room">{room}</span>
+          <span className="ps-room">{fitLine(room)}</span>
         </span>
         {right && (
           <span className="ps-when">

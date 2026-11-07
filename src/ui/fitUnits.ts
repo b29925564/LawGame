@@ -12,6 +12,8 @@
  * 單位的字超出它所在的框，或再往外兩層的框（到絕對定位、可以捲動的框為止），就加 .fl-wrap；重排以後再看一次，
  * 直到沒有單位出框。內層的詞只有在外層已經拆開時才看。
  */
+import { clearMenu } from './menuClear';
+
 const ROOM_SLACK = 0.5;
 const LEVELS = 3;
 const ROUNDS = 6;
@@ -60,7 +62,8 @@ export function fitUnits(root: ParentNode = document) {
 /** 整個畫面：字換了、視窗或框的大小變了、字型載入了、字級換了，就重排一次。 */
 export function watchUnits() {
   const run = () => {
-    fitUnits();
+    // 排不拆單位，再量選單鈕四周（換行會改變頂列的高；讓位以後那一列再排一次）。
+    clearMenu(fitUnits);
     for (const e of document.querySelectorAll<HTMLElement>('.fl')) {
       const b = flowOf(e);
       if (b && !seen.has(b)) {
@@ -75,7 +78,7 @@ export function watchUnits() {
   const touches = (n: Node | null) =>
     !!n &&
     (n instanceof Element
-      ? n.matches('.fl') || !!n.querySelector('.fl') || !!n.closest('.fl')
+      ? n.matches('.fl, .place-tbd') || !!n.querySelector('.fl, .place-tbd') || !!n.closest('.fl')
       : !!n.parentElement?.closest('.fl'));
   // 換字是在 React 寫進畫面之後、瀏覽器畫出來之前（微任務），不會先閃一格擠出框的字。
   const mo = new MutationObserver((ms) => {

@@ -152,3 +152,81 @@ for (const [ep, scene] of [
     }
     expect(lines).toBeGreaterThanOrEqual(2);
   });
+
+// 第二道關卡 72a9003 第 2 項：320 寬英文 125／150%，第 2 集第 22 場的房間 "hallway outside the mediation room" 只剩房間也放不下一行，
+// 被裁成 "…mediation roo"。不出框第一：房間在詞界換行，每一行的字都在場記框裡。
+for (const w of [320, 360])
+  for (const lang of ['en', 'zh-TW'])
+    for (const scale of [1.25, 1.5])
+      test(`地點字卡：房間放不下一行時換行，不被裁掉（ep2-22・${w}・${lang}・${scale * 100}%）`, async ({
+        page,
+      }, info) => {
+        test.skip(info.project.name !== 'chromium', '自己設視窗，手機那一組跑就好');
+        await page.setViewportSize({ width: w, height: 640 });
+        await page.goto('/');
+        await page.evaluate(
+          ([lang, scale]) => {
+            localStorage.setItem('lawgame-lang', lang as string);
+            localStorage.setItem(
+              'lawgame-settings',
+              JSON.stringify({ state: { textScale: scale }, version: 1 }),
+            );
+            localStorage.setItem(
+              'lawgame-ep-auto',
+              JSON.stringify({
+                version: 5,
+                savedAt: Date.now(),
+                label: 'x',
+                progress: {
+                  episode: 'ep2',
+                  scene: 22,
+                  step: 0,
+                  choices: {},
+                  cards: [],
+                  flags: [],
+                  ethics: [],
+                  scenes: {},
+                },
+              }),
+            );
+          },
+          [lang, scale] as const,
+        );
+        await page.reload();
+        await page
+          .getByRole('button', { name: /^(繼續|Continue)/ })
+          .first()
+          .click();
+        const slate = page.locator('.place-slate');
+        await expect(slate).toBeVisible();
+        await page.evaluate(() => document.fonts.ready);
+        await page.waitForTimeout(150);
+        const m = await slate.evaluate((s) => {
+          const where = s.querySelector('.ps-where') as HTMLElement;
+          const room = s.querySelector('.ps-room')!;
+          const box = where.getBoundingClientRect();
+          const out: string[] = [];
+          const walk = document.createTreeWalker(room, NodeFilter.SHOW_TEXT);
+          for (let n = walk.nextNode(); n; n = walk.nextNode()) {
+            const r = document.createRange();
+            r.selectNodeContents(n);
+            for (const l of r.getClientRects())
+              if (
+                l.width &&
+                (l.right > box.right + 0.5 ||
+                  l.left < box.left - 0.5 ||
+                  l.bottom > box.bottom + 0.5 ||
+                  l.top < box.top - 0.5)
+              )
+                out.push(`${n.textContent}：${l.left.toFixed(1)}–${l.right.toFixed(1)}`);
+          }
+          return {
+            text: room.textContent,
+            out,
+            box: `${box.left.toFixed(1)}–${box.right.toFixed(1)}`,
+            slateRight: s.getBoundingClientRect().right,
+          };
+        });
+        expect(m.out, `「${m.text}」超出場記框 ${m.box}`).toEqual([]);
+        expect(m.slateRight).toBeLessThanOrEqual(w);
+      });

@@ -103,8 +103,11 @@ for (const width of [1100, 1530, 1920])
       }
     });
 
-/** 虛詞（含副詞、助詞、介詞、連詞與代名詞）：沒有標點接著時不放行尾。和證據板牌架的 FN_ZH 同一組，再加上助詞與副詞。 */
-const FN = new Set([...'的之與和及或在於對把被為從到以而並是我你他她它了著過沒不又也都就還再很']);
+/** 介詞、連詞、否定詞、副詞與代名詞：沒有標點接著時不放行尾（lineUnits.ts 的 TRAIL）。 */
+const FN = new Set([...'之與和及或在於對把被為從到以而並是我你他她它沒不又也都就還再很跟向']);
+/** 往前黏的助詞：可以在行尾，不放行首（設計師 #329 @7fde9ba 第 1 項更正：「一台沒登出的｜電腦前，」）。 */
+const HEAD = /^[的了著過地得]$/u;
+const SEG = new Intl.Segmenter('zh-Hant', { granularity: 'word' });
 const PUNCT = /[\s，。、；：！？）」』〉》…—,.;:!?)\]]/u;
 const WORD = /[\p{L}\p{N}]/u;
 
@@ -170,6 +173,12 @@ for (const [label, w, h, scale] of [
         const last = line[line.length - 1];
         if (!PUNCT.test(last))
           expect.soft(FN.has(last), `${tag} 行尾是虛詞：「${line}」`).toBe(false);
+        expect
+          .soft(
+            [...SEG.segment(got.text.slice(at).trimStart())][0]?.segment ?? '',
+            `${tag} 行首是助詞：「${line}｜${got.text.slice(at, at + 4)}」`,
+          )
+          .not.toMatch(HEAD);
       }
       const tail = got.text.slice(cuts[cuts.length - 2]);
       expect
@@ -344,5 +353,56 @@ for (const w of [320, 360])
                 .toBe(false);
           }
         });
+      }
+    });
+
+/**
+ * 中文黑底字卡的斷行順序（設計師第二道關卡 72a9003 裁定 1：#328 之後 22:31、23:14、17:52 比以前難讀）：
+ * 前面的規則照舊（上面那條測試）；數詞＋量詞跟後面的詞同一行；每一行都至少 3 個字；行數最少；同樣行數先斷在句號後、再逗號後。
+ * 23:14 在 360 寬 150% 要排成「公車進站，又開走了。｜伊森沒有上車。」（兩行，和 #328 之前一樣）。
+ */
+const NUMCL =
+  /[一二兩三四五六七八九十百千幾半][台支行單個張件位隻輛本份條把杯次間棟層盞句封通頁步]$/u;
+for (const w of [320, 360])
+  for (const scale of [1, 1.5])
+    test(`中文黑底字卡：每行至少 3 個字、量詞不留在行尾（${w}・${scale * 100}%）`, async ({
+      page,
+    }, info) => {
+      test.skip(info.project.name !== 'chromium', '自己設視窗大小，手機那一組跑就好');
+      await page.setViewportSize({ width: w, height: 740 });
+      for (const card of CARDS) {
+        await open(page, card, 'zh', scale);
+        const lines = await page.locator('.cine .cine-text').evaluate((el) => {
+          const out: string[] = [];
+          const rg = document.createRange();
+          let cur = '';
+          let top: number | null = null;
+          const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+          for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+            const s = n.textContent!;
+            for (let i = 0; i < s.length; i++) {
+              rg.setStart(n, i);
+              rg.setEnd(n, i + 1);
+              const q = rg.getClientRects()[0];
+              if (q && q.width && top !== null && q.top > top + 4) {
+                out.push(cur);
+                cur = '';
+              }
+              if (q && q.width) top = q.top;
+              cur += s[i];
+            }
+          }
+          out.push(cur);
+          return out;
+        });
+        const tag = `${card.episode} 第 ${card.step} 步「${lines.join('｜')}」`;
+        for (const l of lines) {
+          expect
+            .soft([...l].filter((c) => WORD.test(c)).length, `${tag}「${l}」不到 3 個字`)
+            .toBeGreaterThanOrEqual(3);
+          expect.soft(NUMCL.test(l.trimEnd()), `${tag}「${l}」量詞留在行尾`).toBe(false);
+        }
+        if (w === 360 && scale === 1.5 && card.zh === '公車進站')
+          expect(lines.map((l) => l.trim())).toEqual(['公車進站，又開走了。', '伊森沒有上車。']);
       }
     });
