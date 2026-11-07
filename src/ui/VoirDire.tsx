@@ -13,6 +13,7 @@ import { Speech } from './Portrait';
 import { Shell, Tabs } from './Shell';
 import { CourtCast } from './jury/CourtFace';
 import { Recap } from './ActCard';
+import { fitLine } from './prose';
 
 type Filter = 'all' | 'seated' | 'unasked';
 
@@ -66,9 +67,7 @@ function VoirDireScreen({ scene }: { scene: VoirDireScene }) {
     return (
       <main className="scene">
         <p className="eyebrow">
-          {t(scene.act, scope)}
-          {t('・')}
-          {t(scene.place, scope)}
+          <span>{fitLine(`${t(scene.act, scope)}${t('・')}${t(scene.place, scope)}`)}</span>
         </p>
         <div className="lines">
           <Recap />

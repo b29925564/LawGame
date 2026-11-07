@@ -8,7 +8,7 @@ import { useMoney, useT } from '../i18n';
 import { CommitBar } from './Commit';
 import { JuryStart } from './JuryStart';
 import { Lock } from './Lock';
-import { prose } from './prose';
+import { prose, fitLine } from './prose';
 import { useScope } from './lang';
 import { Speech } from './Portrait';
 import { SubActions, useSubs } from './SubCard';
@@ -79,9 +79,7 @@ export function Theory({ scene }: { scene: TheoryScene }) {
     return (
       <main className="scene">
         <p className="eyebrow">
-          {t(scene.act, scope)}
-          {t('・')}
-          {t(scene.place, scope)}
+          <span>{fitLine(`${t(scene.act, scope)}${t('・')}${t(scene.place, scope)}`)}</span>
         </p>
         <div className="lines">
           <Recap />
@@ -244,9 +242,7 @@ export function Opening({ scene }: { scene: OpeningScene }) {
     return (
       <main className="scene">
         <p className="eyebrow">
-          {t(scene.act, scope)}
-          {t('・')}
-          {t(scene.place, scope)}
+          <span>{fitLine(`${t(scene.act, scope)}${t('・')}${t(scene.place, scope)}`)}</span>
         </p>
         <div className="lines">
           {scene.intro.map((l, i) => (
@@ -262,8 +258,7 @@ export function Opening({ scene }: { scene: OpeningScene }) {
   return (
     <main className="scene">
       <p className="eyebrow">
-        {t('開場陳述')}
-        {th ? `${t('・')}${t(th.name, scope)}` : ''}
+        <span>{fitLine(`${t('開場陳述')}${th ? `${t('・')}${t(th.name, scope)}` : ''}`)}</span>
       </p>
       {!th ? (
         <p className="muted">{t('沒有選定的案件理論，沒有任何承諾可以許。')}</p>

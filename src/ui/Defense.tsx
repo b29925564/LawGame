@@ -11,6 +11,7 @@ import { batesOf, CourtRecord, useCourtEntries } from './Record';
 import { CourtCast } from './jury/CourtFace';
 import { Recap } from './ActCard';
 import { WitnessPrep } from './Prep';
+import { fitLine } from './prose';
 
 /**
  * 辯方證人（企劃書 6.9.6）：先準備，再直接詰問。
@@ -41,8 +42,9 @@ function DefenseScreen({ scene: raw }: { scene: DefenseScene }) {
     return (
       <main className="scene">
         <p className="eyebrow">
-          {t(scene.act, scope)}
-          {scene.day ? `・${t(scene.day, scope)}` : ''}
+          <span>
+            {fitLine(`${t(scene.act, scope)}${scene.day ? `・${t(scene.day, scope)}` : ''}`)}
+          </span>
         </p>
         <div className="lines">
           <Recap />
@@ -66,10 +68,14 @@ function DefenseScreen({ scene: raw }: { scene: DefenseScene }) {
   return (
     <main className="scene">
       <p className="eyebrow">
-        {st.stage === 'direct'
-          ? t('直接詰問・{name}', { name: t(scene.witness.name, scope) }) +
-            t('・還能問 {n} 題', { n: left })
-          : t('交互詰問結束・{name}', { name: t(scene.witness.name, scope) })}
+        <span>
+          {fitLine(
+            st.stage === 'direct'
+              ? t('直接詰問・{name}', { name: t(scene.witness.name, scope) }) +
+                  t('・還能問 {n} 題', { n: left })
+              : t('交互詰問結束・{name}', { name: t(scene.witness.name, scope) }),
+          )}
+        </span>
       </p>
       {/* 這裡沒有逐人的數字，只說幾位站在對方那邊；說明數字的圖例會讓人以為數字壞了。 */}
       {rules && (

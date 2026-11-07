@@ -119,6 +119,14 @@ for (const w of [320, 360, 412])
                 );
               expect.soft(split, `第 ${step} 步 拆開了 ${n}：「${a}｜${b}」`).toBe(false);
             }
+          // 數字和單位不拆（"Omar H., 2 ⏎ min"，第二道關卡 4d80149 之後的全站掃描）。
+          for (let i = 1; i < rows.length; i++)
+            expect
+              .soft(
+                /\d$/.test(rows[i - 1]) && /^(min|minutes?|hours?|a\.m\.|p\.m\.)\b/.test(rows[i]),
+                `第 ${step} 步 數字和單位拆開：「${rows[i - 1]}｜${rows[i]}」`,
+              )
+              .toBe(false);
           if (label) {
             redacted++;
             expect.soft(rows.length, `收回標籤「${t}」`).toBeLessThanOrEqual(2);

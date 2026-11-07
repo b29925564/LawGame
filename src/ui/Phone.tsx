@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { phoneView, type PhoneView } from '../engine/episode/phone';
 import type { Line, PhoneScene } from '../engine/episode/schema';
 import { sceneChoices, useEpisode } from '../engine/game';
 import { useLang, useT } from '../i18n';
 import { PlaceBeat } from './ActCard';
+import { fitUnits } from './fitUnits';
 import { FitLine, fitLine } from './prose';
 import { useScope } from './lang';
 import { useHand } from './Marks';
@@ -20,6 +21,42 @@ import {
 import { useSubs } from './SubCard';
 
 /** 冷開場：伊森的手機畫面。 */
+/**
+ * 叫車畫面的上車／下車（設計師 v93 排字規則，退路 A）：地址旁邊那一欄放不下黏住的地名（"East River Street"）時，
+ * 不讓地名在窄欄裡一個字一行，整組改成標籤在上、地址在下，地址用整個框的寬。放得下就照原本左右兩欄。
+ */
+function RideRoute({ from, to }: { from: string; to: string }) {
+  const t = useT();
+  const ref = useRef<HTMLDListElement>(null);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const check = () => {
+      el.removeAttribute('data-stack');
+      fitUnits(el);
+      if (!el.querySelector('dd > .fl.fl-wrap')) return;
+      el.setAttribute('data-stack', '');
+      fitUnits(el);
+    };
+    check();
+    const ro = new ResizeObserver(check);
+    ro.observe(document.documentElement);
+    document.fonts?.addEventListener('loadingdone', check);
+    return () => {
+      ro.disconnect();
+      document.fonts?.removeEventListener('loadingdone', check);
+    };
+  }, [from, to]);
+  return (
+    <dl className="ride-route" ref={ref}>
+      <dt>{t('上車')}</dt>
+      <dd>{fitLine(from)}</dd>
+      <dt>{t('下車')}</dt>
+      <dd>{fitLine(to)}</dd>
+    </dl>
+  );
+}
+
 export function Phone({ scene }: { scene: PhoneScene }) {
   const { progress, advance, choose } = useEpisode();
   const t = useT();
@@ -144,7 +181,7 @@ function Screen({
             aria-label={t('打開 {from} 的訊息', { from: t(s.message.from, scope) })}
           >
             <span className="notif-app">{t('聊天')}</span>
-            <strong>{t(s.message.from, scope)}</strong>
+            <strong>{fitLine(t(s.message.from, scope))}</strong>
             <span>{fitLine(t(s.message.text, scope))}</span>
           </button>
           <span className="notif-hint" aria-hidden>
@@ -190,12 +227,7 @@ function Screen({
       return (
         <div className="phone-body ride">
           <header className="chat-head">{t('叫車')}</header>
-          <dl className="ride-route">
-            <dt>{t('上車')}</dt>
-            <dd>{fitLine(t(s.from, scope))}</dd>
-            <dt>{t('下車')}</dt>
-            <dd>{fitLine(t(s.to, scope))}</dd>
-          </dl>
+          <RideRoute from={t(s.from, scope)} to={t(s.to, scope)} />
           <p className="muted">
             {fitLine(t('最近的司機：{driver}，2 分鐘', { driver: t(s.driver, scope) }))}
           </p>

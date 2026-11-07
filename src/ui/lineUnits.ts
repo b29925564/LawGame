@@ -32,15 +32,23 @@ export const PROPER_ZH = [
     '卡爾德快遞',
   ],
   ...['卡爾德港看守所', '卡爾德港警局', '卡港警局', '卡爾德論壇報', '卡爾德港東區', '卡爾德港'],
-  ...['北門貨運', '東河街', '港灣大道一號', '港灣大道', '碼頭路', '州立監獄', '卡福勞工法律事務所'],
-  ...['地方檢察官辦公室', '惠特洛克・海爾律師事務所', '第三法庭', '第五法庭'],
+  ...[
+    '北門貨運',
+    '東河街',
+    '港灣大道一號',
+    '港灣大道',
+    '碼頭路',
+    '州立監獄',
+    '奧卡福勞工法律事務所',
+  ],
+  ...['地方檢察官辦公室', '惠特洛克・海爾律師事務所', '第三法庭', '第五法庭', '卡爾德州立監獄'],
 ];
 
 /**
  * 例外詞表：ICU 會切開，但在本作裡要當一個詞。設計師點名的都放這裡，以後遇到再補
  * （P2-6 r2：「惠特洛克・海爾律師事務所」「智慧手錶」；r3 第 6 條：「腕上」「當庭」；r5：「檢方」）。
  */
-const KEEP = [
+const KEEP_ALL = [
   ...PROPER_ZH,
   '智慧手錶',
   '健康手錶',
@@ -69,6 +77,10 @@ const KEEP = [
   // 第二道關卡 a26de2b 第 3 項：冷開場手機框「門虛｜掩著」「私｜下」「開｜除了」「奧瑪・｜H」。
   ...['虛掩', '私下', '開除', '奧瑪・H'],
 ];
+/** 長的先比對（設計師裁定 4d80149：「卡爾德港看守所」先於「卡爾德港」）。 */
+const KEEP = [...new Set(KEEP_ALL)].sort((a, b) => b.length - a.length);
+/** 單位內部再拆時（fitLine 的退路）：專有名詞不當一整個詞，拆在它內部的詞界（「卡爾德｜大樓」）；人名照樣不拆。 */
+const KEEP_INNER = KEEP.filter((k) => !PROPER_ZH.includes(k));
 /** 開頭的「誰的說法：」「驗屍照片：」這種標籤，冒號前面不超過這麼多字就整組不拆，要斷斷在冒號後（#246 r8）。 */
 const LABEL = 8;
 const MIN_TAIL = 4;
@@ -85,12 +97,17 @@ function words(text: string): string[] {
 }
 
 /** 把字串切成「不換行的單位」：每個單位內部不斷開。labels 關掉時開頭的標籤（「伊森的說法：」）不併成一個單位（牌架卡名要在標籤中間也能斷）。 */
-export function proseUnits(text: string, tail = true, labels = true): string[] {
+export function proseUnits(
+  text: string,
+  tail = true,
+  labels = true,
+  keep: readonly string[] = KEEP,
+): string[] {
   if (!HAN.test(text)) return [text];
   let u = words(text);
 
   // 本作的固定詞：在原字串裡的位置對齊到詞的邊界，整段併成一個。
-  for (const k of KEEP) {
+  for (const k of keep) {
     for (let at = text.indexOf(k); at >= 0; at = text.indexOf(k, at + k.length)) {
       const from = at + k.length;
       let pos = 0;
@@ -330,3 +347,10 @@ export function fitLineUnits(text: string, titles = true): string[] {
   if (k < out.length - 1) out.splice(k, out.length - k, out.slice(k).join(''));
   return out;
 }
+
+/**
+ * fitLine 的退路（設計師裁定 4d80149 退路 B）：一個單位比框的行寬還寬時，拆在它內部的詞界。
+ * 專有名詞拆在名詞內部的詞（「卡爾德｜大樓」「奧卡福勞工｜法律事務所」），人名、標點黏前一個詞的規則照舊；不拆在詞中間。
+ */
+export const innerUnits = (unit: string): string[] =>
+  HAN.test(unit) ? proseUnits(unit, false, false, KEEP_INNER) : [unit];

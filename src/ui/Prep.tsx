@@ -16,6 +16,7 @@ import { useScope } from './lang';
 import { layout, measureFor, type RecordEntry } from './record';
 import { punct } from './Record';
 import './prep.css';
+import { fitLine } from './prose';
 
 type Option = DefenseScene['prep']['options'][number];
 
@@ -236,8 +237,9 @@ export function WitnessPrep({
   return (
     <main className="scene prep">
       <p className="eyebrow">
-        {t(scene.act, scope)}
-        {scene.day ? `・${t(scene.day, scope)}` : ''}
+        <span>
+          {fitLine(`${t(scene.act, scope)}${scene.day ? `・${t(scene.day, scope)}` : ''}`)}
+        </span>
       </p>
       <div className="prep-desk">
         <section className="prep-who">

@@ -1,5 +1,5 @@
 import { Fragment, useLayoutEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
-import { fitLineUnits, nameUnits, proseUnits } from './lineUnits';
+import { fitLineUnits, innerUnits, nameUnits, proseUnits } from './lineUnits';
 import { NB, glueNames } from './enNames';
 import { endsBanned } from './plateBreaks';
 
@@ -26,9 +26,15 @@ export function prose(text: string, tail = true): ReactNode {
  * 英文短行（眉標、手機框、按鈕）的 fitLine：專有名詞黏住；a／an／the／of／to…（plateBreaks.ts 的 endsBanned）黏住下一個字，
  * 不留在行尾（設計師裁定 a26de2b：「VP of ⏎ Operations」「still at the ⏎ office」）。其餘照瀏覽器在空白斷。
  */
+/** 數字和後面的單位黏在一起（"2 min"、"10 a.m."；設計師 v93 排字規則：數字＋單位不拆）。 */
+const UNIT =
+  /^(min|mins|minutes?|hours?|hrs?|days?|weeks?|months?|years?|seconds?|secs?|km|miles?|percent|%|am|pm|a\.m\.|p\.m\.)[.,;:!?)]*$/i;
+const glued = (prev: string, x: string) =>
+  endsBanned(prev) || (/^\$?\d[\d,.:]*$/.test(prev) && UNIT.test(x));
+
 export function fitLineEn(text: string): string {
   const w = glueNames(text).split(' ');
-  return w.reduce((out, x, i) => (i === 0 ? x : out + (endsBanned(w[i - 1]) ? NB : ' ') + x));
+  return w.reduce((out, x, i) => (i === 0 ? x : out + (glued(w[i - 1], x) ? NB : ' ') + x));
 }
 
 /** 引號裡的短篇名（"Note to Audit_v3."，四個字以內）黏成一段：放得下一行就整段不拆（設計師裁定 a26de2b）。 */
@@ -37,14 +43,83 @@ export const glueTitles = (text: string) =>
     b.trim().split(/[ \u00a0]+/).length <= 4 ? a + b.replace(/ /g, NB) + c : m,
   );
 
-/** 黑底字卡的正文（fitLine 規則，lineUnits.ts 的 fitLineUnits）：每個單位包成不換行的 span。英文照常在空白斷。 */
+/**
+ * 一個不拆的單位（設計師裁定 4d80149 的排字規則，由重到輕：不出框 > 專有名詞和黏住的單位不拆 > 行尾不留虛詞 > 沒有單字行）：
+ * 包成 inline-block、最寬是整行（styles.css .fl）。放得下就整段在同一行；比行寬還寬時（窄框、大字級）在單位內部的詞界拆（退路 B），
+ * 不把字擠出框。內部的詞也是 .fl：一個詞本身就比行寬還寬時，中文才在字與字之間拆。
+ */
+const flZh = (w: string, key: number) => {
+  const inner = innerUnits(w);
+  // 最後一行至少三個字（設計師 v93 排字規則第 4 條）：句尾不到三個字（數字也算）的詞併進前一個詞，「盧卡斯的手機響｜了。」→「盧卡斯的｜手機響了。」。
+  // 至少留兩段：只有兩個詞的專有名詞（第五｜法庭、卡爾德｜大樓）照詞界拆，不併成一段（併了放不下會在字中間斷）。
+  const han = (x: string) => x.match(/[\p{L}\p{N}]/gu)?.length ?? 0;
+  while (inner.length > 2 && han(inner[inner.length - 1]) < 3)
+    inner.splice(-2, 2, inner[inner.length - 2] + inner[inner.length - 1]);
+  return (
+    <span key={key} className="fl">
+      {inner.length > 1
+        ? inner.map((x, i) =>
+            [...x].length > 1 && x.trim() ? (
+              <span key={i} className="fl">
+                {x}
+              </span>
+            ) : (
+              x
+            ),
+          )
+        : w}
+    </span>
+  );
+};
+
+/** 英文黏住的一段（不斷行空格連起來的字）：內部再拆時，a／of／& 這些字仍跟著下一個字（「Whitlock & ⏎ Hale」→「Whitlock ⏎ & Hale」）。 */
+const flEn = (g: string, key: number) => {
+  const ws = g.split(NB);
+  const chunks: string[] = [];
+  ws.forEach((x, i) => {
+    const prev = ws[i - 1];
+    if (i > 0 && (glued(prev, x) || prev === '&')) chunks[chunks.length - 1] += NB + x;
+    else chunks.push(x);
+  });
+  return (
+    <span key={key} className="fl">
+      {chunks.map((c, i) => (
+        <Fragment key={i}>
+          {i > 0 && ' '}
+          {c.includes(NB) && chunks.length > 1 ? (
+            <span className="fl">{c.split(NB).join(' ')}</span>
+          ) : (
+            c.split(NB).join(' ')
+          )}
+        </Fragment>
+      ))}
+    </span>
+  );
+};
+
+/**
+ * 短標籤的排字（黑底字卡、手機框、眉標、場記行、卡片標頭、按鈕、泡泡、頂列；設計師裁定 4d80149 的 v93 範圍，全部走這一個）。
+ * 中文：fitLineUnits 的每個單位；英文：fitLineEn 黏好的每一段。單位都包成 .fl（放不下時在內部的詞界拆，見 flZh／flEn）。
+ */
 export function fitLine(text: string, titles = true): ReactNode {
-  if (!HAN.test(text)) return fitLineEn(text);
+  if (!HAN.test(text)) {
+    const groups = fitLineEn(text).split(' ');
+    return groups.map((g, i) => (
+      <Fragment key={i}>
+        {i > 0 && ' '}
+        {g.includes(NB) ? flEn(g, i) : g}
+      </Fragment>
+    ));
+  }
   return fitLineUnits(text, titles).map((w, i) =>
     [...w].length > 1 && w.trim() ? (
-      <span key={i} className={titles && /^[〈《]/.test(w) ? 'kw kw-title' : 'kw'}>
-        {w}
-      </span>
+      titles && /^[〈《]/.test(w) ? (
+        <span key={i} className="kw kw-title">
+          {w}
+        </span>
+      ) : (
+        flZh(w, i)
+      )
     ) : (
       w
     ),

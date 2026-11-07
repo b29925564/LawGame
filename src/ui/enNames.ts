@@ -13,7 +13,8 @@ export const EN_NAMES = [
     'District Attorney',
   ],
   ...['Northgate Freight', 'East River Street', 'Harbor Avenue', 'Pier Nine', 'Pier Road'],
-  ...['State Prison', 'Okafor Labor Law', 'South Harbor Market', 'Whitlock & Hale'],
+  ...['State Prison', 'Calder State Prison', 'Okafor Labor Law', 'South Harbor Market'],
+  ...['Whitlock & Hale', 'Omar H.'],
   ...[
     'Ethan Shaw',
     'Trevor Mills',
@@ -29,9 +30,9 @@ export const EN_NAMES = [
 const NAME_RE = new RegExp(
   `(?<![A-Za-z])(?:${[...EN_NAMES]
     .sort((a, b) => b.length - a.length)
-    .map((n) => n.replace(/ /g, '[ \u00a0]'))
+    .map((n) => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/ /g, '[ \u00a0]'))
     .join('|')})(?![A-Za-z])`,
   'g',
 );
-/** 專有名詞黏住（EN_NAMES）。 */
+/** 專有名詞黏住（EN_NAMES，長的先比對：Calder State Prison 先於 State Prison）。 */
 export const glueNames = (text: string) => text.replace(NAME_RE, (m) => m.replace(/ /g, NB));

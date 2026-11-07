@@ -38,6 +38,7 @@ import { Opening, Theory } from './Theory';
 import { VoirDire } from './VoirDire';
 import { useT } from '../i18n';
 import { SceneScope, useDocumentLang } from './lang';
+import { fitUnits, watchUnits } from './fitUnits';
 import { prose } from './prose';
 
 /** 不畫東西：審判前一場演著時，把審判第一個機位的圖預熱。 */
@@ -61,7 +62,9 @@ export function App() {
   useDocumentLang();
   useEffect(() => {
     document.documentElement.style.setProperty('--text-scale', String(textScale));
+    fitUnits();
   }, [textScale]);
+  useEffect(() => watchUnits(), []);
 
   if (mode === 'title') return <Title />;
   if (mode === 'proto')

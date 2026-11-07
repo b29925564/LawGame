@@ -208,6 +208,14 @@ h3 {
 .kw {
   white-space: nowrap;
 }
+/* 短標籤的一個單位（prose.tsx fitLine）：放得下整段在同一行；比框還寬時 fitUnits.ts 加上 .fl-wrap，
+   在單位內部的詞界拆，不擠出框（設計師裁定 4d80149：不出框第一，退路 B）。 */
+.fl {
+  white-space: nowrap;
+}
+.fl.fl-wrap {
+  white-space: normal;
+}
 * {
   scrollbar-width: thin;
   scrollbar-color: var(--border-strong) transparent;
@@ -1459,6 +1467,14 @@ details summary {
   .taskbar > .muted > .due-text {
     display: inline-block;
     min-width: 5.5em;
+  }
+  /* 期限在第二列、讓出選單鈕的寬度放不下黏住的一段：第二列用全寬、移到選單鈕下緣 8px 以下（Desk.tsx useDueRow，退路 A）。 */
+  .taskbar[data-due-row] {
+    padding-right: 2px;
+  }
+  .taskbar[data-due-row] > .muted {
+    flex-basis: 100%;
+    margin-top: var(--due-drop, 0px);
   }
 }
 .bench .eyebrow,
@@ -2961,6 +2977,12 @@ fieldset.relations.compact {
 .actions > .row > [role='tablist'] {
   display: contents;
 }
+/* 窄手機三格按鈕只有 80px 寬：左右內距收成 8px，「2 次）」這種黏住的單位才不會頂出內距（設計師 v93 排字規則：不出框第一，不縮字）。 */
+@media (max-width: 399px) {
+  .actions > .row button {
+    padding-inline: 8px;
+  }
+}
 /* 一格一黃：選中的分頁是白框，黃只留給下一步（第一道關卡 B2）；選單的分頁同一套（P1-7）。 */
 .actions [aria-selected='true'],
 .menu-panel [role='tab'][aria-selected='true'] {
@@ -3748,6 +3770,14 @@ fieldset.relations.compact {
 .ride-route dd {
   margin: 0;
   font-weight: 700;
+}
+/* 地名在窄欄放不下時（Phone.tsx RideRoute），標籤在上、地址在下，地址用整個框的寬。 */
+.ride-route[data-stack] {
+  grid-template-columns: 1fr;
+  gap: 2px;
+}
+.ride-route[data-stack] dd + dt {
+  margin-top: 8px;
 }
 .ride {
   justify-content: flex-start;

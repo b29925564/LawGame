@@ -8,6 +8,7 @@ import { Transcript } from './Shell';
 import { Recap, splitSlate } from './ActCard';
 import { SubActions, useSubs } from './SubCard';
 import { OnPlate, onPlateOf, PlateEyebrow, usePlate, useScenePlate, useShown } from './scenePlate';
+import { fitLine } from './prose';
 
 /** 對話場景：一路往下讀，遇到選擇就停。之前的台詞留在畫面上，方便回頭看。 */
 export function Dialogue({ scene }: { scene: DialogueScene }) {
@@ -121,7 +122,9 @@ export function Dialogue({ scene }: { scene: DialogueScene }) {
         {shown ? (
           <PlateEyebrow text={splitSlate(t(scene.place, scope))[0]} />
         ) : (
-          <p className="eyebrow">{splitSlate(t(scene.place, scope))[0]}</p>
+          <p className="eyebrow">
+            <span>{fitLine(splitSlate(t(scene.place, scope))[0])}</span>
+          </p>
         )}
         {/* 有底圖時不放盧卡斯大圖：攝影棚光對不上底圖的光；他在畫面裡的位置由立牌負責（設計師 #296）。 */}
         {!shown && <LucasStage lines={lines} />}
