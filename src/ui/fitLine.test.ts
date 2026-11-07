@@ -185,3 +185,45 @@ describe('第二道關卡 464a280 第 5 項：短標籤', () => {
     ).toBe(true);
   });
 });
+
+/** 兩集內容裡所有身分列（role、via）：場景、證人、會見、取證、調解都有。 */
+const roles = (() => {
+  const out = new Set<string>();
+  const walk = (x: unknown): void => {
+    if (Array.isArray(x)) x.forEach(walk);
+    else if (x && typeof x === 'object')
+      for (const [k, v] of Object.entries(x)) {
+        if ((k === 'role' || k === 'via') && typeof v === 'string') out.add(v);
+        else walk(v);
+      }
+    // 會見的來電資訊是 role・via 接起來排的。
+    if (x && typeof x === 'object' && 'role' in x && 'via' in x)
+      out.add(`${(x as { role: string }).role}・${(x as { via: string }).via}`);
+  };
+  walk(episodes);
+  return [...out];
+})();
+
+describe('身分列按「・」分段後，每一段的換行單位不比整串細（第二道關卡 dd50064：「急診｜科主治醫師」）', () => {
+  /** 一串字在哪些字元位置可以換行。 */
+  const cuts = (units: string[], from = 0) => {
+    const at = new Set<number>();
+    let i = from;
+    for (const u of units.slice(0, -1)) at.add((i += u.length));
+    return at;
+  };
+  it('有身分列可以掃', () => expect(roles.length).toBeGreaterThanOrEqual(10));
+  for (const role of roles.filter((r) => r.includes('・'))) {
+    it(role, () => {
+      const whole = cuts(fitLineUnits(role));
+      let at = 0;
+      const extra: string[] = [];
+      for (const seg of role.split('・')) {
+        for (const c of cuts(fitLineUnits(seg), at))
+          if (!whole.has(c)) extra.push(`${role.slice(at, c)}｜${role.slice(c, at + seg.length)}`);
+        at += seg.length + 1;
+      }
+      expect(extra).toEqual([]);
+    });
+  }
+});
