@@ -13,7 +13,7 @@ import { Speech } from './Portrait';
 import { Shell, Tabs } from './Shell';
 import { CourtCast } from './jury/CourtFace';
 import { Recap } from './ActCard';
-import { fitLine } from './prose';
+import { FitLine, fitLine } from './prose';
 
 type Filter = 'all' | 'seated' | 'unasked';
 
@@ -167,9 +167,10 @@ function VoirDireScreen({ scene }: { scene: VoirDireScene }) {
                 <span className="txt">
                   <strong>
                     {t(c.name, scope)}
-                    <span>{t(c.job, scope)}</span>
+                    <span>{fitLine(t(c.job, scope))}</span>
                   </strong>
-                  <span className="line">{t(c.sheet, scope)}</span>
+                  {/* 介紹和黑底字卡一樣排行：詞不拆、每一行至少 3 個字、量詞不留在行尾（設計師 關卡 72a9003：「安全檢｜查。」）。 */}
+                  <FitLine as="span" strictShort className="line" text={t(c.sheet, scope)} />
                 </span>
                 <span className="st">
                   {by ? (
@@ -197,9 +198,7 @@ function VoirDireScreen({ scene }: { scene: VoirDireScene }) {
       <div>
         <h3>{t(picked.name, scope)}</h3>
         <p className="sub">
-          {t(picked.job, scope)}
-          {t('・')}
-          {t(picked.sheet, scope)}
+          {fitLine(`${t(picked.job, scope)}${t('・')}${t(picked.sheet, scope)}`)}
         </p>
         {/* 剩幾題、剩幾次只寫在頂列和按鈕上；人物卡只在人已經不在名單上時說明（設計師 關卡 2 第 18 條）。 */}
         {goneBy(picked.id) && <p className="sub">{goneBy(picked.id)}</p>}

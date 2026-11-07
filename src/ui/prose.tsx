@@ -143,8 +143,22 @@ export function fitLine(text: string, titles = true): ReactNode {
  * （第二道關卡 e771fcf 第 1 項：窄手機 150% 整段 351px、欄只有 312px，頁面被撐寬）。
  * 篇名整段的寬度用 em 記下來，換字級、換視窗寬度時拿來比，放得進就再整段不拆。
  */
-export function FitLine({ text, className }: { text: string; className?: string }) {
+export function FitLine({
+  text,
+  className,
+  as = 'p',
+  strictShort = false,
+}: {
+  text: string;
+  className?: string;
+  /** 放在按鈕裡時用 span（按鈕裡不能放 p）。 */
+  as?: 'p' | 'span';
+  /** 中文每一行至少 3 個字比單位不拆優先（chineseLines）。 */
+  strictShort?: boolean;
+}) {
   const ref = useRef<HTMLParagraphElement>(null);
+  // 同一個 ref 型別給兩種元素用：只用到 HTMLElement 的部分。
+  const Tag = as as 'p';
   const [split, setSplit] = useState<string | null>(null);
   const whole = useRef<{ text: string; em: number } | null>(null);
   const isSplit = split === text;
@@ -170,9 +184,9 @@ export function FitLine({ text, className }: { text: string; className?: string 
   // 英文先黏專有名詞、引號裡的篇名，排行時當成不拆的（englishLines 的 hard）。
   const en = HAN.test(text) ? text : glueTitles(glueNames(text));
   const lines = useEnglishLines(ref, en);
-  const zh = useChineseLines(ref, text);
+  const zh = useChineseLines(ref, text, strictShort);
   return (
-    <p ref={ref} className={className}>
+    <Tag ref={ref} className={className}>
       {HAN.test(text)
         ? zh
           ? zh.map((l, i) => (
@@ -193,7 +207,7 @@ export function FitLine({ text, className }: { text: string; className?: string 
               </Fragment>
             ))
           : glueEnglish(en)}
-    </p>
+    </Tag>
   );
 }
 
@@ -211,21 +225,33 @@ const ZH_INNER = 1e10;
 /** 行尾是虛詞（「一台沒｜登出」），或數詞＋量詞（「一台｜沒登出」）：前面三條規則照舊，比行數重。 */
 const ZH_END = 1e9;
 const ZH_TRAIL =
-  /[的之與和及或在於對把被為從到以而並是我你他她它了著過沒不又也都就還再很]$|[一二兩三四五六七八九十百千幾半][台支行單個張件位隻輛本份條把杯次間棟層盞句封通頁步]$/u;
+  /[的之與和及或在於對把被為從到以而並是我你他她它了著過沒不又也都就還再很]$|[一二兩三四五六七八九十百千幾半][台支行單個張件位隻輛本份條把杯次間棟層盞句封通頁步]?$/u;
 const ZH_SHORT = 1e8;
+const ZH_NUM_END = /[一二兩三四五六七八九十百千幾半0-9]$/u;
 const ZH_LINE = 1e6;
 const ZH_COMMA = 1e3;
 const ZH_WORD = 2e3;
 const zhLetters = (x: string) => x.match(/[\p{L}\p{N}]/gu)?.length ?? 0;
-export function chineseLines(text: string, width: (s: string) => number, room: number) {
-  // 原子：單位；比一行還寬的單位拆成內部的詞（inner 標記那個切點是在單位裡面）。
+export function chineseLines(
+  text: string,
+  width: (s: string) => number,
+  room: number,
+  /** 不到 3 個字的行比拆開單位還重（遴選候選人卡：設計師 關卡 72a9003「每一行至少 3 個字」）。 */
+  strictShort = false,
+) {
+  // 原子：單位內部的詞（inner 標記那個切點是在單位裡面）。
   const atoms: string[] = [];
   const inner: boolean[] = [];
   for (const u of fitLineUnits(text, false)) {
     // 內部的詞還是比一行寬（極窄的欄）才拆成字：每個原子都放得進一行，排好的行才能整行不換行（.zh-line）。
-    const parts = (width(u.trimEnd()) > room ? innerUnits(u) : [u]).flatMap((x) =>
-      width(x.trimEnd()) > room ? [...x] : [x],
-    );
+    // 放得下的單位也先拆成內部的詞，標成 inner（拆的代價比少一行、虛詞收尾都重，只有每行至少 3 個字更重時才會拆）。
+    const split = innerUnits(u);
+    // 數字跟著後面的詞（「三十｜年」不拆；數詞＋量詞規則，在單位內部也一樣）。
+    for (let k = 0; k < split.length - 1;)
+      if (ZH_NUM_END.test(split[k]) && width((split[k] + split[k + 1]).trimEnd()) <= room)
+        split.splice(k, 2, split[k] + split[k + 1]);
+      else k++;
+    const parts = split.flatMap((x) => (width(x.trimEnd()) > room ? [...x] : [x]));
     parts.forEach((x, k) => {
       if (k > 0) inner[atoms.length - 1] = true;
       atoms.push(x);
@@ -242,7 +268,7 @@ export function chineseLines(text: string, width: (s: string) => number, room: n
       const w = width(line.trimEnd());
       if (w > room && i < j - 1) break;
       let c = ZH_LINE + (w > room ? ZH_OVER : 0);
-      if (zhLetters(line) < 3) c += ZH_SHORT;
+      if (zhLetters(line) < 3) c += strictShort ? ZH_INNER * 10 : ZH_SHORT;
       if (j < n) {
         if (inner[j - 1]) c += ZH_INNER;
         const end = line.trimEnd();
@@ -261,7 +287,11 @@ export function chineseLines(text: string, width: (s: string) => number, room: n
   return lines;
 }
 
-function useChineseLines(ref: RefObject<HTMLElement | null>, text: string): string[] | null {
+function useChineseLines(
+  ref: RefObject<HTMLElement | null>,
+  text: string,
+  strictShort: boolean,
+): string[] | null {
   const [got, setGot] = useState<{ text: string; lines: string[] } | null>(null);
   useLayoutEffect(() => {
     const el = ref.current;
@@ -276,7 +306,7 @@ function useChineseLines(ref: RefObject<HTMLElement | null>, text: string): stri
       if ('letterSpacing' in ctx)
         ctx.letterSpacing = cs.letterSpacing === 'normal' ? '0px' : cs.letterSpacing;
       // 中文字寬是整數（全形字＋字距），canvas 量的和排版一樣：剛好等於欄寬的一行放得下（「公車進站，又開走了。」360 寬 150% 正好 312px）。
-      const lines = chineseLines(text, (x) => ctx.measureText(x).width, room + 0.25);
+      const lines = chineseLines(text, (x) => ctx.measureText(x).width, room + 0.25, strictShort);
       setGot((g) =>
         g?.text === text && g.lines.join('\n') === lines.join('\n') ? g : { text, lines },
       );
@@ -286,7 +316,7 @@ function useChineseLines(ref: RefObject<HTMLElement | null>, text: string): stri
     ro.observe(el);
     void document.fonts?.ready.then(check);
     return () => ro.disconnect();
-  }, [ref, text]);
+  }, [ref, text, strictShort]);
   return got?.text === text ? got.lines : null;
 }
 

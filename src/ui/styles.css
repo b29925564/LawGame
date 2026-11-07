@@ -3431,7 +3431,8 @@ fieldset.relations.compact {
 }
 /* 中文字卡自己排好的一行（prose.tsx chineseLines）：每行都量過放得下，整行不再換行
    （剛好等於欄寬的一行，瀏覽器會因為小數點後的誤差再折一次）。 */
-.cine-text .zh-line {
+.cine-text .zh-line,
+.cand .line .zh-line {
   white-space: nowrap;
 }
 .cine-text {

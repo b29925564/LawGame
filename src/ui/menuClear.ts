@@ -20,6 +20,8 @@ const SIDE = [
   '.vdict .hero',
   '.vdict .hero .ey',
   '.board-one .wb-head',
+  // 定場還沒有場景圖時左上角的「待放 3D 機位・定場」（設計師 關卡 72a9003：320 英文 125／150% 碰到、被切到選單鈕）。
+  '.place-tbd',
 ].join(', ');
 /** 頂列的第一行：下面一列要在鈕下面 8px 以外。 */
 const TOP = '.bench > .eyebrow';
@@ -56,7 +58,10 @@ export function clearMenu(fit: (root?: ParentNode) => void) {
   const mt = document.querySelector('.menu-toggle');
   const sides = [...document.querySelectorAll<HTMLElement>(SIDE)];
   const tops = [...document.querySelectorAll<HTMLElement>(TOP)];
-  for (const e of sides) e.style.removeProperty('padding-right');
+  for (const e of sides) {
+    e.style.removeProperty('padding-right');
+    e.style.removeProperty('max-width');
+  }
   for (const e of tops) e.style.removeProperty('min-height');
   fit();
   if (!mt || mt.closest('[hidden]')) return;
@@ -73,8 +78,15 @@ export function clearMenu(fit: (root?: ParentNode) => void) {
           .map((b) => b.right - (m.left - GAP)),
       );
       if (over <= SLACK) break;
-      const pad = parseFloat(getComputedStyle(e).paddingRight) || 0;
-      e.style.paddingRight = `${pad + Math.ceil(over)}px`;
+      const cs = getComputedStyle(e);
+      if (/absolute|fixed/.test(cs.position)) {
+        // 絕對定位、寬度照字長的框（定場的占位字）：加內距只會把框撐寬，改成限制最寬多少。
+        const r = e.getBoundingClientRect();
+        e.style.maxWidth = `${Math.max(0, r.width - Math.ceil(over))}px`;
+      } else {
+        const pad = parseFloat(cs.paddingRight) || 0;
+        e.style.paddingRight = `${pad + Math.ceil(over)}px`;
+      }
       fit(e);
     }
   }

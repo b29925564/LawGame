@@ -117,3 +117,59 @@ for (const w of [320, 360, 390, 412])
           expect.soft(await page.evaluate(near), `${c.name} ${scale * 100}%`).toEqual([]);
         }
     });
+
+/** 定場（場記那一格）還沒有場景圖時，左上角的「待放 3D 機位・定場」也離選單鈕 8px 以上（設計師 關卡 72a9003）。 */
+for (const w of [320, 360])
+  for (const lang of ['zh', 'en'])
+    test(`定場的占位字離選單鈕 8px 以上（${w}・${lang}・100／125／150%）`, async ({
+      page,
+    }, info) => {
+      test.skip(info.project.name !== 'chromium', '自己設視窗大小，手機那一組跑就好');
+      await page.setViewportSize({ width: w, height: 760 });
+      for (const scale of [1, 1.25, 1.5]) {
+        await page.goto('/');
+        await page.evaluate(
+          ([lang, scale]) => {
+            localStorage.clear();
+            localStorage.setItem('lawgame-lang', lang as string);
+            localStorage.setItem(
+              'lawgame-settings',
+              JSON.stringify({ state: { textScale: scale }, version: 1 }),
+            );
+            localStorage.setItem(
+              'lawgame-ep-auto',
+              JSON.stringify({
+                version: 5,
+                savedAt: Date.now(),
+                label: 'x',
+                progress: {
+                  episode: 'ep2',
+                  scene: 22,
+                  step: 0,
+                  choices: {},
+                  cards: [],
+                  flags: [],
+                  ethics: [],
+                  scenes: {},
+                },
+              }),
+            );
+          },
+          [lang, scale] as const,
+        );
+        await page.reload();
+        await page
+          .getByRole('button', { name: /^(繼續|Continue)/ })
+          .first()
+          .click();
+        await expect(page.locator('.place-tbd')).toBeVisible();
+        await page.evaluate(() => document.fonts.ready);
+        await page.waitForTimeout(150);
+        expect
+          .soft(
+            (await page.evaluate(near)).filter((x) => /待放|TBD|定場|Establishing/.test(x)),
+            `${scale * 100}%`,
+          )
+          .toEqual([]);
+      }
+    });

@@ -78,7 +78,7 @@ export function watchUnits() {
   const touches = (n: Node | null) =>
     !!n &&
     (n instanceof Element
-      ? n.matches('.fl') || !!n.querySelector('.fl') || !!n.closest('.fl')
+      ? n.matches('.fl, .place-tbd') || !!n.querySelector('.fl, .place-tbd') || !!n.closest('.fl')
       : !!n.parentElement?.closest('.fl'));
   // 換字是在 React 寫進畫面之後、瀏覽器畫出來之前（微任務），不會先閃一格擠出框的字。
   const mo = new MutationObserver((ms) => {

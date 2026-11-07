@@ -76,6 +76,8 @@ const KEEP_ALL = [
   '電梯廳',
   // 第二道關卡 a26de2b 第 3 項：冷開場手機框「門虛｜掩著」「私｜下」「開｜除了」「奧瑪・｜H」。
   ...['虛掩', '私下', '開除', '奧瑪・H'],
+  // 設計師 關卡 72a9003：遴選候選人卡「排班｜表」。
+  '排班表',
 ];
 /** 長的先比對（設計師裁定 4d80149：「卡爾德港看守所」先於「卡爾德港」）。 */
 const KEEP = [...new Set(KEEP_ALL)].sort((a, b) => b.length - a.length);
@@ -288,6 +290,8 @@ const TRAIL = /[的之與和及或在於對把被為從到以而並是我你他�
  */
 const NUMCL =
   /[一二兩三四五六七八九十百千幾半][台支行單個張件位隻輛本份條把杯次間棟層盞句封通頁步]\p{Script=Han}{0,2}$/u;
+/** 中文數詞收尾（「開了三十｜年」）：跟後面的詞同一個單位（設計師 關卡 72a9003 遴選候選人卡）。「唯一」「統一」這類詞不算。 */
+const NUM_END = /(?:(?<![唯統萬之同單專])一|[二兩三四五六七八九十百千幾])$/u;
 /** 行尾可以停的地方：標點或空白。 */
 const STOP = /[\p{P}\s]$/u;
 /** 書名號、篇名號裡的一整段（〈給稽核部的說明_v3〉）不拆，字數上限。 */
@@ -349,7 +353,8 @@ export function fitLineUnits(text: string, titles = true): string[] {
   for (const u of us) {
     const w = carry + u;
     // 虛詞收尾（或虛詞後面的空白）、數詞＋量詞收尾：黏到下一個單位。
-    if (!u.trim() ? !!carry : !STOP.test(w) && (TRAIL.test(w) || NUMCL.test(w))) carry = w;
+    if (!u.trim() ? !!carry : !STOP.test(w) && (TRAIL.test(w) || NUMCL.test(w) || NUM_END.test(w)))
+      carry = w;
     else {
       out.push(w);
       carry = '';
