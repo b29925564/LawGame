@@ -31,6 +31,7 @@ const EXPECTED = [
   'ti-on',
   'ti-out',
   'ti-show',
+  'ti-sweep',
   'ti-swipe',
 ];
 

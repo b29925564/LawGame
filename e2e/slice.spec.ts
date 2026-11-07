@@ -1,5 +1,8 @@
 import { expect, test, type Page } from '@playwright/test';
 
+// 片頭 40 秒預設會播（title-intro.spec.ts 測）。這裡只看片頭前後的畫面：關掉片頭，冷開場之後直接是集名卡。
+test.beforeEach(({ page }) => page.addInitScript(() => localStorage.setItem('rd.dev.intro', '0')));
+
 // 整集通關一次就接近 30 秒，CI 機器較慢。
 test.describe.configure({ timeout: 90_000 });
 

@@ -4,7 +4,7 @@ import { expect, test, type Page } from '@playwright/test';
 /**
  * 片頭 40 秒（設定集 11.1）：冷開場之後、第一幕之前。七個鏡頭依序，0:38 是原本的集名卡（幕卡）。
  * 第二次播起才有「跳過」，跳到集名卡；每一集分開記。讀檔讀到片頭之後不播。全片第一道黃在 0:29。
- * 正式圖到齊前開關預設關（玩家版不播佔位片頭）：這裡用開發設定 rd.dev.intro 打開。
+ * 正式圖到齊，預設播。開發設定 rd.dev.intro＝'0' 關掉（其他測試只看片頭前後時用）。
  */
 const ORDER = [
   ['paper', 10000],
@@ -26,8 +26,7 @@ async function open(
   await page.evaluate(
     ([episode, scene, seen, lang, on]) => {
       localStorage.setItem('lawgame-lang', lang as string);
-      if (on) localStorage.setItem('rd.dev.intro', '1');
-      else localStorage.removeItem('rd.dev.intro');
+      localStorage.setItem('rd.dev.intro', on ? '1' : '0');
       localStorage.setItem(
         'lawgame-settings',
         JSON.stringify({
@@ -61,32 +60,54 @@ async function open(
     .getByRole('button', { name: /^(繼續|Continue)/ })
     .first()
     .click();
+  // 紙的三張底圖都解完才畫（不會半張），之後的量測才有東西可以量。
+  if (on && scene === 1) await page.locator('.ti-paper svg').waitFor();
 }
 
-/** 片頭裡現在看得到的黃（--hl 的淺深兩值），連 ::before／::after 一起看。 */
+/** 片頭裡現在看得到的黃（--hl 的淺深兩值），連 ::before／::after、SVG 的填色一起看。 */
 const yellows = (page: Page) =>
   page.locator('.title-intro').evaluate((root) => {
     const hl = /rgba?\((255, 208, 46|244, 197, 61)/;
     const hits: string[] = [];
-    for (const el of [root, ...root.querySelectorAll('*')])
+    for (const el of [root, ...root.querySelectorAll('*')]) {
+      // 在 display:none 的祖先底下（例如桌機上的手機版 SVG）不算。
+      if (!el.checkVisibility({ opacityProperty: true, visibilityProperty: true })) continue;
+      if (el.closest('mask, defs')) continue;
       for (const pseudo of [null, '::before', '::after']) {
         const cs = getComputedStyle(el, pseudo);
         if (cs.display === 'none' || cs.visibility === 'hidden' || +cs.opacity === 0) continue;
         if (pseudo && cs.content === 'none') continue;
-        if (hl.test(cs.backgroundColor) || hl.test(cs.color) || hl.test(cs.borderTopColor))
-          hits.push(`${el.className}${pseudo ?? ''}`);
+        const svg = !pseudo && el instanceof SVGElement;
+        if (
+          hl.test(cs.backgroundColor) ||
+          hl.test(cs.color) ||
+          hl.test(cs.borderTopColor) ||
+          (svg && hl.test(cs.fill))
+        )
+          hits.push(`${el.getAttribute('class')}${pseudo ?? ''}`);
       }
+    }
     return hits;
   });
 
-test('開關預設關：正式圖到齊前直接是集名卡，和 main 一樣；?intro=1 打開', async ({ page }) => {
+test('預設播（正式圖到齊）；開發設定 rd.dev.intro＝0 或 ?intro=0 關掉，直接是集名卡', async ({
+  page,
+}) => {
+  await open(page);
+  await page.evaluate(() => localStorage.removeItem('rd.dev.intro'));
+  await page.reload();
+  await page.getByRole('button', { name: /^繼續/ }).first().click();
+  await expect(page.locator('.title-intro')).toHaveAttribute('data-shot', 'paper');
+
   await open(page, { on: false });
   await expect(page.getByRole('heading', { name: '已收回的訊息' })).toBeVisible();
   await expect(page.locator('.title-intro')).toHaveCount(0);
 
-  await page.goto('/?intro=1');
+  await page.evaluate(() => localStorage.removeItem('rd.dev.intro'));
+  await page.goto('/?intro=0');
   await page.getByRole('button', { name: /^繼續/ }).first().click();
-  await expect(page.locator('.title-intro')).toHaveAttribute('data-shot', 'paper');
+  await expect(page.getByRole('heading', { name: '已收回的訊息' })).toBeVisible();
+  await expect(page.locator('.title-intro')).toHaveCount(0);
 });
 
 test('第一次播：七個鏡頭照時間軸，沒有跳過；0:38 是集名卡，之後切進第一幕', async ({ page }) => {
@@ -167,7 +188,11 @@ test('第二集換 0:10 和 0:23：百葉窗是第二集的圖（亮另一條縫
 
   await open(page, { episode: 'ep1' });
   await page.clock.fastForward(10000);
-  expect(await litAt()).toBe(0);
+  await expect(page.locator('.title-intro')).toHaveAttribute('data-shot', 'blind');
+  for (const u of await page
+    .locator('.ti-blinds img')
+    .evaluateAll((im) => im.map((x) => (x as HTMLImageElement).currentSrc)))
+    expect(u).toMatch(/blind-ep1-/);
   await page.clock.fastForward(7000);
   await expect(page.locator('.title-intro')).toHaveAttribute('data-shot', 'court');
   await page.clock.fastForward(6000);
@@ -187,7 +212,7 @@ test('一格一黃：0:00–0:23 沒有黃，0:29 第一道黃（螢光），0:3
     await page.clock.fastForward(ms - 300);
     await page.evaluate(() => document.getAnimations().forEach((a) => a.finish()));
     const hits = await yellows(page);
-    if (shot === 'lucas') expect(hits).toEqual(['ti-line hl::before']);
+    if (shot === 'lucas') expect(hits).toEqual(['ti-hl29-ink']);
     else if (shot === 'mark') expect(hits).toEqual(['ti-hl']);
     else expect(hits, shot).toEqual([]);
     await page.clock.fastForward(300);
@@ -242,22 +267,33 @@ test('片頭期間看得到「選單」：打開時片頭暫停，關上接著�
   await expect(intro).not.toHaveAttribute('data-paused');
 });
 
-test('0:05 黑條節奏：第 2、3 條各隔 333ms，其餘 25 條各隔 83ms', async ({ page }) => {
+test('0:05 黑條節奏：第 1 條蓋第 11 行，第 2、3 條各隔 333ms，其餘各隔 83ms；只蓋畫面裡有字的行', async ({
+  page,
+}) => {
   await open(page);
-  const delays = await page
-    .locator('.ti-bar')
-    .evaluateAll((bars) =>
-      bars.map((b) => parseFloat(getComputedStyle(b).animationDelay) * 1000).sort((a, b) => a - b),
-    );
-  expect(delays).toHaveLength(28);
-  expect(Math.round(delays[0])).toBe(5000);
+  const bars = await page.locator('.ti-bar').evaluateAll((bars) =>
+    bars
+      .map((b) => ({
+        row: Number((b as SVGElement).dataset.row),
+        at: parseFloat(getComputedStyle(b).animationDelay) * 1000,
+      }))
+      .sort((a, b) => a.at - b.at),
+  );
+  // 桌機和手機的機位不同，畫面裡有字的行數不同（空行、出框的行沒有黑條）；兩種都至少十來行。
+  expect(bars.length).toBeGreaterThanOrEqual(12);
+  expect(bars[0]).toEqual({ row: 11, at: 5000 });
+  const delays = bars.map((b) => b.at);
   const gaps = delays.slice(1).map((d, i) => Math.round(d - delays[i]));
-  expect(gaps).toEqual([333, 333, ...Array(25).fill(83)]);
+  expect(gaps).toEqual([333, 333, ...Array(bars.length - 3).fill(83)]);
+  // 紅邊線之後空的那幾行（第 3、5、13 行）沒有黑條。
+  for (const n of [3, 5, 13]) expect(bars.map((b) => b.row)).not.toContain(n);
   // 播完每一條都蓋滿整行（Chrome 結尾進度 0.9999…，steps(4) 曾停在 3/4）。
   await page.evaluate(() => document.getAnimations().forEach((a) => a.finish()));
   expect(
     new Set(
-      await page.locator('.ti-bar').evaluateAll((b) => b.map((x) => getComputedStyle(x).scale)),
+      await page
+        .locator('.ti-bar, .ti-bar-hide')
+        .evaluateAll((b) => b.map((x) => getComputedStyle(x).scale)),
     ),
   ).toEqual(new Set(['1']));
 });
@@ -298,17 +334,42 @@ test('減少動態：第二集 0:23 提醒卡直接消失，「已略過」直�
   );
 });
 
-test('0:29 輪廓光照實際光向：西窗在畫面左邊，光在左肩和後腦左側', async ({ page }) => {
+test('0:29 是正式圖（立牌和輪廓光在圖裡算好，設計師 11-07 PASS），不再疊 HTML 剪影', async ({
+  page,
+}) => {
   await open(page);
   for (const [, ms] of ORDER.slice(0, 4)) await page.clock.fastForward(ms);
   await expect(page.locator('.title-intro')).toHaveAttribute('data-shot', 'lucas');
-  const [rim, body] = await Promise.all(
-    ['.ti-back-rim', '.ti-back-body'].map((s) =>
-      page.locator(s).evaluate((e) => {
-        const r = e.getBoundingClientRect();
-        return { left: r.left, right: r.right, mid: r.left + r.width / 2 };
-      }),
-    ),
-  );
-  expect(rim.right).toBeLessThan(body.mid);
+  await expect
+    .poll(() =>
+      page.locator('.shot-lucas .ti-plate img').evaluate((x) => (x as HTMLImageElement).currentSrc),
+    )
+    .toMatch(/court-0029/);
+  await expect(page.locator('.ti-back-rim, .ti-back-body')).toHaveCount(0);
+});
+
+test('0:00 紙：三張同機位正式圖疊起來，每一行（行號＋字）一拍二亮起；英文介面用英文那張', async ({
+  page,
+}) => {
+  for (const lang of ['zh', 'en'] as const) {
+    await open(page, { lang });
+    const hrefs = await page
+      .locator('.ti-paper image')
+      .evaluateAll((im) => im.map((x) => x.getAttribute('href') ?? ''));
+    const full = lang === 'en' ? /paper-full-en-/ : /paper-full-(desktop|phone)/;
+    expect(hrefs.length).toBe(4);
+    expect(hrefs[0]).toMatch(/paper-blank-/);
+    expect(hrefs[1]).toMatch(/paper-numbers-/);
+    expect(hrefs[2]).toMatch(full);
+    // 黑條是紙上的墨：空白頁乘上墨的反射率。
+    expect(hrefs[3]).toMatch(/paper-blank-/);
+    const cam = (page.viewportSize()!.width <= 767 ? 'phone' : 'desktop') as string;
+    for (const h of hrefs) expect(h).toContain(`-${cam}`);
+    const on = await page
+      .locator('.ti-prow')
+      .evaluateAll((r) =>
+        r.map((x) => Math.round(parseFloat(getComputedStyle(x).animationDelay) * 1000)),
+      );
+    expect(on).toEqual(Array.from({ length: 28 }, (_, n) => 400 + n * 83));
+  }
 });
