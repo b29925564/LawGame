@@ -6,9 +6,10 @@ import { fitLineUnits } from '../src/ui/lineUnits';
  * 冷開場的手機框（設計師裁定 25376da 第 6 項）：
  * - 框裡的字照 fitLine 在詞界斷，不出現「財務長辦｜公室」「聲｜音。」「電梯｜廳」。
  * - 手機框的上緣在右上角選單鈕下緣再下 ≥8px（320 寬時選單鈕蓋到手機狀態列）。
- * 步驟：2 通知、4 叫車、5 對話、7 對話、8 刷卡、9 門。
+ * 步驟：2 通知、3 回覆選項、4 叫車、5 對話、6 回覆選項（對話）、7 對話、8 刷卡、9 門。
  */
-const STEPS = [2, 4, 5, 7, 8, 9];
+// 3、6 是回覆選項（第二道關卡 a26de2b 第 3 項：「私下解｜決」「開｜除了」），4 的司機列「奧瑪・｜H」「2｜分鐘」。
+const STEPS = [2, 3, 4, 5, 6, 7, 8, 9];
 const TEXT =
   '.phone-body > p, .notif > span:not(.notif-app), .bubble, .ride-route dd, .subtitles li > span, .replies button';
 
@@ -32,7 +33,7 @@ async function open(page: Page, step: number, scale: number) {
             episode: 'ep1',
             scene: 0,
             step,
-            choices: { 'cold-open': { 3: 0 } },
+            choices: step <= 3 ? {} : { 'cold-open': { 3: 0 } },
             cards: [],
             flags: [],
             ethics: [],
@@ -50,13 +51,14 @@ async function open(page: Page, step: number, scale: number) {
   await page.waitForTimeout(200);
 }
 
-for (const w of [320, 360])
+// Pixel 7 寬（412）：第二道關卡 a26de2b 第 3 項「門虛｜掩著」只在這個寬度出現。
+for (const w of [320, 360, 412])
   for (const scale of [1, 1.25, 1.5])
     test(`冷開場手機框：詞界斷行、框不被選單鈕蓋（${w} 寬・${scale * 100}%）`, async ({
       page,
     }, info) => {
       test.skip(info.project.name !== 'chromium', '自己設視窗大小，手機那一組跑就好');
-      await page.setViewportSize({ width: w, height: 640 });
+      await page.setViewportSize({ width: w, height: w > 400 ? 915 : 640 });
       for (const step of STEPS) {
         await open(page, step, scale);
         const gap = await page.evaluate(() => {
@@ -88,6 +90,13 @@ for (const w of [320, 360])
           }),
         );
         expect(got.length, `第 ${step} 步 框裡有字`).toBeGreaterThan(0);
+        // 黏住的詞不能把字推出框外。
+        const over = await page
+          .locator(TEXT)
+          .evaluateAll((els) =>
+            els.filter((el) => el.scrollWidth > el.clientWidth + 1).map((el) => el.textContent),
+          );
+        expect(over, `第 ${step} 步 字超出框`).toEqual([]);
         for (const { text, starts } of got) {
           const marks = new Set<number>();
           let pos = 0;

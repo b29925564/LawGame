@@ -10,6 +10,8 @@ import { subCards, type Sub } from './subCards';
 /** 字幕框裡放得下的字數：量卡片實際的內寬與字型（桌機 20px、手機 17px 由樣式決定，這裡不另存一份）。 */
 interface Fit {
   em: number;
+  /** 框實際放得下幾個全形字（未扣餘裕）：中文的切分器允許一行多 1 字，不能超過這個數。 */
+  room: number;
   emRaw: number;
   font: string;
 }
@@ -48,12 +50,23 @@ export function useSubs(line: Line | null, token: number, active: boolean, atEnd
       const inner = el.clientWidth - parseFloat(box.paddingLeft) - parseFloat(box.paddingRight);
       const next = {
         // 中文照每字 1em 估，留 5% 餘裕；英文用實際字型量（canvas 量到的和 DOM 一樣寬），只扣 0.08em（約 2px）的捨入。
-        em: Math.max(8, Math.floor((inner / px) * 0.95)),
+        // 中文不設 8 字下限（第二道關卡 a26de2b 第 2 項：844×390 字幕 150% 框只放得下 7.8 字，硬算 8 字排成 3 行）。
+        em: Math.min(
+          Math.max(8, Math.floor((inner / px) * 0.95)),
+          Math.max(4, Math.floor(inner / px)),
+        ),
+        room: Math.max(4, inner / px),
         emRaw: Math.max(8, Math.floor((inner / px) * 100 - 8) / 100),
         font: `${cs.fontWeight} ${px}px ${cs.fontFamily}`,
       };
       setFit((f) =>
-        f && f.em === next.em && f.emRaw === next.emRaw && f.font === next.font ? f : next,
+        f &&
+        f.em === next.em &&
+        f.room === next.room &&
+        f.emRaw === next.emRaw &&
+        f.font === next.font
+          ? f
+          : next,
       );
     };
     measure();
@@ -65,7 +78,9 @@ export function useSubs(line: Line | null, token: number, active: boolean, atEnd
     if (!text) return [];
     if (!fit) return [{ text, from: 0, of: 1, marked: false }];
     const latin = !/\p{Script=Han}/u.test(text);
-    return subCards(text, latin ? fit.emRaw : fit.em, latin ? measureOf(fit.font) : undefined);
+    return latin
+      ? subCards(text, fit.emRaw, measureOf(fit.font))
+      : subCards(text, fit.em, undefined, 2, fit.room);
   }, [text, fit, fonts]); // eslint-disable-line react-hooks/exhaustive-deps
   const count = Math.max(1, cards.length);
   const ix = atEnd ? count - 1 : at.token === token ? Math.min(at.ix, count - 1) : 0;

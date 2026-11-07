@@ -50,7 +50,7 @@ describe('glueTail：英文頂列期限的黏字（設計師裁定 25376da）', 
       `Pretrial hearing in${NB}three${NB}weeks`,
     );
     expect(glueTail('Trial in three days')).toBe(`Trial in${NB}three${NB}days`);
-    expect(glueTail('Discovery deadline: two weeks')).toBe(`Discovery deadline: two${NB}weeks`);
+    expect(glueTail('Discovery deadline: two weeks')).toBe(`Discovery${NB}deadline: two${NB}weeks`);
     expect(glueTail('Mediation: one week')).toBe(`Mediation: one${NB}week`);
     expect(glueTail('Trial in 3 days now')).toBe(`Trial in${NB}3${NB}days${NB}now`);
   });

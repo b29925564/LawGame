@@ -214,5 +214,12 @@ for (const [ep, scene] of [
           .forEach((r) => expect(endsBanned(r), `${at} 行尾「${r.split(' ').pop()}」`).toBe(false));
         for (const r of rows)
           expect(r, `${at} 數字和單位拆開`).not.toMatch(/(?:^|\s)(?:one|two|three|\d+)$/i);
+        // 冒號前的標籤整段同一行（設計師裁定 a26de2b：「Discovery｜deadline:｜two weeks」）。
+        const label = rows.join(' ').match(/^(.+?:)/)?.[1];
+        if (label)
+          expect(
+            rows.some((r) => r.includes(label)),
+            `${at} 標籤「${label}」拆開`,
+          ).toBe(true);
       }
   });
