@@ -58,6 +58,10 @@ describe('glueTail：英文頂列期限的黏字（設計師裁定 25376da）', 
     );
     expect(glueTail('Trial in three days')).toBe(`Trial in${NB}three${NB}days`);
     expect(glueTail('Discovery deadline: two weeks')).toBe(`Discovery${NB}deadline: two${NB}weeks`);
+    // fitLine 不再把已經黏好的兩段整個黏死（320 寬時標籤被拆成「Discovery｜deadline:｜two weeks」）。
+    expect(fitLineEn(glueTail('Discovery deadline: two weeks'))).toBe(
+      `Discovery${NB}deadline: two${NB}weeks`,
+    );
     expect(glueTail('Mediation: one week')).toBe(`Mediation: one${NB}week`);
     expect(glueTail('Trial in 3 days now')).toBe(`Trial in${NB}3${NB}days${NB}now`);
   });
@@ -149,5 +153,35 @@ describe('第二道關卡 72a9003 設計師裁定 1、6', () => {
       7,
     ))
       expect(l.match(/[\p{L}\p{N}]/gu)!.length, l).toBeGreaterThanOrEqual(3);
+  });
+  it('以「，。？」收尾的兩字子句算一行夠格（候選人卡「自己開店｜七年。」，不是「自己｜開店七年。」）', () => {
+    const width = (x: string) => [...x.trimEnd()].length;
+    expect(chineseLines('自己開店七年。', width, 5, true)).toEqual(['自己開店', '七年。']);
+    expect(chineseLines('單親，兩個孩子。', width, 5, true)).toEqual(['單親，', '兩個孩子。']);
+  });
+});
+
+describe('第二道關卡 464a280 第 5 項：短標籤', () => {
+  const lines = (text: string, room: number) => {
+    const parts = text.split(/([ \u00a0])/);
+    const words = parts.filter((_, i) => i % 2 === 0);
+    const hard = parts.filter((_, i) => i % 2 === 1).map((x) => x === '\u00a0');
+    return englishLines(words, hard, (s) => s.length, room).map((l) => l.replace(/\u00a0/g, ' '));
+  };
+  it('英文兩個字的標籤也黏住（"Not ⏎ agreed"、"$1.5 ⏎ million" 不行）', () => {
+    for (const t of ['Not agreed', '$1.5 million']) expect(fitLineEn(t)).toBe(t.replace(' ', ' '));
+  });
+  it('單字行不得不出現時，放在中間，不放最後一行（"currently taking ⏎ torts."）', () => {
+    expect(lines('Twenty-three, currently taking torts.', 16)).toEqual([
+      'Twenty-three,',
+      'currently',
+      'taking torts.',
+    ]);
+  });
+  it('房名和房號不拆（「調解｜室 2」「調解｜室外的走廊」）', () => {
+    expect(fitLineUnits('第四幕・卡爾德郡高等法院　調解室 2　週四 10:00')).toContain('調解室 2');
+    expect(
+      fitLineUnits('卡爾德郡高等法院　調解室外的走廊').some((u) => u.startsWith('調解室')),
+    ).toBe(true);
   });
 });
