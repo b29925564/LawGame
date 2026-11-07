@@ -281,6 +281,13 @@ export function nameUnits(text: string): NameUnit[] {
 
 /** 虛詞（介詞、連詞、助詞、副詞）與代名詞：後面沒有標點時，fitLine 不讓它留在行尾。 */
 const TRAIL = /[的之與和及或在於對把被為從到以而並是我你他她它了著過沒不又也都就還再很]$/;
+/**
+ * 數詞＋量詞（一台、一支、一行、兩單、31 樓不算：那是數字＋單位）：跟後面的名詞同一行，不留在行尾，也不單獨一行
+ * （設計師第二道關卡 72a9003 裁定 1-2：本來排 v94 全站，黑底字卡和手機框提前到 v93；短標籤都走 fitLine，一起做）。
+ * 量詞後面只接了兩個字以內（「一台白色」）還沒到名詞，繼續黏下一個詞（「一台白色廂型車」）。
+ */
+const NUMCL =
+  /[一二兩三四五六七八九十百千幾半][台支行單個張件位隻輛本份條把杯次間棟層盞句封通頁步]\p{Script=Han}{0,2}$/u;
 /** 行尾可以停的地方：標點或空白。 */
 const STOP = /[\p{P}\s]$/u;
 /** 書名號、篇名號裡的一整段（〈給稽核部的說明_v3〉）不拆，字數上限。 */
@@ -341,8 +348,8 @@ export function fitLineUnits(text: string, titles = true): string[] {
   let carry = '';
   for (const u of us) {
     const w = carry + u;
-    // 虛詞收尾（或虛詞後面的空白）：黏到下一個單位。
-    if (!u.trim() ? !!carry : !STOP.test(w) && TRAIL.test(w)) carry = w;
+    // 虛詞收尾（或虛詞後面的空白）、數詞＋量詞收尾：黏到下一個單位。
+    if (!u.trim() ? !!carry : !STOP.test(w) && (TRAIL.test(w) || NUMCL.test(w))) carry = w;
     else {
       out.push(w);
       carry = '';

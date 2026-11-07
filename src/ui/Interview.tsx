@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import * as interview from '../engine/episode/interview';
 import type { InterviewScene } from '../engine/episode/schema';
 import { interviewState, useEpisode } from '../engine/game';
@@ -8,6 +8,61 @@ import { StickyNote } from './Marks';
 import { Portrait, Speech } from './Portrait';
 import { Transcript } from './Shell';
 import { fitLine } from './prose';
+import { fitUnits } from './fitUnits';
+
+/** 按鈕標籤至少有一個排成兩行以上。 */
+const wraps = (row: HTMLElement) =>
+  [...row.querySelectorAll('button')].some((b) => {
+    const r = document.createRange();
+    r.selectNodeContents(b);
+    const tops = new Set(
+      [...r.getClientRects()].filter((x) => x.width > 0.5).map((x) => Math.round(x.top)),
+    );
+    return tops.size > 1;
+  });
+
+/**
+ * 「提問｜施壓｜安撫（剩 2 次）」三格放不下（320 寬中文 150%：「提⏎問」一字一行、底部被切）：
+ * 每顆的字一行，放不下就排成兩列（提問、施壓一列，安撫一列），還放不下就三顆直排（設計師第二道關卡 72a9003 裁定 4）。
+ * 選項區會縮、會捲，最矮也要整列按鈕看得到，不切。
+ */
+function useActionRow(deps: unknown[]) {
+  const ref = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const row = ref.current;
+    const panel = row?.parentElement;
+    if (!row || !panel) return;
+    const fit = () => {
+      delete row.dataset.cols;
+      panel.style.removeProperty('min-height');
+      fitUnits(row);
+      for (const cols of ['2', '1']) {
+        if (!wraps(row)) break;
+        row.dataset.cols = cols;
+        fitUnits(row);
+      }
+      const cs = getComputedStyle(panel);
+      const n = (v: string) => parseFloat(v) || 0;
+      const need =
+        row.getBoundingClientRect().height +
+        n(cs.paddingTop) +
+        n(cs.paddingBottom) +
+        n(cs.borderTopWidth) +
+        n(cs.borderBottomWidth);
+      if (need > n(cs.minHeight)) panel.style.minHeight = `${Math.ceil(need)}px`;
+    };
+    fit();
+    const ro = new ResizeObserver(fit);
+    ro.observe(document.documentElement);
+    document.fonts?.addEventListener('loadingdone', fit);
+    return () => {
+      ro.disconnect();
+      document.fonts?.removeEventListener('loadingdone', fit);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, deps);
+  return ref;
+}
 
 /** 訪談（企劃書 6.3）：提問、施壓、安撫。視訊通話畫面。 */
 export function Interview({ scene }: { scene: InterviewScene }) {
@@ -24,6 +79,8 @@ export function Interview({ scene }: { scene: InterviewScene }) {
   // 便利貼貼在標頭計量表左邊（設計稿 inner-voice 2a）。
   const note = [...st.log].reverse().find((l) => l.mark?.kind === 'sticky' && l.mark.on);
   const lastMood = [...st.log].reverse().find((l) => l.who === scene.who)?.mood ?? '平';
+  const calms = st.calms ?? scene.calms;
+  const row = useActionRow([t, calms, ending]);
 
   return (
     <main className="scene interview">
@@ -65,7 +122,7 @@ export function Interview({ scene }: { scene: InterviewScene }) {
       {ending ? null : (
         <section className="panel actions">
           {/* 提問／施壓是分頁；安撫是動作，放在分頁列外面（無障礙審查第 7 條）。 */}
-          <div className="row">
+          <div className="row" ref={row}>
             <div className="row" role="tablist" aria-label={t('問法')}>
               <button
                 role="tab"
@@ -74,7 +131,7 @@ export function Interview({ scene }: { scene: InterviewScene }) {
                 aria-selected={tab === 'ask'}
                 onClick={() => setTab('ask')}
               >
-                {t('提問')}
+                {fitLine(t('提問'))}
               </button>
               <button
                 role="tab"
@@ -83,11 +140,11 @@ export function Interview({ scene }: { scene: InterviewScene }) {
                 aria-selected={tab === 'press'}
                 onClick={() => setTab('press')}
               >
-                {t('施壓')}
+                {fitLine(t('施壓'))}
               </button>
             </div>
-            <button disabled={(st.calms ?? scene.calms) <= 0} onClick={calm}>
-              {fitLine(t('安撫（剩 {n} 次）', { n: st.calms ?? scene.calms }))}
+            <button disabled={calms <= 0} onClick={calm}>
+              {fitLine(t('安撫（剩 {n} 次）', { n: calms }))}
             </button>
           </div>
           {tab === 'ask' ? (

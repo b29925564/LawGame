@@ -120,3 +120,76 @@ for (const w of [320, 360])
       }
       expect(seen).toBe(CHOOSE.length);
     });
+
+/**
+ * 通話字幕多到放不下時（第 1 集「上車」、第 2 集尾聲第 6 步，320 寬 150%）：字不疊到手機的狀態列和瀏海，
+ * 舊的往上推到狀態列下緣就整行切掉，不留半行（設計師第二道關卡 72a9003 裁定 3）。從頭一步一步點進去量。
+ */
+for (const w of [320, 360])
+  for (const lang of ['zh', 'en'])
+    test(`通話字幕不疊到狀態列、不留半行（${w} 寬・150%・${lang}）`, async ({ page }, info) => {
+      test.skip(info.project.name !== 'chromium', '自己設視窗大小，手機那一組跑就好');
+      test.setTimeout(90_000);
+      await page.setViewportSize({ width: w, height: 640 });
+      let talk = 0;
+      for (const [episode, scene, step, choices] of [
+        ['ep1', 0, 4, { 'cold-open': { 3: 0 } }],
+        ['ep2', 30, 0, {}],
+      ] as const) {
+        const progress = {
+          episode,
+          scene,
+          step,
+          choices,
+          cards: [],
+          flags: [],
+          ethics: [],
+          scenes: {},
+        };
+        await open(page, progress, lang, 1.5);
+        const beat = page.locator('.place-beat');
+        if (await beat.count()) await beat.click();
+        for (let k = 0; k < 16; k++) {
+          await page.waitForTimeout(600);
+          const m = await page.evaluate(() => {
+            const st = document.querySelector('.phone-status');
+            const ol = document.querySelector('.subtitles');
+            if (!st || !ol) return null;
+            const line = st.getBoundingClientRect().bottom;
+            const cp = getComputedStyle(ol).clipPath;
+            const visTop =
+              ol.getBoundingClientRect().top +
+              (cp.startsWith('inset') ? parseFloat(cp.slice(6)) : 0);
+            const bad: string[] = [];
+            const walk = document.createTreeWalker(ol, NodeFilter.SHOW_TEXT);
+            for (let n = walk.nextNode(); n; n = walk.nextNode()) {
+              const r = document.createRange();
+              r.selectNodeContents(n);
+              for (const b of r.getClientRects()) {
+                if (b.height < 0.5 || b.bottom <= visTop + 0.5) continue;
+                if (b.top < visTop - 0.5) bad.push(`半行「${n.textContent?.slice(0, 16)}」`);
+                if (b.top < line - 0.5)
+                  bad.push(
+                    `疊到狀態列「${n.textContent?.slice(0, 16)}」${(line - b.top).toFixed(1)}px`,
+                  );
+              }
+            }
+            return bad;
+          });
+          if (m) {
+            talk++;
+            expect.soft(m, `${episode} 第 ${k} 下`).toEqual([]);
+          }
+          const btn = page
+            .locator(
+              '.phone .phone-next:visible, .phone .replies button:visible, .phone .notif:visible, .phone .primary:visible, .cine-next:visible',
+            )
+            .first();
+          if (!(await btn.count())) break;
+          await btn.click();
+          await page.waitForTimeout(200);
+          if (await beat.count()) await beat.click().catch(() => {});
+        }
+      }
+      expect(talk).toBeGreaterThan(4);
+    });

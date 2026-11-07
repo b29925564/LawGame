@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { episodes } from '../content';
 import { fitLineUnits } from './lineUnits';
-import { englishLines, glueEnglish, glueTail } from './prose';
+import { chineseLines, englishLines, fitLineEn, glueEnglish, glueTail } from './prose';
 
 /** 兩集手機戲裡的黑底字卡（do: caption）正文。 */
 const captions = Object.values(episodes).flatMap((ep) =>
@@ -97,5 +97,36 @@ describe('englishLines：英文黑底字卡自己排行（設計師 #326 審查�
       'evening, east',
       'Calder Harbor.',
     ]);
+  });
+});
+
+describe('第二道關卡 72a9003 設計師裁定 1、6', () => {
+  const NB = '\u00a0';
+  it('房號、庭號跟著前面的名詞；最後兩個字黏住', () => {
+    expect(fitLineEn('Whitlock & Hale, Conference Room A, Monday 15:00')).toContain(`Room${NB}A,`);
+    expect(fitLineEn('Calder County Superior Court, Courtroom 5')).toContain(`Courtroom${NB}5`);
+    expect(fitLineEn('Dad. In 2016, who ordered the maintenance records destroyed?')).toMatch(
+      new RegExp(`records${NB}destroyed\\?$`),
+    );
+  });
+  it('數詞＋量詞跟後面的詞同一個單位', () => {
+    const u = fitLineUnits('財務長辦公室亮著燈。一台沒登出的電腦前，有人打了一行字。');
+    expect(u.some((x) => /一台$/.test(x))).toBe(false);
+    expect(u.some((x) => /一行$/.test(x))).toBe(false);
+    expect(fitLineUnits('一台白色廂型車停在紅燈前')).toContain('一台白色廂型車');
+  });
+  it('中文字卡：行數最少，同樣行數先斷在句號後；每行至少 3 個字', () => {
+    // 每個字 1 寬、標點也是 1：一行 10 個字。
+    const width = (x: string) => [...x.trimEnd()].length;
+    expect(chineseLines('公車進站，又開走了。伊森沒有上車。', width, 10)).toEqual([
+      '公車進站，又開走了。',
+      '伊森沒有上車。',
+    ]);
+    for (const l of chineseLines(
+      '週二傍晚，卡爾德港東區。一台白色廂型車停在紅燈前，儀表板上夾著一支手機。',
+      width,
+      7,
+    ))
+      expect(l.match(/[\p{L}\p{N}]/gu)!.length, l).toBeGreaterThanOrEqual(3);
   });
 });

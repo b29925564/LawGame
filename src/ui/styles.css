@@ -1000,7 +1000,8 @@ details summary {
 }
 .choices button::before,
 .replies button::before {
-  content: '›';
+  /* 箭頭只是畫面上的記號，不進按鈕的無障礙名稱（替代文字給空字串；第二道關卡 72a9003 設計師裁定 6）。 */
+  content: '›' / '';
   position: absolute;
   left: 14px;
   top: 50%;
@@ -2986,6 +2987,16 @@ fieldset.relations.compact {
     padding-inline: 8px;
   }
 }
+/* 三格放不下（Interview.tsx useActionRow）：兩列，安撫自己一列；還放不下就三顆直排。按鈕的字都是一行。 */
+.actions > .row[data-cols='2'] {
+  grid-template-columns: repeat(2, 1fr);
+}
+.actions > .row[data-cols='2'] > button {
+  grid-column: 1 / -1;
+}
+.actions > .row[data-cols='1'] {
+  grid-template-columns: 1fr;
+}
 /* 一格一黃：選中的分頁是白框，黃只留給下一步（第一道關卡 B2）；選單的分頁同一套（P1-7）。 */
 .actions [aria-selected='true'],
 .menu-panel [role='tab'][aria-selected='true'] {
@@ -3417,6 +3428,11 @@ fieldset.relations.compact {
   flex: 1;
   height: 1px;
   background: var(--cine-line);
+}
+/* 中文字卡自己排好的一行（prose.tsx chineseLines）：每行都量過放得下，整行不再換行
+   （剛好等於欄寬的一行，瀏覽器會因為小數點後的誤差再折一次）。 */
+.cine-text .zh-line {
+  white-space: nowrap;
 }
 .cine-text {
   margin-block: 0;
@@ -3852,6 +3868,14 @@ fieldset.relations.compact {
   --border: var(--cine-line);
   --muted: var(--cine-muted);
   --accent: #f4c53d;
+}
+/* 字幕多到放不下：最新的一句貼底，舊的往上推到狀態列下緣就切掉，不壓到時間和瀏海；
+   切的時候整行拿掉，不留半行（Phone.tsx useWholeLines；設計師第二道關卡 72a9003 裁定 3）。 */
+.talk > .subtitles {
+  flex: 0 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  justify-content: flex-end;
 }
 .phone:has(.door, .talk) .phone-status {
   position: relative;

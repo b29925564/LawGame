@@ -202,6 +202,52 @@ function usePinnedBottom<T extends HTMLElement>(key: unknown) {
   return ref;
 }
 
+/**
+ * 字幕框上緣切到一半的那一行整行拿掉（設計師「溢出時整行切掉」）：量每一行字，跨在框上緣的那一行，
+ * 用 clip-path 從框頂切到那一行的下緣。字換行、加了一句、框的高變了，都重量一次。
+ */
+function useWholeLines<T extends HTMLElement>() {
+  const ref = useRef<T>(null);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const fit = () => {
+      const box = el.getBoundingClientRect();
+      const top = box.top + el.clientTop;
+      let cut = top;
+      const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+      for (let n = w.nextNode(); n; n = w.nextNode()) {
+        const r = document.createRange();
+        r.selectNodeContents(n);
+        for (const b of r.getClientRects())
+          if (b.height > 0.5 && b.top < top - 0.5 && b.bottom > top + 0.5)
+            cut = Math.max(cut, b.bottom);
+      }
+      if (cut > top + 0.5) el.style.clipPath = `inset(${Math.ceil(cut - box.top)}px 0 0 0)`;
+      else el.style.removeProperty('clip-path');
+    };
+    fit();
+    const ro = new ResizeObserver(fit);
+    ro.observe(el);
+    for (const c of el.children) ro.observe(c);
+    const mo = new MutationObserver(() => {
+      for (const c of el.children) ro.observe(c);
+      fit();
+    });
+    mo.observe(el, {
+      childList: true,
+      subtree: true,
+      characterData: true,
+      attributeFilter: ['class'],
+    });
+    return () => {
+      ro.disconnect();
+      mo.disconnect();
+    };
+  });
+  return ref;
+}
+
 function Screen({
   v,
   owner,
@@ -219,6 +265,7 @@ function Screen({
   const log = usePinnedBottom<HTMLOListElement>(
     `${v.thread}|${(v.threads[v.thread ?? ''] ?? []).length}|${v.chosen}|${s.do}`,
   );
+  const subs = useWholeLines<HTMLOListElement>();
   switch (s.do) {
     case 'notify':
       return (
@@ -310,7 +357,7 @@ function Screen({
   // talk 與 choose(talk)：手機收進口袋，畫面是字幕。
   return (
     <div className="phone-body talk">
-      <ol className="subtitles" aria-live="polite">
+      <ol className="subtitles" aria-live="polite" ref={subs}>
         {v.talk.map((l, i) => (
           <li key={i} className={l.who === owner ? 'own' : ''}>
             <strong>{t(l.who, scope)}</strong>

@@ -12,6 +12,8 @@
  * 單位的字超出它所在的框，或再往外兩層的框（到絕對定位、可以捲動的框為止），就加 .fl-wrap；重排以後再看一次，
  * 直到沒有單位出框。內層的詞只有在外層已經拆開時才看。
  */
+import { clearMenu } from './menuClear';
+
 const ROOM_SLACK = 0.5;
 const LEVELS = 3;
 const ROUNDS = 6;
@@ -61,6 +63,8 @@ export function fitUnits(root: ParentNode = document) {
 export function watchUnits() {
   const run = () => {
     fitUnits();
+    // 字排好以後再量選單鈕四周（換行會改變頂列的高）。
+    clearMenu();
     for (const e of document.querySelectorAll<HTMLElement>('.fl')) {
       const b = flowOf(e);
       if (b && !seen.has(b)) {

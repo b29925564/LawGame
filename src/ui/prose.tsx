@@ -26,17 +26,24 @@ export function prose(text: string, tail = true): ReactNode {
  * 英文短行（眉標、手機框、按鈕）的 fitLine：專有名詞黏住；a／an／the／of／to…（plateBreaks.ts 的 endsBanned）黏住下一個字，
  * 不留在行尾（設計師裁定 a26de2b：「VP of ⏎ Operations」「still at the ⏎ office」）。其餘照瀏覽器在空白斷。
  */
+/** 數字開頭的連字號複合字（"12th-floor"、"24-hour"）：數字＋單位，不在連字號換行（設計師第二道關卡 72a9003 裁定 6）。 */
+const HYPHEN_NUM = /\d[\p{L}\d]*-\p{L}/u;
 /** 數字和後面的單位黏在一起（"2 min"、"10 a.m."；設計師 v93 排字規則：數字＋單位不拆）。 */
 const UNIT =
   /^(min|mins|minutes?|hours?|hrs?|days?|weeks?|months?|years?|seconds?|secs?|km|miles?|percent|%|am|pm|a\.m\.|p\.m\.)[.,;:!?)]*$/i;
 const glued = (prev: string, x: string) =>
   endsBanned(prev) ||
+  // 房號、庭號跟著前面的名詞（"Conference Room ⏎ A"；設計師第二道關卡 72a9003 裁定 6）。
+  (/^[A-Z][a-z]+$/.test(prev) && /^(?:[A-Z]|\d{1,3})[,.;:]?$/.test(x)) ||
   /^[→←—–]$/.test(prev) ||
   ((/^\$?\d[\d,.:]*$/.test(prev) || NUM_EN.test(prev)) && UNIT.test(x));
 
 export function fitLineEn(text: string): string {
   const w = glueNames(text).split(' ');
-  return w.reduce((out, x, i) => (i === 0 ? x : out + (glued(w[i - 1], x) ? NB : ' ') + x));
+  // 最後兩個字黏住：沒有只剩一個字的最後一行（規則 4，"records ⏎ destroyed?"）；放不下時退路 B 照樣在中間拆。
+  return w.reduce((out, x, i) =>
+    i === 0 ? x : out + (glued(w[i - 1], x) || (i === w.length - 1 && w.length > 2) ? NB : ' ') + x,
+  );
 }
 
 /** 引號裡的短篇名（"Note to Audit_v3."，四個字以內）黏成一段：放得下一行就整段不拆（設計師裁定 a26de2b）。 */
@@ -109,7 +116,7 @@ export function fitLine(text: string, titles = true): ReactNode {
     return groups.map((g, i) => (
       <Fragment key={i}>
         {i > 0 && ' '}
-        {g.includes(NB) ? flEn(g, i) : g}
+        {g.includes(NB) ? flEn(g, i) : HYPHEN_NUM.test(g) ? <span className="fl">{g}</span> : g}
       </Fragment>
     ));
   }
@@ -160,10 +167,19 @@ export function FitLine({ text, className }: { text: string; className?: string 
   // 英文先黏專有名詞、引號裡的篇名，排行時當成不拆的（englishLines 的 hard）。
   const en = HAN.test(text) ? text : glueTitles(glueNames(text));
   const lines = useEnglishLines(ref, en);
+  const zh = useChineseLines(ref, text);
   return (
     <p ref={ref} className={className}>
       {HAN.test(text)
-        ? fitLine(text, !isSplit)
+        ? zh
+          ? zh.map((l, i) => (
+              <Fragment key={i}>
+                {i > 0 && <br />}
+                {/* 每一行還是 fitLine 的單位：量得和畫的差一點時，瀏覽器在單位之間折，不在字中間。 */}
+                <span className="zh-line">{fitLine(l, !isSplit)}</span>
+              </Fragment>
+            ))
+          : fitLine(text, !isSplit)
         : lines
           ? lines.map((l, i) => (
               <Fragment key={i}>
@@ -176,6 +192,99 @@ export function FitLine({ text, className }: { text: string; className?: string 
           : glueEnglish(en)}
     </p>
   );
+}
+
+/**
+ * 中文黑底字卡自己排行（設計師第二道關卡 72a9003 裁定 1：#328 之後 22:31、23:14、17:52 比以前難讀）。
+ * 換行單位是 fitLineUnits 的單位（專有名詞、虛詞收尾、數詞＋量詞都已黏好），在單位之間挑換行點，依序：
+ * 1. 不出框、不拆單位（單位比一行還寬時才在它內部的詞界拆）；
+ * 2. 每一行都至少 3 個字（標點不算），不只是最後一行；
+ * 3. 行數最少；
+ * 4. 行數一樣時，斷點先選句號後，再來逗號後，最後才是詞界。
+ * 對照：23:14 排成「公車進站，又開走了。｜伊森沒有上車。」。量不到時回傳 null，交給瀏覽器照 fitLine 排。
+ */
+const ZH_OVER = 1e12;
+const ZH_INNER = 1e10;
+/** 行尾是虛詞（「一台沒｜登出」），或數詞＋量詞（「一台｜沒登出」）：前面三條規則照舊，比行數重。 */
+const ZH_END = 1e9;
+const ZH_TRAIL =
+  /[的之與和及或在於對把被為從到以而並是我你他她它了著過沒不又也都就還再很]$|[一二兩三四五六七八九十百千幾半][台支行單個張件位隻輛本份條把杯次間棟層盞句封通頁步]$/u;
+const ZH_SHORT = 1e8;
+const ZH_LINE = 1e6;
+const ZH_COMMA = 1e3;
+const ZH_WORD = 2e3;
+const zhLetters = (x: string) => x.match(/[\p{L}\p{N}]/gu)?.length ?? 0;
+export function chineseLines(text: string, width: (s: string) => number, room: number) {
+  // 原子：單位；比一行還寬的單位拆成內部的詞（inner 標記那個切點是在單位裡面）。
+  const atoms: string[] = [];
+  const inner: boolean[] = [];
+  for (const u of fitLineUnits(text, false)) {
+    // 內部的詞還是比一行寬（極窄的欄）才拆成字：每個原子都放得進一行，排好的行才能整行不換行（.zh-line）。
+    const parts = (width(u.trimEnd()) > room ? innerUnits(u) : [u]).flatMap((x) =>
+      width(x.trimEnd()) > room ? [...x] : [x],
+    );
+    parts.forEach((x, k) => {
+      if (k > 0) inner[atoms.length - 1] = true;
+      atoms.push(x);
+      inner.push(false);
+    });
+  }
+  const n = atoms.length;
+  const best = new Array<number>(n + 1).fill(Infinity);
+  const from = new Array<number>(n + 1).fill(0);
+  best[0] = 0;
+  for (let j = 1; j <= n; j++)
+    for (let i = j - 1; i >= 0; i--) {
+      const line = atoms.slice(i, j).join('');
+      const w = width(line.trimEnd());
+      if (w > room && i < j - 1) break;
+      let c = ZH_LINE + (w > room ? ZH_OVER : 0);
+      if (zhLetters(line) < 3) c += ZH_SHORT;
+      if (j < n) {
+        if (inner[j - 1]) c += ZH_INNER;
+        const end = line.trimEnd();
+        if (ZH_TRAIL.test(end)) c += ZH_END;
+        c += /[。！？…」』]$/.test(end) ? 0 : /[，、；：）]$/.test(end) ? ZH_COMMA : ZH_WORD;
+        // 同樣條件下兩行長度接近一點（遠小於上面每一級）。
+        c += ((room - w) / room) ** 2;
+      }
+      if (best[i] + c < best[j]) {
+        best[j] = best[i] + c;
+        from[j] = i;
+      }
+    }
+  const lines: string[] = [];
+  for (let j = n; j > 0; j = from[j]) lines.unshift(atoms.slice(from[j], j).join(''));
+  return lines;
+}
+
+function useChineseLines(ref: RefObject<HTMLElement | null>, text: string): string[] | null {
+  const [got, setGot] = useState<{ text: string; lines: string[] } | null>(null);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el || !HAN.test(text)) return;
+    const ctx = document.createElement('canvas').getContext('2d');
+    if (!ctx) return;
+    const check = () => {
+      const cs = getComputedStyle(el);
+      const room = el.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+      if (!(room > 0)) return;
+      ctx.font = `${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+      if ('letterSpacing' in ctx)
+        ctx.letterSpacing = cs.letterSpacing === 'normal' ? '0px' : cs.letterSpacing;
+      // 中文字寬是整數（全形字＋字距），canvas 量的和排版一樣：剛好等於欄寬的一行放得下（「公車進站，又開走了。」360 寬 150% 正好 312px）。
+      const lines = chineseLines(text, (x) => ctx.measureText(x).width, room + 0.25);
+      setGot((g) =>
+        g?.text === text && g.lines.join('\n') === lines.join('\n') ? g : { text, lines },
+      );
+    };
+    check();
+    const ro = new ResizeObserver(check);
+    ro.observe(el);
+    void document.fonts?.ready.then(check);
+    return () => ro.disconnect();
+  }, [ref, text]);
+  return got?.text === text ? got.lines : null;
 }
 
 /**
