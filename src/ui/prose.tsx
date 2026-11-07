@@ -31,18 +31,32 @@ const HYPHEN_NUM = /\d[\p{L}\d]*-\p{L}/u;
 /** 數字和後面的單位黏在一起（"2 min"、"10 a.m."；設計師 v93 排字規則：數字＋單位不拆）。 */
 const UNIT =
   /^(min|mins|minutes?|hours?|hrs?|days?|weeks?|months?|years?|seconds?|secs?|km|miles?|percent|%|am|pm|a\.m\.|p\.m\.)[.,;:!?)]*$/i;
+/** 房名：大寫開頭的字，後面接房號、庭號（一個大寫字母或三位以內的數字）。 */
+const CAP = /^[A-Z][a-z]+$/;
+const ROOM_NO = /^(?:[A-Z]|\d{1,3})[,.;:]?$/;
 const glued = (prev: string, x: string) =>
-  endsBanned(prev) ||
+  // 後面帶標點的不是虛詞：房號 "Room A, Monday" 的 "A," 不是冠詞 a。
+  (endsBanned(prev) && !/[,.;:!?]$/.test(prev)) ||
   // 房號、庭號跟著前面的名詞（"Conference Room ⏎ A"；設計師第二道關卡 72a9003 裁定 6）。
-  (/^[A-Z][a-z]+$/.test(prev) && /^(?:[A-Z]|\d{1,3})[,.;:]?$/.test(x)) ||
+  (CAP.test(prev) && ROOM_NO.test(x)) ||
   /^[→←—–]$/.test(prev) ||
   ((/^\$?\d[\d,.:]*$/.test(prev) || NUM_EN.test(prev)) && UNIT.test(x));
 
 export function fitLineEn(text: string): string {
   const w = glueNames(text).split(' ');
+  // 房名整個黏住（"Conference Room A"，不只 "Room A"；設計師 #329 @7fde9ba 第 3 項）：房號前面連著的大寫字都算房名。
+  const room = new Set<number>();
+  w.forEach((x, i) => {
+    if (i === 0 || !CAP.test(w[i - 1]) || !ROOM_NO.test(x)) return;
+    for (let k = i - 1; k > 0 && CAP.test(w[k - 1]); k--) room.add(k);
+  });
   // 最後兩個字黏住：沒有只剩一個字的最後一行（規則 4，"records ⏎ destroyed?"）；放不下時退路 B 照樣在中間拆。
   return w.reduce((out, x, i) =>
-    i === 0 ? x : out + (glued(w[i - 1], x) || (i === w.length - 1 && w.length > 2) ? NB : ' ') + x,
+    i === 0
+      ? x
+      : out +
+        (glued(w[i - 1], x) || room.has(i) || (i === w.length - 1 && w.length > 2) ? NB : ' ') +
+        x,
   );
 }
 
@@ -225,7 +239,9 @@ const ZH_INNER = 1e10;
 /** 行尾是虛詞（「一台沒｜登出」），或數詞＋量詞（「一台｜沒登出」）：前面三條規則照舊，比行數重。 */
 const ZH_END = 1e9;
 const ZH_TRAIL =
-  /[的之與和及或在於對把被為從到以而並是我你他她它了著過沒不又也都就還再很]$|[一二兩三四五六七八九十百千幾半][台支行單個張件位隻輛本份條把杯次間棟層盞句封通頁步]?$/u;
+  /[之與和及或在於對把被為從到以而並是我你他她它沒不又也都就還再很跟向]$|[一二兩三四五六七八九十百千幾半][台支行單個張件位隻輛本份條把杯次間棟層盞句封通頁步]?$/u;
+/** 往前黏的助詞（單獨一個詞的「的」，不是「地圖」「過去」）不放行首（「比家裡｜的月曆」不行，「比家裡的｜月曆」可以；設計師 #329 @7fde9ba 第 1 項）。 */
+const ZH_HEAD = /^[的了著過地得]\p{P}*$/u;
 const ZH_SHORT = 1e8;
 const ZH_NUM_END = /[一二兩三四五六七八九十百千幾半0-9]$/u;
 const ZH_LINE = 1e6;
@@ -273,6 +289,7 @@ export function chineseLines(
         if (inner[j - 1]) c += ZH_INNER;
         const end = line.trimEnd();
         if (ZH_TRAIL.test(end)) c += ZH_END;
+        if (ZH_HEAD.test(atoms[j] ?? '')) c += ZH_END;
         c += /[。！？…」』]$/.test(end) ? 0 : /[，、；：）]$/.test(end) ? ZH_COMMA : ZH_WORD;
         // 同樣條件下兩行長度接近一點（遠小於上面每一級）。
         c += ((room - w) / room) ** 2;

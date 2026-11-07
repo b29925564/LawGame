@@ -84,8 +84,13 @@ export function clearMenu(fit: (root?: ParentNode) => void) {
         const r = e.getBoundingClientRect();
         e.style.maxWidth = `${Math.max(0, r.width - Math.ceil(over))}px`;
       } else {
+        // 先讓內容框的右緣停在鈕左邊 8px（固定的目標，不因為不換行的單位伸出框就越加越多，
+        // 「Whitlock & ⏎ Hale」就是這樣被擠拆的）；內容框已經到位、字還伸出來，才再往內加。
         const pad = parseFloat(cs.paddingRight) || 0;
-        e.style.paddingRight = `${pad + Math.ceil(over)}px`;
+        const r = e.getBoundingClientRect();
+        const contentRight = r.right - (parseFloat(cs.borderRightWidth) || 0) - pad;
+        const short = contentRight - (m.left - GAP);
+        e.style.paddingRight = `${pad + Math.ceil(short > SLACK ? short : over)}px`;
       }
       fit(e);
     }

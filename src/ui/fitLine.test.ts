@@ -26,13 +26,18 @@ describe('黑底字卡的 fitLine 換行單位（設計師 v93 第二道關卡�
     expect(b.at(-1)).toContain('口袋。');
   });
 
-  it('每一張卡：字一個不少；行尾不留虛詞；最後一個單位至少 3 個字', () => {
+  it('每一張卡：字一個不少；行尾不留介詞連詞否定詞、行首不是的了著過；最後一個單位至少 3 個字', () => {
     expect(captions.length).toBeGreaterThan(5);
     for (const text of captions) {
       const u = fitLineUnits(text);
       expect(u.join(''), text).toBe(text);
       for (const x of u.slice(0, -1))
-        if (!/[\p{P}\s]$/u.test(x)) expect(x, `${text}：「${x}」`).not.toMatch(/[的了把在沒又他]$/);
+        if (!/[\p{P}\s]$/u.test(x))
+          expect(x, `${text}：「${x}」`).not.toMatch(/[把在被跟和與對從向沒又]$/);
+      // 「的了著過地得」往前黏：可以在行尾，不在行首（設計師 #329 @7fde9ba 第 1 項）。
+      const seg = new Intl.Segmenter('zh-Hant', { granularity: 'word' });
+      for (const x of u.slice(1))
+        expect([...seg.segment(x)][0].segment, `${text}：「${x}」`).not.toMatch(/^[的了著過地得]$/);
       expect(
         [...u.at(-1)!].filter((c) => /[\p{L}\p{N}]/u.test(c)).length,
         text,
@@ -105,7 +110,12 @@ describe('englishLines：英文黑底字卡自己排行（設計師 #326 審查�
 describe('第二道關卡 72a9003 設計師裁定 1、6', () => {
   const NB = '\u00a0';
   it('房號、庭號跟著前面的名詞；最後兩個字黏住', () => {
-    expect(fitLineEn('Whitlock & Hale, Conference Room A, Monday 15:00')).toContain(`Room${NB}A,`);
+    expect(fitLineEn('Whitlock & Hale, Conference Room A, Monday 15:00')).toContain(
+      `Conference${NB}Room${NB}A,`,
+    );
+    expect(fitLineEn('Whitlock & Hale, Conference Room A, Monday 15:00')).toContain(
+      `Hale, Conference`,
+    );
     expect(fitLineEn('Calder County Superior Court, Courtroom 5')).toContain(`Courtroom${NB}5`);
     expect(fitLineEn('Dad. In 2016, who ordered the maintenance records destroyed?')).toMatch(
       new RegExp(`records${NB}destroyed\\?$`),

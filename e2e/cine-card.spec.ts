@@ -103,8 +103,11 @@ for (const width of [1100, 1530, 1920])
       }
     });
 
-/** 虛詞（含副詞、助詞、介詞、連詞與代名詞）：沒有標點接著時不放行尾。和證據板牌架的 FN_ZH 同一組，再加上助詞與副詞。 */
-const FN = new Set([...'的之與和及或在於對把被為從到以而並是我你他她它了著過沒不又也都就還再很']);
+/** 介詞、連詞、否定詞、副詞與代名詞：沒有標點接著時不放行尾（lineUnits.ts 的 TRAIL）。 */
+const FN = new Set([...'之與和及或在於對把被為從到以而並是我你他她它沒不又也都就還再很跟向']);
+/** 往前黏的助詞：可以在行尾，不放行首（設計師 #329 @7fde9ba 第 1 項更正：「一台沒登出的｜電腦前，」）。 */
+const HEAD = /^[的了著過地得]$/u;
+const SEG = new Intl.Segmenter('zh-Hant', { granularity: 'word' });
 const PUNCT = /[\s，。、；：！？）」』〉》…—,.;:!?)\]]/u;
 const WORD = /[\p{L}\p{N}]/u;
 
@@ -170,6 +173,12 @@ for (const [label, w, h, scale] of [
         const last = line[line.length - 1];
         if (!PUNCT.test(last))
           expect.soft(FN.has(last), `${tag} 行尾是虛詞：「${line}」`).toBe(false);
+        expect
+          .soft(
+            [...SEG.segment(got.text.slice(at).trimStart())][0]?.segment ?? '',
+            `${tag} 行首是助詞：「${line}｜${got.text.slice(at, at + 4)}」`,
+          )
+          .not.toMatch(HEAD);
       }
       const tail = got.text.slice(cuts[cuts.length - 2]);
       expect

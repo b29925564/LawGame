@@ -134,3 +134,49 @@ test('選項按鈕的無障礙名稱前面沒有「›」', async ({ page }, inf
   }
   expect(seen).toBeGreaterThan(2);
 });
+
+/**
+ * 會見的問題鈕（設計師 #329 @7fde9ba 第 1 項）：中文不在詞中間斷，行首不是「的了著過地得」，
+ * 每一行至少 2 個字（不會「運作｜的？」一個字一行）。
+ */
+for (const w of [320, 360])
+  test(`會見問題鈕：中文行首不是助詞、沒有一個字的行（${w}・zh・150%）`, async ({ page }, info) => {
+    test.skip(info.project.name !== 'chromium', '自己設視窗大小，手機那一組跑就好');
+    await page.setViewportSize({ width: w, height: 760 });
+    for (const ep of ['ep1', 'ep2']) {
+      await open(page, ep, 4, 'zh', 1.5);
+      const rows = await page.locator('#iv-panel button').evaluateAll((els) =>
+        els.map((el) => {
+          const lines: string[] = [];
+          let top = -1;
+          const walk = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+          for (let n = walk.nextNode(); n; n = walk.nextNode()) {
+            const s = n.textContent ?? '';
+            for (let i = 0; i < s.length; i++) {
+              const r = document.createRange();
+              r.setStart(n, i);
+              r.setEnd(n, i + 1);
+              const b = r.getBoundingClientRect();
+              if (b.height < 0.5) continue;
+              if (top < 0 || Math.abs(b.top - top) > 6) lines.push('');
+              top = b.top;
+              lines[lines.length - 1] += s[i];
+            }
+          }
+          return lines;
+        }),
+      );
+      expect(rows.length).toBeGreaterThan(0);
+      for (const lines of rows) {
+        const all = lines.join('｜');
+        for (const l of lines.slice(1))
+          expect
+            .soft(l.trim(), `${ep}「${all}」行首是助詞`)
+            .not.toMatch(/^[的了著過地得][\p{P}]*$|^[的了著過][^\p{L}]/u);
+        for (const l of lines)
+          expect
+            .soft(l.match(/[\p{L}\p{N}]/gu)?.length ?? 0, `${ep}「${all}」一個字一行`)
+            .toBeGreaterThanOrEqual(2);
+      }
+    }
+  });

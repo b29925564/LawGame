@@ -151,10 +151,33 @@ for (const w of [320, 360])
         if (await beat.count()) await beat.click();
         for (let k = 0; k < 16; k++) {
           await page.waitForTimeout(600);
-          const m = await page.evaluate(() => {
+          const m = await page.evaluate((lang) => {
             const st = document.querySelector('.phone-status');
             const ol = document.querySelector('.subtitles');
             if (!st || !ol) return null;
+            // 英文：每句最後一行不只一個字（設計師 #329 @7fde9ba 第 2 項："in that ⏎ building."）。
+            const single: string[] = [];
+            if (lang === 'en')
+              for (const li of ol.querySelectorAll('li')) {
+                const rows = new Map<number, string>();
+                const walk = document.createTreeWalker(li, NodeFilter.SHOW_TEXT);
+                for (let n = walk.nextNode(); n; n = walk.nextNode()) {
+                  const s = n.textContent ?? '';
+                  for (let i = 0; i < s.length; i++) {
+                    const r = document.createRange();
+                    r.setStart(n, i);
+                    r.setEnd(n, i + 1);
+                    const b = r.getBoundingClientRect();
+                    if (b.height < 0.5) continue;
+                    const top = Math.round(b.top / 4);
+                    rows.set(top, (rows.get(top) ?? '') + s[i]);
+                  }
+                }
+                const tops = [...rows.keys()].sort((a, b) => a - b);
+                const last = (rows.get(tops.at(-1)!) ?? '').replace(/\u00a0/g, ' ').trim();
+                if (tops.length > 1 && last.split(/\s+/).length < 2)
+                  single.push(`單字行「${last}」`);
+              }
             const line = st.getBoundingClientRect().bottom;
             const cp = getComputedStyle(ol).clipPath;
             const visTop =
@@ -174,8 +197,8 @@ for (const w of [320, 360])
                   );
               }
             }
-            return bad;
-          });
+            return [...bad, ...single];
+          }, lang);
           if (m) {
             talk++;
             expect.soft(m, `${episode} 第 ${k} 下`).toEqual([]);

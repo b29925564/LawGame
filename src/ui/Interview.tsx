@@ -152,7 +152,8 @@ export function Interview({ scene }: { scene: InterviewScene }) {
               {topics.map((tp) => (
                 <li key={tp.id}>
                   <button className="wide" onClick={() => ask(tp.id)}>
-                    {t(tp.label, scope)}
+                    {/* 問題鈕也照短標籤排（設計師 #329 @7fde9ba：「疲勞提醒是怎麼運作｜的？」）。 */}
+                    {fitLine(t(tp.label, scope))}
                   </button>
                 </li>
               ))}
@@ -165,7 +166,7 @@ export function Interview({ scene }: { scene: InterviewScene }) {
                 .map((p) => (
                   <li key={p.id}>
                     <button className="wide" onClick={() => press(p.id)}>
-                      {t(p.label, scope)}
+                      {fitLine(t(p.label, scope))}
                     </button>
                   </li>
                 ))}
