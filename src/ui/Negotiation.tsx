@@ -10,7 +10,7 @@ import { useScope } from './lang';
 import { Speech } from './Portrait';
 import { Shell, Tabs, Transcript } from './Shell';
 import { Recap } from './ActCard';
-import { fitLine } from './prose';
+import { fitDots, fitLine } from './prose';
 
 /** 認罪協商（企劃書 6.8）：攤牌會洩底，虛張聲勢看證據清單，決定權在委託人手上。 */
 export function Negotiation({ scene }: { scene: NegotiationScene }) {
@@ -184,7 +184,8 @@ export function Negotiation({ scene }: { scene: NegotiationScene }) {
           <p className="eyebrow">
             {/* 包成一段：eyebrow 是 flex，fitLine 的每個詞會各自變成一格。 */}
             <span>
-              {fitLine(
+              {fitDots(
+                [t(scene.opponent.name, scope), ...t(scene.opponent.role, scope).split('・')],
                 t('{a}・{b}', {
                   a: t(scene.opponent.name, scope),
                   b: t(scene.opponent.role, scope),

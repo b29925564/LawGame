@@ -154,6 +154,11 @@ describe('第二道關卡 72a9003 設計師裁定 1、6', () => {
     ))
       expect(l.match(/[\p{L}\p{N}]/gu)!.length, l).toBeGreaterThanOrEqual(3);
   });
+  it('以「，。？」收尾的兩字子句算一行夠格（候選人卡「自己開店｜七年。」，不是「自己｜開店七年。」）', () => {
+    const width = (x: string) => [...x.trimEnd()].length;
+    expect(chineseLines('自己開店七年。', width, 5, true)).toEqual(['自己開店', '七年。']);
+    expect(chineseLines('單親，兩個孩子。', width, 5, true)).toEqual(['單親，', '兩個孩子。']);
+  });
 });
 
 describe('第二道關卡 464a280 第 5 項：短標籤', () => {

@@ -441,13 +441,19 @@ export function PlaceSlate({
     if (!el) return;
     const fit = () => {
       // 先放回整段量：放得下就留著；量完把 class 放回去（狀態沒變時 React 不會重畫這個屬性）。
+      const text = el.parentElement;
       el.classList.remove('short', 'wrap');
+      text?.classList.remove('stack');
       const over = !!lead && el.scrollHeight > el.clientHeight + 1;
       el.classList.toggle('short', over);
+      const room = el.querySelector<HTMLElement>('.ps-room');
+      const tight = () => !!room && room.scrollWidth > el.clientWidth + 0.5;
+      // 房間和日子時刻擠不下一行：先把「日子＋時刻＋K」整組換到下一行，房間名是一個單位不拆
+      //（"CFO's ⏎ office" 不行；設計師第二道關卡 464a280 裁定）。
+      if (tight()) text?.classList.add('stack');
       // 只剩房間也放不下一行（320 寬、大字級的英文 "hallway outside the mediation room"）：
       // 不出框第一，房間在詞界換行（fitLine 的單位照樣不拆），場記長成兩行（第二道關卡 72a9003 第 2 項）。
-      const room = el.querySelector<HTMLElement>('.ps-room');
-      const wide = !!room && room.scrollWidth > el.clientWidth + 0.5;
+      const wide = tight();
       el.classList.toggle('wrap', wide);
       if (wide) fitUnits(el);
       setShort(over);
@@ -562,10 +568,9 @@ export function PlaceBeat({
     >
       {!shown && (
         <span className="place-tbd">
-          {/* 英文最後兩個字黏住：放不下時排成「3D camera ⏎ TBD Establishing」（第二道關卡 464a280 第 5 項）。 */}
-          {fitLine(
-            `${t('待放 3D 機位')}${/[\p{sc=Han}]/u.test(t('定場')) ? '\u3000' : ' '}${t('定場')}`,
-          )}
+          {t('待放 3D 機位')}
+          {'\u3000'}
+          {t('定場')}
         </span>
       )}
       {!waiting && <PlaceSlate id={id} place={place} cold={cold} />}

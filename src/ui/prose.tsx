@@ -23,6 +23,21 @@ export function prose(text: string, tail = true): ReactNode {
 }
 
 /**
+ * 用「・」分隔的身分列（「委託人・26 歲・財務分析師・看守所視訊會見室」）：一段一段各自 fitLine，段和段之間只在「・」後面換行
+ *（瀏覽器不在「・」前面斷）。整串交給 fitLine 會把「・」當譯名的連接號往兩邊吃，排成「26｜歲・財務分析｜師」
+ *（設計師第二道關卡 464a280 裁定 3）。譯名本身（「蘇菲・馬丁內斯」）當一段傳進來，不拆。英文照 joined 整串排。
+ */
+export function fitDots(segs: string[], joined: string): ReactNode {
+  if (!HAN.test(joined)) return fitLine(joined);
+  return segs.map((x, i) => (
+    <Fragment key={i}>
+      {i > 0 && '・'}
+      {fitLine(x)}
+    </Fragment>
+  ));
+}
+
+/**
  * 英文短行（眉標、手機框、按鈕）的 fitLine：專有名詞黏住；a／an／the／of／to…（plateBreaks.ts 的 endsBanned）黏住下一個字，
  * 不留在行尾（設計師裁定 a26de2b：「VP of ⏎ Operations」「still at the ⏎ office」）。其餘照瀏覽器在空白斷。
  */
@@ -229,7 +244,7 @@ export function FitLine({
  * 中文黑底字卡自己排行（設計師第二道關卡 72a9003 裁定 1：#328 之後 22:31、23:14、17:52 比以前難讀）。
  * 換行單位是 fitLineUnits 的單位（專有名詞、虛詞收尾、數詞＋量詞都已黏好），在單位之間挑換行點，依序：
  * 1. 不出框、不拆單位（單位比一行還寬時才在它內部的詞界拆）；
- * 2. 每一行都至少 3 個字（標點不算），不只是最後一行；
+ * 2. 每一行都至少 3 個字（標點不算），不只是最後一行；以「，。？」收尾的子句兩個字就夠；
  * 3. 行數最少；
  * 4. 行數一樣時，斷點先選句號後，再來逗號後，最後才是詞界。
  * 對照：23:14 排成「公車進站，又開走了。｜伊森沒有上車。」。量不到時回傳 null，交給瀏覽器照 fitLine 排。
@@ -248,6 +263,8 @@ const ZH_LINE = 1e6;
 const ZH_COMMA = 1e3;
 const ZH_WORD = 2e3;
 const zhLetters = (x: string) => x.match(/[\p{L}\p{N}]/gu)?.length ?? 0;
+/** 以「，。？」收尾、至少兩個字的子句，算一行夠格（「單親，｜兩個孩子。」「自己開店｜七年。」；設計師第二道關卡 464a280 裁定）。 */
+const zhClause = (x: string) => zhLetters(x) >= 2 && /[，。？]$/u.test(x.trimEnd());
 export function chineseLines(
   text: string,
   width: (s: string) => number,
@@ -284,7 +301,7 @@ export function chineseLines(
       const w = width(line.trimEnd());
       if (w > room && i < j - 1) break;
       let c = ZH_LINE + (w > room ? ZH_OVER : 0);
-      if (zhLetters(line) < 3) c += strictShort ? ZH_INNER * 10 : ZH_SHORT;
+      if (zhLetters(line) < 3 && !zhClause(line)) c += strictShort ? ZH_INNER * 10 : ZH_SHORT;
       if (j < n) {
         if (inner[j - 1]) c += ZH_INNER;
         const end = line.trimEnd();

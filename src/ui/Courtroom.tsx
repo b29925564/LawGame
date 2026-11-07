@@ -35,7 +35,7 @@ import { reducedMotion } from './a11y';
 import { msOf, type ObjectionBeat, type Tok } from './court/beat';
 import { CourtCamera, type Shot, type WitnessState } from './court/CourtCamera';
 import { Portrait } from './Portrait';
-import { fitLine } from './prose';
+import { fitDots, fitLine } from './prose';
 
 /**
  * 法庭裡的陪審團（設定集第 8.4、10.1 章）：剪影替身與四階影子。桌機放在中間欄（HUD 的位置），
@@ -542,7 +542,7 @@ function CourtroomScreen({ scene: raw }: { scene: TrialScene }) {
               <span>
                 <strong>{fitLine(t(scene.witness.name, scope))}</strong>
                 {t('・')}
-                {fitLine(t(scene.witness.role, scope))}
+                {fitDots(t(scene.witness.role, scope).split('・'), t(scene.witness.role, scope))}
               </span>
             </p>
             <p

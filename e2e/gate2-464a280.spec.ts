@@ -243,11 +243,101 @@ test('英文兩個字的短標籤放得下就不拆（調解數字板 Not agreed
   }
 });
 
-test('定場佔位字（英文 320・150%）：「3D camera ⏎ TBD Establishing」', async ({ page }, info) => {
+// 設計師更正（12:1x）：「3D camera TBD」「Establishing」是兩個標籤，中間是全形空白，就在那裡換行；不改。這條鎖住現狀。
+test('定場佔位字（英文 320・150%）：「3D camera TBD ⏎ Establishing」', async ({ page }, info) => {
   test.skip(info.project.name !== 'chromium', '自己設視窗大小，手機那一組跑就好');
   await page.setViewportSize({ width: 320, height: 640 });
   await open(page, at('ep2', 15), 'en', 1.5);
   await expect(page.locator('.place-tbd')).toBeVisible();
   const rows = await rowsOf(page, '.place-tbd');
-  expect(rows).toEqual(['3D camera', 'TBD Establishing']);
+  expect(rows).toEqual(['3D camera TBD', 'Establishing']);
 });
+
+// 設計師裁定（464a280 第 5 項補充）：候選人卡中文每行至少 3 個字；以「，。？」收尾的子句兩個字加標點就夠（「自己開店｜七年。」可以，「自己｜開店七年。」不行）。
+for (const [ep, scene] of [
+  ['ep1', 15],
+  ['ep2', 15],
+] as const)
+  test(`遴選候選人卡中文每行夠字（${ep}・320／360・125／150%）`, async ({ page }, info) => {
+    test.skip(info.project.name !== 'chromium', '自己設視窗大小，手機那一組跑就好');
+    test.setTimeout(120_000);
+    const bad: string[] = [];
+    for (const w of [320, 360])
+      for (const scale of [1.25, 1.5]) {
+        await page.setViewportSize({ width: w, height: 640 });
+        await voirDire(page, ep, scene, 'zh', scale);
+        const n = await page.locator('button.cand').count();
+        for (let i = 0; i < n; i++)
+          for (const row of await rowsOf(page, `button.cand >> nth=${i} >> .line`)) {
+            const k = row.match(/[\p{L}\p{N}]/gu)?.length ?? 0;
+            if (k < 3 && !(k >= 2 && /[，。？]$/u.test(row)))
+              bad.push(`${w}・${scale}：「${row}」`);
+          }
+      }
+    expect(bad).toEqual([]);
+  });
+
+// 裁定 1：遴選頁頂列的數字（「候選 21」、第 2 集「無因迴避 2/2」）離選單鈕四向 8 px（412 中文 150% 重疊 6.6 px、320 只有 4.1 px）。
+for (const [ep, scene] of [
+  ['ep1', 15],
+  ['ep2', 15],
+] as const)
+  for (const w of [320, 390, 412])
+    test(`遴選頂列離選單鈕 8 px（${ep}・${w}・中文 150%）`, async ({ page }, info) => {
+      test.skip(info.project.name !== 'chromium', '自己設視窗大小，手機那一組跑就好');
+      await page.setViewportSize({ width: w, height: 800 });
+      await voirDire(page, ep, scene, 'zh', 1.5);
+      const near = await page.evaluate(() => {
+        const m = document.querySelector('.menu-toggle')!.getBoundingClientRect();
+        const out: string[] = [];
+        const walk = document.createTreeWalker(
+          document.querySelector('.bench')!,
+          NodeFilter.SHOW_TEXT,
+        );
+        for (let n = walk.nextNode(); n; n = walk.nextNode()) {
+          if (!n.textContent?.trim()) continue;
+          const r = document.createRange();
+          r.selectNodeContents(n);
+          for (const q of r.getClientRects()) {
+            const dx = Math.max(m.left - q.right, q.left - m.right);
+            const dy = Math.max(m.top - q.bottom, q.top - m.bottom);
+            if (Math.max(dx, dy) < 8 - 0.01)
+              out.push(`「${n.textContent.trim()}」離鈕 ${Math.max(dx, dy).toFixed(1)} px`);
+          }
+        }
+        return out;
+      });
+      expect(near).toEqual([]);
+    });
+
+// 裁定 2：場記的房名是一個單位（Pixel 7 英文 150% 排成 "CFO's ⏎ office"）：擠不下時日子時刻換到下一行。
+test('22:49 場記：房名 "CFO\'s office" 不拆（英文 150%）', async ({ page }) => {
+  await open(page, at('ep1', 0, 10, { 'cold-open': { 3: 0, 6: 1 } }), 'en', 1.5);
+  await expect(page.locator('.place-slate .ps-room')).toBeVisible();
+  const rows = await rowsOf(page, '.place-slate .ps-room');
+  expect(rows).toEqual(["CFO's office"]);
+  // 日子時刻還在畫面上，不被切掉。
+  await expect(page.locator('.place-slate .ps-when')).toContainText('22:49');
+});
+
+// 裁定 3：訪談來電資訊「委託人・26｜歲・財務分析｜師」：「26 歲」黏住，「財務分析師」不拆。
+for (const w of [320, 360])
+  for (const scale of [1, 1.25, 1.5])
+    test(`訪談來電資訊不拆「26 歲」「財務分析師」（ep1 第 4 場・${w}・中文 ${scale * 100}%）`, async ({
+      page,
+    }, info) => {
+      test.skip(info.project.name !== 'chromium', '自己設視窗大小，手機那一組跑就好');
+      await page.setViewportSize({ width: w, height: 740 });
+      await open(page, at('ep1', 4), 'zh', scale);
+      await page
+        .locator('.place-beat')
+        .click({ timeout: 3000 })
+        .catch(() => {});
+      await expect(page.locator('.call .muted').first()).toBeVisible();
+      const rows = await rowsOf(page, '.call .muted');
+      for (const word of ['26 歲', '財務分析師'])
+        expect(
+          rows.some((r) => r.includes(word)),
+          rows.join('｜'),
+        ).toBe(true);
+    });

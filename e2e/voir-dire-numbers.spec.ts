@@ -85,7 +85,7 @@ for (const w of [320, 360])
 
 /**
  * 設計師 關卡 72a9003（#329 @8e5c11c 截圖）：候選人卡的介紹 320／360 中文 150% 把詞拆開（「安全檢｜查。」「按業績抽｜成。」）。
- * 和黑底字卡一樣排行：只在詞與詞之間換行，每一行至少 3 個字（標點不算）。
+ * 和黑底字卡一樣排行：只在詞與詞之間換行，每一行至少 3 個字（標點不算）；以「，。？」收尾的子句兩個字就夠。
  */
 for (const w of [320, 360])
   for (const scale of [1, 1.25, 1.5])
@@ -130,10 +130,10 @@ for (const w of [320, 360])
             expect
               .soft(marks.has(cuts[k]), `「${text.slice(0, cuts[k])}｜${text.slice(cuts[k])}」`)
               .toBe(true);
-          if (cuts.length > 2 && cls === 'line')
-            expect
-              .soft(row.match(/[\p{L}\p{N}]/gu)?.length ?? 0, `「${row}」不到 3 個字（${text}）`)
-              .toBeGreaterThanOrEqual(3);
+          // 以「，。？」收尾的子句兩個字加標點就夠（設計師第二道關卡 464a280 裁定：「單親，｜兩個孩子。」可以）。
+          const nch = row.match(/[\p{L}\p{N}]/gu)?.length ?? 0;
+          if (cuts.length > 2 && cls === 'line' && !(nch >= 2 && /[，。？]$/u.test(row)))
+            expect.soft(nch, `「${row}」不到 3 個字（${text}）`).toBeGreaterThanOrEqual(3);
         }
       }
       // 名字（譯名）放不下時只斷在「・」後面。
