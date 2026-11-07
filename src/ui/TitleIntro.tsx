@@ -3,11 +3,28 @@ import { useSettings } from '../engine/settings';
 import { useT } from '../i18n';
 import { reducedMotion } from './a11y';
 import { useMenu } from './GameMenu';
-import courtDesk40 from './court/court-desktop-40.webp';
-import courtDesk55 from './court/court-desktop-55.webp';
-import courtPhone40 from './court/court-phone-40.webp';
-import courtPhone55 from './court/court-phone-55.webp';
-import witnessStand from './court/cam/witness-default.webp';
+import blindDA from './intro/blind-ep1-base-desktop.avif';
+import blindDW from './intro/blind-ep1-base-desktop.webp';
+import blindPA from './intro/blind-ep1-base-phone.avif';
+import blindPW from './intro/blind-ep1-base-phone.webp';
+import slitDA from './intro/blind-ep1-slit-screen-desktop.avif';
+import slitDW from './intro/blind-ep1-slit-screen-desktop.webp';
+import slitPA from './intro/blind-ep1-slit-screen-phone.avif';
+import slitPW from './intro/blind-ep1-slit-screen-phone.webp';
+import c17DA from './intro/court-0017wD.avif';
+import c17DW from './intro/court-0017wD.webp';
+import c17PA from './intro/court-0017wP.avif';
+import c17PW from './intro/court-0017wP.webp';
+import vigD from './intro/court-0017w-vignette-desktop.png';
+import vigP from './intro/court-0017w-vignette-phone.png';
+import c23DA from './intro/court-0023D.avif';
+import c23DW from './intro/court-0023D.webp';
+import c23PA from './intro/court-0023P.avif';
+import c23PW from './intro/court-0023P.webp';
+import c29DA from './intro/court-0029D.avif';
+import c29DW from './intro/court-0029D.webp';
+import c29PA from './intro/court-0029P.avif';
+import c29PW from './intro/court-0029P.webp';
 import './titleIntro.css';
 
 /**
@@ -15,8 +32,10 @@ import './titleIntro.css';
  * 0:00–0:38 是這裡的七個鏡頭（0:00 和 0:05 同一個機位，合成一格）；0:38 的集名卡是原本的幕卡（ActCard），
  * 停完切黑 83ms 進第一幕第一場。
  *
- * 圖還沒算出來（場景光影）：0:00 紙、0:10 百葉窗用 HTML 畫的佔位；0:17、0:23、0:29 先用現有的法庭機位圖。
- * 圖到了以後換成 <img>，時間軸、黑條、螢光、標準字都不動。
+ * 底圖是場景光影 #3 的正式圖（art-bible/scenes/title-intro-v94/final/，設計師 11-07 PASS）：0:10 第一集百葉窗、
+ * 0:17、0:23、0:29 法庭。圖已經分級過（titlegrade），這裡不再加濾鏡。每張有 AVIF、WebP 兩種，手機用直式機位。
+ * 還沒換的：0:00 紙（黑條要對到紙上透視、景深裡的行，等設計師定做法）、0:10 第二集百葉窗（場景光影重算中），
+ * 先用 HTML 畫的佔位，時間軸、黑條、螢光、標準字都不動。
  *
  * - 每次從頭開始一集都播；讀檔讀到片頭之後不播（片頭是那一張卡的前半段，過了就不在了）。
  * - 第二次播起右下角有「跳過」，直接到 0:38 的集名卡（不跳過集名）。看過與否每一集分開記，存在設定裡。
@@ -120,8 +139,8 @@ export function TitleIntro({ episode, onDone }: { episode: string; onDone: () =>
       {!black && (
         <div key={shot} className={`ti-shot shot-${shot}`} aria-hidden>
           {shot === 'paper' && <Paper />}
-          {shot === 'blind' && <Blind lit={ep2 ? 12 : 0} />}
-          {shot === 'court' && <Plate desk={courtDesk55} phone={courtPhone55} />}
+          {shot === 'blind' && (ep2 ? <Blind lit={12} /> : <Blinds />)}
+          {shot === 'court' && <Court />}
           {shot === 'witness' && <Witness ep2={ep2} />}
           {shot === 'lucas' && <Lucas />}
           {shot === 'mark' && <Mark />}
@@ -195,12 +214,48 @@ function Blind({ lit }: { lit: number }) {
   );
 }
 
-function Plate({ desk, phone, className }: { desk: string; phone: string; className?: string }) {
+/** 手機（≤767px）用直式機位；兩種都先給 AVIF、再給 WebP。 */
+type Src = readonly [avif: string, webp: string];
+function Plate({ desk, phone, className }: { desk: Src; phone: Src; className?: string }) {
+  const PHONE = '(max-width: 767px)';
   return (
     <picture className={['ti-plate', className].filter(Boolean).join(' ')}>
-      <source media="(max-width: 767px)" srcSet={phone} />
-      <img src={desk} alt="" decoding="async" draggable={false} />
+      <source media={PHONE} type="image/avif" srcSet={phone[0]} />
+      <source media={PHONE} type="image/webp" srcSet={phone[1]} />
+      <source type="image/avif" srcSet={desk[0]} />
+      <img src={desk[1]} alt="" decoding="async" draggable={false} />
     </picture>
+  );
+}
+
+/**
+ * 0:10 第一集：塗黑的頁面立起來變成百葉窗（場景光影 #3 正式圖）。底圖的亮縫權重是 0，
+ * 最上面那條（31 樓）的亮縫是另一層，黑底、screen 疊上去，2.4 秒起亮。整組從 1.3 倍拉到 1.0。
+ */
+function Blinds() {
+  return (
+    <div className="ti-blinds">
+      <Plate desk={[blindDA, blindDW]} phone={[blindPA, blindPW]} />
+      <Plate desk={[slitDA, slitDW]} phone={[slitPA, slitPW]} className="ti-slit" />
+    </div>
+  );
+}
+
+/**
+ * 0:17：一張寬圖橫移（陪審席）。視窗左緣從圖寬的 0.310（手機 0.561）移到 0；寬螢幕的起點往回收，
+ * 右邊不露出圖外。暗角是另一張圖，固定在視窗上、一般疊法（不烤進寬圖，橫移時暗角不跟著走）。
+ */
+function Court() {
+  return (
+    <>
+      <div className="ti-pan">
+        <Plate desk={[c17DA, c17DW]} phone={[c17PA, c17PW]} />
+      </div>
+      <picture className="ti-plate ti-vignette">
+        <source media="(max-width: 767px)" srcSet={vigP} />
+        <img src={vigD} alt="" decoding="async" draggable={false} />
+      </picture>
+    </>
   );
 }
 
@@ -209,7 +264,7 @@ function Witness({ ep2 }: { ep2: boolean }) {
   const t = useT();
   return (
     <>
-      <Plate desk={witnessStand} phone={witnessStand} className="still" />
+      <Plate desk={[c23DA, c23DW]} phone={[c23PA, c23PW]} className="still" />
       {ep2 ? (
         <>
           {/* 不是藏、刪、默（黑條的三種意思），是他自己按掉的：61 次紀錄都在（ep2.yaml app-log）。
@@ -240,30 +295,28 @@ function Witness({ ep2 }: { ep2: boolean }) {
   );
 }
 
-/** 0:29：盧卡斯的背影（替身剪影），西窗輪廓光；手上一頁筆錄，一道螢光刷過一行。全片第一道黃。 */
+/**
+ * 0:29：盧卡斯的背影（正式圖：立牌 v4 的輪廓光，手上那頁紙在房間裡實算），從 1.0 推到 1.12（中心在畫面正中）。
+ * 一道螢光由左往右刷過紙上第 13 行：全片第一道黃。螢光的四角取自場景光影的 court-0029-ui.json（放大 1.0 時的
+ * 底圖座標），畫在和底圖同尺寸、同裁切（cover＝slice）的 SVG 上，跟著一起推。
+ */
 function Lucas() {
   return (
-    <>
-      <Plate desk={courtDesk40} phone={courtPhone40} className="rack" />
-      <svg className="ti-back" viewBox="0 0 200 220" preserveAspectRatio="xMidYMax meet">
-        {/* 後腦、碎髮、脖子、兩肩：無臉替身，只有剪影。西窗在畫面左邊：輪廓光在左肩和後腦左側。 */}
-        <path
-          className="ti-back-body"
-          d="M100 18c-24 0-40 18-40 42 0 16 6 28 15 36l-3 20c-22 4-48 12-60 26-8 10-12 40-12 78h200c0-38-4-68-12-78-12-14-38-22-60-26l-3-20c9-8 15-20 15-36 0-24-16-42-40-42z"
-        />
-        <path
-          className="ti-back-rim"
-          d="M72 34c-8 8-12 18-12 26 0 16 6 28 15 36M69 120c-21 5-40 12-50 24-6 8-9 30-10 66"
+    <div className="ti-push29">
+      <Plate desk={[c29DA, c29DW]} phone={[c29PA, c29PW]} className="rack" />
+      <svg className="ti-hl29 desk" viewBox="0 0 2880 1800" preserveAspectRatio="xMidYMid slice">
+        <polygon
+          className="ti-hl29-ink"
+          points="1160.1,1277.8 1332.0,1303.0 1331.1,1308.8 1159.2,1283.4"
         />
       </svg>
-      <div className="ti-page">
-        {[0.8, 0.7, 0.86, 0.62, 0.78, 0.84, 0.5].map((w, n) => (
-          <span key={n} className={n === 3 ? 'ti-line hl' : 'ti-line'}>
-            <i style={{ '--w': w } as CSSProperties} />
-          </span>
-        ))}
-      </div>
-    </>
+      <svg className="ti-hl29 phone" viewBox="0 0 1620 2880" preserveAspectRatio="xMidYMid slice">
+        <polygon
+          className="ti-hl29-ink"
+          points="223.7,2044.5 499.1,2084.8 497.7,2094.0 222.3,2053.4"
+        />
+      </svg>
+    </div>
   );
 }
 
