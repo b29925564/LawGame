@@ -58,6 +58,10 @@ describe('glueTail：英文頂列期限的黏字（設計師裁定 25376da）', 
     );
     expect(glueTail('Trial in three days')).toBe(`Trial in${NB}three${NB}days`);
     expect(glueTail('Discovery deadline: two weeks')).toBe(`Discovery${NB}deadline: two${NB}weeks`);
+    // fitLine 不再把已經黏好的兩段整個黏死（320 寬時標籤被拆成「Discovery｜deadline:｜two weeks」）。
+    expect(fitLineEn(glueTail('Discovery deadline: two weeks'))).toBe(
+      `Discovery${NB}deadline: two${NB}weeks`,
+    );
     expect(glueTail('Mediation: one week')).toBe(`Mediation: one${NB}week`);
     expect(glueTail('Trial in 3 days now')).toBe(`Trial in${NB}3${NB}days${NB}now`);
   });
@@ -154,10 +158,10 @@ describe('第二道關卡 72a9003 設計師裁定 1、6', () => {
 
 describe('第二道關卡 464a280 第 5 項：短標籤', () => {
   const lines = (text: string, room: number) => {
-    const parts = text.split(/([  ])/);
+    const parts = text.split(/([ \u00a0])/);
     const words = parts.filter((_, i) => i % 2 === 0);
-    const hard = parts.filter((_, i) => i % 2 === 1).map((x) => x === ' ');
-    return englishLines(words, hard, (s) => s.length, room).map((l) => l.replace(/ /g, ' '));
+    const hard = parts.filter((_, i) => i % 2 === 1).map((x) => x === '\u00a0');
+    return englishLines(words, hard, (s) => s.length, room).map((l) => l.replace(/\u00a0/g, ' '));
   };
   it('英文兩個字的標籤也黏住（"Not ⏎ agreed"、"$1.5 ⏎ million" 不行）', () => {
     for (const t of ['Not agreed', '$1.5 million']) expect(fitLineEn(t)).toBe(t.replace(' ', ' '));

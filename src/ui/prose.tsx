@@ -51,9 +51,11 @@ export function fitLineEn(text: string): string {
     for (let k = i - 1; k > 0 && CAP.test(w[k - 1]); k--) room.add(k);
   });
   // 最後兩個字黏住：沒有只剩一個字的最後一行（規則 4，"records ⏎ destroyed?"）；放不下時退路 B 照樣在中間拆。
-  // 只有兩個字的標籤也一樣（"Not ⏎ agreed"、"$1.5 ⏎ million"，第二道關卡 464a280 第 5 項）。
+  // 只有兩段的標籤也一樣（"Not ⏎ agreed"、"$1.5 ⏎ million"，第二道關卡 464a280 第 5 項）；
+  // 但最後一段本來就是黏好的兩個字（glueTail 的 "Discovery deadline: ⏎ two weeks"）就不必再往前黏。
+  const tail = (i: number) => i === w.length - 1 && (w.length > 2 || !w[i].includes(NB));
   return w.reduce((out, x, i) =>
-    i === 0 ? x : out + (glued(w[i - 1], x) || room.has(i) || i === w.length - 1 ? NB : ' ') + x,
+    i === 0 ? x : out + (glued(w[i - 1], x) || room.has(i) || tail(i) ? NB : ' ') + x,
   );
 }
 
