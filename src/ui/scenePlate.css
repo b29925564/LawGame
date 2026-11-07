@@ -69,6 +69,16 @@
     transition: opacity 0.35s var(--ease-light, ease-out);
   }
 }
+/* 交叉淡化（23:14 的「漸暗」：手機光 a → 55% 的 b）：下面那張照常亮著，上面這張用 --dur-dim 慢慢淡入。
+   減少動態時程式不給起點，直接是 b。 */
+.plate-host > .scene-plate[data-fade] {
+  z-index: 1;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .scene-plate[data-fade] .plate-stage {
+    transition: opacity var(--dur-dim, 3s) linear;
+  }
+}
 /* 定場那一格：圖是鏡頭本身（PlateHost 在它後面一層），定場卡自己不畫底，場記疊在圖上（場記 z-index 40，自己帶底色）。
    圖還沒解碼完的時候（waiting）圖層是純黑，定場卡也是黑底。 */
 .place-beat.plated {

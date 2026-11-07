@@ -611,3 +611,119 @@ for (const [w, h, max] of [
         ).toBe(1);
       }
   });
+
+/**
+ * 冷開場 ③ 23:14 港邊公車亭（v94，場景光影 #3 定稿：桌機 v4、手機 v6）。
+ * 第一格定場上 a 版（公車還沒來），翻完字幕回到手機看訊息被收回；
+ * 最後一格同一個鏡頭、不再定場，從 a 線性淡到 b 版（公車開走），3 秒；減少動態時直接 b。
+ */
+const STEP_2314 = 12;
+const STEP_2314_BUS = 14;
+
+for (const lang of ['zh', 'en'] as const)
+  test(`23:14 是港邊公車亭的底圖：定場 a 版，收回之後同鏡頭淡到 b 版（${lang}）`, async ({
+    page,
+  }, info) => {
+    await open(page, STEP_2314, lang);
+    const plate = page.locator('.plate-host .scene-plate');
+    await expect(plate).toHaveAttribute('data-plate', 'shelter-2314a');
+    await expect(plate).toHaveAttribute('data-rig', 'ep1-harbour-shelter-fri');
+    await expect(plate).toHaveAttribute('data-kelvin', '4100');
+    await expect(plate).toHaveAttribute('data-state', 'ok');
+    const phone = info.project.name === 'chromium';
+    await expect(plate.locator('.plate-bg')).toHaveAttribute('src', phone ? /phone/ : /desktop/);
+    const slate = page.locator('.place-slate');
+    await expect(slate).toContainText(lang === 'zh' ? '公車亭' : 'bus shelter');
+    await expect(slate).toContainText('23:14');
+    await expect(slate).toContainText('4100K');
+    expect(await tickColor(page)).toBe('rgb(139, 149, 163)');
+
+    await page.locator('.place-beat').click();
+    const card = page.locator('.scene.plated > .sub-card.narration');
+    const next = page.locator('.scene.plated .sub-actions .primary');
+    await expect(card).toContainText(
+      lang === 'zh' ? '港邊的公車亭。' : 'A bus shelter by the harbor.',
+    );
+    const seen: string[] = [];
+    for (let i = 0; i < 6 && (await card.count()); i++) {
+      seen.push((await card.innerText()).trim());
+      await next.click();
+    }
+    // 一句一張：中文兩句兩張；英文第二句在兩行裡放不下，照手標斷點（plateBreaks.ts）在 scrolls up, 後面再分一張。
+    expect(seen.length).toBe(lang === 'zh' ? 2 : 3);
+    // 收回：回到手機，底圖收掉。
+    await expect(
+      page.getByText(lang === 'zh' ? '此訊息已被收回' : 'This message was unsent'),
+    ).toBeVisible();
+    await expect(page.locator('.plate-host')).toHaveCount(0);
+    await page.getByRole('button', { name: lang === 'zh' ? '繼續' : 'Continue' }).click();
+
+    // 最後一格：不再定場，a 在下、b 在上淡進來。
+    await expect(page.locator('.place-beat')).toHaveCount(0);
+    const plates = page.locator('.plate-host .scene-plate');
+    await expect(plates).toHaveCount(2);
+    await expect(plates.nth(0)).toHaveAttribute('data-plate', 'shelter-2314a');
+    await expect(plates.nth(1)).toHaveAttribute('data-plate', 'shelter-2314b');
+    await expect(plates.nth(1)).toHaveAttribute('data-fade', '');
+    await expect(card).toContainText(
+      lang === 'zh' ? '公車進站，又開走了。' : 'A bus pulls in and pulls away.',
+    );
+    const top = plates.nth(1).locator('.plate-stage');
+    const dur = await top.evaluate((e) => getComputedStyle(e).transitionDuration);
+    expect(dur).toBe('3s');
+    await expect
+      .poll(() => top.evaluate((e) => Number(getComputedStyle(e).opacity)), { timeout: 6000 })
+      .toBe(1);
+  });
+
+test('23:14 公車開走：減少動態時不淡入，直接是 b 版', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await open(page, STEP_2314_BUS);
+  const plates = page.locator('.plate-host .scene-plate');
+  await expect(plates).toHaveCount(1);
+  await expect(plates).toHaveAttribute('data-plate', 'shelter-2314b');
+  await expect(page.locator('.place-beat')).toHaveCount(0);
+  await expect(page.locator('.scene.plated > .sub-card.narration')).toContainText('公車進站');
+});
+
+for (const [w, h] of SIZES)
+  test(`23:14 字幕框和按鈕不蓋手機和手：${w}×${h}，中英，字級 100／125%，每一張卡`, async ({
+    page,
+  }, info) => {
+    test.skip(info.project.name !== 'desktop', '自己設視窗大小，桌機那一組跑就好');
+    await page.setViewportSize({ width: w, height: h });
+    for (const lang of ['zh', 'en'] as const)
+      for (const scale of [1, 1.25])
+        for (const step of [STEP_2314, STEP_2314_BUS]) {
+          await open(page, step, lang, scale);
+          if (step === STEP_2314) await page.locator('.place-beat').click();
+          const card = page.locator('.cold-plated > .sub-card');
+          await expect(card).toBeVisible();
+          await page.evaluate(() => document.fonts.ready);
+          // 淡入結束才量（a、b 主體框一樣）。
+          if (step === STEP_2314_BUS)
+            await expect
+              .poll(() =>
+                page.evaluate(() =>
+                  [...document.querySelectorAll('.plate-host .plate-stage')].every(
+                    (e) => Number(getComputedStyle(e).opacity) === 1,
+                  ),
+                ),
+              )
+              .toBe(true);
+          const next = page.locator('.cold-plated .sub-actions .primary');
+          for (let i = 0; i < 6 && (await card.count()); i++) {
+            const text = (await card.innerText()).trim();
+            for (const r of await hidden(page))
+              expect(
+                r.hidden,
+                `${lang} ${scale} 第${i + 1}張「${text}」${r.id} 看不到的比例`,
+              ).toBeLessThanOrEqual(r.cover + 0.001);
+            if (step === STEP_2314_BUS) break;
+            await next.click();
+            await expect
+              .poll(async () => ((await card.count()) ? (await card.innerText()).trim() : ''))
+              .not.toBe(text);
+          }
+        }
+  });

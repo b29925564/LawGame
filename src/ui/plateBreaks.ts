@@ -32,6 +32,8 @@ export const PLATE_BREAKS: readonly string[] = [
   'Voss is on the carpet‖beside his desk.',
   'Ethan kneels and feels for a pulse¦at the neck. Nothing.',
   'When he stands,‖there is blood on his cuff¦and a crystal trophy in his hand.',
+  // ── 冷開場 23:14（港邊公車亭）──
+  "He opens the chat¦and scrolls up,|looking/for Voss's message.",
 ];
 
 /**
@@ -47,8 +49,12 @@ export const WEAK_USED: readonly string[] = [
  * 改找下一個合法的點。只看這張清單；that、and 這類連接詞另有規則（canCut）。
  */
 export const LINE_END_BANNED = new Set('a an the of to in on at for with by from'.split(' '));
-export const endsBanned = (line: string) =>
-  LINE_END_BANNED.has((line.trim().split(/\s+/).pop() ?? '').toLowerCase().replace(/[^a-z']/g, ''));
+export const endsBanned = (line: string) => {
+  const last = line.trim().split(/\s+/).pop() ?? '';
+  // 句號、問號、驚嘆號收尾的是句子的最後一個字（"Ethan doesn't get on."），不是懸在行尾的虛詞。
+  if (/[.!?…]["'”’)]*$/.test(last)) return false;
+  return LINE_END_BANNED.has(last.toLowerCase().replace(/[^a-z']/g, ''));
+};
 
 export type MarkKind = '1' | '2' | '3' | 'L' | 'W';
 
