@@ -275,21 +275,25 @@ export function Negotiation({ scene }: { scene: NegotiationScene }) {
           {scene.authority && (
             <dl className="stats authority">
               <dt>{t('授權上限')}</dt>
-              <dd className={ok ? undefined : 'over'}>{money(st.cap ?? scene.authority.cap)}</dd>
+              <dd className={ok ? undefined : 'over'}>
+                {fitLine(money(st.cap ?? scene.authority.cap))}
+              </dd>
               {offer.terms && (
                 <>
                   <dt>{t('附帶條款')}</dt>
                   <dd className={st.termsOk ? undefined : 'over'}>
-                    {st.termsOk ? t('已同意') : t('未同意')}
+                    {fitLine(st.termsOk ? t('已同意') : t('未同意'))}
                   </dd>
                 </>
               )}
               {/* 和解金額旁邊直接放開庭的風險，兩個數字放在一起比。 */}
               {risk && (
                 <>
-                  <dt className="risk">{t('開庭若判有責')}</dt>
+                  <dt className="risk">{fitLine(t('開庭若判有責'))}</dt>
                   <dd className="risk">
-                    {t('約 {low}到 {high}', { low: money(risk.low), high: money(risk.high) })}
+                    {fitLine(
+                      t('約 {low}到 {high}', { low: money(risk.low), high: money(risk.high) }),
+                    )}
                     {risk.punitive && <small>{t('懲罰性賠償另計')}</small>}
                   </dd>
                 </>
@@ -307,7 +311,7 @@ export function Negotiation({ scene }: { scene: NegotiationScene }) {
               aria-pressed={ok ? choice === 'take' : undefined}
               onClick={() => (ok ? setChoice('take') : advise(true))}
             >
-              {t(ok ? '建議{name}接受' : '建議{name}接受（超過授權）', { name: client })}
+              {fitLine(t(ok ? '建議{name}接受' : '建議{name}接受（超過授權）', { name: client }))}
             </button>
             <button
               className="wide"

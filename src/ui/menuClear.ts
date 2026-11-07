@@ -9,7 +9,8 @@
  * 不會留下照舊寬拆開的專有名詞（「Assistant District ⏎ Attorney」）。
  */
 const GAP = 8;
-const SLACK = 0.5;
+/** 差多少以內算到位：7.8px 也算不過（設計師；第二道關卡 464a280 第 4 項，法庭借據膠囊），只容浮點誤差。 */
+const SLACK = 0.01;
 
 /** 和選單鈕同一條橫帶、右邊要讓位的頂列。 */
 const SIDE = [
