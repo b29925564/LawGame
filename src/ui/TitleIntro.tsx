@@ -181,7 +181,7 @@ export function TitleIntro({ episode, onDone }: { episode: string; onDone: () =>
 
 /**
  * 0:05 的黑條：先慢後快（設計師 #319 審查 4，24 格／秒）。第 1 條蓋第 11 行；第 2、3 條各隔 8 格（333ms）；
- * 其餘各隔 2 格（83ms），跳著蓋。每條 167ms steps(4)。只蓋畫面裡有字的行（桌機中文 16 行），0:07.3 前蓋完，停到 0:10。
+ * 其餘各隔 2 格（83ms），跳著蓋。每條 167ms steps(4)。只蓋底圖裡有字的行（桌機 12 行、手機 16–17 行），0:07.3 前蓋完，停到 0:10。
  */
 export const barDelay = (i: number) => (i < 3 ? i * 333 : 2 * 333 + (i - 2) * 83);
 /**
@@ -564,13 +564,21 @@ function Lucas() {
   return (
     <div className="ti-push29">
       <Plate desk={[c29DA, c29DW]} phone={[c29PA, c29PW]} className="rack" />
-      <svg className="ti-hl29 desk" viewBox="0 0 2880 1800" preserveAspectRatio="xMidYMid slice">
+      <svg
+        className="ti-hl29 ti-hl29-desk"
+        viewBox="0 0 2880 1800"
+        preserveAspectRatio="xMidYMid slice"
+      >
         <polygon
           className="ti-hl29-ink"
           points="1160.1,1277.8 1332.0,1303.0 1331.1,1308.8 1159.2,1283.4"
         />
       </svg>
-      <svg className="ti-hl29 phone" viewBox="0 0 1620 2880" preserveAspectRatio="xMidYMid slice">
+      <svg
+        className="ti-hl29 ti-hl29-phone"
+        viewBox="0 0 1620 2880"
+        preserveAspectRatio="xMidYMid slice"
+      >
         <polygon
           className="ti-hl29-ink"
           points="223.7,2044.5 499.1,2084.8 497.7,2094.0 222.3,2053.4"

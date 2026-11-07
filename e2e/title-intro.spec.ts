@@ -346,6 +346,29 @@ test('0:29 是正式圖（立牌和輪廓光在圖裡算好，設計師 11-07 PA
     )
     .toMatch(/court-0029/);
   await expect(page.locator('.ti-back-rim, .ti-back-body')).toHaveCount(0);
+  // 螢光那一層和底圖同尺寸、同裁切，貼滿畫面，沒有別的框（曾經撞到冷開場手機框的 .phone 類名，手機上整格被蓋住）。
+  const vp = page.viewportSize()!;
+  // 推軌放大前（第 0 格）量。
+  await page.evaluate(() =>
+    document.getAnimations().forEach((a) => {
+      a.pause();
+      a.currentTime = 0;
+    }),
+  );
+  const hl = page.locator('.ti-hl29').filter({ visible: true });
+  await expect(hl).toHaveCount(1);
+  const box = (await hl.boundingBox())!;
+  expect([box.x, box.y, box.width, box.height].map(Math.round)).toEqual([
+    0,
+    0,
+    vp.width,
+    vp.height,
+  ]);
+  const look = await hl.evaluate((e) => {
+    const cs = getComputedStyle(e);
+    return [cs.position, cs.borderTopWidth, cs.backgroundColor];
+  });
+  expect(look).toEqual(['absolute', '0px', 'rgba(0, 0, 0, 0)']);
 });
 
 test('0:00 紙：三張同機位正式圖疊起來，每一行（行號＋字）一拍二亮起；英文介面用英文那張', async ({
