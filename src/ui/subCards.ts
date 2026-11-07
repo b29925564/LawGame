@@ -165,6 +165,10 @@ function zhFit(card: Card, em: number): Card[] {
   ];
 }
 
+/** 排好的每一行都不比框寬（沒排行的卡交給瀏覽器折）。 */
+const inRoom = (cards: Card[], room: number) =>
+  cards.every((c) => (c.lines ?? []).every((l) => zhW(l) <= room));
+
 /** 一張字幕卡：of ＝ 這一句一共分成幾張；marked ＝ 這一句的斷點是人手標的（plateBreaks.ts）。 */
 export type Sub = Card & { of: number; marked: boolean };
 const tag = (cards: Card[], marked: boolean): Sub[] =>
@@ -197,15 +201,25 @@ export function unitsOf(text: string): string[] {
  * 先分成單位（unitsOf：一句，一字句接在旁邊那句）；一個單位放不下兩行，才分成幾張：英文照人工斷點（plateBreaks.ts），
  * 沒標的才退回切分器（逗號、片語規則），中文在逗號、再不行在詞界（splitCards）。
  */
-export function subCards(text: string, em: number, measure?: Measure, maxLines = 2): Sub[] {
+export function subCards(
+  text: string,
+  em: number,
+  measure?: Measure,
+  maxLines = 2,
+  room?: number,
+): Sub[] {
   const sents = unitsOf(text);
   return sents.flatMap((s) => {
     if (zh(s)) {
       const one = maxLines === 2 ? zhOne({ text: s, from: 0 }, em) : null;
-      return tag(
-        one ? [one] : splitCards(s, em, maxLines, measure).flatMap((c) => zhFit(c, em)),
-        false,
-      );
+      if (one) return tag([one], false);
+      const cut = (e: number) => splitCards(s, e, maxLines, measure).flatMap((c) => zhFit(c, em));
+      let cards = cut(em);
+      // 切分器容許中文一行比 em 多 1 字；有實際框寬（room）時，切出來有一行比框寬就收緊再切，
+      // 不讓瀏覽器把那一行折成第 3 行（第二道關卡 a26de2b 第 2 項：844×390 字幕 150%「沃斯倒在地毯上，」）。
+      for (let e = em - 1; room !== undefined && e >= 4 && !inRoom(cards, room); e--)
+        cards = cut(e);
+      return tag(cards, false);
     }
     const m = markedFor(s);
     const marked = m && markedCards(m, em, measure);

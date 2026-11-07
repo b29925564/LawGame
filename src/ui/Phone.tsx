@@ -197,7 +197,7 @@ function Screen({
             <dd>{fitLine(t(s.to, scope))}</dd>
           </dl>
           <p className="muted">
-            {t('最近的司機：{driver}，2 分鐘', { driver: t(s.driver, scope) })}
+            {fitLine(t('最近的司機：{driver}，2 分鐘', { driver: t(s.driver, scope) }))}
           </p>
           <button className="primary" onClick={advance}>
             {t('叫車')}
@@ -246,7 +246,7 @@ function Screen({
         >
           {s.options.map((o, i) => (
             <button key={i} onClick={() => choose(i)}>
-              {t(o.text, scope)}
+              {fitLine(t(o.text, scope))}
             </button>
           ))}
         </div>
