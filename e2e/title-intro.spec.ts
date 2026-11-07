@@ -135,14 +135,17 @@ test('英文：跳過鈕是英文，標準字仍是「合理懷疑」四個字',
   await expect(page.locator('.ti-mark h1')).toHaveText('合理懷疑');
 });
 
-test('第二集換 0:10 和 0:23：百葉窗亮的是另一條縫，證人席是派單 App 的提醒', async ({ page }) => {
+test('第二集換 0:10 和 0:23：百葉窗是第二集的圖（亮另一條縫），證人席是派單 App 的提醒', async ({ page }) => {
   await open(page, { episode: 'ep2' });
   const intro = page.locator('.title-intro');
   await page.clock.fastForward(10000);
   await expect(intro).toHaveAttribute('data-shot', 'blind');
-  const litAt = () =>
-    page.locator('.ti-gap').evaluateAll((g) => g.findIndex((x) => x.classList.contains('lit')));
-  expect(await litAt()).toBe(12);
+  // 第二集自己的正式圖（第 13 縫亮，場景光影 #3 11-07 重算），不是第一集那張。
+  const srcs = await page
+    .locator('.ti-blinds img')
+    .evaluateAll((im) => im.map((x) => (x as HTMLImageElement).currentSrc));
+  expect(srcs.length).toBe(2);
+  for (const u of srcs) expect(u).toMatch(/blind-ep2-/);
   await page.clock.fastForward(7000);
   await expect(intro).toHaveAttribute('data-shot', 'court');
   await page.clock.fastForward(6000);

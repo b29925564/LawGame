@@ -11,6 +11,14 @@ import slitDA from './intro/blind-ep1-slit-screen-desktop.avif';
 import slitDW from './intro/blind-ep1-slit-screen-desktop.webp';
 import slitPA from './intro/blind-ep1-slit-screen-phone.avif';
 import slitPW from './intro/blind-ep1-slit-screen-phone.webp';
+import blind2DA from './intro/blind-ep2-base-desktop.avif';
+import blind2DW from './intro/blind-ep2-base-desktop.webp';
+import blind2PA from './intro/blind-ep2-base-phone.avif';
+import blind2PW from './intro/blind-ep2-base-phone.webp';
+import slit2DA from './intro/blind-ep2-slit-screen-desktop.avif';
+import slit2DW from './intro/blind-ep2-slit-screen-desktop.webp';
+import slit2PA from './intro/blind-ep2-slit-screen-phone.avif';
+import slit2PW from './intro/blind-ep2-slit-screen-phone.webp';
 import c17DA from './intro/court-0017wD.avif';
 import c17DW from './intro/court-0017wD.webp';
 import c17PA from './intro/court-0017wP.avif';
@@ -32,10 +40,9 @@ import './titleIntro.css';
  * 0:00–0:38 是這裡的七個鏡頭（0:00 和 0:05 同一個機位，合成一格）；0:38 的集名卡是原本的幕卡（ActCard），
  * 停完切黑 83ms 進第一幕第一場。
  *
- * 底圖是場景光影 #3 的正式圖（art-bible/scenes/title-intro-v94/final/，設計師 11-07 PASS）：0:10 第一集百葉窗、
+ * 底圖是場景光影 #3 的正式圖（art-bible/scenes/title-intro-v94/final/，設計師 11-07 PASS）：0:10 兩集百葉窗、
  * 0:17、0:23、0:29 法庭。圖已經分級過（titlegrade），這裡不再加濾鏡。每張有 AVIF、WebP 兩種，手機用直式機位。
- * 還沒換的：0:00 紙（黑條要對到紙上透視、景深裡的行，等設計師定做法）、0:10 第二集百葉窗（場景光影重算中），
- * 先用 HTML 畫的佔位，時間軸、黑條、螢光、標準字都不動。
+ * 還沒換的：0:00 紙（黑條要對到紙上透視、景深裡的行，等場景光影給每一行的四角座標），先用 HTML 畫的佔位。
  *
  * - 每次從頭開始一集都播；讀檔讀到片頭之後不播（片頭是那一張卡的前半段，過了就不在了）。
  * - 第二次播起右下角有「跳過」，直接到 0:38 的集名卡（不跳過集名）。看過與否每一集分開記，存在設定裡。
@@ -139,7 +146,7 @@ export function TitleIntro({ episode, onDone }: { episode: string; onDone: () =>
       {!black && (
         <div key={shot} className={`ti-shot shot-${shot}`} aria-hidden>
           {shot === 'paper' && <Paper />}
-          {shot === 'blind' && (ep2 ? <Blind lit={12} /> : <Blinds />)}
+          {shot === 'blind' && <Blinds ep2={ep2} />}
           {shot === 'court' && <Court />}
           {shot === 'witness' && <Witness ep2={ep2} />}
           {shot === 'lucas' && <Lucas />}
@@ -197,23 +204,6 @@ function Paper() {
   );
 }
 
-/**
- * 0:10：塗黑的頁面立起來變成百葉窗，4800K 從縫打進霧裡；31 條縫（＝31 層樓），lit 那一條（由上往下數，0 起）亮起。
- * 第一集是最上面那條（31 樓）；第二集是合約第 7.3 條那一行。
- */
-function Blind({ lit }: { lit: number }) {
-  return (
-    <div className="ti-blind">
-      <div className="ti-slats">
-        {Array.from({ length: 31 }, (_, n) => (
-          <i key={n} className={n === lit ? 'ti-gap lit' : 'ti-gap'} />
-        ))}
-      </div>
-      <i className="ti-fog" />
-    </div>
-  );
-}
-
 /** 手機（≤767px）用直式機位；兩種都先給 AVIF、再給 WebP。 */
 type Src = readonly [avif: string, webp: string];
 function Plate({ desk, phone, className }: { desk: Src; phone: Src; className?: string }) {
@@ -229,14 +219,26 @@ function Plate({ desk, phone, className }: { desk: Src; phone: Src; className?: 
 }
 
 /**
- * 0:10 第一集：塗黑的頁面立起來變成百葉窗（場景光影 #3 正式圖）。底圖的亮縫權重是 0，
- * 最上面那條（31 樓）的亮縫是另一層，黑底、screen 疊上去，2.4 秒起亮。整組從 1.3 倍拉到 1.0。
+ * 0:10：塗黑的頁面立起來變成百葉窗（場景光影 #3 正式圖），31 條縫＝31 層樓。底圖的亮縫權重是 0，
+ * 亮的那一條是另一層，黑底、screen 疊上去，2.4 秒起亮。整組從 1.3 倍拉到 1.0。
+ * 第一集亮最上面那條（31 樓）；第二集亮合約第 7.3 條那一行（第 13 縫，和第一集同一個機位、葉片升高 18 縫）。
  */
-function Blinds() {
+const BLINDS = {
+  ep1: {
+    base: { desk: [blindDA, blindDW], phone: [blindPA, blindPW] },
+    slit: { desk: [slitDA, slitDW], phone: [slitPA, slitPW] },
+  },
+  ep2: {
+    base: { desk: [blind2DA, blind2DW], phone: [blind2PA, blind2PW] },
+    slit: { desk: [slit2DA, slit2DW], phone: [slit2PA, slit2PW] },
+  },
+} as const;
+function Blinds({ ep2 }: { ep2: boolean }) {
+  const { base, slit } = BLINDS[ep2 ? 'ep2' : 'ep1'];
   return (
     <div className="ti-blinds">
-      <Plate desk={[blindDA, blindDW]} phone={[blindPA, blindPW]} />
-      <Plate desk={[slitDA, slitDW]} phone={[slitPA, slitPW]} className="ti-slit" />
+      <Plate desk={base.desk} phone={base.phone} />
+      <Plate desk={slit.desk} phone={slit.phone} className="ti-slit" />
     </div>
   );
 }
