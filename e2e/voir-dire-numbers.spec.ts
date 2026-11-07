@@ -94,7 +94,7 @@ for (const w of [320, 360])
     }, info) => {
       test.skip(info.project.name !== 'chromium', '自己設視窗，手機那一組跑就好');
       await open(page, w, 'zh', scale);
-      const got = await page.locator('button.cand .line').evaluateAll((els) =>
+      const got = await page.locator('button.cand .line, button.cand .job').evaluateAll((els) =>
         els.map((el) => {
           const text = el.textContent ?? '';
           const starts: number[] = [];
@@ -112,11 +112,12 @@ for (const w of [320, 360])
               lastTop = top;
             }
           }
-          return { text, starts };
+          return { text, starts, cls: el.className };
         }),
       );
-      expect(got.length).toBe(12);
-      for (const { text, starts } of got) {
+      expect(got.length).toBe(24);
+      // 每行至少 3 個字是介紹的規則；職稱（「小型物流行老闆」）只看不在詞中間斷。
+      for (const { text, starts, cls } of got) {
         const marks = new Set<number>();
         let pos = 0;
         // 單位之間；單位比一行還寬時，它內部的詞界也可以（退路 B），詞中間不行。
@@ -129,10 +130,36 @@ for (const w of [320, 360])
             expect
               .soft(marks.has(cuts[k]), `「${text.slice(0, cuts[k])}｜${text.slice(cuts[k])}」`)
               .toBe(true);
-          if (cuts.length > 2)
+          if (cuts.length > 2 && cls === 'line')
             expect
               .soft(row.match(/[\p{L}\p{N}]/gu)?.length ?? 0, `「${row}」不到 3 個字（${text}）`)
               .toBeGreaterThanOrEqual(3);
         }
       }
+      // 名字（譯名）放不下時只斷在「・」後面。
+      const names = await page.locator('button.cand strong').evaluateAll((els) =>
+        els.map((el) => {
+          let text = '';
+          const cuts: number[] = [];
+          let lastTop = -1;
+          const walk = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+          for (let n = walk.nextNode(); n; n = walk.nextNode()) {
+            if (n.parentElement?.closest('.job')) continue;
+            const s = n.textContent ?? '';
+            for (let i = 0; i < s.length; i++) {
+              const r = document.createRange();
+              r.setStart(n, i);
+              r.setEnd(n, i + 1);
+              const top = Math.round(r.getBoundingClientRect().top);
+              if (lastTop >= 0 && Math.abs(top - lastTop) > 6) cuts.push(text.length);
+              lastTop = top;
+              text += s[i];
+            }
+          }
+          return { text, cuts };
+        }),
+      );
+      for (const { text, cuts } of names)
+        for (const at of cuts)
+          expect.soft(text[at - 1], `名字「${text.slice(0, at)}｜${text.slice(at)}」`).toBe('・');
     });
