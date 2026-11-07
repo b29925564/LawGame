@@ -135,7 +135,9 @@ test('英文：跳過鈕是英文，標準字仍是「合理懷疑」四個字',
   await expect(page.locator('.ti-mark h1')).toHaveText('合理懷疑');
 });
 
-test('第二集換 0:10 和 0:23：百葉窗是第二集的圖（亮另一條縫），證人席是派單 App 的提醒', async ({ page }) => {
+test('第二集換 0:10 和 0:23：百葉窗是第二集的圖（亮另一條縫），證人席是派單 App 的提醒', async ({
+  page,
+}) => {
   await open(page, { episode: 'ep2' });
   const intro = page.locator('.title-intro');
   await page.clock.fastForward(10000);
