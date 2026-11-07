@@ -83,11 +83,14 @@ const flZh = (w: string, key: number) => {
 
 /** 英文黏住的一段（不斷行空格連起來的字）：內部再拆時，a／of／& 這些字仍跟著下一個字（「Whitlock & ⏎ Hale」→「Whitlock ⏎ & Hale」）。 */
 const flEn = (g: string, key: number) => {
-  const ws = g.split(NB);
+  // 專有名詞在內部也是一塊（最後兩個字黏住時會把名字和前一個字黏成一段，「Assistant District Attorney」
+  // 拆的時候是「Assistant ⏎ District Attorney」，不是「Assistant District ⏎ Attorney」）。
+  const ws = glueNames(g.split(NB).join(' ')).split(' ');
   const chunks: string[] = [];
   ws.forEach((x, i) => {
-    const prev = ws[i - 1];
-    if (i > 0 && (glued(prev, x) || prev === '&')) chunks[chunks.length - 1] += NB + x;
+    const prev = ws[i - 1]?.split(NB).at(-1) ?? '';
+    const head = x.split(NB)[0];
+    if (i > 0 && (glued(prev, head) || prev === '&')) chunks[chunks.length - 1] += NB + x;
     else chunks.push(x);
   });
   return (

@@ -62,9 +62,8 @@ export function fitUnits(root: ParentNode = document) {
 /** 整個畫面：字換了、視窗或框的大小變了、字型載入了、字級換了，就重排一次。 */
 export function watchUnits() {
   const run = () => {
-    fitUnits();
-    // 字排好以後再量選單鈕四周（換行會改變頂列的高）。
-    clearMenu();
+    // 排不拆單位，再量選單鈕四周（換行會改變頂列的高；讓位以後那一列再排一次）。
+    clearMenu(fitUnits);
     for (const e of document.querySelectorAll<HTMLElement>('.fl')) {
       const b = flowOf(e);
       if (b && !seen.has(b)) {

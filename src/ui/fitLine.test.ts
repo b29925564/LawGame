@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { episodes } from '../content';
 import { fitLineUnits } from './lineUnits';
-import { chineseLines, englishLines, fitLineEn, glueEnglish, glueTail } from './prose';
+import { Fragment, createElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { chineseLines, englishLines, fitLine, fitLineEn, glueEnglish, glueTail } from './prose';
 
 /** 兩集手機戲裡的黑底字卡（do: caption）正文。 */
 const captions = Object.values(episodes).flatMap((ep) =>
@@ -107,6 +109,15 @@ describe('第二道關卡 72a9003 設計師裁定 1、6', () => {
     expect(fitLineEn('Calder County Superior Court, Courtroom 5')).toContain(`Courtroom${NB}5`);
     expect(fitLineEn('Dad. In 2016, who ordered the maintenance records destroyed?')).toMatch(
       new RegExp(`records${NB}destroyed\\?$`),
+    );
+  });
+  it('最後兩個字黏成一段時，裡面的專有名詞還是一塊（頂列「Assistant District ⏎ Attorney」）', () => {
+    const html = (t: string) => renderToStaticMarkup(createElement(Fragment, null, fitLine(t)));
+    expect(html('Catherine Morrow · Assistant District Attorney')).toContain(
+      '<span class="fl">District Attorney</span>',
+    );
+    expect(html('Trevor Mills · VP of Operations, Calder Express')).toContain(
+      '<span class="fl">Calder Express</span>',
     );
   });
   it('數詞＋量詞跟後面的詞同一個單位', () => {

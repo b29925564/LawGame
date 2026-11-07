@@ -5,7 +5,8 @@
  * 標頭那一行至少 44px 高）在大字級時不夠。這裡量實際的鈕：
  * 1. 和鈕同一條橫帶（鈕上下各 8px 之內）的頂列，字或有框的東西伸到鈕左邊 8px 之內，就把那一列的右內距加大，讓字換行。
  * 2. 頂列（.bench）的標頭那一行下面的第二列，若在鈕下面不到 8px，就把標頭那一行撐高，整列換到鈕下面（和期限那一格一樣）。
- * 每次先拿掉自己加的值再量，不會越加越多。
+ * 每次先拿掉自己加的值、照沒讓位的寬重排一次再量，不會越加越多；加了右內距就把那一列重排一次（單位拆不拆照讓位後的寬），
+ * 不會留下照舊寬拆開的專有名詞（「Assistant District ⏎ Attorney」）。
  */
 const GAP = 8;
 const SLACK = 0.5;
@@ -50,12 +51,14 @@ function inkOf(root: Element): Box[] {
   return out;
 }
 
-export function clearMenu() {
+/** fit：排不拆單位（fitUnits），傳進來是為了不互相 import。 */
+export function clearMenu(fit: (root?: ParentNode) => void) {
   const mt = document.querySelector('.menu-toggle');
   const sides = [...document.querySelectorAll<HTMLElement>(SIDE)];
   const tops = [...document.querySelectorAll<HTMLElement>(TOP)];
   for (const e of sides) e.style.removeProperty('padding-right');
   for (const e of tops) e.style.removeProperty('min-height');
+  fit();
   if (!mt || mt.closest('[hidden]')) return;
   const m = mt.getBoundingClientRect();
   if (!m.width) return;
@@ -72,6 +75,7 @@ export function clearMenu() {
       if (over <= SLACK) break;
       const pad = parseFloat(getComputedStyle(e).paddingRight) || 0;
       e.style.paddingRight = `${pad + Math.ceil(over)}px`;
+      fit(e);
     }
   }
   // 2. 第二列換到鈕下面：只看橫向和鈕（左右各 8px）重疊的東西。

@@ -63,8 +63,7 @@ export function App() {
   useDocumentLang();
   useEffect(() => {
     document.documentElement.style.setProperty('--text-scale', String(textScale));
-    fitUnits();
-    clearMenu();
+    clearMenu(fitUnits);
   }, [textScale]);
   useEffect(() => watchUnits(), []);
 
