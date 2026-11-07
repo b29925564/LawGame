@@ -68,7 +68,18 @@ for (const [lang, width] of [
     await fontsReady();
     expect(await cut(page)).toEqual([]);
     const row = () => nav.locator(':scope > button[data-key]').allInnerTexts();
-    const before = await row();
+    // 字型載完 Shell 會作廢量過的寬、攤開重量（loadingdone → 下一次 render）：機器忙的時候這一輪會晚於上面兩個 rAF，
+    // 量到重量前的列（第一道關卡 a26de2b：3 workers 下差一格）。隔 300ms 連續兩次讀到一樣的列，才當作排好了。
+    let before = await row();
+    await expect
+      .poll(async () => {
+        await page.waitForTimeout(300);
+        const now = await row();
+        const same = now.join('|') === before.join('|');
+        before = now;
+        return same;
+      })
+      .toBe(true);
     const slot = await more.evaluate((b) => b.getBoundingClientRect().width);
     await more.click();
     await expect(more).toHaveAttribute('aria-expanded', 'true');

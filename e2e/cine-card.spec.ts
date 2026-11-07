@@ -1,6 +1,7 @@
 /// <reference lib="dom" />
 import { expect, test, type Page } from '@playwright/test';
 import { proseUnits } from '../src/ui/lineUnits';
+import { EN_NAMES } from '../src/ui/enNames';
 import { endsBanned } from '../src/ui/plateBreaks';
 
 /**
@@ -271,7 +272,7 @@ const FORCED_ONE: Record<string, string[]> = {
   '320 150': ['apartment', '“Note', 'message.', 'Tuesday'],
 };
 for (const w of [320, 360])
-  for (const scale of [1.25, 1.5])
+  for (const scale of [1, 1.25, 1.5])
     test(`英文黑底字卡：行尾沒有虛詞、沒有單字行（${w}・${scale * 100}%）`, async ({
       page,
     }, info) => {
@@ -320,6 +321,28 @@ for (const w of [320, 360])
             expect
               .soft(endsBanned(r), `${tag}\n第 ${i + 1} 行的行尾「${words[words.length - 1]}」`)
               .toBe(false);
+        });
+        // 引號裡的篇名放得下一行就整段不拆（設計師裁定 a26de2b：「“Note｜to Audit_v3.”」）；320 寬 150% 放不下，照之前接受。
+        if (!(w === 320 && scale === 1.5))
+          for (const m of rows.join(' ').matchAll(/“[^”]+”/g))
+            expect
+              .soft(
+                rows.some((r) => r.includes(m[0])),
+                `${tag}\n篇名 ${m[0]} 拆開`,
+              )
+              .toBe(true);
+        // 專有名詞不拆（Calder County／Building／Harbor…）。
+        rows.slice(1).forEach((r, i) => {
+          for (const n of EN_NAMES) {
+            const ws = n.split(' ');
+            for (let k = 1; k < ws.length; k++)
+              expect
+                .soft(
+                  rows[i].endsWith(ws.slice(0, k).join(' ')) && r.startsWith(ws.slice(k).join(' ')),
+                  `${tag}\n拆開 ${n}`,
+                )
+                .toBe(false);
+          }
         });
       }
     });

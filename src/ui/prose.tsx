@@ -1,5 +1,6 @@
 import { Fragment, useLayoutEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { fitLineUnits, nameUnits, proseUnits } from './lineUnits';
+import { NB, glueNames } from './enNames';
 import { endsBanned } from './plateBreaks';
 
 const HAN = /\p{Script=Han}/u;
@@ -21,9 +22,24 @@ export function prose(text: string, tail = true): ReactNode {
   return proseUnits(text, tail).map((w, i) => ([...w].length > 1 && w.trim() ? kw(w, i) : w));
 }
 
+/**
+ * 英文短行（眉標、手機框、按鈕）的 fitLine：專有名詞黏住；a／an／the／of／to…（plateBreaks.ts 的 endsBanned）黏住下一個字，
+ * 不留在行尾（設計師裁定 a26de2b：「VP of ⏎ Operations」「still at the ⏎ office」）。其餘照瀏覽器在空白斷。
+ */
+export function fitLineEn(text: string): string {
+  const w = glueNames(text).split(' ');
+  return w.reduce((out, x, i) => (i === 0 ? x : out + (endsBanned(w[i - 1]) ? NB : ' ') + x));
+}
+
+/** 引號裡的短篇名（"Note to Audit_v3."，四個字以內）黏成一段：放得下一行就整段不拆（設計師裁定 a26de2b）。 */
+export const glueTitles = (text: string) =>
+  text.replace(/([“"])([^”"]+)([”"])/g, (m, a: string, b: string, c: string) =>
+    b.trim().split(/[ \u00a0]+/).length <= 4 ? a + b.replace(/ /g, NB) + c : m,
+  );
+
 /** 黑底字卡的正文（fitLine 規則，lineUnits.ts 的 fitLineUnits）：每個單位包成不換行的 span。英文照常在空白斷。 */
 export function fitLine(text: string, titles = true): ReactNode {
-  if (!HAN.test(text)) return text;
+  if (!HAN.test(text)) return fitLineEn(text);
   return fitLineUnits(text, titles).map((w, i) =>
     [...w].length > 1 && w.trim() ? (
       <span key={i} className={titles && /^[〈《]/.test(w) ? 'kw kw-title' : 'kw'}>
@@ -64,7 +80,9 @@ export function FitLine({ text, className }: { text: string; className?: string 
     void document.fonts?.ready.then(check);
     return () => ro.disconnect();
   }, [text, isSplit]);
-  const lines = useEnglishLines(ref, text);
+  // 英文先黏專有名詞、引號裡的篇名，排行時當成不拆的（englishLines 的 hard）。
+  const en = HAN.test(text) ? text : glueTitles(glueNames(text));
+  const lines = useEnglishLines(ref, en);
   return (
     <p ref={ref} className={className}>
       {HAN.test(text)
@@ -78,7 +96,7 @@ export function FitLine({ text, className }: { text: string; className?: string 
                 {l}
               </Fragment>
             ))
-          : glueEnglish(text)}
+          : glueEnglish(en)}
     </p>
   );
 }
@@ -184,7 +202,7 @@ function useEnglishLines(ref: RefObject<HTMLElement | null>, text: string): stri
  * 內容裡已經用不換行空白黏好的（east Calder Harbor）照原樣。
  */
 export function glueEnglish(text: string): string {
-  const w = text.split(' ');
+  const w = glueNames(text).split(' ');
   const cap = (x: string) => /^[A-Z]/.test(x);
   return w.reduce((out, x, i) => {
     if (i === 0) return x;
@@ -216,12 +234,15 @@ const NUM_EN = /^(?:\d+|one|two|three|four|five|six|seven|eight|nine|ten|eleven|
  * 用不斷行空格，中文沒有半形空白，原樣不動。欄的最小寬度不小於黏住的最長一段（styles.css .due-text），所以不會凸出欄外。
  */
 export function glueTail(text: string): string {
-  const w = text.split(' ');
-  if (w.length < 2) return text;
+  const w = glueNames(text).split(' ');
+  if (w.length < 2) return w.join(' ');
+  // 冒號前的標籤（Discovery deadline:）整段黏住，放不下就整段換到下一行（設計師裁定 a26de2b）。
+  const label = w.findIndex((x) => x.endsWith(':'));
   return w.reduce((out, x, i) => {
     if (i === 0) return x;
     const prev = w[i - 1];
-    const glue = NUM_EN.test(prev) || endsBanned(prev) || i === w.length - 1;
+    const glue =
+      NUM_EN.test(prev) || endsBanned(prev) || i === w.length - 1 || (label <= 2 && i <= label);
     return out + (glue ? '\u00a0' : ' ') + x;
   });
 }

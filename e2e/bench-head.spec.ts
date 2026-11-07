@@ -1,6 +1,8 @@
 /// <reference lib="dom" />
 import { expect, test, type Page } from '@playwright/test';
+import { EN_NAMES } from '../src/ui/enNames';
 import { fitLineUnits } from '../src/ui/lineUnits';
+import { endsBanned } from '../src/ui/plateBreaks';
 
 /**
  * 頂列（.bench）的人名職稱、幕名地點和警示：中文只在詞與詞之間換行（fitLine），不出現「合規｜長」「服｜務 22」
@@ -14,12 +16,12 @@ const PAGES: [string, string, number][] = [
   ['法庭', 'ep1', 17],
 ];
 
-async function open(page: Page, ep: string, scene: number, scale: number) {
+async function open(page: Page, ep: string, scene: number, scale: number, lang = 'zh') {
   await page.goto('/');
   await page.evaluate(
-    ([ep, scene, scale]) => {
+    ([ep, scene, scale, lang]) => {
       localStorage.clear();
-      localStorage.setItem('lawgame-lang', 'zh');
+      localStorage.setItem('lawgame-lang', lang);
       localStorage.setItem(
         'lawgame-settings',
         JSON.stringify({ state: { textScale: scale }, version: 1 }),
@@ -43,10 +45,13 @@ async function open(page: Page, ep: string, scene: number, scale: number) {
         }),
       );
     },
-    [ep, scene, scale] as const,
+    [ep, scene, scale, lang] as const,
   );
   await page.reload();
-  await page.getByRole('button', { name: /^繼續/ }).first().click();
+  await page
+    .getByRole('button', { name: /^(繼續|Continue)/ })
+    .first()
+    .click();
   await page.waitForTimeout(400);
   const beat = page.locator('.place-beat');
   if (await beat.count()) await beat.click({ timeout: 3000 }).catch(() => {});
@@ -110,6 +115,59 @@ for (const w of [320, 360, 390])
                 `${name}「${text.slice(0, at)}｜${text.slice(at)}」`,
               )
               .toBe(true);
+        }
+      }
+    });
+
+/**
+ * 頂列英文（設計師裁定 a26de2b）：行尾不留 of／for／the…（「VP of ⏎ Operations」「Counsel for ⏎ the plaintiff」），
+ * 專有名詞不拆（結辯「Calder ⏎ County」）。
+ */
+const PAGES_EN: [string, string, number][] = [
+  ...PAGES,
+  ['第 2 集調解', 'ep2', 12],
+  ['第 2 集結辯', 'ep2', 21],
+];
+for (const w of [320, 360, 390])
+  for (const scale of [1, 1.25, 1.5])
+    test(`頂列英文：行尾沒有虛詞、專有名詞不拆：${w} 寬・${scale * 100}%`, async ({
+      page,
+    }, info) => {
+      test.skip(info.project.name !== 'chromium', '自己設視窗大小，手機那一組跑就好');
+      test.setTimeout(120_000);
+      await page.setViewportSize({ width: w, height: 740 });
+      for (const [name, ep, scene] of PAGES_EN) {
+        await open(page, ep, scene, scale, 'en');
+        for (const { text, starts } of await breaks(page)) {
+          const rows: string[] = [];
+          let at = 0;
+          for (const s of [...starts, text.length]) {
+            rows.push(
+              text
+                .slice(at, s)
+                .replace(/\u00a0/g, ' ')
+                .trim(),
+            );
+            at = s;
+          }
+          rows.slice(0, -1).forEach((r, i) => {
+            expect
+              .soft(endsBanned(r.split(' ').at(-1) ?? ''), `${name}「${r}｜${rows[i + 1]}」行尾`)
+              .toBe(false);
+            for (const n of EN_NAMES)
+              for (let k = 1; k < n.split(' ').length; k++) {
+                const [a, b] = [
+                  n.split(' ').slice(0, k).join(' '),
+                  n.split(' ').slice(k).join(' '),
+                ];
+                expect
+                  .soft(
+                    r.endsWith(a) && rows[i + 1].startsWith(b),
+                    `${name}「${r}｜${rows[i + 1]}」拆開 ${n}`,
+                  )
+                  .toBe(false);
+              }
+          });
         }
       }
     });
