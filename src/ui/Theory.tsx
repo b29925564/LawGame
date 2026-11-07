@@ -261,7 +261,7 @@ export function Opening({ scene }: { scene: OpeningScene }) {
         <span>{fitLine(`${t('開場陳述')}${th ? `${t('・')}${t(th.name, scope)}` : ''}`)}</span>
       </p>
       {!th ? (
-        <p className="muted">{t('沒有選定的案件理論，沒有任何承諾可以許。')}</p>
+        <p className="muted">{fitLine(t('沒有選定的案件理論，沒有任何承諾可以許。'))}</p>
       ) : (
         <>
           <p className="muted small">

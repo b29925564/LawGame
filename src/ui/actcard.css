@@ -600,6 +600,11 @@
     flex-wrap: wrap;
   }
 }
+/* 寬一點的手機也一樣：房間和日子時刻擠不下一行時（PlaceSlate 量過才加 .stack），日子時刻整組換行，房間不拆。 */
+.place-slate .ps-text.stack {
+  flex-direction: column;
+  align-items: flex-start;
+}
 @media (prefers-reduced-motion: reduce) {
   /* 減少動態：不淡入淡出，停 2.5 秒後直接收掉。 */
   .place-slate {

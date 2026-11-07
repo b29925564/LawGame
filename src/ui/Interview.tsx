@@ -7,7 +7,7 @@ import { useScope } from './lang';
 import { StickyNote } from './Marks';
 import { Portrait, Speech } from './Portrait';
 import { Transcript } from './Shell';
-import { fitLine } from './prose';
+import { fitDots, fitLine } from './prose';
 import { fitUnits } from './fitUnits';
 
 /** 按鈕標籤至少有一個排成兩行以上。 */
@@ -89,7 +89,10 @@ export function Interview({ scene }: { scene: InterviewScene }) {
         <div>
           <h2>{t(scene.who, scope)}</h2>
           <p className="muted">
-            {fitLine(t('{a}・{b}', { a: t(scene.role, scope), b: t(scene.via, scope) }))}
+            {fitDots(
+              [...t(scene.role, scope).split('・'), t(scene.via, scope)],
+              t('{a}・{b}', { a: t(scene.role, scope), b: t(scene.via, scope) }),
+            )}
           </p>
         </div>
         {note && (

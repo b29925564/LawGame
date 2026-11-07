@@ -9,7 +9,8 @@
  * 不會留下照舊寬拆開的專有名詞（「Assistant District ⏎ Attorney」）。
  */
 const GAP = 8;
-const SLACK = 0.5;
+/** 差多少以內算到位：7.8px 也算不過（設計師；第二道關卡 464a280 第 4 項，法庭借據膠囊），只容浮點誤差。 */
+const SLACK = 0.01;
 
 /** 和選單鈕同一條橫帶、右邊要讓位的頂列。 */
 const SIDE = [
@@ -99,11 +100,12 @@ export function clearMenu(fit: (root?: ParentNode) => void) {
   for (const e of tops) {
     const below: Box[] = [];
     const floor = e.getBoundingClientRect().bottom - 1;
-    for (let s = e.nextElementSibling; s; s = s.nextElementSibling) below.push(...inkOf(s));
-    // 寬螢幕的頂列是同一行（標頭旁邊就是信心條），只管真的排在標頭下面的那一列。
-    const hit = below.filter(
-      (b) => b.top >= floor && b.right > m.left - GAP && b.left < m.right + GAP,
-    );
+    // 寬螢幕的頂列是同一行（標頭旁邊就是信心條），只管真的排在標頭下面的那一列：用整個元素的框判斷在不在下面，
+    // 字的框不行——大字的數字（遴選「候選 21」）字框比行框高，上緣會高過標頭的下緣，被當成同一行漏掉
+    //（設計師第二道關卡 464a280 裁定 1：412 中文 150% 重疊 6.6 px）。
+    for (let s = e.nextElementSibling; s; s = s.nextElementSibling)
+      if (s.getBoundingClientRect().top >= floor) below.push(...inkOf(s));
+    const hit = below.filter((b) => b.right > m.left - GAP && b.left < m.right + GAP);
     if (!hit.length) continue;
     const top = Math.min(...hit.map((b) => b.top));
     const short = m.bottom + GAP - top;

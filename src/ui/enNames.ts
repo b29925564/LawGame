@@ -14,7 +14,7 @@ export const EN_NAMES = [
   ],
   ...['Northgate Freight', 'East River Street', 'Harbor Avenue', 'Pier Nine', 'Pier Road'],
   ...['State Prison', 'Calder State Prison', 'Okafor Labor Law', 'South Harbor Market'],
-  ...['Whitlock & Hale', 'Omar H.'],
+  ...['Whitlock & Hale', 'Omar H.', 'Air Force'],
   ...[
     'Ethan Shaw',
     'Trevor Mills',
