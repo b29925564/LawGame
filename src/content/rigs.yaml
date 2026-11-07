@@ -34,6 +34,12 @@ ep1-31f-fri:
   label: 週五
   time: '22:49'
   kelvin: 4100
+# 冷開場 23:14，港邊公車亭：亭內偏暗的那根燈管 --k-fluoro（第 3 章第 03 格；art-bible/scenes/coldopen-v94/rigs/harbour-shelter-night.yaml）。
+# 鈉燈只是焦外光點，不照人；手機光是 6500 的螢幕光，不是房間的燈組。
+ep1-harbour-shelter-fri:
+  label: 週五
+  time: '23:14'
+  kelvin: 4100
 # 大廳晨光（第 5 章場景光表）。
 ep1-firm-lobby-mon:
   label: 週一

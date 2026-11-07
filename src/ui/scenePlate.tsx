@@ -28,6 +28,8 @@ type Entry = {
   scene: string;
   rig: string;
   lang?: Lang;
+  /** 同一組燈的第幾個版本（23:14 的 a、b：手機光正常、55%）；格子的 variant 要一樣才算。 */
+  variant?: string;
   files: Record<'desktop' | 'phone', { file: string }>;
   focus?: { y?: number };
   /** 窄視窗裁左右時：圖上的 at（圖寬比例）落在視窗寬的 to 處（和立牌組的 anchor 同一個意思）。 */
@@ -105,11 +107,14 @@ const PHONE = '(max-width: 767px), (orientation: portrait)';
 
 export function plateFor(
   episode: string,
-  scene: { id: string; rig?: string },
+  scene: { id: string; rig?: string; variant?: string },
   lang: Lang,
 ): Plate | null {
   if (!scene.rig) return null;
-  const hits = ENTRIES.filter((p) => p.scene === `${episode}:${scene.id}` && p.rig === scene.rig);
+  const hits = ENTRIES.filter(
+    (p) =>
+      p.scene === `${episode}:${scene.id}` && p.rig === scene.rig && p.variant === scene.variant,
+  );
   const hit = hits.find((p) => p.lang === lang) ?? hits.find((p) => !p.lang);
   const rig = RIGS[scene.rig];
   if (!hit || !rig) return null;
@@ -133,7 +138,7 @@ export function plateFor(
 /** 這一場戲的底圖（跟著介面語言）；沒有就是 null。 */
 export function useScenePlate(
   episode: string,
-  scene: { id: string; rig?: string } | undefined,
+  scene: { id: string; rig?: string; variant?: string } | undefined,
 ): Plate | null {
   const lang = useLang((s) => s.lang);
   return scene ? plateFor(episode, scene, lang) : null;
@@ -284,7 +289,19 @@ export function useShown(plate: Plate | null): Shown | null {
  * 底圖層：釘在視窗後面，圖沒好以前是純黑。圖不放在介面前面，介面（台詞框、按鈕）自己讓出上半部。
  * 燈組與色溫寫在 data 上（驗收截圖與 e2e 讀它，不讀圖檔）。
  */
-export function ScenePlate({ shown, dim }: { shown: Shown; dim?: boolean }) {
+export function ScenePlate({
+  shown,
+  dim,
+  fade,
+  from,
+}: {
+  shown: Shown;
+  dim?: boolean;
+  /** 疊在另一張上面慢慢淡入（交叉淡化）。 */
+  fade?: boolean;
+  /** 交叉淡化的起點：硬切出來、不淡入。 */
+  from?: boolean;
+}) {
   const { plate, url, state: warm, phone } = shown;
   // 畫面上這幾張 <img> 自己解碼完才亮：warmPlate 解碼的是另一個 Image 物件，這邊的元件掛上去時還沒畫，
   // 小的立牌圖會先出來、底圖晚幾格（第二道關卡 v93 第 1 處：立牌單獨浮在黑底上）。底圖、立牌一起亮，從黑淡入。
@@ -314,6 +331,8 @@ export function ScenePlate({ shown, dim }: { shown: Shown; dim?: boolean }) {
       data-kelvin={plate.kelvin}
       data-state={state}
       data-dim={dim ? '' : undefined}
+      data-fade={fade ? '' : undefined}
+      data-from={from ? '' : undefined}
       data-subjects={plate.subjects ? JSON.stringify(plate.subjects[variant]) : undefined}
       data-clear={plate.clear ? JSON.stringify(plate.clear[variant]) : undefined}
       aria-hidden
@@ -415,14 +434,22 @@ export function PlateEyebrow({ text }: { text: string }) {
  * 場景自己的介面用 usePlate 說「我這一格要這張圖」：over='beat' 是定場（圖在場記後面、黑底的定場卡讓出來），
  * over='scene' 是場景介面後面。
  */
-type PlateLayer = { shown: Shown; dim: boolean; over: 'beat' | 'scene' };
+/** from：交叉淡化的起點（23:14 的「漸暗」a → b），畫在下面一層，上面這張淡入。 */
+type PlateLayer = { shown: Shown; dim: boolean; over: 'beat' | 'scene'; from?: Shown };
 const usePlateStore = create<{ layer: PlateLayer | null }>(() => ({ layer: null }));
 
-export function usePlate(shown: Shown | null, over: 'beat' | 'scene', dim = false) {
-  const key = shown ? `${shown.url}|${shown.state}|${shown.scrim}` : '';
+export function usePlate(
+  shown: Shown | null,
+  over: 'beat' | 'scene',
+  dim = false,
+  from: Shown | null = null,
+) {
+  const key = shown
+    ? `${shown.url}|${shown.state}|${shown.scrim}|${from?.url ?? ''}|${from?.state ?? ''}`
+    : '';
   useLayoutEffect(() => {
     if (!shown) return;
-    const mine: PlateLayer = { shown, dim, over };
+    const mine: PlateLayer = { shown, dim, over, from: from ?? undefined };
     usePlateStore.setState({ layer: mine });
     return () => {
       // 換場時舊的先卸、新的才掛（同一個 commit）：只清自己的，不蓋掉接手的那一層。
@@ -437,7 +464,10 @@ export function PlateHost() {
   if (!layer) return null;
   return (
     <div className="plate-host" data-over={layer.over}>
-      <ScenePlate key={layer.shown.url} shown={layer.shown} dim={layer.dim} />
+      {layer.from && (
+        <ScenePlate key={`from:${layer.from.url}`} shown={layer.from} dim={layer.dim} from />
+      )}
+      <ScenePlate key={layer.shown.url} shown={layer.shown} dim={layer.dim} fade={!!layer.from} />
     </div>
   );
 }

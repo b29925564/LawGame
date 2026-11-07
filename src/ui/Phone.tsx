@@ -7,6 +7,7 @@ import { PlaceBeat } from './ActCard';
 import { fitUnits } from './fitUnits';
 import { FitLine, fitLine } from './prose';
 import { useScope } from './lang';
+import { reducedMotion } from './a11y';
 import { useHand } from './Marks';
 import { Redaction } from './Redaction';
 import {
@@ -66,12 +67,20 @@ export function Phone({ scene }: { scene: PhoneScene }) {
   useHand('coldopen', !scene.epilogue);
   // 有定場鏡頭的那一格（do: caption 帶 place＋rig）：底圖照「場景 id＋那一格的 rig」找。
   // 先演定場（圖＋左下場記），再把那一格的字當旁白字幕放在同一張圖上（和其他有底圖的場一樣，設計師 #296）。
-  const cap = v.step.do === 'caption' && v.step.rig && v.step.place ? v.step : null;
-  const plate = cap ? plateFor(progress.episode, { id: scene.id, rig: cap.rig }, lang) : null;
+  // 有 rig 沒 place 的格子是同一個鏡頭接著演（23:14 的最後一格）：不再定場，直接上圖；fadeFrom 是交叉淡化的起點。
+  const cap = v.step.do === 'caption' && v.step.rig ? v.step : null;
+  const plate = cap
+    ? plateFor(progress.episode, { id: scene.id, rig: cap.rig, variant: cap.variant }, lang)
+    : null;
   const shown = useShown(plate);
+  const fromPlate =
+    cap?.fadeFrom && !reducedMotion()
+      ? plateFor(progress.episode, { id: scene.id, rig: cap.rig, variant: cap.fadeFrom }, lang)
+      : null;
+  const from = useShown(fromPlate);
   const [framed, setFramed] = useState<number | null>(null);
-  const slated = !!shown && framed === progress.step;
-  usePlate(slated ? shown : null, 'scene');
+  const slated = !!shown && (framed === progress.step || !cap?.place);
+  usePlate(slated ? shown : null, 'scene', false, slated && from?.state === 'ok' ? from : null);
   const narr: Line | null = cap
     ? { who: '旁白', text: cap.text, mood: '平', thought: false }
     : null;
@@ -85,7 +94,7 @@ export function Phone({ scene }: { scene: PhoneScene }) {
   const ahead = scene.steps.slice(progress.step + 1).find((s) => s.do === 'caption' && s.rig);
   const next =
     ahead && ahead.do === 'caption' && ahead.rig
-      ? plateFor(progress.episode, { id: scene.id, rig: ahead.rig }, lang)
+      ? plateFor(progress.episode, { id: scene.id, rig: ahead.rig, variant: ahead.variant }, lang)
       : null;
   const [nextDesk, nextPhone] = [next?.desktop, next?.phone];
   useEffect(() => {
@@ -98,7 +107,12 @@ export function Phone({ scene }: { scene: PhoneScene }) {
         key={progress.step}
         id={scene.id}
         episode={progress.episode}
-        place={{ raw: cap.place ?? '', text: t(cap.place ?? '', scope), rig: cap.rig }}
+        place={{
+          raw: cap.place ?? '',
+          text: t(cap.place ?? '', scope),
+          rig: cap.rig,
+          variant: cap.variant,
+        }}
         onDone={() => setFramed(progress.step)}
         cold
       />

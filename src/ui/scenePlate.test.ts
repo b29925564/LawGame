@@ -7,7 +7,7 @@ import { bandNeedsScrim, plateFor } from './scenePlate';
  * 底圖接進場景（scenePlate.tsx）：照「集:場景 id」找，燈組要和場景自己寫的一樣，有語言的圖跟介面語言。
  * plates.test.ts 管 manifest 和劇本對得上；這裡管程式真的會把圖拿出來。
  */
-type Plate = { id: string; scene: string; rig: string; lang?: 'zh' | 'en' };
+type Plate = { id: string; scene: string; rig: string; lang?: 'zh' | 'en'; variant?: string };
 const { plates } = JSON.parse(
   readFileSync(new URL('./plates/plates.json', import.meta.url), 'utf8'),
 ) as { plates: Plate[] };
@@ -19,7 +19,7 @@ describe('場景底圖', () => {
       const want = p.lang ?? lang;
       if (want !== lang) continue;
       it(`${p.id}：${p.scene} 在 ${lang} 拿得到，色溫讀燈組`, () => {
-        const hit = plateFor(ep, { id, rig: p.rig }, lang);
+        const hit = plateFor(ep, { id, rig: p.rig, variant: p.variant }, lang);
         expect(hit?.id).toBe(p.id);
         expect(hit?.kelvin).toBe(RIGS[p.rig].kelvin);
         expect(hit?.desktop).toMatch(/desktop.*\.jpg$/);
