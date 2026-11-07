@@ -366,9 +366,7 @@ function CourtroomScreen({ scene: raw }: { scene: TrialScene }) {
         {light}
         <main className="scene">
           <p className="eyebrow">
-            {t(scene.act, scope)}
-            {t('・')}
-            {t(scene.day, scope)}
+            <span>{fitLine(`${t(scene.act, scope)}${t('・')}${t(scene.day, scope)}`)}</span>
           </p>
           <div className="lines">
             <Recap />

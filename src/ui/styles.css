@@ -152,7 +152,9 @@
    :root 的 light-dark() 權杖在根就算好了，只改這裡的 color-scheme 不夠：選單鈕用到的權杖照深色那一邊釘住。
    只釘按鈕本身：打開的選單面板照主題（第二道關卡 a26de2b 第 1 項：釘在 .game-menu 上，面板變深色、
    「選項」頁的標籤卻還是淺色主題的深字，對比 1.05:1）。 */
-:root:has(.call-screen) .menu-toggle {
+/* 尾聲的手機戲（.phone-stage，不帶 .cold-scope）也一樣：黑底的鏡頭層上，選單鈕用深色款（設計師 #328 審查 1）。 */
+:root:has(.call-screen) .menu-toggle,
+:root:has(.phone-stage) .menu-toggle {
   color-scheme: dark;
   --bg: #0b0e13;
   --surface: #131920;
@@ -207,6 +209,14 @@ h3 {
 /* 紙面內文的一個詞（prose.tsx）：詞裡不換行，詞與詞之間照常。 */
 .kw {
   white-space: nowrap;
+}
+/* 短標籤的一個單位（prose.tsx fitLine）：放得下整段在同一行；比框還寬時 fitUnits.ts 加上 .fl-wrap，
+   在單位內部的詞界拆，不擠出框（設計師裁定 4d80149：不出框第一，退路 B）。 */
+.fl {
+  white-space: nowrap;
+}
+.fl.fl-wrap {
+  white-space: normal;
 }
 * {
   scrollbar-width: thin;
@@ -1459,6 +1469,14 @@ details summary {
   .taskbar > .muted > .due-text {
     display: inline-block;
     min-width: 5.5em;
+  }
+  /* 期限在第二列、讓出選單鈕的寬度放不下黏住的一段：第二列用全寬、移到選單鈕下緣 8px 以下（Desk.tsx useDueRow，退路 A）。 */
+  .taskbar[data-due-row] {
+    padding-right: 2px;
+  }
+  .taskbar[data-due-row] > .muted {
+    flex-basis: 100%;
+    margin-top: var(--due-drop, 0px);
   }
 }
 .bench .eyebrow,
@@ -2961,6 +2979,12 @@ fieldset.relations.compact {
 .actions > .row > [role='tablist'] {
   display: contents;
 }
+/* 窄手機三格按鈕只有 80px 寬：左右內距收成 8px，「2 次）」這種黏住的單位才不會頂出內距（設計師 v93 排字規則：不出框第一，不縮字）。 */
+@media (max-width: 399px) {
+  .actions > .row button {
+    padding-inline: 8px;
+  }
+}
 /* 一格一黃：選中的分頁是白框，黃只留給下一步（第一道關卡 B2）；選單的分頁同一套（P1-7）。 */
 .actions [aria-selected='true'],
 .menu-panel [role='tab'][aria-selected='true'] {
@@ -3718,6 +3742,26 @@ fieldset.relations.compact {
   flex-wrap: wrap;
   row-gap: 2px;
 }
+/* 窄手機：泡泡寬一點、聊天畫面的間距和選項的上下內距收一點，選項出現時最後一個泡泡才整個放得進對話區
+   （設計師 #328 審查 2：320 寬 150% 沃斯那則訊息上緣被切掉 4.5px、英文 20px）。選項鈕最矮 44px。 */
+@media (max-width: 399px) {
+  .bubble {
+    max-width: 88%;
+  }
+  .phone-body.chat {
+    gap: 8px;
+  }
+  .phone-body.chat > .bubbles {
+    padding-block: 0;
+  }
+  .phone-body.chat > .replies {
+    gap: 6px;
+  }
+  .phone-body.chat > .replies button {
+    min-height: 44px;
+    padding-block: 8px;
+  }
+}
 .bubble.retracted .redact-label {
   flex: 1 1 auto;
 }
@@ -3748,6 +3792,14 @@ fieldset.relations.compact {
 .ride-route dd {
   margin: 0;
   font-weight: 700;
+}
+/* 地名在窄欄放不下時（Phone.tsx RideRoute），標籤在上、地址在下，地址用整個框的寬。 */
+.ride-route[data-stack] {
+  grid-template-columns: 1fr;
+  gap: 2px;
+}
+.ride-route[data-stack] dd + dt {
+  margin-top: 8px;
 }
 .ride {
   justify-content: flex-start;

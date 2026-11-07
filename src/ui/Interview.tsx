@@ -7,6 +7,7 @@ import { useScope } from './lang';
 import { StickyNote } from './Marks';
 import { Portrait, Speech } from './Portrait';
 import { Transcript } from './Shell';
+import { fitLine } from './prose';
 
 /** 訪談（企劃書 6.3）：提問、施壓、安撫。視訊通話畫面。 */
 export function Interview({ scene }: { scene: InterviewScene }) {
@@ -31,7 +32,7 @@ export function Interview({ scene }: { scene: InterviewScene }) {
         <div>
           <h2>{t(scene.who, scope)}</h2>
           <p className="muted">
-            {t('{a}・{b}', { a: t(scene.role, scope), b: t(scene.via, scope) })}
+            {fitLine(t('{a}・{b}', { a: t(scene.role, scope), b: t(scene.via, scope) }))}
           </p>
         </div>
         {note && (
@@ -86,7 +87,7 @@ export function Interview({ scene }: { scene: InterviewScene }) {
               </button>
             </div>
             <button disabled={(st.calms ?? scene.calms) <= 0} onClick={calm}>
-              {t('安撫（剩 {n} 次）', { n: st.calms ?? scene.calms })}
+              {fitLine(t('安撫（剩 {n} 次）', { n: st.calms ?? scene.calms }))}
             </button>
           </div>
           {tab === 'ask' ? (

@@ -9,7 +9,7 @@ import {
 import { episodeOf, useEpisode } from '../engine/game';
 import { useLang, useT } from '../i18n';
 import { straight } from '../i18n/curly';
-import { prose, titleLine } from './prose';
+import { prose, titleLine, fitLine } from './prose';
 import { reducedMotion } from './a11y';
 import { claimHand } from './hand';
 import { rigOf } from './rigs';
@@ -374,11 +374,11 @@ export function ActCard({
           {(where || right) && (
             <p className="act-slate">
               <span className="rd" style={d(6)}>
-                {where}
+                {fitLine(where)}
               </span>
               {right && (
                 <span className="rd" style={d(7)}>
-                  <b>{right}</b>
+                  <b>{fitLine(right)}</b>
                 </span>
               )}
             </p>

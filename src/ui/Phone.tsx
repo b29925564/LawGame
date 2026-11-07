@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { phoneView, type PhoneView } from '../engine/episode/phone';
 import type { Line, PhoneScene } from '../engine/episode/schema';
 import { sceneChoices, useEpisode } from '../engine/game';
 import { useLang, useT } from '../i18n';
 import { PlaceBeat } from './ActCard';
+import { fitUnits } from './fitUnits';
 import { FitLine, fitLine } from './prose';
 import { useScope } from './lang';
 import { useHand } from './Marks';
@@ -20,6 +21,42 @@ import {
 import { useSubs } from './SubCard';
 
 /** 冷開場：伊森的手機畫面。 */
+/**
+ * 叫車畫面的上車／下車（設計師 v93 排字規則，退路 A）：地址旁邊那一欄放不下黏住的地名（"East River Street"）時，
+ * 不讓地名在窄欄裡一個字一行，整組改成標籤在上、地址在下，地址用整個框的寬。放得下就照原本左右兩欄。
+ */
+function RideRoute({ from, to }: { from: string; to: string }) {
+  const t = useT();
+  const ref = useRef<HTMLDListElement>(null);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const check = () => {
+      el.removeAttribute('data-stack');
+      fitUnits(el);
+      if (!el.querySelector('dd > .fl.fl-wrap')) return;
+      el.setAttribute('data-stack', '');
+      fitUnits(el);
+    };
+    check();
+    const ro = new ResizeObserver(check);
+    ro.observe(document.documentElement);
+    document.fonts?.addEventListener('loadingdone', check);
+    return () => {
+      ro.disconnect();
+      document.fonts?.removeEventListener('loadingdone', check);
+    };
+  }, [from, to]);
+  return (
+    <dl className="ride-route" ref={ref}>
+      <dt>{t('上車')}</dt>
+      <dd>{fitLine(from)}</dd>
+      <dt>{t('下車')}</dt>
+      <dd>{fitLine(to)}</dd>
+    </dl>
+  );
+}
+
 export function Phone({ scene }: { scene: PhoneScene }) {
   const { progress, advance, choose } = useEpisode();
   const t = useT();
@@ -119,6 +156,52 @@ export function Phone({ scene }: { scene: PhoneScene }) {
   );
 }
 
+/**
+ * 對話泡泡捲在最底（設計師 #328 審查：選項出現時，派單的「You have been online…」只露出前兩行，下緣被選項區切掉）。
+ * 換一步、選項出現或收起、泡泡換行讓高度變了（fitUnits 在畫面寫好之後才拆字），都捲回最底；
+ * 玩家自己往上捲去看前面的訊息時不拉回來，捲回最底才再跟著。
+ */
+function usePinnedBottom<T extends HTMLElement>(key: unknown) {
+  const ref = useRef<T>(null);
+  const pinned = useRef(true);
+  useLayoutEffect(() => {
+    pinned.current = true;
+    const el = ref.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [key]);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const toBottom = () => {
+      if (pinned.current) el.scrollTop = el.scrollHeight;
+    };
+    // 只有玩家自己捲（滾輪、手指、鍵盤）才可能離開最底；框變矮時瀏覽器自己夾 scrollTop 發的 scroll 不算。
+    const atBottom = () => el.scrollHeight - el.scrollTop - el.clientHeight < 4;
+    const onScroll = () => {
+      if (atBottom()) pinned.current = true;
+    };
+    const onUser = () => requestAnimationFrame(() => (pinned.current = atBottom()));
+    const ro = new ResizeObserver(toBottom);
+    ro.observe(el);
+    for (const c of el.children) ro.observe(c);
+    const mo = new MutationObserver(() => {
+      for (const c of el.children) ro.observe(c);
+      toBottom();
+    });
+    mo.observe(el, { childList: true });
+    const user = ['wheel', 'touchmove', 'keydown'] as const;
+    el.addEventListener('scroll', onScroll, { passive: true });
+    for (const k of user) el.addEventListener(k, onUser, { passive: true });
+    return () => {
+      ro.disconnect();
+      mo.disconnect();
+      el.removeEventListener('scroll', onScroll);
+      for (const k of user) el.removeEventListener(k, onUser);
+    };
+  });
+  return ref;
+}
+
 function Screen({
   v,
   owner,
@@ -133,6 +216,9 @@ function Screen({
   const s = v.step;
   const t = useT();
   const scope = useScope();
+  const log = usePinnedBottom<HTMLOListElement>(
+    `${v.thread}|${(v.threads[v.thread ?? ''] ?? []).length}|${v.chosen}|${s.do}`,
+  );
   switch (s.do) {
     case 'notify':
       return (
@@ -144,7 +230,7 @@ function Screen({
             aria-label={t('打開 {from} 的訊息', { from: t(s.message.from, scope) })}
           >
             <span className="notif-app">{t('聊天')}</span>
-            <strong>{t(s.message.from, scope)}</strong>
+            <strong>{fitLine(t(s.message.from, scope))}</strong>
             <span>{fitLine(t(s.message.text, scope))}</span>
           </button>
           <span className="notif-hint" aria-hidden>
@@ -159,7 +245,7 @@ function Screen({
       return (
         <div className="phone-body chat">
           <header className="chat-head">{v.thread && t(v.thread, scope)}</header>
-          <ol className="bubbles" aria-live="polite">
+          <ol className="bubbles" aria-live="polite" ref={log}>
             {(v.threads[v.thread ?? ''] ?? []).map((b, i) => (
               <li
                 key={i}
@@ -190,12 +276,7 @@ function Screen({
       return (
         <div className="phone-body ride">
           <header className="chat-head">{t('叫車')}</header>
-          <dl className="ride-route">
-            <dt>{t('上車')}</dt>
-            <dd>{fitLine(t(s.from, scope))}</dd>
-            <dt>{t('下車')}</dt>
-            <dd>{fitLine(t(s.to, scope))}</dd>
-          </dl>
+          <RideRoute from={t(s.from, scope)} to={t(s.to, scope)} />
           <p className="muted">
             {fitLine(t('最近的司機：{driver}，2 分鐘', { driver: t(s.driver, scope) }))}
           </p>

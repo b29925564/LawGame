@@ -60,7 +60,9 @@ export function Deposition({ scene }: { scene: DepositionScene }) {
     return (
       <main className="scene">
         <p className="eyebrow">
-          {t('{a}・{b}', { a: t(scene.act, scope), b: t(scene.place, scope) })}
+          <span>
+            {fitLine(t('{a}・{b}', { a: t(scene.act, scope), b: t(scene.place, scope) }))}
+          </span>
         </p>
         {scene.video && <VideoSource video={scene.video} />}
         <div className="lines">

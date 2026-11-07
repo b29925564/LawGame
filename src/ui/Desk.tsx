@@ -22,6 +22,7 @@ import { ExhibitSticker } from './ExhibitSticker';
 import { MarkLines } from './Marks';
 import { ExhibitRef, ExhibitTag, exhibitNo, FilingThumb, Pleading, Written } from './Pleading';
 import { useScope } from './lang';
+import { fitUnits } from './fitUnits';
 import { fitLine, glueTail, prose } from './prose';
 import { useCardPick } from './pick';
 import { Speech } from './Portrait';
@@ -127,10 +128,48 @@ function SlotLine({
   );
 }
 
+/**
+ * 手機頂列的期限（設計師裁定 4d80149 退路 A）：期限已經換到第二列、而且黏住的一段（Discovery deadline:）在讓出選單鈕的寬度裡
+ * 放不下、被拆開時，第二列改用全寬，往下移到選單鈕下緣 8px 以下，整段不拆。放得下就照原本的排法（不動已經過關的版面）。
+ * 直接改 DOM 的屬性（data-due-row、--due-drop），每次先拿掉再量，不會一下用全寬、一下不用來回跳。
+ */
+function useDueRow(bar: { current: HTMLElement | null }, text: string) {
+  useLayoutEffect(() => {
+    const el = bar.current;
+    if (!el) return;
+    const check = () => {
+      el.removeAttribute('data-due-row');
+      el.style.removeProperty('--due-drop');
+      fitUnits(el);
+      const hours = el.querySelector('.hours');
+      const muted = el.querySelector(':scope > .muted');
+      const menu = document.querySelector('.menu-toggle');
+      if (!hours || !muted || !menu || !window.matchMedia('(max-width: 1023px)').matches) return;
+      const second = muted.getBoundingClientRect().top >= hours.getBoundingClientRect().bottom - 2;
+      const broken = !!muted.querySelector('.due-text > .fl.fl-wrap');
+      if (!second || !broken) return;
+      el.setAttribute('data-due-row', '');
+      fitUnits(el);
+      const drop = menu.getBoundingClientRect().bottom + 8 - muted.getBoundingClientRect().top;
+      if (drop > 0) el.style.setProperty('--due-drop', `${Math.ceil(drop)}px`);
+    };
+    check();
+    const ro = new ResizeObserver(check);
+    ro.observe(document.documentElement);
+    document.fonts?.addEventListener('loadingdone', check);
+    return () => {
+      ro.disconnect();
+      document.fonts?.removeEventListener('loadingdone', check);
+    };
+  }, [bar, text]);
+}
+
 export function Desk({ scene }: { scene: DeskScene }) {
   const { progress, advance, clearReport, resolveTwist, wrapDesk } = useEpisode();
   const t = useT();
   const scope = useScope();
+  const bar = useRef<HTMLElement>(null);
+  useDueRow(bar, t(scene.deadline, scope));
   const st = deskState(progress, scene);
   const [app, setApp] = useState<App>('mail');
   // 翻開卷宗是資料夾聲，其他程式是翻頁聲；點同一個不出聲。
@@ -288,7 +327,7 @@ export function Desk({ scene }: { scene: DeskScene }) {
     <Shell
       resetKey={app}
       head={
-        <header className="taskbar">
+        <header className="taskbar" ref={bar}>
           <span className="hours" aria-label={t('剩餘工時 {n} 小時', { n: st.hours })}>
             <Swap value={st.hours} /> {t('工時')}
           </span>
