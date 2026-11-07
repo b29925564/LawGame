@@ -152,7 +152,9 @@
    :root 的 light-dark() 權杖在根就算好了，只改這裡的 color-scheme 不夠：選單鈕用到的權杖照深色那一邊釘住。
    只釘按鈕本身：打開的選單面板照主題（第二道關卡 a26de2b 第 1 項：釘在 .game-menu 上，面板變深色、
    「選項」頁的標籤卻還是淺色主題的深字，對比 1.05:1）。 */
-:root:has(.call-screen) .menu-toggle {
+/* 尾聲的手機戲（.phone-stage，不帶 .cold-scope）也一樣：黑底的鏡頭層上，選單鈕用深色款（設計師 #328 審查 1）。 */
+:root:has(.call-screen) .menu-toggle,
+:root:has(.phone-stage) .menu-toggle {
   color-scheme: dark;
   --bg: #0b0e13;
   --surface: #131920;
@@ -3739,6 +3741,26 @@ fieldset.relations.compact {
      「This｜message｜was｜unsent」一個字一行，是標籤被時間擠到只剩最長一個字寬）。 */
   flex-wrap: wrap;
   row-gap: 2px;
+}
+/* 窄手機：泡泡寬一點、聊天畫面的間距和選項的上下內距收一點，選項出現時最後一個泡泡才整個放得進對話區
+   （設計師 #328 審查 2：320 寬 150% 沃斯那則訊息上緣被切掉 4.5px、英文 20px）。選項鈕最矮 44px。 */
+@media (max-width: 399px) {
+  .bubble {
+    max-width: 88%;
+  }
+  .phone-body.chat {
+    gap: 8px;
+  }
+  .phone-body.chat > .bubbles {
+    padding-block: 0;
+  }
+  .phone-body.chat > .replies {
+    gap: 6px;
+  }
+  .phone-body.chat > .replies button {
+    min-height: 44px;
+    padding-block: 8px;
+  }
 }
 .bubble.retracted .redact-label {
   flex: 1 1 auto;

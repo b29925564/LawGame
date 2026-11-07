@@ -15,7 +15,8 @@ jobs:
   check:
     runs-on: ubuntu-24.04
     # 25 分鐘太緊：e2e 本身約 14 分鐘，裝 Playwright 字型時 apt 鏡像慢的話會多出近 10 分鐘（11-06 #322、#323 都因此被取消）。
-    timeout-minutes: 40
+    # 11-07 #328 加了全站短標籤掃描（約 9 分鐘），e2e 變成約 36 分鐘，40 分鐘只剩 1.5 分鐘的餘裕，放到 55。
+    timeout-minutes: 55
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

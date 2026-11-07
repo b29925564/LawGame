@@ -30,7 +30,9 @@ export function prose(text: string, tail = true): ReactNode {
 const UNIT =
   /^(min|mins|minutes?|hours?|hrs?|days?|weeks?|months?|years?|seconds?|secs?|km|miles?|percent|%|am|pm|a\.m\.|p\.m\.)[.,;:!?)]*$/i;
 const glued = (prev: string, x: string) =>
-  endsBanned(prev) || ((/^\$?\d[\d,.:]*$/.test(prev) || NUM_EN.test(prev)) && UNIT.test(x));
+  endsBanned(prev) ||
+  /^[→←—–]$/.test(prev) ||
+  ((/^\$?\d[\d,.:]*$/.test(prev) || NUM_EN.test(prev)) && UNIT.test(x));
 
 export function fitLineEn(text: string): string {
   const w = glueNames(text).split(' ');

@@ -156,6 +156,52 @@ export function Phone({ scene }: { scene: PhoneScene }) {
   );
 }
 
+/**
+ * 對話泡泡捲在最底（設計師 #328 審查：選項出現時，派單的「You have been online…」只露出前兩行，下緣被選項區切掉）。
+ * 換一步、選項出現或收起、泡泡換行讓高度變了（fitUnits 在畫面寫好之後才拆字），都捲回最底；
+ * 玩家自己往上捲去看前面的訊息時不拉回來，捲回最底才再跟著。
+ */
+function usePinnedBottom<T extends HTMLElement>(key: unknown) {
+  const ref = useRef<T>(null);
+  const pinned = useRef(true);
+  useLayoutEffect(() => {
+    pinned.current = true;
+    const el = ref.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [key]);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const toBottom = () => {
+      if (pinned.current) el.scrollTop = el.scrollHeight;
+    };
+    // 只有玩家自己捲（滾輪、手指、鍵盤）才可能離開最底；框變矮時瀏覽器自己夾 scrollTop 發的 scroll 不算。
+    const atBottom = () => el.scrollHeight - el.scrollTop - el.clientHeight < 4;
+    const onScroll = () => {
+      if (atBottom()) pinned.current = true;
+    };
+    const onUser = () => requestAnimationFrame(() => (pinned.current = atBottom()));
+    const ro = new ResizeObserver(toBottom);
+    ro.observe(el);
+    for (const c of el.children) ro.observe(c);
+    const mo = new MutationObserver(() => {
+      for (const c of el.children) ro.observe(c);
+      toBottom();
+    });
+    mo.observe(el, { childList: true });
+    const user = ['wheel', 'touchmove', 'keydown'] as const;
+    el.addEventListener('scroll', onScroll, { passive: true });
+    for (const k of user) el.addEventListener(k, onUser, { passive: true });
+    return () => {
+      ro.disconnect();
+      mo.disconnect();
+      el.removeEventListener('scroll', onScroll);
+      for (const k of user) el.removeEventListener(k, onUser);
+    };
+  });
+  return ref;
+}
+
 function Screen({
   v,
   owner,
@@ -170,6 +216,9 @@ function Screen({
   const s = v.step;
   const t = useT();
   const scope = useScope();
+  const log = usePinnedBottom<HTMLOListElement>(
+    `${v.thread}|${(v.threads[v.thread ?? ''] ?? []).length}|${v.chosen}|${s.do}`,
+  );
   switch (s.do) {
     case 'notify':
       return (
@@ -196,7 +245,7 @@ function Screen({
       return (
         <div className="phone-body chat">
           <header className="chat-head">{v.thread && t(v.thread, scope)}</header>
-          <ol className="bubbles" aria-live="polite">
+          <ol className="bubbles" aria-live="polite" ref={log}>
             {(v.threads[v.thread ?? ''] ?? []).map((b, i) => (
               <li
                 key={i}
