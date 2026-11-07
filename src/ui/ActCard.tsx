@@ -562,9 +562,10 @@ export function PlaceBeat({
     >
       {!shown && (
         <span className="place-tbd">
-          {t('待放 3D 機位')}
-          {'\u3000'}
-          {t('定場')}
+          {/* 英文最後兩個字黏住：放不下時排成「3D camera ⏎ TBD Establishing」（第二道關卡 464a280 第 5 項）。 */}
+          {fitLine(
+            `${t('待放 3D 機位')}${/[\p{sc=Han}]/u.test(t('定場')) ? '\u3000' : ' '}${t('定場')}`,
+          )}
         </span>
       )}
       {!waiting && <PlaceSlate id={id} place={place} cold={cold} />}

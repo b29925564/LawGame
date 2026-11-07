@@ -519,8 +519,8 @@ function CourtroomScreen({ scene: raw }: { scene: TrialScene }) {
         onClick={nextQuestion}
       >
         {st.i < scene.witness.direct.length
-          ? t('聽下一個問題')
-          : t('{who}詰問完畢', { who: t(scene.examiner ?? terms.other, scope) })}
+          ? fitLine(t('聽下一個問題'))
+          : fitLine(t('{who}詰問完畢', { who: t(scene.examiner ?? terms.other, scope) }))}
       </button>
       {st.i >= scene.witness.direct.length && (
         <button {...locked} onClick={toCross}>

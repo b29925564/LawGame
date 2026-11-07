@@ -193,7 +193,9 @@ function VoirDireScreen({ scene }: { scene: VoirDireScene }) {
                 </span>
               </button>
               {filter === 'all' && i === scene.seats - 1 && pool.length > scene.seats && (
-                <p className="cutline">{t('以上 {n} 位入座・以下候補', { n: scene.seats })}</p>
+                <p className="cutline">
+                  <span>{fitLine(t('以上 {n} 位入座・以下候補', { n: scene.seats }))}</span>
+                </p>
               )}
             </li>
           );

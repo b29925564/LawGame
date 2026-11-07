@@ -27,7 +27,7 @@ import { dossierOf, EvidenceBag, EvidenceZoom, PhotoLog, PrintPlate } from './Do
 import { hasPrint, Print } from './prints';
 import { reducedMotion } from './a11y';
 import { useScope } from './lang';
-import { prose } from './prose';
+import { fitLine, prose } from './prose';
 import { ExhibitSticker } from './ExhibitSticker';
 import { cardHighlights, cardStamps, Hl, Stamp } from './Marks';
 import { exhibitNo } from './Pleading';
@@ -531,7 +531,7 @@ export function CardPick({
       <span className="pick-name">
         {verb && <span className="verb">{t(verb)} </span>}
         {stamp(item, scope) && <span className="time">{stamp(item, scope)}</span>}
-        {t(item.name, scope)}
+        {fitLine(t(item.name, scope))}
         {tag && <span className="muted"> {t(tag, scope)}</span>}
       </span>
       {compact && item.kind && <span className="pick-kind">{t(item.kind)}</span>}

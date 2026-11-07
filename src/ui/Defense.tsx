@@ -53,7 +53,7 @@ function DefenseScreen({ scene: raw }: { scene: DefenseScene }) {
           ))}
         </div>
         <button className="primary next" onClick={() => setIntro(false)}>
-          {t('準備{name}出庭', { name: t(scene.witness.name, scope) })}
+          {fitLine(t('準備{name}出庭', { name: t(scene.witness.name, scope) }))}
         </button>
       </main>
     );
