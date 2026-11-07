@@ -188,8 +188,8 @@ export const barDelay = (i: number) => (i < 3 ? i * 333 : 2 * 333 + (i - 2) * 83
  * 0:00–0:10 的紙（場景光影 #3 正式圖，art-bible/scenes/title-intro-v94/final/paper/）：同一台機位、同一個裁切的
  * 三張圖疊起來，用遮罩逐行露出。
  * - 空白頁（blank）墊底。
- * - 紅邊線從「行號」那張（numbers）由上往下畫出來，和行號同步。
- * - 每一行（行號＋那一行的字）從「全文」那張（full／full-en）一拍二亮起，先是 12% 的影子。
+ * - 「行號」那張（numbers）：行號逐行亮起（每 83ms 兩行），紅邊線同步由上往下畫。
+ * - 行號亮完，「全文」那張（full／full-en）整頁淡入。
  * - 0:05 起黑條一條一條蓋上：黑條是那一行字的四邊形上下各外擴 15%，跟著景深糊（對焦在第 11 行）。
  *   黑條是紙上的墨，不是貼上去的純黑：空白頁乘上墨的反射率，跟著光池暗下去，最暗是底色。
  *   黑條底下的字從遮罩扣掉，露出空白頁：糊開的黑條邊緣看到的是紙，不是被蓋住的字。
@@ -216,8 +216,14 @@ const PAPER_IMG = {
 } as const;
 const PHONE = '(max-width: 767px)';
 
-/** 第 n 行（0 起）亮起的時間：0.4 秒起，一拍二（24 格／秒，每 2 格一行）。 */
-const rowOn = (n: number) => 400 + n * 83;
+/**
+ * 設定集 11.1 的三拍（設計師 11-07 審 #332）：空白頁 → 行號 → 字。
+ * - 第 n 行（0 起）的行號亮起的時間：0.4 秒起，每 2 格（83ms）亮兩行。
+ * - 行號全部亮完，全文整頁一起淡入（不逐行）。第 11 行從淡入完到 5 秒的黑條，完整停留 3 秒以上（設計師要 ≥2.5 秒）。
+ */
+const rowOn = (n: number) => 400 + Math.floor(n / 2) * 83;
+export const FULL_ON = 1600;
+export const FULL_FADE = 350;
 /** 對焦在第 11 行。離得越遠越糊：在全文底圖上量，每隔一行約多 4.5 px 的高斯（底圖像素）。 */
 const dof = (n: number) => Math.min(4.5 * Math.abs(n - 10), 36);
 
@@ -390,16 +396,21 @@ function Paper() {
                   height={3 * L.H}
                   fill="#000"
                 />
+                {L.rows.map((r) => (
+                  <polygon
+                    key={r.n}
+                    className="ti-prow"
+                    data-row={r.n + 1}
+                    style={{ '--on': `${rowOn(r.n)}ms` } as CSSProperties}
+                    points={pts(r.number)}
+                    fill="#fff"
+                  />
+                ))}
               </g>
             </mask>
             <mask id={`${id}r`} maskUnits="userSpaceOnUse" x={0} y={0} width={L.W} height={L.H}>
               <g filter={`url(#${id}f)`}>
-                {L.rows.map((r) => (
-                  <g key={r.n} className="ti-prow" style={{ '--n': r.n } as CSSProperties}>
-                    <polygon points={pts(r.number)} fill="#fff" />
-                    {r.text && <polygon points={pts(r.text)} fill="#fff" />}
-                  </g>
-                ))}
+                <rect x={0} y={0} width={L.W} height={L.H} fill="#fff" />
                 {L.rows.map(
                   (r) =>
                     r.text &&
@@ -447,7 +458,16 @@ function Paper() {
           >
             <image href={src.blank} width={L.W} height={L.H} />
             <image href={src.numbers} width={L.W} height={L.H} mask={`url(#${id}m)`} />
-            <image href={src.full} width={L.W} height={L.H} mask={`url(#${id}r)`} />
+            <image
+              className="ti-full"
+              href={src.full}
+              width={L.W}
+              height={L.H}
+              mask={`url(#${id}r)`}
+              style={
+                { '--full-on': `${FULL_ON}ms`, '--full-fade': `${FULL_FADE}ms` } as CSSProperties
+              }
+            />
             <image
               href={src.blank}
               width={L.W}

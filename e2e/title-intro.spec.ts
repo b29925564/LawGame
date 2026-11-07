@@ -1,5 +1,13 @@
 /// <reference lib="dom" />
+import { readFileSync } from 'node:fs';
 import { expect, test, type Page } from '@playwright/test';
+
+const PAPER = JSON.parse(
+  readFileSync(new URL('../src/ui/intro/paper-rows.json', import.meta.url), 'utf8'),
+) as Record<
+  'desktop' | 'phone',
+  { size: [number, number]; rows: Record<'number' | 'zh' | 'en', number[][] | null>[] }
+>;
 
 /**
  * 片頭 40 秒（設定集 11.1）：冷開場之後、第一幕之前。七個鏡頭依序，0:38 是原本的集名卡（幕卡）。
@@ -371,9 +379,7 @@ test('0:29 是正式圖（立牌和輪廓光在圖裡算好，設計師 11-07 PA
   expect(look).toEqual(['absolute', '0px', 'rgba(0, 0, 0, 0)']);
 });
 
-test('0:00 紙：三張同機位正式圖疊起來，每一行（行號＋字）一拍二亮起；英文介面用英文那張', async ({
-  page,
-}) => {
+test('0:00 紙：三張同機位正式圖疊起來；英文介面用英文那張', async ({ page }) => {
   for (const lang of ['zh', 'en'] as const) {
     await open(page, { lang });
     const hrefs = await page
@@ -388,11 +394,89 @@ test('0:00 紙：三張同機位正式圖疊起來，每一行（行號＋字）
     expect(hrefs[3]).toMatch(/paper-blank-/);
     const cam = (page.viewportSize()!.width <= 767 ? 'phone' : 'desktop') as string;
     for (const h of hrefs) expect(h).toContain(`-${cam}`);
+  }
+});
+
+/** 紙上第 11 行的兩塊（行號、字）在畫面上的位置：照 paper-rows.json 和 cover 裁切算，往內縮一點。 */
+function row11(vp: { width: number; height: number }, lang: 'zh' | 'en') {
+  const cam = vp.width <= 767 ? 'phone' : 'desktop';
+  const { size, rows } = PAPER[cam];
+  const k = Math.max(vp.width / size[0], vp.height / size[1]);
+  const [ox, oy] = [(vp.width - size[0] * k) / 2, (vp.height - size[1] * k) / 2];
+  const box = (q: number[][], shrink: number) => {
+    const xs = q.map((p) => ox + p[0] * k);
+    const ys = q.map((p) => oy + p[1] * k);
+    const [x0, x1, y0, y1] = [Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys)];
+    const dy = (y1 - y0) * shrink;
+    const x = Math.max(0, x0);
+    return { x, y: y0 + dy, width: Math.min(vp.width, x1) - x, height: y1 - y0 - 2 * dy };
+  };
+  return { number: box(rows[10].number!, 0.1), text: box(rows[10][lang]!, 0.15) };
+}
+
+/** 畫面上一塊的亮度標準差（有字的地方高，空白的紙低）。截圖交給瀏覽器解碼再算。 */
+async function ink(page: Page, clip: { x: number; y: number; width: number; height: number }) {
+  const png = (await page.screenshot({ clip })).toString('base64');
+  return page.evaluate(async (b64) => {
+    const img = new Image();
+    img.src = `data:image/png;base64,${b64}`;
+    await img.decode();
+    const c = document.createElement('canvas');
+    [c.width, c.height] = [img.width, img.height];
+    const g = c.getContext('2d')!;
+    g.drawImage(img, 0, 0);
+    const d = g.getImageData(0, 0, c.width, c.height).data;
+    const ys: number[] = [];
+    for (let i = 0; i < d.length; i += 4)
+      ys.push(0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]);
+    const m = ys.reduce((a, b) => a + b, 0) / ys.length;
+    return Math.sqrt(ys.reduce((a, b) => a + (b - m) ** 2, 0) / ys.length);
+  }, png);
+}
+
+test('0:00 紙三拍（設定集 11.1）：空白頁 → 行號（每 83ms 兩行）→ 全文整頁淡入；第 11 行停留 ≥2.5 秒才被黑條蓋', async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  for (const lang of ['zh', 'en'] as const) {
+    await open(page, { lang });
+    // 時間軸：行號每 2 格兩行，全文在行號亮完之後才淡入。
     const on = await page
       .locator('.ti-prow')
       .evaluateAll((r) =>
         r.map((x) => Math.round(parseFloat(getComputedStyle(x).animationDelay) * 1000)),
       );
-    expect(on).toEqual(Array.from({ length: 28 }, (_, n) => 400 + n * 83));
+    expect(on).toEqual(Array.from({ length: 28 }, (_, n) => 400 + Math.floor(n / 2) * 83));
+    const [fullOn, fullFade] = await page.locator('.ti-full').evaluate((e) => {
+      const cs = getComputedStyle(e);
+      return [parseFloat(cs.animationDelay) * 1000, parseFloat(cs.animationDuration) * 1000];
+    });
+    expect(fullOn).toBeGreaterThanOrEqual(Math.max(...on) + 83);
+    expect(fullFade).toBeGreaterThanOrEqual(300);
+    expect(fullFade).toBeLessThanOrEqual(400);
+    const bar11 = await page
+      .locator('.ti-bar[data-row="11"]')
+      .evaluate((e) => parseFloat(getComputedStyle(e).animationDelay) * 1000);
+    expect(bar11 - (fullOn + fullFade)).toBeGreaterThanOrEqual(2500);
+
+    // 畫面上量：每一拍停住截圖，看第 11 行的行號、字那兩塊有沒有墨。
+    const at = (t: number) =>
+      page.evaluate((t) => {
+        for (const a of document.getAnimations()) {
+          a.pause();
+          a.currentTime = t;
+        }
+      }, t);
+    const r = row11(page.viewportSize()!, lang);
+    await at(200);
+    const blank = { number: await ink(page, r.number), text: await ink(page, r.text) };
+    // 第 2 拍中段：行號亮完一半多（第 11 行已亮），還沒有字。
+    await at(1000);
+    const mid = { number: await ink(page, r.number), text: await ink(page, r.text) };
+    await at(fullOn + fullFade + 100);
+    const after = { number: await ink(page, r.number), text: await ink(page, r.text) };
+    expect(mid.number, `${lang} 行號在第 2 拍出現`).toBeGreaterThan(blank.number * 1.5 + 1);
+    expect(mid.text, `${lang} 第 2 拍沒有字`).toBeLessThan(blank.text * 1.3 + 1);
+    expect(after.text, `${lang} 第 3 拍之後有字`).toBeGreaterThan(mid.text * 2 + 3);
   }
 });

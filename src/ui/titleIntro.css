@@ -292,10 +292,12 @@
   .ti-wipe {
     animation: var(--wipe) var(--wipe-dur) linear both;
   }
-  /* 每一行（行號＋字）一拍二亮起（每 2 格一行，24fps＝83ms）。 */
+  /* 三拍：行號逐行亮起（每 2 格兩行，時間由 Paper 給 --on），亮完全文整頁淡入。 */
   .ti-prow {
-    animation: ti-on 1ms steps(1, end) both;
-    animation-delay: calc(400ms + var(--n) * var(--dur-cut-black));
+    animation: ti-show 1ms steps(1, end) var(--on) both;
+  }
+  .ti-full {
+    animation: ti-rise var(--full-fade) linear var(--full-on) both;
   }
   .ti-bar,
   .ti-bar-hide {
@@ -399,15 +401,6 @@
 }
 /* 分格動畫（steps(n, end)）的最後一格從 99.9% 就停住：Chrome 算到結尾時進度是 0.9999999999999989，
    steps(4, end) 會停在 3/4（黑條只蓋到四分之三、提醒卡滑不出畫面）。 */
-@keyframes ti-on {
-  from {
-    opacity: 0.12;
-  }
-  99.9%,
-  to {
-    opacity: 1;
-  }
-}
 @keyframes ti-bar {
   from {
     scale: 0 1;
