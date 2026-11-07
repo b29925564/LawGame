@@ -8,6 +8,7 @@ import { useScope } from './lang';
 import { Speech } from './Portrait';
 import { Shell, Tabs, Transcript } from './Shell';
 import { Recap } from './ActCard';
+import { fitLine } from './prose';
 
 /** 對方主導時每一題的結果標籤。 */
 const REVIEW = {
@@ -168,10 +169,15 @@ export function Deposition({ scene }: { scene: DepositionScene }) {
       head={
         <header className="panel-head bench">
           <p className="eyebrow">
-            {t('{a}・{b}', {
-              a: t(scene.witness.name, scope),
-              b: t(scene.witness.role, scope),
-            })}
+            {/* 包成一段：eyebrow 是 flex，fitLine 的每個詞會各自變成一格。 */}
+            <span>
+              {fitLine(
+                t('{a}・{b}', {
+                  a: t(scene.witness.name, scope),
+                  b: t(scene.witness.role, scope),
+                }),
+              )}
+            </span>
           </p>
           {theirs ? (
             <p className="patience">
