@@ -8,48 +8,53 @@
  * 不用 inline-block：瀏覽器算按鈕、標題的無障礙名稱時，會在每個 inline-block 前後補空白
  * （「嗯， 算是 吧。」），讀屏器和語音操控拿到的字就和畫面上的不一樣。
  *
- * 量法：先讓每個單位都能換行，量框的內寬（這時格線、彈性欄照字最窄的寬度排，框不會被不換行的字撐開）；
- * 再讓每個單位都不換行，量單位本身的寬；最後只有比框寬的單位加 .fl-wrap。
+ * 量法：先讓每個單位都不換行，照這樣排版（格線、彈性欄會照不拆的單位撐開或換列，和以前用不換行空白黏的時候一樣）。
+ * 單位的字超出它所在的框，或再往外兩層的框（到絕對定位、可以捲動的框為止），就加 .fl-wrap；重排以後再看一次，
+ * 直到沒有單位出框。內層的詞只有在外層已經拆開時才看。
  */
 const ROOM_SLACK = 0.5;
+const LEVELS = 3;
+const ROUNDS = 6;
 
-const flowOf = (e: HTMLElement) => {
+const flowOf = (e: Element) => {
   let x = e.parentElement;
   while (x && /^(inline|contents)$/.test(getComputedStyle(x).display)) x = x.parentElement;
   return x;
 };
 
-const roomOf = (b: HTMLElement) => {
-  const cs = getComputedStyle(b);
-  return b.clientWidth - (parseFloat(cs.paddingLeft) || 0) - (parseFloat(cs.paddingRight) || 0);
-};
+/** 這個單位的字是否超出它的框或外面兩層框的內寬。 */
+function overflows(e: HTMLElement) {
+  const r = e.getBoundingClientRect();
+  if (!r.width) return false;
+  let box = flowOf(e);
+  for (let k = 0; box && box !== document.body && k < LEVELS; k++) {
+    const cs = getComputedStyle(box);
+    if (/auto|scroll/.test(cs.overflowX)) return false;
+    const b = box.getBoundingClientRect();
+    const n = (v: string) => parseFloat(v) || 0;
+    const l = b.left + n(cs.borderLeftWidth) + n(cs.paddingLeft);
+    const rr = b.right - n(cs.borderRightWidth) - n(cs.paddingRight);
+    if (r.right > rr + ROOM_SLACK || r.left < l - ROOM_SLACK) return true;
+    if (/absolute|fixed/.test(cs.position)) return false;
+    box = flowOf(box);
+  }
+  return false;
+}
 
 export function fitUnits(root: ParentNode = document) {
   const all = [...root.querySelectorAll<HTMLElement>('.fl')];
   if (!all.length) return;
-  // 1. 都能換行：量每個單位所在的框。
-  for (const e of all) e.classList.add('fl-wrap');
-  const rooms = new Map<HTMLElement, number>();
-  const boxOf = new Map<HTMLElement, HTMLElement>();
-  for (const e of all) {
-    const b = flowOf(e);
-    if (!b) continue;
-    boxOf.set(e, b);
-    if (!rooms.has(b)) rooms.set(b, roomOf(b));
-  }
-  // 2. 都不換行：量每個單位的寬。
   for (const e of all) e.classList.remove('fl-wrap');
-  const widths = all.map((e) => e.getBoundingClientRect().width);
-  // 3. 比框寬的才拆；裡面的詞只有外面那一層拆了才要看。
-  const wide = new Set<HTMLElement>();
-  all.forEach((e, i) => {
-    const b = boxOf.get(e);
-    if (!b || widths[i] <= rooms.get(b)! + ROOM_SLACK) return;
-    const outer = e.parentElement?.closest<HTMLElement>('.fl');
-    if (outer && all.includes(outer) && !wide.has(outer)) return;
-    wide.add(e);
-  });
-  for (const e of wide) e.classList.add('fl-wrap');
+  for (let round = 0; round < ROUNDS; round++) {
+    const open = all.filter((e) => {
+      if (e.classList.contains('fl-wrap')) return false;
+      const outer = e.parentElement?.closest('.fl');
+      return !outer || outer.classList.contains('fl-wrap');
+    });
+    const wide = open.filter(overflows);
+    if (!wide.length) return;
+    for (const e of wide) e.classList.add('fl-wrap');
+  }
 }
 
 /** 整個畫面：字換了、視窗或框的大小變了、字型載入了、字級換了，就重排一次。 */
