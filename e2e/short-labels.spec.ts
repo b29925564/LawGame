@@ -130,8 +130,10 @@ async function open(
   await page.waitForTimeout(600);
 }
 
+/** 幕序（「第三｜幕」不可以；第二道關卡 4d80149 之後的全站掃描在證詞錄取的眉標找到）。 */
+const ORDS = ['一', '二', '三', '四', '五', '六', '七'].map((n) => `第${n}幕`);
 /** 名詞 → 允許的拆點（名詞內部的詞界：英文是空白後面，中文是 innerUnits 的切點）。 */
-const NAMES = [...EN_NAMES, ...PROPER_ZH]
+const NAMES = [...EN_NAMES, ...PROPER_ZH, ...ORDS]
   .sort((a, b) => b.length - a.length)
   .map((n) => {
     const cuts: number[] = [];

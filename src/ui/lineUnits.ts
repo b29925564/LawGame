@@ -97,6 +97,9 @@ function words(text: string): string[] {
 }
 
 /** 把字串切成「不換行的單位」：每個單位內部不斷開。labels 關掉時開頭的標籤（「伊森的說法：」）不併成一個單位（牌架卡名要在標籤中間也能斷）。 */
+const ORD_IN = /第 ?[〇零一二三四五六七八九十百\d]+ ?[幕集天場章日輪]/g;
+const ORD = /^第 ?[〇零一二三四五六七八九十百\d]+ ?[幕集天場章日輪]$/;
+
 export function proseUnits(
   text: string,
   tail = true,
@@ -107,7 +110,9 @@ export function proseUnits(
   let u = words(text);
 
   // 本作的固定詞：在原字串裡的位置對齊到詞的邊界，整段併成一個。
-  for (const k of keep) {
+  // 序數（「第三幕」「第 2 集」）也是一個詞：「第三｜幕」不可以（第二道關卡 4d80149 之後的全站掃描）。
+  const ords = text.match(ORD_IN) ?? [];
+  for (const k of [...ords, ...keep]) {
     for (let at = text.indexOf(k); at >= 0; at = text.indexOf(k, at + k.length)) {
       const from = at + k.length;
       let pos = 0;
@@ -122,9 +127,14 @@ export function proseUnits(
     }
   }
 
-  // 譯名：以「・」為中心往兩邊吃。
+  // 譯名：以「・」為中心往兩邊吃。序數後面的「・」是分隔號（「第三幕・奧卡福勞工法律事務所」），黏在序數後面，不往兩邊吃。
   for (let i = 0; i < u.length; i++) {
     if (u[i] !== '・') continue;
+    if (i > 0 && ORD.test(u[i - 1])) {
+      u = [...u.slice(0, i - 1), u[i - 1] + u[i], ...u.slice(i + 1)];
+      i--;
+      continue;
+    }
     const take = (dir: -1 | 1) => {
       let j = i + dir;
       let n = 0;
