@@ -103,3 +103,26 @@
   inset: 0;
   background: rgb(6 8 11 / 58%);
 }
+/* 冷開場 22:33 的插入鏡頭（Phone.tsx 的 ColdInsert）：蓋在手機和選單鈕上面，整段擋住點擊。
+   lead：還看得到手機（通知剛跳出來），透明；black／back：硬切的 2 格黑；plate：0.4 秒的鏡頭。
+   硬切，不淡入：這裡的圖層不吃 .plate-stage 的淡入。 */
+.cold-insert {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-toast);
+  background: #000;
+  pointer-events: auto;
+}
+.cold-insert[data-phase='lead'] {
+  background: transparent;
+}
+.cold-insert > .scene-plate {
+  position: absolute;
+  z-index: auto;
+}
+.cold-insert:not([data-phase='plate']) > .scene-plate {
+  visibility: hidden;
+}
+.cold-insert .plate-stage {
+  transition: none;
+}
