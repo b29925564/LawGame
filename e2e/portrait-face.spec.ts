@@ -82,3 +82,42 @@ for (const lang of ['zh', 'en'] as const)
     expect(ix + iw).toBeGreaterThanOrEqual(bx + bw - 0.5);
     expect(iy + ih).toBeGreaterThan(by + bh);
   });
+
+/**
+ * 寬螢幕左下角的盧卡斯大立繪（≥1360）：立繪包的右肩碰到圖的右緣（4:5 裁切），露出來就是一條直的切邊
+ * （體驗評測 5ad27e3：原本用遮罩淡掉，看得到灰糊的一條邊）。碰到右緣的那一段要整個在畫面下緣以下。
+ */
+for (const [w, h] of [
+  [1366, 768],
+  [1440, 900],
+  [1920, 1080],
+] as const)
+  test(`盧卡斯大立繪：右肩的裁切邊不在畫面裡（${w}×${h}）`, async ({ page }, info) => {
+    test.skip(info.project.name !== 'desktop', '寬螢幕才有');
+    await page.setViewportSize({ width: w, height: h });
+    await open(page, 'zh');
+    const img = page.locator('.lucas-stage img.on');
+    await expect(img).toBeVisible();
+    await expect(img).toHaveJSProperty('complete', true);
+    const m = await img.evaluate(async (el: HTMLImageElement) => {
+      // 用原圖量：右緣那一欄從哪一列開始不透明。
+      const src = new Image();
+      src.src = el.currentSrc;
+      await src.decode();
+      const c = document.createElement('canvas');
+      c.width = src.naturalWidth;
+      c.height = src.naturalHeight;
+      const g = c.getContext('2d')!;
+      g.drawImage(src, 0, 0);
+      const col = g.getImageData(c.width - 1, 0, 1, c.height).data;
+      let y = 0;
+      while (y < c.height && col[y * 4 + 3] <= 20) y++;
+      const r = el.getBoundingClientRect();
+      return {
+        edge: r.top + (y / c.height) * r.height,
+        h: innerHeight,
+        mask: getComputedStyle(el.parentElement!).maskImage,
+      };
+    });
+    expect(m.edge, JSON.stringify(m)).toBeGreaterThanOrEqual(m.h);
+  });
