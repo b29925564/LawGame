@@ -2,6 +2,9 @@
 import { readFileSync } from 'node:fs';
 import { expect, test, type Page } from '@playwright/test';
 
+// 片頭 40 秒預設會播（title-intro.spec.ts 測）。這裡只看片頭前後的畫面：關掉片頭，冷開場之後直接是集名卡。
+test.beforeEach(({ page }) => page.addInitScript(() => localStorage.setItem('rd.dev.intro', '0')));
+
 /**
  * 冷開場 22:49 的定場鏡頭（RD-ART-0505，31 樓財務長辦公室）：手機戲裡的一格，接法和其他有底圖的場一樣——
  * 先定場（圖＋左下場記，圖沒解碼完純黑），再把那一格的字當旁白字幕放在同一張圖上。

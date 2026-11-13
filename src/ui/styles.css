@@ -3436,6 +3436,11 @@ fieldset.relations.compact {
 .cand .job .zh-line {
   white-space: nowrap;
 }
+/* FitLine 中文排好的行：行尾換行，替代文字是空的（無障礙名稱、複製出來的字不多空白）。 */
+.zh-line:not(:last-child)::after {
+  content: '\A' / '';
+  white-space: pre;
+}
 .cine-text {
   margin-block: 0;
   font-family: var(--font-doc);

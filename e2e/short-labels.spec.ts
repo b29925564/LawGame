@@ -2,12 +2,12 @@
 import { readFileSync } from 'node:fs';
 import { expect, test, type Page } from '@playwright/test';
 import { EN_NAMES } from '../src/ui/enNames';
-import { innerUnits, PROPER_ZH } from '../src/ui/lineUnits';
+import { innerUnits, PROPER_ZH, ROOMS_ZH } from '../src/ui/lineUnits';
 
 /**
  * v93 排字規則（設計師裁定 4d80149）的全站掃描，320／360 × 125／150% × 中英，每一種場景讀檔進去：
  * 1. 不出框：每個文字節點的每一行（Range 量字框）都在它的框（最近的區塊）和外面兩層區塊的內寬裡。
- * 2. 專有名詞不拆（enNames、PROPER_ZH）：除非整個名詞比框的內寬還寬（退路 B），那時只能拆在名詞內部的詞界。
+ * 2. 專有名詞、房名、職稱不拆（enNames、PROPER_ZH、ROOMS_ZH）：除非整個名詞比框的內寬還寬（退路 B），那時只能拆在名詞內部的詞界。
  * 3. 手機框和黑底字卡的中文換行時，最後一行至少三個字（數字也算）。
  * 長篇內文（逐字稿內文、信件列表、法典、片尾、法庭字幕）是 v94 的範圍，不在這裡（LONG）。
  */
@@ -133,7 +133,8 @@ async function open(
 /** 幕序（「第三｜幕」不可以；第二道關卡 4d80149 之後的全站掃描在證詞錄取的眉標找到）。 */
 const ORDS = ['一', '二', '三', '四', '五', '六', '七'].map((n) => `第${n}幕`);
 /** 名詞 → 允許的拆點（名詞內部的詞界：英文是空白後面，中文是 innerUnits 的切點）。 */
-const NAMES = [...EN_NAMES, ...PROPER_ZH, ...ORDS]
+// 房名、職稱也是一個詞（第二道關卡 464a280 第 5 項、裁定 3）。
+const NAMES = [...EN_NAMES, ...PROPER_ZH, ...ROOMS_ZH, ...ORDS]
   .sort((a, b) => b.length - a.length)
   .map((n) => {
     const cuts: number[] = [];

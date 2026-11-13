@@ -1,5 +1,8 @@
 import { expect, test } from '@playwright/test';
 
+// 片頭 40 秒預設會播（title-intro.spec.ts 測）。這裡只看片頭前後的畫面：關掉片頭，冷開場之後直接是集名卡。
+test.beforeEach(({ page }) => page.addInitScript(() => localStorage.setItem('rd.dev.intro', '0')));
+
 test('冷開場：看過的訊息被收回，換場自動存檔，可從標題繼續', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: '新遊戲' }).click();
