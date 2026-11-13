@@ -101,6 +101,65 @@ export function introOn() {
   return INTRO_DEFAULT;
 }
 
+/**
+ * 片頭的圖全部先載好、解碼好才開始 0:00（體驗評測 v94 預檢擋件 1）：鏡頭開始才載圖，慢網路上 0:17 會黑一秒多，
+ * 圖晚 3 秒到的時候整個鏡頭不見。照 0:00 紙的做法，九張（紙三層、百葉窗兩層、0:17 寬圖和暗角、0:23、0:29）都解完才起算。
+ * 冷開場最後一張底圖送出去以後就開始預載（Phone.tsx），進片頭時通常已經好了。
+ * 等太久（READY_CAP）就照樣開始，沒到的圖到了再出來：總比一直黑著好。
+ */
+const READY_CAP = 12000;
+/** 支不支援 AVIF：先試解一張。SVG 的 <image> 沒有 <picture> 可以選格式，紙也要靠這個挑。 */
+let avifOk: Promise<boolean> | null = null;
+function avif() {
+  avifOk ??= (() => {
+    const i = new Image();
+    i.src = pbDA;
+    return i.decode().then(
+      () => true,
+      () => false,
+    );
+  })();
+  return avifOk;
+}
+/** 解過的圖留著參照，瀏覽器不會把解碼結果丟掉；同一張只解一次。 */
+const decoded = new Map<string, Promise<void>>();
+const held: HTMLImageElement[] = [];
+function decodeOnce(url: string) {
+  let p = decoded.get(url);
+  if (!p) {
+    const i = new Image();
+    i.src = url;
+    held.push(i);
+    p = i.decode().catch(() => undefined);
+    decoded.set(url, p);
+  }
+  return p;
+}
+/** 這一集、這個機位（手機直式／桌機）、這個語言要用到的每一張圖。 */
+function introSrcs(episode: string, phone: boolean, lang: 'zh' | 'en', av: boolean) {
+  const k = phone ? 'phone' : 'desk';
+  const pick = (s: Src) => s[av ? 0 : 1];
+  const paper = PAPER_IMG[phone ? 'phone' : 'desktop'];
+  const { base, slit } = BLINDS[episode === 'ep2' ? 'ep2' : 'ep1'];
+  return [
+    pick(paper.blank),
+    pick(paper.numbers),
+    pick(paper[lang]),
+    pick(base[k]),
+    pick(slit[k]),
+    pick(phone ? [c17PA, c17PW] : [c17DA, c17DW]),
+    phone ? vigP : vigD,
+    pick(phone ? [c23PA, c23PW] : [c23DA, c23DW]),
+    pick(phone ? [c29PA, c29PW] : [c29DA, c29DW]),
+  ];
+}
+export function preloadIntro(episode: string, lang: 'zh' | 'en') {
+  const phone = globalThis.matchMedia?.(PHONE).matches ?? false;
+  return avif().then((av) =>
+    Promise.all(introSrcs(episode, phone, lang, av).map(decodeOnce)).then(() => undefined),
+  );
+}
+
 export function TitleIntro({ episode, onDone }: { episode: string; onDone: () => void }) {
   const t = useT();
   // 第二次播起才能跳過：看的是開始播的那一刻，這一次播到一半不會冒出按鈕。
@@ -108,6 +167,21 @@ export function TitleIntro({ episode, onDone }: { episode: string; onDone: () =>
   const [at, setAt] = useState(0);
   const [black, setBlack] = useState(false);
   const paused = useMenu((m) => m.open !== null);
+  const lang = useLang((s) => s.lang);
+  // 圖全部解碼好才從 0:00 開始；之前是純黑（選單照樣能開）。
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    let live = true;
+    const go = () => live && setReady(true);
+    const cap = window.setTimeout(go, READY_CAP);
+    void preloadIntro(episode, lang).then(go);
+    return () => {
+      live = false;
+      window.clearTimeout(cap);
+    };
+    // 語言在片頭中途換了不重等：紙的那一層自己會補解。
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [episode]);
   /** 這個鏡頭已經播了多久（暫停前播掉的）。 */
   const spent = useRef(0);
   useEffect(() => {
@@ -128,7 +202,7 @@ export function TitleIntro({ episode, onDone }: { episode: string; onDone: () =>
     spent.current = 0;
   }, [at]);
   useEffect(() => {
-    if (paused) return;
+    if (paused || !ready) return;
     const rm = reducedMotion();
     const last = at === SHOTS.length - 1;
     const left = SHOTS[at][1] - spent.current;
@@ -149,7 +223,7 @@ export function TitleIntro({ episode, onDone }: { episode: string; onDone: () =>
     };
     // onDone 每次 render 都是新的：計時只看鏡頭換了沒有、停了沒有。
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [at, paused]);
+  }, [at, paused, ready]);
   const [shot] = SHOTS[at];
   const ep2 = episode === 'ep2';
   return (
@@ -158,9 +232,10 @@ export function TitleIntro({ episode, onDone }: { episode: string; onDone: () =>
       data-shot={shot}
       data-episode={episode}
       data-paused={paused ? '' : undefined}
+      data-ready={ready ? '' : undefined}
       aria-label={t('片頭')}
     >
-      {!black && (
+      {ready && !black && (
         <div key={shot} className={`ti-shot shot-${shot}`} aria-hidden>
           {shot === 'paper' && <Paper />}
           {shot === 'blind' && <Blinds ep2={ep2} />}
@@ -324,31 +399,16 @@ function paperLayout(cam: Cam, lang: 'zh' | 'en') {
   };
 }
 
-/** 支不支援 AVIF：SVG 的 <image> 沒有 <picture> 可以選格式，先試解一張。四張都解完才畫，畫面不會半張。 */
-let avifOk: Promise<boolean> | null = null;
+/** 紙的三層都解完才畫，畫面不會半張（片頭開始前通常已經解好了，見 preloadIntro）。 */
 function usePaperSrc(phone: boolean, lang: 'zh' | 'en') {
   const set = PAPER_IMG[phone ? 'phone' : 'desktop'];
   const [ready, setReady] = useState<Record<string, string> | null>(null);
   useEffect(() => {
     let live = true;
-    avifOk ??= (() => {
-      const i = new Image();
-      i.src = pbDA;
-      return i.decode().then(
-        () => true,
-        () => false,
-      );
-    })();
-    void avifOk.then(async (avif) => {
-      const pick = (s: readonly [string, string]) => s[avif ? 0 : 1];
+    void avif().then(async (av) => {
+      const pick = (s: readonly [string, string]) => s[av ? 0 : 1];
       const srcs = { blank: pick(set.blank), numbers: pick(set.numbers), full: pick(set[lang]) };
-      await Promise.all(
-        Object.values(srcs).map((u) => {
-          const i = new Image();
-          i.src = u;
-          return i.decode().catch(() => undefined);
-        }),
-      );
+      await Promise.all(Object.values(srcs).map(decodeOnce));
       if (live) setReady(srcs);
     });
     return () => {
