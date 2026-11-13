@@ -2145,6 +2145,8 @@ html[lang='en'] .vform .fh .c {
   }
   .nego-ladder .v {
     white-space: normal;
+    /* 折成兩行時兩行都靠右，和其他價錢同一條右緣（體驗評測 5ad27e3，320 英文 150%）。 */
+    text-align: end;
   }
 }
 

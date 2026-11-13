@@ -152,3 +152,34 @@ for (const scale of [1, 1.5])
       expect(r, `第 ${i + 1} 階`).toEqual({ inside: true, covered: false });
     }
   });
+
+/**
+ * 320 英文 150%：「$2.5 million」「$1.8 million」放不下一行時折兩行，兩行都要靠右，
+ * 和其他價錢對齊同一條右緣（體驗評測 5ad27e3：折行後靠左，其他靠右）。
+ */
+test('調解 320 英文 150%：價錢折行後每一行仍靠右', async ({ page }, info) => {
+  test.skip(info.project.name !== 'desktop', '自己設視窗大小，桌機那一組跑就好');
+  await page.setViewportSize({ width: 320, height: 640 });
+  await open(page, 1.5);
+  const m = await page.evaluate(() =>
+    [...document.querySelectorAll<HTMLElement>('.nego-ladder .v')].map((v) => {
+      const cell = v.getBoundingClientRect();
+      const r = document.createRange();
+      r.selectNodeContents(v);
+      const lines = [...r.getClientRects()];
+      return {
+        text: v.textContent,
+        lines: lines.length,
+        // 每一行字的右緣離格子右緣多遠。
+        gap: Math.max(...lines.map((l) => Math.round(cell.right - l.right))),
+        right: Math.round(cell.right),
+      };
+    }),
+  );
+  expect(
+    m.some((x) => x.lines > 1),
+    JSON.stringify(m),
+  ).toBe(true);
+  for (const x of m) expect(x.gap, JSON.stringify(x)).toBeLessThanOrEqual(1);
+  expect(new Set(m.map((x) => x.right)).size, JSON.stringify(m)).toBe(1);
+});
