@@ -13,6 +13,9 @@ tool: 線上對話式生圖工具（使用者操作），以 lucas_final.png 當
 date: 2026-10-02
 process: [裁 4:5, Lanczos 放大至 2048×2560, rembg isnet-general-use 去背, 依頭頂與頭寬對齊, WebP q70 輸出 1024/512/144]
 default: { plain: v01, tense: tense-light v01, hard: v01, warm: v01, panic: v01, silent: v02 }
+# 臉的中心 x（％，原檔寬）：兩眼眼窩中點和鼻尖的平均。頭像照這個置中，不照頭部輪廓（align.head_cx＝45.6％）：
+# 他多半側四分之三，頭髮置中時臉會偏左 5～10％。新表情要量好補在這裡（cast.test.ts 會擋）。2026-11-13 量。
+face_cx: { plain v01: 40.6, tense-light v01: 35.5, hard v01: 38.8, warm v01: 40.2, panic v01: 41.7, silent v02: 35.6 }
 # 使用者 17:36Z 更正：原記為緊的 v02/v03 其實是硬；硬目前瀏海仍放下，露額頭版尚未產生
 picks:
   - { file: lucas__F__plain__v01.webp,        expr: plain,  role: default,  framing: standard }

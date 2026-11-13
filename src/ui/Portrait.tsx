@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import type { Line } from '../engine/episode/schema';
 import { useT } from '../i18n';
-import { LUCAS, lucas } from './cast';
+import { LUCAS, lucas, lucasFace } from './cast';
 import { IdPhoto } from './IdPhoto';
 import { useScope } from './lang';
 import { CourtFace, useInCourt } from './jury/CourtFace';
@@ -40,7 +40,7 @@ export function Portrait({
   const src = who === LUCAS ? lucas(mood, 144) : undefined;
   if (src)
     return (
-      <span className="portrait art" {...a11y}>
+      <span className="portrait art face-crop" style={lucasFace(mood)} {...a11y}>
         <img
           src={src}
           srcSet={`${src} 144w, ${lucas(mood, 512)} 512w`}
