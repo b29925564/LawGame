@@ -1,4 +1,12 @@
-import { type CSSProperties, useEffect, useId, useMemo, useRef, useState } from 'react';
+import {
+  type CSSProperties,
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useSettings } from '../engine/settings';
 import { useLang, useT } from '../i18n';
 import { reducedMotion } from './a11y';
@@ -101,6 +109,135 @@ export function introOn() {
   return INTRO_DEFAULT;
 }
 
+/**
+ * 片頭的圖全部先載好、解碼好才開始 0:00（體驗評測 v94 預檢擋件 1）：鏡頭開始才載圖，慢網路上 0:17 會黑一秒多，
+ * 圖晚 3 秒到的時候整個鏡頭不見。照 0:00 紙的做法，九張（紙三層、百葉窗兩層、0:17 寬圖和暗角、0:23、0:29）都解完才起算。
+ * 冷開場最後一張底圖送出去以後就開始預載（Phone.tsx），進片頭時通常已經好了。
+ * 等太久（READY_CAP）就照樣開始，時間軸照走；但每個鏡頭還是等自己的圖層都解好才出現，之前那幾格純黑，
+ * 不會先露出半張（例如 0:17 只有暗角）再一塊塊補上（設計師 #339 要改 1）。
+ */
+const READY_CAP = 12000;
+/**
+ * 一層圖＝一個 <picture>：source 依序是 [media, type, srcset]，最後是 img 的 src。畫面上的 <Plate> 和預載用同一份，
+ * 預載時照 React 建的順序（img 先有 src，再和 source 一起放進 picture）離線建一個，瀏覽器挑哪一張就解哪一張，
+ * 和畫面上 <picture> 實際載的一定是同一張。（原本用 new Image() 試解 AVIF 自己挑：CI 的 headless 瀏覽器
+ * 桌機 <picture> 挑了 WebP，預載的卻是 AVIF，預載白做，#339 第一輪 CI 紅。）
+ */
+type Layer = {
+  s: readonly (readonly [string | undefined, string | undefined, string])[];
+  src: string;
+};
+const PHONE_MQ = '(max-width: 767px)';
+const plateLayer = (desk: Src, phone: Src): Layer => ({
+  s: [
+    [PHONE_MQ, 'image/avif', phone[0]],
+    [PHONE_MQ, 'image/webp', phone[1]],
+    [undefined, 'image/avif', desk[0]],
+  ],
+  src: desk[1],
+});
+const VIGNETTE: Layer = { s: [[PHONE_MQ, undefined, vigP]], src: vigD };
+const layerKey = (l: Layer) => [...l.s.map((x) => x[2]), l.src].join(' ');
+/** 解過的圖留著參照，瀏覽器不會把解碼結果丟掉；同一層只解一次。 */
+const decoded = new Map<string, Promise<string>>();
+const held: HTMLImageElement[] = [];
+/**
+ * 解好的那一個 picture（或單張 img）本身：畫面上直接把它搬進去，不靠瀏覽器快取再載一次。
+ * CI 的 headless 瀏覽器（Playwright 攔請求時）不會拿記憶體裡解好的圖給新的 <img>，又去網路載一次；
+ * 搬同一個元素進去，畫出來的就是已經解好的那張（#339 CI 紅）。
+ */
+const built = new Map<string, HTMLElement>();
+/** 已經解完的圖層：render 時同步查，圖早就好的鏡頭在換到它的那一格就畫出來，不多黑一格。 */
+const done = new Set<string>();
+function decodeLayer(l: Layer) {
+  const key = layerKey(l);
+  let p = decoded.get(key);
+  if (!p) {
+    const img = document.createElement('img');
+    img.src = l.src;
+    if (l.s.length) {
+      const pic = document.createElement('picture');
+      for (const [media, type, srcset] of l.s) {
+        const so = document.createElement('source');
+        if (media) so.media = media;
+        if (type) so.type = type;
+        so.srcset = srcset;
+        pic.append(so);
+      }
+      pic.append(img);
+      built.set(key, pic);
+    } else built.set(key, img);
+    img.alt = '';
+    img.draggable = false;
+    held.push(img);
+    p = img
+      .decode()
+      .catch(() => undefined)
+      .then(() => {
+        if (decoded.get(key) === p) done.add(key);
+        return img.currentSrc || img.src;
+      });
+    decoded.set(key, p);
+  }
+  return p;
+}
+const decodeOnce = (url: string) => decodeLayer({ s: [], src: url });
+/**
+ * SVG 的 <image>（0:00 的紙）沒有 <picture> 可以選格式：問瀏覽器的 <picture> 挑不挑 AVIF，照它的答案挑。
+ */
+let avifOk: Promise<boolean> | null = null;
+/** 挑的結果，知道了以後 render 可以直接查（還不知道是 null）。 */
+let avifKnown: boolean | null = null;
+function avif() {
+  avifOk ??= decodeLayer({ s: [[undefined, 'image/avif', pbDA]], src: pbDW }).then(
+    (url) => (avifKnown = url === new URL(pbDA, location.href).href),
+  );
+  return avifOk;
+}
+/** 片頭結束或被略過：放掉解好的大圖，手機上不再佔著記憶體（設計師 #339 建議 2）。 */
+function release() {
+  decoded.clear();
+  built.clear();
+  done.clear();
+  held.length = 0;
+}
+/** 這一集、這個機位（紙要知道手機直式／桌機）、這個語言，每個鏡頭要用到的圖層。 */
+function introLayers(
+  episode: string,
+  phone: boolean,
+  lang: 'zh' | 'en',
+  av: boolean,
+): Partial<Record<ShotId, Layer[]>> {
+  const pick = (s: Src): Layer => ({ s: [], src: s[av ? 0 : 1] });
+  const paper = PAPER_IMG[phone ? 'phone' : 'desktop'];
+  const { base, slit } = BLINDS[episode === 'ep2' ? 'ep2' : 'ep1'];
+  return {
+    paper: [pick(paper.blank), pick(paper.numbers), pick(paper[lang])],
+    blind: [plateLayer(base.desk, base.phone), plateLayer(slit.desk, slit.phone)],
+    court: [plateLayer([c17DA, c17DW], [c17PA, c17PW]), VIGNETTE],
+    witness: [plateLayer([c23DA, c23DW], [c23PA, c23PW])],
+    lucas: [plateLayer([c29DA, c29DW], [c29PA, c29PW])],
+  };
+}
+const isPhone = () => globalThis.matchMedia?.(PHONE).matches ?? false;
+/** 一個鏡頭（不給就是整段片頭）的每一層都解好。 */
+function decodeShots(episode: string, lang: 'zh' | 'en', shot?: ShotId) {
+  return avif().then((av) => {
+    const all = introLayers(episode, isPhone(), lang, av);
+    const layers = shot ? (all[shot] ?? []) : Object.values(all).flat();
+    return Promise.all(layers.map(decodeLayer)).then(() => undefined);
+  });
+}
+/** 這個鏡頭的圖層是不是全都解完了（同步）。 */
+function shotDecoded(episode: string, lang: 'zh' | 'en', shot: ShotId) {
+  if (avifKnown === null) return false;
+  const layers = introLayers(episode, isPhone(), lang, avifKnown)[shot] ?? [];
+  return layers.every((l) => done.has(layerKey(l)));
+}
+export function preloadIntro(episode: string, lang: 'zh' | 'en') {
+  return decodeShots(episode, lang);
+}
+
 export function TitleIntro({ episode, onDone }: { episode: string; onDone: () => void }) {
   const t = useT();
   // 第二次播起才能跳過：看的是開始播的那一刻，這一次播到一半不會冒出按鈕。
@@ -108,6 +245,33 @@ export function TitleIntro({ episode, onDone }: { episode: string; onDone: () =>
   const [at, setAt] = useState(0);
   const [black, setBlack] = useState(false);
   const paused = useMenu((m) => m.open !== null);
+  const lang = useLang((s) => s.lang);
+  // 圖全部解碼好才從 0:00 開始；之前是純黑（選單照樣能開）。
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    let live = true;
+    const go = () => live && setReady(true);
+    const cap = window.setTimeout(go, READY_CAP);
+    void preloadIntro(episode, lang).then(go);
+    return () => {
+      live = false;
+      window.clearTimeout(cap);
+    };
+    // 語言在片頭中途換了不重等：紙的那一層自己會補解。
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [episode]);
+  // 這個鏡頭的圖層都解好了沒有：還沒好就整格純黑。
+  const [shotOk, setShotOk] = useState<string | null>(null);
+  const cur = SHOTS[at][0];
+  useEffect(() => {
+    let live = true;
+    void decodeShots(episode, lang, cur).then(() => live && setShotOk(cur));
+    return () => {
+      live = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [episode, cur]);
+  useEffect(() => release, []);
   /** 這個鏡頭已經播了多久（暫停前播掉的）。 */
   const spent = useRef(0);
   useEffect(() => {
@@ -128,7 +292,7 @@ export function TitleIntro({ episode, onDone }: { episode: string; onDone: () =>
     spent.current = 0;
   }, [at]);
   useEffect(() => {
-    if (paused) return;
+    if (paused || !ready) return;
     const rm = reducedMotion();
     const last = at === SHOTS.length - 1;
     const left = SHOTS[at][1] - spent.current;
@@ -149,7 +313,7 @@ export function TitleIntro({ episode, onDone }: { episode: string; onDone: () =>
     };
     // onDone 每次 render 都是新的：計時只看鏡頭換了沒有、停了沒有。
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [at, paused]);
+  }, [at, paused, ready]);
   const [shot] = SHOTS[at];
   const ep2 = episode === 'ep2';
   return (
@@ -158,9 +322,10 @@ export function TitleIntro({ episode, onDone }: { episode: string; onDone: () =>
       data-shot={shot}
       data-episode={episode}
       data-paused={paused ? '' : undefined}
+      data-ready={ready ? '' : undefined}
       aria-label={t('片頭')}
     >
-      {!black && (
+      {ready && !black && (shotOk === shot || shotDecoded(episode, lang, shot)) && (
         <div key={shot} className={`ti-shot shot-${shot}`} aria-hidden>
           {shot === 'paper' && <Paper />}
           {shot === 'blind' && <Blinds ep2={ep2} />}
@@ -324,31 +489,16 @@ function paperLayout(cam: Cam, lang: 'zh' | 'en') {
   };
 }
 
-/** 支不支援 AVIF：SVG 的 <image> 沒有 <picture> 可以選格式，先試解一張。四張都解完才畫，畫面不會半張。 */
-let avifOk: Promise<boolean> | null = null;
+/** 紙的三層都解完才畫，畫面不會半張（片頭開始前通常已經解好了，見 preloadIntro）。 */
 function usePaperSrc(phone: boolean, lang: 'zh' | 'en') {
   const set = PAPER_IMG[phone ? 'phone' : 'desktop'];
   const [ready, setReady] = useState<Record<string, string> | null>(null);
   useEffect(() => {
     let live = true;
-    avifOk ??= (() => {
-      const i = new Image();
-      i.src = pbDA;
-      return i.decode().then(
-        () => true,
-        () => false,
-      );
-    })();
-    void avifOk.then(async (avif) => {
-      const pick = (s: readonly [string, string]) => s[avif ? 0 : 1];
+    void avif().then(async (av) => {
+      const pick = (s: readonly [string, string]) => s[av ? 0 : 1];
       const srcs = { blank: pick(set.blank), numbers: pick(set.numbers), full: pick(set[lang]) };
-      await Promise.all(
-        Object.values(srcs).map((u) => {
-          const i = new Image();
-          i.src = u;
-          return i.decode().catch(() => undefined);
-        }),
-      );
+      await Promise.all(Object.values(srcs).map(decodeOnce));
       if (live) setReady(srcs);
     });
     return () => {
@@ -499,13 +649,32 @@ function Paper() {
 /** 手機（≤767px）用直式機位；兩種都先給 AVIF、再給 WebP。 */
 type Src = readonly [avif: string, webp: string];
 function Plate({ desk, phone, className }: { desk: Src; phone: Src; className?: string }) {
-  const PHONE = '(max-width: 767px)';
+  return <LayerPicture layer={plateLayer(desk, phone)} className={className} />;
+}
+/**
+ * 畫面上的一層圖：預載解好的那個 picture 直接搬進來（built）；還沒建過（不該發生：鏡頭等圖層解好才畫）就照同一份描述畫一個。
+ * 外面那層 span 是 display: contents，不影響版面和選擇器。
+ */
+function LayerPicture({ layer, className }: { layer: Layer; className?: string }) {
+  const host = useRef<HTMLSpanElement>(null);
+  const cls = ['ti-plate', className].filter(Boolean).join(' ');
+  const key = layerKey(layer);
+  const [moved] = useState(() => built.has(key));
+  useLayoutEffect(() => {
+    const el = built.get(key);
+    const h = host.current;
+    if (!moved || !el || !h) return;
+    el.className = cls;
+    h.append(el);
+    return () => el.remove();
+  }, [moved, key, cls]);
+  if (moved) return <span ref={host} className="ti-host" />;
   return (
-    <picture className={['ti-plate', className].filter(Boolean).join(' ')}>
-      <source media={PHONE} type="image/avif" srcSet={phone[0]} />
-      <source media={PHONE} type="image/webp" srcSet={phone[1]} />
-      <source type="image/avif" srcSet={desk[0]} />
-      <img src={desk[1]} alt="" decoding="async" draggable={false} />
+    <picture className={cls}>
+      {layer.s.map(([media, type, srcset]) => (
+        <source key={srcset} media={media} type={type} srcSet={srcset} />
+      ))}
+      <img src={layer.src} alt="" decoding="async" draggable={false} />
     </picture>
   );
 }
@@ -545,10 +714,7 @@ function Court() {
       <div className="ti-pan">
         <Plate desk={[c17DA, c17DW]} phone={[c17PA, c17PW]} />
       </div>
-      <picture className="ti-plate ti-vignette">
-        <source media="(max-width: 767px)" srcSet={vigP} />
-        <img src={vigD} alt="" decoding="async" draggable={false} />
-      </picture>
+      <LayerPicture layer={VIGNETTE} className="ti-vignette" />
     </>
   );
 }

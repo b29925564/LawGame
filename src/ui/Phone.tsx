@@ -22,6 +22,7 @@ import {
   warmPlate,
 } from './scenePlate';
 import { useSubs } from './SubCard';
+import { introOn, preloadIntro } from './TitleIntro';
 
 /** 冷開場：伊森的手機畫面。 */
 /**
@@ -117,6 +118,11 @@ export function Phone({ scene }: { scene: PhoneScene }) {
   useEffect(() => {
     for (const url of [nextDesk, nextPhone]) if (url) void warmPlate(url);
   }, [nextDesk, nextPhone]);
+  // 冷開場的底圖都送出去了（後面沒有要先載的），接著載片頭的九張圖：進片頭時不用等（體驗評測 v94 預檢）。
+  const coldDone = progress.scene === 0 && !ahead;
+  useEffect(() => {
+    if (coldDone && introOn()) void preloadIntro(progress.episode, lang);
+  }, [coldDone, progress.episode, lang]);
 
   if (cap && shown && !slated)
     return (

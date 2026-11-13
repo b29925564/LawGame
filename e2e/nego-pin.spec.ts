@@ -6,40 +6,43 @@ import { expect, test, type Page } from '@playwright/test';
  * 釘住的主按鈕「Call Arthur Calder for approval −1 round」不在單字中間斷行，也不蓋住條件階梯：
  * 內容區的底部讓出按鈕的高度，從最上面捲到最下面，按鈕的方框和每一階看得到的部分都不相交；每一階都捲得到、整階看得到。
  */
-async function open(page: Page, scale: number) {
+async function open(page: Page, scale: number, lang: 'zh' | 'en' = 'en') {
   await page.goto('/');
-  await page.evaluate((scale) => {
-    localStorage.clear();
-    localStorage.setItem('lawgame-lang', 'en');
-    localStorage.setItem(
-      'lawgame-settings',
-      JSON.stringify({ state: { textScale: scale }, version: 1 }),
-    );
-    localStorage.setItem(
-      'lawgame-ep-auto',
-      JSON.stringify({
-        version: 5,
-        savedAt: Date.now(),
-        label: 'x',
-        progress: {
-          episode: 'ep2',
-          scene: 12,
-          step: 0,
-          choices: {},
-          cards: [],
-          flags: [],
-          ethics: [],
-          scenes: {},
-        },
-      }),
-    );
-  }, scale);
+  await page.evaluate(
+    ([scale, lang]) => {
+      localStorage.clear();
+      localStorage.setItem('lawgame-lang', lang);
+      localStorage.setItem(
+        'lawgame-settings',
+        JSON.stringify({ state: { textScale: scale }, version: 1 }),
+      );
+      localStorage.setItem(
+        'lawgame-ep-auto',
+        JSON.stringify({
+          version: 5,
+          savedAt: Date.now(),
+          label: 'x',
+          progress: {
+            episode: 'ep2',
+            scene: 12,
+            step: 0,
+            choices: {},
+            cards: [],
+            flags: [],
+            ethics: [],
+            scenes: {},
+          },
+        }),
+      );
+    },
+    [scale, lang] as const,
+  );
   await page.reload();
   await page
-    .getByRole('button', { name: /^Continue/ })
+    .getByRole('button', { name: /^(Continue|繼續)/ })
     .first()
     .click();
-  await page.getByRole('button', { name: 'Sit down' }).click();
+  await page.getByRole('button', { name: /^(Sit down|坐下)$/ }).click();
   await expect(page.locator('.nego-ladder li')).toHaveCount(4);
   await page.evaluate(() => document.fonts.ready);
 }
@@ -152,3 +155,52 @@ for (const scale of [1, 1.5])
       expect(r, `第 ${i + 1} 階`).toEqual({ inside: true, covered: false });
     }
   });
+
+/**
+ * 條件階梯的價錢不斷行（設計師 #339：「$2.5 ⏎ million」把數字和單位拆開）。放不下「價錢＋超過授權」時，
+ * 標記換到價錢下面另起一行、同樣靠右；每一列的價錢都只佔一行、對在同一條右緣，頁面不橫向捲。
+ */
+for (const width of [320, 360])
+  for (const lang of ['zh', 'en'] as const)
+    test(`調解 ${width} ${lang} 150%：條件階梯的價錢只佔一行、靠右`, async ({ page }, info) => {
+      test.skip(info.project.name !== 'desktop', '自己設視窗大小，桌機那一組跑就好');
+      await page.setViewportSize({ width, height: 740 });
+      await open(page, 1.5, lang);
+      const m = await page.evaluate(() => {
+        const line = (el: Element) => {
+          const r = document.createRange();
+          r.selectNodeContents(el);
+          return new Set([...r.getClientRects()].map((x) => Math.round(x.top))).size;
+        };
+        const rows = [...document.querySelectorAll('.nego-ladder li')].map((li) => {
+          const v = li.querySelector('.v')!;
+          const tag = li.querySelector('.tg em');
+          const box = li.getBoundingClientRect();
+          const pad = parseFloat(getComputedStyle(li).paddingRight);
+          return {
+            text: v.textContent,
+            lines: line(v),
+            right: Math.round(v.getBoundingClientRect().right),
+            tagLines: tag ? line(tag) : 0,
+            tagOut: tag ? Math.round(tag.getBoundingClientRect().right - (box.right - pad)) : 0,
+          };
+        });
+        const doc = document.scrollingElement!;
+        return { rows, wide: doc.scrollWidth - doc.clientWidth };
+      });
+      const all = JSON.stringify(m);
+      expect(m.wide, all).toBeLessThanOrEqual(0);
+      for (const r of m.rows) {
+        expect(r.lines, all).toBe(1);
+        expect(r.tagLines, all).toBeLessThanOrEqual(1);
+        expect(r.tagOut, all).toBeLessThanOrEqual(0);
+      }
+      expect(new Set(m.rows.map((r) => r.right)).size, all).toBe(1);
+      await page.screenshot({
+        path: info.outputPath(`ladder-${width}-${lang}.png`),
+        clip: await page
+          .locator('.nego-ladder')
+          .boundingBox()
+          .then((b) => b!),
+      });
+    });

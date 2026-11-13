@@ -2121,6 +2121,19 @@ html[lang='en'] .vform .fh .c {
   color: var(--text);
   font-weight: 600;
 }
+/* 一列放不下「價錢＋超過授權」：價錢不斷行，整張階梯的標記換到價錢下面、同樣靠右（Negotiation.tsx useLadderStack；
+   設計師 #339：「$2.5 ⏎ million」把數字和單位拆開）。 */
+.nego-ladder[data-stack] li {
+  row-gap: 2px;
+}
+.nego-ladder[data-stack] li > .v,
+.nego-ladder[data-stack] li > .tg {
+  grid-column: 1 / -1;
+  justify-self: end;
+}
+.nego-ladder[data-stack] li > .tg:empty {
+  display: none;
+}
 .nego-ladder li.on {
   /* 目前這一檔：淡底＋左緣一條正文色。黃只給下一步（「打電話請示」），一格一黃（第一道關卡 B2）。 */
   background: var(--surface-2);
@@ -2143,7 +2156,7 @@ html[lang='en'] .vform .fh .c {
   .nego-ladder li .th {
     grid-column: 1 / -1;
   }
-  .nego-ladder .v {
+  .nego-ladder .v:not(.money) {
     white-space: normal;
   }
 }
