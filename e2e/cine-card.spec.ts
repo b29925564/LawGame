@@ -10,13 +10,11 @@ import { endsBanned } from '../src/ui/plateBreaks';
  * 2. 中文照 fitLine 規則斷行：只在 Intl.Segmenter 的詞界斷，行尾不留虛詞，最後一行至少 3 個字（標點不算）。
  */
 type Card = { episode: 'ep1' | 'ep2'; step: number; zh: string };
-/** 兩集冷開場所有的黑底字卡（22:49 那一格有底圖，是字幕卡，不在這裡）。 */
+/** 兩集冷開場所有的黑底字卡（22:49、23:14 那幾格有底圖，是字幕卡，不在這裡）。 */
 const CARDS: Card[] = [
   { episode: 'ep1', step: 0, zh: '週五深夜' },
   { episode: 'ep1', step: 1, zh: '城東一間小公寓' },
   { episode: 'ep1', step: 11, zh: '大廳閘門' },
-  { episode: 'ep1', step: 12, zh: '港邊的公車亭' },
-  { episode: 'ep1', step: 14, zh: '公車進站' },
   { episode: 'ep2', step: 0, zh: '週二傍晚' },
   { episode: 'ep2', step: 5, zh: '東河街' },
   { episode: 'ep2', step: 6, zh: '車停在路邊' },
@@ -359,7 +357,7 @@ for (const w of [320, 360])
 /**
  * 中文黑底字卡的斷行順序（設計師第二道關卡 72a9003 裁定 1：#328 之後 22:31、23:14、17:52 比以前難讀）：
  * 前面的規則照舊（上面那條測試）；數詞＋量詞跟後面的詞同一行；每一行都至少 3 個字；行數最少；同樣行數先斷在句號後、再逗號後。
- * 23:14 在 360 寬 150% 要排成「公車進站，又開走了。｜伊森沒有上車。」（兩行，和 #328 之前一樣）。
+ * （23:14 原本也在這裡；v94 起 23:14 有公車亭底圖，改成底圖字幕，一句一張，cold-open-plate.spec.ts 量。）
  */
 const NUMCL =
   /[一二兩三四五六七八九十百千幾半][台支行單個張件位隻輛本份條把杯次間棟層盞句封通頁步]$/u;
@@ -402,7 +400,5 @@ for (const w of [320, 360])
             .toBeGreaterThanOrEqual(3);
           expect.soft(NUMCL.test(l.trimEnd()), `${tag}「${l}」量詞留在行尾`).toBe(false);
         }
-        if (w === 360 && scale === 1.5 && card.zh === '公車進站')
-          expect(lines.map((l) => l.trim())).toEqual(['公車進站，又開走了。', '伊森沒有上車。']);
       }
     });

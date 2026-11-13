@@ -354,6 +354,104 @@
         "phone": 0
       },
       "source": "project-files art-bible/scenes/0505-31f（RD-ART-0505 v4，delivery-v4.md、manifest.json）；floor_L 是介面與操作 #3 在交付的 jpg 上重量的（最暗 0.5% 的平均 L*）"
+    },
+    {
+      "id": "shelter-2314a",
+      "scene": "ep1:cold-open",
+      "rig": "ep1-harbour-shelter-fri",
+      "card_kelvin": 4100,
+      "date": "2026-03-13 23:14",
+      "episode": 1,
+      "variant": "a",
+      "step_note": "冷開場 ③ 23:14 港邊公車亭（設定集第 3 章第 03 格）：a 是手機光正常，b 是手機光 55%，最後一格從 a 交叉淡化到 b 做「漸暗」（設計師 mock 審查 11-06）。桌機 mock v4、手機直式 v6（另一台機位，不從桌機裁）",
+      "files": {
+        "desktop": {
+          "file": "shelter-2314a-desktop.jpg",
+          "bytes": 78822
+        },
+        "phone": {
+          "file": "shelter-2314a-phone.jpg",
+          "bytes": 68409
+        }
+      },
+      "focus": {
+        "y": 0
+      },
+      "focus_note": "手機和手在上緣（桌機 y 0–0.48）：視窗比圖扁要裁上下時對齊上緣，不切手機。手機直式 cover 置中，安全區 x 0.10–0.90",
+      "subjects": {
+        "desktop": [
+          {
+            "id": "phone-hands",
+            "box": [0.13, 0.0, 0.4, 0.48],
+            "cover": 0
+          }
+        ],
+        "phone": [
+          {
+            "id": "phone-hands",
+            "box": [0.2, 0.02, 0.7, 0.37],
+            "cover": 0
+          }
+        ]
+      },
+      "floor_L": {
+        "desktop": 3.81,
+        "phone": 4.12
+      },
+      "yellow_final_violations": {
+        "desktop": 0,
+        "phone": 0
+      },
+      "source": "art-bible/scenes/coldopen-v94/final/03-2314a-*.jpg；rig art-bible/scenes/coldopen-v94/rigs/harbour-shelter-night.yaml"
+    },
+    {
+      "id": "shelter-2314b",
+      "scene": "ep1:cold-open",
+      "rig": "ep1-harbour-shelter-fri",
+      "card_kelvin": 4100,
+      "date": "2026-03-13 23:14",
+      "episode": 1,
+      "variant": "b",
+      "step_note": "冷開場 ③ 23:14 港邊公車亭（設定集第 3 章第 03 格）：a 是手機光正常，b 是手機光 55%，最後一格從 a 交叉淡化到 b 做「漸暗」（設計師 mock 審查 11-06）。桌機 mock v4、手機直式 v6（另一台機位，不從桌機裁）",
+      "files": {
+        "desktop": {
+          "file": "shelter-2314b-desktop.jpg",
+          "bytes": 75433
+        },
+        "phone": {
+          "file": "shelter-2314b-phone.jpg",
+          "bytes": 64823
+        }
+      },
+      "focus": {
+        "y": 0
+      },
+      "focus_note": "手機和手在上緣（桌機 y 0–0.48）：視窗比圖扁要裁上下時對齊上緣，不切手機。手機直式 cover 置中，安全區 x 0.10–0.90",
+      "subjects": {
+        "desktop": [
+          {
+            "id": "phone-hands",
+            "box": [0.13, 0.0, 0.4, 0.48],
+            "cover": 0
+          }
+        ],
+        "phone": [
+          {
+            "id": "phone-hands",
+            "box": [0.2, 0.02, 0.7, 0.37],
+            "cover": 0
+          }
+        ]
+      },
+      "floor_L": {
+        "desktop": 3.81,
+        "phone": 4.13
+      },
+      "yellow_final_violations": {
+        "desktop": 0,
+        "phone": 0
+      },
+      "source": "art-bible/scenes/coldopen-v94/final/03-2314b-*.jpg；rig art-bible/scenes/coldopen-v94/rigs/harbour-shelter-night.yaml"
     }
   ]
 }

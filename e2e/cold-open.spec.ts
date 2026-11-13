@@ -29,12 +29,17 @@ test('冷開場：看過的訊息被收回，換場自動存檔，可從標題�
   await next();
   await next();
   await next();
+  // 23:14 也有定場鏡頭（港邊公車亭）：點掉場記，兩句兩張字幕。
+  await page.locator('.place-beat').click();
+  await next();
   await next();
   await expect(page.getByText('此訊息已被收回')).toBeVisible();
   await expect(page.getByText('我們私下解決')).toHaveCount(0);
   await next();
   // 冷開場裡沒有警方照片（設定集 11.5：冷開場沒有血、沒有黃）。
   await expect(page.getByRole('list', { name: '現場照片' })).toHaveCount(0);
+  // 23:14 最後一格：公車亭 b 版，兩句兩張字幕。
+  await next();
   await next();
   await expect(page.getByRole('heading', { name: '已收回的訊息' })).toBeVisible();
 

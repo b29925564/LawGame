@@ -403,14 +403,22 @@ scenes:
       - do: caption
         time: '23:01'
         text: 大廳閘門。他拿出手機，按了 9，按了 1，又把手機收回口袋。
+      # 23:14 港邊公車亭（設定集第 3 章第 03 格）：先定場，手機光正常的那張（a）。
       - do: caption
         time: '23:14'
+        place: 卡爾德港　公車亭　週五 23:14
+        rig: ep1-harbour-shelter-fri
+        variant: a
         text: 港邊的公車亭。他打開聊天室，往上滑，找沃斯那則訊息。
       - do: retract
         time: '23:14'
         target: summons
+      # 同一個鏡頭，不再定場：從 a 交叉淡化到手機光 55% 的 b，做「漸暗」（設計師 mock 審查 11-06）。
       - do: caption
         time: '23:14'
+        rig: ep1-harbour-shelter-fri
+        variant: b
+        fadeFrom: a
         text: 公車進站，又開走了。伊森沒有上車。
 
   - type: card
