@@ -2079,7 +2079,7 @@ html[lang='en'] .vform .fh .c {
   /* 價和標記不要隔半個畫面（體驗評測 v89）。 */
   max-width: 560px;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-columns: auto minmax(0, 1fr);
   column-gap: var(--s3);
   list-style: none;
   margin: var(--s2) 0 var(--s3);
@@ -2089,17 +2089,13 @@ html[lang='en'] .vform .fh .c {
 .nego-ladder li {
   display: grid;
   /* subgrid 讓每一列的價和標記對齊同一欄；價和標記不換行，窄螢幕由門檻那欄讓位
-     （體驗評測 v89：英文「$2.5 million」被拆成兩行）。 */
+     （體驗評測 v89：英文「$2.5 million」被拆成兩行）。門檻欄 11-13 拿掉，剩價和標記兩欄。 */
   grid-column: 1 / -1;
   grid-template-columns: subgrid;
   gap: var(--s3);
   align-items: baseline;
   padding: 6px 8px;
   border-bottom: 1px solid var(--border);
-}
-.nego-ladder .th {
-  color: var(--muted);
-  font-size: 13px;
 }
 .nego-ladder .v {
   font-weight: 600;

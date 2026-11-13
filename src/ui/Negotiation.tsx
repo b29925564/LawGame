@@ -247,15 +247,11 @@ export function Negotiation({ scene }: { scene: NegotiationScene }) {
       {tab === 'offer' && (
         <section className="panel">
           <h2>{t('對方現在開的條件')}</h2>
-          {/* 條件階梯：每一檔的門檻和價放在一起，信心 100 時也看得出還差多少（體驗評測 v89）。 */}
+          {/* 條件階梯：只列每一檔的價和授權標記，不列信心門檻（使用者 11-13：隱藏數值不報給玩家）；
+              對方鬆到哪一檔，看反白的那一列。 */}
           <ol className="nego-ladder" aria-label={t('條件階梯')}>
-            {ladder.map((o, i) => (
+            {ladder.map((o) => (
               <li key={o.id} className={o.id === offer.id ? 'on' : undefined}>
-                <span className="th">
-                  {o.min > 0
-                    ? t('信心 {n} 以上', { n: o.min })
-                    : t('信心低於 {n}', { n: ladder[i - 1]?.min ?? 0 })}
-                </span>
                 <span className="v">
                   {o.amount !== undefined ? money(o.amount) : t(o.label, scope)}
                 </span>
