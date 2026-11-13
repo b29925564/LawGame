@@ -52,113 +52,28 @@
   animation-play-state: paused !important;
 }
 
-/* ── 0:00–0:10 紙 ── */
+/* ── 0:00–0:10 紙（TitleIntro.tsx 的 Paper：三張同機位底圖用 SVG 遮罩逐行露出） ── */
 .ti-paper {
   position: absolute;
   inset: 0;
-  display: grid;
-  place-items: center;
-  perspective: 1400px;
-  background: #0d1015;
+  background: var(--cine-bg);
+}
+.ti-paper svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
 }
 .ti-sheet {
-  /* 整頁的寬放得進視窗（手機直式也看得到行號和紅邊線）；桌機是高度略超出畫面的微距。 */
-  --row: calc(min(108dvh, 129vw) / 30);
-  position: relative;
-  height: min(108dvh, 129vw);
-  aspect-ratio: 8.5 / 11;
-  padding-top: var(--row);
-  background: var(--paper);
-  color-scheme: light;
-  transform-origin: 50% 40%;
+  /* 推軌的中心是第 11 行（transform-origin 由程式給，底圖像素）。 */
+  transform-box: view-box;
 }
-.ti-margin {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 14%;
-  width: 4px;
-  border-inline: 1px solid var(--paper-margin);
-  transform-origin: top;
-}
-.ti-row {
-  position: relative;
-  height: var(--row);
-  display: flex;
-  align-items: center;
-}
-.ti-no {
-  width: 14%;
-  padding-right: 3%;
-  text-align: right;
-  font: 400 calc(var(--row) * 0.42) / 1 var(--font-court);
-  color: var(--paper-muted);
-}
-.ti-ink {
-  height: calc(var(--row) * 0.26);
-  width: calc(var(--w) * 76%);
-  margin-left: 5%;
-  background: repeating-linear-gradient(
-    90deg,
-    rgb(25 32 42 / 72%) 0 calc(var(--row) * 0.34),
-    transparent 0 calc(var(--row) * 0.4)
-  );
-}
-.ti-bar {
-  position: absolute;
-  left: 15%;
-  right: 4%;
-  top: 16%;
-  bottom: 16%;
-  background: var(--redact);
-  border-top: 1px solid var(--cine-line);
-  transform-origin: left;
+/* 黑條和遮罩裡扣掉字的那一塊：從那一行字的左緣往右長。 */
+.ti-bar,
+.ti-bar-hide {
+  transform-box: fill-box;
+  transform-origin: left center;
   scale: 0 1;
-}
-/* 一道低角度光擦過紙面（4800K）：左上亮、往右下沉進黑裡。 */
-.ti-rake {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background:
-    linear-gradient(105deg, rgb(255 226 192 / 16%) 0%, transparent 38%),
-    radial-gradient(120% 90% at 10% 20%, transparent 40%, rgb(6 8 11 / 82%) 100%);
-}
-
-/* ── 0:10 百葉窗 ── */
-.ti-blind {
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(80% 70% at 60% 45%, #10141b, var(--cine-bg) 80%);
-}
-.ti-slats {
-  position: absolute;
-  inset: 4% -20%;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-evenly;
-  transform: perspective(1200px) rotateX(12deg);
-  transform-origin: 50% 50%;
-}
-.ti-gap {
-  height: max(2px, 0.32vh);
-  background: rgb(255 226 192 / 28%);
-  box-shadow: 0 0 1.2vh rgb(255 226 192 / 22%);
-}
-.ti-gap.lit {
-  background: var(--k-window);
-  box-shadow:
-    0 0 1vh rgb(255 226 192 / 80%),
-    0 0 5vh rgb(255 226 192 / 35%);
-  opacity: 0.28;
-}
-.ti-fog {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background:
-    linear-gradient(200deg, rgb(255 226 192 / 10%) 0%, transparent 45%),
-    linear-gradient(90deg, var(--cine-bg) 0%, transparent 18%, transparent 82%, var(--cine-bg) 100%);
 }
 
 /* ── 0:17／0:23／0:29 法庭機位 ── */
@@ -170,12 +85,74 @@
   height: 100%;
 }
 .ti-plate img {
+  /* 正式圖已經分級過（場景光影的 titlegrade），不再加濾鏡。 */
   object-fit: cover;
-  /* 圖版 8 格同一組分級（飽和 −18%、對比 +6%）。 */
-  filter: saturate(0.82) contrast(1.06);
 }
-.shot-court .ti-plate img {
-  width: 108%;
+
+/* ── 0:10 百葉窗：底圖＋亮縫層（黑底，screen 疊）── */
+.ti-blinds {
+  position: absolute;
+  inset: 0;
+}
+.ti-slit {
+  mix-blend-mode: screen;
+  opacity: 0;
+}
+
+/* 0:17：寬圖（桌機 3712×1600、手機 3283×2560）蓋滿高度，橫移。--u0 是起點時視窗左緣在圖寬的比例。 */
+.ti-pan {
+  --ar: calc(3712 / 1600);
+  --u0: 0.31;
+  --w: max(100vw, 100dvh * var(--ar));
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: var(--w);
+  height: calc(var(--w) / var(--ar));
+  translate: 0 -50%;
+}
+@media (max-width: 767px) {
+  .ti-pan {
+    --ar: calc(3283 / 2560);
+    --u0: 0.561;
+  }
+}
+.ti-pan .ti-plate img {
+  object-fit: fill;
+}
+/* 暗角固定在視窗上，一般疊法（#0b0e13 加透明度，四角不會低於底色）。 */
+.ti-vignette {
+  pointer-events: none;
+}
+
+/* 0:29：底圖和螢光一起推（中心在畫面正中＝底圖的 (0.5, 0.5)，cover 置中裁切）。 */
+.ti-push29 {
+  position: absolute;
+  inset: 0;
+}
+.ti-hl29 {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.ti-hl29-phone {
+  display: none;
+}
+@media (max-width: 767px) {
+  .ti-hl29-desk {
+    display: none;
+  }
+  .ti-hl29-phone {
+    display: block;
+  }
+}
+/* 螢光筆的墨是透明的：乘在紙上，底下的字透出來。由左往右刷（clip 從右邊收起）。 */
+.ti-hl29-ink {
+  fill: var(--hl);
+  mix-blend-mode: multiply;
+  clip-path: inset(0 100% 0 0);
 }
 .ti-bubble,
 .ti-note {
@@ -238,62 +215,6 @@
   font-style: normal;
   color: var(--redact-label);
 }
-/* 盧卡斯的背影：無臉替身剪影（立牌色 #07090c），西窗在畫面左邊，左肩和後腦左側一道輪廓光。待放 AI 立繪。 */
-.ti-back {
-  position: absolute;
-  left: 14%;
-  bottom: 0;
-  width: min(44vw, 64dvh);
-  height: auto;
-}
-@media (max-width: 767px) {
-  .ti-back {
-    left: -28vw;
-    width: 118vw;
-  }
-}
-.ti-back-body {
-  fill: #07090c;
-}
-.ti-back-rim {
-  fill: none;
-  stroke: rgb(255 226 192 / 55%);
-  stroke-width: 1.4;
-  stroke-linecap: round;
-  filter: blur(0.6px);
-}
-.ti-page {
-  position: absolute;
-  right: 12%;
-  bottom: 9%;
-  width: min(300px, 40vw);
-  display: grid;
-  gap: 7px;
-  padding: 16px 18px;
-  background: var(--paper);
-  color-scheme: light;
-  rotate: -4deg;
-  box-shadow: 0 20px 60px rgb(0 0 0 / 60%);
-}
-.ti-line {
-  position: relative;
-  height: 9px;
-}
-.ti-line i {
-  position: absolute;
-  inset: 2px auto 2px 0;
-  width: calc(var(--w) * 100%);
-  background: rgb(25 32 42 / 70%);
-}
-.ti-line.hl::before {
-  content: '';
-  position: absolute;
-  inset: -2px -4px;
-  background: var(--hl);
-  transform-origin: left;
-  scale: 0 1;
-}
-
 /* ── 0:34 標準字 ── */
 .ti-mark {
   position: absolute;
@@ -367,26 +288,30 @@
   .ti-sheet {
     animation: ti-push 10s var(--ease-camera) both;
   }
-  .ti-margin {
-    animation: ti-draw 2400ms linear both;
+  /* 紅邊線由上往下，和行號同步（時間表每台機位不同，Paper 寫在 --wipe）。 */
+  .ti-wipe {
+    animation: var(--wipe) var(--wipe-dur) linear both;
   }
-  /* 行號一拍二（每 2 格亮一行，24fps＝83ms）。 */
-  .ti-no {
-    animation: ti-on 1ms steps(1, end) both;
-    animation-delay: calc(400ms + var(--n) * var(--dur-cut-black));
+  /* 三拍：行號逐行亮起（每 2 格兩行，時間由 Paper 給 --on），亮完全文整頁淡入。 */
+  .ti-prow {
+    animation: ti-show 1ms steps(1, end) var(--on) both;
   }
-  .ti-bar {
+  .ti-full {
+    animation: ti-rise var(--full-fade) linear var(--full-on) both;
+  }
+  .ti-bar,
+  .ti-bar-hide {
     animation: ti-bar var(--dur-redact-in) steps(4, end) both;
     animation-delay: calc(5000ms + var(--bd));
   }
-  .ti-slats {
-    animation: ti-pull 7s var(--ease-camera) both;
-  }
-  .ti-gap.lit {
+  .ti-slit {
     animation: ti-lit var(--dur-lightmove) var(--ease-light) 2400ms both;
   }
-  .shot-court .ti-plate img {
-    animation: ti-track 6s var(--ease-camera) both;
+  .ti-blinds {
+    animation: ti-pull-plate 7s var(--ease-camera) both;
+  }
+  .ti-pan {
+    animation: ti-pan 6s var(--ease-camera) both;
   }
   .ti-bubble,
   .ti-note {
@@ -405,12 +330,13 @@
     animation: ti-bar var(--dur-redact-in) steps(4, end) 3000ms both;
   }
   .shot-lucas .ti-plate img {
-    animation:
-      ti-rack var(--dur-rack) var(--ease-light) both,
-      ti-push-lucas 5s var(--ease-camera) both;
+    animation: ti-rack var(--dur-rack) var(--ease-light) both;
   }
-  .ti-line.hl::before {
-    animation: ti-bar var(--dur-hl) steps(8, end) 1600ms both;
+  .ti-push29 {
+    animation: ti-push-lucas 5s var(--ease-camera) both;
+  }
+  .ti-hl29-ink {
+    animation: ti-sweep var(--dur-hl) steps(8, end) 1600ms both;
   }
   .ti-tube,
   .ti-cone {
@@ -434,7 +360,11 @@
   .ti-shot {
     animation: ti-rise var(--dur-rm) linear both;
   }
-  .ti-bar {
+  .ti-wipe {
+    display: none;
+  }
+  .ti-bar,
+  .ti-bar-hide {
     animation: ti-bar 1ms steps(1, start) both;
     animation-delay: calc(5000ms + var(--bd));
   }
@@ -447,8 +377,8 @@
   .ti-skipped {
     animation: ti-show 1ms steps(1, start) 3000ms both;
   }
-  .ti-line.hl::before {
-    animation: ti-bar 1ms steps(1, start) 1600ms both;
+  .ti-hl29-ink {
+    animation: ti-sweep 1ms steps(1, start) 1600ms both;
   }
   .ti-ch::after {
     animation: ti-out 1ms steps(1, start) both;
@@ -457,34 +387,20 @@
   .ti-hl {
     animation: ti-show 1ms steps(1, start) calc(3 * 250ms) both;
   }
-  .ti-gap.lit {
+  .ti-slit {
     animation: ti-lit 1ms steps(1, start) 2400ms both;
   }
 }
 @keyframes ti-push {
   from {
-    transform: scale(1) rotateX(0deg);
+    transform: scale(1);
   }
   to {
-    transform: scale(1.06) rotateX(12deg);
-  }
-}
-@keyframes ti-draw {
-  from {
-    scale: 1 0;
+    transform: scale(1.06);
   }
 }
 /* 分格動畫（steps(n, end)）的最後一格從 99.9% 就停住：Chrome 算到結尾時進度是 0.9999999999999989，
    steps(4, end) 會停在 3/4（黑條只蓋到四分之三、提醒卡滑不出畫面）。 */
-@keyframes ti-on {
-  from {
-    opacity: 0.12;
-  }
-  99.9%,
-  to {
-    opacity: 1;
-  }
-}
 @keyframes ti-bar {
   from {
     scale: 0 1;
@@ -503,33 +419,37 @@
     scale: 0 1;
   }
 }
-@keyframes ti-pull {
-  from {
-    transform: perspective(1200px) rotateX(12deg) scale(1.3);
-  }
-}
 @keyframes ti-lit {
   99.9%,
   to {
     opacity: 1;
   }
 }
-@keyframes ti-track {
+@keyframes ti-pull-plate {
   from {
-    translate: 0 0;
+    scale: 1.3;
   }
-  to {
-    translate: -7.4% 0;
+}
+/* 寬螢幕的圖比 0.310 剩下的部分窄：起點收到「圖的右緣貼視窗右緣」，不露出圖外。 */
+@keyframes ti-pan {
+  from {
+    translate: calc(-1 * min(var(--u0) * var(--w), var(--w) - 100vw)) -50%;
   }
 }
 @keyframes ti-rack {
   from {
-    filter: saturate(0.82) contrast(1.06) blur(6px);
+    filter: blur(6px);
   }
 }
 @keyframes ti-push-lucas {
   to {
-    scale: 1.03;
+    scale: 1.12;
+  }
+}
+@keyframes ti-sweep {
+  99.9%,
+  to {
+    clip-path: inset(0 0 0 0);
   }
 }
 @keyframes ti-show {

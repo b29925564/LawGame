@@ -1097,19 +1097,24 @@ button.cand[aria-pressed='true'],
   display: flex;
   align-items: center;
   gap: var(--s3);
-  height: 28px;
+  min-height: 28px;
   margin: 0;
-  padding: 0 var(--s4);
-  font: 500 11px/1 var(--font-mono);
+  padding: 6px var(--s4);
+  font: 500 11px/1.4 var(--font-mono);
   letter-spacing: 0.1em;
   color: var(--muted);
   background: light-dark(rgb(17 23 32 / 4%), rgb(231 234 238 / 4%));
-  white-space: nowrap;
+}
+/* 放不下一行就換行（320 英文 "Above: the 12 who sit · Below: the rest" 比名單寬，名單被撐到 351px；
+   第二道關卡 464a280 第 2 項）。兩邊的線至少留一小段。 */
+.cutline > span {
+  flex: 0 1 auto;
+  text-align: center;
 }
 .cutline::before,
 .cutline::after {
   content: '';
-  flex: 1;
+  flex: 1 0 12px;
   border-top: 1px solid var(--border);
 }
 
@@ -1371,6 +1376,8 @@ button.cand[aria-pressed='true'],
   font-size: 10px;
 }
 .shell-body > .tbd > .cands {
+  /* 名單寬＝外框寬（第二道關卡 464a280 第 2 項：320 英文名單被量好的長行撐到 351px，外框只有 292px，右邊被切掉）。 */
+  width: 100%;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--surface);

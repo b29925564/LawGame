@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { type RefObject, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { phoneView, type PhoneView } from '../engine/episode/phone';
 import type { Line, PhoneScene } from '../engine/episode/schema';
 import { sceneChoices, useEpisode } from '../engine/game';
@@ -220,8 +220,9 @@ function usePinnedBottom<T extends HTMLElement>(key: unknown) {
  * 字幕框上緣切到一半的那一行整行拿掉（設計師「溢出時整行切掉」）：量每一行字，跨在框上緣的那一行，
  * 用 clip-path 從框頂切到那一行的下緣。字換行、加了一句、框的高變了，都重量一次。
  */
-function useWholeLines<T extends HTMLElement>() {
-  const ref = useRef<T>(null);
+function useWholeLines<T extends HTMLElement>(given?: RefObject<T | null>) {
+  const own = useRef<T>(null);
+  const ref = given ?? own;
   useLayoutEffect(() => {
     const el = ref.current;
     if (!el) return;
@@ -240,13 +241,24 @@ function useWholeLines<T extends HTMLElement>() {
       if (cut > top + 0.5) el.style.clipPath = `inset(${Math.ceil(cut - box.top)}px 0 0 0)`;
       else el.style.removeProperty('clip-path');
     };
-    fit();
-    const ro = new ResizeObserver(fit);
+    // 捲動、換字型、貼底之後位置還會再動一點（Pixel 7 的 2.625 倍像素差 2px）：當下量一次，下一格畫面前再量一次。
+    let raf = 0;
+    const late: number[] = [];
+    const soon = () => {
+      fit();
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(fit);
+      // 貼底、字型、捲動定下來不一定再發事件：稍後再量兩次。
+      late.splice(0).forEach((id) => clearTimeout(id));
+      late.push(window.setTimeout(fit, 150), window.setTimeout(fit, 500));
+    };
+    soon();
+    const ro = new ResizeObserver(soon);
     ro.observe(el);
     for (const c of el.children) ro.observe(c);
     const mo = new MutationObserver(() => {
       for (const c of el.children) ro.observe(c);
-      fit();
+      soon();
     });
     mo.observe(el, {
       childList: true,
@@ -254,9 +266,14 @@ function useWholeLines<T extends HTMLElement>() {
       characterData: true,
       attributeFilter: ['class'],
     });
+    // 可以捲的列表（聊天室）：捲到哪裡，最上面那行都整行藏掉或整行露出。
+    el.addEventListener('scroll', soon, { passive: true });
     return () => {
+      cancelAnimationFrame(raf);
+      late.forEach((id) => clearTimeout(id));
       ro.disconnect();
       mo.disconnect();
+      el.removeEventListener('scroll', soon);
     };
   });
   return ref;
@@ -280,6 +297,8 @@ function Screen({
     `${v.thread}|${(v.threads[v.thread ?? ''] ?? []).length}|${v.chosen}|${s.do}`,
   );
   const subs = useWholeLines<HTMLOListElement>();
+  // 聊天室也一樣：舊訊息被標題列切到的那一行整行藏掉，不留半行（第二道關卡 464a280 第 3 項，第 2 集派單手機）。
+  useWholeLines(log);
   switch (s.do) {
     case 'notify':
       return (

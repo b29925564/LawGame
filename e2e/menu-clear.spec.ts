@@ -6,13 +6,31 @@ import { expect, test, type Page } from '@playwright/test';
  * 關卡量到的：協商、調解「剩餘回合」0.4px，取證「5 題」5px，調解「85」7.6px；另外眉標在 150% 時離鈕左邊 1.3–1.4px。
  * 鈕的寬高跟著字級變，CSS 裡固定的讓位不夠；menuClear.ts 照實際的鈕讓位。
  */
-type Case = { ep: string; scene: number; name: string; enter?: RegExp; walk?: boolean };
+type Case = {
+  ep: string;
+  scene: number;
+  name: string;
+  enter?: RegExp;
+  walk?: boolean;
+  scenes?: Record<string, unknown>;
+};
 const CASES: Case[] = [
   { ep: 'ep1', scene: 11, name: '協商', enter: /^(坐下|Sit)/ },
   { ep: 'ep2', scene: 12, name: '調解', enter: /^(坐下|Sit)/ },
   { ep: 'ep2', scene: 8, name: '取證', walk: true },
   { ep: 'ep2', scene: 9, name: '取證（對方）' },
   { ep: 'ep2', scene: 16, name: '開場陳述' },
+  // 第二道關卡 464a280 第 4 項：法庭頂列的借據膠囊「IOU 01／IOU 02」在 390／412 英文 125% 離鈕 7.8px。
+  {
+    ep: 'ep1',
+    scene: 17,
+    name: '法庭（借據膠囊）',
+    enter: /^(開庭|Go to court)/,
+    scenes: {
+      theory: { chosen: 'rachel' },
+      opening: { promises: ['rachel-time', 'rachel-sender'] },
+    },
+  },
 ];
 
 async function open(page: Page, c: Case, lang: string, scale: number) {
@@ -39,7 +57,7 @@ async function open(page: Page, c: Case, lang: string, scale: number) {
             cards: [],
             flags: [],
             ethics: [],
-            scenes: {},
+            scenes: (c as Case).scenes ?? {},
           },
         }),
       );
