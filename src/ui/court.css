@@ -2100,9 +2100,14 @@ html[lang='en'] .vform .fh .c {
 .nego-ladder .v {
   font-weight: 600;
   white-space: nowrap;
+  /* 門檻欄拿掉以後，價錢本身要讀得出一階一階：右對齊、等寬數字（設計師 #337 複審）。 */
+  justify-self: end;
+  font-variant-numeric: tabular-nums;
 }
 .nego-ladder .tg {
   display: flex;
+  /* 「超過授權」每一列都靠右對在同一條線上（設計師 #337 複審）。 */
+  justify-content: flex-end;
   white-space: nowrap;
   gap: 8px;
   font-size: 13px;
