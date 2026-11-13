@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react';
 import { useT } from '../i18n';
-import { LUCAS, lucas } from './cast';
+import { LUCAS, lucas, lucasFace } from './cast';
 import { svg, type JurorLook } from './jury/silhouette';
 import { Tbd } from './jury/Tbd';
 import { useScope } from './lang';
@@ -61,9 +61,15 @@ export function IdPhoto({
       style={size === 'fill' ? undefined : ({ '--w': `${size}px` } as CSSProperties)}
       aria-hidden
     >
-      <span className="ph">
-        {who === LUCAS ? <img src={lucas('平', 144)} alt="" decoding="async" /> : <b>{last[0]}</b>}
-      </span>
+      {who === LUCAS ? (
+        <span className="ph face-crop" style={lucasFace('平')}>
+          <img src={lucas('平', 144)} alt="" decoding="async" />
+        </span>
+      ) : (
+        <span className="ph">
+          <b>{last[0]}</b>
+        </span>
+      )}
       {size === 96 && (
         <span className="nm">{/^[A-Za-z]/.test(name) ? name.toUpperCase() : name}</span>
       )}

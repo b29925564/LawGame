@@ -867,17 +867,23 @@ details summary {
   background: var(--surface-2);
   box-shadow: 0 0 0 1px var(--border);
 }
-.portrait.art {
+/*
+ * 盧卡斯的頭像（對白頭像、檔案照）一律這樣裁：立繪是半身構圖，放大 1.5 倍取頭肩，
+ * 臉的中心（--face-x，cast.ts lucasFace，yaml face_cx）放在格子正中間。
+ * 不能照頭部輪廓（立繪包對齊用的 45.6%）置中：他多半側四分之三，頭髮置中時臉會偏左。
+ */
+.face-crop {
   position: relative;
   overflow: hidden;
 }
-/* 立繪是半身構圖，頭像放大 1.5 倍取頭肩；全組依頭部中心 x=45.6% 對齊，往左移讓臉置中。 */
-.portrait.art > img {
+:is(.portrait, .idphoto .ph).face-crop > img {
   position: absolute;
   top: 3%;
-  left: -18.4%;
+  left: calc(50% - var(--face-x, 0.456) * 150%);
   width: 150%;
   height: auto;
+  max-width: none;
+  object-fit: fill;
 }
 @media (min-width: 768px) {
   .portrait {
