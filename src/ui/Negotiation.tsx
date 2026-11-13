@@ -1,5 +1,5 @@
 import { useCaseTerms } from './terms';
-import { useEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useState } from 'react';
 import * as nego from '../engine/episode/negotiation';
 import type { NegotiationScene } from '../engine/episode/schema';
 import { closingArgs, negoState, trialRisk, useEpisode } from '../engine/game';
@@ -13,11 +13,57 @@ import { Recap } from './ActCard';
 import { fitDots, fitLine } from './prose';
 
 /** 認罪協商（企劃書 6.8）：攤牌會洩底，虛張聲勢看證據清單，決定權在委託人手上。 */
+/**
+ * 條件階梯：價錢不斷行（「$2.5 ⏎ million」把數字和單位拆開，設計師 #339）。哪一列放不下「價錢＋超過授權」，
+ * 整張階梯的標記都換到價錢下面另起一行、同樣靠右，每一列的價錢還是對在同一條右緣。
+ * 量的是字本身的寬度（不折行），和現在是哪一種排法無關，不會來回跳。
+ */
+function useLadderStack() {
+  const [el, setEl] = useState<HTMLOListElement | null>(null);
+  const [stack, setStack] = useState(false);
+  useLayoutEffect(() => {
+    if (!el) return;
+    const fit = () => {
+      let tight = false;
+      for (const li of el.children) {
+        // 第 1 集的條件是一整句（不是價錢），本來就可以換行，不算。
+        const v = li.querySelector('.v.money');
+        const tag = li.querySelector('.tg em');
+        if (!v || !tag) continue;
+        const r = document.createRange();
+        r.selectNodeContents(v);
+        const cs = getComputedStyle(li);
+        const room =
+          li.clientWidth -
+          parseFloat(cs.paddingLeft) -
+          parseFloat(cs.paddingRight) -
+          (parseFloat(cs.columnGap) || 0);
+        if (r.getBoundingClientRect().width + tag.getBoundingClientRect().width > room + 0.5)
+          tight = true;
+      }
+      setStack(tight);
+    };
+    fit();
+    const ro = new ResizeObserver(fit);
+    ro.observe(el);
+    // 換語言、換檔：字變了但框不一定變大小。
+    const mo = new MutationObserver(fit);
+    mo.observe(el, { subtree: true, childList: true, characterData: true });
+    void document.fonts?.ready.then(fit);
+    return () => {
+      ro.disconnect();
+      mo.disconnect();
+    };
+  }, [el]);
+  return [setEl, stack] as const;
+}
+
 export function Negotiation({ scene }: { scene: NegotiationScene }) {
   const { progress, revealArg, bluff, advise, walkOut, advance, callClient } = useEpisode();
   const st = negoState(progress, scene);
   const terms = useCaseTerms();
   const t = useT();
+  const [ladderRef, ladderStack] = useLadderStack();
   const scope = useScope();
   const [intro, setIntro] = useState(st.log.length <= scene.intro.length);
   const [tab, setTab] = useState<'offer' | 'reveal' | 'bluff'>('offer');
@@ -249,10 +295,15 @@ export function Negotiation({ scene }: { scene: NegotiationScene }) {
           <h2>{t('對方現在開的條件')}</h2>
           {/* 條件階梯：只列每一檔的價和授權標記，不列信心門檻（使用者 11-13：隱藏數值不報給玩家）；
               對方鬆到哪一檔，看反白的那一列。 */}
-          <ol className="nego-ladder" aria-label={t('條件階梯')}>
+          <ol
+            ref={ladderRef}
+            className="nego-ladder"
+            data-stack={ladderStack ? '' : undefined}
+            aria-label={t('條件階梯')}
+          >
             {ladder.map((o) => (
               <li key={o.id} className={o.id === offer.id ? 'on' : undefined}>
-                <span className="v">
+                <span className={o.amount !== undefined ? 'v money' : 'v'}>
                   {o.amount !== undefined ? money(o.amount) : t(o.label, scope)}
                 </span>
                 <span className="tg">
