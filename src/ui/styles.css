@@ -2570,6 +2570,10 @@ fieldset.relations.compact {
   width: 2px;
   background: var(--border);
 }
+/* 還沒放卡、說明也教過了（taught.ts）：空的軸照樣畫出來，大約一張卡高（設計師 #336）。 */
+.timeline:empty {
+  min-height: 48px;
+}
 .timeline li {
   user-select: none;
   -webkit-user-select: none;
@@ -7148,11 +7152,6 @@ button.found:hover:not(:disabled) {
 .ledger-row p {
   margin: 4px 0 0;
 }
-.ledger-key {
-  color: var(--muted);
-  font-size: 14px;
-  padding-top: 2px;
-}
 .ledger-dots {
   list-style: none;
   margin: 0;
@@ -7196,9 +7195,6 @@ button.found:hover:not(:disabled) {
 .ledger-reasons li.money {
   list-style: none;
   margin-left: -1.4em;
-}
-.ledger-tip {
-  margin: 8px 0 0;
 }
 .ledger-all summary {
   cursor: pointer;

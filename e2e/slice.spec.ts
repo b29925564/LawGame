@@ -1,5 +1,8 @@
 import { expect, test, type Page } from '@playwright/test';
 
+// 片頭 40 秒預設會播（title-intro.spec.ts 測）。這裡只看片頭前後的畫面：關掉片頭，冷開場之後直接是集名卡。
+test.beforeEach(({ page }) => page.addInitScript(() => localStorage.setItem('rd.dev.intro', '0')));
+
 // 整集通關一次就接近 30 秒，CI 機器較慢。
 test.describe.configure({ timeout: 90_000 });
 
@@ -156,9 +159,14 @@ async function playToRachelLast(page: Page) {
   await next(page);
   await next(page);
   await next(page);
+  await next(page); // 23:01 大廳閘門
+  // 23:14 港邊公車亭也有定場鏡頭：場記＋兩句兩張字幕。
+  await next(page);
   await next(page);
   await next(page);
   await expect(page.getByText('此訊息已被收回')).toBeVisible();
+  await next(page);
+  // 公車開走（同鏡頭淡到 b 版）：兩句兩張。
   await next(page);
   await next(page); // 片頭
 

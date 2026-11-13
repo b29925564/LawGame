@@ -28,9 +28,9 @@ const EXPECTED = [
   'ti-bar',
   'ti-gone',
   'ti-lit',
-  'ti-on',
   'ti-out',
   'ti-show',
+  'ti-sweep',
   'ti-swipe',
 ];
 

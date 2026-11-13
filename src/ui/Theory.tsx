@@ -15,6 +15,7 @@ import { SubActions, useSubs } from './SubCard';
 import { Transcript } from './Shell';
 import { Recap, splitSlate } from './ActCard';
 import { OnPlate, onPlateOf, PlateEyebrow, usePlate, useScenePlate, useShown } from './scenePlate';
+import { useTaught } from './taught';
 
 /**
  * 案件理論（企劃書 6.9.2）：整集最大的策略決定，選了不能換。
@@ -38,6 +39,8 @@ export function Theory({ scene }: { scene: TheoryScene }) {
   const cue = scene.intro[at];
   const subs = useSubs(shown && intro ? cue : null, at, !rec);
   const lastLine = at >= scene.intro.length - 1;
+  // 怎麼選只陪第一次（taught.ts）：定案過一次理論，下一集就只剩三張卡和定案列。
+  const teachTheory = useTaught('theory', theory.done(st));
 
   if (intro && shown)
     return (
@@ -127,7 +130,9 @@ export function Theory({ scene }: { scene: TheoryScene }) {
   return (
     <main className={shown ? 'scene theory-pick backdrop' : 'scene theory-pick'}>
       <p className="eyebrow">{t('案件理論')}</p>
-      {!done && <p className="muted">{t('點一張卡比較，再按下面的「以這個理論開庭」定案。')}</p>}
+      {!done && teachTheory && (
+        <p className="muted">{t('點一張卡比較，再按下面的「以這個理論開庭」定案。')}</p>
+      )}
       <ul className="theory-grid">
         {scene.theories.map((th) => {
           const ok = theory.unlocked(th, held);

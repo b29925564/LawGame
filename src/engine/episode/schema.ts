@@ -95,8 +95,24 @@ const phoneStep = z.discriminatedUnion('do', [
     /** 這一格有定場鏡頭（場景底圖）：地點是場記左欄、rig 是燈組（rigs.yaml）；底圖照「場景 id＋rig」找。 */
     place: z.string().optional(),
     rig: z.string().optional(),
+    /**
+     * 同一組燈的另一張底圖（plates.json 的 variant，例如手機光 55% 的 b）。有 rig 沒 place 的格子不再定場，
+     * 直接放在圖上（同一個鏡頭接著演）。
+     */
+    variant: z.string().optional(),
+    /** 進這一格時先放這個版本，再交叉淡化到本格的版本（23:14 的「漸暗」：a → b）。 */
+    fadeFrom: z.string().optional(),
   }),
-  z.object({ do: z.literal('notify'), time: time.optional(), message }),
+  z.object({
+    do: z.literal('notify'),
+    time: time.optional(),
+    message,
+    /**
+     * 通知跳出時切一個插入鏡頭（設定集第 3 章第 01 格：伊森下巴被螢幕光由下打亮，0.4 秒）：rig 是那張圖的燈組，
+     * 底圖照「場景 id＋rig」找。不定場、沒有場記：硬切進去、硬切回來。
+     */
+    rig: z.string().optional(),
+  }),
   z.object({ do: z.literal('say'), time: time.optional(), message }),
   z.object({
     do: z.literal('choose'),

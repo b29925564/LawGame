@@ -1328,6 +1328,9 @@ button.cand[aria-pressed='true'],
   place-items: center;
   color: var(--muted);
 }
+.prof.empty > .ghost {
+  visibility: hidden;
+}
 .commitbar {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -1680,9 +1683,6 @@ button.cand[aria-pressed='true'],
   from {
     opacity: 0;
   }
-}
-.lcol .ledger-tip {
-  margin: 0;
 }
 .ledger-why,
 .ledger-claim {

@@ -69,6 +69,25 @@
     transition: opacity 0.35s var(--ease-light, ease-out);
   }
 }
+/* 交叉淡化（23:14 的「漸暗」：手機光 a → 55% 的 b）：下面那張（data-from）收回之後硬切回來、一直不透明，
+   上面這張用 --dur-dim 從 0 淡到 1，中間每一格的亮度都在 a、b 之間（設計師 #330 審查 1：不先暗下去）。
+   上面這層自己不鋪黑底（不然一開始就把 a 蓋成黑的，淡入中段只剩 b 的一半亮）；a 還沒解碼完之前 b 也不開始淡。
+   減少動態時程式不給起點，直接是 b。 */
+.plate-host > .scene-plate[data-fade] {
+  z-index: 1;
+  background: transparent;
+}
+.plate-host > .scene-plate:not([data-state='ok']) + .scene-plate[data-fade] .plate-stage {
+  opacity: 0;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .scene-plate[data-from] .plate-stage {
+    transition: none;
+  }
+  .scene-plate[data-fade] .plate-stage {
+    transition: opacity var(--dur-dim, 3s) linear;
+  }
+}
 /* 定場那一格：圖是鏡頭本身（PlateHost 在它後面一層），定場卡自己不畫底，場記疊在圖上（場記 z-index 40，自己帶底色）。
    圖還沒解碼完的時候（waiting）圖層是純黑，定場卡也是黑底。 */
 .place-beat.plated {
@@ -83,4 +102,27 @@
   position: absolute;
   inset: 0;
   background: rgb(6 8 11 / 58%);
+}
+/* 冷開場 22:33 的插入鏡頭（Phone.tsx 的 ColdInsert）：蓋在手機和選單鈕上面，整段擋住點擊。
+   lead：還看得到手機（通知剛跳出來），透明；black／back：硬切的 2 格黑；plate：0.4 秒的鏡頭。
+   硬切，不淡入：這裡的圖層不吃 .plate-stage 的淡入。 */
+.cold-insert {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-toast);
+  background: #000;
+  pointer-events: auto;
+}
+.cold-insert[data-phase='lead'] {
+  background: transparent;
+}
+.cold-insert > .scene-plate {
+  position: absolute;
+  z-index: auto;
+}
+.cold-insert:not([data-phase='plate']) > .scene-plate {
+  visibility: hidden;
+}
+.cold-insert .plate-stage {
+  transition: none;
 }

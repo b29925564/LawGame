@@ -64,7 +64,8 @@ export function splitSlate(place: string): [string, string] {
 }
 
 /** 場記的地點：raw 是中文原文，text 是畫面語言的寫法，rig 是這場戲的燈組（rigs.yaml 的鍵）。 */
-export type Place = { raw: string; text: string; rig?: string };
+/** variant：同一燈組有好幾版底圖時（例如 23:14 公車亭 a、b），這一格定場用哪一版。 */
+export type Place = { raw: string; text: string; rig?: string; variant?: string };
 
 /**
  * 場記一行：左欄地點，右欄「日、時刻、色溫」。色溫讀燈組（11.3）；日子時刻用地點自帶的寫法（已經是畫面語言），
@@ -521,7 +522,7 @@ export function PlaceBeat({
   const t = useT();
   const wait = reducedMotion() ? SLATE_HOLD : 2 * SLATE_FADE + SLATE_HOLD;
   // 有底圖就是定場鏡頭：圖解碼完才放場記、才開始計時；等的時候整格純黑（不放占位字、不放顆粒）。
-  const shown = useShown(useScenePlate(episode, { id, rig: place.rig }));
+  const shown = useShown(useScenePlate(episode, { id, rig: place.rig, variant: place.variant }));
   const waiting = shown?.state === 'wait';
   // 底圖是共用的一層（scenePlate.tsx 的 PlateHost），定場只說「這一格要這張圖」。
   usePlate(shown, 'beat');
