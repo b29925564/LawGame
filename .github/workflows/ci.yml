@@ -12,11 +12,9 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  check:
+  static:
     runs-on: ubuntu-24.04
-    # 25 分鐘太緊：e2e 本身約 14 分鐘，裝 Playwright 字型時 apt 鏡像慢的話會多出近 10 分鐘（11-06 #322、#323 都因此被取消）。
-    # 11-07 #328 加了全站短標籤掃描（約 9 分鐘），e2e 變成約 36 分鐘，40 分鐘只剩 1.5 分鐘的餘裕，放到 55。
-    timeout-minutes: 55
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -34,7 +32,49 @@ jobs:
         run: npm test
       - name: 建置
         run: npm run build
-      - name: 自動通關測試
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist
+          retention-days: 1
+
+  # 11-13：e2e 單機跑到 41 分鐘（4 核、2 個 worker）。拆成 4 台同時跑，測試一個都不少。
+  e2e:
+    needs: static
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+      - name: 自動通關測試（第 ${{ matrix.shard }}／4 份）
+        env:
+          PW_PREBUILT: '1'
         run: |
           npx playwright install --with-deps chromium
-          npm run e2e
+          npx playwright test --shard=${{ matrix.shard }}/4
+
+  # 合併保護看的是這個名字：上面全部綠才綠。
+  check:
+    needs: [static, e2e]
+    if: always()
+    runs-on: ubuntu-24.04
+    steps:
+      - name: 全部通過
+        run: |
+          [ "${{ needs.static.result }}" = success ] && [ "${{ needs.e2e.result }}" = success ]
