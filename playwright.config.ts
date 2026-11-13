@@ -11,8 +11,10 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } },
     },
   ],
-  // CI 的 e2e 分片直接用 check 工作建好的 dist（PW_PREBUILT=1），不再各自重建。
+  // CI 的 e2e 分片直接用 static 工作建好的 dist（PW_PREBUILT=1），不再各自重建。
   webServer: {
     command: process.env.PW_PREBUILT ? 'npm run preview' : 'npm run build && npm run preview',
-    port: 4173, reuseExistingServer: true },
+    port: 4173,
+    reuseExistingServer: true,
+  },
 });
