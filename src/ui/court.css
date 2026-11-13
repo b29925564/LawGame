@@ -2028,15 +2028,6 @@ html[lang='en'] .vform .fh .c {
   background: var(--muted);
   transition: width 0.4s var(--ease);
 }
-.confbar b {
-  position: absolute;
-  top: -3px;
-  width: 2px;
-  height: 12px;
-  margin-left: -1px;
-  background: var(--text);
-  box-shadow: 0 0 0 1px var(--surface);
-}
 .nego-move {
   margin: 0 0 var(--s3);
   line-height: 1.6;
@@ -2100,7 +2091,10 @@ html[lang='en'] .vform .fh .c {
 .nego-ladder .v {
   font-weight: 600;
   white-space: nowrap;
-  /* 門檻欄拿掉以後，價錢本身要讀得出一階一階：右對齊、等寬數字（設計師 #337 複審）。 */
+}
+/* 門檻欄拿掉以後，金額本身要讀得出一階一階：右對齊、等寬數字（設計師 #337 複審）。
+   文字條件（第 1 集認罪協商）不右對齊，左緣才不會參差（第二道關卡 #337 後續）。 */
+.nego-ladder .v.money {
   justify-self: end;
   font-variant-numeric: tabular-nums;
 }
@@ -2129,6 +2123,10 @@ html[lang='en'] .vform .fh .c {
 .nego-ladder[data-stack] li > .v,
 .nego-ladder[data-stack] li > .tg {
   grid-column: 1 / -1;
+}
+/* 只有金額靠右；第 1 集的文字條件靠左（第二道關卡 #337 後續）。 */
+.nego-ladder[data-stack] li > .v.money,
+.nego-ladder[data-stack] li > .tg {
   justify-self: end;
 }
 .nego-ladder[data-stack] li > .tg:empty {

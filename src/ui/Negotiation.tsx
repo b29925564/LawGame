@@ -239,14 +239,9 @@ export function Negotiation({ scene }: { scene: NegotiationScene }) {
             <span className="nowrap">
               {t('{name}的信心', { name: opp })} <strong>{st.confidence}</strong>
             </span>
-            {/* 刻度是每一檔條件的門檻：填色退到刻度左邊，條件就換一檔。 */}
+            {/* 不畫門檻刻度（使用者 11-13 選「拿掉門檻」：隱藏數值不報給玩家）。 */}
             <span className="confbar" aria-hidden>
               <i style={{ width: `${st.confidence}%` }} />
-              {scene.offers
-                .filter((o) => o.min > 0)
-                .map((o) => (
-                  <b key={o.id} style={{ left: `${o.min}%` }} />
-                ))}
             </span>
             <span className="nowrap" aria-label={`${t('剩餘回合')} ${st.rounds}`}>
               {t('剩餘回合')} <strong>{st.rounds}</strong>
