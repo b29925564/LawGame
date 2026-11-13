@@ -44,7 +44,9 @@ async function board(page: Page, reduced?: boolean) {
     if (await side.isVisible()) await side.locator('.mini-btn').click();
     else {
       await links
-        .getByRole('button', { name: /點板上的卡|Tap a card on the board/ })
+        .getByRole('button', {
+          name: /點板上的卡|Tap a card on the board|^放到 [AB]$|^Place in [AB]$/,
+        })
         .first()
         .click();
       await page.locator('.card-sheet button').filter({ hasText: name }).first().click();
@@ -221,7 +223,9 @@ async function openBoard(page: Page, lang: 'zh' | 'en', cards: string[], picks: 
     if (await side.isVisible()) await side.locator('.mini-btn').click();
     else {
       await page
-        .getByRole('button', { name: /點板上的卡|Tap a card on the board/ })
+        .getByRole('button', {
+          name: /點板上的卡|Tap a card on the board|^放到 [AB]$|^Place in [AB]$/,
+        })
         .first()
         .click();
       await page.locator('.card-sheet button').filter({ hasText: name }).first().click();

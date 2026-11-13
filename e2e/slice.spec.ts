@@ -101,7 +101,9 @@ async function solve(
     else {
       // 手機：點連線台的空格打開挑卡片抽屜，點一張就放上去。
       await links
-        .getByRole('button', { name: /點板上的卡|Tap a card on the board/ })
+        .getByRole('button', {
+          name: /點板上的卡|Tap a card on the board|^放到 [AB]$|^Place in [AB]$/,
+        })
         .first()
         .click();
       await card(page.locator('.card-sheet'), name).click();
