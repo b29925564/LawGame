@@ -77,6 +77,10 @@
 }
 
 /* ── 0:17／0:23／0:29 法庭機位 ── */
+/* 預載解好的圖層直接搬進這個殼（TitleIntro.tsx LayerPicture），殼本身不佔版面。 */
+.ti-host {
+  display: contents;
+}
 .ti-plate,
 .ti-plate img {
   position: absolute;

@@ -1,4 +1,12 @@
-import { type CSSProperties, useEffect, useId, useMemo, useRef, useState } from 'react';
+import {
+  type CSSProperties,
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useSettings } from '../engine/settings';
 import { useLang, useT } from '../i18n';
 import { reducedMotion } from './a11y';
@@ -133,6 +141,12 @@ const layerKey = (l: Layer) => [...l.s.map((x) => x[2]), l.src].join(' ');
 /** 解過的圖留著參照，瀏覽器不會把解碼結果丟掉；同一層只解一次。 */
 const decoded = new Map<string, Promise<string>>();
 const held: HTMLImageElement[] = [];
+/**
+ * 解好的那一個 picture（或單張 img）本身：畫面上直接把它搬進去，不靠瀏覽器快取再載一次。
+ * CI 的 headless 瀏覽器（Playwright 攔請求時）不會拿記憶體裡解好的圖給新的 <img>，又去網路載一次；
+ * 搬同一個元素進去，畫出來的就是已經解好的那張（#339 CI 紅）。
+ */
+const built = new Map<string, HTMLElement>();
 /** 已經解完的圖層：render 時同步查，圖早就好的鏡頭在換到它的那一格就畫出來，不多黑一格。 */
 const done = new Set<string>();
 function decodeLayer(l: Layer) {
@@ -151,7 +165,10 @@ function decodeLayer(l: Layer) {
         pic.append(so);
       }
       pic.append(img);
-    }
+      built.set(key, pic);
+    } else built.set(key, img);
+    img.alt = '';
+    img.draggable = false;
     held.push(img);
     p = img
       .decode()
@@ -180,6 +197,7 @@ function avif() {
 /** 片頭結束或被略過：放掉解好的大圖，手機上不再佔著記憶體（設計師 #339 建議 2）。 */
 function release() {
   decoded.clear();
+  built.clear();
   done.clear();
   held.length = 0;
 }
@@ -633,10 +651,26 @@ type Src = readonly [avif: string, webp: string];
 function Plate({ desk, phone, className }: { desk: Src; phone: Src; className?: string }) {
   return <LayerPicture layer={plateLayer(desk, phone)} className={className} />;
 }
-/** 畫面上的 <picture>，和預載（decodeLayer）用同一份圖層描述。 */
+/**
+ * 畫面上的一層圖：預載解好的那個 picture 直接搬進來（built）；還沒建過（不該發生：鏡頭等圖層解好才畫）就照同一份描述畫一個。
+ * 外面那層 span 是 display: contents，不影響版面和選擇器。
+ */
 function LayerPicture({ layer, className }: { layer: Layer; className?: string }) {
+  const host = useRef<HTMLSpanElement>(null);
+  const cls = ['ti-plate', className].filter(Boolean).join(' ');
+  const key = layerKey(layer);
+  const [moved] = useState(() => built.has(key));
+  useLayoutEffect(() => {
+    const el = built.get(key);
+    const h = host.current;
+    if (!moved || !el || !h) return;
+    el.className = cls;
+    h.append(el);
+    return () => el.remove();
+  }, [moved, key, cls]);
+  if (moved) return <span ref={host} className="ti-host" />;
   return (
-    <picture className={['ti-plate', className].filter(Boolean).join(' ')}>
+    <picture className={cls}>
       {layer.s.map(([media, type, srcset]) => (
         <source key={srcset} media={media} type={type} srcSet={srcset} />
       ))}

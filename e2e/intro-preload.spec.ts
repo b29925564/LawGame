@@ -22,6 +22,10 @@ async function open(
   late = /\/assets\/(paper|blind|court)-[^/]*\.(avif|webp|png)$/,
   ms = 3000,
 ) {
+  // 和 CI 一樣不讓瀏覽器拿快取：畫面上的圖要是預載解好的那一張，不能靠再載一次。
+  const cdp = await page.context().newCDPSession(page);
+  await cdp.send('Network.enable');
+  await cdp.send('Network.setCacheDisabled', { cacheDisabled: true });
   await page.route(late, async (r) => {
     await new Promise((ok) => setTimeout(ok, ms));
     await r.continue();
