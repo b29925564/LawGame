@@ -111,13 +111,15 @@ export function introOn() {
 const READY_CAP = 12000;
 /** 支不支援 AVIF：先試解一張。SVG 的 <image> 沒有 <picture> 可以選格式，紙也要靠這個挑。 */
 let avifOk: Promise<boolean> | null = null;
+/** 試解的結果，知道了以後 render 可以直接查（還不知道是 null）。 */
+let avifKnown: boolean | null = null;
 function avif() {
   avifOk ??= (() => {
     const i = new Image();
     i.src = pbDA;
     return i.decode().then(
-      () => true,
-      () => false,
+      () => (avifKnown = true),
+      () => (avifKnown = false),
     );
   })();
   return avifOk;
@@ -125,13 +127,20 @@ function avif() {
 /** 解過的圖留著參照，瀏覽器不會把解碼結果丟掉；同一張只解一次。 */
 const decoded = new Map<string, Promise<void>>();
 const held: HTMLImageElement[] = [];
+/** 已經解完的網址：render 時同步查，圖早就好的鏡頭在換到它的那一格就畫出來，不多黑一格。 */
+const done = new Set<string>();
 function decodeOnce(url: string) {
   let p = decoded.get(url);
   if (!p) {
     const i = new Image();
     i.src = url;
     held.push(i);
-    p = i.decode().catch(() => undefined);
+    p = i
+      .decode()
+      .catch(() => undefined)
+      .then(() => {
+        if (decoded.get(url) === p) done.add(url);
+      });
     decoded.set(url, p);
   }
   return p;
@@ -139,6 +148,7 @@ function decodeOnce(url: string) {
 /** 片頭結束或被略過：放掉解好的大圖，手機上不再佔著記憶體（設計師 #339 建議 2）。 */
 function release() {
   decoded.clear();
+  done.clear();
   held.length = 0;
 }
 /** 這一集、這個機位（手機直式／桌機）、這個語言，每個鏡頭要用到的圖層。 */
@@ -168,6 +178,11 @@ function decodeShots(episode: string, lang: 'zh' | 'en', shot?: ShotId) {
     const urls = shot ? (all[shot] ?? []) : Object.values(all).flat();
     return Promise.all(urls.map(decodeOnce)).then(() => undefined);
   });
+}
+/** 這個鏡頭的圖層是不是全都解完了（同步）。 */
+function shotDecoded(episode: string, lang: 'zh' | 'en', shot: ShotId) {
+  if (avifKnown === null) return false;
+  return (introSrcs(episode, isPhone(), lang, avifKnown)[shot] ?? []).every((u) => done.has(u));
 }
 export function preloadIntro(episode: string, lang: 'zh' | 'en') {
   return decodeShots(episode, lang);
@@ -260,7 +275,7 @@ export function TitleIntro({ episode, onDone }: { episode: string; onDone: () =>
       data-ready={ready ? '' : undefined}
       aria-label={t('片頭')}
     >
-      {ready && !black && shotOk === shot && (
+      {ready && !black && (shotOk === shot || shotDecoded(episode, lang, shot)) && (
         <div key={shot} className={`ti-shot shot-${shot}`} aria-hidden>
           {shot === 'paper' && <Paper />}
           {shot === 'blind' && <Blinds ep2={ep2} />}

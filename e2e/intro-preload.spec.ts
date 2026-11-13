@@ -141,3 +141,32 @@ test('一張圖晚 15 秒到：那個鏡頭不是完整畫面就是純黑', asyn
   expect(shown.map((s) => s.shot)).toEqual(['ti-shot shot-blind', 'ti-shot shot-court']);
   expect(shown.flatMap((s) => s.bad)).toEqual([]);
 });
+
+/**
+ * 圖都在快取裡的時候，換鏡頭不能多黑一格（設計師 #339 複審條件）：鏡頭的圖層已經解好，
+ * 換到它的那一次 render 就要畫出來，切點的黑格數和 #332 一樣（只有 CUT_BLACK 那一段）。
+ */
+test('圖都已解好：每個切點新鏡頭和換鏡頭同一格出現', async ({ page }) => {
+  test.setTimeout(60_000);
+  await open(page, 'ep1', 'zh', /^$/, 0);
+  const main = page.locator('.title-intro');
+  await expect(page.locator('.ti-paper svg')).toBeVisible({ timeout: 10_000 });
+  await page.evaluate(() => {
+    const w = window as unknown as { cuts: string[] };
+    w.cuts = [];
+    const root = document.querySelector<HTMLElement>('.title-intro')!;
+    new MutationObserver(() => {
+      const shot = root.dataset.shot!;
+      if (w.cuts.some((c) => c.startsWith(shot + ' '))) return;
+      w.cuts.push(`${shot} ${root.querySelector(`.ti-shot.shot-${shot}`) ? '同一格' : '晚了'}`);
+    }).observe(root, { attributes: true, attributeFilter: ['data-shot'] });
+  });
+  for (let i = 1; i < SHOTS.length; i++) {
+    await page.clock.runFor(SHOTS[i - 1][1]);
+    await expect(main).toHaveAttribute('data-shot', SHOTS[i][0]);
+  }
+  await page.clock.runFor(SHOTS[SHOTS.length - 1][1]);
+  await expect(main).toHaveAttribute('data-shot', 'mark');
+  const cuts = await page.evaluate(() => (window as unknown as { cuts: string[] }).cuts);
+  expect(cuts).toEqual([...SHOTS.slice(1).map(([s]) => s), 'mark'].map((s) => `${s} 同一格`));
+});
