@@ -380,7 +380,13 @@ function VoirDireScreen({ scene }: { scene: VoirDireScene }) {
             {box}
             {profile ?? (
               <section className="panel prof empty">
-                {teachList ? t('點名單上的人看他的資料。') : null}
+                {/* 教過以後字隱藏但留著位置：空欄高度和有字時一樣，commitbar 不跳（設計師 #336）。 */}
+                <span
+                  className={teachList ? undefined : 'ghost'}
+                  aria-hidden={!teachList || undefined}
+                >
+                  {t('點名單上的人看他的資料。')}
+                </span>
               </section>
             )}
             <div className="commitbar">

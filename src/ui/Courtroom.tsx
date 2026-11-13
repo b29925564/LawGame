@@ -515,7 +515,7 @@ function CourtroomScreen({ scene: raw }: { scene: TrialScene }) {
     <p className="muted">
       {teachObject
         ? t('聽{who}問下去。有問題的地方就在問完的那一刻提異議。', { who: examiner })
-        : t('{who}主詰問中。', { who: examiner })}
+        : t('{who}直接詰問中。', { who: examiner })}
     </p>
   );
   const objectOnce = (r: trial.Objection) => {

@@ -28,7 +28,7 @@
 '{who}詰問完畢': '{who} finishes direct'
 開始交互詰問: Begin cross-examination
 '聽{who}問下去。有問題的地方就在問完的那一刻提異議。': 'Listen to {who} continue. If a question is improper, object the moment it is asked.'
-'{who}主詰問中。': 'Direct examination by {who}.'
+'{who}直接詰問中。': 'Direct examination by {who}.'
 已定錨: Locked in
 她在錄取筆錄裡已經講死這個說法: She already committed to this version in her deposition.
 '1 鎖定': '1 Lock in'

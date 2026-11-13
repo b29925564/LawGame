@@ -2570,6 +2570,10 @@ fieldset.relations.compact {
   width: 2px;
   background: var(--border);
 }
+/* 還沒放卡、說明也教過了（taught.ts）：空的軸照樣畫出來，大約一張卡高（設計師 #336）。 */
+.timeline:empty {
+  min-height: 48px;
+}
 .timeline li {
   user-select: none;
   -webkit-user-select: none;
