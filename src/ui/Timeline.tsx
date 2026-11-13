@@ -3,6 +3,7 @@ import { useT } from '../i18n';
 import { stamp } from './Evidence';
 import { useScope } from './lang';
 import { announce, useHand } from './Marks';
+import { useTaught } from './taught';
 /** 時間線：順序由玩家自己排。遊戲不會自動排序，也不會標出衝突（企劃書 6.5）。 */
 export interface TimelineCard {
   id: string;
@@ -42,6 +43,8 @@ export function Timeline({
   const scope = useScope();
   const timed = cards.filter((c) => c.time);
   const rows = placed.map((id) => timed.find((c) => c.id === id)).filter((c) => !!c);
+  // 「點卡放上去」只陪第一次（taught.ts）：放過一張以後，空的時間軸就是空的軸，不再寫字教。
+  const teachTimeline = useTaught('timeline', rows.length > 0);
   // 間距標記：兩張卡的先後排對了（不必相鄰），就標在較晚那張上方。
   const gaps = new Map<string, { min: number; detail: string }>();
   for (const m of marks.filter((x) => x.kind === 'gap')) {
@@ -170,7 +173,7 @@ export function Timeline({
           </p>
         )}
       </div>
-      {rows.length === 0 ? (
+      {rows.length === 0 && teachTimeline ? (
         <p className="muted">{t('點上面的卡片，把它放上時間軸。')}</p>
       ) : (
         <ol className={drag ? 'timeline sorting' : 'timeline'} ref={list}>

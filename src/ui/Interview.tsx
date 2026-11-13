@@ -9,6 +9,7 @@ import { Portrait, Speech } from './Portrait';
 import { Transcript } from './Shell';
 import { fitDots, fitLine } from './prose';
 import { fitUnits } from './fitUnits';
+import { useTaught } from './taught';
 
 /** 按鈕標籤至少有一個排成兩行以上。 */
 const wraps = (row: HTMLElement) =>
@@ -70,6 +71,8 @@ export function Interview({ scene }: { scene: InterviewScene }) {
   const t = useT();
   const scope = useScope();
   const st = interviewState(progress, scene);
+  // 施壓的說明只陪第一次（taught.ts）：壓過一次，之後看他的防備計量表就知道後果。
+  const teachPress = useTaught('press', st.pressed.length > 0);
   const [tab, setTab] = useState<'ask' | 'press'>('ask');
   // 結束會見時先播收尾（獄警敲門之類），再按一次才離開。
   const [leaving, setLeaving] = useState(false);
@@ -173,7 +176,9 @@ export function Interview({ scene }: { scene: InterviewScene }) {
                     </button>
                   </li>
                 ))}
-              <li className="muted">{t('施壓會讓他更防備。手上有東西撐著再問。')}</li>
+              {teachPress && (
+                <li className="muted">{t('施壓會讓他更防備。手上有東西撐著再問。')}</li>
+              )}
             </ul>
           )}
         </section>
