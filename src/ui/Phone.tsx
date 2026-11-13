@@ -14,6 +14,8 @@ import {
   OnPlate,
   onPlateOf,
   plateFor,
+  ScenePlate,
+  type Shown,
   useAvoidSubjects,
   usePlate,
   useShown,
@@ -90,11 +92,26 @@ export function Phone({ scene }: { scene: PhoneScene }) {
     slated ? shown : null,
     `${progress.step}|${subs.ix}|${subs.text}`,
   );
-  // 下一格有底圖就先載，進那一格時不用等。
-  const ahead = scene.steps.slice(progress.step + 1).find((s) => s.do === 'caption' && s.rig);
+  // 通知跳出時的插入鏡頭（do: notify 帶 rig）：不定場，硬切進去、硬切回來（ColdInsert）。
+  const note = v.step.do === 'notify' && v.step.rig ? v.step : null;
+  const insert = useShown(
+    note ? plateFor(progress.episode, { id: scene.id, rig: note.rig }, lang) : null,
+  );
+  // 下一格有底圖就先載，進那一格時不用等（插入鏡頭只有 0.4 秒，更要先載好）。
+  const ahead = scene.steps
+    .slice(progress.step + 1)
+    .find((s) => (s.do === 'caption' || s.do === 'notify') && s.rig);
   const next =
-    ahead && ahead.do === 'caption' && ahead.rig
-      ? plateFor(progress.episode, { id: scene.id, rig: ahead.rig, variant: ahead.variant }, lang)
+    ahead && (ahead.do === 'caption' || ahead.do === 'notify') && ahead.rig
+      ? plateFor(
+          progress.episode,
+          {
+            id: scene.id,
+            rig: ahead.rig,
+            variant: ahead.do === 'caption' ? ahead.variant : undefined,
+          },
+          lang,
+        )
       : null;
   const [nextDesk, nextPhone] = [next?.desktop, next?.phone];
   useEffect(() => {
@@ -166,7 +183,50 @@ export function Phone({ scene }: { scene: PhoneScene }) {
         </div>
         <Screen v={v} owner={scene.owner} advance={advance} choose={choose} />
       </div>
+      {note && <ColdInsert key={progress.step} shown={insert} />}
     </main>
+  );
+}
+
+/**
+ * 插入鏡頭（設定集第 3 章第 01 格）：通知跳出來、手機亮起，切 0.4 秒伊森的下巴被螢幕光由下打亮，再切回手機。
+ * 兩次都是硬切，中間 2 格黑（第 1 章「硬切：中間 2 格黑，83ms」）；不淡入、不推、沒有場記。
+ * 先讓通知在畫面上停一下（LEAD），玩家看得到「跳出來」這件事，才切走。整段期間擋住點擊，免得還沒看到鏡頭就點掉通知。
+ * 圖要在 LATE 以內解碼好才演；太晚就不演（慢網路不卡住、不在玩家讀通知的時候突然切走）。
+ */
+const INSERT = { lead: 500, cut: 83, hold: 400, late: 1500 };
+type InsertPhase = 'lead' | 'black' | 'plate' | 'back' | 'done';
+
+function ColdInsert({ shown }: { shown: Shown | null }) {
+  const [phase, setPhase] = useState<InsertPhase>('lead');
+  const [born] = useState(() => performance.now());
+  const ok = shown?.state === 'ok';
+  useEffect(() => {
+    if (!ok) return;
+    const wait = Math.max(0, INSERT.lead - (performance.now() - born));
+    // 太晚才解碼好：下面那個計時器已經收掉了，不再演。
+    if (performance.now() - born > INSERT.late) return;
+    const { cut, hold } = INSERT;
+    const at: [number, InsertPhase][] = [
+      [wait, 'black'],
+      [wait + cut, 'plate'],
+      [wait + cut + hold, 'back'],
+      [wait + 2 * cut + hold, 'done'],
+    ];
+    const ts = at.map(([ms, p]) => setTimeout(() => setPhase(p), ms));
+    return () => ts.forEach(clearTimeout);
+  }, [ok, born]);
+  // 圖壞了、太慢：不演，也不擋點擊。
+  useEffect(() => {
+    if (ok) return;
+    const t = setTimeout(() => setPhase('done'), INSERT.late);
+    return () => clearTimeout(t);
+  }, [ok]);
+  if (!shown || phase === 'done') return null;
+  return (
+    <div className="cold-insert" data-phase={phase} aria-hidden>
+      <ScenePlate shown={shown} />
+    </div>
   );
 }
 
