@@ -3,6 +3,9 @@ import { expect, test, type Page } from '@playwright/test';
 import { nameUnits } from '../src/ui/lineUnits';
 import { endsBanned } from '../src/ui/plateBreaks';
 
+// 片頭 40 秒預設會播（title-intro.spec.ts 測）。這裡只看片頭前後的畫面：關掉片頭，冷開場之後直接是集名卡。
+test.beforeEach(({ page }) => page.addInitScript(() => localStorage.setItem('rd.dev.intro', '0')));
+
 /**
  * 幕卡 9:16 直排版在 ≤360 寬（第二道關卡 7075839 舊問題 7；設計師 v93 裁定 一之 3）：
  * 標題（幕序＋幕名）、標題欄（含案號）、場記線互不重疊，也都在卡裡；英文標題只在完整的字之間換行。
