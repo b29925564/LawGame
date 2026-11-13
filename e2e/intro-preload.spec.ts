@@ -15,9 +15,15 @@ const SHOTS = [
   ['lucas', 5000],
 ] as const;
 
-async function open(page: Page, episode: 'ep1' | 'ep2', lang: 'zh' | 'en') {
-  await page.route(/\/assets\/(paper|blind|court)-[^/]*\.(avif|webp|png)$/, async (r) => {
-    await new Promise((ok) => setTimeout(ok, 3000));
+async function open(
+  page: Page,
+  episode: 'ep1' | 'ep2',
+  lang: 'zh' | 'en',
+  late = /\/assets\/(paper|blind|court)-[^/]*\.(avif|webp|png)$/,
+  ms = 3000,
+) {
+  await page.route(late, async (r) => {
+    await new Promise((ok) => setTimeout(ok, ms));
     await r.continue();
   });
   await page.clock.install({ time: 1_800_000_000_000 });
@@ -88,3 +94,50 @@ for (const [episode, lang] of [
       expect((await allDecoded(page)).n, SHOTS[i][0]).toBeGreaterThan(0);
     }
   });
+
+/**
+ * 等滿 12 秒（READY_CAP）就開播，時間軸照走；但還沒到的那個鏡頭不能先露出半張（設計師 #339 要改 1）：
+ * 0:17 的法庭晚 15 秒到，鏡頭到了先整格純黑（暗角也不出來），圖到了整張一起出來。
+ */
+test('一張圖晚 15 秒到：那個鏡頭不是完整畫面就是純黑', async ({ page }) => {
+  test.setTimeout(90_000);
+  await open(page, 'ep1', 'zh', /\/assets\/court-0017w[DP]-[^/]*\.(avif|webp)$/, 15_000);
+  const main = page.locator('.title-intro');
+  await expect(main).toHaveAttribute('data-shot', 'paper');
+  // 0:00 的紙還沒開始：等滿上限。
+  await expect(main).not.toHaveAttribute('data-ready', '');
+  await page.clock.runFor(12_000);
+  await expect(main).toHaveAttribute('data-ready', '');
+  await expect(page.locator('.ti-paper svg')).toBeVisible({ timeout: 10_000 });
+  // 每一次有鏡頭掛上去，就記下它的圖層是不是都已經解好。
+  await page.evaluate(() => {
+    const w = window as unknown as { shown: { shot: string; bad: string[] }[] };
+    w.shown = [];
+    new MutationObserver(() => {
+      for (const el of document.querySelectorAll<HTMLElement>('.ti-shot:not([data-seen])')) {
+        el.dataset.seen = '';
+        w.shown.push({
+          shot: el.className,
+          bad: [...el.querySelectorAll('img')]
+            .filter((i) => !i.complete || !i.naturalWidth)
+            .map((i) => i.currentSrc || i.src),
+        });
+      }
+    }).observe(document.querySelector('.title-intro')!, { childList: true, subtree: true });
+  });
+  await page.clock.runFor(SHOTS[0][1]);
+  await expect(main).toHaveAttribute('data-shot', 'blind');
+  await page.clock.runFor(SHOTS[1][1]);
+  await expect(main).toHaveAttribute('data-shot', 'court');
+  // 法庭還沒到：整格純黑，連暗角都沒有。
+  await page.waitForTimeout(500);
+  await expect(page.locator('.ti-shot')).toHaveCount(0);
+  await expect(main.locator('img')).toHaveCount(0);
+  // 圖到了整張一起出來。
+  await expect(page.locator('.ti-shot.shot-court')).toBeAttached({ timeout: 20_000 });
+  const shown = await page.evaluate(
+    () => (window as unknown as { shown: { shot: string; bad: string[] }[] }).shown,
+  );
+  expect(shown.map((s) => s.shot)).toEqual(['ti-shot shot-blind', 'ti-shot shot-court']);
+  expect(shown.flatMap((s) => s.bad)).toEqual([]);
+});

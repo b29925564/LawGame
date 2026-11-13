@@ -105,7 +105,8 @@ export function introOn() {
  * 片頭的圖全部先載好、解碼好才開始 0:00（體驗評測 v94 預檢擋件 1）：鏡頭開始才載圖，慢網路上 0:17 會黑一秒多，
  * 圖晚 3 秒到的時候整個鏡頭不見。照 0:00 紙的做法，九張（紙三層、百葉窗兩層、0:17 寬圖和暗角、0:23、0:29）都解完才起算。
  * 冷開場最後一張底圖送出去以後就開始預載（Phone.tsx），進片頭時通常已經好了。
- * 等太久（READY_CAP）就照樣開始，沒到的圖到了再出來：總比一直黑著好。
+ * 等太久（READY_CAP）就照樣開始，時間軸照走；但每個鏡頭還是等自己的圖層都解好才出現，之前那幾格純黑，
+ * 不會先露出半張（例如 0:17 只有暗角）再一塊塊補上（設計師 #339 要改 1）。
  */
 const READY_CAP = 12000;
 /** 支不支援 AVIF：先試解一張。SVG 的 <image> 沒有 <picture> 可以選格式，紙也要靠這個挑。 */
@@ -135,29 +136,41 @@ function decodeOnce(url: string) {
   }
   return p;
 }
-/** 這一集、這個機位（手機直式／桌機）、這個語言要用到的每一張圖。 */
-function introSrcs(episode: string, phone: boolean, lang: 'zh' | 'en', av: boolean) {
+/** 片頭結束或被略過：放掉解好的大圖，手機上不再佔著記憶體（設計師 #339 建議 2）。 */
+function release() {
+  decoded.clear();
+  held.length = 0;
+}
+/** 這一集、這個機位（手機直式／桌機）、這個語言，每個鏡頭要用到的圖層。 */
+function introSrcs(
+  episode: string,
+  phone: boolean,
+  lang: 'zh' | 'en',
+  av: boolean,
+): Partial<Record<ShotId, string[]>> {
   const k = phone ? 'phone' : 'desk';
   const pick = (s: Src) => s[av ? 0 : 1];
   const paper = PAPER_IMG[phone ? 'phone' : 'desktop'];
   const { base, slit } = BLINDS[episode === 'ep2' ? 'ep2' : 'ep1'];
-  return [
-    pick(paper.blank),
-    pick(paper.numbers),
-    pick(paper[lang]),
-    pick(base[k]),
-    pick(slit[k]),
-    pick(phone ? [c17PA, c17PW] : [c17DA, c17DW]),
-    phone ? vigP : vigD,
-    pick(phone ? [c23PA, c23PW] : [c23DA, c23DW]),
-    pick(phone ? [c29PA, c29PW] : [c29DA, c29DW]),
-  ];
+  return {
+    paper: [pick(paper.blank), pick(paper.numbers), pick(paper[lang])],
+    blind: [pick(base[k]), pick(slit[k])],
+    court: [pick(phone ? [c17PA, c17PW] : [c17DA, c17DW]), phone ? vigP : vigD],
+    witness: [pick(phone ? [c23PA, c23PW] : [c23DA, c23DW])],
+    lucas: [pick(phone ? [c29PA, c29PW] : [c29DA, c29DW])],
+  };
+}
+const isPhone = () => globalThis.matchMedia?.(PHONE).matches ?? false;
+/** 一個鏡頭（不給就是整段片頭）的每一層都解好。 */
+function decodeShots(episode: string, lang: 'zh' | 'en', shot?: ShotId) {
+  return avif().then((av) => {
+    const all = introSrcs(episode, isPhone(), lang, av);
+    const urls = shot ? (all[shot] ?? []) : Object.values(all).flat();
+    return Promise.all(urls.map(decodeOnce)).then(() => undefined);
+  });
 }
 export function preloadIntro(episode: string, lang: 'zh' | 'en') {
-  const phone = globalThis.matchMedia?.(PHONE).matches ?? false;
-  return avif().then((av) =>
-    Promise.all(introSrcs(episode, phone, lang, av).map(decodeOnce)).then(() => undefined),
-  );
+  return decodeShots(episode, lang);
 }
 
 export function TitleIntro({ episode, onDone }: { episode: string; onDone: () => void }) {
@@ -182,6 +195,18 @@ export function TitleIntro({ episode, onDone }: { episode: string; onDone: () =>
     // 語言在片頭中途換了不重等：紙的那一層自己會補解。
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [episode]);
+  // 這個鏡頭的圖層都解好了沒有：還沒好就整格純黑。
+  const [shotOk, setShotOk] = useState<string | null>(null);
+  const cur = SHOTS[at][0];
+  useEffect(() => {
+    let live = true;
+    void decodeShots(episode, lang, cur).then(() => live && setShotOk(cur));
+    return () => {
+      live = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [episode, cur]);
+  useEffect(() => release, []);
   /** 這個鏡頭已經播了多久（暫停前播掉的）。 */
   const spent = useRef(0);
   useEffect(() => {
@@ -235,7 +260,7 @@ export function TitleIntro({ episode, onDone }: { episode: string; onDone: () =>
       data-ready={ready ? '' : undefined}
       aria-label={t('片頭')}
     >
-      {ready && !black && (
+      {ready && !black && shotOk === shot && (
         <div key={shot} className={`ti-shot shot-${shot}`} aria-hidden>
           {shot === 'paper' && <Paper />}
           {shot === 'blind' && <Blinds ep2={ep2} />}
