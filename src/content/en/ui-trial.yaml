@@ -28,6 +28,7 @@
 '{who}詰問完畢': '{who} finishes direct'
 開始交互詰問: Begin cross-examination
 '聽{who}問下去。有問題的地方就在問完的那一刻提異議。': 'Listen to {who} continue. If a question is improper, object the moment it is asked.'
+'{who}主詰問中。': 'Direct examination by {who}.'
 已定錨: Locked in
 她在錄取筆錄裡已經講死這個說法: She already committed to this version in her deposition.
 '1 鎖定': '1 Lock in'
@@ -126,7 +127,6 @@
 點一張卡比較，再按下面的「以這個理論開庭」定案。: Pick a card to compare, then press "Go to trial on this theory" below to commit.
 '生效中：{rulings}': 'In effect: {rulings}'
 '生效中：': 'In effect: '
-下次可以試: Next time
 完整帳目: Full ledger
 '（{where}）': ' ({where})'
 開場: Opening
@@ -142,17 +142,7 @@
 '{who}的證詞沒有被彈劾': "{who}'s testimony was never impeached"
 開示時硬藏的 {n} 份資料被揭穿: 'Documents you withheld in discovery came out ({n})'
 懲罰性賠償成立，另加 {money}: 'Punitive damages found: another {money}'
-起點偏的理論，要靠更多彈劾把陪審員拉回來。: A theory that starts behind needs more impeachments to win jurors back.
-先把論點確認起來，再在開場許承諾。: Confirm your points before you make promises in the opening.
-調查時多確認幾個論點，結辯才填得滿。: Confirm more points during the investigation so your closing is full.
-開庭前選一個案件理論，論點才有方向。: Pick a case theory before trial so your points have a direction.
-結辯基調要對著陪審員的取向挑。: Choose the closing tone for the jurors you actually have.
-談判時攤過的牌對方會備好說法，結辯換別的論點。: The other side has an answer ready for anything you showed in negotiation. Close on other points.
-先鎖定證詞，再出示論點，彈劾才會成立。: Lock the testimony first, then show your point, and the impeachment holds.
-開示時硬藏的東西被揭穿，比交出去更傷。: Withholding in discovery hurts more than handing it over once it comes out.
 審前的選擇讓陪審團一開始就偏向對方: A pretrial choice tilted the jury against you before the trial began
-交出去的東西對方會用，開場前先想好怎麼解釋。: Whatever you hand over, the other side will use. Have your explanation ready before openings.
-懲罰性賠償看的是被告隱瞞了什麼，開示和證據要先處理。: Punitive damages turn on what the defendant hid; deal with discovery and the evidence first.
 懲罰性賠償可能再加同額: Punitive damages could add the same amount again
 懲罰性賠償可能另加 {r} 倍: 'Punitive damages could add {r}× on top'
 '理論起點：死者過失 {base}%　陪審團寫下：{fault}%': 'Theory start: deceased {base}% at fault · Jury wrote: {fault}%'

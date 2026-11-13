@@ -36,6 +36,7 @@ import { msOf, type ObjectionBeat, type Tok } from './court/beat';
 import { CourtCamera, type Shot, type WitnessState } from './court/CourtCamera';
 import { Portrait } from './Portrait';
 import { fitDots, fitLine } from './prose';
+import { teach, useTaught } from './taught';
 
 /**
  * 法庭裡的陪審團（設定集第 8.4、10.1 章）：剪影替身與四階影子。桌機放在中間欄（HUD 的位置），
@@ -343,6 +344,10 @@ function CourtroomScreen({ scene: raw }: { scene: TrialScene }) {
   const [pick, setPick] = useState<string>(pending?.id ?? scene.witness.claims[0].id);
   const record = useCourtEntries(st.log, scene.witness.name, st.stricken);
   const bates = batesOf(progress, raw.id);
+  // 操作說明只陪第一次（taught.ts）：提過異議、出示過論點、按過休庭，之後就不再寫字教。
+  const teachObject = useTaught('object');
+  const teachPresent = useTaught('present');
+  const teachRecess = useTaught('recess');
   const narrow = useNarrow();
   const compactJury = useCompactJury();
   const [beat, startBeat, onJudgeRead, onJudgeShown] = useObjectionBeat();
@@ -504,13 +509,23 @@ function CourtroomScreen({ scene: raw }: { scene: TrialScene }) {
   const rulings = rulingsIn(progress);
   // 桌機主詰問：提示、主按鈕和異議窗共用鏡頭條上面那一格；手機照舊，主按鈕在底列。
   const slot = !narrow && st.stage === 'direct';
+  // 提過一次異議以後，這一格只說現在是誰在問。
+  const examiner = t(scene.examiner ?? terms.other, scope);
   const prompt = (
     <p className="muted">
-      {t('聽{who}問下去。有問題的地方就在問完的那一刻提異議。', {
-        who: t(scene.examiner ?? terms.other, scope),
-      })}
+      {teachObject
+        ? t('聽{who}問下去。有問題的地方就在問完的那一刻提異議。', { who: examiner })
+        : t('{who}主詰問中。', { who: examiner })}
     </p>
   );
+  const objectOnce = (r: trial.Objection) => {
+    teach('object');
+    object(r);
+  };
+  const recessOnce = () => {
+    teach('recess');
+    setRecess(true);
+  };
   const listen = (
     <>
       <button
@@ -611,12 +626,16 @@ function CourtroomScreen({ scene: raw }: { scene: TrialScene }) {
               <button
                 className={`primary wide next${beat ? ' locked' : ''}`}
                 inert={!!beat}
-                onClick={() => setRecess(true)}
+                onClick={recessOnce}
               >
                 {t('休庭')}
               </button>
             )}
-            <EvidenceDrawer note={t('庭上隨時可以翻。出示哪一個論點，看的就是這裡的強度。')} />
+            <EvidenceDrawer
+              note={
+                teachPresent ? t('庭上隨時可以翻。出示哪一個論點，看的就是這裡的強度。') : undefined
+              }
+            />
             {st.stage === 'cross' && (
               <button
                 className="primary wide"
@@ -659,7 +678,7 @@ function CourtroomScreen({ scene: raw }: { scene: TrialScene }) {
               bates={bates}
               className="full"
             />
-            <p className="muted small">{t('按「休庭」看這一場的結果。')}</p>
+            {teachRecess && <p className="muted small">{t('按「休庭」看這一場的結果。')}</p>}
           </section>
         )}
         {slot && (
@@ -689,12 +708,12 @@ function CourtroomScreen({ scene: raw }: { scene: TrialScene }) {
               live={st.window}
               rulings={rulings}
               onPass={letPass}
-              onObject={object}
+              onObject={objectOnce}
             />
           </div>
         )}
         {!slot && st.stage === 'direct' && st.window && (
-          <ObjectionWindow rulings={rulings} onPass={letPass} onObject={object} />
+          <ObjectionWindow rulings={rulings} onPass={letPass} onObject={objectOnce} />
         )}
         {!slot && st.stage === 'direct' && !st.window && now(prompt)}
 
@@ -742,6 +761,7 @@ function CourtroomScreen({ scene: raw }: { scene: TrialScene }) {
                           verb={t('出示')}
                           tag={exposed.includes(a.id) ? t('（已洩漏，她備好了反擊）') : undefined}
                           onPick={() => {
+                            teach('present');
                             confront(claim.id, a.strength, a.tags as Tag[], a.id);
                             // 這一項打完就跳到下一項。筆錄釘在上面，所以換頁不會把剛才的結果藏起來。
                             const nx = scene.witness.claims.find(

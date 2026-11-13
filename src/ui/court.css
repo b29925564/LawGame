@@ -1681,9 +1681,6 @@ button.cand[aria-pressed='true'],
     opacity: 0;
   }
 }
-.lcol .ledger-tip {
-  margin: 0;
-}
 .ledger-why,
 .ledger-claim {
   margin: 8px 0 0;

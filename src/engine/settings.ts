@@ -23,6 +23,11 @@ export interface Settings {
   voBox: boolean;
   /** 片頭看過的集（設定集 11.1：第二次播起可以跳過）。key 是集 id（ep1、ep2）。 */
   introSeen: Record<string, boolean>;
+  /**
+   * 第一次用過就不再出現的操作說明（使用者 11-13：機制只在第一次出現時教，之後靠介面自己說話）。
+   * key 見 ui/taught.ts。
+   */
+  taught: Record<string, boolean>;
   set: (patch: Partial<Omit<Settings, 'set'>>) => void;
 }
 
@@ -41,6 +46,7 @@ export const useSettings = create<Settings>()(
       voScale: 1,
       voBox: false,
       introSeen: {},
+      taught: {},
       set: (patch) => set(patch),
     }),
     { name: 'lawgame-settings', version: 1 },

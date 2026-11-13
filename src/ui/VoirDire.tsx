@@ -14,6 +14,7 @@ import { Shell, Tabs } from './Shell';
 import { CourtCast } from './jury/CourtFace';
 import { Recap } from './ActCard';
 import { FitLine, fitLine } from './prose';
+import { useTaught } from './taught';
 
 type Filter = 'all' | 'seated' | 'unasked';
 
@@ -65,6 +66,8 @@ function VoirDireScreen({ scene }: { scene: VoirDireScene }) {
   const [intro, setIntro] = useState(st.asked.length === 0 && st.struck.length === 0);
   const [filter, setFilter] = useState<Filter>('all');
   const [open, setOpen] = useState<string | null>(null);
+  // 「點名單看資料」只陪第一次（taught.ts）：點開過一個人以後，空的資料欄就是空的。
+  const teachList = useTaught('voirdire', open !== null);
   // 無因迴避用定案樣式：點了先看帳，按定案鈕才刪人。
   const [striking, setStriking] = useState<string | null>(null);
   const wide = useMedia(WIDE_VD);
@@ -376,7 +379,9 @@ function VoirDireScreen({ scene }: { scene: VoirDireScene }) {
           <div className="vd-right">
             {box}
             {profile ?? (
-              <section className="panel prof empty">{t('點名單上的人看他的資料。')}</section>
+              <section className="panel prof empty">
+                {teachList ? t('點名單上的人看他的資料。') : null}
+              </section>
             )}
             <div className="commitbar">
               <p className="who">

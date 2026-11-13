@@ -38,6 +38,7 @@ import { Timeline } from './Timeline';
 import { Lock } from './Lock';
 import { PlaceSlate, Recap } from './ActCard';
 import { durUi, reducedMotion } from './a11y';
+import { useTaught } from './taught';
 
 // 證據庫和左下的證據抽屜內容一模一樣，所以只留抽屜：它在每個畫面都叫得出來。
 type App = 'mail' | 'docs' | 'board' | 'jobs' | 'court' | 'discovery';
@@ -670,6 +671,9 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
     relation: l.relation,
     conclusion: l.conclusion,
   }));
+  // 操作說明只陪第一次（taught.ts）：連出第一條發現、確認第一個疑問之後就不再出現。
+  const teachLink = useTaught('link', found.length > 0);
+  const teachAnswer = useTaught('answer', st.confirmed.length > 0);
   // 疑問的答案都是發現；論點只在證據欄出現，拿來連線（試玩回報：兩邊各列一次太亂）。
   const answers = found;
   // 兩張卡之間用 ×（手寫字型裡有這個字，⟷ 會退回別的字型）。
@@ -965,7 +969,7 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
                 {t('連起來')}
               </button>
             </div>
-            {found.length === 0 && (
+            {found.length === 0 && teachLink && (
               <p className="bench-hint">{t('把兩張卡連起來，發現會出現在下面。')}</p>
             )}
           </div>
@@ -1128,8 +1132,13 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
                             </button>
                           ) : (
                             // 連起來之後下一步要點發現再提交（體驗評測：沒有提示，會以為連起來就解完了）。
+                            // 確認過第一個疑問以後只留空槽，不再寫字教（taught.ts）。
                             <span className="slot-hint">
-                              {found.length ? t('點一條發現放到這裡') : t('先連線，得到發現')}
+                              {teachAnswer
+                                ? found.length
+                                  ? t('點一條發現放到這裡')
+                                  : t('先連線，得到發現')
+                                : null}
                             </span>
                           )}
                         </li>
@@ -1508,8 +1517,7 @@ function Jobs({ scene, held }: { scene: DeskScene; held: string[] }) {
     scene.cards.find((c) => c.id === id)?.name ??
     scene.questions.find((q) => q.argument.id === id)?.argument.name ??
     id;
-  if (shown.length === 0)
-    return <p className="muted">{t('目前沒有可以委託的事。多讀卷宗、多問委託人。')}</p>;
+  if (shown.length === 0) return <p className="muted">{t('目前沒有可以委託的事。')}</p>;
   return (
     <ul className="stack">
       {shown.map((j) => {

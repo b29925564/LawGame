@@ -96,18 +96,6 @@ function ClosingScreen({ scene }: { scene: ClosingScene }) {
         return t('懲罰性賠償成立，另加 {money}', { money: money(it.money ?? 0) });
     }
   };
-  const tips: Record<LedgerItem['kind'], string> = {
-    theory: t('起點偏的理論，要靠更多彈劾把陪審員拉回來。'),
-    broken: t('先把論點確認起來，再在開場許承諾。'),
-    empty: t('調查時多確認幾個論點，結辯才填得滿。'),
-    noTheory: t('開庭前選一個案件理論，論點才有方向。'),
-    tone: t('結辯基調要對著陪審員的取向挑。'),
-    exposed: t('談判時攤過的牌對方會備好說法，結辯換別的論點。'),
-    unimpeached: t('先鎖定證詞，再出示論點，彈劾才會成立。'),
-    concealed: t('開示時硬藏的東西被揭穿，比交出去更傷。'),
-    effect: t('交出去的東西對方會用，開場前先想好怎麼解釋。'),
-    punitive: t('懲罰性賠償看的是被告隱瞞了什麼，開示和證據要先處理。'),
-  };
 
   if (st.verdict && bench === 'bench')
     return (
@@ -129,7 +117,6 @@ function ClosingScreen({ scene }: { scene: ClosingScene }) {
         items={ledger(progress)}
         ending={endingOf(progress, scene)}
         says={reason}
-        tips={tips}
         onNext={advance}
       />
     );
@@ -327,7 +314,6 @@ function Verdict({
   items,
   ending,
   says,
-  tips,
   onNext,
 }: {
   /** 法官席那一格按了略過：四拍不演，直接到結論。 */
@@ -339,7 +325,6 @@ function Verdict({
   items: LedgerItem[];
   ending: Line[];
   says: (it: LedgerItem) => string;
-  tips: Record<LedgerItem['kind'], string>;
   onNext: () => void;
 }) {
   const t = useT();
@@ -599,11 +584,7 @@ function Verdict({
               </span>
             </div>
           </section>
-          {!won && top[0] && (
-            <p className="ledger-tip">
-              <span className="ledger-key">{t('下次可以試')}</span> {tips[top[0].kind]}
-            </p>
-          )}
+          {/* 「下次可以試」拿掉了（使用者 11-13：教學以外不再教機制）。為什麼輸，帳目本身就寫著。 */}
           {(items.length > 0 || claimed || award?.why) && (
             <details className="fold ledger">
               <summary>
