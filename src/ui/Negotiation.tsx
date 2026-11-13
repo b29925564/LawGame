@@ -60,11 +60,7 @@ export function Negotiation({ scene }: { scene: NegotiationScene }) {
       ? t('但仍超過授權，要先打電話請示{name}。', { name: client })
       : t('但仍超過授權上限。');
   // 條件依信心分檔：信心低於目前這一檔的門檻，就換下一檔（engine offerOf）。
-  const better = ladder.find((o) => o.min < offer.min);
-  const toNext = better ? st.confidence - offer.min + 1 : 0;
-  const nextHint = better
-    ? t('信心再降 {k}，條件就會鬆動。', { k: toNext })
-    : t('這已經是對方開得出來最好的條件。');
+  // 下一檔門檻不寫出來（使用者 11-13：教學以外不教機制，隱藏數值不報給玩家）；條件有沒有鬆動看結果就知道。
   // 定案列一出現就捲進畫面，手機上才不會被底部列擋住。
   useEffect(() => {
     if (choice) document.querySelector('.commit-bar')?.scrollIntoView({ block: 'nearest' });
@@ -108,7 +104,7 @@ export function Negotiation({ scene }: { scene: NegotiationScene }) {
           <b>{t('{name}的信心 {a} → {b}', { name: opp, a: last.conf, b: st.confidence })}</b>
           {offer.id !== last.offer
             ? `${t('條件鬆動了：{label}', { label: t(offer.label, scope) })}${stillOver && t('。')}${stillOver}`
-            : `${t('條件沒變。')}${nextHint}`}
+            : t('條件沒變。')}
         </>
       )}
     </p>
@@ -251,16 +247,11 @@ export function Negotiation({ scene }: { scene: NegotiationScene }) {
       {tab === 'offer' && (
         <section className="panel">
           <h2>{t('對方現在開的條件')}</h2>
-          {nego.canAct(st) && <p className="muted small nego-next">{nextHint}</p>}
-          {/* 條件階梯：每一檔的門檻和價放在一起，信心 100 時也看得出還差多少（體驗評測 v89）。 */}
+          {/* 條件階梯：只列每一檔的價和授權標記，不列信心門檻（使用者 11-13：隱藏數值不報給玩家）；
+              對方鬆到哪一檔，看反白的那一列。 */}
           <ol className="nego-ladder" aria-label={t('條件階梯')}>
-            {ladder.map((o, i) => (
+            {ladder.map((o) => (
               <li key={o.id} className={o.id === offer.id ? 'on' : undefined}>
-                <span className="th">
-                  {o.min > 0
-                    ? t('信心 {n} 以上', { n: o.min })
-                    : t('信心低於 {n}', { n: ladder[i - 1]?.min ?? 0 })}
-                </span>
                 <span className="v">
                   {o.amount !== undefined ? money(o.amount) : t(o.label, scope)}
                 </span>

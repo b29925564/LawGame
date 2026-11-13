@@ -834,16 +834,18 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
           {face}
         </button>
       );
+    // 連出第一條發現以後不再寫字教（taught.ts，使用者 11-13）：桌機留空格，窄版的挑卡入口只剩「＋」。
     return docked ? (
-      <span className="cork-empty">{t('點右邊的卡片放上來')}</span>
+      <span className="cork-empty">{teachLink ? t('點右邊的卡片放上來') : null}</span>
     ) : (
       // 手機和 1379 以下：空格就是挑卡片的入口，挑完回到這裡看得到 A、B（UX 規格 P1-11）。
       <button
         className="cork-empty"
         disabled={i > st.link.cards.length}
         onClick={() => setPicking(true)}
+        aria-label={teachLink ? undefined : t('放到 {slot}', { slot: i === 0 ? 'A' : 'B' })}
       >
-        {t('點板上的卡，或從證據裡挑')}
+        {teachLink ? t('點板上的卡，或從證據裡挑') : <span aria-hidden>＋</span>}
       </button>
     );
   };

@@ -2044,9 +2044,6 @@ html[lang='en'] .vform .fh .c {
 .nego-move b {
   margin-right: 8px;
 }
-.nego-next {
-  margin: 4px 0 0;
-}
 /*
  * 「打電話請示」是這一頁唯一的主按鈕：條件表長到捲動框外時，它釘在框底，永遠整顆看得到
  * （設計師 #225 第三輪：中文桌機被框的底邊切掉一半）。上下各墊一條面板色（上面那條就是按鈕間的 8px 間距，
@@ -2082,7 +2079,7 @@ html[lang='en'] .vform .fh .c {
   /* 價和標記不要隔半個畫面（體驗評測 v89）。 */
   max-width: 560px;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-columns: auto minmax(0, 1fr);
   column-gap: var(--s3);
   list-style: none;
   margin: var(--s2) 0 var(--s3);
@@ -2092,7 +2089,7 @@ html[lang='en'] .vform .fh .c {
 .nego-ladder li {
   display: grid;
   /* subgrid 讓每一列的價和標記對齊同一欄；價和標記不換行，窄螢幕由門檻那欄讓位
-     （體驗評測 v89：英文「$2.5 million」被拆成兩行）。 */
+     （體驗評測 v89：英文「$2.5 million」被拆成兩行）。門檻欄 11-13 拿掉，剩價和標記兩欄。 */
   grid-column: 1 / -1;
   grid-template-columns: subgrid;
   gap: var(--s3);
@@ -2100,16 +2097,17 @@ html[lang='en'] .vform .fh .c {
   padding: 6px 8px;
   border-bottom: 1px solid var(--border);
 }
-.nego-ladder .th {
-  color: var(--muted);
-  font-size: 13px;
-}
 .nego-ladder .v {
   font-weight: 600;
   white-space: nowrap;
+  /* 門檻欄拿掉以後，價錢本身要讀得出一階一階：右對齊、等寬數字（設計師 #337 複審）。 */
+  justify-self: end;
+  font-variant-numeric: tabular-nums;
 }
 .nego-ladder .tg {
   display: flex;
+  /* 「超過授權」每一列都靠右對在同一條線上（設計師 #337 複審）。 */
+  justify-content: flex-end;
   white-space: nowrap;
   gap: 8px;
   font-size: 13px;
