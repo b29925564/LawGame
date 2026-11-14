@@ -118,6 +118,11 @@ export function introOn() {
  */
 const READY_CAP = 12000;
 /**
+ * 等超過這麼久才出「載入中」（設計師 v95：1.5 秒內解好就完全不出現）。位置、字級、字色和「跳過」相同，
+ * 不加框、不加底、完全不動，0:00 第一個鏡頭出現的那一格同時消失；12 秒上限照舊，字留到第一個鏡頭真的出現。
+ */
+const LOADING_AFTER = 1500;
+/**
  * 一層圖＝一個 <picture>：source 依序是 [media, type, srcset]，最後是 img 的 src。畫面上的 <Plate> 和預載用同一份，
  * 預載時照 React 建的順序（img 先有 src，再和 source 一起放進 picture）離線建一個，瀏覽器挑哪一張就解哪一張，
  * 和畫面上 <picture> 實際載的一定是同一張。（原本用 new Image() 試解 AVIF 自己挑：CI 的 headless 瀏覽器
@@ -149,6 +154,8 @@ const held: HTMLImageElement[] = [];
 const built = new Map<string, HTMLElement>();
 /** 已經解完的圖層：render 時同步查，圖早就好的鏡頭在換到它的那一格就畫出來，不多黑一格。 */
 const done = new Set<string>();
+/** 解完的圖層，瀏覽器實際挑的那個網址（紙的 SVG <image> 要用，render 時同步查）。 */
+const chosen = new Map<string, string>();
 function decodeLayer(l: Layer) {
   const key = layerKey(l);
   let p = decoded.get(key);
@@ -174,31 +181,36 @@ function decodeLayer(l: Layer) {
       .decode()
       .catch(() => undefined)
       .then(() => {
-        if (decoded.get(key) === p) done.add(key);
-        return img.currentSrc || img.src;
+        const url = img.currentSrc || img.src;
+        if (decoded.get(key) === p) {
+          done.add(key);
+          chosen.set(key, url);
+        }
+        return url;
       });
     decoded.set(key, p);
   }
   return p;
 }
-const decodeOnce = (url: string) => decodeLayer({ s: [], src: url });
 /**
- * SVG 的 <image>（0:00 的紙）沒有 <picture> 可以選格式：問瀏覽器的 <picture> 挑不挑 AVIF，照它的答案挑。
+ * 只有格式不同的一層（AVIF 和 WebP 同一張圖）：0:00 的紙是 SVG 的 <image>，沒有 <picture> 可以選格式，
+ * 就用同樣的 picture 讓瀏覽器挑，解好以後拿它挑的那個網址給 <image>。九張圖同時開始，不用先試解一張（評測 v95）。
  */
-let avifOk: Promise<boolean> | null = null;
-/** 挑的結果，知道了以後 render 可以直接查（還不知道是 null）。 */
-let avifKnown: boolean | null = null;
-function avif() {
-  avifOk ??= decodeLayer({ s: [[undefined, 'image/avif', pbDA]], src: pbDW }).then(
-    (url) => (avifKnown = url === new URL(pbDA, location.href).href),
-  );
-  return avifOk;
+const formatLayer = (s: Src): Layer => ({ s: [[undefined, 'image/avif', s[0]]], src: s[1] });
+function paperLayers(phone: boolean, lang: 'zh' | 'en') {
+  const set = PAPER_IMG[phone ? 'phone' : 'desktop'];
+  return {
+    blank: formatLayer(set.blank),
+    numbers: formatLayer(set.numbers),
+    full: formatLayer(set[lang]),
+  };
 }
 /** 片頭結束或被略過：放掉解好的大圖，手機上不再佔著記憶體（設計師 #339 建議 2）。 */
 function release() {
   decoded.clear();
   built.clear();
   done.clear();
+  chosen.clear();
   held.length = 0;
 }
 /** 這一集、這個機位（紙要知道手機直式／桌機）、這個語言，每個鏡頭要用到的圖層。 */
@@ -206,13 +218,10 @@ function introLayers(
   episode: string,
   phone: boolean,
   lang: 'zh' | 'en',
-  av: boolean,
 ): Partial<Record<ShotId, Layer[]>> {
-  const pick = (s: Src): Layer => ({ s: [], src: s[av ? 0 : 1] });
-  const paper = PAPER_IMG[phone ? 'phone' : 'desktop'];
   const { base, slit } = BLINDS[episode === 'ep2' ? 'ep2' : 'ep1'];
   return {
-    paper: [pick(paper.blank), pick(paper.numbers), pick(paper[lang])],
+    paper: Object.values(paperLayers(phone, lang)),
     blind: [plateLayer(base.desk, base.phone), plateLayer(slit.desk, slit.phone)],
     court: [plateLayer([c17DA, c17DW], [c17PA, c17PW]), VIGNETTE],
     witness: [plateLayer([c23DA, c23DW], [c23PA, c23PW])],
@@ -222,16 +231,13 @@ function introLayers(
 const isPhone = () => globalThis.matchMedia?.(PHONE).matches ?? false;
 /** 一個鏡頭（不給就是整段片頭）的每一層都解好。 */
 function decodeShots(episode: string, lang: 'zh' | 'en', shot?: ShotId) {
-  return avif().then((av) => {
-    const all = introLayers(episode, isPhone(), lang, av);
-    const layers = shot ? (all[shot] ?? []) : Object.values(all).flat();
-    return Promise.all(layers.map(decodeLayer)).then(() => undefined);
-  });
+  const all = introLayers(episode, isPhone(), lang);
+  const layers = shot ? (all[shot] ?? []) : Object.values(all).flat();
+  return Promise.all(layers.map(decodeLayer)).then(() => undefined);
 }
 /** 這個鏡頭的圖層是不是全都解完了（同步）。 */
 function shotDecoded(episode: string, lang: 'zh' | 'en', shot: ShotId) {
-  if (avifKnown === null) return false;
-  const layers = introLayers(episode, isPhone(), lang, avifKnown)[shot] ?? [];
+  const layers = introLayers(episode, isPhone(), lang)[shot] ?? [];
   return layers.every((l) => done.has(layerKey(l)));
 }
 export function preloadIntro(episode: string, lang: 'zh' | 'en') {
@@ -272,6 +278,11 @@ export function TitleIntro({ episode, onDone }: { episode: string; onDone: () =>
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [episode, cur]);
   useEffect(() => release, []);
+  const [slow, setSlow] = useState(false);
+  useEffect(() => {
+    const id = window.setTimeout(() => setSlow(true), LOADING_AFTER);
+    return () => window.clearTimeout(id);
+  }, []);
   /** 這個鏡頭已經播了多久（暫停前播掉的）。 */
   const spent = useRef(0);
   useEffect(() => {
@@ -315,6 +326,11 @@ export function TitleIntro({ episode, onDone }: { episode: string; onDone: () =>
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [at, paused, ready]);
   const [shot] = SHOTS[at];
+  const showing = ready && !black && (shotOk === shot || shotDecoded(episode, lang, shot));
+  // 第一個鏡頭出現過就不再出「載入中」（之後鏡頭之間的黑是剪接，不是等）。
+  const [started, setStarted] = useState(false);
+  if (showing && !started) setStarted(true);
+  const loading = slow && !started && !showing;
   const ep2 = episode === 'ep2';
   return (
     <main
@@ -325,7 +341,7 @@ export function TitleIntro({ episode, onDone }: { episode: string; onDone: () =>
       data-ready={ready ? '' : undefined}
       aria-label={t('片頭')}
     >
-      {ready && !black && (shotOk === shot || shotDecoded(episode, lang, shot)) && (
+      {showing && (
         <div key={shot} className={`ti-shot shot-${shot}`} aria-hidden>
           {shot === 'paper' && <Paper />}
           {shot === 'blind' && <Blinds ep2={ep2} />}
@@ -335,10 +351,19 @@ export function TitleIntro({ episode, onDone }: { episode: string; onDone: () =>
           {shot === 'mark' && <Mark />}
         </div>
       )}
-      {canSkip && (
-        <button className="ti-skip" onClick={onDone}>
-          {t('跳過')}
-        </button>
+      {(canSkip || loading) && (
+        <div className="ti-corner">
+          {canSkip && (
+            <button className="ti-skip" onClick={onDone}>
+              {t('跳過')}
+            </button>
+          )}
+          {loading && (
+            <p className="ti-loading" role="status">
+              {t('載入中')}
+            </p>
+          )}
+        </div>
       )}
     </main>
   );
@@ -490,21 +515,26 @@ function paperLayout(cam: Cam, lang: 'zh' | 'en') {
 }
 
 /** 紙的三層都解完才畫，畫面不會半張（片頭開始前通常已經解好了，見 preloadIntro）。 */
+/** 紙的三層已經解好就同步拿到網址：鏡頭出現的那一格就畫得出來，不多黑一格。 */
+function paperNow(phone: boolean, lang: 'zh' | 'en') {
+  const ls = paperLayers(phone, lang);
+  const [blank, numbers, full] = [ls.blank, ls.numbers, ls.full].map((l) =>
+    chosen.get(layerKey(l)),
+  );
+  return blank && numbers && full ? { blank, numbers, full } : null;
+}
 function usePaperSrc(phone: boolean, lang: 'zh' | 'en') {
-  const set = PAPER_IMG[phone ? 'phone' : 'desktop'];
-  const [ready, setReady] = useState<Record<string, string> | null>(null);
+  const [ready, setReady] = useState<Record<string, string> | null>(() => paperNow(phone, lang));
   useEffect(() => {
     let live = true;
-    void avif().then(async (av) => {
-      const pick = (s: readonly [string, string]) => s[av ? 0 : 1];
-      const srcs = { blank: pick(set.blank), numbers: pick(set.numbers), full: pick(set[lang]) };
-      await Promise.all(Object.values(srcs).map(decodeOnce));
-      if (live) setReady(srcs);
-    });
+    const ls = paperLayers(phone, lang);
+    void Promise.all([decodeLayer(ls.blank), decodeLayer(ls.numbers), decodeLayer(ls.full)]).then(
+      ([blank, numbers, full]) => live && setReady({ blank, numbers, full }),
+    );
     return () => {
       live = false;
     };
-  }, [set, lang]);
+  }, [phone, lang]);
   return ready;
 }
 
