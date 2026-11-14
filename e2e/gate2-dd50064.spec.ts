@@ -43,19 +43,18 @@ async function open(page: Page, episode: string, scene: number, scale: number, s
   await page.reload();
   await page.getByRole('button', { name: /^繼續/ }).first().click();
   await page.evaluate(() => document.fonts.ready);
-  await page
-    .locator('.place-beat')
-    .click({ timeout: 3000 })
-    .catch(() => {});
-  // 取證「開始錄取」、協商／調解「坐下」、法庭「開庭」：照畫面上的主要按鈕點進去，直到身分列出現。
+  // 地點卡（有的場才有）、取證「開始錄取」、協商／調解「坐下」、法庭「開庭」：
+  // 等畫面上出現其中一個再點，直到身分列出現。不要固定等地點卡 3 秒：沒有地點卡的場每次白等，
+  // 一條測試開 6 次就吃掉 18 秒，CI 負載高時超過 30 秒上限（#343 CI）。
   for (let k = 0; k < 8; k++) {
     await page
-      .locator(`${sel}, button.primary:visible`)
+      .locator(`${sel}, .place-beat, button.primary:visible`)
       .first()
       .waitFor({ timeout: 5000 })
       .catch(() => {});
     if (await page.locator(sel).count()) break;
-    await page.locator('button.primary:visible').last().click();
+    if (await page.locator('.place-beat').count()) await page.locator('.place-beat').click();
+    else await page.locator('button.primary:visible').last().click();
     await page.waitForTimeout(300);
   }
   await page.evaluate(() => document.fonts.ready);
