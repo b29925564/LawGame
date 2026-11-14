@@ -346,6 +346,8 @@ function CourtroomScreen({ scene: raw }: { scene: TrialScene }) {
   const bates = batesOf(progress, raw.id);
   // 操作說明只陪第一次（taught.ts）：提過異議、出示過論點、按過休庭，之後就不再寫字教。
   const teachObject = useTaught('object');
+  // 這一場一開始還在教異議（見下面的 prompt）。
+  const [keepTall] = useState(teachObject);
   const teachPresent = useTaught('present');
   const teachRecess = useTaught('recess');
   const narrow = useNarrow();
@@ -511,12 +513,21 @@ function CourtroomScreen({ scene: raw }: { scene: TrialScene }) {
   const slot = !narrow && st.stage === 'direct';
   // 提過一次異議以後，這一格只說現在是誰在問。
   const examiner = t(scene.examiner ?? terms.other, scope);
-  const prompt = (
-    <p className="muted">
-      {teachObject
-        ? t('聽{who}問下去。有問題的地方就在問完的那一刻提異議。', { who: examiner })
-        : t('{who}直接詰問中。', { who: examiner })}
+  const teachLine = t('聽{who}問下去。有問題的地方就在問完的那一刻提異議。', { who: examiner });
+  const nowLine = t('{who}直接詰問中。', { who: examiner });
+  // 這一場一開始還在教異議：教學那句換成短句以後，框照舊留長句的高度，下面的陪審團條不跳
+  // （體驗評測 v94，320 中文：教完以後框少 4.2px，陪審團條往下跳）。兩句疊在同一格，看不到的那句只佔位。
+  const prompt = keepTall ? (
+    <p className="muted keep-h">
+      <span data-off={teachObject ? undefined : ''} aria-hidden={!teachObject || undefined}>
+        {teachLine}
+      </span>
+      <span data-off={teachObject ? '' : undefined} aria-hidden={teachObject || undefined}>
+        {nowLine}
+      </span>
     </p>
+  ) : (
+    <p className="muted">{nowLine}</p>
   );
   const objectOnce = (r: trial.Objection) => {
     teach('object');

@@ -4154,3 +4154,14 @@ html[lang='en'] .stamp.rec-stamp b {
 [data-hand='sticker'] .docket tr.dk-cur {
   box-shadow: inset 2px 0 0 var(--pencil-ui);
 }
+
+/* 法庭提示：教學長句和之後的短句疊在同一格，高度取長句，換句時框不縮（Courtroom.tsx keepTall）。 */
+.keep-h {
+  display: grid;
+}
+.keep-h > span {
+  grid-area: 1 / 1;
+}
+.keep-h > [data-off] {
+  visibility: hidden;
+}
