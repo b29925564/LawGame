@@ -174,3 +174,54 @@ test('圖都已解好：每個切點新鏡頭和換鏡頭同一格出現', async
   const cuts = await page.evaluate(() => (window as unknown as { cuts: string[] }).cuts);
   expect(cuts).toEqual([...SHOTS.slice(1).map(([s]) => s), 'mark'].map((s) => `${s} 同一格`));
 });
+
+/** 每次畫面有變，記下「載入中」和 0:00 的紙是不是同時在（設計師 v95 片頭開播前空等）。 */
+const watchLoading = (page: Page) =>
+  page.evaluate(() => {
+    const w = window as unknown as { seen: string[] };
+    w.seen = [];
+    const root = document.querySelector('.title-intro')!;
+    const note = () => {
+      const s = `${root.querySelector('.ti-loading') ? '字' : ''}${root.querySelector('.ti-paper svg') ? '紙' : ''}`;
+      if (w.seen[w.seen.length - 1] !== s) w.seen.push(s);
+    };
+    note();
+    new MutationObserver(note).observe(root, { childList: true, subtree: true });
+  });
+const seen = (page: Page) => page.evaluate(() => (window as unknown as { seen: string[] }).seen);
+
+test('圖晚到：1.5 秒前沒有「載入中」，之後有；紙出現的那一格字同時消失', async ({ page }) => {
+  test.setTimeout(60_000);
+  await open(page, 'ep1', 'zh', /\/assets\/(paper|blind|court)-[^/]*\.(avif|webp|png)$/, 5000);
+  const main = page.locator('.title-intro');
+  await expect(main).toHaveAttribute('data-shot', 'paper');
+  await watchLoading(page);
+  await page.clock.runFor(1400);
+  await expect(page.locator('.ti-loading')).toHaveCount(0);
+  await page.clock.runFor(200);
+  await expect(page.locator('.ti-loading')).toHaveText('載入中');
+  // 字不動：沒有動畫、沒有轉場。
+  const motion = await page
+    .locator('.ti-loading')
+    .evaluate((el) => [el.getAnimations().length, getComputedStyle(el).transitionDuration]);
+  expect(motion).toEqual([0, '0s']);
+  await expect(page.locator('.ti-paper svg')).toBeVisible({ timeout: 15_000 });
+  await expect(page.locator('.ti-loading')).toHaveCount(0);
+  expect(await seen(page)).toEqual(['', '字', '紙']);
+});
+
+test('圖 1.5 秒內解好：完全不出「載入中」', async ({ page }) => {
+  test.setTimeout(60_000);
+  await open(page, 'ep2', 'en', /^$/, 0);
+  await watchLoading(page);
+  await expect(page.locator('.ti-paper svg')).toBeVisible({ timeout: 10_000 });
+  await page.clock.runFor(SHOTS[0][1]);
+  await expect(page.locator('.title-intro')).toHaveAttribute('data-shot', 'blind');
+  await page.clock.runFor(SHOTS[1][1]);
+  await expect(page.locator('.title-intro')).toHaveAttribute('data-shot', 'court');
+  const s = await seen(page);
+  expect(
+    s.filter((x) => x.includes('字')),
+    JSON.stringify(s),
+  ).toEqual([]);
+});

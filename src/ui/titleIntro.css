@@ -27,11 +27,18 @@
   opacity: 0.07;
   background-image: var(--grain);
 }
-.ti-skip {
+/* 右下角：「跳過」和「載入中」排在同一條底線上（載入中在跳過左邊）。 */
+.ti-corner {
   position: absolute;
   z-index: 2;
   right: max(16px, env(safe-area-inset-right));
   bottom: max(16px, env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: row-reverse;
+  align-items: center;
+  gap: 16px;
+}
+.ti-skip {
   min-height: 44px;
   padding: 0 18px;
   border: 1px solid var(--cine-muted);
@@ -43,6 +50,13 @@
 }
 .ti-skip:hover {
   border-color: var(--cine-text);
+}
+/* 開播前等圖超過 1.5 秒（TitleIntro.tsx LOADING_AFTER）：和「跳過」同字級，#8a95a2，不加框不加底、完全不動。 */
+.ti-loading {
+  margin: 0;
+  color: var(--ink-muted);
+  font: 500 14px / 44px var(--font);
+  letter-spacing: 0.08em;
 }
 
 /* 選單打開時片頭暫停：計時器停（TitleIntro.tsx），鏡頭裡的動態也停。 */
