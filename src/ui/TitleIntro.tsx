@@ -418,6 +418,13 @@ const BEAT = 83;
 export const FULL_FADE = 350;
 /** 對焦在第 11 行。離得越遠越糊：在全文底圖上量，每隔一行約多 4.5 px 的高斯（底圖像素）。 */
 const dof = (n: number) => Math.min(4.5 * Math.abs(n - 10), 36);
+/**
+ * 景深和遮罩羽化的像素數是在桌機 2304 寬、手機 1440 寬的底圖上量的。v95 桌機底圖加大到 3072 寬
+ * （場景光影 #3 11-14，1440 @2x 推鏡不放大），像素數跟著底圖等比放大，畫面上糊的程度不變。
+ */
+const MEASURED_W = { desktop: 2304, phone: 1440 } as const;
+/** 濾鏡 id 裡不放小數點。 */
+const dKey = (s: number) => String(s).replace('.', '_');
 
 /**
  * 黑條是墨：紙的 5% 反射率，在 sRGB 裡約等於乘 0.2–0.25（0.05^(1/2.2)，取暗一點：黑條要讀成黑）。不在線性光裡算：Chrome 的濾鏡用 8 位元
@@ -446,12 +453,12 @@ function fitX(ps: Pt[]) {
 }
 
 /** 一台機位要畫的東西：每一行的遮罩、黑條、紅邊線那一帶、紅邊線往下畫的時間表。 */
-function paperLayout(cam: Cam, lang: 'zh' | 'en') {
+function paperLayout(cam: Cam, lang: 'zh' | 'en', k: number) {
   const [W, H] = cam.size;
   const rows = cam.rows.map((r, n) => {
     const text = r[lang];
     const h = hOf(r.number);
-    const s = dof(n);
+    const s = Math.round(dof(n) * k * 10) / 10;
     // 糊開的字會超出框：外擴 15%，再加景深，但不吃進下一行太多。
     const pad = 0.15 * h + Math.min(1.5 * s, 0.3 * h);
     return {
@@ -509,7 +516,8 @@ function paperLayout(cam: Cam, lang: 'zh' | 'en') {
     band,
     on,
     fullOn,
-    wipe: { css: wipe, dur, x: Math.min(...band.map((p) => p[0])) - 20 },
+    k,
+    wipe: { css: wipe, dur, x: Math.min(...band.map((p) => p[0])) - 20 * k },
     origin: [(origin[0][0] + origin[2][0]) / 2, (origin[0][1] + origin[2][1]) / 2] as Pt,
   };
 }
@@ -554,7 +562,10 @@ function Paper() {
   const lang = useLang((s) => s.lang);
   const phone = usePhonePaper();
   const cam = phone ? 'phone' : 'desktop';
-  const L = useMemo(() => paperLayout(CAMS[cam], lang), [cam, lang]);
+  const L = useMemo(
+    () => paperLayout(CAMS[cam], lang, CAMS[cam].size[0] / MEASURED_W[cam]),
+    [cam, lang],
+  );
   const src = usePaperSrc(phone, lang);
   const id = useId().replace(/:/g, '');
   const sigmas = [...new Set(L.rows.filter((r) => r.bar && L.order.has(r.n)).map((r) => r.s))];
@@ -572,10 +583,10 @@ function Paper() {
           <style>{`@keyframes ti-wipe-${cam}{${L.wipe.css}}.ti-wipe-${cam}{--wipe:ti-wipe-${cam};--wipe-dur:${L.wipe.dur}ms}`}</style>
           <defs>
             <filter id={`${id}f`} {...region}>
-              <feGaussianBlur stdDeviation={2} />
+              <feGaussianBlur stdDeviation={2 * L.k} />
             </filter>
             {sigmas.map((s) => (
-              <filter key={s} id={`${id}d${s}`} {...region}>
+              <filter key={s} id={`${id}d${dKey(s)}`} {...region}>
                 <feGaussianBlur stdDeviation={Math.max(s, 0.6)} />
               </filter>
             ))}
@@ -640,7 +651,11 @@ function Paper() {
                       data-row={r.n + 1}
                       style={{ '--bd': `${barDelay(L.order.get(r.n)!)}ms` } as CSSProperties}
                     >
-                      <polygon points={pts(r.bar)} fill="#fff" filter={`url(#${id}d${r.s})`} />
+                      <polygon
+                        points={pts(r.bar)}
+                        fill="#fff"
+                        filter={`url(#${id}d${dKey(r.s)})`}
+                      />
                     </g>
                   ),
               )}
@@ -712,6 +727,7 @@ function LayerPicture({ layer, className }: { layer: Layer; className?: string }
 /**
  * 0:10：塗黑的頁面立起來變成百葉窗（場景光影 #3 正式圖），31 條縫＝31 層樓。底圖的亮縫權重是 0，
  * 亮的那一條是另一層，黑底、screen 疊上去，2.4 秒起亮。整組從 1.3 倍拉到 1.0。
+ * 底圖桌機 3840×2400、手機 1800×3200（v95 加大）：起格 1.3 倍時，桌機裝置像素寬 ≤ 2953、直式寬 ≤ 1384 且高 ≤ 2461 都不放大。
  * 第一集亮最上面那條（31 樓）；第二集亮合約第 7.3 條那一行（第 13 縫，和第一集同一個機位、葉片升高 18 縫）。
  */
 const BLINDS = {
@@ -787,8 +803,8 @@ function Witness({ ep2 }: { ep2: boolean }) {
 
 /**
  * 0:29：盧卡斯的背影（正式圖：立牌 v4 的輪廓光，手上那頁紙在房間裡實算），從 1.0 推到 1.12（中心在畫面正中）。
- * 一道螢光由左往右刷過紙上第 13 行：全片第一道黃。螢光的四角取自場景光影的 court-0029-ui.json（放大 1.0 時的
- * 底圖座標），畫在和底圖同尺寸、同裁切（cover＝slice）的 SVG 上，跟著一起推。
+ * 一道螢光由左往右刷過紙上第 13 行：全片第一道黃。螢光的四角取自場景光影的 court-0029-ui.json「desktop 3240×2025」
+ * 和「phone 1620×2880」（放大 1.0 時的底圖座標），畫在和底圖同尺寸、同裁切（cover＝slice）的 SVG 上，跟著一起推。
  */
 function Lucas() {
   return (
@@ -796,12 +812,12 @@ function Lucas() {
       <Plate desk={[c29DA, c29DW]} phone={[c29PA, c29PW]} className="rack" />
       <svg
         className="ti-hl29 ti-hl29-desk"
-        viewBox="0 0 2880 1800"
+        viewBox="0 0 3240 2025"
         preserveAspectRatio="xMidYMid slice"
       >
         <polygon
           className="ti-hl29-ink"
-          points="1160.1,1277.8 1332.0,1303.0 1331.1,1308.8 1159.2,1283.4"
+          points="1305.1,1437.5 1498.5,1465.9 1497.5,1472.4 1304.1,1443.8"
         />
       </svg>
       <svg
