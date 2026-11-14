@@ -10,10 +10,10 @@ describe('立繪包', () => {
 
   it('每個 mood 三種尺寸都有圖；變體名稱照 yaml 找檔', () => {
     for (const mood of ['平', '緊', '暖', '硬', '慌', '默', undefined])
-      for (const size of [144, 512, 1024] as const) expect(lucas(mood, size)).toBeTruthy();
+      for (const size of [144, 512, 628, 1256] as const) expect(lucas(mood, size)).toBeTruthy();
     expect(lucas('硬', 144)).toMatch(/hard/);
-    expect(lucas('緊', 1024)).toMatch(/tense-light/);
-    expect(lucas('慌', 1024)).toMatch(/panic/);
+    expect(lucas('緊', 1256)).toMatch(/tense-light/);
+    expect(lucas('慌', 1256)).toMatch(/panic/);
     expect(lucas('默', 512)).toMatch(/silent/);
   });
 
