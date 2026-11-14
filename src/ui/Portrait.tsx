@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import type { Line } from '../engine/episode/schema';
 import { useT } from '../i18n';
 import { LUCAS, lucas, lucasFace } from './cast';
@@ -112,6 +112,19 @@ function useWide() {
   return on;
 }
 
+/** 裝置像素比（瀏覽器縮放、換螢幕都會變）：大立繪不放大超過原圖要用。 */
+function useDpr() {
+  const [dpr, setDpr] = useState(() => globalThis.devicePixelRatio || 1);
+  useEffect(() => {
+    if (!globalThis.matchMedia) return;
+    const mq = matchMedia(`(resolution: ${dpr}dppx)`);
+    const on = () => setDpr(globalThis.devicePixelRatio || 1);
+    mq.addEventListener('change', on);
+    return () => mq.removeEventListener('change', on);
+  }, [dpr]);
+  return dpr;
+}
+
 /**
  * 對話場景旁的盧卡斯大圖（立繪 1256／628，寬螢幕才有；手機不載）。他還沒開口就不出現。
  * 立繪和頭像的畫布不同（立繪補過右肩），srcset 只能放立繪自己的兩個尺寸，不能混頭像的 512。
@@ -119,12 +132,13 @@ function useWide() {
  */
 export function LucasStage({ lines }: { lines: Line[] }) {
   const show = useWide();
+  const dpr = useDpr();
   const said = lines.filter((l) => l.who === LUCAS && !l.mark);
   if (!show || !said.length) return null;
   const now = lucas(said[said.length - 1].mood, 1256);
   const seen = [...new Set(said.map((l) => l.mood))];
   return (
-    <figure className="lucas-stage" aria-hidden>
+    <figure className="lucas-stage" style={{ '--dpr': dpr } as CSSProperties} aria-hidden>
       {seen.map((mood) => {
         const big = lucas(mood, 1256);
         return (
@@ -132,7 +146,7 @@ export function LucasStage({ lines }: { lines: Line[] }) {
             key={mood}
             src={big}
             srcSet={`${lucas(mood, 628)} 628w, ${big} 1256w`}
-            sizes="min(368px, calc((50vw - 472px) * 1.17))"
+            sizes="min(calc((50vw - 472px) * 1.163), calc(45vh * 0.994))"
             alt=""
             decoding="async"
             className={big === now ? 'on' : undefined}
