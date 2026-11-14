@@ -925,29 +925,32 @@ details summary {
 .call .idphoto.fill {
   --w: 60px;
 }
-/* 對話場景旁的盧卡斯大圖：寬螢幕才有，貼在台詞欄左邊、底部對齊。 */
+/* 對話場景旁的盧卡斯大圖：寬螢幕才有（1360px 以下不出現，Portrait.tsx），放在台詞欄右邊、底部對齊。 */
 .lucas-stage {
-  /* 台詞欄寬 880px；大圖放在台詞欄右邊。--w 是舊 4:5 立繪框的寬（人物比例照 v94，最多 300px），
-     1360px 以下不出現（Portrait.tsx）。
-     v95 立繪補完右肩（場景光影 #3，art/lucas-stage-v95）：畫布 1256×1363，舊 1024 框的 (x, y) 在新畫布
-     (x + 47, y + 83)，人物上、左、右各留 8%（x 100–1154）。框貼畫面底，半身全露，下緣讓畫面底切。
-     他的臉朝畫面左邊，所以放台詞欄右邊、看著台詞（設計師 #344，UI 規格 §16）；不鏡像（西裝扣法、頭像方向）。
-     人物左緣（x 100）離台詞欄右緣 8px；人物寬 --w × 1054/1024，右邊離畫面邊至少 24px：
-     --w ≤ (50vw − 440 − 8 − 24) × 1024/1054（≈0.97），取 0.95 留抗鋸齒邊的餘裕。 */
-  --w: min(300px, calc((50vw - 472px) * 0.95));
+  /* v95 立繪（場景光影 #3，art/lucas-stage-v95）：畫布 1256×1363，人物 x 96–1158、頭頂 y 102，框貼畫面底，
+     半身全露，下緣讓畫面底切。他的臉朝畫面左邊，所以放台詞欄（880px）右邊、看著台詞（設計師 #344，UI 規格 §16）；
+     不鏡像（西裝扣法、頭像方向）。
+     v96 寬螢幕放大（設計師 gate 2 @0223ca5）：--k 是畫布一個像素在畫面上多寬，取三者最小——
+     (a) 人物寬 1062 放得進「台詞欄右緣 + 8」到「畫面右緣 − 24」之間（÷1080 留抗鋸齒邊的餘裕）；
+     (b) 人物高 1261（頭頂到畫面底）≤ 畫面高 45%（÷1263 留抗鋸齒邊）；
+     (c) 不放大超過原圖：畫布 1256 寬 × devicePixelRatio ≤ 1256（--dpr 由 Portrait.tsx 給）。
+     框只留人物左右各 8 個畫布像素（x 88–1166）：框的左緣也不進台詞欄，人物左緣（x 96）正好在台詞欄右緣 + 8px。 */
+  --k: min(calc((50vw - 472px) / 1080), calc(45vh / 1263), calc(1px / var(--dpr, 1)));
   position: fixed;
   bottom: 0;
-  left: calc(50% + 440px + 8px - var(--w) * 100 / 1024);
-  width: calc(var(--w) * 1256 / 1024);
-  aspect-ratio: 1256 / 1363;
+  left: calc(50% + 440px + 8px - var(--k) * 8);
+  width: calc(var(--k) * 1078);
+  height: calc(var(--k) * 1363);
   margin: 0;
+  overflow: hidden;
   pointer-events: none;
   z-index: 0;
 }
 .lucas-stage img {
   position: absolute;
-  inset: 0;
-  width: 100%;
+  top: 0;
+  left: calc(var(--k) * -88);
+  width: calc(var(--k) * 1256);
   height: 100%;
   object-fit: contain;
   opacity: 0;
