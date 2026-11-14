@@ -132,7 +132,7 @@ export function LucasStage({ lines }: { lines: Line[] }) {
             key={mood}
             src={big}
             srcSet={`${lucas(mood, 628)} 628w, ${big} 1256w`}
-            sizes="min(368px, calc((50vw - 456px) * 1.19))"
+            sizes="min(368px, calc((50vw - 472px) * 1.17))"
             alt=""
             decoding="async"
             className={big === now ? 'on' : undefined}

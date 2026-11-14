@@ -87,8 +87,9 @@ for (const lang of ['zh', 'en'] as const)
  * 寬螢幕左下角的盧卡斯大立繪（≥1360）。v94 以前立繪包的右肩碰到圖的右緣（4:5 裁切），露出來就是一條直的
  * 切邊（體驗評測 5ad27e3），只好整張往下藏。v95 場景光影 #3 把右肩補完（art/lucas-stage-v95），
  * 畫布四周留白：除了下緣，圖的上、左、右三邊都是全透明，框貼畫面底、半身全露出來。
- * 量：畫面上那張是立繪畫布（1256 或 628，不能是頭像的 512）；三邊沒有不透明像素；人物不出畫面左緣、
- * 不壓到台詞欄；框的下緣就是畫面下緣。
+ * 他的臉朝畫面左邊，所以放台詞欄右邊、看著台詞（設計師 #344，UI 規格 §16）。
+ * 量：畫面上那張是立繪畫布（1256 或 628，不能是頭像的 512）；三邊沒有不透明像素；人物左緣離台詞欄右緣 8px；
+ * 右邊離畫面邊至少 24px；頭頂離「選單」鈕至少 8px；框的下緣就是畫面下緣。
  */
 for (const [w, h] of [
   [1360, 768],
@@ -129,21 +130,34 @@ for (const [w, h] of [
           }
       const r = el.getBoundingClientRect();
       const col = document.querySelector('.scene.dialogue')!.getBoundingClientRect();
+      // 人物最上面的不透明列（頭頂）。
+      let y0 = 0;
+      while (y0 < c.height && ![...Array(c.width).keys()].some((x) => a(x, y0) > 20)) y0++;
+      const menu = [...document.querySelectorAll('button')].find((b) =>
+        /^(選單|Menu)$/.test(b.textContent!.trim()),
+      );
       return {
         natural: [c.width, c.height],
         edge,
         left: r.left + (x0 / c.width) * r.width,
         right: r.left + ((x1 + 1) / c.width) * r.width,
         bottom: r.bottom,
+        top: r.top + (y0 / c.height) * r.height,
         h: innerHeight,
-        colLeft: col.left,
+        w: innerWidth,
+        colRight: col.right,
+        menuBottom: menu ? menu.getBoundingClientRect().bottom : 0,
       };
     });
     const info2 = JSON.stringify(m);
     expect([628, 1256], info2).toContain(m.natural[0]);
     expect(m.natural[0] / m.natural[1], info2).toBeCloseTo(1256 / 1363, 2);
     expect(m.edge, info2).toBeLessThanOrEqual(2);
-    expect(m.left, info2).toBeGreaterThanOrEqual(0);
     expect(m.bottom, info2).toBeCloseTo(m.h, 0);
-    expect(m.right, info2).toBeLessThanOrEqual(m.colLeft - 4);
+    // 他臉朝左：放在台詞欄右邊、看著台詞。人物左緣離台詞欄右緣 8px（±2）。
+    expect(Math.abs(m.left - (m.colRight + 8)), info2).toBeLessThanOrEqual(2);
+    // 外輪廓離畫面右緣至少 24px，不要幾乎碰到（UI 規格 §16）。
+    expect(m.w - m.right, info2).toBeGreaterThanOrEqual(24);
+    // 頭頂和「選單」鈕至少 8px。
+    expect(m.top - m.menuBottom, info2).toBeGreaterThanOrEqual(8);
   });
