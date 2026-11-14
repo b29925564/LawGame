@@ -131,6 +131,9 @@ test('一張圖晚 15 秒到：那個鏡頭不是完整畫面就是純黑', asyn
   });
   await page.clock.runFor(SHOTS[0][1]);
   await expect(main).toHaveAttribute('data-shot', 'blind');
+  // 時鐘是假的：12 秒上限一跳就過，真實時間才幾毫秒，負載高時百葉窗可能還在解。
+  // 等它真的掛上去再往下走，不然它整段純黑、根本沒出現（gate 1 3 workers 偶發）。
+  await expect(page.locator('.ti-shot.shot-blind')).toBeAttached({ timeout: 10_000 });
   await page.clock.runFor(SHOTS[1][1]);
   await expect(main).toHaveAttribute('data-shot', 'court');
   // 法庭還沒到：整格純黑，連暗角都沒有。
