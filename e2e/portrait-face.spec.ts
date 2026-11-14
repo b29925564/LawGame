@@ -84,15 +84,20 @@ for (const lang of ['zh', 'en'] as const)
   });
 
 /**
- * 寬螢幕左下角的盧卡斯大立繪（≥1360）：立繪包的右肩碰到圖的右緣（4:5 裁切），露出來就是一條直的切邊
- * （體驗評測 5ad27e3：原本用遮罩淡掉，看得到灰糊的一條邊）。碰到右緣的那一段要整個在畫面下緣以下。
+ * 寬螢幕左下角的盧卡斯大立繪（≥1360）。v94 以前立繪包的右肩碰到圖的右緣（4:5 裁切），露出來就是一條直的
+ * 切邊（體驗評測 5ad27e3），只好整張往下藏。v95 場景光影 #3 把右肩補完（art/lucas-stage-v95），
+ * 畫布四周留白：除了下緣，圖的上、左、右三邊都是全透明，框貼畫面底、半身全露出來。
+ * 量：畫面上那張是立繪畫布（1256 或 628，不能是頭像的 512）；三邊沒有不透明像素；人物不出畫面左緣、
+ * 不壓到台詞欄；框的下緣就是畫面下緣。
  */
 for (const [w, h] of [
+  [1360, 768],
   [1366, 768],
+  [1512, 900],
   [1440, 900],
   [1920, 1080],
 ] as const)
-  test(`盧卡斯大立繪：右肩的裁切邊不在畫面裡（${w}×${h}）`, async ({ page }, info) => {
+  test(`盧卡斯大立繪：半身完整、沒有切邊（${w}×${h}）`, async ({ page }, info) => {
     test.skip(info.project.name !== 'desktop', '寬螢幕才有');
     await page.setViewportSize({ width: w, height: h });
     await open(page, 'zh');
@@ -100,7 +105,6 @@ for (const [w, h] of [
     await expect(img).toBeVisible();
     await expect(img).toHaveJSProperty('complete', true);
     const m = await img.evaluate(async (el: HTMLImageElement) => {
-      // 用原圖量：右緣那一欄從哪一列開始不透明。
       const src = new Image();
       src.src = el.currentSrc;
       await src.decode();
@@ -109,15 +113,37 @@ for (const [w, h] of [
       c.height = src.naturalHeight;
       const g = c.getContext('2d')!;
       g.drawImage(src, 0, 0);
-      const col = g.getImageData(c.width - 1, 0, 1, c.height).data;
-      let y = 0;
-      while (y < c.height && col[y * 4 + 3] <= 20) y++;
+      const { data } = g.getImageData(0, 0, c.width, c.height);
+      const a = (x: number, y: number) => data[(y * c.width + x) * 4 + 3];
+      let edge = 0;
+      for (let y = 0; y < c.height; y++) edge = Math.max(edge, a(0, y), a(c.width - 1, y));
+      for (let x = 0; x < c.width; x++) edge = Math.max(edge, a(x, 0));
+      // 人物左右最外的不透明欄（alpha > 20）。
+      let x0 = c.width;
+      let x1 = 0;
+      for (let y = 0; y < c.height; y += 2)
+        for (let x = 0; x < c.width; x++)
+          if (a(x, y) > 20) {
+            x0 = Math.min(x0, x);
+            x1 = Math.max(x1, x);
+          }
       const r = el.getBoundingClientRect();
+      const col = document.querySelector('.scene.dialogue')!.getBoundingClientRect();
       return {
-        edge: r.top + (y / c.height) * r.height,
+        natural: [c.width, c.height],
+        edge,
+        left: r.left + (x0 / c.width) * r.width,
+        right: r.left + ((x1 + 1) / c.width) * r.width,
+        bottom: r.bottom,
         h: innerHeight,
-        mask: getComputedStyle(el.parentElement!).maskImage,
+        colLeft: col.left,
       };
     });
-    expect(m.edge, JSON.stringify(m)).toBeGreaterThanOrEqual(m.h);
+    const info2 = JSON.stringify(m);
+    expect([628, 1256], info2).toContain(m.natural[0]);
+    expect(m.natural[0] / m.natural[1], info2).toBeCloseTo(1256 / 1363, 2);
+    expect(m.edge, info2).toBeLessThanOrEqual(2);
+    expect(m.left, info2).toBeGreaterThanOrEqual(0);
+    expect(m.bottom, info2).toBeCloseTo(m.h, 0);
+    expect(m.right, info2).toBeLessThanOrEqual(m.colLeft - 4);
   });

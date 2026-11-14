@@ -12,6 +12,8 @@ align: { head_top: 58, head_cx: 933, head_w: 1099 }
 tool: 線上對話式生圖工具（使用者操作），以 lucas_final.png 當參考、逐句修改指令產生
 date: 2026-10-02
 process: [裁 4:5, Lanczos 放大至 2048×2560, rembg isnet-general-use 去背, 依頭頂與頭寬對齊, WebP q70 輸出 1024/512/144]
+# v95 立繪層（根目錄、628/）：場景光影 #3 補完右肩，畫布 1256×1363，舊 1024 框 (x, y) → (x+47, y+83)，比例 1:1；
+# 512／144 頭像不變（4:5，face_cx 照舊）。來源與量測：/mnt/project-files/art/lucas-stage-v95/README.md。
 default: { plain: v01, tense: tense-light v01, hard: v01, warm: v01, panic: v01, silent: v02 }
 # 臉的中心 x（％，原檔寬）：兩眼眼窩中點和鼻尖的平均。頭像照這個置中，不照頭部輪廓（align.head_cx＝45.6％）：
 # 他多半側四分之三，頭髮置中時臉會偏左 5～10％。新表情要量好補在這裡（cast.test.ts 會擋）。2026-11-13 量。

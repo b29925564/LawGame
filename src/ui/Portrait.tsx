@@ -113,25 +113,26 @@ function useWide() {
 }
 
 /**
- * 對話場景旁的盧卡斯大圖（1024，寬螢幕才有；手機不載）。他還沒開口就不出現。
+ * 對話場景旁的盧卡斯大圖（立繪 1256／628，寬螢幕才有；手機不載）。他還沒開口就不出現。
+ * 立繪和頭像的畫布不同（立繪補過右肩），srcset 只能放立繪自己的兩個尺寸，不能混頭像的 512。
  * 立繪包全組對齊過，換表情時疊起來交叉淡化，不會跳位。
  */
 export function LucasStage({ lines }: { lines: Line[] }) {
   const show = useWide();
   const said = lines.filter((l) => l.who === LUCAS && !l.mark);
   if (!show || !said.length) return null;
-  const now = lucas(said[said.length - 1].mood, 1024);
+  const now = lucas(said[said.length - 1].mood, 1256);
   const seen = [...new Set(said.map((l) => l.mood))];
   return (
     <figure className="lucas-stage" aria-hidden>
       {seen.map((mood) => {
-        const big = lucas(mood, 1024);
+        const big = lucas(mood, 1256);
         return (
           <img
             key={mood}
             src={big}
-            srcSet={`${lucas(mood, 512)} 512w, ${big} 1024w`}
-            sizes="300px"
+            srcSet={`${lucas(mood, 628)} 628w, ${big} 1256w`}
+            sizes="min(368px, calc((50vw - 456px) * 1.19))"
             alt=""
             decoding="async"
             className={big === now ? 'on' : undefined}

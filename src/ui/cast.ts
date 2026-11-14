@@ -3,7 +3,8 @@ import lucasYaml from './cast/lucas/lucas.yaml?raw';
 
 /**
  * 正式立繪（視覺設計師的立繪包，art-bible/cast/lead/pack）。
- * 圖檔照包裡的結構放：根目錄 1024×1280、512/、144/；每個表情用哪一張看 yaml 的 default。
+ * 圖檔照包裡的結構放：根目錄是立繪（1256×1363，v95 右肩補完的畫布）、628/ 是它的一半，
+ * 512/、144/ 是頭像（4:5，只裁臉）；每個表情用哪一張看 yaml 的 default。
  * 補新表情或換預設張，只要把圖和新的 yaml 放進來，這裡不用改。
  */
 export type Expr = 'plain' | 'tense' | 'warm' | 'hard' | 'panic' | 'silent';
@@ -46,10 +47,10 @@ const urls = import.meta.glob<string>('./cast/lucas/**/*.webp', {
   import: 'default',
 });
 
-export type Size = 144 | 512 | 1024;
+export type Size = 144 | 512 | 628 | 1256;
 
 function dir(size: Size) {
-  return size === 1024 ? './cast/lucas/' : `./cast/lucas/${size}/`;
+  return size === 1256 ? './cast/lucas/' : `./cast/lucas/${size}/`;
 }
 
 const picks = defaults(lucasYaml);
