@@ -1553,11 +1553,15 @@ for (const [w, h] of [
 
 // v93 gate 2 第二輪（3f6629d）(a)：上一題在矮版答案列作答，按「下一題」以後，放卡時頁面要捲到看得到卡；
 // 矮版是上一題的版面，換題要從一般版重新量（不然放下的卡整張在答案列下面）。
-for (const [w, h] of [
-  [412, 839],
-  [360, 740],
+// late：放卡那一刻量到的版面是舊的（CI 慢機器上 Cork 量到該留矮版、捲好以後，400ms 那次重量才換回一般版，
+// 卡下緣被一般版答案列蓋 10px：卡 247–549，答案列上緣 539）。這裡把 B 的標籤先往上提 40px 讓放卡那一輪量到「要矮版」，
+// 頁面一開始捲就放回去，重現同一個順序：答案列換版以後要照新的答案列再捲一次。
+for (const [w, h, late] of [
+  [412, 839, false],
+  [360, 740, false],
+  [360, 740, true],
 ] as const)
-  test(`手機 ${w}×${h}（en）：上一題作答後兩格都還有卡，下一題放卡，新卡在頂列和答案列之間`, async ({
+  test(`手機 ${w}×${h}（en）：上一題作答後兩格都還有卡，下一題放卡，新卡在頂列和答案列之間${late ? '（答案列在捲好以後才換版）' : ''}`, async ({
     page,
   }) => {
     test.slow();
@@ -1593,6 +1597,18 @@ for (const [w, h] of [
     const dots = page.locator('.cork-dots button');
     for (let k = 0; !(await card.count()) && k < (await dots.count()); k++)
       await dots.nth(k).click();
+    if (late)
+      await page.evaluate(() => {
+        const st = document.createElement('style');
+        st.textContent = '.cork .slot-tag { translate: 0 -40px !important; }';
+        document.head.append(st);
+        const off = () => {
+          if (scrollY < 1) return;
+          st.remove();
+          removeEventListener('scroll', off);
+        };
+        addEventListener('scroll', off);
+      });
     await card.first().click();
     await settled(page);
     await page.waitForTimeout(900);

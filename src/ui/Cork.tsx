@@ -986,13 +986,22 @@ export function Cork({
     onTight(want);
     return true;
   };
-  const scrollToSlot = (slot: number) => {
+  // 剛放的卡（哪一格、什麼時候）和量位置的那一輪還在不在跑：答案列晚一步才換版時要再看一次（下面的 tight effect）。
+  const justPlaced = useRef<{ slot: number; at: number } | null>(null);
+  const measuring = useRef(false);
+  const scrollToSlot = (slot: number, again = false) => {
     let tries = 0;
-    let swapped = false;
+    // 再看一次（答案列已經換過版）時不再換版，只重量、重捲。
+    let swapped = again;
+    if (!again) justPlaced.current = { slot, at: performance.now() };
+    measuring.current = true;
     const run = () => {
       const board = ref.current;
       const el = focusEls.current[slot];
-      if (!board || !el) return;
+      if (!board || !el) {
+        measuring.current = false;
+        return;
+      }
       // 剛放上的卡先畫在原位一兩格（away），內文還沒展開、高度不是最後的：等它進到光圈再量。
       if (el.classList.contains('away') && tries++ < 12) {
         requestAnimationFrame(run);
@@ -1030,10 +1039,30 @@ export function Cork({
       if (hh > avail) move += toTop;
       else if (toBottom > 0) move += toBottom;
       else if (toTop < 0) move += toTop;
+      measuring.current = false;
       if (Math.abs(move) >= 1) scrollPageTo(window.scrollY + move);
     };
     requestAnimationFrame(run);
   };
+  // 放卡時量的是當下的答案列；之後答案列才換版（慢機器上卡高晚一步定，400ms 那次重量才換，CI 上
+  // 量到矮版捲好、再換回一般版，卡下緣被蓋 10px）：剛放卡的 2 秒內換版就照新的答案列再捲一次。
+  useEffect(() => {
+    const p = justPlaced.current;
+    if (!p || measuring.current || performance.now() - p.at > 2000) return;
+    scrollToSlot(p.slot, true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tight]);
+  // 玩家自己捲過、按過鍵，就不再替他捲回去。
+  useEffect(() => {
+    const off = () => {
+      justPlaced.current = null;
+    };
+    const evs = ['wheel', 'touchstart', 'keydown'] as const;
+    for (const ev of evs) window.addEventListener(ev, off, { passive: true });
+    return () => {
+      for (const ev of evs) window.removeEventListener(ev, off);
+    };
+  }, []);
   // 板子窄到光圈卡上放不下圖釘兩側的小籤（1350px 以下的桌機視窗），也改用手機的板面。
   const compact = phone || (w > 0 && w < ROOMY);
   // 拔掉卡（或重新整理後板上已經有卡）：沒有放卡的捲動可以等，在卡進出光圈的動畫之後再量一次，放得下就回一般版。
