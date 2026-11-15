@@ -558,6 +558,8 @@ export function anchoredClaims(p: Progress): string[] {
 interface GameState {
   mode: Mode;
   progress: Progress;
+  /** 每次讀檔或換局加一；場景元件用它當 key，讀同一場的存檔時才會重新掛載。 */
+  loadId: number;
   /** 從指定集數開新遊戲（預設第 1 集）。 */
   newGame: (episode?: string) => void;
   /** 這一集演完之後接下一集，帶著跨集旗標與倫理紀錄。 */
@@ -718,20 +720,25 @@ export const useEpisode = create<GameState>()((set, get) => {
   return {
     mode: 'title',
     progress: start('ep1'),
+    loadId: 0,
     newGame: (episode = 'ep1') =>
-      set({ mode: 'play', progress: start(episode in episodes ? episode : 'ep1') }),
+      set({
+        mode: 'play',
+        progress: start(episode in episodes ? episode : 'ep1'),
+        loadId: get().loadId + 1,
+      }),
     nextEpisode: () => {
       const p = get().progress;
       const next = followingEpisode(p);
       if (!next || sceneOf(p)) return;
       const progress = carryOver(p, next);
       writeSave('auto', saveLabel(progress), progress);
-      set({ mode: 'play', progress });
+      set({ mode: 'play', progress, loadId: get().loadId + 1 });
     },
     load: (slot) => {
       const f = readSave(slot);
       if (!f) return false;
-      set({ mode: 'play', progress: f.progress });
+      set({ mode: 'play', progress: f.progress, loadId: get().loadId + 1 });
       return true;
     },
     save: (slot) => writeSave(slot, saveLabel(get().progress), get().progress),
@@ -772,7 +779,11 @@ export const useEpisode = create<GameState>()((set, get) => {
         },
       });
     },
-    toTitle: () => set({ mode: 'title' }),
+    toTitle: () => {
+      // 回標題前先自動存檔，「繼續」才不會回到這一場的開頭；原型模式不動玩家的存檔。
+      if (get().mode === 'play') autosave();
+      set({ mode: 'title' });
+    },
     openProto: () => set({ mode: 'proto' }),
 
     ask: (topic) =>
@@ -1023,4 +1034,28 @@ export function evidence(p: Progress): Evidence[] {
     }
   }
   return out;
+}
+
+/** 遊玩中把目前進度寫進自動存檔；標題與原型模式不寫。 */
+export function autosave(): boolean {
+  const { mode, progress } = useEpisode.getState();
+  return mode === 'play' && writeSave('auto', saveLabel(progress), progress);
+}
+
+/**
+ * 關分頁、手機把瀏覽器丟到背景時，系統可能直接回收分頁，
+ * 所以在 pagehide 與 visibilitychange（變成 hidden）時先寫一次自動存檔。
+ * 回傳解除監聽的函式（測試用）。
+ */
+export function autosaveOnHide(win: Window = window): () => void {
+  const onHide = () => void autosave();
+  const onVisibility = () => {
+    if (win.document.visibilityState === 'hidden') autosave();
+  };
+  win.addEventListener('pagehide', onHide);
+  win.document.addEventListener('visibilitychange', onVisibility);
+  return () => {
+    win.removeEventListener('pagehide', onHide);
+    win.document.removeEventListener('visibilitychange', onVisibility);
+  };
 }
