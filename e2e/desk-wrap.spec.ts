@@ -101,3 +101,21 @@ test('連錯的一組連按兩下「連起來」，只扣 1 工時', async ({ pa
   await page.waitForTimeout(1200);
   await expect(hours).toHaveAttribute('aria-label', '剩餘工時 19 小時');
 });
+
+test('自己再拼回同一組連錯的線，「連起來」按不下去；換一種關係就可以（#358）', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await open(page, {
+    link: { cards: ['ride-receipt', 'sophie-home'], relation: '矛盾' },
+    badLinks: 1,
+    badTried: ['ride-receipt|sophie-home|矛盾'],
+  } as Partial<typeof desk>);
+  await page
+    .getByRole('button', { name: /^證據板/ })
+    .first()
+    .click();
+  const connect = page.getByRole('button', { name: '連起來' });
+  await expect(connect).toBeDisabled();
+  if (process.env.SHOT) await page.screenshot({ path: process.env.SHOT });
+  await page.getByRole('radio', { name: '支持' }).click();
+  await expect(connect).toBeEnabled();
+});
