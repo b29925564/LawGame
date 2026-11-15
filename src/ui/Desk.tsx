@@ -1283,8 +1283,10 @@ function Motions({
   useEffect(() => {
     if (!menu || !wide) return;
     const esc = (e: KeyboardEvent) => e.key === 'Escape' && setMenu(null);
+    // 挑證物的抽屜（1024–1439 證據欄沒常駐時）掛在 body 下，不在 .blank-wrap 裡：也算「裡面」，
+    // 不然按下卡片那一刻抽屜就收掉，click 落空，證物格填不上（Issue #360）。抽屜自己的背板和關閉鈕照樣收。
     const away = (e: PointerEvent) =>
-      !(e.target as Element).closest?.('.blank-wrap') && setMenu(null);
+      !(e.target as Element).closest?.('.blank-wrap, .sheet-wrap') && setMenu(null);
     window.addEventListener('keydown', esc);
     window.addEventListener('pointerdown', away);
     return () => {
