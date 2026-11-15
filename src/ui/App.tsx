@@ -55,7 +55,7 @@ function WarmPlate({ episode, scene }: { episode: string; scene: Scene }) {
 }
 
 export function App() {
-  const { mode, progress, advance, toTitle, nextEpisode } = useEpisode();
+  const { mode, progress, loadId, advance, toTitle, nextEpisode } = useEpisode();
   const textScale = useSettings((s) => s.textScale);
   const t = useT();
   // 定場演過的那一場（換地點的場景先放一格場記，再掛介面）。
@@ -162,24 +162,40 @@ export function App() {
           onDone={() => setFramed(scene.id)}
         />
       )}
-      {!beat && scene?.type === 'phone' && <Phone key={scene.id} scene={scene} />}
+      {!beat && scene?.type === 'phone' && <Phone key={`${loadId}:${scene.id}`} scene={scene} />}
       {!beat &&
         scene?.type === 'dialogue' &&
         (scene.photos && progress.step >= scene.steps.length ? (
-          <ScenePhotos key={scene.id} photos={scene.photos} onNext={advance} />
+          <ScenePhotos key={`${loadId}:${scene.id}`} photos={scene.photos} onNext={advance} />
         ) : (
-          <Dialogue key={scene.id} scene={scene} />
+          <Dialogue key={`${loadId}:${scene.id}`} scene={scene} />
         ))}
-      {!beat && scene?.type === 'interview' && <Interview key={scene.id} scene={scene} />}
-      {!beat && scene?.type === 'desk' && <Desk key={scene.id} scene={scene} />}
-      {!beat && scene?.type === 'trial' && <Courtroom key={scene.id} scene={scene} />}
-      {!beat && scene?.type === 'deposition' && <Deposition key={scene.id} scene={scene} />}
-      {!beat && scene?.type === 'negotiation' && <Negotiation key={scene.id} scene={scene} />}
-      {!beat && scene?.type === 'voirdire' && <VoirDire key={scene.id} scene={scene} />}
-      {!beat && scene?.type === 'defense' && <Defense key={scene.id} scene={scene} />}
-      {!beat && scene?.type === 'theory' && <Theory key={scene.id} scene={scene} />}
-      {!beat && scene?.type === 'opening' && <Opening key={scene.id} scene={scene} />}
-      {!beat && scene?.type === 'closing' && <Closing key={scene.id} scene={scene} />}
+      {!beat && scene?.type === 'interview' && (
+        <Interview key={`${loadId}:${scene.id}`} scene={scene} />
+      )}
+      {!beat && scene?.type === 'desk' && <Desk key={`${loadId}:${scene.id}`} scene={scene} />}
+      {!beat && scene?.type === 'trial' && (
+        <Courtroom key={`${loadId}:${scene.id}`} scene={scene} />
+      )}
+      {!beat && scene?.type === 'deposition' && (
+        <Deposition key={`${loadId}:${scene.id}`} scene={scene} />
+      )}
+      {!beat && scene?.type === 'negotiation' && (
+        <Negotiation key={`${loadId}:${scene.id}`} scene={scene} />
+      )}
+      {!beat && scene?.type === 'voirdire' && (
+        <VoirDire key={`${loadId}:${scene.id}`} scene={scene} />
+      )}
+      {!beat && scene?.type === 'defense' && (
+        <Defense key={`${loadId}:${scene.id}`} scene={scene} />
+      )}
+      {!beat && scene?.type === 'theory' && <Theory key={`${loadId}:${scene.id}`} scene={scene} />}
+      {!beat && scene?.type === 'opening' && (
+        <Opening key={`${loadId}:${scene.id}`} scene={scene} />
+      )}
+      {!beat && scene?.type === 'closing' && (
+        <Closing key={`${loadId}:${scene.id}`} scene={scene} />
+      )}
       {scene?.type === 'card' && !last && progress.step === 0 && (
         <IntroThen key={scene.id} episode={opening ? progress.episode : null}>
           <ActCard headline={headline} place={slate} bates={page} onDone={advance} />

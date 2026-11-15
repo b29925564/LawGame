@@ -4,6 +4,18 @@
  * 否則玩家更新後存檔會損毀（製作流程第 8 節，A 類錯誤）。
  */
 
+import { episodes } from '../content';
+import { startClosing } from './episode/closing';
+import { startDefense } from './episode/defense';
+import { startDeposition } from './episode/deposition';
+import { startDesk } from './episode/desk';
+import { startInterview } from './episode/interview';
+import { startNegotiation } from './episode/negotiation';
+import type { Episode, Scene } from './episode/schema';
+import { startOpening, startTheory } from './episode/theory';
+import { startTrial } from './episode/trial';
+import { startVoirDire } from './episode/voirdire';
+
 export interface Progress {
   episode: string;
   scene: number;
@@ -24,6 +36,8 @@ export interface SaveFile {
   version: number;
   savedAt: number;
   label: string;
+  /** 存檔當下的場景 id：劇本增刪場景後，靠它找回原本的場景（舊存檔沒有，選填所以不必升版）。 */
+  sceneId?: string;
   progress: Progress;
 }
 
@@ -90,9 +104,112 @@ export function migrate(raw: unknown): SaveFile | null {
     if (!step) return null;
     d = step(d);
   }
-  const p = d.progress;
-  if (!p || typeof p.episode !== 'string' || typeof p.scene !== 'number') return null;
-  return d;
+  return check(d);
+}
+
+const isObj = (v: unknown): v is Record<string, unknown> =>
+  !!v && typeof v === 'object' && !Array.isArray(v);
+const isStrs = (v: unknown): v is string[] =>
+  Array.isArray(v) && v.every((x) => typeof x === 'string');
+const isIndex = (v: unknown): v is number => Number.isInteger(v) && (v as number) >= 0;
+
+/** 場景的起始狀態，只拿來比對欄位形狀；需要前情的場景用空的陪審團代替。 */
+function fresh(s: Scene): unknown {
+  switch (s.type) {
+    case 'interview':
+      return startInterview(s);
+    case 'desk':
+      return startDesk(s);
+    case 'trial':
+      return startTrial(s);
+    case 'deposition':
+      return startDeposition(s);
+    case 'voirdire':
+      return startVoirDire(s);
+    case 'theory':
+      return startTheory();
+    case 'opening':
+      return startOpening();
+    case 'defense':
+      return startDefense({});
+    case 'closing':
+      return startClosing({});
+    case 'negotiation':
+      return startNegotiation(s);
+    default:
+      return null;
+  }
+}
+
+/** 起始狀態是陣列的欄位，存檔裡有的話也必須是陣列（舊存檔可能少欄位，少了不算壞）。 */
+function shapeOk(s: Scene, st: Record<string, unknown>): boolean {
+  let init: unknown;
+  try {
+    init = fresh(s);
+  } catch {
+    return true;
+  }
+  if (!isObj(init)) return true;
+  return Object.entries(init).every(
+    ([k, v]) => !Array.isArray(v) || st[k] === undefined || Array.isArray(st[k]),
+  );
+}
+
+/** 電話與對話場景的最後一個合法步數；對話演完後的文件照片頁停在 steps.length。 */
+function lastStep(s: Scene | undefined): number | null {
+  if (!s || (s.type !== 'phone' && s.type !== 'dialogue')) return null;
+  return s.type === 'dialogue' && s.photos ? s.steps.length : s.steps.length - 1;
+}
+
+/**
+ * 遷移後的存檔逐欄檢查，壞掉的當作沒有存檔，免得讀進來整個畫面當掉。
+ * 同時用 sceneId 找回場景、把步數夾回範圍內、丟掉超出選項的選擇。
+ */
+function check(d: SaveFile): SaveFile | null {
+  const p = d.progress as unknown;
+  if (typeof d.label !== 'string' || !Number.isFinite(d.savedAt) || !isObj(p)) return null;
+  if (d.sceneId !== undefined && typeof d.sceneId !== 'string') return null;
+  if (typeof p.episode !== 'string' || !Object.hasOwn(episodes, p.episode)) return null;
+  const ep: Episode = episodes[p.episode as keyof typeof episodes];
+  if (!isIndex(p.scene) || !isIndex(p.step) || !isStrs(p.cards)) return null;
+  const flags = p.flags === undefined ? [] : p.flags;
+  const ethics = p.ethics === undefined ? [] : p.ethics;
+  if (!isStrs(flags) || !isStrs(ethics)) return null;
+  const { choices, scenes } = p;
+  if (!isObj(choices)) return null;
+  if (!isObj(scenes) || !Object.values(scenes).every(isObj)) return null;
+  const byId = new Map(ep.scenes.map((s, i) => [s.id, i]));
+  // 劇本增刪場景後索引會偏：以 sceneId 為準，找不到才退回原索引。
+  let scene = p.scene;
+  if (d.sceneId && ep.scenes[scene]?.id !== d.sceneId) scene = byId.get(d.sceneId) ?? scene;
+  // 大於等於場景數＝這一集已經演完（sceneOf 回 null），遊戲本來就這樣讀，不算壞檔，也不改它。
+  for (const [id, st] of Object.entries(scenes as Record<string, Record<string, unknown>>)) {
+    const s = ep.scenes[byId.get(id) ?? -1];
+    if (s && !shapeOk(s, st)) return null;
+  }
+  const last = lastStep(ep.scenes[scene]);
+  const step = last === null ? p.step : Math.min(p.step, last);
+  // 個別壞掉的選擇只丟掉那一筆，不廢掉整個存檔（原本也讀不到它）。
+  // 指到本集場景的選擇，必須是那一場真的有的選擇步、選項也在範圍內；指到別集的留著無害。
+  const kept = Object.entries(choices).filter(([k, v]) => {
+    if (!isIndex(v)) return false;
+    const [id, i] = k.split(':');
+    const s = ep.scenes[byId.get(id) ?? -1];
+    if (!s) return true;
+    const st = 'steps' in s ? s.steps[Number(i)] : undefined;
+    return st?.do === 'choose' && v < st.options.length;
+  });
+  return {
+    ...d,
+    progress: {
+      ...(p as unknown as Progress),
+      scene,
+      step,
+      flags,
+      ethics,
+      choices: Object.fromEntries(kept) as Record<string, number>,
+    },
+  };
 }
 
 const key = (slot: Slot) => `lawgame-ep-${slot}`;
@@ -116,7 +233,10 @@ export function writeSave(
   progress: Progress,
   storage: Storage | undefined = globalThis.localStorage,
 ): boolean {
-  const file: SaveFile = { version: SAVE_VERSION, savedAt: Date.now(), label, progress };
+  const sceneId = Object.hasOwn(episodes, progress.episode)
+    ? episodes[progress.episode as keyof typeof episodes].scenes[progress.scene]?.id
+    : undefined;
+  const file: SaveFile = { version: SAVE_VERSION, savedAt: Date.now(), label, sceneId, progress };
   try {
     storage?.setItem(key(slot), JSON.stringify(file));
     return !!storage;

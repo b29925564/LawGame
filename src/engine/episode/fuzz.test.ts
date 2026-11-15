@@ -28,7 +28,7 @@ import {
   voirDireState,
 } from '../game';
 import { closingReplay, ledger } from '../ledger';
-import type { Progress } from '../save';
+import { migrate, SAVE_VERSION, type Progress } from '../save';
 import type { Relation, Tag } from '../schema';
 import * as closing from './closing';
 import * as depo from './deposition';
@@ -268,6 +268,17 @@ function checkLedger(p: Progress) {
   }
 }
 
+/** 每換一場存一次檔再讀回來：真正玩出來的進度不能被讀檔檢查當成壞檔，也不能被改動。 */
+function roundTrip(p: Progress) {
+  const raw = JSON.parse(
+    JSON.stringify({ version: SAVE_VERSION, savedAt: 1, label: 'x', progress: p }),
+  );
+  const back = migrate(raw)?.progress;
+  if (!back) throw new Error('玩出來的進度讀檔時被當成壞檔');
+  if (JSON.stringify(back) !== JSON.stringify(raw.progress))
+    throw new Error('玩出來的進度讀檔後被改動了');
+}
+
 interface Run {
   seed: number;
   steps: number;
@@ -291,7 +302,10 @@ function play(seed: number, episode = 'ep1'): Run {
       if (!s) return run;
       const here = `${s.id}#${p.step}`;
       if (here !== where) {
-        if (run.scenes.at(-1) !== s.id) run.scenes.push(s.id);
+        if (run.scenes.at(-1) !== s.id) {
+          run.scenes.push(s.id);
+          roundTrip(p);
+        }
         where = here;
         stall = 0;
       }
