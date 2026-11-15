@@ -182,8 +182,8 @@ function check(d: SaveFile): SaveFile | null {
   // 劇本增刪場景後索引會偏：以 sceneId 為準，找不到才退回原索引。
   let scene = p.scene;
   if (d.sceneId && ep.scenes[scene]?.id !== d.sceneId) scene = byId.get(d.sceneId) ?? scene;
-  // 等於場景數＝這一集已經演完。
-  if (scene > ep.scenes.length) return null;
+  // 等於場景數＝這一集已經演完；超過的也當演完（遊戲本來就這樣讀），不算壞檔。
+  scene = Math.min(scene, ep.scenes.length);
   for (const [id, st] of Object.entries(scenes as Record<string, Record<string, unknown>>)) {
     const s = ep.scenes[byId.get(id) ?? -1];
     if (s && !shapeOk(s, st)) return null;

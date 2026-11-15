@@ -67,7 +67,6 @@ describe('存檔檢查', () => {
     ['步數是字串', { step: '0' }],
     ['不認得的集數', { episode: 'ep9' }],
     ['原型鏈上的鍵', { episode: 'constructor' }],
-    ['場景超過一集的長度', { scene: ep1.length + 1 }],
   ])('%s的存檔當作沒有', (_, p) => {
     expect(read(file(p))).toBeNull();
   });
@@ -89,6 +88,8 @@ describe('存檔檢查', () => {
   it('演完的一集（場景＝場景數）照樣讀得回來', () => {
     const f = read(file({ scene: ep1.length, step: 0, choices: {} }));
     expect(f?.progress.scene).toBe(ep1.length);
+    // 超過場景數也當演完。
+    expect(read(file({ scene: 999, step: 0, choices: {} }))?.progress.scene).toBe(ep1.length);
   });
 
   it('劇本增刪場景後，靠場景 id 找回原本的場景', () => {
