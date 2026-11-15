@@ -2,6 +2,8 @@ import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
   testDir: 'e2e',
+  // WebKit 冒煙只由 playwright.webkit.config.ts 跑。
+  testIgnore: ['webkit-smoke.spec.ts'],
   use: { baseURL: 'http://localhost:4173' },
   projects: [
     { name: 'chromium', use: { ...devices['Pixel 7'] } },

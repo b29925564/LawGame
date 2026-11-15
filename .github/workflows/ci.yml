@@ -69,12 +69,40 @@ jobs:
           npx playwright install --with-deps chromium
           npx playwright test --shard=${{ matrix.shard }}/4
 
+  # WebKit 冒煙（第一級支援：中文 100%、桌機 1366、手機 390）：Safari 只有 WebKit，Chromium 測不到。
+  # 只跑第 1 集整集通關＋第 2 集每種場景各一次，和 e2e 分片同時跑，不拉長 CI。
+  webkit:
+    needs: static
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-webkit-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+      - name: WebKit 冒煙
+        env:
+          PW_PREBUILT: '1'
+        run: |
+          npx playwright install --with-deps webkit
+          npx playwright test -c playwright.webkit.config.ts
+
   # 合併保護看的是這個名字：上面全部綠才綠。
   check:
-    needs: [static, e2e]
+    needs: [static, e2e, webkit]
     if: always()
     runs-on: ubuntu-24.04
     steps:
       - name: 全部通過
         run: |
-          [ "${{ needs.static.result }}" = success ] && [ "${{ needs.e2e.result }}" = success ]
+          [ "${{ needs.static.result }}" = success ] && [ "${{ needs.e2e.result }}" = success ] && [ "${{ needs.webkit.result }}" = success ]
