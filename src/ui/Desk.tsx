@@ -926,6 +926,7 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
           onZoom={setZoomed}
           misses={st.badLinks}
           onMissDone={settle}
+          tried={desk.triedLink(st)}
           tight={tight}
           onTight={setTight}
         />
