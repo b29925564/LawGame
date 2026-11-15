@@ -29,6 +29,8 @@ export interface DeskState {
   found: string[];
   /** 連錯的次數；每次扣 1 工時。 */
   badLinks: number;
+  /** 連錯過的組合（排序過的兩張卡 id 加關係）。同一組不能再連一次，和疑問的 tried 一樣。舊存檔沒有這欄。 */
+  badTried?: string[];
   linkNote: string | null;
   /** 上一次連錯錯在哪：兩張卡根本沒關係（cards），或卡對了但關係選錯（relation）。 */
   linkMiss?: 'cards' | 'relation' | null;
@@ -186,8 +188,17 @@ export function setLinkRelation(st: DeskState, relation: Relation): DeskState {
   return { ...st, link: { ...st.link, relation }, linkNote: null };
 }
 
+const linkKey = (cards: string[], relation: Relation) =>
+  `${[...cards].sort().join('|')}|${relation}`;
+
+/** 現在擺著的兩張卡和關係，之前已經連錯過。 */
+export function triedLink(st: DeskState): boolean {
+  const { cards, relation } = st.link;
+  return !!relation && cards.length === 2 && !!st.badTried?.includes(linkKey(cards, relation));
+}
+
 export function canConnect(st: DeskState): boolean {
-  return st.hours >= 1 && st.link.cards.length === 2 && !!st.link.relation;
+  return st.hours >= 1 && st.link.cards.length === 2 && !!st.link.relation && !triedLink(st);
 }
 
 /**
@@ -218,6 +229,7 @@ export function connect(s: DeskScene, st: DeskState): DeskState {
   return {
     ...next,
     badLinks: next.badLinks + 1,
+    badTried: [...(next.badTried ?? []), linkKey(cards, relation!)],
     linkMiss: pair ? 'relation' : 'cards',
     linkNote: '這兩張卡連不起來，至少不是這種關係。白花了 1 工時。',
   };

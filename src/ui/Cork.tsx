@@ -592,6 +592,7 @@ function String_({
   sagPx = SAG,
   fallPx = 0,
   opacity,
+  tried = false,
 }: {
   from: [number, number];
   to: [number, number];
@@ -602,6 +603,8 @@ function String_({
   /** B 端從圖釘鬆脫後往下掉的距離（px）。 */
   fallPx?: number;
   opacity?: number;
+  /** 這一組之前連錯過：鉛筆色，不分關係（設計師 #368）。 */
+  tried?: boolean;
 }) {
   const px = (v: number) => (v / Math.max(h, 1)) * 100;
   const end: [number, number] = [to[0], to[1] + px(fallPx)];
@@ -609,8 +612,9 @@ function String_({
   // 二次曲線中點的下垂是控制點偏移的一半。
   const my = (from[1] + end[1]) / 2 + px(sagPx) * 2;
   const d = `M${from[0]} ${from[1]} Q${mx} ${my} ${end[0]} ${end[1]}`;
-  const kind =
-    relation === '矛盾'
+  const kind = tried
+    ? 'tried'
+    : relation === '矛盾'
       ? 'contra'
       : relation === '支持'
         ? 'support'
@@ -908,6 +912,7 @@ export function Cork({
   onZoom,
   misses = 0,
   onMissDone,
+  tried = false,
   tight = false,
   onTight,
 }: {
@@ -933,6 +938,8 @@ export function Cork({
   /** 連錯的次數：一變多就演「線沒釘住」，演完叫 onMissDone 把兩張卡放回原位。 */
   misses?: number;
   onMissDone?: () => void;
+  /** 光圈裡這一組（兩張卡加關係）之前連錯過：線直接畫成沒釘住的靜態樣子，不重播、卡不退回。 */
+  tried?: boolean;
   /** 答案列現在是不是矮版（Desk.tsx 換 class）；放好的長卡比頂列到答案列的空間高時 Cork 要它換矮版（onTight）。 */
   tight?: boolean;
   onTight?: (tight: boolean) => void;
@@ -1472,7 +1479,13 @@ export function Cork({
   return (
     <div
       ref={ref}
-      className={['cork', compact && 'compact', miss && 'missing', settled && 'settled']
+      className={[
+        'cork',
+        compact && 'compact',
+        miss && 'missing',
+        tried && !miss && 'tried',
+        settled && 'settled',
+      ]
         .filter(Boolean)
         .join(' ')}
       style={
@@ -1510,7 +1523,21 @@ export function Cork({
         ) : (
           !miss &&
           focus[0] &&
-          focus[1] && <String_ from={abFrom} to={abTo} relation={relation} h={h} />
+          focus[1] &&
+          (tried ? (
+            // 連錯動畫 drop 階段的終點姿勢（下垂加深、B 端鬆脫），但不透明、不動。
+            <String_
+              from={abFrom}
+              to={abTo}
+              relation={relation}
+              h={h}
+              sagPx={SAG + 60}
+              fallPx={90}
+              tried
+            />
+          ) : (
+            <String_ from={abFrom} to={abTo} relation={relation} h={h} />
+          ))
         )}
       </svg>
       {placed

@@ -19,6 +19,12 @@ const linkUp = (st: desk.DeskState, cards: string[], r: Relation) => {
   return desk.connect(investigate, desk.setLinkRelation(st, r));
 };
 
+/** 擺好兩張卡和關係，不按「連起來」。 */
+const linkUpNoConnect = (st: desk.DeskState, cards: string[], r: Relation) => {
+  for (const c of cards) st = desk.toggleLinkCard(st, c);
+  return desk.setLinkRelation(st, r);
+};
+
 describe('訪談', () => {
   it('話題問過就不再出現，卡片要湊齊才解鎖新話題', () => {
     let st = interview.startInterview(meet);
@@ -111,6 +117,9 @@ describe('桌面調查', () => {
     expect(st.hours).toBe(hours - 1);
     // 卡對了、關係錯：回饋要跟「兩張卡沒關係」分得開（試玩回報）。
     expect(st.linkMiss).toBe('relation');
+    // 同一組再按一次（連按兩下）不再扣工時。
+    expect(desk.canConnect(st)).toBe(false);
+    expect(desk.connect(investigate, st).hours).toBe(hours - 1);
     st = desk.setLinkRelation(st, '支持');
     st = desk.connect(investigate, st);
     expect(st.found).toEqual(['l-called']);
@@ -125,6 +134,30 @@ describe('桌面調查', () => {
     expect(st.link).toEqual({ cards: [], relation: null });
     expect(st.linkNote).toBe(note);
     expect(st.linkMiss).toBe('cards');
+  });
+
+  it('自己再拼回同一組連錯的線（卡片順序不同也算）不能連，換一種關係就可以', () => {
+    let st = desk.commission(investigate, play(), 'job-watch', ['ethan-message']);
+    st = desk.commission(investigate, st, 'job-ride', ['ethan-ride']);
+    const hours = st.hours;
+    st = linkUp(st, ['watch-notice', 'ride-receipt'], '矛盾');
+    st = desk.releaseLink(st);
+    expect(st.hours).toBe(hours - 1);
+    st = desk.toggleLinkCard(st, 'ride-receipt');
+    st = desk.toggleLinkCard(st, 'watch-notice');
+    st = desk.setLinkRelation(st, '矛盾');
+    expect(desk.triedLink(st)).toBe(true);
+    expect(desk.canConnect(st)).toBe(false);
+    expect(desk.connect(investigate, st).hours).toBe(hours - 1);
+    st = desk.setLinkRelation(st, '縮小範圍');
+    expect(desk.canConnect(st)).toBe(true);
+    st = desk.connect(investigate, st);
+    expect(st.hours).toBe(hours - 2);
+    // 舊存檔沒有 badTried：照樣能連。
+    const old = { ...desk.releaseLink(st), badTried: undefined };
+    expect(desk.canConnect(linkUpNoConnect(old, ['watch-notice', 'ride-receipt'], '矛盾'))).toBe(
+      true,
+    );
   });
 
   it('疑問要拿發現回答，全對才確認，錯了照樣扣工時而且不說哪裡錯', () => {
