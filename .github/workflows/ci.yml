@@ -96,6 +96,12 @@ jobs:
         run: |
           npx playwright install --with-deps webkit
           npx playwright test -c playwright.webkit.config.ts
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: webkit-results
+          path: test-results
+          retention-days: 7
 
   # 合併保護看的是這個名字：上面全部綠才綠。
   check:
