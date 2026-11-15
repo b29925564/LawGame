@@ -1283,8 +1283,10 @@ function Motions({
   useEffect(() => {
     if (!menu || !wide) return;
     const esc = (e: KeyboardEvent) => e.key === 'Escape' && setMenu(null);
+    // 挑證物的抽屜（1024–1439 證據欄沒常駐時）掛在 body 下，不在 .blank-wrap 裡：也算「裡面」，
+    // 不然按下卡片那一刻抽屜就收掉，click 落空，證物格填不上（Issue #360）。抽屜自己的背板和關閉鈕照樣收。
     const away = (e: PointerEvent) =>
-      !(e.target as Element).closest?.('.blank-wrap') && setMenu(null);
+      !(e.target as Element).closest?.('.blank-wrap, .sheet-wrap') && setMenu(null);
     window.addEventListener('keydown', esc);
     window.addEventListener('pointerdown', away);
     return () => {
@@ -1706,14 +1708,27 @@ function FoundNote({
 function WrapButton({ hours, open, onWrap }: { hours: number; open: number; onWrap: () => void }) {
   const t = useT();
   const [armed, setArmed] = useState(false);
+  // 剛換成定案鈕的 400ms 內不收點擊：雙擊「結束調查」的第二下會落在定案鈕上，結束調查又不能復原（Issue #350）。
+  const [ready, setReady] = useState(false);
   useEffect(() => {
     if (!armed) return;
+    const settle = setTimeout(() => setReady(true), 400);
     const timer = setTimeout(() => setArmed(false), 4000);
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(settle);
+      clearTimeout(timer);
+      setReady(false);
+    };
   }, [armed]);
   // 第二下是定案鈕：寫出還剩多少工時、多少疑問沒確認（UX 決策代價規格三）。
+  // 兩個狀態給不同的 key：React 不沿用同一個按鈕節點，雙擊的第二下不會被當成按了新的按鈕。
   return armed ? (
-    <button className="commit wide armed" onClick={onWrap}>
+    <button
+      key="armed"
+      className="commit wide armed"
+      aria-disabled={!ready}
+      onClick={() => ready && onWrap()}
+    >
       <Lock />
       {t('確定結束')}{' '}
       <span className="cost">
@@ -1721,7 +1736,7 @@ function WrapButton({ hours, open, onWrap }: { hours: number; open: number; onWr
       </span>
     </button>
   ) : (
-    <button className="wide" onClick={() => setArmed(true)}>
+    <button key="idle" className="wide" onClick={() => setArmed(true)}>
       {t('結束調查')}
     </button>
   );
