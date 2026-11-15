@@ -458,9 +458,10 @@ async function prepare(page: Page) {
   await page.getByRole('button', { name: /就這樣準備/ }).click();
 }
 
-test('第 1 集可以一路從冷開場玩到判決', async ({ page }) => {
+test('第 1 集可以一路從冷開場玩到判決', async ({ page }, info) => {
   // 整集玩完單跑約 62 秒；CI 並行時偶發超過 90 秒（gate 1），這一條單獨放寬。
-  test.setTimeout(150_000);
+  // WebKit 冒煙（playwright.webkit.config.ts）在 CI 上整集要 2.5 分鐘以上，再放寬。
+  test.setTimeout(info.project.name.startsWith('webkit') ? 360_000 : 150_000);
   await playToRachelLast(page);
   // 不出示論點 D：瑞秋不會援引緘默權，照常走到辯方證人和結辯。
   await page.getByRole('button', { name: '詰問完畢' }).click();
