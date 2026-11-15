@@ -120,6 +120,11 @@
   stroke: #cfccc4;
   stroke-width: 2px;
 }
+/* 這一組之前連錯過（#368）：線沒釘住，鉛筆色。 */
+.cork-string.tried path {
+  stroke: var(--pencil);
+  stroke-width: 2px;
+}
 /* 兩張卡放上去、還沒選關係：一條鬆的白線。 */
 .cork-string.pending path {
   stroke: #e7e4dc;
@@ -205,7 +210,8 @@
 .cork-focus.gone {
   opacity: 0;
 }
-.cork.missing :is(.cork-knot, .cork-zoom) {
+.cork.missing :is(.cork-knot, .cork-zoom),
+.cork.tried :is(.cork-knot, .cork-zoom) {
   opacity: 0;
   pointer-events: none;
 }
