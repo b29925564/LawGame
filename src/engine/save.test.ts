@@ -55,7 +55,6 @@ describe('存檔檢查', () => {
     ['卡片是 null', { cards: null }],
     ['卡片不是字串', { cards: [1] }],
     ['選擇是 null', { choices: null }],
-    ['選擇的值不是數字', { choices: { a: 'x' } }],
     ['旗標不是陣列', { flags: 'x' }],
     ['倫理紀錄是 null', { ethics: null }],
     ['場景狀態是字串', { scenes: { 'meet-ethan': 'x' } }],
@@ -125,6 +124,9 @@ describe('存檔檢查', () => {
       }),
     );
     expect(f?.progress.choices).toEqual({});
+    // 值不是索引的那一筆丟掉，存檔照讀。
+    const odd = read(file({ choices: { a: 'x', 'cold-open': { 3: 0 } } }));
+    expect(odd?.progress.choices).toEqual({});
     const ok = read(file({}));
     expect(ok?.progress.choices).toEqual(progress.choices);
   });

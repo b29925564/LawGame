@@ -176,7 +176,7 @@ function check(d: SaveFile): SaveFile | null {
   const ethics = p.ethics === undefined ? [] : p.ethics;
   if (!isStrs(flags) || !isStrs(ethics)) return null;
   const { choices, scenes } = p;
-  if (!isObj(choices) || !Object.values(choices).every(isIndex)) return null;
+  if (!isObj(choices)) return null;
   if (!isObj(scenes) || !Object.values(scenes).every(isObj)) return null;
   const byId = new Map(ep.scenes.map((s, i) => [s.id, i]));
   // 劇本增刪場景後索引會偏：以 sceneId 為準，找不到才退回原索引。
@@ -190,8 +190,10 @@ function check(d: SaveFile): SaveFile | null {
   }
   const last = lastStep(ep.scenes[scene]);
   const step = last === null ? p.step : Math.min(p.step, last);
-  // 指到本集場景的選擇，必須是那一場真的有的選擇步、選項也在範圍內；其他的留著無害。
-  const kept = Object.entries(choices as Record<string, number>).filter(([k, v]) => {
+  // 個別壞掉的選擇只丟掉那一筆，不廢掉整個存檔（原本也讀不到它）。
+  // 指到本集場景的選擇，必須是那一場真的有的選擇步、選項也在範圍內；指到別集的留著無害。
+  const kept = Object.entries(choices).filter(([k, v]) => {
+    if (!isIndex(v)) return false;
     const [id, i] = k.split(':');
     const s = ep.scenes[byId.get(id) ?? -1];
     if (!s) return true;
@@ -206,7 +208,7 @@ function check(d: SaveFile): SaveFile | null {
       step,
       flags,
       ethics,
-      choices: Object.fromEntries(kept),
+      choices: Object.fromEntries(kept) as Record<string, number>,
     },
   };
 }
