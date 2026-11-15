@@ -96,6 +96,11 @@ jobs:
         run: |
           npx playwright install --with-deps webkit
           npx playwright test -c playwright.webkit.config.ts
+      - name: 失敗時印出畫面快照與截圖（artifact 下載不到時用）
+        if: failure()
+        run: |
+          for f in test-results/*/error-context.md; do echo "=== $f"; cat "$f"; done
+          for f in test-results/*/test-failed-1.png; do echo "=== PNG $f"; base64 -w0 "$f"; echo; done
       - if: failure()
         uses: actions/upload-artifact@v4
         with:
