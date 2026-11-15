@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { autosaveOnHide } from './engine/game';
 import { restoreLang } from './i18n';
 import { App } from './ui/App';
+import { ErrorBoundary } from './ui/ErrorBoundary';
 import { restoreA11y } from './ui/a11y';
 import './ui/styles.css';
 import './ui/court.css';
@@ -14,6 +15,8 @@ autosaveOnHide();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    <ErrorBoundary>
+      <App />
+    </ErrorBoundary>
   </StrictMode>,
 );
