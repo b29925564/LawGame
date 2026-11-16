@@ -25,6 +25,8 @@
 自動存檔: Autosave
 存檔 {n}: Slot {n}
 空: Empty
+讀不出來: Can't be read
+自動存檔讀不出來，沒辦法從上次的地方繼續。: Your autosave can't be read, so you can't pick up where you left off.
 選單: Menu
 筆錄: Transcript
 收起筆錄: Hide transcript

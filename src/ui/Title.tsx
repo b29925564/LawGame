@@ -3,7 +3,7 @@ import { episodes } from '../content';
 import { useEpisode } from '../engine/game';
 import { useLang, useT } from '../i18n';
 import { LangSwitch } from './lang';
-import { readSave, SLOTS, type Slot } from '../engine/save';
+import { readSave, SLOTS, unreadable, type Slot } from '../engine/save';
 import { unlockAudio } from '../engine/sound';
 import { Credits } from './Credits';
 import { fitLine } from './prose';
@@ -60,6 +60,9 @@ export function SlotList({
                     {/* 時間整組不斷開（「10:20 AM」的 AM 不單獨一行）。 */}
                     <span className="when">{when(f.savedAt, lang)}</span>
                   </>
+                ) : unreadable(slot) ? (
+                  // 有資料但讀不出來（壞掉、或是比這一版新的存檔）：不說「空」，免得玩家以為進度不見了（Issue #364）。
+                  t('讀不出來')
                 ) : (
                   t('空')
                 )}
@@ -90,6 +93,8 @@ export function Title() {
   const [credits, setCredits] = useState(false);
   // 標題畫面每次進來才讀一次：讀檔要解析整份 JSON，不必每次 render 都做（Issue #388 P5）。
   const [auto] = useState(() => readSave('auto'));
+  // 自動存檔有資料卻讀不出來：沒有「繼續」，要說一聲（Issue #364）。
+  const [broken] = useState(() => !auto && unreadable('auto'));
   // 被畫面錯誤送回來的那一次才說明；讀過就清掉，下次回標題不再出現。
   const [fault] = useState(() => useFault.getState().fault);
   useEffect(() => {
@@ -122,6 +127,11 @@ export function Title() {
         </h1>
       </div>
       <div className="title-foot">
+        {broken && (
+          <div className="title-note">
+            <p role="status">{fitLine(t('自動存檔讀不出來，沒辦法從上次的地方繼續。'))}</p>
+          </div>
+        )}
         {fault && (
           <div className="title-note">
             <p role="status">
