@@ -9,6 +9,7 @@ import { IdPhoto } from './IdPhoto';
 import { lookOf } from './jury/JuryBox';
 import { Tbd } from './jury/Tbd';
 import { useScope } from './lang';
+import { Stamp } from './Marks';
 import { Speech } from './Portrait';
 import { Shell, Tabs } from './Shell';
 import { CourtCast } from './jury/CourtFace';
@@ -212,7 +213,11 @@ function VoirDireScreen({ scene }: { scene: VoirDireScene }) {
     <section className="panel prof" aria-label={t(picked.name, scope)}>
       <IdPhoto who={picked.name} size={96} look={lookOf(episode, picked.id)} />
       <div>
-        <h3>{t(picked.name, scope)}</h3>
+        {/* 有因迴避剛被駁回：名字那一行右邊蓋聲請被駁回時用的同一個章，問過他之後拿掉（設計師 #393）。 */}
+        <div className="prof-name">
+          <h3>{t(picked.name, scope)}</h3>
+          {vd.deniedNow(st, picked.id) && <Stamp text="駁回" sm still />}
+        </div>
         <p className="sub">
           {fitLine(`${t(picked.job, scope)}${t('・')}${t(picked.sheet, scope)}`)}
         </p>

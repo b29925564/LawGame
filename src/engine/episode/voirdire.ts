@@ -80,11 +80,15 @@ export function challenge(s: VoirDireScene, st: VoirDireState, id: string): Voir
   };
 }
 
+/** 這個人的有因迴避剛被駁回、而且之後還沒問過他（人物卡蓋「駁回」章、按鈕停用的那段期間）。 */
+export function deniedNow(st: VoirDireState, id: string): boolean {
+  const was = st.denied?.[id];
+  return st.seated === null && was !== undefined && was === st.asked.includes(id);
+}
+
 /** 還能不能對這個人聲請有因迴避：被駁回過、而且之後沒有新的提問，就不行。 */
 export function canChallenge(st: VoirDireState, id: string): boolean {
-  if (st.seated !== null || gone(st).includes(id)) return false;
-  const was = st.denied?.[id];
-  return was === undefined || was !== st.asked.includes(id);
+  return st.seated === null && !gone(st).includes(id) && !deniedNow(st, id);
 }
 
 export function canStrike(s: VoirDireScene, st: VoirDireState, id: string): boolean {
