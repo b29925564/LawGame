@@ -12,9 +12,11 @@ on:
 permissions:
   contents: read
 
+# PR 推新的就取消舊的。main 不取消正在跑的全站掃描（約 30 分鐘）：合併一密，每一輪都被下一次合併取消，
+# 11-16 main 連續 20 輪全被取消、一輪都沒跑完。改成跑完再跑最新的那一輪（中間排隊的會被更新的取代）。
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   static:
