@@ -38,6 +38,13 @@ export interface SaveFile {
   label: string;
   /** 存檔當下的場景 id：劇本增刪場景後，靠它找回原本的場景（舊存檔沒有，選填所以不必升版）。 */
   sceneId?: string;
+  /**
+   * 每一筆選擇當時選的那句選項原文（鍵同 progress.choices）。劇本在選擇步前插台詞、或在選項中間插新選項，
+   * 索引會錯位：讀檔時靠原文找回同一句。選填，舊存檔沒有就照索引讀。
+   */
+  picks?: Record<string, string>;
+  /** 存檔當下那一步的原文（台詞、提示或第一個選項）：劇本在前面插台詞時，靠它找回同一步。選填。 */
+  stepText?: string;
   progress: Progress;
 }
 
@@ -95,7 +102,7 @@ const migrations: Record<number, (d: SaveFile) => SaveFile> = {
   }),
 };
 
-export function migrate(raw: unknown): SaveFile | null {
+export function migrate(raw: unknown, eps: Episodes = episodes): SaveFile | null {
   if (!raw || typeof raw !== 'object') return null;
   let d = raw as SaveFile;
   if (typeof d.version !== 'number' || d.version > SAVE_VERSION) return null;
@@ -104,7 +111,7 @@ export function migrate(raw: unknown): SaveFile | null {
     if (!step) return null;
     d = step(d);
   }
-  return check(d);
+  return check(d, eps);
 }
 
 const isObj = (v: unknown): v is Record<string, unknown> =>
@@ -165,12 +172,13 @@ function lastStep(s: Scene | undefined): number | null {
  * 遷移後的存檔逐欄檢查，壞掉的當作沒有存檔，免得讀進來整個畫面當掉。
  * 同時用 sceneId 找回場景、把步數夾回範圍內、丟掉超出選項的選擇。
  */
-function check(d: SaveFile): SaveFile | null {
+function check(d: SaveFile, eps: Episodes): SaveFile | null {
   const p = d.progress as unknown;
   if (typeof d.label !== 'string' || !Number.isFinite(d.savedAt) || !isObj(p)) return null;
   if (d.sceneId !== undefined && typeof d.sceneId !== 'string') return null;
-  if (typeof p.episode !== 'string' || !Object.hasOwn(episodes, p.episode)) return null;
-  const ep: Episode = episodes[p.episode as keyof typeof episodes];
+  if (typeof p.episode !== 'string' || !Object.hasOwn(eps, p.episode)) return null;
+  const ep: Episode = eps[p.episode];
+  const picks = isObj(d.picks) ? d.picks : {};
   if (!isIndex(p.scene) || !isIndex(p.step) || !isStrs(p.cards)) return null;
   const flags = p.flags === undefined ? [] : p.flags;
   const ethics = p.ethics === undefined ? [] : p.ethics;
@@ -187,18 +195,53 @@ function check(d: SaveFile): SaveFile | null {
     const s = ep.scenes[byId.get(id) ?? -1];
     if (s && !shapeOk(s, st)) return null;
   }
-  const last = lastStep(ep.scenes[scene]);
-  const step = last === null ? p.step : Math.min(p.step, last);
-  // 個別壞掉的選擇只丟掉那一筆，不廢掉整個存檔（原本也讀不到它）。
-  // 指到本集場景的選擇，必須是那一場真的有的選擇步、選項也在範圍內；指到別集的留著無害。
-  const kept = Object.entries(choices).filter(([k, v]) => {
-    if (!isIndex(v)) return false;
+  const cur = ep.scenes[scene];
+  const last = lastStep(cur);
+  let step = last === null ? p.step : Math.min(p.step, last);
+  // 劇本在這一步前面插了台詞：靠原文找回同一步（同一句出現多次就挑離原位最近的）。
+  if (cur && 'steps' in cur && typeof d.stepText === 'string') {
+    const near = nearest(
+      cur.steps.map((x) => stepTextOf(x)),
+      d.stepText,
+      step,
+    );
+    if (near !== null) step = near;
+  }
+  // 選擇：先看原位那一步的同一個索引是不是當時那句；不是就在同一場裡找那句原文，換成新的步數與索引。
+  // 原文找不到（改寫過）但原位仍是選擇步、索引在範圍內，照索引讀。個別壞掉的只丟那一筆，不廢整個存檔。
+  const kept: [string, number][] = [];
+  for (const [k, v] of Object.entries(choices)) {
+    if (!isIndex(v)) continue;
     const [id, i] = k.split(':');
     const s = ep.scenes[byId.get(id) ?? -1];
-    if (!s) return true;
-    const st = 'steps' in s ? s.steps[Number(i)] : undefined;
-    return st?.do === 'choose' && v < st.options.length;
-  });
+    if (!s) {
+      kept.push([k, v]);
+      continue;
+    }
+    if (!('steps' in s)) continue;
+    const steps = s.steps as Step[];
+    const text = typeof picks[k] === 'string' ? (picks[k] as string) : null;
+    const at = steps[Number(i)];
+    if (at?.do === 'choose' && v < at.options.length && (!text || at.options[v].text === text)) {
+      kept.push([k, v]);
+      continue;
+    }
+    if (text) {
+      const found = nearest(
+        steps.map((x) =>
+          x.do === 'choose' && x.options.some((o) => o.text === text) ? text : null,
+        ),
+        text,
+        Number(i),
+      );
+      if (found !== null) {
+        const opts = steps[found].options;
+        kept.push([`${id}:${found}`, opts.findIndex((o: { text: string }) => o.text === text)]);
+        continue;
+      }
+    }
+    if (at?.do === 'choose' && v < at.options.length) kept.push([k, v]);
+  }
   return {
     ...d,
     progress: {
@@ -207,9 +250,70 @@ function check(d: SaveFile): SaveFile | null {
       step,
       flags,
       ethics,
-      choices: Object.fromEntries(kept) as Record<string, number>,
+      choices: Object.fromEntries(kept),
+      scenes: fixIndexes(ep, scenes as Record<string, Record<string, unknown>>, byId),
     },
   };
+}
+
+type Episodes = Record<string, Episode>;
+type Step = { do: string; text?: string; prompt?: string; options: { text: string }[] };
+
+/** 一步的原文指紋：台詞、提示或第一個選項。 */
+function stepTextOf(x: unknown): string | null {
+  const st = x as Partial<Step>;
+  return st.text ?? st.prompt ?? st.options?.[0]?.text ?? null;
+}
+
+/** 在 list 裡找值等於 want、離 from 最近的位置。 */
+function nearest(list: (string | null)[], want: string, from: number): number | null {
+  let best: number | null = null;
+  list.forEach((x, i) => {
+    if (x === want && (best === null || Math.abs(i - from) < Math.abs(best - from))) best = i;
+  });
+  return best;
+}
+
+/**
+ * 場景內的索引夾回範圍：劇本刪了題目，庭審的主詰問題號、錄取（對方主導）的題號會超出去。
+ * 庭審存檔時異議窗開著、那一題又不見了，就把窗關上，讀回來由下一題重新開始。
+ */
+function fixIndexes(
+  ep: Episode,
+  scenes: Record<string, Record<string, unknown>>,
+  byId: Map<string, number>,
+): Record<string, unknown> {
+  return Object.fromEntries(
+    Object.entries(scenes).map(([id, st]) => {
+      const s = ep.scenes[byId.get(id) ?? -1];
+      if (!s || typeof st.i !== 'number') return [id, st];
+      if (s.type === 'trial') {
+        const n = s.witness.direct.length;
+        const i = Math.max(0, Math.min(st.i, n));
+        return [id, { ...st, i, window: !!st.window && i < n }];
+      }
+      if (s.type === 'deposition' && 'script' in s && Array.isArray(s.script))
+        return [id, { ...st, i: Math.max(0, Math.min(st.i, s.script.length)) }];
+      return [id, st];
+    }),
+  );
+}
+
+/** 存檔時記下的原文指紋：場景 id、這一步的原文、每一筆選擇選的那句。 */
+export function fingerprint(p: Progress, eps: Episodes = episodes) {
+  const ep = Object.hasOwn(eps, p.episode) ? eps[p.episode] : undefined;
+  if (!ep) return {};
+  const cur = ep.scenes[p.scene];
+  const picks: Record<string, string> = {};
+  for (const [k, v] of Object.entries(p.choices)) {
+    const [id, i] = k.split(':');
+    const s = ep.scenes.find((x) => x.id === id);
+    const st = s && 'steps' in s ? (s.steps as Step[])[Number(i)] : undefined;
+    const text = st?.do === 'choose' ? st.options[v]?.text : undefined;
+    if (text !== undefined) picks[k] = text;
+  }
+  const stepText = cur && 'steps' in cur ? stepTextOf(cur.steps[p.step]) : null;
+  return { sceneId: cur?.id, picks, ...(stepText ? { stepText } : {}) };
 }
 
 const key = (slot: Slot) => `lawgame-ep-${slot}`;
@@ -233,10 +337,13 @@ export function writeSave(
   progress: Progress,
   storage: Storage | undefined = globalThis.localStorage,
 ): boolean {
-  const sceneId = Object.hasOwn(episodes, progress.episode)
-    ? episodes[progress.episode as keyof typeof episodes].scenes[progress.scene]?.id
-    : undefined;
-  const file: SaveFile = { version: SAVE_VERSION, savedAt: Date.now(), label, sceneId, progress };
+  const file: SaveFile = {
+    version: SAVE_VERSION,
+    savedAt: Date.now(),
+    label,
+    ...fingerprint(progress),
+    progress,
+  };
   try {
     storage?.setItem(key(slot), JSON.stringify(file));
     return !!storage;

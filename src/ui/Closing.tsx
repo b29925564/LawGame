@@ -4,7 +4,7 @@ import type { ClosingScene, Line } from '../engine/episode/schema';
 import {
   closingArgs,
   closingState,
-  deskSceneOf,
+  argDef,
   endingOf,
   promisesOf,
   exposedArgs,
@@ -169,8 +169,7 @@ function ClosingScreen({ scene }: { scene: ClosingScene }) {
                 <span className="carry-key">{t('理論靠的論點')}</span>
                 {th.needs.map((n) => {
                   const have = args.some((a) => a.id === n);
-                  const name = deskSceneOf(progress)?.questions.find((q) => q.argument.id === n)
-                    ?.argument.name;
+                  const name = argDef(progress, n)?.name;
                   return (
                     <span key={n} className={have ? 'need ok' : 'need miss'}>
                       <span className="diamond" aria-hidden>
