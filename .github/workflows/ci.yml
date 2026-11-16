@@ -6,6 +6,7 @@ on:
   push:
     branches: [main]
     paths-ignore: ['**/*.md']
+  workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -65,6 +66,8 @@ jobs:
       - name: 自動通關測試（第 ${{ matrix.shard }}／4 份）
         env:
           PW_PREBUILT: '1'
+          # PR 只跑快速層（第一級組合）；合併到 main 後跑全站掃描（process-v2 第 5 節）。
+          E2E_TIER: ${{ github.event_name == 'pull_request' && 'fast' || 'full' }}
         run: |
           npx playwright install --with-deps chromium
           npx playwright test --shard=${{ matrix.shard }}/4
@@ -117,3 +120,19 @@ jobs:
       - name: 全部通過
         run: |
           [ "${{ needs.static.result }}" = success ] && [ "${{ needs.e2e.result }}" = success ] && [ "${{ needs.webkit.result }}" = success ]
+
+  # 合併後全站掃描紅了：開 Issue（C 級以外由協調者分級），不必等人去看 Actions。
+  report:
+    needs: [static, e2e, webkit]
+    if: failure() && github.event_name == 'push'
+    runs-on: ubuntu-24.04
+    permissions:
+      issues: write
+    steps:
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          RUN: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          gh issue create -R "${{ github.repository }}" \
+            --title "main 全站掃描失敗：${GITHUB_SHA::7}" \
+            --body "合併後的全站掃描在 ${GITHUB_SHA} 失敗：$RUN"
