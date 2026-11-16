@@ -1,5 +1,5 @@
 import { type ReactNode, useEffect, useState } from 'react';
-import { episodes } from '../content';
+import { episodeMeta, isEpisodeId, loadEpisode } from '../content';
 import { batesAt, ownBates, totalPages } from '../engine/bates';
 import {
   END_TITLE,
@@ -87,6 +87,11 @@ export function App() {
   useEffect(() => {
     if (mode === 'play') preloadScenes();
   }, [mode]);
+  // 下一集的劇本在這一集進行中就先載（#388），集尾按「繼續第 n 集」時不必等。
+  const following = mode === 'play' ? followingEpisode(progress) : null;
+  useEffect(() => {
+    if (isEpisodeId(following)) loadEpisode(following).catch(() => undefined);
+  }, [following]);
 
   if (mode === 'title') return <Title />;
   if (mode === 'proto')
@@ -247,7 +252,7 @@ export function App() {
                   nextEpisode();
                 }}
               >
-                {t('繼續第 {n} 集', { n: episodes[next as keyof typeof episodes].number })}
+                {t('繼續第 {n} 集', { n: isEpisodeId(next) ? episodeMeta[next].number : next })}
               </button>
             )}
             <button
