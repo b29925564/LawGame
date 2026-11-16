@@ -8,7 +8,14 @@ import {
   type RefObject,
 } from 'react';
 import { JUDGE, YOU } from '../engine/episode/trial';
-import { cssOf, objectionBeat, tokensFrom, type ObjectionBeat, type Tok } from './court/beat';
+import {
+  cssOf,
+  objectionBeat,
+  tokensFrom,
+  type At,
+  type ObjectionBeat,
+  type Tok,
+} from './court/beat';
 import { batesAt } from '../engine/bates';
 import { episodeOf } from '../engine/game';
 import type { Progress } from '../engine/save';
@@ -238,6 +245,7 @@ export function punct(text: string) {
  * fit：框的高度由版面決定，行距收到一頁 25 行一次放得下（法庭左欄）。
  * bates：卷號與每頁的 Bates（batesOf）；不給就不印。
  * onBeat：新進來的這一批有律師的異議時，交出這一拍的節拍表（鏡頭和輸入鎖照它走，第 10.3 章）。
+ * onBatch：新進來的這一批不是異議時，交出它逐行出完的時間點（出示成立那一拍照它停，Issue #354）。
  * beat：這一拍還在進行（頁邊的目前行記號換成黃，這時畫面上沒有主按鈕）。
  * cover：手機上鏡頭插進來蓋住筆錄底部多少 px：最新那一行要捲到它上面（設計師 P3 裁定）。
  * onCues：字幕列要放的句子與出現時間（鏡頭裡的人：證人與法官；設定集 10.1）。
@@ -251,6 +259,7 @@ export function CourtRecord({
   bates,
   className = '',
   onBeat,
+  onBatch,
   beat: beatOn = false,
   cover = null,
   overlay = null,
@@ -264,6 +273,7 @@ export function CourtRecord({
   bates?: Volume;
   className?: string;
   onBeat?: (beat: ObjectionBeat, read: (tok: Tok) => number) => void;
+  onBatch?: (end: At, read: (tok: Tok) => number) => void;
   beat?: boolean;
   cover?: HTMLElement | null;
   /** 桌機蓋在紙下半的浮層（點開的陪審團）：只影響捲到哪，紙不收邊。 */
@@ -381,6 +391,16 @@ export function CourtRecord({
     if (!beat || told.current === batch) return;
     told.current = batch;
     onBeat?.(beat.t, tokensFrom(box.current ?? document.documentElement));
+  });
+  // 不是異議的一批：交出逐行出完的時間點（一行一拍 --dur-ui；按過「立即顯示全文」就是馬上）。
+  const toldBatch = useRef(batch);
+  useEffect(() => {
+    if (!live || beat || toldBatch.current === batch) return;
+    toldBatch.current = batch;
+    onBatch?.(
+      animate ? { ui: rows.length - firstNew } : {},
+      tokensFrom(box.current ?? document.documentElement),
+    );
   });
   // 每一行從哪個時間點開始逐行出現：異議那一拍裡，法官的話等章落下、駁回後的回答等切回證人。
   const blockOf = (entry: number) =>

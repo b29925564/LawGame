@@ -33,7 +33,7 @@ import { useMenu } from './GameMenu';
 import { CourtCast } from './jury/CourtFace';
 import { Recap } from './ActCard';
 import { reducedMotion } from './a11y';
-import { msOf, type ObjectionBeat, type Tok } from './court/beat';
+import { msOf, plus, type At, type ObjectionBeat, type Tok } from './court/beat';
 import { CourtCamera, type Shot, type WitnessState } from './court/CourtCamera';
 import { Portrait } from './Portrait';
 import { fitDots, fitLine } from './prose';
@@ -332,6 +332,41 @@ function shotOf(phase: Phase | undefined): Shot {
   return 'witness';
 }
 
+/**
+ * 出示成立的那一拍（Issue #354，設計師裁定 i354-scene-looks/designer-rulings.md）：證人席從鋪陳走到對質
+ * （build→confront 的影子爬升），停到證人的話逐行出完，再停一拍法官席的沉默（--dur-bench-hold），才換回下一項證詞。
+ * 這一拍裡輸入鎖住，和異議那一拍一樣。只有出示成立才演；不成立照舊用筆錄上的回饋，鏡頭不動。
+ * 第 10.4 章整段（證物推進光池、貼紙、頁行浮出）之後再做。
+ */
+function useConfrontBeat() {
+  const [held, setHeld] = useState(false);
+  const waiting = useRef(false);
+  const timer = useRef(0);
+  const after = useRef<(() => void) | null>(null);
+  useEffect(() => () => clearTimeout(timer.current), []);
+  /** 按下出示、而且成立：鏡頭先換到對質，等筆錄交出這一批要逐行出多久。then：鬆開以後要做的事（跳下一項證詞）。 */
+  const start = useCallback((then: () => void) => {
+    clearTimeout(timer.current);
+    after.current = then;
+    waiting.current = true;
+    setHeld(true);
+  }, []);
+  /** 筆錄交出這一批逐行出完的時間點：照它加一拍沉默後鬆開。 */
+  const onBatch = useCallback((at: At, read: (tok: Tok) => number) => {
+    if (!waiting.current) return;
+    waiting.current = false;
+    timer.current = window.setTimeout(
+      () => {
+        setHeld(false);
+        after.current?.();
+        after.current = null;
+      },
+      msOf(plus(at, { 'bench-hold': 1 }), read),
+    );
+  }, []);
+  return [held, start, onBatch] as const;
+}
+
 export function Courtroom({ scene }: { scene: TrialScene }) {
   return (
     <CourtCast>
@@ -391,6 +426,9 @@ function CourtroomScreen({ scene: raw }: { scene: TrialScene }) {
   const narrow = useNarrow();
   const compactJury = useCompactJury();
   const [beat, startBeat, onJudgeRead, onJudgeShown] = useObjectionBeat();
+  const [confronting, startConfront, onBatch] = useConfrontBeat();
+  // 招牌時刻裡（異議、出示成立）輸入鎖住。
+  const busy = !!beat || confronting;
   const [insert, setInsert] = useState<HTMLDivElement | null>(null);
   // 桌機陪審團收合後點開的浮層：蓋在筆錄紙下半，最新一句要捲到它上面（設計師 gate 2 第三輪第 1 項）。
   const [pop, setPop] = useState<HTMLDivElement | null>(null);
@@ -510,19 +548,23 @@ function CourtroomScreen({ scene: raw }: { scene: TrialScene }) {
   const shot = shotOf(beat?.phase);
   const witnessState: WitnessState = st.pleaded
     ? 'fifth'
-    : st.stage === 'cross' && cs
-      ? cs.setup
-        ? 'build'
-        : cs.lock !== 'none'
-          ? 'lock'
-          : 'default'
-      : 'default';
+    : confronting
+      ? 'confront'
+      : st.stage === 'cross' && cs
+        ? cs.setup
+          ? 'build'
+          : cs.lock !== 'none'
+            ? 'lock'
+            : 'default'
+        : 'default';
   // 手機插入的鏡頭：一刀黑起打開；成立時法官說完就收，駁回時留到證人答完。
+  // 出示成立那一拍也打開，證人的話出完就收。
   const insertOpen =
-    !!beat &&
-    (beat.phase === 'black' ||
-      beat.phase === 'bench' ||
-      (!beat.t.sustained && (beat.phase === 'back' || beat.phase === 'answer')));
+    confronting ||
+    (!!beat &&
+      (beat.phase === 'black' ||
+        beat.phase === 'bench' ||
+        (!beat.t.sustained && (beat.phase === 'back' || beat.phase === 'answer'))));
   const camera = {
     shot,
     witness: scene.witness.name,
@@ -545,7 +587,7 @@ function CourtroomScreen({ scene: raw }: { scene: TrialScene }) {
       body
     );
   // 異議那一拍裡輸入鎖住：主按鈕藏起來（位置留著，版面不跳）。
-  const locked = beat ? { className: 'locked', inert: true } : {};
+  const locked = busy ? { className: 'locked', inert: true } : {};
   const rulings = rulingsIn(progress);
   // 桌機主詰問：提示、主按鈕和異議窗共用鏡頭條上面那一格；手機照舊，主按鈕在底列。
   const slot = !narrow && st.stage === 'direct';
@@ -640,8 +682,9 @@ function CourtroomScreen({ scene: raw }: { scene: TrialScene }) {
               fit
               bates={bates}
               onBeat={startBeat}
-              beat={!!beat}
-              cover={narrow && beat ? insert : null}
+              onBatch={onBatch}
+              beat={busy}
+              cover={narrow && busy ? insert : null}
               overlay={narrow ? null : pop}
               onCues={setCues}
             />
@@ -658,7 +701,8 @@ function CourtroomScreen({ scene: raw }: { scene: TrialScene }) {
               <Tabs
                 label={t('證詞')}
                 value={pick}
-                onPick={setPick}
+                // 出示成立那一拍裡不換證詞（輸入鎖住）。
+                onPick={(v) => !confronting && setPick(v)}
                 items={scene.witness.claims.map((c, i) => ({
                   id: c.id,
                   label: t('證詞 {n}', { n: i + 1 }),
@@ -673,8 +717,8 @@ function CourtroomScreen({ scene: raw }: { scene: TrialScene }) {
             {narrow && <CourtCamera ref={setInsert} mode="insert" open={insertOpen} {...camera} />}
             {st.stage === 'done' && (
               <button
-                className={`primary wide next${beat ? ' locked' : ''}`}
-                inert={!!beat}
+                className={`primary wide next${busy ? ' locked' : ''}`}
+                inert={busy}
                 onClick={recessOnce}
               >
                 {t('休庭')}
@@ -687,7 +731,8 @@ function CourtroomScreen({ scene: raw }: { scene: TrialScene }) {
             />
             {st.stage === 'cross' && (
               <button
-                className="primary wide"
+                className={`primary wide${confronting ? ' locked' : ''}`}
+                inert={confronting}
                 onClick={() => {
                   // 自己喊停的不必再等一拍，直接進休庭。
                   setRecess(true);
@@ -767,7 +812,7 @@ function CourtroomScreen({ scene: raw }: { scene: TrialScene }) {
         {!slot && st.stage === 'direct' && !st.window && now(prompt)}
 
         {st.stage === 'cross' && (
-          <section className="panel">
+          <section className="panel" inert={confronting}>
             <article className="claim">
               {now(<p className="claim-text">{t('「{text}」', { text: t(claim.text, scope) })}</p>)}
               <ol className="steps">
@@ -816,7 +861,12 @@ function CourtroomScreen({ scene: raw }: { scene: TrialScene }) {
                             const nx = scene.witness.claims.find(
                               (c) => c.id !== claim.id && st.claims[c.id]?.result === 'none',
                             );
-                            if (nx) setPick(nx.id);
+                            const next = () => nx && setPick(nx.id);
+                            // 出示成立：先演對質那一拍，演完才跳。
+                            const now = useEpisode.getState().progress;
+                            const done = trialState(now, courtScene(now, raw)).claims[claim.id];
+                            if (done?.result === 'impeached') startConfront(next);
+                            else next();
                           }}
                         />
                       ))}
