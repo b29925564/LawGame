@@ -12,11 +12,20 @@ const seed = (page: Page, file: object) =>
   );
 const base = { episode: 'ep1', scene: 0, step: 0, choices: {}, cards: [], flags: [], ethics: [] };
 
-test('壞掉的自動存檔當作沒有：標題照常顯示，不出現「繼續」', async ({ page }) => {
+test('壞掉的自動存檔：標題照常顯示，不出現「繼續」，但說一聲讀不出來', async ({ page }) => {
   await seed(page, { progress: { ...base, cards: null, choices: null, scenes: {} } });
   await page.goto('/');
   await expect(page.getByRole('button', { name: '新遊戲' })).toBeVisible();
   await expect(page.getByRole('button', { name: /^繼續（/ })).toHaveCount(0);
+  // 但要說一聲，讀檔清單上那一格寫「讀不出來」，不是「空」（Issue #364）。
+  await expect(
+    page.getByRole('status').filter({ hasText: '自動存檔讀不出來，沒辦法從上次的地方繼續。' }),
+  ).toBeVisible();
+  await page.getByRole('button', { name: '讀取存檔', exact: true }).click();
+  const slot = page.getByRole('button', { name: '讀取自動存檔', exact: true });
+  await expect(slot).toBeDisabled();
+  await expect(slot).toContainText('讀不出來');
+  await expect(page.getByRole('button', { name: '讀取存檔 1', exact: true })).toContainText('空');
 });
 
 test('讀進來的進度讓畫面出錯時回到標題，不白屏，存檔還在', async ({ page }) => {
