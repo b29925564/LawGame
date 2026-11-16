@@ -100,6 +100,8 @@ function build() {
 }
 
 export default defineConfig({
+  // GitHub Pages 在 /LawGame/ 子路徑下（pages.yml 設 BASE_PATH）；其他建置照舊用根路徑。
+  base: process.env.BASE_PATH ?? '/',
   plugins: [content(), react()],
   define: { __BUILD__: JSON.stringify(build()) },
   css: { postcss: { plugins: [reducedMotionCss()] } },
