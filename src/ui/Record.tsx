@@ -21,6 +21,7 @@ import { episodeOf } from '../engine/game';
 import type { Progress } from '../engine/save';
 import { preload, tIn, useCatalog, useLang, useT, type Lang } from '../i18n';
 import { curly, straight } from '../i18n/curly';
+import { reducedMotion } from './a11y';
 import { useScope } from './lang';
 import {
   CJK_PUNCT,
@@ -478,6 +479,9 @@ export function CourtRecord({
 
   // 新的一批進來：翻到最後一句所在的那一頁，從那頁的頁首放起；放不下就讓最後一行剛好在框底。
   // 頁首正好一行高、在第 1 行正上方，所以用第 1 行的位置往上推一行（手機的頁首是黏住的，量它會量到黏住的位置）。
+  // 這一批跨頁時，新的一頁要等它第一行有字的那行真的印出來才翻；在那之前停在上一頁，
+  // 不讓玩家往左看到一張只有行號的空頁（對質停格那一拍最明顯，Issue #354、設計師 i354-confront ②）。
+  const flipped = useRef({ batch: -1, page: 0 });
   useEffect(() => {
     const el = box.current;
     const last = rows[rows.length - 1];
@@ -487,28 +491,53 @@ export function CourtRecord({
     const padB = parseFloat(cs.paddingBottom);
     const top = el.getBoundingClientRect().top + el.clientTop;
     const y = (n: Element) => el.scrollTop + n.getBoundingClientRect().top - top;
-    const head = rows.find((r) => r.page === last.page) ?? last;
-    const headEl = el.querySelector(`[data-row="${head.index}"]`);
-    const lastEl = el.querySelector(`[data-row="${last.index}"]`);
-    let target = headEl ? y(headEl) - size.row - padT : 0;
-    if (lastEl) {
-      // 鏡頭插進來或陪審團浮層蓋上時，框底被蓋住的那段不算看得到。
-      const bottom = y(lastEl) + size.row;
-      const under = cover ?? overlay;
-      const hidden = under
-        ? Math.max(0, el.getBoundingClientRect().bottom - under.getBoundingClientRect().top)
-        : 0;
-      const seen = el.clientHeight - padB - hidden;
-      if (bottom > target + seen) target = bottom - seen;
+    const place = (last: RecordRow) => {
+      const head = rows.find((r) => r.page === last.page) ?? last;
+      const headEl = el.querySelector(`[data-row="${head.index}"]`);
+      const lastEl = el.querySelector(`[data-row="${last.index}"]`);
+      let target = headEl ? y(headEl) - size.row - padT : 0;
+      if (lastEl) {
+        // 鏡頭插進來或陪審團浮層蓋上時，框底被蓋住的那段不算看得到。
+        const bottom = y(lastEl) + size.row;
+        const under = cover ?? overlay;
+        const hidden = under
+          ? Math.max(0, el.getBoundingClientRect().bottom - under.getBoundingClientRect().top)
+          : 0;
+        const seen = el.clientHeight - padB - hidden;
+        if (bottom > target + seen) target = bottom - seen;
+        el.scrollTop = Math.max(0, target);
+        // 紙按行吸附：被蓋住時吸到上一行會讓最後一行掉進浮層或鏡頭底下，改吸下一行。
+        if (hidden > 0 && el.scrollTop < target - 0.5) el.scrollTop += size.row;
+        return;
+      }
       el.scrollTop = Math.max(0, target);
-      // 紙按行吸附：被蓋住時吸到上一行會讓最後一行掉進浮層或鏡頭底下，改吸下一行。
-      if (hidden > 0 && el.scrollTop < target - 0.5) el.scrollTop += size.row;
+    };
+    const start = rows.find((r) => r.index === firstNew);
+    if (!animate || reducedMotion() || !start || start.page >= last.page) {
+      place(last);
       return;
     }
-    el.scrollTop = Math.max(0, target);
+    const lastOn = (page: number) => [...rows].reverse().find((r) => r.page === page) ?? last;
+    if (flipped.current.batch !== batch) flipped.current = { batch, page: start.page };
+    place(lastOn(flipped.current.page));
+    const offs: (() => void)[] = [];
+    for (let page = flipped.current.page + 1; page <= last.page; page++) {
+      const head = rows.find((r) => r.page === page && r.text);
+      const node = head && el.querySelector(`[data-row="${head.index}"]`);
+      if (!node) continue;
+      // 那一行的字開始淡入的那一刻（animationstart 在延遲走完才發）就翻過去。
+      const on = () => {
+        if (flipped.current.batch !== batch || flipped.current.page >= page) return;
+        flipped.current.page = page;
+        place(lastOn(page));
+      };
+      node.addEventListener('animationstart', on);
+      offs.push(() => node.removeEventListener('animationstart', on));
+    }
+    return () => offs.forEach((off) => off());
     // 只在句數、框或鏡頭變了的時候翻頁，不搶使用者往回翻的捲動位置。
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [entries.length, live, size?.row, size?.h, cover, spare]);
+  }, [entries.length, live, size?.row, size?.h, cover, spare, animate, batch]);
 
   // 頁首、行號、Bates 是紙上印好的東西：用屬性交給 CSS 畫，不進文字內容，報讀與搜尋都只讀到證詞本身。
   // 每張頁首都帶卷、頁、Bates；手機上每張都黏在框頂，下一頁的頁首捲上來時蓋掉上一張，

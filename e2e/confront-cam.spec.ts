@@ -91,3 +91,38 @@ for (const strong of [true, false])
     await expect(witnessPlate(page, 'confront')).toHaveCount(0, { timeout: 3000 });
     if (phone) await expect(page.locator('.court-cam.insert')).not.toHaveAttribute('data-open');
   });
+
+// 對質停格時往左看筆錄：這一批跨到新的一頁時，新頁要等第一行字印出來才翻，
+// 在那之前停在上一頁（證人那句在第 2 頁底），框裡任何時候都至少有一行字（設計師 i354-confront ②）。
+test('出示成立：筆錄不翻到還沒有字的空白頁', async ({ page }) => {
+  test.setTimeout(90_000);
+  await toCross(page);
+  const claim = page.locator('article.claim');
+  await claim.getByRole('button', { name: /「所有」是指所有/ }).click();
+  await claim.getByRole('button', { name: /智慧手錶會同步手機的通知/ }).click();
+  await page.waitForTimeout(1500);
+  await claim.getByRole('button', { name: /出示 論點 A/ }).click();
+  const empty: number[] = [];
+  const t0 = Date.now();
+  while (Date.now() - t0 < 2500) {
+    const printed = await page.evaluate(() => {
+      const box = document.querySelector('.record .rec-scroll');
+      if (!box) return -1;
+      const r = box.getBoundingClientRect();
+      const ins = document.querySelector('.court-cam.insert[data-open]');
+      const bottom = Math.min(r.bottom, ins ? ins.getBoundingClientRect().top : Infinity);
+      return [...box.querySelectorAll('.rec-row .rec-tx')].filter((e) => {
+        const b = e.getBoundingClientRect();
+        return (
+          (e.textContent ?? '').trim() &&
+          b.bottom > r.top + 2 &&
+          b.top < bottom - 2 &&
+          Number(getComputedStyle(e).opacity) > 0.05
+        );
+      }).length;
+    });
+    if (printed === 0) empty.push(Date.now() - t0);
+    await page.waitForTimeout(40);
+  }
+  expect(empty, '筆錄框裡沒有任何印出來的字（毫秒）').toEqual([]);
+});
