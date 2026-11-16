@@ -1284,6 +1284,19 @@ button.cand[aria-pressed='true'],
   font: 700 20px/1.3 var(--font-doc);
   margin: 0;
 }
+/* 名字一行；有因迴避被駁回時右邊蓋「駁回」章，不壓名字（設計師 #393）。 */
+.prof .prof-name {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--s3);
+}
+.prof .prof-name > h3 {
+  min-width: 0;
+}
+.prof .prof-name > .stamp {
+  flex: none;
+}
 .prof .sub {
   margin: 4px 0 0;
   font: 400 var(--fs-ui-meta) / 1.4 var(--font);

@@ -175,7 +175,8 @@ function losePatience(s: TrialScene, st: TrialState, why: string): TrialState {
   if (next.patience <= 0) {
     const r = shiftAll(s, next.jury, 5);
     next = say(
-      { ...next, jury: r.jury, deltas: r.deltas, rebuked: true, stage: 'done' },
+      // 異議窗一併關掉：詰問已經被叫停，引擎不該再接受異議或不異議（上線前審查 C10，#386）。
+      { ...next, jury: r.jury, deltas: r.deltas, rebuked: true, stage: 'done', window: false },
       { who: JUDGE, text: '律師，我警告過你了。詰問到此為止，本庭不容許這樣浪費陪審團的時間。' },
     );
     // 辯方被叫停，檢方的再主詰問照樣要問。
@@ -195,8 +196,9 @@ export function nextQuestion(s: TrialScene, st: TrialState): TrialState {
 
 /** 不異議：證詞留在陪審團腦中，往有罪方向推。 */
 export function letPass(s: TrialScene, st: TrialState): TrialState {
-  if (!st.window) return st;
+  if (!st.window || st.stage !== 'direct') return st;
   const q = s.witness.direct[st.i];
+  if (!q) return { ...st, window: false };
   const r = applyImpact(s, st.jury, -q.impact, q.tags as Tag[]);
   return say(
     { ...st, window: false, i: st.i + 1, jury: r.jury, deltas: r.deltas },
@@ -209,8 +211,9 @@ export function letPass(s: TrialScene, st: TrialState): TrialState {
  * 成立時證人不回答，被異議的那個問題記成 struck（筆錄上蓋黑條，設定集 10.3）；判定照舊。
  */
 export function object(s: TrialScene, st: TrialState, reason: Objection): TrialState {
-  if (!st.window) return st;
+  if (!st.window || st.stage !== 'direct') return st;
   const q = s.witness.direct[st.i];
+  if (!q) return { ...st, window: false };
   if (q.objection === reason) {
     const asked = st.log.at(-1);
     const log = asked ? [...st.log.slice(0, -1), { ...asked, struck: true }] : st.log;

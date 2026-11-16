@@ -364,6 +364,27 @@ describe('庭審', () => {
     expect(st.stage).toBe('done');
   });
 
+  it('訓斥後異議窗關掉，引擎不再接受異議或不異議（#386 C10）', () => {
+    let st: trial.TrialState = { ...trial.startTrial(court), patience: 1 };
+    st = trial.nextQuestion(court, st);
+    const wrong = court.witness.direct[0].objection === '無關' ? '已問已答' : '無關';
+    st = trial.object(court, st, wrong);
+    expect(st.rebuked).toBe(true);
+    expect(st.window).toBe(false);
+    const after = st;
+    expect(trial.object(court, st, wrong)).toBe(after);
+    expect(trial.letPass(court, st)).toBe(after);
+    expect(after.patience).toBe(0);
+  });
+
+  it('異議窗開著但題號超出這場的題目（劇本改版後讀舊檔）：不丟錯，只把窗關掉', () => {
+    let st = trial.nextQuestion(court, trial.startTrial(court));
+    st = { ...st, i: court.witness.direct.length + 3 };
+    expect(() => trial.letPass(court, st)).not.toThrow();
+    expect(trial.letPass(court, st).window).toBe(false);
+    expect(trial.object(court, st, '誘導').window).toBe(false);
+  });
+
   it('三步驟：沒鋪陳被擋下，鎖得死才是彈劾成功', () => {
     const claim = court.witness.claims[0];
     let st = trial.toCross(court, trial.startTrial(court));

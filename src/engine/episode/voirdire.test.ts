@@ -39,6 +39,40 @@ describe('陪審團遴選', () => {
     expect(bad.excused).not.toContain(clean.id);
   });
 
+  it('被駁回之後沒有新的提問，不能再對同一人聲請；連點只記一筆（#386 C8）', () => {
+    const biased = scene.candidates.find((c) => c.cause)!;
+    const clean = scene.candidates.find((c) => !c.cause)!;
+    let st = vd.startVoirDire(scene);
+
+    // 沒問過就聲請：駁回一次，再按也不會多扣。
+    st = vd.challenge(scene, st, biased.id);
+    expect(vd.canChallenge(st, biased.id)).toBe(false);
+    expect(vd.challenge(scene, st, biased.id)).toBe(st);
+    expect(st.wrong).toBe(1);
+
+    // 問過之後有了新資訊，可以再聲請，而且這次成立。
+    st = vd.ask(scene, st, biased.id);
+    expect(vd.canChallenge(st, biased.id)).toBe(true);
+    st = vd.challenge(scene, st, biased.id);
+    expect(st.excused).toContain(biased.id);
+    expect(st.wrong).toBe(1);
+
+    // 問過、沒有偏見的人：駁回後就不能再聲請。
+    st = vd.challenge(scene, vd.ask(scene, st, clean.id), clean.id);
+    st = vd.challenge(scene, st, clean.id);
+    st = vd.challenge(scene, st, clean.id);
+    expect(st.wrong).toBe(2);
+    expect(vd.canChallenge(st, clean.id)).toBe(false);
+  });
+
+  it('舊存檔沒有 denied 欄位也照常能聲請', () => {
+    const old = vd.startVoirDire(scene);
+    delete old.denied;
+    const clean = scene.candidates.find((c) => !c.cause)!;
+    expect(vd.canChallenge(old, clean.id)).toBe(true);
+    expect(vd.challenge(scene, old, clean.id).wrong).toBe(1);
+  });
+
   it('無因迴避只有三次，而且你砍一位，檢方就砍掉對你最有利的一位', () => {
     let st = vd.startVoirDire(scene);
     const best = [...scene.candidates].sort((a, b) => b.value - a.value)[0];

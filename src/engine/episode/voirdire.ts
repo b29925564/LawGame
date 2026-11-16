@@ -14,6 +14,11 @@ export interface VoirDireState {
   theirCause?: string[];
   /** 沒有根據就聲請剔除的次數：開庭第一天法官耐心照這個數字扣。 */
   wrong: number;
+  /**
+   * 被駁回的有因迴避：候選人 id → 駁回時問過他沒有。沒有新的提問就不能再對同一人聲請，
+   * 連點不會一直扣（上線前審查 C8，#386）。舊存檔沒有這個欄位。
+   */
+  denied?: Record<string, boolean>;
   seated: string[] | null;
 }
 
@@ -66,9 +71,24 @@ export function ask(s: VoirDireScene, st: VoirDireState, id: string): VoirDireSt
  */
 export function challenge(s: VoirDireScene, st: VoirDireState, id: string): VoirDireState {
   const c = s.candidates.find((x) => x.id === id);
-  if (!c || st.seated !== null || gone(st).includes(id)) return st;
+  if (!c || !canChallenge(st, id)) return st;
   if (c.cause && st.asked.includes(id)) return { ...st, excused: [...st.excused, id] };
-  return { ...st, wrong: st.wrong + 1 };
+  return {
+    ...st,
+    wrong: st.wrong + 1,
+    denied: { ...st.denied, [id]: st.asked.includes(id) },
+  };
+}
+
+/** 這個人的有因迴避剛被駁回、而且之後還沒問過他（人物卡蓋「駁回」章、按鈕停用的那段期間）。 */
+export function deniedNow(st: VoirDireState, id: string): boolean {
+  const was = st.denied?.[id];
+  return st.seated === null && was !== undefined && was === st.asked.includes(id);
+}
+
+/** 還能不能對這個人聲請有因迴避：被駁回過、而且之後沒有新的提問，就不行。 */
+export function canChallenge(st: VoirDireState, id: string): boolean {
+  return st.seated === null && !gone(st).includes(id) && !deniedNow(st, id);
 }
 
 export function canStrike(s: VoirDireScene, st: VoirDireState, id: string): boolean {
