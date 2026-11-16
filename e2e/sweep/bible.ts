@@ -5,6 +5,16 @@ import { appendFileSync } from 'node:fs';
 const LOG = '/tmp/qa-bible.txt';
 const log = (s: string) => appendFileSync(LOG, s + '\n');
 
+/**
+ * 設定集稽核的違規（process-v2 第 5 節第 11、12 項）：全路線通關結束時斷言是空的。
+ * 只收規則明確的項目：一格一黃、回彈／震動／放大、百分比、紅章、虛線框、圓角黑條。
+ * 投影、筆錄、證據板只記錄（給人看），不判定。
+ * 已接受的偏差（設計師裁定）：片頭鏡頭推拉 ti-* 放大超過 1.04；手機狀態列的電量百分比是畫面裡的東西。
+ */
+export const bibleViolations: string[] = [];
+const MOTION_OK = /@keyframes ti-/;
+const PERCENT_OK = /▂▄▆ \d+%/;
+
 export type BibleResult = {
   yellow: string[];
   yellowSum: number;
@@ -326,6 +336,16 @@ export async function bibleShot(page: Page, name: string, tag: string) {
     `[黃 ${tag}] ${name}：${r.yellow.length} 總和 ${r.yellowSum.toFixed(2)} ${r.yellow.join(' | ')}`,
   );
   if (yBad)
+    bibleViolations.push(
+      `一格一黃 ${tag} ${name}：總和 ${r.yellowSum.toFixed(2)} ${r.yellow.join(' | ')}`,
+    );
+  for (const p of r.percent.filter((x) => !PERCENT_OK.test(x)))
+    bibleViolations.push(`百分比 ${tag} ${name}：${p}`);
+  for (const x of r.redStamp) bibleViolations.push(`紅章 ${tag} ${name}：${x}`);
+  for (const x of r.dashed) bibleViolations.push(`虛線框 ${tag} ${name}：${x}`);
+  if (r.redact.round.length)
+    bibleViolations.push(`圓角黑條 ${tag} ${name}：${r.redact.round.join(',')}`);
+  if (yBad)
     log(
       `[黃違規 ${tag}] ${name}：權重總和 ${r.yellowSum.toFixed(2)}、完全不透明 ${r.yellowFull} 處 ${r.yellow.join(' | ')}`,
     );
@@ -457,6 +477,7 @@ export async function motionShot(page: Page, name: string, tag: string) {
   for (const h of hits)
     if (!motionSeen.has(h)) {
       motionSeen.add(h);
+      if (!MOTION_OK.test(h)) bibleViolations.push(`動態 ${tag} ${name}：${h}`);
       log(`[動態 ${tag}] ${name}：${h}`);
     }
 }

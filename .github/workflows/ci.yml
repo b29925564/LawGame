@@ -136,9 +136,11 @@ jobs:
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
-      - name: 全路線通關（第 ${{ matrix.shard }}／4 份）
+      - name: 全路線通關＋設定集稽核（第 ${{ matrix.shard }}／4 份）
         env:
           PW_PREBUILT: '1'
+          # 每個截圖點跑設定集稽核（一格一黃、動態、百分比、紅章、虛線框、黑條），違規就紅。
+          BIBLE: '1'
         run: |
           npx playwright install --with-deps chromium
           npx playwright test -c playwright.sweep.config.ts --shard=${{ matrix.shard }}/4
