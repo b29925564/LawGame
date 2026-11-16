@@ -1,5 +1,5 @@
 /// <reference lib="dom" />
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type ElementHandle, type Page } from '@playwright/test';
 
 /**
  * 桌機矮螢幕的證據板（Issue #354，設計師裁定 C）：板子比中欄可見高度高，答案列不釘底，照順序排在發現下面；
@@ -42,12 +42,12 @@ async function board(page: Page) {
 }
 
 /** 中欄（捲動框）的可見範圍，扣掉底緣淡出。 */
-const inView = (page: Page, sel: string) =>
-  page.evaluate((sel) => {
+const inView = (el: ElementHandle<Element>) =>
+  el.evaluate((e) => {
     const box = document.querySelector('.shell-body')!.getBoundingClientRect();
-    const r = document.querySelector(sel)!.getBoundingClientRect();
+    const r = e.getBoundingClientRect();
     return { top: r.top - box.top, bottom: box.bottom - 24 - r.bottom };
-  }, sel);
+  });
 
 for (const [w, h] of [
   [1380, 768],
@@ -75,6 +75,8 @@ for (const [w, h] of [
     await links.getByRole('radio', { name: /^支持/ }).click();
     await links.getByRole('button', { name: '連起來' }).click();
     await expect(page.locator('.found.fresh')).toBeVisible();
+    // .fresh 只留 600 ms（Desk.tsx useBump）：CI 慢的時候等捲動停下來就超過了，先抓住這張發現本身再量。
+    const fresh = (await page.locator('.found.fresh').first().elementHandle())!;
     // 捲動停下來以後量。
     await expect
       .poll(async () => {
@@ -83,8 +85,8 @@ for (const [w, h] of [
         return a === (await body.evaluate((e) => e.scrollTop)) && a > 0;
       })
       .toBe(true);
-    const note = await inView(page, '.found.fresh');
-    const bar = await inView(page, '.answer-bar');
+    const note = await inView(fresh);
+    const bar = await inView((await page.locator('.answer-bar').first().elementHandle())!);
     expect(note.top, '新發現上緣在中欄裡').toBeGreaterThanOrEqual(0);
     expect(bar.bottom, '答案列底緣在淡出區上面').toBeGreaterThanOrEqual(-1);
   });
