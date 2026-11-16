@@ -99,3 +99,44 @@ for (const [ep, verdict] of [
     const m = await menu(page);
     expect(m.bg).toBeGreaterThan(180);
   });
+
+/**
+ * 判決窗光 ④ 的 3D 機位（Issue #354）：第一集三種結果都播算好的圖，最後停在各自的落點那一格，圖都解碼好；
+ * 第二集還沒有算圖，照舊是示意畫面。
+ */
+for (const [ep, verdict, last] of [
+  ['ep1', '無罪', 'vl-e1-1640'],
+  ['ep1', '有罪', 'vl-e1-g10'],
+  ['ep1', '陪審團僵局', 'vl-e1-h10'],
+  ['ep2', '有責', null],
+] as const)
+  test(`判決窗光：${ep} ${verdict}`, async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    const progress = structuredClone(seeds[ep]);
+    progress.scenes.closing.verdict = verdict;
+    await page.addInitScript(
+      (save) => {
+        if (sessionStorage.getItem('seeded')) return;
+        sessionStorage.setItem('seeded', '1');
+        localStorage.clear();
+        localStorage.setItem('lawgame-ep-auto', save);
+      },
+      JSON.stringify({ version: 5, savedAt: Date.now(), label: 'x', progress }),
+    );
+    await page.goto('/');
+    await page
+      .getByRole('button', { name: /^繼續（/ })
+      .first()
+      .click();
+    await expect(page.locator('.vstage[data-phase="light"]')).toBeVisible({ timeout: 20_000 });
+    if (!last) {
+      await expect(page.locator('.vs-tbd')).toBeVisible();
+      await expect(page.locator('.vs-frame img')).toHaveCount(0);
+      return;
+    }
+    await expect(page.locator('.vs-tbd')).toHaveCount(0);
+    const on = page.locator(`.vs-frame img[data-on][src*="${last}"]`);
+    await expect(on).toBeVisible({ timeout: 5_000 });
+    expect(await on.evaluate((i: HTMLImageElement) => i.complete && i.naturalWidth)).toBe(1920);
+    await expect(page.locator('.vs-frame img[data-on]')).toHaveCount(1);
+  });
