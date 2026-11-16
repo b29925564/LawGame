@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { episodes } from '../content';
-import { migrate, readSave, SAVE_VERSION, writeSave, type Progress } from './save';
+import {
+  backupKey,
+  migrate,
+  readSave,
+  SAVE_VERSION,
+  unreadable,
+  writeSave,
+  type Progress,
+} from './save';
 
 const memory = (): Storage => {
   const m = new Map<string, string>();
@@ -207,5 +215,36 @@ describe('劇本改版後讀舊檔', () => {
       file({ scene: trial, step: 0, choices: {}, scenes: { [t.id]: { i: n + 5, window: true } } }),
     );
     expect(f?.progress.scenes[t.id]).toMatchObject({ i: n, window: false });
+  });
+});
+
+describe('讀不到的存檔先備份（#363）', () => {
+  it('壞檔被覆寫前，原始字串搬到備份鍵；unreadable 分得出「有資料但讀不出來」', () => {
+    const s = memory();
+    expect(unreadable('auto', s)).toBe(false);
+    s.setItem('lawgame-ep-auto', '{壞掉');
+    expect(unreadable('auto', s)).toBe(true);
+    expect(writeSave('auto', '第 1 集・片頭', progress, s)).toBe(true);
+    expect(s.getItem(backupKey('auto'))).toBe('{壞掉');
+    expect(unreadable('auto', s)).toBe(false);
+    // 再存一次，備份不被好的存檔蓋掉。
+    writeSave('auto', '第 1 集・片頭', progress, s);
+    expect(s.getItem(backupKey('auto'))).toBe('{壞掉');
+  });
+
+  it('比這一版新的存檔也算讀不出來，會被備份', () => {
+    const s = memory();
+    const newer = JSON.stringify({ ...file({}), version: SAVE_VERSION + 1 });
+    s.setItem('lawgame-ep-1', newer);
+    expect(unreadable(1, s)).toBe(true);
+    writeSave(1, '第 1 集・片頭', progress, s);
+    expect(s.getItem(backupKey(1))).toBe(newer);
+  });
+
+  it('正常存檔不產生備份', () => {
+    const s = memory();
+    writeSave('auto', '第 1 集・片頭', progress, s);
+    writeSave('auto', '第 1 集・片頭', progress, s);
+    expect(s.getItem(backupKey('auto'))).toBeNull();
   });
 });
