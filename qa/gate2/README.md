@@ -1,6 +1,6 @@
 # 第二道關卡量測腳本（原樣，2026-11-16 交給 CI）
 
-> repo 版（2026-11-16）：寫死的路徑改成環境變數——playwright 用 repo 的 `playwright`、瀏覽器可用 `PW_CHROMIUM` 指定、輸出 `OUTDIR`、repo 根目錄 `REPO_ROOT`（預設目前目錄）。`package.json` 設 commonjs。CI 已接上的：第 14 項 `ci-camera.sh`（ci.yml 的 camera 工作，合併後跑）。`c/frames.py` 加了 `cameraLayerLightToggle`：只算鏡頭層還在的幀，鏡頭層退場後落在暗底圖上的不算。
+> repo 版（2026-11-16）：寫死的路徑改成環境變數——playwright 用 repo 的 `playwright`、瀏覽器可用 `PW_CHROMIUM` 指定、輸出 `OUTDIR`、repo 根目錄 `REPO_ROOT`（預設目前目錄）。`package.json` 設 commonjs。CI 已接上的：第 14 項 `ci-camera.sh`（ci.yml 的 camera 工作，合併後跑）；第 1 項規則 1 掃描 `e2e/rule1.spec.ts`（判定本體 `b/work14/rules8.js` 原樣複製成 `e2e/rule1/rules8.cjs`，1366、412 在 PR 跑，1530、1920、390 合併後跑）。`c/frames.py` 加了 `cameraLayerLightToggle`：只算鏡頭層還在的幀，鏡頭層退場後落在暗底圖上的不算。
 
 這些腳本都是從檢查員的資料夾原樣複製過來的，沒有改寫，這次也沒有重跑。
 
