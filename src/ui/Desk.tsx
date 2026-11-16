@@ -744,25 +744,29 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
 
   const list = (
     <nav className="q-list" aria-label={t('疑問')}>
-      <p className="eyebrow">{t('已確認 {n}', { n: st.confirmed.length })}</p>
+      {/* 時間線排在最上面：整理時間是每個疑問的底（試玩回報：放在最下面要捲才看得到）。
+          它不是疑問，自己一塊、不在清單裡；下面疑問清單的標題列放在時間線卡下面
+          （設計師裁定 (a)，Issue #375：原本小標在時間線卡上方 1.4 px，讀起來像時間線的標題）。
+          標題列左「疑問」、右「已確認 n」：清單混著已確認和未確認的疑問，只寫「已確認」會跟底下對不起來。 */}
+      <button
+        className="q-item timeline-entry"
+        aria-current={shown === 'timeline'}
+        onClick={() => setView('timeline')}
+      >
+        <span className="q-num">{t('時間線')}</span>
+        <span className="q-text">{t('把事件排在時間軸上')}</span>
+        <span className="q-meta">
+          <span>{t('已排 {n} / {m}', { n: st.timeline.length, m: timedN })}</span>
+        </span>
+        <span className="tl-meter" aria-hidden>
+          <i style={{ width: `${timedN ? (st.timeline.length / timedN) * 100 : 0}%` }} />
+        </span>
+      </button>
+      <p className="eyebrow q-head">
+        <span>{t('疑問')}</span>
+        <span className="q-count">{t('已確認 {n}', { n: st.confirmed.length })}</span>
+      </p>
       <ul>
-        {/* 時間線排在最上面：整理時間是每個疑問的底（試玩回報：放在最下面要捲才看得到）。 */}
-        <li>
-          <button
-            className="q-item timeline-entry"
-            aria-current={shown === 'timeline'}
-            onClick={() => setView('timeline')}
-          >
-            <span className="q-num">{t('時間線')}</span>
-            <span className="q-text">{t('把事件排在時間軸上')}</span>
-            <span className="q-meta">
-              <span>{t('已排 {n} / {m}', { n: st.timeline.length, m: timedN })}</span>
-            </span>
-            <span className="tl-meter" aria-hidden>
-              <i style={{ width: `${timedN ? (st.timeline.length / timedN) * 100 : 0}%` }} />
-            </span>
-          </button>
-        </li>
         {questions.map((x, i) => {
           const s = status(x.id);
           if (s === 'done') {
