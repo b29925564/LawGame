@@ -145,19 +145,53 @@ jobs:
           npx playwright install --with-deps chromium
           npx playwright test -c playwright.sweep.config.ts --shard=${{ matrix.shard }}/4
 
+  # 黑底鏡頭層的選單鈕顏色（process-v2 第 5 節第 14 項）：25 個鏡頭層情境逐幀量像素，體驗評測的腳本原樣搬來。
+  camera:
+    needs: static
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        size: [p7, '1530', '320']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+      - run: |
+          npx playwright install --with-deps chromium
+          pip install --quiet numpy pillow
+      - name: 選單鈕顏色（${{ matrix.size }}）
+        run: |
+          npx vite preview --port 4173 &
+          for i in $(seq 30); do curl -sf http://localhost:4173 >/dev/null && break; sleep 1; done
+          qa/gate2/ci-camera.sh "$RUNNER_TEMP/camera" ${{ matrix.size }}
+
   # 合併保護看的是這個名字：上面全部綠才綠。
   check:
-    needs: [static, e2e, webkit, routes]
+    needs: [static, e2e, webkit, routes, camera]
     if: always()
     runs-on: ubuntu-24.04
     steps:
       - name: 全部通過
         run: |
-          [ "${{ needs.static.result }}" = success ] && [ "${{ needs.e2e.result }}" = success ] && [ "${{ needs.webkit.result }}" = success ] && [[ "${{ needs.routes.result }}" =~ ^(success|skipped)$ ]]
+          [ "${{ needs.static.result }}" = success ] && [ "${{ needs.e2e.result }}" = success ] && [ "${{ needs.webkit.result }}" = success ] && [[ "${{ needs.routes.result }}" =~ ^(success|skipped)$ ]] && [[ "${{ needs.camera.result }}" =~ ^(success|skipped)$ ]]
 
   # 合併後全站掃描紅了：開 Issue（C 級以外由協調者分級），不必等人去看 Actions。
   report:
-    needs: [static, e2e, webkit, routes]
+    needs: [static, e2e, webkit, routes, camera]
     if: failure() && github.event_name == 'push'
     runs-on: ubuntu-24.04
     permissions:

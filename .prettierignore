@@ -5,3 +5,5 @@ test-results
 playwright-report
 # 立繪包的 yaml 照視覺設計師交的原檔放，不重排。
 src/ui/cast/**/*.yaml
+# 體驗評測的量測腳本照原樣搬來（process-v2 第 5 節），不重排。
+qa/gate2/**
