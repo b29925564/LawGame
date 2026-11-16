@@ -11,6 +11,17 @@ export function benchNames(slot: string | undefined, patience: number, en: boole
   });
 }
 
+/**
+ * 受光圖（rim）、前景（front）的檔名候選。背牆的字只在底圖上，英文版底圖（-en）的 rim／front 和中文版逐像素相同，
+ * 所以只放一份（中文名），-en 的底圖退回去用它（試玩打包有檔數上限）。
+ */
+export function layerNames(plateName: string, layer: 'rim' | 'front') {
+  const shared = plateName.replace(/-en$/, '');
+  return shared === plateName
+    ? [`${plateName}-${layer}`]
+    : [`${plateName}-${layer}`, `${shared}-${layer}`];
+}
+
 /** 判決格的結果（Closing 的 VerdictKind 再分兩集）。 */
 export type VerdictOutcome = '無罪' | '有罪' | '無責' | '有責' | '陪審團僵局';
 

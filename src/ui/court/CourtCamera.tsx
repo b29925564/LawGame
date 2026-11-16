@@ -10,7 +10,7 @@ import {
 import { useLang, useT } from '../../i18n';
 import { reducedMotion } from '../a11y';
 import { JUDGE } from '../../engine/episode/trial';
-import { benchNames } from './camNames';
+import { benchNames, layerNames } from './camNames';
 import { tokensFrom } from './beat';
 import { P_FROM, P_TO, climbCoef, easeOf } from './climb';
 import { useSettings } from '../../engine/settings';
@@ -41,6 +41,7 @@ import { svg } from '../jury/silhouette';
  *   有時段就是 bench-{時段}-p{n}，英文介面先找 -en（背牆的字）；找不到退回 bench-d2-pm。
  * - `{機位}-{狀態}-rim.webp`：立牌的受光圖（灰階，和底圖同一個畫面）。輪廓光乘上它，被百葉窗光條、
  *   盧卡斯的影子擋掉的地方就沒有輪廓光；沒有這張就照剪影自己的燈畫。
+ *   英文底圖（-en）不另放 rim／front，共用中文版那張（layerNames）。
  * - 證人席 lock→build、build→confront 另有 `{機位}-{從}-{到}-climb.png`：影子往上爬的遮罩（climb.ts），換狀態時 --dur-shadow 掃過去；其他狀態互換淡化，減少動態直接換。
  * - `{機位}-front.webp`（或 `{機位}-{狀態}-front.webp`）：擋在立牌前面的東西（證人席桌面、欄杆、法官席桌緣），帶 alpha。
  */
@@ -105,8 +106,8 @@ function resolve(cam: Cam, names: string[]): Layer | null {
   return {
     name: plate.name,
     plate,
-    rim: pick([`${plate.name}-rim`]),
-    front: pick([`${plate.name}-front`, `${cam}-front`]),
+    rim: pick(layerNames(plate.name, 'rim')),
+    front: pick([...layerNames(plate.name, 'front'), `${cam}-front`]),
   };
 }
 
