@@ -240,9 +240,15 @@ export function courtArgs(p: Progress) {
 }
 
 export function closingArgs(p: Progress) {
-  return (deskSceneOf(p)?.questions ?? [])
-    .filter((q) => p.cards.includes(q.argument.id) && !q.argument.motionOnly)
-    .map((q) => q.argument);
+  return heldArgs(p).filter((a) => !a.motionOnly);
+}
+
+/** 依代號找論點定義，不管在哪一個桌面（手上有沒有都找得到，用來顯示缺哪一張）。 */
+export function argDef(p: Progress, id: string) {
+  return episodeOf(p)
+    .scenes.filter((s): s is DeskScene => s.type === 'desk')
+    .flatMap((d) => d.questions)
+    .find((q) => q.argument.id === id)?.argument;
 }
 
 /** 提前收場的方式、協商的那一種，和收場的那一場（場景序）。 */

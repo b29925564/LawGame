@@ -148,3 +148,64 @@ describe('存檔檢查', () => {
     }
   });
 });
+
+/** 劇本改版（#385）：複製一份第 1 集，在電話那一場動手腳，舊存檔用改過的劇本讀。 */
+describe('劇本改版後讀舊檔', () => {
+  type S = { do: string; text?: string; options?: { text: string }[] };
+  const edited = (f: (steps: S[]) => void) => {
+    const copy = structuredClone(episodes);
+    f((copy.ep1.scenes[phone] as unknown as { steps: S[] }).steps);
+    return copy;
+  };
+  const id = ep1[phone].id;
+  const opts = (phoneSteps[choose] as unknown as S).options!;
+  const saved = (p: Partial<Progress> = {}) => {
+    const s = memory();
+    writeSave('auto', '第 1 集・片頭', { ...progress, ...p }, s);
+    return JSON.parse(s.getItem('lawgame-ep-auto')!);
+  };
+
+  it('存檔記下選了哪一句和這一步的原文', () => {
+    const raw = saved();
+    expect(raw.picks).toEqual({ [`${id}:${choose}`]: opts[0].text });
+    expect(typeof raw.stepText).toBe('string');
+  });
+
+  it('選擇前面插了一句台詞：選擇和目前步數都跟著往後移', () => {
+    const eps = edited((st) => st.splice(choose, 0, { do: 'say', text: '新插的一句' }));
+    const f = migrate(saved(), eps)!;
+    expect(f.progress.choices).toEqual({ [`${id}:${choose + 1}`]: 0 });
+    expect(f.progress.step).toBe(choose + 1);
+  });
+
+  it('選項前面插了一個新選項：照文字找回原本選的那一個', () => {
+    const eps = edited((st) => st[choose].options!.unshift({ text: '新選項' }));
+    const f = migrate(saved(), eps)!;
+    expect(f.progress.choices).toEqual({ [`${id}:${choose}`]: 1 });
+  });
+
+  it('選項文字改了：找不到原文時保留還在範圍內的索引', () => {
+    const eps = edited((st) => (st[choose].options![0].text = '改寫過的選項'));
+    expect(migrate(saved(), eps)!.progress.choices).toEqual({ [`${id}:${choose}`]: 0 });
+  });
+
+  it('那一步不再是選擇、也找不到原文：丟掉這筆選擇', () => {
+    const eps = edited((st) => (st[choose] = { do: 'say', text: '改成台詞' }));
+    expect(migrate(saved({ step: 0 }), eps)!.progress.choices).toEqual({});
+  });
+
+  it('沒有指紋的舊存檔照舊讀得回來', () => {
+    const f = read(file({}));
+    expect(f?.progress.choices).toEqual(progress.choices);
+  });
+
+  it('庭審題號超出直接詰問的長度：夾回最後並關掉異議窗', () => {
+    const trial = ep1.findIndex((s) => s.type === 'trial');
+    const t = ep1[trial] as { id: string; witness: { direct: unknown[] } };
+    const n = t.witness.direct.length;
+    const f = read(
+      file({ scene: trial, step: 0, choices: {}, scenes: { [t.id]: { i: n + 5, window: true } } }),
+    );
+    expect(f?.progress.scenes[t.id]).toMatchObject({ i: n, window: false });
+  });
+});
