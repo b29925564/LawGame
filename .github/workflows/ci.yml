@@ -85,6 +85,16 @@ jobs:
           path: flaky.jsonl
           if-no-files-found: ignore
           retention-days: 3
+      - name: 挑出第二、三級的結果（只開 C 級 Issue，不擋）
+        if: always() && github.event_name != 'pull_request'
+        run: node scripts/ci/tier23.mjs pw-json/report.json > tier23.jsonl
+      - if: always() && github.event_name != 'pull_request'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: tier23-e2e-${{ matrix.shard }}
+          path: tier23.jsonl
+          if-no-files-found: ignore
+          retention-days: 3
 
   # WebKit 冒煙（第一級支援：中文 100%、桌機 1366、手機 390）：Safari 只有 WebKit，Chromium 測不到。
   # 只跑第 1 集整集通關＋第 2 集每種場景各一次，和 e2e 分片同時跑，不拉長 CI。
@@ -251,6 +261,38 @@ jobs:
             else
               gh issue create --label C --title "$title" --body "$(printf '%s\n\n這條測試第一次失敗、自動重跑才過，CI 沒有擋下來。請把測試裡寫死的等待改成等畫面狀態，或找出真正的原因；不要刪測試或跳過。\n\n_由 CI 的 flaky 工作自動開立_' "$note")"
             fi
+          done
+
+  # 第二、三級組合（英文、125／150%、360、320）和第一級其他尺寸的名稱毛病：照跑不擋，開成 C 級 Issue
+  # （process-v2 第 5 節第 8 項）。每個「檔案 › 組合」一張；已經開著的就改內文換成最新結果，不留言、不通知。
+  tier23:
+    needs: e2e
+    if: always() && github.event_name == 'push'
+    runs-on: ubuntu-24.04
+    permissions:
+      issues: write
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          pattern: tier23-*
+          path: tier23
+      - name: 開或更新 C 級 Issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RUN: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          cat tier23/*/tier23.jsonl 2>/dev/null > all.jsonl || true
+          [ -s all.jsonl ] || { echo '第二、三級沒有結果'; exit 0; }
+          open=$(gh issue list --state open --label C --search "in:title 第二三級" --limit 200 --json number,title)
+          jq -c '.' all.jsonl | while IFS= read -r g; do
+            key=$(jq -r '.key' <<<"$g")
+            title="第二三級：${key:0:200}"
+            list=$(jq -r '.items[] | "- \(.)"' <<<"$g" | head -c 55000)
+            body=$(printf '%s 的全站掃描（%s）：\n\n%s\n\n第二、三級組合照跑不擋，結果只開 C 級 Issue（process-v2 第 5 節第 8 項）。每次 main 的全站掃描會把內文換成最新結果；修好、或裁定不算以後，請關掉這張。\n\n_由 CI 的 tier23 工作自動開立_' "${GITHUB_SHA::7}" "$RUN" "$list")
+            n=$(jq -r --arg t "$title" '.[] | select(.title == $t) | .number' <<<"$open" | head -1)
+            if [ -n "$n" ]; then gh issue edit "$n" --body "$body"
+            else gh issue create --label C --title "$title" --body "$body"; fi
           done
 
   # 合併保護看的是這個名字：上面全部綠才綠。

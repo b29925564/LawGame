@@ -2,7 +2,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
-import { enter, FAST, SCENES, SIZES, STEPS } from './scan/scenes';
+import { CONTINUE, enter, FAST, SCENES, SIZES, STEPS } from './scan/scenes';
 
 /**
  * 無障礙名稱全站比對（pipeline/process-v2.md 第 5 節第 10 項）：
@@ -48,6 +48,7 @@ async function buttons(page: Page): Promise<Btn[]> {
         objectId: object.objectId,
         returnByValue: true,
         functionDeclaration: `function () {
+          const STATUS = ${JSON.stringify(STATUS)};
           for (let x = this; x && x !== document.body; x = x.parentElement) {
             const cs = getComputedStyle(x);
             if (cs.display === 'none' || cs.visibility === 'hidden' || x.hasAttribute('inert')) return null;
@@ -63,12 +64,14 @@ async function buttons(page: Page): Promise<Btn[]> {
           const w = document.createTreeWalker(this, NodeFilter.SHOW_TEXT);
           for (let t = w.nextNode(); t; t = w.nextNode()) {
             if (!t.data.trim() || !own(t.parentElement)) continue;
-            // 例外（設計師 11-16 准）：發現卡的「已放進答案」小標由 aria-pressed 表達，不比對。
-            if (this.hasAttribute('aria-pressed') && t.parentElement.closest('.found-used-tag')) continue;
+            // 狀態小標（設計師 11-16 准）：可以只放在描述裡，或由 aria-pressed／aria-checked 表達。
+            const status = !!t.parentElement.closest(STATUS);
+            if (status && (this.hasAttribute('aria-pressed') || this.hasAttribute('aria-checked')))
+              continue;
             const rg = document.createRange();
             rg.selectNodeContents(t);
             const rs = [...rg.getClientRects()].filter((q) => q.width && q.height);
-            if (rs.length) nodes.push({ s: t.data, top: rs[0].top, h: rs[0].height });
+            if (rs.length) nodes.push({ s: t.data, top: rs[0].top, h: rs[0].height, status });
           }
           const top = Math.min(...nodes.map((x) => x.top));
           return {
@@ -79,7 +82,7 @@ async function buttons(page: Page): Promise<Btn[]> {
               .filter((e) => e.querySelector(':scope > .zh-line'))
               .map((e) => e.textContent || ''),
             chunks: nodes.map((x) => x.s),
-            first: nodes.filter((x) => x.top < top + x.h / 2).map((x) => x.s),
+            first: nodes.filter((x) => !x.status && x.top < top + x.h / 2).map((x) => x.s),
             labels: [this, ...this.querySelectorAll('[aria-label]')]
               .map((e) => e.getAttribute('aria-label'))
               .filter((x) => x),
@@ -110,11 +113,16 @@ async function buttons(page: Page): Promise<Btn[]> {
  *   要在「名稱＋aria-describedby 描述」裡找得到。
  * 只記（note）：沒有 aria-label 的按鈕，名稱和畫面字不完全一樣。
  * 不設白名單；真的要例外，在這裡寫明是哪個按鈕、為什麼，並請設計師看過。
- * 例外：發現卡（有 aria-pressed）的 .found-used-tag「已放進答案」，由 aria-pressed 表達（設計師 11-16 准）。
+ * 例外：狀態小標（見 STATUS）可以只在描述裡，或由 aria-pressed／aria-checked 表達（設計師 11-16 准）。
  */
 const HAN = '[\\p{Script=Han}（）「」，。、：；！？]';
 const hanGap = (ws: string) => new RegExp(`${HAN}[${ws}]+${HAN}`, 'u');
 const DECOR = /[✓›•·＋+]/g;
+/**
+ * 狀態小標（設計師 11-16 補判）：只有這些可以不在名稱裡——放在 aria-describedby，或按鈕有 aria-pressed／aria-checked
+ * 時由它表達。標題行上其他的字一律要在名稱裡。新的狀態小標加 data-ax="status"。
+ */
+const STATUS = '[data-ax="status"], .found-new, .found-used-tag';
 function flaws(bs: Btn[]) {
   const block: string[] = [];
   const note: string[] = [];
@@ -133,11 +141,9 @@ function flaws(bs: Btn[]) {
     for (const f of b.fits)
       if (!sn.includes(squash(f)))
         block.push(`折行的字不在名稱裡：${f.slice(0, 30)} ∉ ${n.slice(0, 80)}`);
-    // 標題行上的標籤（例：發現卡的「新」）設計師准放在 aria-describedby，所以標題行逐段比，在描述裡的不算。
-    const sd = squash(b.desc);
     const lost = b.first.filter((c) => {
       const sc = squash(c.replace(DECOR, ''));
-      return sc && !sn.includes(sc) && !sd.includes(sc);
+      return sc && !sn.includes(sc);
     });
     if (lost.length)
       block.push(`標題行不在名稱裡：${lost.join('').trim().slice(0, 40)} ∉ ${n.slice(0, 60)}`);
@@ -171,10 +177,11 @@ for (const sz of SIZES) {
       test.skip(info.project.name !== 'desktop', '每個尺寸只跑一次（viewport 自己設）'),
     );
     test.skip(FAST && !sz.fast && !UPDATE, '第一級以外的尺寸只在合併後的全站掃描跑');
+    test.skip(UPDATE && !!sz.tier23, '第二、三級不存基準，只查名稱的毛病');
     for (const [ep, scene, label, step, seed] of SCENES) {
       test(`${ep} 第 ${scene} 場 ${label}（步 ${step}）`, async ({ page }) => {
         test.setTimeout(120_000);
-        await enter(page, ep, scene, step, seed);
+        await enter(page, ep, scene, step, seed, sz);
         const board = seed.startsWith('board');
         const seen: string[][] = [];
         const bad: string[] = [];
@@ -194,17 +201,20 @@ for (const sz of SIZES) {
           const f = flaws(bs);
           bad.push(...f.block.map((x) => `第 ${seen.length} 個畫面 ${x}`));
           notes.push(...f.note.map((x) => `第 ${seen.length} 個畫面 ${x}`));
-          const c = page.getByRole('button', { name: /^繼續$/ }).filter({ visible: true });
+          const c = page.getByRole('button', { name: CONTINUE }).filter({ visible: true });
           if (!(await c.count())) break;
           await c.first().click();
         }
-        // 擋的範圍照設計師裁定：zh 的第一級組合（1366、412）。其他尺寸照跑只記報告（第二級不擋，開 C 級 Issue）。
+        // 擋的範圍照設計師裁定：zh 的第一級組合（1366、412）。其他尺寸照跑只記報告，
+        // 「C 級」的由 CI 的 tier23 工作開成 C 級 Issue（第二級不擋）。
         for (const x of [...new Set(notes)])
           test.info().annotations.push({ type: '名稱≠畫面字（只記）', description: x });
         if (!sz.fast)
           for (const x of [...new Set(bad)])
-            test.info().annotations.push({ type: '名稱的毛病', description: x });
+            test.info().annotations.push({ type: 'C 級', description: x });
         else expect.soft([...new Set(bad)], `按鈕名稱的毛病（${sz.name}）`).toEqual([]);
+        // 第二、三級（英文、放大字、窄螢幕）只查名稱的毛病，不和基準比。
+        if (sz.tier23) return;
         const file = baseFile(sz.name, ep, scene, step, label);
         if (UPDATE) {
           mkdirSync(dirname(file.pathname), { recursive: true });
