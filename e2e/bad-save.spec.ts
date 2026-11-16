@@ -32,3 +32,25 @@ test('讀進來的進度讓畫面出錯時回到標題，不白屏，存檔還�
   await expect(page.getByRole('button', { name: /^繼續（/ })).toBeVisible();
   expect(errors.length).toBeGreaterThan(0);
 });
+
+test('壞掉的自動存檔在第一次被覆寫前另存備份（#363）', async ({ page }) => {
+  await page.addInitScript(() => {
+    // 只在第一次載入時塞壞檔，之後不再蓋回去。
+    if (!sessionStorage.getItem('seeded')) {
+      sessionStorage.setItem('seeded', '1');
+      localStorage.setItem('lawgame-ep-auto', '{壞掉');
+    }
+  });
+  await page.goto('/');
+  await page.getByRole('button', { name: '新遊戲' }).click();
+  await page.getByRole('button', { name: /^第 1 集/ }).click();
+  await page.getByRole('button', { name: '繼續' }).click();
+  await page.getByRole('button', { name: '繼續' }).click();
+  await page.evaluate(() => window.dispatchEvent(new Event('pagehide')));
+  const keys = await page.evaluate(() => ({
+    bad: localStorage.getItem('lawgame-ep-auto-bad'),
+    auto: localStorage.getItem('lawgame-ep-auto'),
+  }));
+  expect(keys.bad).toBe('{壞掉');
+  expect(JSON.parse(keys.auto!).progress.episode).toBe('ep1');
+});
