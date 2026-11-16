@@ -152,8 +152,24 @@ export async function link(
   // 上一次連錯的卡還留在台上：先拿下來
   while (await links.locator('button.slot-clear').count())
     await links.locator('button.slot-clear').first().click();
-  for (const n of names) await pickCard(page, links, n);
-  await links.getByRole('radio', { name: relation }).click();
+  // 每放一張就等它真的上台（A／B 多一個「拿下 …」鈕，Desk.tsx corkSlot）再放下一張：手機牌架換頁時卡還在動，
+  // CI 滿載時那一下點空了，兩格沒放滿，「連起來」一直是灰的（2026-11-16 main：R6 手機）。點空了就再點一次。
+  const placed = links.getByRole('button', { name: /^拿下 / });
+  for (const n of names) {
+    const before = await placed.count();
+    await pickCard(page, links, n);
+    const landed = await expect(placed)
+      .toHaveCount(before + 1, { timeout: 5000 })
+      .then(() => true)
+      .catch(() => false);
+    if (!landed) {
+      await pickCard(page, links, n);
+      await expect(placed).toHaveCount(before + 1);
+    }
+  }
+  const rel = links.getByRole('radio', { name: relation });
+  await rel.click();
+  await expect(rel).toBeChecked();
   await links.getByRole('button', { name: '連起來' }).click();
   return links.getByRole('status');
 }

@@ -501,6 +501,26 @@ for (const layerClass of ['act-stage', 'cine call-screen'])
     expect(frames, `每一格：${frames.join(' → ')}`).toEqual(frames.map(() => dark));
   });
 
+/** 等元素的位置連續 3 次（每次隔 150 ms）都一樣，最多 5 秒。 */
+async function settle(page: Page, sel: string) {
+  let last = '';
+  let same = 0;
+  await expect
+    .poll(
+      async () => {
+        const r = await page.locator(sel).first().boundingBox();
+        const now = r
+          ? `${r.x.toFixed(1)},${r.y.toFixed(1)},${r.width.toFixed(1)},${r.height.toFixed(1)}`
+          : '';
+        same = now === last ? same + 1 : 0;
+        last = now;
+        return same >= 2;
+      },
+      { intervals: [150], timeout: 5000 },
+    )
+    .toBe(true);
+}
+
 /** 門縫光的方框（桌機、手機兩張圖）：直接讀 plates.json，舊版沒有這個欄位也照樣量。 */
 const DOORS = (
   JSON.parse(readFileSync(new URL('../src/ui/plates/plates.json', import.meta.url), 'utf8')) as {
@@ -544,6 +564,9 @@ for (const [w, h, max] of [
         for (let i = 0; i < 8 && (await card.count()); i++) {
           const text = (await card.innerText()).trim();
           const at = `${lang} ${scale * 100}% 第${i + 1}張「${text}」`;
+          // 等字幕卡的位置停下來再量：讓位（useAvoidSubjects）在字型、版面變了以後會重排一次，
+          // CI 滿載時第一張卡會在重排前被量到（2026-11-15 CI：863×360 英文 150% 第 1 張 193、之後 187）。
+          await settle(page, '.cold-plated > .sub-card');
           // 字幕卡和「繼續」不疊（第二道關卡 25376da 第 1 項：863×360「繼續」壓在字幕上）；記下卡的左緣、下緣。
           const lay = await page.evaluate(() => {
             const [c, a] = ['.cold-plated > .sub-card', '.cold-plated > .sub-actions'].map((q) =>

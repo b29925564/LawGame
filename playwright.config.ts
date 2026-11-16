@@ -24,6 +24,10 @@ export default defineConfig({
   testIgnore: ['webkit-smoke.spec.ts', 'sweep/**', ...(FAST ? FULL_ONLY : [])],
   grepInvert: FAST ? TIER23 : undefined,
   use: { baseURL: 'http://localhost:4173' },
+  // CI 上失敗的測試自動重跑一次。重跑才過的是「不穩定」，不擋合併，但不能悶掉：
+  // JSON 報告交給 scripts/ci/flaky.mjs 挑出來，ci.yml 的 flaky 工作開成 C 級 Issue（2026-11-16 使用者同意）。
+  retries: process.env.CI ? 1 : 0,
+  reporter: process.env.CI ? [['list'], ['json', { outputFile: 'pw-json/report.json' }]] : 'list',
   projects: [
     { name: 'chromium', use: { ...devices['Pixel 7'] } },
     // 電腦版是三欄版面，證據欄常駐右邊；兩種寬度都要能通關。

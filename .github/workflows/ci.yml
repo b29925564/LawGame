@@ -71,6 +71,16 @@ jobs:
         run: |
           npx playwright install --with-deps chromium
           npx playwright test --shard=${{ matrix.shard }}/4
+      - name: 記下重跑才過的測試（不穩定）
+        if: always()
+        run: node scripts/ci/flaky.mjs pw-json/report.json "e2e ${{ matrix.shard }}" > flaky.jsonl
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: flaky-e2e-${{ matrix.shard }}
+          path: flaky.jsonl
+          if-no-files-found: ignore
+          retention-days: 3
 
   # WebKit 冒煙（第一級支援：中文 100%、桌機 1366、手機 390）：Safari 只有 WebKit，Chromium 測不到。
   # 只跑第 1 集整集通關＋第 2 集每種場景各一次，和 e2e 分片同時跑，不拉長 CI。
@@ -99,6 +109,16 @@ jobs:
         run: |
           npx playwright install --with-deps webkit
           npx playwright test -c playwright.webkit.config.ts
+      - name: 記下重跑才過的測試（不穩定）
+        if: always()
+        run: node scripts/ci/flaky.mjs pw-json/report.json "webkit" > flaky.jsonl
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: flaky-webkit
+          path: flaky.jsonl
+          if-no-files-found: ignore
+          retention-days: 3
       - name: 失敗時印出畫面快照與截圖（artifact 下載不到時用）
         if: failure()
         run: |
@@ -144,6 +164,16 @@ jobs:
         run: |
           npx playwright install --with-deps chromium
           npx playwright test -c playwright.sweep.config.ts --shard=${{ matrix.shard }}/4
+      - name: 記下重跑才過的測試（不穩定）
+        if: always()
+        run: node scripts/ci/flaky.mjs pw-json/report.json "routes ${{ matrix.shard }}" > flaky.jsonl
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: flaky-routes-${{ matrix.shard }}
+          path: flaky.jsonl
+          if-no-files-found: ignore
+          retention-days: 3
 
   # 黑底鏡頭層的選單鈕顏色（process-v2 第 5 節第 14 項）：25 個鏡頭層情境逐幀量像素，體驗評測的腳本原樣搬來。
   camera:
@@ -181,6 +211,41 @@ jobs:
           npx vite preview --port 4173 &
           for i in $(seq 30); do curl -sf http://localhost:4173 >/dev/null && break; sleep 1; done
           qa/gate2/ci-camera.sh "$RUNNER_TEMP/camera" ${{ matrix.size }}
+
+  # 重跑才過的測試（playwright.config.ts 的 retries）：不擋合併，但每一條都開成 C 級 Issue；
+  # 同一條已經有開著的 Issue 就留言記這一次，不重複開。
+  flaky:
+    needs: [e2e, webkit, routes]
+    if: always()
+    runs-on: ubuntu-24.04
+    permissions:
+      issues: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: flaky-*
+          path: flaky
+      - name: 開 Issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RUN: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          WHERE: ${{ github.event_name == 'pull_request' && format('PR #{0}', github.event.pull_request.number) || github.ref_name }}
+        run: |
+          cat flaky/*/flaky.jsonl 2>/dev/null > all.jsonl || true
+          [ -s all.jsonl ] || { echo '沒有不穩定的測試'; exit 0; }
+          jq -r '.key' all.jsonl | sort -u | while IFS= read -r key; do
+            title="不穩定測試：${key:0:200}"
+            body=$(jq -r --arg k "$key" 'select(.key == $k) | "- \(.job)（\(.project)）\(.file):\(.line)\n```\n\(.error)\n```"' all.jsonl)
+            n=$(gh issue list --state open --label C --search "in:title 不穩定測試" --limit 200 --json number,title \
+              | jq -r --arg t "$title" '.[] | select(.title == $t) | .number' | head -1)
+            note=$(printf '%s 第一次失敗、重跑才過：%s\n\n%s' "$WHERE" "$RUN" "$body")
+            if [ -n "$n" ]; then
+              gh issue comment "$n" --body "$note"
+            else
+              gh issue create --label C --title "$title" --body "$(printf '%s\n\n這條測試第一次失敗、自動重跑才過，CI 沒有擋下來。請把測試裡寫死的等待改成等畫面狀態，或找出真正的原因；不要刪測試或跳過。\n\n_由 CI 的 flaky 工作自動開立_' "$note")"
+            fi
+          done
 
   # 合併保護看的是這個名字：上面全部綠才綠。
   check:

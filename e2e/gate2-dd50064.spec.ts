@@ -118,21 +118,20 @@ const ROWS: [ep: string, scene: number, sel: string, what: string][] = [
   ['ep2', 19, '.panel-head.bench .eyebrow', '法庭 唐醫師'],
 ];
 
+// 每個寬度×字級各一條測試：原本一條開 6 次頁面，CI 滿載時超過 30 秒上限（2026-11-14 CI）。量法不變。
 for (const [ep, scene, sel, what] of ROWS)
-  test(`身分列只在詞和詞之間、「・」前後換行（${ep} 第 ${scene} 場 ${what}・320／360・中文 100／125／150%）`, async ({
-    page,
-  }, info) => {
-    test.skip(info.project.name !== 'chromium', '自己設視窗大小，手機那一組跑就好');
-    for (const w of [320, 360]) {
-      await page.setViewportSize({ width: w, height: 740 });
-      for (const scale of [1, 1.25, 1.5]) {
+  for (const w of [320, 360])
+    for (const scale of [1, 1.25, 1.5])
+      test(`身分列只在詞和詞之間、「・」前後換行（${ep} 第 ${scene} 場 ${what}・${w}・中文 ${scale * 100}%）`, async ({
+        page,
+      }, info) => {
+        test.skip(info.project.name !== 'chromium', '自己設視窗大小，手機那一組跑就好');
+        await page.setViewportSize({ width: w, height: 740 });
         await open(page, ep, scene, scale, sel);
         await expect(page.locator(sel).first()).toBeVisible();
         const { rows, text } = await linesOf(page, sel);
         expect(badBreaks(rows, text), `${w}・${scale * 100}%：${rows.join('⏎')}`).toEqual([]);
-      }
-    }
-  });
+      });
 
 test('第 2 集第 19 場：「急診科」不拆（360・中文 125／150%）', async ({ page }, info) => {
   test.skip(info.project.name !== 'chromium', '自己設視窗大小，手機那一組跑就好');
