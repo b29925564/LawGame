@@ -230,8 +230,10 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
           RUN: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          WHERE: ${{ github.event_name == 'pull_request' && format('PR #{0}', github.event.pull_request.number) || github.ref_name }}
+          PR: ${{ github.event.pull_request.number }}
+          BRANCH: ${{ github.ref_name }}
         run: |
+          WHERE=${PR:+PR #$PR}; WHERE=${WHERE:-$BRANCH}
           cat flaky/*/flaky.jsonl 2>/dev/null > all.jsonl || true
           [ -s all.jsonl ] || { echo '沒有不穩定的測試'; exit 0; }
           jq -r '.key' all.jsonl | sort -u | while IFS= read -r key; do
