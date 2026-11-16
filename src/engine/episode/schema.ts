@@ -274,13 +274,25 @@ const bag = z
     '保管鏈要時間遞增，而且上一手的收受人就是下一手的交出人',
   );
 
+/**
+ * 物品卡縮圖：只收跟著遊戲打包的相對路徑（public/ 底下，例如 cards/phone.webp）。
+ * 外部網址會把玩家的 IP 送到別的網站，開頭的 / 在 GitHub Pages 子路徑底下會找不到檔，`..` 會跑出 public/
+ * （上線前審查 S7，Issue #380）。
+ */
+export const cardImage = z
+  .string()
+  .regex(
+    /^[a-z0-9][\w-]*(?:\/[\w-]+)*\.(?:webp|avif|png|jpe?g)$/i,
+    '縮圖只能是打包內的相對路徑（例如 cards/phone.webp），不能是網址、/ 開頭或含 ..',
+  );
+
 const card = z.object({
   id,
   name: z.string(),
   /** 物品／文件／陳述（設計稿 board-redesign）。 */
   kind: z.enum(['物品', '文件', '陳述', '宣誓陳述', '論點']),
   /** 物品卡的實物縮圖（public/ 底下的路徑）；沒有就畫剪影。 */
-  image: z.string().optional(),
+  image: cardImage.optional(),
   /** 哪一天，例如「週五」。時間線上沒有日期就分不出先後。 */
   date: z.string().optional(),
   time: time.optional(),
