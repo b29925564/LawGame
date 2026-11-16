@@ -82,7 +82,7 @@ test('片頭、冷開場：沒有被 CSP 擋下的東西', async ({ page }) => {
   await page.getByRole('button', { name: /^第 1 集/ }).click();
   await page.getByRole('button', { name: '繼續' }).click();
   await page.getByRole('button', { name: '繼續' }).click();
-  await page.getByRole('button', { name: /打開 葛蘭特・沃斯 的訊息/ }).click();
+  await page.locator('button.notif').click();
   await page.evaluate(() => document.fonts.ready);
   await page.waitForTimeout(800);
   expect(await violations()).toEqual([]);
