@@ -432,11 +432,13 @@ async function playToRachelLast(page: Page) {
   await claim.getByRole('button', { name: /智慧手錶會記錄心率/ }).click();
   await card(claim, /出示 論點 B/).click();
 
-  await expect(claim).toContainText('全程在線上會議');
+  // 出示成立後停在對質那一拍，證人的字幕整句播完再加一拍才換下一項（設計師 i354-confront 裁定 A），手機約 7 秒。
+  const settle = { timeout: 15_000 };
+  await expect(claim).toContainText('全程在線上會議', settle);
   await claim.getByRole('button', { name: /出席紀錄由系統自動產生/ }).click();
   await card(claim, /出示 論點 C/).click();
 
-  await expect(claim).toContainText('三十一樓還有誰');
+  await expect(claim).toContainText('三十一樓還有誰', settle);
   await claim.getByRole('button', { name: /那個時間，三十一樓除了您/ }).click();
   await claim.getByRole('button', { name: /門禁紀錄顯示/ }).click();
   return claim;
@@ -514,7 +516,9 @@ test('第 1 集可以一路從冷開場玩到判決', async ({ page }, info) => 
   await expect(page.getByRole('heading', { name: /無罪|有罪|無法達成裁決/ })).toBeVisible();
 });
 
-test('瑞秋援引緘默權後，檢方撤回起訴，直接進尾聲（E1）', async ({ page }) => {
+test('瑞秋援引緘默權後，檢方撤回起訴，直接進尾聲（E1）', async ({ page }, info) => {
+  // 跟整集那一條一樣從冷開場玩起；出示成立的對質停格撐到字幕播完後，每一次多約 5 秒，90 秒不夠。
+  test.setTimeout(info.project.name.startsWith('webkit') ? 360_000 : 150_000);
   const claim = await playToRachelLast(page);
   await card(claim, /出示 論點 D/).click();
   await expect(page.getByText('自證己罪').first()).toBeVisible();
