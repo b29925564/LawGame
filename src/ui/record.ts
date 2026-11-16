@@ -56,6 +56,8 @@ export interface Cue {
   at: string;
   /** 沒有字幕：鏡頭外的人開口（或旁白），上一句字幕收掉。 */
   blank?: boolean;
+  /** 旁白：沒有人開口，不收上一句；證人的字幕照讀秒播完（設計師 i354-confront，修訂 #257）。 */
+  soft?: boolean;
   /** 這句字幕在這個時間點收掉（異議那一拍：法官的話留到切回證人為止）。 */
   until?: string;
 }
