@@ -501,13 +501,10 @@
 }
 
 /* 場景還沒載好（src/ui/lazyScenes.tsx SceneWait，設計師 #404）：佔滿畫面、在內容底下，不轉圈不動。
-   法庭系用底圖解碼前的純黑；其他場景用頁面底色。「載入中」沿用上面片頭的 .ti-corner／.ti-loading。 */
+   底色一律用頁面底色，跟著主題走。「載入中」沿用上面片頭的 .ti-corner／.ti-loading。 */
 .scene-wait {
   position: fixed;
   inset: 0;
   z-index: -1;
   background: var(--bg);
-}
-.scene-wait.dark {
-  background: #0b0e13;
 }

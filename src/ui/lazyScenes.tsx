@@ -16,10 +16,10 @@ const LOADING_AFTER = 1500;
 
 /**
  * 場景還沒載好時佔滿場景區的空白（設計師 #404 審查）：不轉圈、不動。
- * 法庭系的場景用底圖解碼前的純黑，其他場景用頁面底色，所以不會先閃一下淺灰再切到深色法庭。
+ * 底色一律用頁面底色（--bg），跟著主題走：淺色模式的法庭整頁也是淺的，只有鏡頭條在底圖解碼前是純黑，所以等待畫面不另外壓黑。
  * 等超過 1.5 秒右下角出「載入中」，位置、字和片頭的一樣；場景出來就跟著拿掉。
  */
-function SceneWait({ dark }: { dark: boolean }) {
+function SceneWait() {
   const t = useT();
   const [slow, setSlow] = useState(false);
   useEffect(() => {
@@ -27,7 +27,7 @@ function SceneWait({ dark }: { dark: boolean }) {
     return () => clearTimeout(timer);
   }, []);
   return (
-    <div className={dark ? 'scene-wait dark' : 'scene-wait'} aria-busy="true">
+    <div className="scene-wait" aria-busy="true">
       {slow && (
         <div className="ti-corner">
           <p className="ti-loading" role="status">
@@ -39,7 +39,7 @@ function SceneWait({ dark }: { dark: boolean }) {
   );
 }
 
-function scene<P extends object>(load: Loader<P>, dark = false): ComponentType<P> {
+function scene<P extends object>(load: Loader<P>): ComponentType<P> {
   let C: ComponentType<P> | undefined;
   let pending: Promise<ComponentType<P>> | undefined;
   const preload = () =>
@@ -61,7 +61,7 @@ function scene<P extends object>(load: Loader<P>, dark = false): ComponentType<P
   // 一律包在同一個 Suspense 裡：載好以後也不換掉這層，場景才不會因為樹的形狀變了被重新掛載、狀態歸零。
   function Lazy(props: P) {
     return (
-      <Suspense fallback={<SceneWait dark={dark} />}>
+      <Suspense fallback={<SceneWait />}>
         <Loaded {...props} />
       </Suspense>
     );
@@ -70,14 +70,14 @@ function scene<P extends object>(load: Loader<P>, dark = false): ComponentType<P
 }
 
 export const Desk = scene(() => import('./scenes').then((m) => m.Desk));
-export const Courtroom = scene(() => import('./scenes').then((m) => m.Courtroom), true);
-export const Closing = scene(() => import('./scenes').then((m) => m.Closing), true);
+export const Courtroom = scene(() => import('./scenes').then((m) => m.Courtroom));
+export const Closing = scene(() => import('./scenes').then((m) => m.Closing));
 export const Deposition = scene(() => import('./scenes').then((m) => m.Deposition));
 export const Negotiation = scene(() => import('./scenes').then((m) => m.Negotiation));
-export const VoirDire = scene(() => import('./scenes').then((m) => m.VoirDire), true);
-export const Defense = scene(() => import('./scenes').then((m) => m.Defense), true);
+export const VoirDire = scene(() => import('./scenes').then((m) => m.VoirDire));
+export const Defense = scene(() => import('./scenes').then((m) => m.Defense));
 export const Theory = scene(() => import('./scenes').then((m) => m.Theory));
-export const Opening = scene(() => import('./scenes').then((m) => m.Opening), true);
+export const Opening = scene(() => import('./scenes').then((m) => m.Opening));
 export const Interview = scene(() => import('./scenes').then((m) => m.Interview));
 export const Prototype = scene(() => import('./Prototype').then((m) => m.Prototype));
 

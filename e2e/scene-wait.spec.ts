@@ -4,7 +4,7 @@ import { expect, test, type Page } from '@playwright/test';
 
 /**
  * 場景延遲載入時的等待畫面（Issue #388 P3，設計師 #404 審查）：直接讀檔進法庭、場景程式還沒到，
- * 畫面要是底圖解碼前的純黑（#0b0e13），不能先閃一下淺色頁面底色；等超過 1.5 秒右下角出「載入中」，場景出來就拿掉。
+ * 畫面是頁面底色（--bg，跟著主題；這裡用淺色模式量），不另外壓黑；等超過 1.5 秒右下角出「載入中」，場景出來就拿掉。
  * 這裡把場景 chunk 延遲 3.5 秒來量（「載入中」出現後要留夠時間讓測試看到）。SHOTS=1 時另外存截圖給設計師看。
  */
 const save = JSON.parse(
@@ -34,7 +34,7 @@ async function slowCourt(page: Page) {
     .click();
 }
 
-test('讀檔直接進法庭、場景還沒載好：純黑，1.5 秒後才出「載入中」，載好就換上法庭', async ({
+test('讀檔直接進法庭、場景還沒載好：頁面底色，1.5 秒後才出「載入中」，載好就換上法庭', async ({
   page,
 }, info) => {
   // 手機看 390 寬（設計師指定）。
@@ -44,7 +44,7 @@ test('讀檔直接進法庭、場景還沒載好：純黑，1.5 秒後才出「�
   await expect(wait).toBeVisible();
   const t0 = Date.now();
   await expect(wait).toHaveAttribute('aria-busy', 'true');
-  await expect(wait).toHaveCSS('background-color', 'rgb(11, 14, 19)');
+  await expect(wait).toHaveCSS('background-color', 'rgb(227, 230, 234)');
   await expect(wait.getByText('載入中')).toHaveCount(0);
   const name = info.project.name === 'desktop' ? 'desktop-1440' : 'phone';
   if (SHOTS) {
