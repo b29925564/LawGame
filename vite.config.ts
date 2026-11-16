@@ -87,6 +87,42 @@ function reducedMotionCss(): CssPlugin {
   };
 }
 
+/**
+ * 內容安全政策（上線前審查 S2，Issue #380）：GitHub Pages 不能自訂回應標頭，只能用 <meta>。
+ * 只在建置時加：開發伺服器的熱更新要跑行內腳本。字型還從 Google Fonts 載（自架見 #380 S3），放行那兩個網域。
+ * 發布 Artifact 時 bundle.py 把主程式內嵌成行內腳本，會拿掉這一行（pipeline/publish/README.md）。
+ */
+export const CSP = [
+  "default-src 'self'",
+  "script-src 'self'",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "font-src 'self' https://fonts.gstatic.com",
+  "img-src 'self' data: blob:",
+  "media-src 'self' blob:",
+  "connect-src 'self'",
+  "worker-src 'self'",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'none'",
+].join('; ');
+
+function csp(): Plugin {
+  return {
+    name: 'lawgame-csp',
+    apply: 'build',
+    transformIndexHtml: {
+      order: 'post',
+      handler: () => [
+        {
+          tag: 'meta',
+          attrs: { 'http-equiv': 'Content-Security-Policy', content: CSP },
+          injectTo: 'head-prepend',
+        },
+      ],
+    },
+  };
+}
+
 /** 標題畫面角落的建置標記：commit 短碼與建置時間（台北時間），分辨快取到的舊頁面。 */
 function build() {
   let sha = 'dev';
@@ -102,7 +138,7 @@ function build() {
 export default defineConfig({
   // GitHub Pages 在 /LawGame/ 子路徑下（pages.yml 設 BASE_PATH）；其他建置照舊用根路徑。
   base: process.env.BASE_PATH ?? '/',
-  plugins: [content(), react()],
+  plugins: [content(), react(), csp()],
   define: { __BUILD__: JSON.stringify(build()) },
   css: { postcss: { plugins: [reducedMotionCss()] } },
   test: {
