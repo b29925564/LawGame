@@ -56,8 +56,9 @@ const seen = new Set<string>();
 /** 推進劇情時每一步呼叫：法庭說話列第一次出現某位次要角色的剪影，就拍中英文（視窗大小，不整頁）。 */
 export async function tick(page: Page) {
   if (!DIR) return;
+  // 剪影不再有標籤（11-16）：說話者名字在台詞那一行（.speech .who）或手機法庭的說話者列（.court-now > .who）。
   const names = await page
-    .locator('.tbd:not(.row) .tbd-label span:nth-child(2)')
+    .locator('.speech .who, .court-now > .who')
     .allTextContents()
     .catch(() => []);
   for (const n of names)
@@ -65,7 +66,7 @@ export async function tick(page: Page) {
       seen.add(n);
       note(`[說話者] ${EP()} ${proj(page)} ${n}`);
       await page
-        .locator('.tbd:not(.row)')
+        .locator('.speech:has(.portrait.sil), .court-now')
         .first()
         .scrollIntoViewIfNeeded()
         .catch(() => {});

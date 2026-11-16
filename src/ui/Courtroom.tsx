@@ -35,6 +35,7 @@ import { Recap } from './ActCard';
 import { reducedMotion } from './a11y';
 import { msOf, type At, type ObjectionBeat, type Tok } from './court/beat';
 import { CourtCamera, type Shot, type WitnessState } from './court/CourtCamera';
+import { LUCAS } from './cast';
 import { Portrait } from './Portrait';
 import { fitDots, fitLine } from './prose';
 import { teach, useTaught } from './taught';
@@ -623,6 +624,8 @@ function CourtroomScreen({ scene: raw }: { scene: TrialScene }) {
   const now = (body: ReactNode) =>
     narrow ? (
       <div className="court-now">
+        {/* 剪影就是定稿、不再有標籤（使用者 11-16）：法庭裡的人寫一行說話者名字，盧卡斯有立繪不寫。 */}
+        {speaker !== LUCAS && <span className="who">{t(speaker, scope)}</span>}
         <Portrait who={speaker} decorative />
         {body}
       </div>
