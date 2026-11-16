@@ -26,6 +26,14 @@ describe('黑底字卡的 fitLine 換行單位（設計師 v93 第二道關卡�
     expect(b.at(-1)).toContain('口袋。');
   });
 
+  it('標題的錯誤說明：「重新載入」「自動存檔」不拆（設計師 #407）', () => {
+    const u = fitLineUnits(
+      '畫面沒能載入，已回到標題。請確認網路連線後重新載入，進度停在上一次自動存檔。',
+    );
+    expect(u.some((x) => x.includes('重新載入'))).toBe(true);
+    expect(u.some((x) => x.includes('自動存檔'))).toBe(true);
+  });
+
   it('每一張卡：字一個不少；行尾不留介詞連詞否定詞、行首不是的了著過；最後一個單位至少 3 個字', () => {
     expect(captions.length).toBeGreaterThan(5);
     for (const text of captions) {

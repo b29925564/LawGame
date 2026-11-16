@@ -6,6 +6,8 @@ import { LangSwitch } from './lang';
 import { readSave, SLOTS, type Slot } from '../engine/save';
 import { unlockAudio } from '../engine/sound';
 import { Credits } from './Credits';
+import { fitLine } from './prose';
+import { useFault } from './ErrorBoundary';
 import { DocketMini, SaveBates } from './Dossier';
 import { useShallow } from 'zustand/react/shallow';
 
@@ -88,6 +90,11 @@ export function Title() {
   const [credits, setCredits] = useState(false);
   // 標題畫面每次進來才讀一次：讀檔要解析整份 JSON，不必每次 render 都做（Issue #388 P5）。
   const [auto] = useState(() => readSave('auto'));
+  // 被畫面錯誤送回來的那一次才說明；讀過就清掉，下次回標題不再出現。
+  const [fault] = useState(() => useFault.getState().fault);
+  useEffect(() => {
+    useFault.setState({ fault: null });
+  }, []);
   const t = useT();
   // 瀏覽器要等玩家碰過畫面才肯出聲：標題畫面上的點擊或按鍵都順手解鎖。
   // 各瀏覽器認的手勢不同（iOS 要 touchend／click），所以全部聽，重複呼叫無害。
@@ -115,6 +122,26 @@ export function Title() {
         </h1>
       </div>
       <div className="title-foot">
+        {fault && (
+          <div className="title-note">
+            <p role="status">
+              {/* 排字照短標籤規則（fitLine）：中文在詞界換行，不切在「重新載｜入」中間（設計師 #407）。 */}
+              {fitLine(
+                fault === 'load'
+                  ? t(
+                      '畫面沒能載入，已回到標題。請確認網路連線後重新載入，進度停在上一次自動存檔。',
+                    )
+                  : t('剛才的畫面出了錯，已回到標題。進度停在上一次自動存檔。'),
+              )}
+            </p>
+            {/* 瀏覽器會記住下載失敗的模組，不重新載入頁面就一直失敗（Chromium 實測），所以給一顆重新載入。 */}
+            {fault === 'load' && (
+              <button className="link" onClick={() => location.reload()}>
+                {t('重新載入')}
+              </button>
+            )}
+          </div>
+        )}
         <div className="stack">
           <LangSwitch />
           {/* 讀檔清單打開時，黃留給選中的存檔欄那一道（存檔畫面只准一道黃；設計師 P2-6 r1）。 */}
