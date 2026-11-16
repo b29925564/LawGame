@@ -361,7 +361,7 @@ export function voirDireState(p: Progress, s: VoirDireScene) {
 
 /**
  * 開庭時真正上場的法庭：陪審團是遴選留下的 12 位，
- * 法官耐心先扣掉遴選時沒有根據的聲請（企劃書 6.9.1、6.11）。
+ * 開庭第一天的法官耐心先扣掉遴選時沒有根據的聲請和被駁回的動議（企劃書 6.9.1、6.11）。
  */
 export function courtScene(p: Progress, s: TrialScene): TrialScene {
   const vd = episodeOf(p).scenes.find((x) => x.type === 'voirdire') as VoirDireScene | undefined;
@@ -373,13 +373,18 @@ export function courtScene(p: Progress, s: TrialScene): TrialScene {
   // 前面的選擇留下的代價（例如交出群組截圖）：陪審團一開始就往對方移。
   const shift = motionShift(p) - adverseShift(p) - effectSum(p, 'jury');
   const jurors = vd && st?.seated ? voirdire.panel(vd, st) : s.jurors;
+  // 遴選時沒有根據的聲請、審前動議被駁回：法官只在開庭第一天記這筆帳（遴選頁與動議的說明都這樣寫；
+  // 使用者 11-16 決定兩樣都要扣，#383）。之後的開庭日從劇本寫的耐心重新開始，不重扣。
+  const firstDay = previousJury(p, s)
+    ? 0
+    : (vd && st?.seated ? st.wrong : 0) + (allFlags(p).includes('motion-denied') ? 1 : 0);
   return {
     ...s,
     witness: { ...s.witness, direct: directFor(p, s) },
     jurors: shift
       ? jurors.map((j) => ({ ...j, start: Math.max(0, Math.min(100, j.start - shift)) }))
       : jurors,
-    patience: Math.max(1, s.patience - (vd && st?.seated ? st.wrong : 0) - cost),
+    patience: Math.max(1, s.patience - firstDay - cost),
   };
 }
 

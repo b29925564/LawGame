@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { episodes } from '../../content';
 import { allFlags, branchContext, courtScene, useEpisode } from '../game';
-import { canWrap, startDesk, type DeskState } from './desk';
+import { canWrap, done, startDesk, type DeskState } from './desk';
 import * as discovery from './discovery';
 import type { DeskScene, Episode, TrialScene } from './schema';
 import { validateEpisode } from './validate';
@@ -80,6 +80,22 @@ describe('開示', () => {
     st = discovery.respond(s, st, 'change', 'overbroad');
     expect(discovery.handedOver(s, st)).toEqual([s.discovery[0].cards[0]]);
     expect(discovery.patienceCost(st)).toBe(2);
+  });
+
+  it('工時用完也要先回應看得到的請求，才進下一幕（#384）', () => {
+    const s = desk();
+    let st: DeskState = { ...startDesk(s), hours: 0 };
+    expect(done(s, st)).toBe(false);
+    for (const r of s.discovery.slice(0, -1)) st = discovery.respond(s, st, r.id, 'produce');
+    expect(done(s, st)).toBe(false);
+    st = discovery.respond(s, st, 'chat', 'overbroad');
+    expect(done(s, st)).toBe(true);
+    expect(st.flags).toContain('discovery:chat:compelled');
+  });
+
+  it('沒有開示請求時，工時用完就進下一幕', () => {
+    const s = structuredClone(episodes.ep1.scenes.find((x) => x.type === 'desk') as DeskScene);
+    expect(done({ ...s, discovery: [] }, { ...startDesk(s), hours: 0 })).toBe(true);
   });
 
   it('全部回應完才能結束調查', () => {
