@@ -111,19 +111,51 @@ jobs:
           path: test-results
           retention-days: 7
 
+  # 全路線通關（第 1 集 R1–R7、第 2 集 E1–E11，兩種寬度）：每條約 3–4 分鐘，只在合併後跑。
+  routes:
+    needs: static
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+      - name: 全路線通關（第 ${{ matrix.shard }}／4 份）
+        env:
+          PW_PREBUILT: '1'
+        run: |
+          npx playwright install --with-deps chromium
+          npx playwright test -c playwright.sweep.config.ts --shard=${{ matrix.shard }}/4
+
   # 合併保護看的是這個名字：上面全部綠才綠。
   check:
-    needs: [static, e2e, webkit]
+    needs: [static, e2e, webkit, routes]
     if: always()
     runs-on: ubuntu-24.04
     steps:
       - name: 全部通過
         run: |
-          [ "${{ needs.static.result }}" = success ] && [ "${{ needs.e2e.result }}" = success ] && [ "${{ needs.webkit.result }}" = success ]
+          [ "${{ needs.static.result }}" = success ] && [ "${{ needs.e2e.result }}" = success ] && [ "${{ needs.webkit.result }}" = success ] && [[ "${{ needs.routes.result }}" =~ ^(success|skipped)$ ]]
 
   # 合併後全站掃描紅了：開 Issue（C 級以外由協調者分級），不必等人去看 Actions。
   report:
-    needs: [static, e2e, webkit]
+    needs: [static, e2e, webkit, routes]
     if: failure() && github.event_name == 'push'
     runs-on: ubuntu-24.04
     permissions:
