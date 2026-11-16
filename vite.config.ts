@@ -141,6 +141,11 @@ export default defineConfig({
   plugins: [content(), react(), csp()],
   define: { __BUILD__: JSON.stringify(build()) },
   css: { postcss: { plugins: [reducedMotionCss()] } },
+  build: {
+    // 音效用 fetch 載入：小於 4 KB 的檔若照預設內嵌成 data:，會被 CSP 的 connect-src 擋（設計師 #398 審查）。
+    // 音檔一律輸出成檔案；其他資源照 Vite 預設。
+    assetsInlineLimit: (file) => (/\.(m4a|mp3|ogg|wav)$/i.test(file) ? false : undefined),
+  },
   test: {
     include: ['src/**/*.test.ts'],
   },

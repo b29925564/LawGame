@@ -1,11 +1,11 @@
 /// <reference lib="dom" />
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { expect, test, type Page } from '@playwright/test';
 
 /**
  * 內容安全政策（上線前審查 S2，Issue #380）：GitHub Pages 不能設回應標頭，
  * 所以 CSP 在建置時以 <meta> 放進 index.html（vite.config.ts 的 csp()）。
- * 這裡確認打包後真的有這行，而且走過片頭、冷開場、法庭、第 2 集尾聲都沒有任何東西被它擋下。
+ * 這裡確認打包後真的有這行，而且走過片頭、冷開場、法庭、證據板速寫的 Worker、第 2 集尾聲都沒有任何東西被它擋下。
  * 被擋的東西不一定會讓測試失敗（圖少一張、字型退回系統字），所以要直接收違規事件。
  */
 const seeds = JSON.parse(
@@ -98,6 +98,33 @@ test('法庭與異議：沒有被 CSP 擋下的東西', async ({ page }) => {
   await page.locator('button.primary.wide:not(.locked)').first().click();
   await expect(page.locator('section.objection').first()).toBeAttached();
   await page.waitForTimeout(800);
+  expect(await violations()).toEqual([]);
+});
+
+/**
+ * 證據板「陪審團知道的案情」的速寫在 Worker 裡畫（src/ui/sketch/JurySketch.tsx）；被擋會默默退回主執行緒，
+ * 畫面看不出來。這裡直接用打包出來的那支 worker 檔起一個，確認 worker-src 放行（設計師 #398 審查）。
+ */
+test('證據板速寫的 Worker 能起來', async ({ page }) => {
+  const file = readdirSync(new URL('../dist/assets/', import.meta.url)).find((f) =>
+    /^sketch\.worker-.*\.js$/.test(f),
+  );
+  expect(file).toBeTruthy();
+  const violations = watch(page);
+  await page.goto('/');
+  const result = await page.evaluate(
+    (src) =>
+      new Promise<string>((resolve) => {
+        const w = new Worker(src, { type: 'module' });
+        w.onerror = (e) => resolve(`error ${e.message}`);
+        setTimeout(() => {
+          w.terminate();
+          resolve('ok');
+        }, 1500);
+      }),
+    new URL(`assets/${file}`, page.url()).href,
+  );
+  expect(result).toBe('ok');
   expect(await violations()).toEqual([]);
 });
 
