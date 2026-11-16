@@ -3922,6 +3922,26 @@ html[lang='en'] .stamp.rec-stamp b {
   left: calc(3.1 / 5.2 * 100%);
   width: calc(2.1 / 5.2 * 100%);
 }
+/* 第二集還沒有算圖：示意畫面占位（一道硬邊窄光柱，光罩寬 13%，落點在被告席、桌角、走道）。 */
+.vs-light[data-tbd] {
+  width: min(900px, calc(100vw - 32px));
+}
+.vs-tbd {
+  font: 400 12px/1.4 var(--font-court);
+  letter-spacing: 0.08em;
+  color: var(--cine-muted);
+}
+.vs-light[data-tbd] .vs-frame {
+  aspect-ratio: 2.39;
+  background: linear-gradient(#19202a, #0b0e13 55%, #06080b);
+}
+.vs-shaft {
+  position: absolute;
+  inset: 0 auto 0 calc(var(--x) * 100% - 6.5%);
+  width: 13%;
+  background: color-mix(in srgb, var(--k-lowsun) 62%, transparent);
+  mix-blend-mode: screen;
+}
 /* 格底 32px 俯視小地圖：用一點標出光落在哪裡，300px 寬也分得出來。 */
 .vs-map {
   position: relative;
@@ -3955,6 +3975,7 @@ html[lang='en'] .stamp.rec-stamp b {
   .vs-name[data-cover] .vs-bar {
     animation: v-cover var(--dur-redact-in) steps(4) both;
   }
+  .vs-shaft,
   .vs-dot {
     transition: left var(--dur-lightmove) var(--ease-light);
   }

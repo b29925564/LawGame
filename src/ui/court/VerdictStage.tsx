@@ -36,6 +36,8 @@ export function useVerdictRun(
   root: React.RefObject<HTMLElement | null>,
   /** done：前面法官席那一格已經按了略過。 */
   start: 'form' | 'done' = 'form',
+  /** 哪一集：判決窗光的圖目前只有第一集（verdictLight.ts）。 */
+  episode = 'ep1',
 ) {
   // 四拍和法官席都是鏡頭段（淺色主題也照深色解）；回到結論頁（淺色）之前先切黑 --dur-cut-black，和離開冷開場同一套（end）。
   // 減少動態：法官席之後本來就切黑了，直接到結論。
@@ -52,7 +54,7 @@ export function useVerdictRun(
   const pre = useRef<HTMLImageElement[]>([]);
   useEffect(() => {
     if (reducedMotion()) return;
-    pre.current = lightFrames(v).map((u) => {
+    pre.current = lightFrames(v, episode).map((u) => {
       const img = new Image();
       img.src = u;
       void img.decode?.().catch(() => undefined);
@@ -107,7 +109,7 @@ export function useVerdictRun(
     return () => window.removeEventListener('keydown', key);
   }, [phase, skip]);
 
-  return { phase, pull, recover, landed, frame, skip };
+  return { phase, pull, recover, landed, frame, skip, episode };
 }
 
 /**
@@ -115,6 +117,7 @@ export function useVerdictRun(
  * 筆錄頁的黑條照結果停：無罪抽完、有罪抽完後被告姓名那一行再蓋上、僵局卡在 6/12；
  * 字卡三種結果同字級同停留（--dur-turn），不配音效；窗光落點由結果決定，移動用 --dur-lightmove。
  * 窗光是判決窗光 A 的 3D 機位（verdictLight.ts）：16:40 那一格，有罪、僵局再播 10 格光的移動；小地圖在畫框下方。
+ * 第二集還沒有算圖，照舊是示意畫面（標「待放 3D 機位」）。
  */
 export function VerdictStage({
   v,
@@ -133,8 +136,8 @@ export function VerdictStage({
   defendant: string;
 }) {
   const t = useT();
-  const { phase, pull, recover, landed, frame, skip } = run;
-  const frames = lightFrames(v);
+  const { phase, pull, recover, landed, frame, skip, episode } = run;
+  const frames = lightFrames(v, episode);
   if (phase === 'form' || phase === 'done') return null;
   const at = landed || v === '無罪' ? landingAt(v) : landingAt('無罪');
   const style = { '--stop': LANDING[v].n } as CSSProperties;
@@ -175,11 +178,30 @@ export function VerdictStage({
         )}
         {phase === 'card' && <p className="vs-card">{word}</p>}
         {phase === 'light' && (
-          <div className="vs-light">
+          <div className="vs-light" data-tbd={frames.length === 0 || undefined}>
+            {frames.length === 0 && (
+              <span className="vs-tbd">
+                {t('待放 3D 機位')} {t('判決')}
+              </span>
+            )}
             <div className="vs-frame">
-              {frames.map((u, i) => (
-                <img key={u} src={u} alt="" data-on={i === Math.min(frame, frames.length - 1) || undefined} />
-              ))}
+              {frames.length > 0 ? (
+                frames.map((u, i) => (
+                  <img
+                    key={u}
+                    src={u}
+                    alt=""
+                    data-on={i === Math.min(frame, frames.length - 1) || undefined}
+                  />
+                ))
+              ) : (
+                // 第二集還沒有自己的算圖：照舊用示意畫面占位（光柱、落點照設定集座標）
+                <>
+                  <span className="vs-table" data-side="defense" />
+                  <span className="vs-table" data-side="state" />
+                  <span className="vs-shaft" style={{ '--x': at } as CSSProperties} />
+                </>
+              )}
             </div>
             <div className="vs-map">
               <span className="vs-table" data-side="defense" />

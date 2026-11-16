@@ -8,9 +8,13 @@ describe('判決窗光 ④ 的畫面', () => {
     expect(lightFrames('陪審團僵局')).toHaveLength(1 + MOVE_FRAMES);
   });
   it('三種結果都從同一格（光在被告席）開始，最後一格各不相同', () => {
-    const [a, b, c] = (['無罪', '有罪', '陪審團僵局'] as const).map(lightFrames);
+    const [a, b, c] = (['無罪', '有罪', '陪審團僵局'] as const).map((v) => lightFrames(v));
     expect(b[0]).toBe(a[0]);
     expect(c[0]).toBe(a[0]);
     expect(new Set([a.at(-1), b.at(-1), c.at(-1)]).size).toBe(3);
+  });
+  it('第二集還沒有算圖：回傳空的（畫面照舊用示意）', () => {
+    for (const v of ['無罪', '有罪', '陪審團僵局'] as const)
+      expect(lightFrames(v, 'ep2')).toEqual([]);
   });
 });

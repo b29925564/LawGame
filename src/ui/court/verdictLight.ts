@@ -18,11 +18,13 @@ const MOVE: Partial<Record<Verdict, string>> = { 有罪: 'g', 陪審團僵局: '
 
 const url = (name: string) => FILES[`./vlight/${name}.webp`];
 
-/** 這個結果要播的畫面：第 0 格是 16:40（被告席），之後是移動的 10 格；無罪只有第 0 格。缺檔回傳空陣列。 */
-export function lightFrames(v: Verdict): string[] {
+/** 這個結果要播的畫面（只有第一集）：第 0 格是 16:40（被告席），之後是移動的 10 格；無罪只有第 0 格。缺檔回傳空陣列。 */
+export function lightFrames(v: Verdict, episode = 'ep1'): string[] {
+  if (episode !== 'ep1') return []; // 第二集（06/04、民事）的人和光都不一樣，還沒有算圖
   const k = MOVE[v];
   const names = ['vl-e1-1640'];
-  if (k) for (let i = 1; i <= MOVE_FRAMES; i++) names.push(`vl-e1-${k}${String(i).padStart(2, '0')}`);
+  if (k)
+    for (let i = 1; i <= MOVE_FRAMES; i++) names.push(`vl-e1-${k}${String(i).padStart(2, '0')}`);
   const urls = names.map(url);
   return urls.every(Boolean) ? (urls as string[]) : [];
 }
