@@ -92,11 +92,14 @@ export function Timeline({
   } | null>(null);
   const list = useRef<HTMLOListElement>(null);
   const link = useRef<HTMLSpanElement>(null);
-  // 連線：量兩列的位置；排序、拖曳、視窗縮放後都重量一次，拖曳中先藏起來。
+  // 連線：量兩列的位置；排序、放開拖曳、版面縮放後重量，拖曳中連線藏起來，也不量。
+  // observer 只在這幾樣變了才重建，不是每次 render（拖曳的每次 pointermove 都會 render，Issue #388 P4）。
+  const order = placed.join('|');
+  const dragging = !!drag;
   useLayoutEffect(() => {
     const ol = list.current;
     const el = link.current;
-    if (!ol || !el || !sync) return;
+    if (!ol || !el || !sync || dragging) return;
     const measure = () => {
       const rs = sync.cards.map((id) => ol.querySelector<HTMLElement>(`[data-id="${id}"]`));
       if (!rs[0] || !rs[1]) return;
@@ -108,7 +111,7 @@ export function Timeline({
     const ro = new ResizeObserver(measure);
     ro.observe(ol);
     return () => ro.disconnect();
-  });
+  }, [syncKey, order, lit, dragging]); // eslint-disable-line react-hooks/exhaustive-deps
   const grab = (e: PointerEvent<HTMLButtonElement>, id: string, i: number) => {
     e.currentTarget.setPointerCapture(e.pointerId);
     const els = [...(list.current?.children ?? [])];

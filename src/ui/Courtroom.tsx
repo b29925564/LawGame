@@ -38,6 +38,7 @@ import { CourtCamera, type Shot, type WitnessState } from './court/CourtCamera';
 import { Portrait } from './Portrait';
 import { fitDots, fitLine } from './prose';
 import { teach, useTaught } from './taught';
+import { useShallow } from 'zustand/react/shallow';
 
 /**
  * 法庭裡的陪審團（設定集第 8.4、10.1 章）：剪影替身與四階影子。桌機放在中間欄（HUD 的位置），
@@ -352,7 +353,21 @@ function CourtroomScreen({ scene: raw }: { scene: TrialScene }) {
     confront,
     badger,
     finishTrial,
-  } = useEpisode();
+  } = useEpisode(
+    useShallow((s) => ({
+      progress: s.progress,
+      advance: s.advance,
+      nextQuestion: s.nextQuestion,
+      letPass: s.letPass,
+      object: s.object,
+      toCross: s.toCross,
+      lock: s.lock,
+      setup: s.setup,
+      confront: s.confront,
+      badger: s.badger,
+      finishTrial: s.finishTrial,
+    })),
+  );
   // 上場的是遴選留下的陪審團，法官耐心也已經扣過遴選時的失誤。
   const scene = courtScene(progress, raw);
   const st = trialState(progress, scene);

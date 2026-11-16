@@ -41,6 +41,7 @@ import { SceneScope, useDocumentLang } from './lang';
 import { fitUnits, watchUnits } from './fitUnits';
 import { clearMenu } from './menuClear';
 import { prose } from './prose';
+import { useShallow } from 'zustand/react/shallow';
 
 /** 不畫東西：審判前一場演著時，把審判第一個機位的圖預熱。 */
 function WarmCourt({ id, patience }: { id: string; patience: number }) {
@@ -62,7 +63,16 @@ function WarmPlate({ episode, scene }: { episode: string; scene: Scene }) {
 }
 
 export function App() {
-  const { mode, progress, loadId, advance, toTitle, nextEpisode } = useEpisode();
+  const { mode, progress, loadId, advance, toTitle, nextEpisode } = useEpisode(
+    useShallow((s) => ({
+      mode: s.mode,
+      progress: s.progress,
+      loadId: s.loadId,
+      advance: s.advance,
+      toTitle: s.toTitle,
+      nextEpisode: s.nextEpisode,
+    })),
+  );
   const textScale = useSettings((s) => s.textScale);
   const t = useT();
   // 定場演過的那一場（換地點的場景先放一格場記，再掛介面）。

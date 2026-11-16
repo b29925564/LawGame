@@ -11,6 +11,7 @@ import { Speech } from './Portrait';
 import { Shell, Tabs, Transcript } from './Shell';
 import { Recap } from './ActCard';
 import { fitDots, fitLine } from './prose';
+import { useShallow } from 'zustand/react/shallow';
 
 /** 認罪協商（企劃書 6.8）：攤牌會洩底，虛張聲勢看證據清單，決定權在委託人手上。 */
 /**
@@ -59,7 +60,17 @@ function useLadderStack() {
 }
 
 export function Negotiation({ scene }: { scene: NegotiationScene }) {
-  const { progress, revealArg, bluff, advise, walkOut, advance, callClient } = useEpisode();
+  const { progress, revealArg, bluff, advise, walkOut, advance, callClient } = useEpisode(
+    useShallow((s) => ({
+      progress: s.progress,
+      revealArg: s.revealArg,
+      bluff: s.bluff,
+      advise: s.advise,
+      walkOut: s.walkOut,
+      advance: s.advance,
+      callClient: s.callClient,
+    })),
+  );
   const st = negoState(progress, scene);
   const terms = useCaseTerms();
   const t = useT();

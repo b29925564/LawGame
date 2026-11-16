@@ -7,6 +7,7 @@ import { readSave, SLOTS, type Slot } from '../engine/save';
 import { unlockAudio } from '../engine/sound';
 import { Credits } from './Credits';
 import { DocketMini, SaveBates } from './Dossier';
+import { useShallow } from 'zustand/react/shallow';
 
 const when = (t: number, lang: string) =>
   new Date(t).toLocaleString(lang === 'en' ? 'en-US' : 'zh-TW', {
@@ -73,7 +74,11 @@ export function SlotList({
 }
 
 export function Title() {
-  const { newGame, load: loadSlot, openProto } = useEpisode();
+  const {
+    newGame,
+    load: loadSlot,
+    openProto,
+  } = useEpisode(useShallow((s) => ({ newGame: s.newGame, load: s.load, openProto: s.openProto })));
   // 讀檔清單在手機上要往下捲才看得到；讀進來的場景從頂端開始，不沿用標題頁的捲動位置（體驗評測 v90）。
   const load = (slot: Slot) => {
     if (loadSlot(slot)) window.scrollTo({ top: 0 });
@@ -81,7 +86,8 @@ export function Title() {
   const [loading, setLoading] = useState(false);
   const [picking, setPicking] = useState(false);
   const [credits, setCredits] = useState(false);
-  const auto = readSave('auto');
+  // 標題畫面每次進來才讀一次：讀檔要解析整份 JSON，不必每次 render 都做（Issue #388 P5）。
+  const [auto] = useState(() => readSave('auto'));
   const t = useT();
   // 瀏覽器要等玩家碰過畫面才肯出聲：標題畫面上的點擊或按鍵都順手解鎖。
   // 各瀏覽器認的手勢不同（iOS 要 touchend／click），所以全部聽，重複呼叫無害。

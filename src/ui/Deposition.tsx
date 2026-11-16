@@ -9,6 +9,7 @@ import { Speech } from './Portrait';
 import { Shell, Tabs, Transcript } from './Shell';
 import { Recap } from './ActCard';
 import { fitDots, fitLine } from './prose';
+import { useShallow } from 'zustand/react/shallow';
 
 /** 對方主導時每一題的結果標籤。 */
 const REVIEW = {
@@ -36,7 +37,15 @@ function VideoSource({ video }: { video: NonNullable<DepositionScene['video']> }
 
 /** 證詞錄取（企劃書 6.7）：12 個提問額度，定錨與探路互相衝突。 */
 export function Deposition({ scene }: { scene: DepositionScene }) {
-  const { progress, askDepo, defendDepo, finishDepo, advance } = useEpisode();
+  const { progress, askDepo, defendDepo, finishDepo, advance } = useEpisode(
+    useShallow((s) => ({
+      progress: s.progress,
+      askDepo: s.askDepo,
+      defendDepo: s.defendDepo,
+      finishDepo: s.finishDepo,
+      advance: s.advance,
+    })),
+  );
   const st = depoState(progress, scene);
   const t = useT();
   const scope = useScope();

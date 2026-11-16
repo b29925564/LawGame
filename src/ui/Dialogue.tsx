@@ -9,10 +9,13 @@ import { Recap, splitSlate } from './ActCard';
 import { SubActions, useSubs } from './SubCard';
 import { OnPlate, onPlateOf, PlateEyebrow, usePlate, useScenePlate, useShown } from './scenePlate';
 import { fitLine } from './prose';
+import { useShallow } from 'zustand/react/shallow';
 
 /** 對話場景：一路往下讀，遇到選擇就停。之前的台詞留在畫面上，方便回頭看。 */
 export function Dialogue({ scene }: { scene: DialogueScene }) {
-  const { progress, advance, choose } = useEpisode();
+  const { progress, advance, choose } = useEpisode(
+    useShallow((s) => ({ progress: s.progress, advance: s.advance, choose: s.choose })),
+  );
   const t = useT();
   const scope = useScope();
   // 這一場有底圖就當背景（沒有的場景照舊）：台詞框貼底，讓出上半部給圖。

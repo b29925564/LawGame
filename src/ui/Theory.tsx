@@ -16,13 +16,21 @@ import { Transcript } from './Shell';
 import { Recap, splitSlate } from './ActCard';
 import { OnPlate, onPlateOf, PlateEyebrow, usePlate, useScenePlate, useShown } from './scenePlate';
 import { useTaught } from './taught';
+import { useShallow } from 'zustand/react/shallow';
 
 /**
  * 案件理論（企劃書 6.9.2）：整集最大的策略決定，選了不能換。
  * 論點湊不齊的理論照樣列出來，寫明缺什麼，玩家才知道為什麼選不了。
  */
 export function Theory({ scene }: { scene: TheoryScene }) {
-  const { progress, chooseTheory, skipTheory, advance } = useEpisode();
+  const { progress, chooseTheory, skipTheory, advance } = useEpisode(
+    useShallow((s) => ({
+      progress: s.progress,
+      chooseTheory: s.chooseTheory,
+      skipTheory: s.skipTheory,
+      advance: s.advance,
+    })),
+  );
   const st = theoryState(progress, scene);
   const t = useT();
   const scope = useScope();
@@ -232,7 +240,14 @@ function TheoryCommit(p: { what: string; cost: string; onCommit: () => void }) {
 
 /** 開場陳述（企劃書 6.9.3）：從選定理論的承諾裡挑，最多三個。 */
 export function Opening({ scene }: { scene: OpeningScene }) {
-  const { progress, togglePromise, deliverOpening, advance } = useEpisode();
+  const { progress, togglePromise, deliverOpening, advance } = useEpisode(
+    useShallow((s) => ({
+      progress: s.progress,
+      togglePromise: s.togglePromise,
+      deliverOpening: s.deliverOpening,
+      advance: s.advance,
+    })),
+  );
   const st = openingState(progress, scene);
   const { theory: th } = promisesOf(progress);
   const t = useT();

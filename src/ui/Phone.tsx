@@ -23,6 +23,7 @@ import {
 } from './scenePlate';
 import { useSubs } from './SubCard';
 import { introOn, preloadIntro } from './TitleIntro';
+import { useShallow } from 'zustand/react/shallow';
 
 /** 冷開場：伊森的手機畫面。 */
 /**
@@ -62,7 +63,9 @@ function RideRoute({ from, to }: { from: string; to: string }) {
 }
 
 export function Phone({ scene }: { scene: PhoneScene }) {
-  const { progress, advance, choose } = useEpisode();
+  const { progress, advance, choose } = useEpisode(
+    useShallow((s) => ({ progress: s.progress, advance: s.advance, choose: s.choose })),
+  );
   const t = useT();
   const scope = useScope();
   const lang = useLang((s) => s.lang);
