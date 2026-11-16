@@ -1,0 +1,10 @@
+# action 都鎖在 commit SHA（#380 S4）：靠 dependabot 每週檢查新版，開 PR 換 SHA 和註解裡的版號。
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ['*']
