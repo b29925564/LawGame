@@ -7,3 +7,6 @@ playwright-report
 src/ui/cast/**/*.yaml
 # 體驗評測的量測腳本照原樣搬來（process-v2 第 5 節），不重排。
 qa/gate2/**
+# 規則 1 判定本體：第二道關卡的 rules8.js 原樣搬來，不重排。
+e2e/rule1/
+pw-json
