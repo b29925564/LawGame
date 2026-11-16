@@ -44,6 +44,21 @@ const fresh = () => ({
   witnessEnd: null,
 });
 
+const PHASES: Phase[] = ['intro', 'board', 'court', 'verdict'];
+const isObj = (v: unknown): v is Record<string, unknown> =>
+  !!v && typeof v === 'object' && !Array.isArray(v);
+
+/** 原型進度的形狀檢查：階段合法，證據板是物件且起始狀態是陣列的欄位仍是陣列。 */
+export function protoOk(v: unknown): boolean {
+  if (!isObj(v) || !PHASES.includes(v.phase as Phase) || !isObj(v.board)) return false;
+  if (v.cross !== null && v.cross !== undefined && !isObj(v.cross)) return false;
+  if (v.feedback !== undefined && !isObj(v.feedback)) return false;
+  const b = v.board;
+  return Object.entries(board.startBoard(episode)).every(
+    ([k, x]) => !Array.isArray(x) || Array.isArray(b[k]),
+  );
+}
+
 export const useGame = create<GameState>()(
   persist(
     (set, get) => {
@@ -93,6 +108,11 @@ export const useGame = create<GameState>()(
       name: 'lawgame-save',
       version: 2,
       migrate: () => fresh() as unknown as GameState,
+      // 讀回來的原型進度形狀不對（手改過、舊結構）就重來，不讓畫面丟錯。
+      merge: (persisted, current) => ({
+        ...current,
+        ...(protoOk(persisted) ? (persisted as Partial<GameState>) : fresh()),
+      }),
     },
   ),
 );
