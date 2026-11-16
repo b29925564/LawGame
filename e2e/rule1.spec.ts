@@ -1,7 +1,7 @@
 /// <reference lib="dom" />
 import { createRequire } from 'node:module';
 import { readFileSync } from 'node:fs';
-import { enter, SCENES, SIZES, STEPS, FAST } from './scan/scenes';
+import { CONTINUE, enter, SCENES, SIZES, STEPS, FAST } from './scan/scenes';
 import { expect, test, type Page } from '@playwright/test';
 
 /**
@@ -25,6 +25,8 @@ const NAMES = {
 };
 type Hit = Record<string, unknown>;
 type Rule1Result = { over: Hit[]; menu: Hit[]; cut: Hit[]; btn: Hit[]; overlap: Hit[] };
+/** 第 3、4 項：整頁橫向溢出、刪節號（r8-scan.js 的 docW／ell，照原本的判法）。 */
+type Extra = { hscroll: Hit[]; ell: Hit[] };
 
 /**
  * 不算的幾類（第二道關卡 7c324bb result-b §2「以前就不算的幾類」，每一類都有截圖存證）：
@@ -58,8 +60,10 @@ const sig = (kind: string, h: Hit) =>
   [kind, h.asel ?? h.bsel ?? h.sel, h.csel ?? h.osel ?? ''].join('|');
 
 /** 把關卡慣例「不算」的去掉，剩下的就是違規。 */
-function violations(m: Rule1Result) {
+function violations(m: Rule1Result & Extra) {
   return {
+    hscroll: m.hscroll,
+    ell: m.ell,
     over: m.over,
     menu: m.menu,
     cut: m.cut.filter((c) => !c.scroll),
@@ -68,15 +72,36 @@ function violations(m: Rule1Result) {
   };
 }
 
-async function measure(page: Page) {
+async function measure(page: Page, zh: boolean) {
   await page.evaluate(() => document.fonts.ready);
   await page.waitForTimeout(450);
   // 換成後備字型量出來的換行是錯的：真字型沒載到就讓測試失敗，不要默默量錯。
   const fonts = await page.evaluate(() =>
     [...document.fonts].filter((f) => f.status === 'loaded').map((f) => f.family.replace(/"/g, '')),
   );
-  expect(fonts, '中文字型要載到').toContain('Noto Sans TC');
-  return violations(await page.evaluate(rules8, NAMES));
+  if (zh) expect(fonts, '中文字型要載到').toContain('Noto Sans TC');
+  const extra: Extra = await page.evaluate(() => {
+    const vis = (e: Element) => {
+      const r = e.getBoundingClientRect();
+      const cs = getComputedStyle(e);
+      return r.width > 0 && r.height > 0 && cs.visibility !== 'hidden' && cs.display !== 'none';
+    };
+    const nm = (e: Element) =>
+      e.tagName.toLowerCase() + (e.classList.length ? '.' + [...e.classList].join('.') : '');
+    const docW = document.documentElement.scrollWidth;
+    return {
+      hscroll: docW > innerWidth ? [{ docW, vw: innerWidth }] : [],
+      ell: [...document.querySelectorAll('*')]
+        .filter(
+          (e) =>
+            getComputedStyle(e).textOverflow === 'ellipsis' &&
+            e.scrollWidth > e.clientWidth + 1 &&
+            vis(e),
+        )
+        .map((e) => ({ sel: nm(e), text: (e.textContent || '').slice(0, 40) })),
+    };
+  });
+  return violations({ ...(await page.evaluate(rules8, NAMES)), ...extra });
 }
 
 // 每條測試各自獨立：讓 CI 的 4 份分片按測試平均分，不要整支檔案都落在同一份（第一次上 CI 時 e2e 第 3 份多跑 6 分鐘）。
@@ -98,7 +123,7 @@ for (const sz of SIZES) {
     for (const [ep, scene, label, step, seed] of SCENES) {
       test(`${ep} 第 ${scene} 場 ${label}（步 ${step}）`, async ({ page }) => {
         test.setTimeout(120_000);
-        await enter(page, ep, scene, step, seed);
+        await enter(page, ep, scene, step, seed, sz);
         const board = seed.startsWith('board');
         const found: Record<string, unknown>[] = [];
         for (let k = 0; k < (board ? 1 : STEPS); k++) {
@@ -108,7 +133,7 @@ for (const sz of SIZES) {
             await pb.first().click();
             continue;
           }
-          const v = await measure(page);
+          const v = await measure(page, sz.lang !== 'en');
           for (const [kind, list] of Object.entries(v))
             for (const h of list) {
               const known = KNOWN[sig(kind, h)];
@@ -119,9 +144,17 @@ for (const sz of SIZES) {
             await page.screenshot({
               path: `${process.env.RULE1_SHOTS}/${sz.name}-${ep}-${scene}-${label}-k${k}.png`,
             });
-          const c = page.getByRole('button', { name: /^繼續$/ }).filter({ visible: true });
+          const c = page.getByRole('button', { name: CONTINUE }).filter({ visible: true });
           if (!(await c.count())) break;
           await c.first().click();
+        }
+        // 第二、三級：照跑、不擋，記在報告；CI 的 tier23 工作把它開成 C 級 Issue（process-v2 第 5 節第 8 項）。
+        if (sz.tier23) {
+          for (const f of found)
+            test
+              .info()
+              .annotations.push({ type: 'C 級', description: JSON.stringify(f).slice(0, 300) });
+          return;
         }
         expect(found, `規則 1（${sz.name}，${ep} 第 ${scene} 場 ${label}）`).toEqual([]);
       });

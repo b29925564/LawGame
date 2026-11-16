@@ -136,42 +136,85 @@ export function progressOf(ep: string, scene: number, step: number, seed: Seed) 
   return { ...hung, scene, step, scenes: keep };
 }
 
-/** 尺寸：第一級 1366、412 在 PR 跑；1530、1920、390 只在全站掃描跑（1920 也被 TIER23 擋）。 */
-export const SIZES = [
-  { name: '1366', viewport: { width: 1366, height: 768 }, mobile: false, fast: true },
-  { name: '412', viewport: { width: 412, height: 915 }, mobile: true, fast: true },
+export type Size = {
+  name: string;
+  viewport: { width: number; height: number };
+  mobile: boolean;
+  /** PR 快速層跑（第一級的 1366、412）。 */
+  fast: boolean;
+  /** 第二、三級組合（process-v2 第 5 節第 8 項）：照跑，結果只記在報告，由 CI 開 C 級 Issue，不擋。 */
+  tier23?: boolean;
+  lang?: 'zh' | 'en';
+  textScale?: number;
+};
+const DESK = { width: 1366, height: 768 };
+const PHONE = { width: 412, height: 915 };
+/**
+ * 尺寸：第一級 1366、412 在 PR 跑；1530、1920、390 只在全站掃描跑（1920 也被 TIER23 擋）。
+ * 第二、三級（英文、125／150%、360、320）也只在全站掃描跑，名稱都會被 playwright.config.ts 的 TIER23 擋在 PR 外面。
+ */
+export const SIZES: Size[] = [
+  { name: '1366', viewport: DESK, mobile: false, fast: true },
+  { name: '412', viewport: PHONE, mobile: true, fast: true },
   { name: '1530', viewport: { width: 1530, height: 860 }, mobile: false, fast: false },
   { name: '1920', viewport: { width: 1920, height: 1080 }, mobile: false, fast: false },
   { name: '390', viewport: { width: 390, height: 844 }, mobile: true, fast: false },
+  { name: 'en-1366', viewport: DESK, mobile: false, fast: false, tier23: true, lang: 'en' },
+  { name: 'en-412', viewport: PHONE, mobile: true, fast: false, tier23: true, lang: 'en' },
+  { name: '125-1366', viewport: DESK, mobile: false, fast: false, tier23: true, textScale: 1.25 },
+  { name: '150-1366', viewport: DESK, mobile: false, fast: false, tier23: true, textScale: 1.5 },
+  { name: '150-412', viewport: PHONE, mobile: true, fast: false, tier23: true, textScale: 1.5 },
+  { name: '360', viewport: { width: 360, height: 740 }, mobile: true, fast: false, tier23: true },
+  { name: '320', viewport: { width: 320, height: 640 }, mobile: true, fast: false, tier23: true },
 ];
+/** 「繼續」鈕：中英文都認。 */
+export const CONTINUE = /^(繼續|Continue)$/;
 /** PR 快速層只走前幾步；全站掃描每個點往下走到 8 步。 */
 export const FAST = process.env.E2E_TIER === 'fast';
 export const STEPS = FAST ? 3 : 8;
 
-export async function enter(page: Page, ep: string, scene: number, step: number, seed: Seed) {
+export async function enter(
+  page: Page,
+  ep: string,
+  scene: number,
+  step: number,
+  seed: Seed,
+  sz: Pick<Size, 'lang' | 'textScale'> = {},
+) {
   const save = JSON.stringify({
     version: 5,
     savedAt: Date.now(),
     label: 'x',
     progress: progressOf(ep, scene, step, seed),
   });
-  await page.addInitScript((s) => {
-    if (sessionStorage.getItem('seeded')) return;
-    sessionStorage.setItem('seeded', '1');
-    localStorage.clear();
-    localStorage.setItem('lawgame-ep-auto', s);
-    localStorage.setItem('lawgame-lang', 'zh');
-    localStorage.setItem('rd.dev.intro', '0');
-  }, save);
+  const lang = sz.lang ?? 'zh';
+  const settings = sz.textScale
+    ? JSON.stringify({ state: { textScale: sz.textScale, voScale: sz.textScale }, version: 1 })
+    : '';
+  await page.addInitScript(
+    ([s, lang, settings]) => {
+      if (sessionStorage.getItem('seeded')) return;
+      sessionStorage.setItem('seeded', '1');
+      localStorage.clear();
+      localStorage.setItem('lawgame-ep-auto', s);
+      localStorage.setItem('lawgame-lang', lang);
+      localStorage.setItem('rd.dev.intro', '0');
+      if (settings) localStorage.setItem('lawgame-settings', settings);
+    },
+    [save, lang, settings],
+  );
   await page.goto('/');
-  await page.getByRole('button', { name: /^繼續/ }).first().click();
+  await page
+    .getByRole('button', { name: /^(繼續|Continue)/ })
+    .first()
+    .click();
   await page.waitForTimeout(600);
   if (seed === 'board1' || seed === 'board2') {
     if (await page.locator('.place-beat').count())
       await page.locator('.place-beat').first().click();
     await page.waitForTimeout(3000);
     await page
-      .getByRole('button', { name: /^證據板/ })
+      .getByRole('button', { name: /^(證據板|Board)/ })
       .filter({ visible: true })
       .first()
       .click();
