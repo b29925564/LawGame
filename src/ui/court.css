@@ -3756,22 +3756,42 @@ html[lang='en'] .stamp.rec-stamp b {
   text-indent: 0.3em;
   text-align: center;
 }
-/* 窗光：一道硬邊窄光柱（光罩寬 13%），落點在被告席、桌角、走道。 */
+/* 窗光：判決窗光 A 的機位（verdictLight.ts，1920×1080 算圖）。桌機和法官席判決格一樣裁成 2.39，人頭離上緣 ≥ 10%；
+   手機裁成約 1.24、全高、靠左，辯方席三個落點和兩個人都在框裡（書記官在框外，不留半個人）。
+   所有格疊在一起、事先解碼，只換哪一格看得見：切格不閃。 */
 .vs-light {
   display: grid;
   gap: 10px;
-  width: min(900px, calc(100vw - 32px));
-}
-.vs-tbd {
-  font: 400 12px/1.4 var(--font-court);
-  letter-spacing: 0.08em;
-  color: var(--cine-muted);
+  width: min(calc(100vw - 32px), calc((100vh - 120px) * 2.39));
 }
 .vs-frame {
   position: relative;
   overflow: hidden;
   aspect-ratio: 2.39;
-  background: linear-gradient(#19202a, #0b0e13 55%, #06080b);
+  background: #0b0e13;
+}
+.vs-frame img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 0 11.5%;
+  visibility: hidden;
+}
+.vs-frame img[data-on] {
+  visibility: visible;
+}
+@media (max-width: 767px) {
+  .vs-light {
+    width: min(calc(100vw - 16px), calc((100vh - 160px) * 1.24));
+  }
+  .vs-frame {
+    aspect-ratio: 1.24;
+  }
+  .vs-frame img {
+    object-position: 0 50%;
+  }
 }
 .vs-table {
   position: absolute;
@@ -3787,6 +3807,19 @@ html[lang='en'] .stamp.rec-stamp b {
 .vs-table[data-side='state'] {
   left: calc(3.1 / 5.2 * 100%);
   width: calc(2.1 / 5.2 * 100%);
+}
+/* 第二集還沒有算圖：示意畫面占位（一道硬邊窄光柱，光罩寬 13%，落點在被告席、桌角、走道）。 */
+.vs-light[data-tbd] {
+  width: min(900px, calc(100vw - 32px));
+}
+.vs-tbd {
+  font: 400 12px/1.4 var(--font-court);
+  letter-spacing: 0.08em;
+  color: var(--cine-muted);
+}
+.vs-light[data-tbd] .vs-frame {
+  aspect-ratio: 2.39;
+  background: linear-gradient(#19202a, #0b0e13 55%, #06080b);
 }
 .vs-shaft {
   position: absolute;

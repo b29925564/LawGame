@@ -416,7 +416,7 @@ function Verdict({
   const root = useRef<HTMLElement>(null);
   const kind: VerdictKind =
     v === '無罪' || v === '無責' ? '無罪' : v === '陪審團僵局' ? '陪審團僵局' : '有罪';
-  const run = useVerdictRun(kind, root, start);
+  const run = useVerdictRun(kind, root, start, episode);
   const written = run.phase !== 'form';
   const caption = useCaseTerms();
 

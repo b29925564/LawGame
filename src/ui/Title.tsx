@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { episodes } from '../content';
+import { episodeLoaded, episodeMeta, loadEpisode, onEpisodeLoaded, isEpisodeId } from '../content';
 import { useEpisode } from '../engine/game';
 import { useLang, useT } from '../i18n';
 import { LangSwitch } from './lang';
@@ -33,10 +33,18 @@ export function SlotList({
   const lang = useLang((s) => s.lang);
   // 存檔畫面只准一道黃（設計師 P2-6 r1）：選中的那一欄用 JS 記，滑鼠滑過不算；只有它的目前行上螢光，焦點框改用墨色。
   const [sel, setSel] = useState<Slot | null>(null);
+  // 存檔欄的案卷登錄表要看劇本：用到的集數先載入，載好再畫一次（#388）。
+  const [, redraw] = useState(0);
+  useEffect(() => onEpisodeLoaded(() => redraw((n) => n + 1)), []);
+  const files = slots.map((slot) => readSave(slot));
+  const need = [...new Set(files.map((f) => f?.progress.episode))].filter(isEpisodeId).join(',');
+  useEffect(() => {
+    for (const id of need.split(',').filter(isEpisodeId)) loadEpisode(id).catch(() => undefined);
+  }, [need]);
   return (
     <ul className="stack slots">
-      {slots.map((slot) => {
-        const f = readSave(slot);
+      {slots.map((slot, i) => {
+        const f = files[i];
         const name = slot === 'auto' ? t('自動存檔') : t('存檔 {n}', { n: slot });
         return (
           <li key={slot}>
@@ -68,8 +76,8 @@ export function SlotList({
                 )}
               </span>
               {/* Bates 區間在章節那一行下面，再下面是縮小的案卷登錄表（設計師 P2-6；設定集第 10 章）。 */}
-              {f && <SaveBates progress={f.progress} />}
-              {f && <DocketMini progress={f.progress} />}
+              {f && episodeLoaded(f.progress.episode) && <SaveBates progress={f.progress} />}
+              {f && episodeLoaded(f.progress.episode) && <DocketMini progress={f.progress} />}
             </button>
           </li>
         );
@@ -86,7 +94,7 @@ export function Title() {
   } = useEpisode(useShallow((s) => ({ newGame: s.newGame, load: s.load, openProto: s.openProto })));
   // 讀檔清單在手機上要往下捲才看得到；讀進來的場景從頂端開始，不沿用標題頁的捲動位置（體驗評測 v90）。
   const load = (slot: Slot) => {
-    if (loadSlot(slot)) window.scrollTo({ top: 0 });
+    void Promise.resolve(loadSlot(slot)).then((ok) => ok && window.scrollTo({ top: 0 }));
   };
   const [loading, setLoading] = useState(false);
   const [picking, setPicking] = useState(false);
@@ -169,7 +177,7 @@ export function Title() {
           </button>
           {picking && (
             <ul className="stack slots">
-              {Object.entries(episodes).map(([id, ep]) => (
+              {Object.entries(episodeMeta).map(([id, ep]) => (
                 <li key={id}>
                   <button className="slot" onClick={() => newGame(id)}>
                     <strong>{t('第 {n} 集', { n: ep.number })}</strong>

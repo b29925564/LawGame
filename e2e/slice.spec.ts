@@ -243,8 +243,8 @@ async function playToRachelLast(page: Page) {
 
   // 法院系統：依據、支撐、請求三樣都要對。
   await page.getByRole('button', { name: '法院系統' }).click();
-  await expect(page.locator('article.plead')).toContainText('死者手錶的健康資料');
-  await fileMotion(page, '核發傳票給手錶廠商', '相關性', /手錶資料與本案相關/);
+  await expect(page.locator('article.plead')).toContainText('死者的智慧手錶');
+  await fileMotion(page, '核發傳票給手錶廠商', '相關性', /手錶能縮小死亡時間/);
   // 法官准了：證物貼紙的「供辨識」劃掉，蓋「已採納」章。
   await expect(page.locator('.xs.admitted')).toHaveCount(1);
   // 貼紙就是這一格的黃：主按鈕降級、其他黃退成鉛筆。
@@ -300,7 +300,7 @@ async function playToRachelLast(page: Page) {
   );
   await page.getByRole('button', { name: '法院系統' }).click();
   await expect(page.locator('article.plead')).toContainText('巡邏車上的供述');
-  await fileMotion(page, '排除該項供述', '米蘭達警告', /供述取得程序違法/);
+  await fileMotion(page, '排除該項供述', '米蘭達警告', /那句話是警員問出來的/);
   await expect(page.getByText('本庭排除該項供述')).toBeVisible();
   await page.getByRole('button', { name: '回到桌面' }).click();
   await page.getByRole('button', { name: '結束調查' }).click();

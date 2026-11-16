@@ -33,6 +33,7 @@ import type { Relation, Tag } from '../schema';
 import * as closing from './closing';
 import * as depo from './deposition';
 import * as desk from './desk';
+import * as discovery from './discovery';
 import * as interview from './interview';
 import * as nego from './negotiation';
 import * as theory from './theory';
@@ -96,7 +97,7 @@ function actions(p: Progress): { go: Act | null; rest: Act[] } {
         );
         return { go: null, rest };
       }
-      if (desk.done(s, st)) return { go: go(), rest };
+      if (desk.done(s, st, p.cards)) return { go: go(), rest };
       const held = desk.heldCards(s, st, p.cards);
       for (const d of s.docs) {
         add(`open ${d.id}`, () => g.openDoc(d.id));
@@ -104,6 +105,11 @@ function actions(p: Progress): { go: Act | null; rest: Act[] } {
       }
       for (const m of s.mail) add(`mail ${m.id}`, () => g.openMail(m.id));
       for (const j of s.jobs) add(`job ${j.id}`, () => g.commission(j.id));
+      // 開示 App 的三個回應按鈕（看得到、還沒回應的請求）。
+      for (const r of discovery.openRequests(s, st, p.cards))
+        if (!discovery.answered(st)[r.id])
+          for (const resp of ['produce', 'privilege', 'overbroad'] as const)
+            add(`respond ${r.id} ${resp}`, () => g.respondDiscovery(r.id, resp));
       for (const m of s.motions) {
         for (const b of m.bases) add(`basis ${m.id} ${b}`, () => g.pickBasis(m.id, b));
         for (const r of m.requests) add(`request ${m.id} ${r}`, () => g.pickRequest(m.id, r));

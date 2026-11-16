@@ -248,3 +248,16 @@ describe('讀不到的存檔先備份（#363）', () => {
     expect(s.getItem(backupKey('auto'))).toBeNull();
   });
 });
+
+describe('劇本還沒載入（#388）', () => {
+  it('只做結構檢查，不動場景、步數與選擇；不認得的集數仍然拒絕', () => {
+    const raw = file({ scene: 999, step: 50, choices: { 'x:3': 9 } });
+    expect(migrate(raw, {})?.progress).toMatchObject({
+      scene: 999,
+      step: 50,
+      choices: { 'x:3': 9 },
+    });
+    expect(migrate(file({ episode: 'ep9' }), {})).toBeNull();
+    expect(migrate(file({ cards: null }), {})).toBeNull();
+  });
+});

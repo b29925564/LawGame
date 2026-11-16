@@ -4,7 +4,7 @@
  * 否則玩家更新後存檔會損毀（製作流程第 8 節，A 類錯誤）。
  */
 
-import { episodes } from '../content';
+import { episodes, isEpisodeId } from '../content';
 import { startClosing } from './episode/closing';
 import { startDefense } from './episode/defense';
 import { startDeposition } from './episode/deposition';
@@ -176,8 +176,12 @@ function check(d: SaveFile, eps: Episodes): SaveFile | null {
   const p = d.progress as unknown;
   if (typeof d.label !== 'string' || !Number.isFinite(d.savedAt) || !isObj(p)) return null;
   if (d.sceneId !== undefined && typeof d.sceneId !== 'string') return null;
-  if (typeof p.episode !== 'string' || !Object.hasOwn(eps, p.episode)) return null;
-  const ep: Episode = eps[p.episode];
+  if (typeof p.episode !== 'string') return null;
+  // 劇本依集數動態載入（#388）：還沒載入的集數只做結構檢查（空劇本＝不對場景、步數、選擇動手），
+  // 開始玩之前載入後會再完整檢查一次。
+  const known = Object.hasOwn(eps, p.episode);
+  if (!known && !isEpisodeId(p.episode)) return null;
+  const ep: Episode = known ? eps[p.episode] : UNLOADED;
   const picks = isObj(d.picks) ? d.picks : {};
   if (!isIndex(p.scene) || !isIndex(p.step) || !isStrs(p.cards)) return null;
   const flags = p.flags === undefined ? [] : p.flags;
@@ -257,6 +261,7 @@ function check(d: SaveFile, eps: Episodes): SaveFile | null {
 }
 
 type Episodes = Record<string, Episode>;
+const UNLOADED = { scenes: [] } as unknown as Episode;
 type Step = { do: string; text?: string; prompt?: string; options: { text: string }[] };
 
 /** 一步的原文指紋：台詞、提示或第一個選項。 */

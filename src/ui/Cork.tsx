@@ -468,6 +468,7 @@ function RackName({
   tail,
   lines,
   className,
+  max = 2,
   onHead,
 }: {
   id: string;
@@ -475,6 +476,8 @@ function RackName({
   tail: boolean;
   /** 最多幾行；沒給就量格子放得下的行數，最多兩行。 */
   lines?: number;
+  /** 沒給 lines 時最多幾行（便條的論點名稱要整句放得下，給三行；設計師 #425）。 */
+  max?: number;
   className?: string;
   onHead: (id: string, head: string) => void;
 }) {
@@ -501,7 +504,7 @@ function RackName({
       if (lines === undefined) {
         const ks = getComputedStyle(card);
         const room = card.clientHeight - num(ks.paddingTop) - num(ks.paddingBottom);
-        n = Math.min(2, Math.floor(room / lineH));
+        n = Math.min(max, Math.floor(room / lineH));
       }
       const head = fitName(text, width, font, n, lines === undefined);
       onHead(id, head.lines.join('').trim());
@@ -522,7 +525,7 @@ function RackName({
       ro.disconnect();
       document.fonts?.removeEventListener('loadingdone', fit);
     };
-  }, [id, text, tail, lines, onHead]);
+  }, [id, text, tail, lines, max, onHead]);
   return (
     <b
       ref={ref}
@@ -577,7 +580,7 @@ function RackFace({
         </span>
       );
     case 'note':
-      return <RackName {...nameProps} className="cork-hand" />;
+      return <RackName {...nameProps} max={3} className="cork-hand" />;
     default:
       return <RackName {...nameProps} className="cork-doc-name" />;
   }

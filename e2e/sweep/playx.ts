@@ -4,6 +4,18 @@ import { extraShot } from './extra';
 import { expect, type Page, type Locator } from '@playwright/test';
 import { fileMotion, ruling } from './motion';
 
+/**
+ * 出示成立後停在對質那一拍（#410／#417）：輸入鎖住（證詞欄、詰問完畢、休庭都 inert），
+ * 等證人字幕播完再加一拍才放開。等它放開再往下按；不等的話「休庭」「詰問完畢」會在拍子裡按不到。
+ */
+export async function settle(page: Page) {
+  await page.waitForFunction(
+    () => !document.querySelector('section.panel[inert]:has(article.claim), button.primary[inert]'),
+    null,
+    { timeout: 20_000 },
+  );
+}
+
 export type Opts = {
   theory: 'rachel' | 'sophie' | 'doubt';
   rosa?: boolean;
@@ -381,7 +393,7 @@ export async function play(page: Page, o: Opts) {
   await page.getByRole('button', { name: '法院系統' }).click();
   await expect(page.locator('article.plead')).toContainText(/手錶/);
   if (o.mistakes) {
-    await fileMotion(page, '核發傳票給手錶廠商', '營業秘密', /手錶資料與本案相關/);
+    await fileMotion(page, '核發傳票給手錶廠商', '營業秘密', /手錶能縮小死亡時間/);
     await shot(page, o, 'motion-denied');
     const st = await ruling(page);
     log.push(`[走錯] 手錶傳票選錯依據：駁回章${st ? `「${st}」` : '沒有'}出現`);
@@ -402,7 +414,7 @@ export async function play(page: Page, o: Opts) {
     }
   }
   if (!denied) {
-    await fileMotion(page, '核發傳票給手錶廠商', '相關性', /手錶資料與本案相關/);
+    await fileMotion(page, '核發傳票給手錶廠商', '相關性', /手錶能縮小死亡時間/);
     await expect(page.getByText(/22:24，心率歸零。|23 分鐘/).first()).toBeVisible();
     await page.getByRole('button', { name: '回到桌面' }).click();
     await page.getByRole('button', { name: '法院系統' }).click();
@@ -496,7 +508,7 @@ export async function play(page: Page, o: Opts) {
   else
     await solve(page, '車上那句話', [/逮捕報告：「自願陳述」/, '巡邏車錄影：沒有警告'], /矛盾/, 1);
   await page.getByRole('button', { name: '法院系統' }).click();
-  await fileMotion(page, '排除該項供述', '米蘭達警告', /供述取得程序違法/);
+  await fileMotion(page, '排除該項供述', '米蘭達警告', /那句話是警員問出來的/);
   await expect(page.getByText('本庭排除該項供述')).toBeVisible();
   await page.getByRole('button', { name: '回到桌面' }).click();
   {
@@ -616,6 +628,7 @@ export async function play(page: Page, o: Opts) {
     await page.getByRole('button', { name: /「所有」是指所有/ }).click();
     await page.getByRole('button', { name: /智慧手錶會同步手機的通知/ }).click();
     await cardIn(page, /出示 論點 A/).click();
+    await settle(page);
   }
   await page.getByRole('button', { name: '詰問完畢' }).click();
   await shot(page, o, 'k-done');
@@ -632,6 +645,7 @@ export async function play(page: Page, o: Opts) {
     await c.getByRole('button', { name: /沒有繞去任何地方/ }).click();
     await c.getByRole('button', { name: /地下停車場走/ }).click();
     await cardIn(c, /出示 論點 H/).click();
+    await settle(page);
     await shot(page, o, 's-impeached');
   }
   if (
@@ -652,12 +666,16 @@ export async function play(page: Page, o: Opts) {
     const claim = page.locator('article.claim');
     await claim.getByRole('button', { name: /智慧手錶會記錄心率/ }).click();
     await cardIn(claim, /出示 論點 B/).click();
+    await settle(page);
     await claim.getByRole('button', { name: /出席紀錄由系統自動產生/ }).click();
     await cardIn(claim, /出示 論點 C/).click();
+    await settle(page);
     await claim.getByRole('button', { name: /那個時間，三十一樓除了您/ }).click();
     await claim.getByRole('button', { name: /門禁紀錄顯示/ }).click();
     await cardIn(claim, /出示 論點 D/).click();
-    if (o.theory === 'rachel') await expect(page.getByText('自證己罪')).toBeVisible();
+    await settle(page);
+    // 字幕列與筆錄都有這句（#417 起旁白不收字幕）：看第一個就好。
+    if (o.theory === 'rachel') await expect(page.getByText('自證己罪').first()).toBeVisible();
     else
       log.push(
         `[資訊] 非瑞秋理論彈劾瑞秋：${(await page.locator('main').innerText()).replace(/\s+/g, ' ').slice(-200)}`,
