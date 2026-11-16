@@ -8,6 +8,7 @@ const param = () => ({
   setTargetAtTime() {},
   setValueAtTime() {},
   linearRampToValueAtTime() {},
+  exponentialRampToValueAtTime() {},
   cancelScheduledValues() {},
 });
 class FakeAudioContext {
@@ -36,6 +37,16 @@ class FakeAudioContext {
   }
   createBuffer() {
     return {};
+  }
+  /** 載不到音檔時退回的合成音。 */
+  createOscillator() {
+    return {
+      type: 'sine',
+      frequency: param(),
+      connect: (n: { connect?: unknown }) => n,
+      start() {},
+      stop() {},
+    };
   }
   decodeAudioData() {
     return Promise.resolve({});
