@@ -1,4 +1,12 @@
-import { Fragment, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+import {
+  Fragment,
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
 import { createPortal } from 'react-dom';
 import * as desk from '../engine/episode/desk';
 import * as discovery from '../engine/episode/discovery';
@@ -1050,7 +1058,12 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
                       isNew={f.id === newest && !placed.has(f.id)}
                       used={a.cards.includes(f.id)}
                       done={done}
-                      label={`${t(f.name, scope)}${t('：')}${showPair(f.pair)}`}
+                      // 名稱照畫面第一行的順序：編號、關係、兩張卡（設計師 ci-ax-names 11-16 補判 B2）。
+                      label={t('{name}，{relation}：{pair}', {
+                        name: t(f.name, scope),
+                        relation: t(f.relation),
+                        pair: showPair(f.pair),
+                      })}
                       onPick={() => toggleCard(q.id, f.id)}
                       head={
                         <>
@@ -1665,6 +1678,8 @@ function FoundNote({
   const body = useRef<HTMLSpanElement>(null);
   const [long, setLong] = useState(false);
   const [open, setOpen] = useState(false);
+  // 內文、註記和「新」讀屏放在描述裡念；「已放進答案」由 aria-pressed 表達。
+  const id = useId();
   useLayoutEffect(() => {
     const el = body.current;
     if (!el || open) return;
@@ -1685,16 +1700,24 @@ function FoundNote({
         className={fresh ? 'found fresh' : 'found'}
         aria-pressed={used}
         aria-label={label}
+        aria-describedby={isNew ? `${id}-new ${id}-body` : `${id}-body`}
         disabled={done}
         onClick={onPick}
       >
         <span className="found-head">
           {head}
-          {isNew && <span className="found-new">{t('新')}</span>}
+          {isNew && (
+            <span id={`${id}-new`} className="found-new">
+              {t('新')}
+            </span>
+          )}
           {used && <span className="found-used-tag">{t('已放進答案')}</span>}
         </span>
         <strong className="found-pair">{prose(pair)}</strong>
-        <span className={'found-body' + (long ? ' long' : '') + (open ? ' open' : '')}>
+        <span
+          id={`${id}-body`}
+          className={'found-body' + (long ? ' long' : '') + (open ? ' open' : '')}
+        >
           <span ref={body} className="found-text">
             {prose(text)}
           </span>

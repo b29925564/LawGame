@@ -132,7 +132,7 @@ export async function link(
 
 export async function answer(page: Page, n: number) {
   const q = page.locator('section.workbench');
-  const fb = q.getByRole('button', { name: new RegExp(`^發現 ${n}：`) });
+  const fb = q.getByRole('button', { name: new RegExp(`^發現 ${n}，`) });
   if (!(await fb.isVisible().catch(() => false)))
     await q
       .locator('details.found-used > summary')
@@ -227,7 +227,7 @@ export async function play(page: Page, o: Opts) {
   await page.getByRole('button', { name: /^第 1 集/ }).click();
   await next(page);
   await next(page);
-  await page.getByRole('button', { name: /打開 葛蘭特・沃斯 的訊息/ }).click();
+  await page.getByRole('button', { name: /^聊天 葛蘭特・沃斯/ }).click();
   await shot(page, o, 'phone');
   await page.getByRole('button', { name: '好。' }).click();
   await next(page);

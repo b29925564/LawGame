@@ -1051,7 +1051,7 @@ for (const [w, h] of [
       await links.getByRole('radio', { name: zh ? '支持' : 'Supports' }).click();
       await links.getByRole('button', { name: zh ? '連起來' : 'Link' }).click();
       const q = page.locator('section.workbench');
-      await q.getByRole('button', { name: new RegExp(zh ? '^發現 1：' : '^Finding 1:') }).click();
+      await q.getByRole('button', { name: new RegExp(zh ? '^發現 1，' : '^Finding 1,') }).click();
       await q.getByRole('button', { name: zh ? /^提交/ : /^Submit/ }).click();
       await expect(q).toContainText(zh ? '已確認' : 'Confirmed');
       // 同一題再放一張：捲到位，標籤和卡名在變高的答案面板上方。

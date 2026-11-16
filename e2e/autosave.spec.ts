@@ -10,7 +10,7 @@ async function replyToBoss(page: Page) {
   await page.getByRole('button', { name: /^第 1 集/ }).click();
   await page.getByRole('button', { name: '繼續' }).click();
   await page.getByRole('button', { name: '繼續' }).click();
-  await page.getByRole('button', { name: /打開 葛蘭特・沃斯 的訊息/ }).click();
+  await page.getByRole('button', { name: /^聊天 葛蘭特・沃斯/ }).click();
   await page.getByRole('button', { name: '好。' }).click();
 }
 

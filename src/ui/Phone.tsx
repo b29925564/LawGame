@@ -370,11 +370,8 @@ function Screen({
       return (
         <div className="phone-body lock">
           <p className="lock-clock">{v.time && t(v.time, scope)}</p>
-          <button
-            className="notif"
-            onClick={advance}
-            aria-label={t('打開 {from} 的訊息', { from: t(s.message.from, scope) })}
-          >
+          {/* 名稱就是按鈕上的字（聊天、寄件人、內文）：內文是劇情，讀屏要念得到（設計師 ci-ax-names 11-16 補判 B2）。 */}
+          <button className="notif" onClick={advance}>
             <span className="notif-app">{t('聊天')}</span>
             <strong>{fitLine(t(s.message.from, scope))}</strong>
             <span>{fitLine(t(s.message.text, scope))}</span>
