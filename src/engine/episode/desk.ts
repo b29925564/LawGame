@@ -482,9 +482,12 @@ export function motionCards(s: DeskScene, st: DeskState): string[] {
   });
 }
 
-/** 工時用完就直接進下一幕，帶著手上有的東西（企劃書 6.13）。 */
-export function done(_s: DeskScene, st: DeskState): boolean {
-  return st.wrapped || st.hours <= 0;
+/**
+ * 工時用完就直接進下一幕，帶著手上有的東西（企劃書 6.13）。
+ * 但開示有期限：看得到的請求要先全部回應（回應不花工時），不能靠把工時花光躲掉代價（#384）。
+ */
+export function done(s: DeskScene, st: DeskState, carried: string[] = []): boolean {
+  return st.wrapped || (st.hours <= 0 && allAnswered(s, st, carried));
 }
 
 /** 過關的推理鏈確認之後，才能收工進下一幕。 */
