@@ -47,6 +47,7 @@ import { Lock } from './Lock';
 import { PlaceSlate, Recap } from './ActCard';
 import { durUi, reducedMotion } from './a11y';
 import { useTaught } from './taught';
+import { useShallow } from 'zustand/react/shallow';
 
 // 證據庫和左下的證據抽屜內容一模一樣，所以只留抽屜：它在每個畫面都叫得出來。
 type App = 'mail' | 'docs' | 'board' | 'jobs' | 'court' | 'discovery';
@@ -174,7 +175,15 @@ function useDueRow(bar: { current: HTMLElement | null }, text: string) {
 }
 
 export function Desk({ scene }: { scene: DeskScene }) {
-  const { progress, advance, clearReport, resolveTwist, wrapDesk } = useEpisode();
+  const { progress, advance, clearReport, resolveTwist, wrapDesk } = useEpisode(
+    useShallow((s) => ({
+      progress: s.progress,
+      advance: s.advance,
+      clearReport: s.clearReport,
+      resolveTwist: s.resolveTwist,
+      wrapDesk: s.wrapDesk,
+    })),
+  );
   const t = useT();
   const scope = useScope();
   const bar = useRef<HTMLElement>(null);
@@ -398,7 +407,9 @@ const RESULT: Record<discovery.Result, string> = {
 
 /** 證據開示：對方的每項請求選一種回應，送出就定案。 */
 function Discovery({ scene }: { scene: DeskScene }) {
-  const { progress, respondDiscovery } = useEpisode();
+  const { progress, respondDiscovery } = useEpisode(
+    useShallow((s) => ({ progress: s.progress, respondDiscovery: s.respondDiscovery })),
+  );
   const t = useT();
   const scope = useScope();
   const st = deskState(progress, scene);
@@ -481,7 +492,9 @@ function Discovery({ scene }: { scene: DeskScene }) {
 }
 
 function Mail({ scene }: { scene: DeskScene }) {
-  const { progress, openMail } = useEpisode();
+  const { progress, openMail } = useEpisode(
+    useShallow((s) => ({ progress: s.progress, openMail: s.openMail })),
+  );
   const t = useT();
   const scope = useScope();
   const st = deskState(progress, scene);
@@ -538,7 +551,9 @@ function DocLine({ text }: { text: string }) {
 
 /** 文件以句子為單位。點一句話可以標記，命中關鍵事實才生成卡片，點錯沒有懲罰。 */
 function Docs({ scene }: { scene: DeskScene }) {
-  const { progress, openDoc, mark } = useEpisode();
+  const { progress, openDoc, mark } = useEpisode(
+    useShallow((s) => ({ progress: s.progress, openDoc: s.openDoc, mark: s.mark })),
+  );
   const t = useT();
   const scope = useScope();
   const st = deskState(progress, scene);
@@ -643,7 +658,19 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
     submit,
     toggleTimeline,
     moveTimeline,
-  } = useEpisode();
+  } = useEpisode(
+    useShallow((s) => ({
+      progress: s.progress,
+      toggleCard: s.toggleCard,
+      toggleLinkCard: s.toggleLinkCard,
+      setLinkRelation: s.setLinkRelation,
+      connect: s.connect,
+      releaseLink: s.releaseLink,
+      submit: s.submit,
+      toggleTimeline: s.toggleTimeline,
+      moveTimeline: s.moveTimeline,
+    })),
+  );
   const t = useT();
   const scope = useScope();
   const st = deskState(progress, scene);
@@ -1247,7 +1274,15 @@ function Motions({
   held: string[];
   onBoard: () => void;
 }) {
-  const { progress, pickBasis, pickRequest, toggleSupport, fileMotion } = useEpisode();
+  const { progress, pickBasis, pickRequest, toggleSupport, fileMotion } = useEpisode(
+    useShallow((s) => ({
+      progress: s.progress,
+      pickBasis: s.pickBasis,
+      pickRequest: s.pickRequest,
+      toggleSupport: s.toggleSupport,
+      fileMotion: s.fileMotion,
+    })),
+  );
   const t = useT();
   const scope = useScope();
   const wide = useWide();
@@ -1527,7 +1562,9 @@ const argName = (scene: DeskScene, id: string) =>
   scene.questions.find((q) => q.argument.id === id)?.argument.name ?? id;
 
 function Jobs({ scene, held }: { scene: DeskScene; held: string[] }) {
-  const { progress, commission } = useEpisode();
+  const { progress, commission } = useEpisode(
+    useShallow((s) => ({ progress: s.progress, commission: s.commission })),
+  );
   const t = useT();
   const scope = useScope();
   const st = deskState(progress, scene);

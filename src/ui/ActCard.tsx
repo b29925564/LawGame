@@ -17,6 +17,7 @@ import { subjectRects, usePlate, useScenePlate, useShown } from './scenePlate';
 import { useCaseTerms } from './terms';
 import { fitUnits } from './fitUnits';
 import './actcard.css';
+import { useShallow } from 'zustand/react/shallow';
 
 export type Headline = { kicker: string; title: string; day?: string };
 
@@ -584,7 +585,7 @@ export function PlaceBeat({
  * 移到下一場第一則旁白區塊，一字不刪。和場記重複的地點不再寫一次。
  */
 export function Recap() {
-  const { progress } = useEpisode();
+  const { progress } = useEpisode(useShallow((s) => ({ progress: s.progress })));
   const t = useT();
   const ep = episodeOf(progress);
   const card = ep.scenes[progress.scene - 1];

@@ -16,6 +16,7 @@ import { CourtCast } from './jury/CourtFace';
 import { Recap } from './ActCard';
 import { FitLine, fitLine } from './prose';
 import { useTaught } from './taught';
+import { useShallow } from 'zustand/react/shallow';
 
 type Filter = 'all' | 'seated' | 'unasked';
 
@@ -59,7 +60,16 @@ export function VoirDire({ scene }: { scene: VoirDireScene }) {
 }
 
 function VoirDireScreen({ scene }: { scene: VoirDireScene }) {
-  const { progress, askJuror, challengeJuror, strikeJuror, seatJury, advance } = useEpisode();
+  const { progress, askJuror, challengeJuror, strikeJuror, seatJury, advance } = useEpisode(
+    useShallow((s) => ({
+      progress: s.progress,
+      askJuror: s.askJuror,
+      challengeJuror: s.challengeJuror,
+      strikeJuror: s.strikeJuror,
+      seatJury: s.seatJury,
+      advance: s.advance,
+    })),
+  );
   const episode = progress.episode;
   const st = voirDireState(progress, scene);
   const t = useT();

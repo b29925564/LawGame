@@ -12,6 +12,7 @@ import { CourtCast } from './jury/CourtFace';
 import { Recap } from './ActCard';
 import { WitnessPrep } from './Prep';
 import { fitLine } from './prose';
+import { useShallow } from 'zustand/react/shallow';
 
 /**
  * 辯方證人（企劃書 6.9.6）：先準備，再直接詰問。
@@ -27,7 +28,15 @@ export function Defense({ scene }: { scene: DefenseScene }) {
 }
 
 function DefenseScreen({ scene: raw }: { scene: DefenseScene }) {
-  const { progress, prepareWitness, askWitness, finishWitness, advance } = useEpisode();
+  const { progress, prepareWitness, askWitness, finishWitness, advance } = useEpisode(
+    useShallow((s) => ({
+      progress: s.progress,
+      prepareWitness: s.prepareWitness,
+      askWitness: s.askWitness,
+      finishWitness: s.finishWitness,
+      advance: s.advance,
+    })),
+  );
   // 條件不符的題目（例如證人更正過筆錄）不出現。
   const scene = witnessScene(progress, raw);
   const st = defenseState(progress, scene);
