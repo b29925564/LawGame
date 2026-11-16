@@ -162,3 +162,13 @@ describe('英文登錄表', () => {
       expect(long).toEqual([]);
     });
 });
+
+describe('劇本依集數載入（#388）', () => {
+  it('標題畫面用的集數與標題和整集劇本一致', async () => {
+    const { EPISODE_IDS, episodeMeta, episodes, episodeLoaded } = await import('./index');
+    for (const id of EPISODE_IDS) {
+      expect(episodeLoaded(id)).toBe(true);
+      expect(episodeMeta[id]).toEqual({ number: episodes[id].number, title: episodes[id].title });
+    }
+  });
+});

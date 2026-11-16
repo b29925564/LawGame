@@ -1,5 +1,12 @@
 import { create } from 'zustand';
-import { episodes } from '../content';
+import {
+  EPISODE_IDS,
+  episodeLoaded,
+  episodes,
+  isEpisodeId,
+  loadEpisode,
+  type EpisodeId,
+} from '../content';
 import type { Relation, Tag } from './schema';
 import * as branch from './episode/branch';
 import * as closing from './episode/closing';
@@ -46,7 +53,7 @@ const start = (episode: string): Progress => ({
 });
 
 /** 集數順序（content/index.ts 的登錄順序）。 */
-const ORDER = Object.keys(episodes);
+const ORDER: readonly string[] = EPISODE_IDS;
 
 /** 這一集之後的下一集；最後一集回傳 null。 */
 export function followingEpisode(p: Progress): string | null {
@@ -567,10 +574,11 @@ interface GameState {
   /** 每次讀檔或換局加一；場景元件用它當 key，讀同一場的存檔時才會重新掛載。 */
   loadId: number;
   /** 從指定集數開新遊戲（預設第 1 集）。 */
-  newGame: (episode?: string) => void;
+  newGame: (episode?: string) => void | Promise<void>;
   /** 這一集演完之後接下一集，帶著跨集旗標與倫理紀錄。 */
-  nextEpisode: () => void;
-  load: (slot: Slot) => boolean;
+  nextEpisode: () => void | Promise<void>;
+  /** 劇本已載入時同步完成；否則先載入那一集（#388），回傳 Promise。 */
+  load: (slot: Slot) => boolean | Promise<boolean>;
   save: (slot: Slot) => boolean;
   advance: () => void;
   choose: (option: number) => void;
@@ -723,29 +731,54 @@ export const useEpisode = create<GameState>()((set, get) => {
     negoScene(get().progress, s),
   );
 
+  /**
+   * 那一集的劇本已載入就直接做；否則載入完再做（#388）。等待中玩家換了局或讀了別的檔（loadId 變了），
+   * 就不再做；載入失敗（離線）回傳 fallback，畫面留在原處。
+   */
+  function whenLoaded<T>(id: EpisodeId, go: () => T, fallback: T): T | Promise<T> {
+    if (episodeLoaded(id)) return go();
+    const at = get().loadId;
+    return loadEpisode(id).then(
+      () => (get().loadId === at ? go() : fallback),
+      () => fallback,
+    );
+  }
+
   return {
     mode: 'title',
     progress: start('ep1'),
     loadId: 0,
-    newGame: (episode = 'ep1') =>
-      set({
-        mode: 'play',
-        progress: start(episode in episodes ? episode : 'ep1'),
-        loadId: get().loadId + 1,
-      }),
+    newGame: (episode = 'ep1') => {
+      const id = isEpisodeId(episode) ? episode : 'ep1';
+      const go = () => set({ mode: 'play', progress: start(id), loadId: get().loadId + 1 });
+      return whenLoaded(id, go, undefined);
+    },
     nextEpisode: () => {
       const p = get().progress;
       const next = followingEpisode(p);
-      if (!next || sceneOf(p)) return;
-      const progress = carryOver(p, next);
-      writeSave('auto', saveLabel(progress), progress);
-      set({ mode: 'play', progress, loadId: get().loadId + 1 });
+      if (!next || !isEpisodeId(next) || sceneOf(p)) return;
+      return whenLoaded(
+        next,
+        () => {
+          const progress = carryOver(p, next);
+          writeSave('auto', saveLabel(progress), progress);
+          set({ mode: 'play', progress, loadId: get().loadId + 1 });
+        },
+        undefined,
+      );
     },
     load: (slot) => {
       const f = readSave(slot);
       if (!f) return false;
-      set({ mode: 'play', progress: f.progress, loadId: get().loadId + 1 });
-      return true;
+      const id = f.progress.episode as EpisodeId;
+      const go = () => {
+        // 劇本載入後再完整檢查一次（場景、步數、選擇對位）。
+        const g = readSave(slot);
+        if (!g) return false;
+        set({ mode: 'play', progress: g.progress, loadId: get().loadId + 1 });
+        return true;
+      };
+      return whenLoaded(id, go, false);
     },
     save: (slot) => writeSave(slot, saveLabel(get().progress), get().progress),
     advance: () => {
