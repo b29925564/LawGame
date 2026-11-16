@@ -444,11 +444,22 @@ export function CourtRecord({
       // 異議那一拍：法官的裁定留到切回證人為止，不跟著回到證人席。
       ...(animate && beat && i === beat.o + 1 ? { until: cssOf(beat.t.back) } : {}),
     });
-    // 字幕留到下一句開始為止：下一句是鏡頭外的人（律師的問句、旁白）就收成空，不讓上一句看起來像在答新問題（設計師 #257）。
+    // 字幕留到下一句開始為止：下一句是鏡頭外的人開口（律師的問句）就收成空，不讓上一句看起來像在答新問題（設計師 #257）。
+    // 旁白不是有人開口，不收：證人的字幕照讀秒播完（設計師 i354-confront：對質那句被旁白在 720 ms 收掉）。
     const fresh = entries.flatMap((e, i) =>
       i < batch
         ? []
-        : [inShot(e) ? cue(e, i) : { ...cue(e, i), text: '', redact: undefined, blank: true }],
+        : [
+            inShot(e)
+              ? cue(e, i)
+              : {
+                  ...cue(e, i),
+                  text: '',
+                  redact: undefined,
+                  blank: true,
+                  ...(e.kind === 'note' ? { soft: true } : {}),
+                },
+          ],
     );
     if (fresh.length) return fresh;
     const last = entries.length - 1;
@@ -456,7 +467,9 @@ export function CourtRecord({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [live, entries, batch, rows, animate, beat]);
   const cueKey = cues
-    .map((c) => `${c.key}|${c.at}|${c.until ?? ''}|${c.redact ?? ''}|${c.text}`)
+    .map(
+      (c) => `${c.key}|${c.at}|${c.until ?? ''}|${c.redact ?? ''}|${c.soft ? 's' : ''}|${c.text}`,
+    )
     .join('\n');
   useEffect(() => {
     onCues?.(cues);

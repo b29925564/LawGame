@@ -33,7 +33,7 @@ import { useMenu } from './GameMenu';
 import { CourtCast } from './jury/CourtFace';
 import { Recap } from './ActCard';
 import { reducedMotion } from './a11y';
-import { msOf, plus, type At, type ObjectionBeat, type Tok } from './court/beat';
+import { msOf, type At, type ObjectionBeat, type Tok } from './court/beat';
 import { CourtCamera, type Shot, type WitnessState } from './court/CourtCamera';
 import { Portrait } from './Portrait';
 import { fitDots, fitLine } from './prose';
@@ -343,28 +343,52 @@ function useConfrontBeat() {
   const waiting = useRef(false);
   const timer = useRef(0);
   const after = useRef<(() => void) | null>(null);
+  /** 這一批開播的時刻、要等到開播後幾毫秒（筆錄逐行出完與字幕播完取晚的）、最後停的那一拍。 */
+  const clock = useRef<{ t0: number; end: number; hold: number } | null>(null);
   useEffect(() => () => clearTimeout(timer.current), []);
+  const arm = useCallback(() => {
+    const c = clock.current;
+    if (!c) return;
+    clearTimeout(timer.current);
+    timer.current = window.setTimeout(
+      () => {
+        clock.current = null;
+        setHeld(false);
+        after.current?.();
+        after.current = null;
+      },
+      Math.max(0, c.t0 + c.end + c.hold - performance.now()),
+    );
+  }, []);
   /** 按下出示、而且成立：鏡頭先換到對質，等筆錄交出這一批要逐行出多久。then：鬆開以後要做的事（跳下一項證詞）。 */
   const start = useCallback((then: () => void) => {
     clearTimeout(timer.current);
+    clock.current = null;
     after.current = then;
     waiting.current = true;
     setHeld(true);
   }, []);
   /** 筆錄交出這一批逐行出完的時間點：照它加一拍沉默後鬆開。 */
-  const onBatch = useCallback((at: At, read: (tok: Tok) => number) => {
-    if (!waiting.current) return;
-    waiting.current = false;
-    timer.current = window.setTimeout(
-      () => {
-        setHeld(false);
-        after.current?.();
-        after.current = null;
-      },
-      msOf(plus(at, { 'bench-hold': 1 }), read),
-    );
-  }, []);
-  return [held, start, onBatch] as const;
+  const onBatch = useCallback(
+    (at: At, read: (tok: Tok) => number) => {
+      if (!waiting.current) return;
+      waiting.current = false;
+      clock.current = { t0: performance.now(), end: msOf(at, read), hold: read('bench-hold') };
+      arm();
+    },
+    [arm],
+  );
+  /** 字幕量出這一批鏡頭裡的話播完要多久（在筆錄交出這一批之後才到）：比筆錄晚就停到字幕播完再加一拍（設計師 i354-confront）。 */
+  const onSaid = useCallback(
+    (ms: number) => {
+      const c = clock.current;
+      if (!c || ms <= c.end) return;
+      c.end = ms;
+      arm();
+    },
+    [arm],
+  );
+  return [held, start, onBatch, onSaid] as const;
 }
 
 export function Courtroom({ scene }: { scene: TrialScene }) {
@@ -426,7 +450,7 @@ function CourtroomScreen({ scene: raw }: { scene: TrialScene }) {
   const narrow = useNarrow();
   const compactJury = useCompactJury();
   const [beat, startBeat, onJudgeRead, onJudgeShown] = useObjectionBeat();
-  const [confronting, startConfront, onBatch] = useConfrontBeat();
+  const [confronting, startConfront, onBatch, onSaid] = useConfrontBeat();
   // 招牌時刻裡（異議、出示成立）輸入鎖住。
   const busy = !!beat || confronting;
   const [insert, setInsert] = useState<HTMLDivElement | null>(null);
@@ -574,6 +598,7 @@ function CourtroomScreen({ scene: raw }: { scene: TrialScene }) {
     cues,
     onJudgeRead,
     onJudgeShown,
+    onSaid,
   };
   // 手機常駐的說話者頭像（第 10.1 章「對話頭像：法庭＝立繪」，56×70）：最後開口的人；盧卡斯用立繪。
   const speaker = [...st.log].reverse().find((l) => l.who !== '旁白')?.who ?? scene.witness.name;

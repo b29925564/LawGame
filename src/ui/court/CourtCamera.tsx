@@ -567,6 +567,7 @@ export function CourtCamera({
   cues = [],
   onJudgeRead,
   onJudgeShown,
+  onSaid,
   onShown,
   crop,
   ref,
@@ -587,6 +588,8 @@ export function CourtCamera({
   onJudgeRead?: (ms: number) => void;
   /** 法官的第一張裁定字幕真的開始出現的那一刻（字幕靠 CSS 計時，瀏覽器忙時會比 JS 計時晚）；法庭畫面用它等字幕讀完才切回。 */
   onJudgeShown?: () => void;
+  /** 這一批字幕全部播完是開播後幾毫秒（出示成立那一拍照它停住）。 */
+  onSaid?: (ms: number) => void;
   /** 另給的裁切框（16:9 原圖上的比例 [x, y, w, h]）：框的長寬比跟著它，蓋過 mode 的預設裁切。 */
   crop?: Crop;
   /** 這個機位的每一層都解碼好、真的切進畫面的那一刻（判決那一格從這裡開始算停多久）。 */
@@ -699,6 +702,7 @@ export function CourtCamera({
           cues={entered ? cues : []}
           onJudgeRead={onJudgeRead}
           onJudgeShown={onJudgeShown}
+          onSaid={onSaid}
           away={shot === 'witness' || (shot === 'black' && last === 'bench')}
         />
       </div>
@@ -719,10 +723,13 @@ function Subtitles({
   cues,
   onJudgeRead,
   onJudgeShown,
+  onSaid,
   away,
 }: {
   cues: Cue[];
   onJudgeRead?: (ms: number) => void;
+  /** 這一批鏡頭裡的話（字幕）全部播完是開播後幾毫秒；出示成立那一拍照它停住。 */
+  onSaid?: (ms: number) => void;
   onJudgeShown?: () => void;
   /** 鏡頭已不在法官席（切回證人）：有收掉時間的句子（法官的裁定）跟著鏡頭同一格收，不等自己的計時。 */
   away?: boolean;
@@ -814,6 +821,7 @@ function Subtitles({
       text?: string;
       lines?: string[];
       blank?: boolean;
+      soft?: boolean;
       redact?: Cue['redact'];
       at: string;
       cue: string;
@@ -825,7 +833,7 @@ function Subtitles({
     }[] = [];
     for (const c of cues) {
       if (c.blank) {
-        flat.push({ key: c.key, who: '', blank: true, at: c.at, cue: c.key });
+        flat.push({ key: c.key, who: '', blank: true, soft: c.soft, at: c.at, cue: c.key });
         continue;
       }
       if (c.redact) {
@@ -893,10 +901,12 @@ function Subtitles({
       });
     }
     // 每張收在下一張出現時；下一句（別的人）先到，就在那一刻收，不讓長句的後幾張壓在新的一句上。
+    // 旁白（soft）不算下一句：不收字幕，前一句照讀秒播完。
     flat.forEach((c, i) => {
-      const nextCard = flat[i + 1];
+      const rest = flat.slice(i + 1).filter((x) => !x.soft);
+      const nextCard = rest[0];
       if (nextCard) {
-        const nextCue = flat.slice(i + 1).find((x) => x.cue !== c.cue);
+        const nextCue = rest.find((x) => x.cue !== c.cue);
         c.next =
           nextCard.cue === c.cue && nextCue ? `min(${nextCard.at}, ${nextCue.at})` : nextCard.at;
       }
@@ -912,6 +922,23 @@ function Subtitles({
     const unit = box.current ? tokensFrom(box.current)('sub-unit') : 0;
     onJudgeRead(judgeUnits * unit);
   }, [judgeUnits, onJudgeRead]);
+  // 最後一張字幕收掉（或讀完）的時間：CSS 算式交給瀏覽器換算（transition-delay 的計算值是秒）。
+  const spoken = cards.filter((c) => !c.blank);
+  const tail = spoken[spoken.length - 1];
+  const said = tail
+    ? (tail.next ?? `calc(${tail.at} + ${tail.units ?? 0} * var(--dur-sub-unit))`)
+    : '';
+  useEffect(() => {
+    const el = box.current;
+    if (!onSaid || !el || !said) return;
+    const probe = document.createElement('i');
+    probe.hidden = true;
+    probe.style.transitionDelay = said;
+    el.append(probe);
+    const ms = parseFloat(getComputedStyle(probe).transitionDelay) * 1000;
+    probe.remove();
+    if (Number.isFinite(ms)) onSaid(ms);
+  }, [said, onSaid]);
   if (!cues.length) return null;
   return (
     <div
@@ -920,7 +947,7 @@ function Subtitles({
       data-subbox={voBox ? 'on' : undefined}
       style={{ '--sub-scale': voScale } as CSSProperties}
     >
-      {cards.map((c, i) =>
+      {cards.map((c) =>
         c.blank ? null : (
           <p
             key={c.key}
@@ -933,7 +960,7 @@ function Subtitles({
               } as CSSProperties
             }
             data-compact={c.compact || undefined}
-            data-last={(i === cards.length - 1 && !c.until) || undefined}
+            data-last={!c.next || undefined}
             data-gone={(away && c.until) || undefined}
             onAnimationStart={
               c.until && c === cards.find((x) => x.until)

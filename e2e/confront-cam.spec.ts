@@ -70,6 +70,22 @@ for (const strong of [true, false])
     if (phone) await expect(page.locator('.court-cam.insert')).toHaveAttribute('data-open');
     await expect(witnessPlate(page, 'confront').first()).toBeAttached();
     await expect(page.locator('.record').getByText('那則通知……我沒有看過')).toBeVisible();
+    // 證人那句的字幕整句播完（同一批後面的旁白不收字幕），停格撐到最後一張播出來之後（設計師 i354-confront）。
+    const subOn = (text: string) =>
+      page.evaluate(
+        (text) =>
+          [...document.querySelectorAll('.cam-sub')].some(
+            (e) =>
+              (e.textContent ?? '').includes(text) &&
+              Number(getComputedStyle(e).opacity) > 0.9 &&
+              getComputedStyle(e).visibility === 'visible',
+          ),
+        text,
+      );
+    for (const text of ['我沒有看過。', '所以我們沒有再往下查。']) {
+      await expect.poll(() => subOn(text), { timeout: 8000, intervals: [50] }).toBe(true);
+      await expect(panel).toHaveAttribute('inert', '');
+    }
     // 演完：鬆開輸入，換回下一項證詞的狀態（這一場只有一項證詞，留在原處），手機收起插入鏡頭。
     await expect(panel).not.toHaveAttribute('inert', '', { timeout: 8000 });
     await expect(witnessPlate(page, 'confront')).toHaveCount(0, { timeout: 3000 });
