@@ -172,7 +172,10 @@ jobs:
           key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
       - run: |
           npx playwright install --with-deps chromium
-          pip install --quiet numpy pillow
+          # python3 -I 會略過使用者 site-packages，所以裝進 venv 並放到 PATH 最前面
+          python3 -m venv "$RUNNER_TEMP/py"
+          "$RUNNER_TEMP/py/bin/pip" install --quiet numpy pillow
+          echo "$RUNNER_TEMP/py/bin" >> "$GITHUB_PATH"
       - name: 選單鈕顏色（${{ matrix.size }}）
         run: |
           npx vite preview --port 4173 &
