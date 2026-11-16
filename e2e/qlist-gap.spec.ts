@@ -3,7 +3,8 @@ import { expect, test, type Page } from '@playwright/test';
 
 /**
  * 證據板左欄（Issue #375，設計師裁定 (a)）：時間線入口自己一塊、不在疑問清單裡；
- * 「已確認 n」是疑問清單的小標，在時間線卡下面——字離時間線卡至少 16 px，離自己清單第一項至少 8 px。
+ * 疑問清單的標題列在時間線卡下面：左「疑問」、右「已確認 n」同一列，n 用等寬數字；
+ * 字離時間線卡至少 16 px，離自己清單第一項至少 8 px。
  * 原本小標在時間線卡上方只差 1.4 px，讀起來像時間線的標題。兩集的證據板，第一級桌機寬度。
  */
 const desk = {
@@ -74,7 +75,7 @@ async function open(page: Page, b: (typeof BOARDS)[number], confirmed: string[])
 for (const w of [1366, 1530, 1920])
   for (const b of BOARDS)
     for (const confirmed of b.ep === 'ep1' ? [[], ['q1']] : [[]])
-      test(`${b.ep} 證據板 ${w}：「已確認 ${confirmed.length}」在時間線卡下面，離它 ≥16 px、離第一題 ≥8 px`, async ({
+      test(`${b.ep} 證據板 ${w}：「疑問／已確認 ${confirmed.length}」在時間線卡下面，離它 ≥16 px、離第一題 ≥8 px`, async ({
         page,
       }, info) => {
         test.skip(info.project.name !== 'desktop', '自己設視窗大小，桌機那一組跑就好');
@@ -91,15 +92,32 @@ for (const w of [1366, 1530, 1920])
           rg.selectNodeContents(eb);
           const text = rg.getBoundingClientRect();
           const first = nav.querySelector('ul > li > *')!.getBoundingClientRect();
+          const [l, r] = Array.from(eb.children) as HTMLElement[];
+          const lr = l.getBoundingClientRect();
+          const rr = r.getBoundingClientRect();
+          const ul = nav.querySelector('ul')!.getBoundingClientRect();
           return {
-            label: eb.textContent,
+            left: l.textContent,
+            right: r.textContent,
+            row: Math.abs(lr.top - rr.top) < 1,
+            leftEdge: lr.left - ul.left,
+            rightEdge: ul.right - rr.right,
+            tabular: getComputedStyle(r).fontVariantNumeric,
+            sameType: getComputedStyle(l).fontSize === getComputedStyle(r).fontSize,
             order: tl.bottom <= text.top,
             above: text.top - tl.bottom,
             below: first.top - text.bottom,
           };
         });
         const info2 = JSON.stringify(m);
-        expect(m.label, info2).toBe(`已確認 ${confirmed.length}`);
+        expect(m.left, info2).toBe('疑問');
+        expect(m.right, info2).toBe(`已確認 ${confirmed.length}`);
+        // 同一列、左右貼齊清單兩邊（右邊字尾有 letter-spacing 的空，容 3 px）。
+        expect(m.row, info2).toBe(true);
+        expect(Math.abs(m.leftEdge), info2).toBeLessThanOrEqual(3);
+        expect(Math.abs(m.rightEdge), info2).toBeLessThanOrEqual(3);
+        expect(m.tabular, info2).toContain('tabular-nums');
+        expect(m.sameType, info2).toBe(true);
         expect(m.order, info2).toBe(true);
         expect(m.above, info2).toBeGreaterThanOrEqual(16);
         expect(m.below, info2).toBeGreaterThanOrEqual(8);

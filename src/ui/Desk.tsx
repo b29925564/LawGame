@@ -745,8 +745,9 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
   const list = (
     <nav className="q-list" aria-label={t('疑問')}>
       {/* 時間線排在最上面：整理時間是每個疑問的底（試玩回報：放在最下面要捲才看得到）。
-          它不是疑問，自己一塊、不在清單裡；「已確認 n」是下面疑問清單的小標，放在時間線卡下面
-          （設計師裁定 (a)，Issue #375：原本小標在時間線卡上方 1.4 px，讀起來像時間線的標題）。 */}
+          它不是疑問，自己一塊、不在清單裡；下面疑問清單的標題列放在時間線卡下面
+          （設計師裁定 (a)，Issue #375：原本小標在時間線卡上方 1.4 px，讀起來像時間線的標題）。
+          標題列左「疑問」、右「已確認 n」：清單混著已確認和未確認的疑問，只寫「已確認」會跟底下對不起來。 */}
       <button
         className="q-item timeline-entry"
         aria-current={shown === 'timeline'}
@@ -761,7 +762,10 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
           <i style={{ width: `${timedN ? (st.timeline.length / timedN) * 100 : 0}%` }} />
         </span>
       </button>
-      <p className="eyebrow">{t('已確認 {n}', { n: st.confirmed.length })}</p>
+      <p className="eyebrow q-head">
+        <span>{t('疑問')}</span>
+        <span className="q-count">{t('已確認 {n}', { n: st.confirmed.length })}</span>
+      </p>
       <ul>
         {questions.map((x, i) => {
           const s = status(x.id);
