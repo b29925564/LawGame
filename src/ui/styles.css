@@ -1146,6 +1146,18 @@ details summary {
 .title-screen .stack button:not(.link) {
   min-height: 50px;
 }
+.title-note {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  color: var(--cine-text);
+  font-size: 14px;
+  line-height: 1.7;
+}
+.title-note p {
+  margin: 0;
+}
 .title-build {
   margin: 0;
   color: var(--faint);
