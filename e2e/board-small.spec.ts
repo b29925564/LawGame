@@ -1191,16 +1191,31 @@ test('手機：減少動態時直接跳到位，不演捲動', async ({ page }) 
   await question(page);
   await page.evaluate(() => window.scrollTo(0, 0));
   await page.waitForTimeout(300);
+  // 每個畫格記一次板子離頂列多遠。CI 機器忙的時候，捲動可能晚幾個畫格才發生（11-16 #431 一輪差 264 px），
+  // 所以不看「兩個畫格內到位」，而是看捲動有沒有中間值：直接跳到位只會有起點和終點兩個值，演捲動（約 280ms）會有一串中間值。
+  await page.evaluate(() => {
+    const w = window as unknown as { __gaps: number[] };
+    w.__gaps = [];
+    const tick = () => {
+      w.__gaps.push(
+        document.querySelector('.cork')!.getBoundingClientRect().top -
+          document.querySelector('.wb-head')!.getBoundingClientRect().height,
+      );
+      if (w.__gaps.length < 120) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  });
   await page.locator('.cork-rack:not(.marks) .cork-card').first().click();
-  // 兩個畫格內就在終點（一般捲動要 280ms）。
-  await page.evaluate(
-    () => new Promise((ok) => requestAnimationFrame(() => requestAnimationFrame(ok))),
-  );
-  const r = await page.evaluate(() => ({
-    corkTop: document.querySelector('.cork')!.getBoundingClientRect().top,
-    head: document.querySelector('.wb-head')!.getBoundingClientRect().height,
-  }));
-  expect(Math.abs(r.corkTop - r.head), '一下就到').toBeLessThanOrEqual(2);
+  await expect
+    .poll(() =>
+      page.evaluate(() => Math.abs((window as unknown as { __gaps: number[] }).__gaps.at(-1)!)),
+    )
+    .toBeLessThanOrEqual(2);
+  const gaps = await page.evaluate(() => (window as unknown as { __gaps: number[] }).__gaps);
+  const start = gaps[0];
+  const end = gaps.at(-1)!;
+  const between = gaps.filter((g) => Math.abs(g - start) > 2 && Math.abs(g - end) > 2);
+  expect(between, '一下就到，中間沒有捲動的過程').toEqual([]);
 });
 
 // 設計師 2026-10-16 審 #284：板上的字固定 px，但讀字的兩條路（放大檢視、證據抽屜）要跟著字級放大、不切字。
