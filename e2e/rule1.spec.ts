@@ -255,6 +255,9 @@ async function measure(page: Page) {
   return violations(await page.evaluate(rules8, NAMES));
 }
 
+// 每條測試各自獨立：讓 CI 的 4 份分片按測試平均分，不要整支檔案都落在同一份（第一次上 CI 時 e2e 第 3 份多跑 6 分鐘）。
+test.describe.configure({ mode: 'parallel' });
+
 for (const sz of SIZES) {
   test.describe(`規則 1 掃描 ${sz.name}`, () => {
     test.use({
