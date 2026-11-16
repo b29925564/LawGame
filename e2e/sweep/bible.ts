@@ -9,11 +9,12 @@ const log = (s: string) => appendFileSync(LOG, s + '\n');
  * 設定集稽核的違規（process-v2 第 5 節第 11、12 項）：全路線通關結束時斷言是空的。
  * 只收規則明確的項目：一格一黃、回彈／震動／放大、百分比、紅章、虛線框、圓角黑條。
  * 投影、筆錄、證據板只記錄（給人看），不判定。
- * 已接受的偏差（設計師裁定）：片頭鏡頭推拉 ti-* 放大超過 1.04；手機狀態列的電量百分比是畫面裡的東西。
+ * 已接受的偏差（設計師裁定）：片頭鏡頭推拉 ti-* 放大超過 1.04；手機狀態列的電量百分比、旁白裡的「百分之四百」
+ * 是故事裡的東西，不是給玩家看的數值。
  */
 export const bibleViolations: string[] = [];
 const MOTION_OK = /@keyframes ti-/;
-const PERCENT_OK = /▂▄▆ \d+%/;
+const PERCENT_OK = /▂▄▆ \d+%|^p\.narration/;
 
 export type BibleResult = {
   yellow: string[];
