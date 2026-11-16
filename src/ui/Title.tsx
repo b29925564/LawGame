@@ -6,6 +6,7 @@ import { LangSwitch } from './lang';
 import { readSave, SLOTS, type Slot } from '../engine/save';
 import { unlockAudio } from '../engine/sound';
 import { Credits } from './Credits';
+import { fitLine } from './prose';
 import { useFault } from './ErrorBoundary';
 import { DocketMini, SaveBates } from './Dossier';
 import { useShallow } from 'zustand/react/shallow';
@@ -124,9 +125,14 @@ export function Title() {
         {fault && (
           <div className="title-note">
             <p role="status">
-              {fault === 'load'
-                ? t('畫面沒能載入，已回到標題。請確認網路連線後重新載入，進度停在上一次自動存檔。')
-                : t('剛才的畫面出了錯，已回到標題。進度停在上一次自動存檔。')}
+              {/* 排字照短標籤規則（fitLine）：中文在詞界換行，不切在「重新載｜入」中間（設計師 #407）。 */}
+              {fitLine(
+                fault === 'load'
+                  ? t(
+                      '畫面沒能載入，已回到標題。請確認網路連線後重新載入，進度停在上一次自動存檔。',
+                    )
+                  : t('剛才的畫面出了錯，已回到標題。進度停在上一次自動存檔。'),
+              )}
             </p>
             {/* 瀏覽器會記住下載失敗的模組，不重新載入頁面就一直失敗（Chromium 實測），所以給一顆重新載入。 */}
             {fault === 'load' && (
