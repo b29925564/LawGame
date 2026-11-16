@@ -6666,9 +6666,16 @@ button.found:hover:not(:disabled) {
     width: 220px;
   }
 }
-/* 時間線入口：在疑問清單最上面，帶一條進度。 */
+/* 時間線入口：在疑問清單上面自己一塊，帶一條進度。 */
 .q-item.timeline-entry {
   border-color: var(--border-strong);
+}
+/*
+ * 「已確認 n」是下面疑問清單的小標（Issue #375，設計師裁定 (a)）：離上面的時間線卡至少 16px，
+ * 離自己清單的第一項 8px（量的是字，不是行框：字上下各有行高留的空）。
+ */
+.q-list > .timeline-entry + .eyebrow {
+  margin: 16px 0 8px;
 }
 .q-item.timeline-entry[aria-current='true'] {
   border-color: var(--hl);
