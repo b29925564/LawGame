@@ -722,6 +722,7 @@ for (const w of [412, 360, 320])
                 src,
                 label: card.getAttribute('aria-label'),
                 photo: card.classList.contains('photo'),
+                note: card.classList.contains('note'),
                 lines,
                 tall: b.scrollHeight - b.clientHeight,
                 wide: Math.max(
@@ -739,7 +740,10 @@ for (const w of [412, 360, 320])
           seen++;
           const joined = c.lines.join('');
           expect(c.label, `${c.full} 的 aria-label`).toBe(c.full);
-          expect(c.lines.length, `${c.full} 行數`).toBeLessThanOrEqual(c.photo ? 1 : 2);
+          // 便條（論點）的名稱要整句放得下，最多三行（設計師 #425）；照片一行；其他兩行。
+          expect(c.lines.length, `${c.full} 行數`).toBeLessThanOrEqual(
+            c.photo ? 1 : c.note ? 3 : 2,
+          );
           expect(c.tall, `${c.full} 沒有被切到半行`).toBeLessThanOrEqual(1);
           expect(c.wide, `${c.full} 不超出卡寬`).toBeLessThanOrEqual(1);
           if (!joined.trim()) continue;
