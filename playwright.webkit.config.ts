@@ -6,6 +6,7 @@ import base from './playwright.config';
 export default defineConfig({
   ...base,
   testIgnore: [],
+  grepInvert: undefined,
   // 只在 CI 的 WebKit 才看得到的問題，留下截圖和軌跡（上傳成 artifact）。
   use: { ...base.use, screenshot: 'only-on-failure', trace: 'retain-on-failure' },
   testMatch: ['slice.spec.ts', 'webkit-smoke.spec.ts'],
