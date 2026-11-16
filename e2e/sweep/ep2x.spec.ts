@@ -233,11 +233,14 @@ async function until(
     break;
   }
   if (!(await stop())) {
-    L.push(
-      `[停住@${label}] ${(await main(page)).slice(-300)}｜按鈕：${(await page.locator('main button:visible').allTextContents()).join(' | ')}`,
-    );
+    const btns = (await page.locator('main button:visible').allTextContents()).join(' | ');
+    const text = await main(page);
+    L.push(`[停住@${label}] ${text.slice(-300)}｜按鈕：${btns}`);
     await page.screenshot({ path: `${dir}/stuck-${label}.png` });
-    throw new Error(`停住：${label}`);
+    // 卡在哪個畫面直接寫進錯誤訊息：CI 的 flaky 工作把錯誤前幾行貼進 Issue（/tmp 的紀錄檔不會上傳）。
+    throw new Error(
+      `停住：${label}\n畫面：${text.slice(-160)}\n按鈕：${btns.slice(0, 200)}\n繼續：${await has(page, '繼續')}，inert：${await page.locator('[inert]').count()}`,
+    );
   }
 }
 

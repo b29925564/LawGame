@@ -56,6 +56,8 @@ test('限時異議窗：選單開著時不倒數，關掉後接著算', async ({
 
 test('限時異議窗：切到別的分頁時不倒數', async ({ page }, info) => {
   test.skip(info.project.name !== 'desktop', '桌機跑就好');
+  // 這條本身就要停 6 秒再等最多 6 秒關窗，加上進法庭，CI 忙的時候會超過預設的 30 秒（#435）。
+  test.setTimeout(60_000);
   const win = await openObjection(page);
   const hide = (hidden: boolean) =>
     page.evaluate((h) => {
