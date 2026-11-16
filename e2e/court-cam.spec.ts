@@ -246,15 +246,18 @@ const benchCam = JSON.parse(
 };
 
 for (const lang of ['zh', 'en'] as const)
-  for (const [width, scale] of [
+  for (const [width, scale, height = 860] of [
     [1100, 1],
     [1366, 1],
     [1530, 1],
+    // 第一級組合常見的矮螢幕（Issue #354）：鏡頭條變矮，字幕框離燈管最近。
+    [1366, 1, 768],
+    [1280, 1, 720],
     [0, 1],
     [1100, 1.5],
     [0, 1.5],
   ] as const) {
-    test(`法官的裁定一句一張、都讀得到、燈管與鐘在畫面內（${width || '手機'}・${scale * 100}%・${lang}）`, async ({
+    test(`法官的裁定一句一張、都讀得到、燈管與鐘在畫面內（${width ? `${width}×${height}` : '手機'}・${scale * 100}%・${lang}）`, async ({
       page,
     }, info) => {
       test.skip(
@@ -262,7 +265,7 @@ for (const lang of ['zh', 'en'] as const)
         width ? '鏡頭條只在桌機' : '手機插入鏡頭',
       );
       test.setTimeout(120_000);
-      if (width) await page.setViewportSize({ width, height: 860 });
+      if (width) await page.setViewportSize({ width, height });
       await page.addInitScript(
         ([s, l, sc]) => {
           if (sessionStorage.getItem('seeded')) return;
