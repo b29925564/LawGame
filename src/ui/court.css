@@ -1245,40 +1245,8 @@ button.cand[aria-pressed='true'],
   min-height: 0;
 }
 .prof > .idphoto,
-.prof > .tbd {
+.prof > .silcard {
   align-self: start;
-}
-/*
- * 人物卡的「待放 AI 立繪　{全名}」：一行，橫跨在照片和名字上方（不鎖在 96px 框寬裡，也不超出卡片），
- * 名字不准斷開（設計師 #225 第三輪）。引線從標籤左端垂直接到框頂。
- */
-.prof > .tbd {
-  display: contents;
-}
-.prof > .tbd > .tbd-label {
-  grid-column: 1 / -1;
-  grid-row: 1;
-  justify-self: start;
-  flex-wrap: nowrap;
-  white-space: nowrap;
-  max-width: 100%;
-  margin-bottom: calc(6px - var(--s4));
-}
-.prof > .tbd > .tbd-label > span + span {
-  overflow-wrap: normal;
-}
-.prof > .tbd > .silcard {
-  grid-column: 1;
-  grid-row: 2;
-  align-self: start;
-}
-/* 名字那一欄（沒有 class 的 div；.qa、.acts 照原本橫跨整張卡）。 */
-.prof:has(> .tbd) > div:not([class]) {
-  grid-column: 2;
-  grid-row: 2;
-}
-.prof:has(> .tbd) {
-  grid-template-rows: auto auto minmax(min-content, 1fr) auto;
 }
 .prof h3 {
   font: 700 20px/1.3 var(--font-doc);
@@ -1391,7 +1359,7 @@ button.cand[aria-pressed='true'],
   width: 28px;
   font-size: 10px;
 }
-.shell-body > .tbd > .cands {
+.shell-body > .cands {
   /* 名單寬＝外框寬（第二道關卡 464a280 第 2 項：320 英文名單被量好的長行撐到 351px，外框只有 292px，右邊被切掉）。 */
   width: 100%;
   border: 1px solid var(--border);
@@ -2797,22 +2765,6 @@ html[lang='en'] .stamp.rec-stamp b {
 .jf-tilt {
   transform-origin: 50% 100%;
 }
-.jf-label {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-}
-.jf-label rect {
-  fill: none;
-  stroke: var(--cine-line);
-  stroke-dasharray: 14 14;
-  stroke-width: 3;
-}
-.jf-label text {
-  font: 34px var(--font-mono);
-  fill: var(--cine-muted);
-}
 .jf-svg svg {
   display: block;
   width: 100%;
@@ -2993,34 +2945,46 @@ html[lang='en'] .stamp.rec-stamp b {
   height: 100%;
 }
 
-/*
- * 「待放 AI 立繪」標籤（設定集第 7 章 :9、第 5 章 0502）：框外上方，細引線連回空框，不寫在框裡。
- * 單一人物的框寫全名不截字：先排「待放 AI 立繪」，名字放不下就換到第二行（寬度至少放得下前半句）。
- * 成排的小卡（.row）整排一個標籤，連到整排的外框。
- */
-.tbd {
-  display: inline-flex;
-  flex-direction: column;
-  align-items: flex-start;
-  flex: none;
-  width: min-content;
-  vertical-align: top;
+/* 結辯後的對白：法庭裡的人是剪影小卡（40×50），名字寫在旁邊那一行；欄寬跟著放寬，字不貼著剪影。 */
+.epi .msg:has(> .portrait.sil) {
+  grid-template-columns: 40px minmax(0, 1fr);
 }
-.tbd.row {
-  display: flex;
-  width: auto;
-  align-items: stretch;
-}
-.tbd.row:not(.bare) > :last-child {
-  padding: 5px;
-  border: 1px solid var(--border);
+.epi .msg > .portrait.sil {
+  display: block;
+  width: 40px;
+  height: 50px;
   border-radius: var(--radius);
 }
+/* 「就用這 12 位」的鎖：單色 SVG，跟字同色（設計師第二輪：不用表情符號）。不叫 .lock：那是 styles.css 手機鎖定畫面的類別。 */
+.commit .vd-lock {
+  width: 0.78em;
+  height: 0.92em;
+  margin-right: 0.4em;
+  vertical-align: -0.08em;
+}
+
+/*
+ * ══ 法庭鏡頭（設定集第 7 章 3D 立牌與 :21–22 裁切；設計師 P3 裁定 1-3、5） ══
+ * 桌機：中欄一條 2.39:1 的鏡頭條，夾在提示句／證詞卡和陪審團之間。剪接一律發生在這裡，不管法庭光層開不開。
+ * 手機：平常不出現（說話者用 56×70 頭像），招牌時刻在筆錄下方插一張 16:9，蓋住陪審團刻痕條與提示句，
+ * 不把版面往下推；那一拍裡輸入鎖住，那塊本來就用不到。框沒有邊：一刀黑要整塊都是黑。
+ */
+.shell:has(> .shell-tabs > .record) {
+  /* 法官的沉默（第 10.3 章「打字聲 → 一刀黑 → 法官的沉默 → 小章」）。全域權杖沒有這一項，先在法庭畫面命名，同 --dur-nod。 */
+  --dur-bench-hold: 700ms;
+}
+.court-cam {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  pointer-events: none;
+}
+/* 「待放 3D 機位」標籤（占位機位圖才有）：框外上方，細引線連回框，不寫在框裡。 */
 .tbd-label {
   position: relative;
   display: flex;
   flex-wrap: wrap;
-  /* 一個全形空格寬（「待放 AI 立繪\u3000{名字}」）：英文一行時「TBD」和名字才分得開。 */
+  /* 一個全形空格寬（「待放 3D 機位\u3000{機位}」）：英文一行時「TBD」和機位名才分得開。 */
   column-gap: 1em;
   margin: 0 0 6px;
   padding-left: 7px;
@@ -3052,89 +3016,6 @@ html[lang='en'] .stamp.rec-stamp b {
 .tbd-label::after {
   width: 4px;
   border-top-width: 1px;
-}
-/* 木色陪審席上的字跟方塊的字同色，才讀得到。 */
-.box .tbd-label {
-  color: light-dark(#5b4630, #b7a283);
-}
-.box .tbd-label::before,
-.box .tbd-label::after {
-  border-color: light-dark(rgb(91 70 48 / 55%), rgb(183 162 131 / 55%));
-}
-.box.mini .tbd-label {
-  margin-bottom: 4px;
-}
-.cand-scroll > .tbd > .tbd-label,
-.shell-body > .tbd > .tbd-label {
-  margin: 0 0 6px 10px;
-}
-/*
- * 說話列（法庭、結辯、判決後的對白、陪審團長）：標籤一行「待放 AI 立繪　{全名}」橫跨在框和名字欄上方，
- * 引線垂直接到框頂；名字不准斷開（設計師 #225 第三輪：「AI art TBD / Omar / Hassan」斷成三行，
- * 標籤被鎖在 72px 框寬裡）。Tbd 在這裡拆開（display: contents），標籤自己佔第一列。
- */
-:is(.speech, .epi .msg, .panel.fore, .court-now):has(> .tbd) {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: start;
-}
-:is(.speech, .court-now):has(> .tbd) {
-  column-gap: 12px;
-  row-gap: 0;
-}
-:is(.epi .msg, .panel.fore):has(> .tbd) {
-  row-gap: 0;
-}
-:is(.speech, .epi .msg, .panel.fore, .court-now) > .tbd {
-  display: contents;
-}
-:is(.speech, .epi .msg, .panel.fore, .court-now) > .tbd > .tbd-label {
-  grid-column: 1 / -1;
-  justify-self: start;
-  flex-wrap: nowrap;
-  white-space: nowrap;
-  max-width: 100%;
-}
-:is(.speech, .epi .msg, .panel.fore, .court-now) > .tbd > .tbd-label > span + span {
-  overflow-wrap: normal;
-}
-:is(.speech, .epi .msg, .panel.fore, .court-now) > .tbd > :not(.tbd-label) {
-  grid-column: 1;
-  grid-row: 2;
-}
-:is(.speech, .epi .msg, .panel.fore, .court-now):has(> .tbd) > :not(.tbd) {
-  grid-column: 2;
-  grid-row: 2;
-}
-.epi .msg > .tbd > .portrait.sil {
-  display: block;
-  width: 40px;
-  height: 50px;
-  border-radius: var(--radius);
-}
-/* 「就用這 12 位」的鎖：單色 SVG，跟字同色（設計師第二輪：不用表情符號）。不叫 .lock：那是 styles.css 手機鎖定畫面的類別。 */
-.commit .vd-lock {
-  width: 0.78em;
-  height: 0.92em;
-  margin-right: 0.4em;
-  vertical-align: -0.08em;
-}
-
-/*
- * ══ 法庭鏡頭（設定集第 7 章 3D 立牌與 :21–22 裁切；設計師 P3 裁定 1-3、5） ══
- * 桌機：中欄一條 2.39:1 的鏡頭條，夾在提示句／證詞卡和陪審團之間。剪接一律發生在這裡，不管法庭光層開不開。
- * 手機：平常不出現（說話者用 56×70 頭像），招牌時刻在筆錄下方插一張 16:9，蓋住陪審團刻痕條與提示句，
- * 不把版面往下推；那一拍裡輸入鎖住，那塊本來就用不到。框沒有邊：一刀黑要整塊都是黑。
- */
-.shell:has(> .shell-tabs > .record) {
-  /* 法官的沉默（第 10.3 章「打字聲 → 一刀黑 → 法官的沉默 → 小章」）。全域權杖沒有這一項，先在法庭畫面命名，同 --dur-nod。 */
-  --dur-bench-hold: 700ms;
-}
-.court-cam {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  pointer-events: none;
 }
 .court-cam > .tbd-label {
   align-self: flex-start;
@@ -3526,11 +3407,16 @@ html[lang='en'] .stamp.rec-stamp b {
 .shell-foot > .locked {
   visibility: hidden;
 }
-/* 手機：說話者頭像（56×70）接在提示句或證詞前面；標籤「待放 AI 立繪　{全名}」在框上方。 */
+/* 手機：說話者頭像（56×70）接在提示句或證詞前面；法庭裡的人在框上方寫一行說話者名字（一般說話者名字樣式）。 */
 .court-now {
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-start;
   gap: 12px;
+}
+.court-now > .who {
+  flex: 0 0 100%;
+  margin: 0 0 -6px;
 }
 .court-now > :last-child {
   flex: 1 1 auto;

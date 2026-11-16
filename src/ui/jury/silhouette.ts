@@ -1008,7 +1008,6 @@ const d = (poly: Poly, close = true) =>
 /**
  * 一張卡面的 SVG（viewBox 400×500）。影子不在這裡：影子要能 300ms 移動（--dur-shadow），
  * 由元件疊一層 HTML 遮罩（參考實作把影子畫在 SVG 裡，形狀與羽化照抄到 CSS）。
- * frame：畫「待放 AI 立繪」的虛線框。標籤的字不畫在框裡，由 Tbd 放在框外上方（設定集第 7 章 :9、第 5 章 0502）。
  * bg：卡面底色；法庭鏡頭裡的立牌疊在機位底圖上，不畫底。
  * rim：輪廓光的寬（卡面單位，400 寬）。卡面 56–72px 時 8 剛好；鏡頭裡照顯示寬度換算，讓畫面上是 1–1.5px（設計師 P3 裁定）。
  * part：法庭鏡頭把立牌拆兩層——body 是剪影本體，light 是它接到的光（受光染色、輪廓光、配件、眼神光），
@@ -1022,7 +1021,6 @@ export function svg(
   {
     v = 60,
     pose,
-    frame = false,
     uid = p.id,
     bg = true,
     rim = 8,
@@ -1034,7 +1032,6 @@ export function svg(
   }: {
     v?: number;
     pose?: Pose;
-    frame?: boolean;
     uid?: string;
     bg?: boolean;
     rim?: number;
@@ -1127,6 +1124,6 @@ ${notes}
 ${pose === 'J3' ? `<path clip-path="url(#armclip-${uid})" d="${d([morph([N[0] - 120, 436], 'J3'), morph([N[0] + 120, 436], 'J3')], false)}" stroke="var(${K})" stroke-width="9.3" opacity="${inkOpacity(K, 0.85)}" fill="none"/>` : ''}`
     : ''
 }
-${frame ? '<rect x="14" y="14" width="372" height="472" fill="none" stroke="var(--cine-line,#2a323d)" stroke-dasharray="14 14" stroke-width="3"/>' : ''}
+
 ${wide ? '</g>' : ''}</svg>`;
 }

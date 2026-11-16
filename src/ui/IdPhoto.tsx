@@ -2,7 +2,6 @@ import type { CSSProperties } from 'react';
 import { useT } from '../i18n';
 import { LUCAS, lucas, lucasFace } from './cast';
 import { svg, type JurorLook } from './jury/silhouette';
-import { Tbd } from './jury/Tbd';
 import { useScope } from './lang';
 
 /**
@@ -11,8 +10,7 @@ import { useScope } from './lang';
  * 盧卡斯一律放照片，同一個外框。
  *
  * look（陪審員候選人）：遴選在法庭裡，法庭裡的人一律是剪影卡（使用者 10-09）。不套模板 B 的外框、不重複印名字，
- * 跟陪審席同一種卡：--radius、只有一圈虛線（設計師第二輪）。96 寬的人物卡是單一人物，框外上方寫
- * 「待放 AI 立繪\u3000{全名}」；名單與陪審席的小卡成排，標籤由整排一個（Tbd row）。
+ * 跟陪審席同一種卡：--radius。剪影就是定稿，不加標籤、不加虛線框（使用者 11-16，設計師 remove-portrait-tag）。
  */
 export function IdPhoto({
   who,
@@ -35,11 +33,11 @@ export function IdPhoto({
         style={{ '--w': `${size}px` } as CSSProperties}
         aria-hidden
         dangerouslySetInnerHTML={{
-          __html: svg(look, { v: 60, pose: 'J1', frame: true, uid: `id-${look.id}-${size}` }),
+          __html: svg(look, { v: 60, pose: 'J1', uid: `id-${look.id}-${size}` }),
         }}
       />
     );
-    return size === 96 ? <Tbd name={name}>{card}</Tbd> : card;
+    return card;
   }
   // 「茱蒂絲・柯恩」取「柯」；「Judith Cohen」取「C」。
   const last =

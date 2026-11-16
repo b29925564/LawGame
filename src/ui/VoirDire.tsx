@@ -7,7 +7,6 @@ import { CommitBar } from './Commit';
 import { CardSheet } from './Desk';
 import { IdPhoto } from './IdPhoto';
 import { lookOf } from './jury/JuryBox';
-import { Tbd } from './jury/Tbd';
 import { useScope } from './lang';
 import { Stamp } from './Marks';
 import { Speech } from './Portrait';
@@ -171,52 +170,50 @@ function VoirDireScreen({ scene }: { scene: VoirDireScene }) {
   const leftStrikes = scene.peremptories - st.struck.length;
 
   const list = (
-    <Tbd row bare>
-      <ul className="cands" aria-label={t('候選人')}>
-        {rows.map((c) => {
-          const i = pool.indexOf(c);
-          const by = goneBy(c.id);
-          const asked = st.asked.includes(c.id);
-          const cls = ['cand', by ? 'struck' : i >= scene.seats ? 'bench' : 'seat'];
-          if (sel === c.id) cls.push('on');
-          return (
-            <li key={c.id} className="cand-li">
-              <button
-                className={cls.join(' ')}
-                aria-pressed={sel === c.id}
-                onClick={() => pick(c.id)}
-              >
-                <span className="no">{by ? '–' : i + 1}</span>
-                <IdPhoto who={c.name} size={40} look={lookOf(episode, c.id)} />
-                <span className="txt">
-                  <strong>
-                    {/* 名字放不下時斷在「・」（「茱蒂絲・柯｜恩」不行）。 */}
-                    {nameUnits(t(c.name, scope))}
-                    <FitLine as="span" strictShort className="job" text={t(c.job, scope)} />
-                  </strong>
-                  {/* 介紹和黑底字卡一樣排行：詞不拆、每一行至少 3 個字、量詞不留在行尾（設計師 關卡 72a9003：「安全檢｜查。」）。 */}
-                  <FitLine as="span" strictShort className="line" text={t(c.sheet, scope)} />
-                </span>
-                <span className="st">
-                  {by ? (
-                    <span className="gone">{by}</span>
-                  ) : (
-                    i < scene.seats && <span className="seatno">{t('席 {n}', { n: i + 1 })}</span>
-                  )}
-                  {asked && <span>{t('已問')}</span>}
-                </span>
-              </button>
-              {filter === 'all' && i === scene.seats - 1 && pool.length > scene.seats && (
-                <p className="cutline">
-                  <span>{fitLine(t('以上 {n} 位入座・以下候補', { n: scene.seats }))}</span>
-                </p>
-              )}
-            </li>
-          );
-        })}
-        {rows.length === 0 && <li className="muted">{t('這個篩選沒有人。')}</li>}
-      </ul>
-    </Tbd>
+    <ul className="cands" aria-label={t('候選人')}>
+      {rows.map((c) => {
+        const i = pool.indexOf(c);
+        const by = goneBy(c.id);
+        const asked = st.asked.includes(c.id);
+        const cls = ['cand', by ? 'struck' : i >= scene.seats ? 'bench' : 'seat'];
+        if (sel === c.id) cls.push('on');
+        return (
+          <li key={c.id} className="cand-li">
+            <button
+              className={cls.join(' ')}
+              aria-pressed={sel === c.id}
+              onClick={() => pick(c.id)}
+            >
+              <span className="no">{by ? '–' : i + 1}</span>
+              <IdPhoto who={c.name} size={40} look={lookOf(episode, c.id)} />
+              <span className="txt">
+                <strong>
+                  {/* 名字放不下時斷在「・」（「茱蒂絲・柯｜恩」不行）。 */}
+                  {nameUnits(t(c.name, scope))}
+                  <FitLine as="span" strictShort className="job" text={t(c.job, scope)} />
+                </strong>
+                {/* 介紹和黑底字卡一樣排行：詞不拆、每一行至少 3 個字、量詞不留在行尾（設計師 關卡 72a9003：「安全檢｜查。」）。 */}
+                <FitLine as="span" strictShort className="line" text={t(c.sheet, scope)} />
+              </span>
+              <span className="st">
+                {by ? (
+                  <span className="gone">{by}</span>
+                ) : (
+                  i < scene.seats && <span className="seatno">{t('席 {n}', { n: i + 1 })}</span>
+                )}
+                {asked && <span>{t('已問')}</span>}
+              </span>
+            </button>
+            {filter === 'all' && i === scene.seats - 1 && pool.length > scene.seats && (
+              <p className="cutline">
+                <span>{fitLine(t('以上 {n} 位入座・以下候補', { n: scene.seats }))}</span>
+              </p>
+            )}
+          </li>
+        );
+      })}
+      {rows.length === 0 && <li className="muted">{t('這個篩選沒有人。')}</li>}
+    </ul>
   );
 
   const profile = picked && (
@@ -316,16 +313,14 @@ function VoirDireScreen({ scene }: { scene: VoirDireScene }) {
         <span>{t('陪審席・{n} 席', { n: scene.seats })}</span>
         <span>{t('由名單上往下入座')}</span>
       </div>
-      <Tbd row bare>
-        {wide && scene.seats > 6 ? (
-          <div className="seat-rows">
-            <div className="seats back">{seatsIdx.slice(6).map(seatCell)}</div>
-            <div className="seats">{seatsIdx.slice(0, 6).map(seatCell)}</div>
-          </div>
-        ) : (
-          <div className="seats">{seatsIdx.map(seatCell)}</div>
-        )}
-      </Tbd>
+      {wide && scene.seats > 6 ? (
+        <div className="seat-rows">
+          <div className="seats back">{seatsIdx.slice(6).map(seatCell)}</div>
+          <div className="seats">{seatsIdx.slice(0, 6).map(seatCell)}</div>
+        </div>
+      ) : (
+        <div className="seats">{seatsIdx.map(seatCell)}</div>
+      )}
     </section>
   );
 

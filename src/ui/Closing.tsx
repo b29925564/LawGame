@@ -687,13 +687,13 @@ function Verdict({
                   look={lookOf(episode, fore.id)}
                   v={st.jury[fore.id] ?? 0}
                   seat={t(fore.label, scope)}
-                  // 標籤寫全名（「海倫・杜根」，不是只有姓）：label 是「名・姓・職業」，去掉最後的職業。
-                  name={foreParts.length > 1 ? foreParts.slice(0, -1).join('・') : foreParts[0]}
                 />
               ) : (
                 <span />
               )}
               <div>
+                {/* 剪影就是定稿、不再有標籤（使用者 11-16）：陪審長的全名寫在這一行上面。 */}
+                {fore && <span className="who">{foreSign}</span>}
                 <p className="who">{readOut.who}</p>
                 <blockquote>
                   {/* 最後兩個字和標點綁在一起，「無罪。」」不會被拆成兩行（體驗評測 v88）。 */}

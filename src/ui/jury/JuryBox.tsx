@@ -5,7 +5,6 @@ import { useT } from '../../i18n';
 import { useScope } from '../lang';
 import looks from './jurors.json';
 import { band, poseFor, shadowWidth, svg, tick, type JurorLook, type Pose } from './silhouette';
-import { Tbd } from './Tbd';
 
 /** 候選人的剪影參數（視覺設計師 #2 的 jurors.json，id 對劇本第 15 場 candidates）。 */
 export function lookOf(episode: string, id: string): JurorLook {
@@ -28,20 +27,18 @@ const POSTURE: Record<Pose, string> = {
 /**
  * 一張陪審員卡（設定集第 8.2、8.4 章）：光影藏臉替身，姿勢跨區間 300ms 交叉淡化，
  * 影子從卡面右側吃進來（四階 0／30／60／90%，--dur-shadow 移動）。
- * name：單獨一張（判決頁的陪審團長）時，框外上方寫「待放 AI 立繪\u3000{全名}」；陪審席裡成排的卡只畫虛線框。
+ * 剪影就是定稿：不加標籤、不加虛線框（使用者 11-16）；名字寫在卡旁（陪審席的報讀、判決頁陪審團長的那一行）。
  */
 export function JurorFace({
   look,
   v,
   seat,
-  name,
   notes,
   nod,
 }: {
   look: JurorLook;
   v: number;
   seat: string;
-  name?: string;
   /** J4 事件姿勢。 */
   notes?: boolean;
   /** 點頭的次數鍵：一變就點一次頭。 */
@@ -81,13 +78,9 @@ export function JurorFace({
         className="jf-shadow"
         style={{ '--sh': `${(shadowWidth(look, v) / 4).toFixed(2)}%` } as CSSProperties}
       />
-      {/* 「待放 AI 立繪」虛線框永遠看得到（第 7.6 章）：疊在影子上面，不被影子吃掉。字在框外（Tbd）。 */}
-      <svg className="jf-label" viewBox="0 0 400 500" aria-hidden focusable="false">
-        <rect x="14" y="14" width="372" height="472" />
-      </svg>
     </span>
   );
-  return name ? <Tbd name={name}>{face}</Tbd> : face;
+  return face;
 }
 
 /** 圖例：半邊影子的臉＋「影子＝懷疑」（第 8.4 章，面板右上常駐）。 */
@@ -271,48 +264,44 @@ export function JuryBox({
             {toggle}
           </span>
         </div>
-        <Tbd row>
-          <ul className="jb-grid">
-            {jurors.map((j, i) => {
-              const v = jury[j.id] ?? 0;
-              const over = v >= threshold;
-              return (
-                <li key={j.id} className="jb-cell" title={name(j.label)}>
-                  <JurorFace
-                    look={lookOf(episode, j.id)}
-                    v={v}
-                    seat={seat(i)}
-                    notes={writing(j.id)}
-                    nod={nods[j.id]}
-                  />
-                  <span
-                    className={
-                      showNumbers ? (over ? 'jb-track th over' : 'jb-track th') : 'jb-track'
-                    }
-                    style={
-                      { '--tick': showNumbers ? v : tick(v), '--th': threshold } as CSSProperties
-                    }
-                    aria-hidden
-                  />
-                  {showNumbers && (
-                    <span className={over ? 'jb-num over' : 'jb-num'}>
-                      {over && '▲'}
-                      {v}
-                    </span>
-                  )}
-                  <span className="sr-only">
-                    {t('{seat} 號 {name}：{posture}', {
-                      seat: seat(i),
-                      name: name(j.label),
-                      posture: t(POSTURE[writing(j.id) ? 'J4' : poseFor(v)]),
-                    })}
-                    {showNumbers && `，${v}`}
+        <ul className="jb-grid">
+          {jurors.map((j, i) => {
+            const v = jury[j.id] ?? 0;
+            const over = v >= threshold;
+            return (
+              <li key={j.id} className="jb-cell" title={name(j.label)}>
+                <JurorFace
+                  look={lookOf(episode, j.id)}
+                  v={v}
+                  seat={seat(i)}
+                  notes={writing(j.id)}
+                  nod={nods[j.id]}
+                />
+                <span
+                  className={showNumbers ? (over ? 'jb-track th over' : 'jb-track th') : 'jb-track'}
+                  style={
+                    { '--tick': showNumbers ? v : tick(v), '--th': threshold } as CSSProperties
+                  }
+                  aria-hidden
+                />
+                {showNumbers && (
+                  <span className={over ? 'jb-num over' : 'jb-num'}>
+                    {over && '▲'}
+                    {v}
                   </span>
-                </li>
-              );
-            })}
-          </ul>
-        </Tbd>
+                )}
+                <span className="sr-only">
+                  {t('{seat} 號 {name}：{posture}', {
+                    seat: seat(i),
+                    name: name(j.label),
+                    posture: t(POSTURE[writing(j.id) ? 'J4' : poseFor(v)]),
+                  })}
+                  {showNumbers && `，${v}`}
+                </span>
+              </li>
+            );
+          })}
+        </ul>
       </div>
     </section>
   );
