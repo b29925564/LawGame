@@ -9,6 +9,7 @@ import {
 import { useT } from '../../i18n';
 import { reducedMotion } from '../a11y';
 import { beatsOf, landingAt, LANDING, readTokens, type Verdict } from './verdictBeats';
+import { lightFrames, MOVE_FRAMES } from './verdictLight';
 
 export type Phase = 'form' | 'cut' | 'record' | 'card' | 'cut2' | 'light' | 'end' | 'done';
 
@@ -44,7 +45,21 @@ export function useVerdictRun(
   const [pull, setPull] = useState(false);
   const [recover, setRecover] = useState(false);
   const [landed, setLanded] = useState(false);
+  /** ④ 窗光播到第幾格（0 = 16:40 被告席；有罪、僵局 1–10 是光的移動）。 */
+  const [frame, setFrame] = useState(0);
   const timers = useRef<number[]>([]);
+  // ④ 的畫面一開始就載入、解碼（切鏡頭之前所有圖層都要解碼好）；留著參照，瀏覽器才不會丟掉
+  const pre = useRef<HTMLImageElement[]>([]);
+  useEffect(() => {
+    if (reducedMotion()) return;
+    pre.current = lightFrames(v).map((u) => {
+      const img = new Image();
+      img.src = u;
+      void img.decode?.().catch(() => undefined);
+      return img;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const clear = () => {
     timers.current.forEach((x) => window.clearTimeout(x));
     timers.current = [];
@@ -56,7 +71,8 @@ export function useVerdictRun(
 
   useLayoutEffect(() => {
     if (phase !== 'form' || !root.current) return;
-    const b = beatsOf(v, handEnd(root.current), readTokens());
+    const k = readTokens();
+    const b = beatsOf(v, handEnd(root.current), k);
     const at = (ms: number, f: () => void) => timers.current.push(window.setTimeout(f, ms));
     at(b.black, () => setPhase('cut'));
     at(b.record, () => setPhase('record'));
@@ -66,6 +82,10 @@ export function useVerdictRun(
     at(b.card[1], () => setPhase('cut2'));
     at(b.light, () => setPhase('light'));
     at(b.lightLanded, () => setLanded(true));
+    // 光的移動：10 格等間隔排在 --dur-lightmove 裡（--ease-light 已經算進每一格），從 lightLanded 開始，和小地圖的點同時走
+    if (v !== '無罪')
+      for (let i = 1; i <= MOVE_FRAMES; i++)
+        at(b.lightLanded + (i * k.lightMove) / MOVE_FRAMES, () => setFrame(i));
     at(b.done, () => setPhase('end'));
     return clear;
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -87,14 +107,14 @@ export function useVerdictRun(
     return () => window.removeEventListener('keydown', key);
   }, [phase, skip]);
 
-  return { phase, pull, recover, landed, skip };
+  return { phase, pull, recover, landed, frame, skip };
 }
 
 /**
  * 判決的鏡頭（黑底，蓋住整個畫面）：筆錄頁、字卡、窗光三種畫面輪流。
  * 筆錄頁的黑條照結果停：無罪抽完、有罪抽完後被告姓名那一行再蓋上、僵局卡在 6/12；
  * 字卡三種結果同字級同停留（--dur-turn），不配音效；窗光落點由結果決定，移動用 --dur-lightmove。
- * 窗光是 3D 機位的位置：算圖來之前用示意畫面占位（標「待放 3D 機位」），光柱、落點、地圖照設定集座標。
+ * 窗光是判決窗光 A 的 3D 機位（verdictLight.ts）：16:40 那一格，有罪、僵局再播 10 格光的移動；小地圖在畫框下方。
  */
 export function VerdictStage({
   v,
@@ -113,7 +133,8 @@ export function VerdictStage({
   defendant: string;
 }) {
   const t = useT();
-  const { phase, pull, recover, landed, skip } = run;
+  const { phase, pull, recover, landed, frame, skip } = run;
+  const frames = lightFrames(v);
   if (phase === 'form' || phase === 'done') return null;
   const at = landed || v === '無罪' ? landingAt(v) : landingAt('無罪');
   const style = { '--stop': LANDING[v].n } as CSSProperties;
@@ -155,13 +176,10 @@ export function VerdictStage({
         {phase === 'card' && <p className="vs-card">{word}</p>}
         {phase === 'light' && (
           <div className="vs-light">
-            <span className="vs-tbd">
-              {t('待放 3D 機位')} {t('判決')}
-            </span>
             <div className="vs-frame">
-              <span className="vs-table" data-side="defense" />
-              <span className="vs-table" data-side="state" />
-              <span className="vs-shaft" style={{ '--x': at } as CSSProperties} />
+              {frames.map((u, i) => (
+                <img key={u} src={u} alt="" data-on={i === Math.min(frame, frames.length - 1) || undefined} />
+              ))}
             </div>
             <div className="vs-map">
               <span className="vs-table" data-side="defense" />
