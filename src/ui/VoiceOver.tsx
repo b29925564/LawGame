@@ -1,4 +1,13 @@
-import { Fragment, useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
+import {
+  Fragment,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+} from 'react';
 import { createPortal } from 'react-dom';
 import type { Line } from '../engine/episode/schema';
 import { useSettings } from '../engine/settings';
@@ -76,14 +85,19 @@ export function VoiceOver({ line, onDone }: { line: Line; onDone: () => void }) 
   const onPlate = useOnPlate();
   const t = useT();
   const scope = useScope();
-  const beats = beatsOf(line).map((b) => ({ ...b, text: t(b.text, scope) }));
+  const beats = useMemo(
+    () => beatsOf(line).map((b) => ({ ...b, text: t(b.text, scope) })),
+    [line, t, scope],
+  );
   const [i, setI] = useState(0);
   // waiting：拍與拍之間的靜默；typing：出字中；shown：出完了
   const [phase, setPhase] = useState<'waiting' | 'typing' | 'shown'>('waiting');
-  const [p, setP] = useState(0);
+  // 進度線每一幀直接改 style，不經過 React：停留最長 7 秒，每幀重繪整個覆蓋層太浪費（上線前審查 P1）。
+  const bar = useRef<HTMLSpanElement>(null);
+  const setP = (k: number) => bar.current?.style.setProperty('--p', String(k));
   const shownAt = useRef(0);
   const beat = beats[i];
-  const tm = voTiming(beat.text);
+  const tm = useMemo(() => voTiming(beat.text), [beat.text]);
   const reduced = reducedMotion();
 
   const next = (at?: { x: number; y: number }) => {
@@ -150,17 +164,26 @@ export function VoiceOver({ line, onDone }: { line: Line; onDone: () => void }) 
     };
   }, [phase]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // 字幕播到一半被卸載（讀檔、回標題）也要放開讀屏播報，不然之後的記號都卡在佇列裡（上線前審查 C14）。
+  // 正常播完時 next() 已經呼叫過，再呼叫一次沒有副作用。
+  useEffect(() => () => announce.voiceEnd(), []);
+
+  // 鍵盤監聽只掛一次，透過 ref 呼叫最新的 click。
+  const clickRef = useRef(click);
+  useLayoutEffect(() => {
+    clickRef.current = click;
+  });
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
       if (e.key !== 'Enter' && e.key !== ' ') return;
       // 獨白中打開的選單自己吃鍵盤，不要同時把字幕往前推。
       if ((e.target as Element | null)?.closest?.('.game-menu')) return;
       e.preventDefault();
-      click();
+      clickRef.current();
     };
     window.addEventListener('keydown', key);
     return () => window.removeEventListener('keydown', key);
-  });
+  }, []);
 
   const cue = <span className={phase === 'shown' ? 'vo-cue on' : 'vo-cue'}>{t('點擊繼續')}</span>;
   let n = 0;
@@ -199,7 +222,7 @@ export function VoiceOver({ line, onDone }: { line: Line; onDone: () => void }) 
               </Fragment>
             ))}
         </p>
-        <span className="vo-progress" style={{ '--p': p } as CSSProperties} />
+        <span ref={bar} className="vo-progress" style={{ '--p': 0 } as CSSProperties} />
         {onPlate && cue}
       </div>
       {!onPlate && cue}
