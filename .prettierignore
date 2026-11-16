@@ -10,3 +10,5 @@ qa/gate2/**
 # 規則 1 判定本體：第二道關卡的 rules8.js 原樣搬來，不重排。
 e2e/rule1/
 pw-json
+# 無障礙名稱基準：npm run a11y:names 產生，不重排。
+e2e/scan/a11y-names/
