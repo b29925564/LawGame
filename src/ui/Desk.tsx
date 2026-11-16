@@ -199,7 +199,7 @@ export function Desk({ scene }: { scene: DeskScene }) {
   const unread = scene.mail.filter((m) => st.mail.includes(m.id) && !st.openMail.includes(m.id));
   // 卷宗也掛未讀數：新進來的文件（例如法官的裁定）不會被跳過（體驗評測、劇本與內容）。
   const unreadDocs = scene.docs.filter((d) => !st.readDocs.includes(d.id)).length;
-  const finished = desk.done(scene, st);
+  const finished = desk.done(scene, st, progress.cards);
   // 1024–1379：證據欄收成「證據 n」鈕，版面讓出右欄（styles.css 的 data-dock）。
   const docked = useDock();
   useEffect(() => {
@@ -366,7 +366,8 @@ export function Desk({ scene }: { scene: DeskScene }) {
               onWrap={wrapDesk}
             />
           ) : (
-            st.confirmed.includes(scene.goal) &&
+            // 推理鏈確認了、或工時用完了，只差開示沒回應：帶去開示（#384）。
+            (st.confirmed.includes(scene.goal) || st.hours <= 0) &&
             pending > 0 && (
               <button className="wide" onClick={() => pickApp('discovery')}>
                 {t('結束調查')} <span className="cost">{t('開示未回應 {n}', { n: pending })}</span>

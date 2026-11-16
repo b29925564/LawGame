@@ -13,8 +13,9 @@ function content(): Plugin {
   return {
     name: 'lawgame-content',
     enforce: 'pre',
-    load(id) {
-      if (!id.endsWith('.yaml')) return;
+    load(full) {
+      const [id, query] = full.split('?');
+      if (!id.endsWith('.yaml') || (query !== undefined && query !== 'meta')) return;
       if (/[\\/]content[\\/]en[\\/]/.test(id)) {
         // 英文對照表：中文原句 → 英文。空檔就是空表。
         const map = z.record(z.string(), z.string()).parse(parse(readFileSync(id, 'utf8')) ?? {});
@@ -32,6 +33,11 @@ function content(): Plugin {
       }
       const schema = id.endsWith('proto.yaml') ? caseSchema : episodeSchema;
       const data = schema.parse(parse(readFileSync(id, 'utf8')));
+      if (query === 'meta') {
+        // 標題畫面用的集數與標題（#388）：不必載入整集。
+        const { number, title } = data as { number: number; title: string };
+        return `export default ${JSON.stringify({ number, title })};`;
+      }
       return `export default JSON.parse(${JSON.stringify(JSON.stringify(data))});`;
     },
   };
@@ -154,5 +160,7 @@ export default defineConfig({
   },
   test: {
     include: ['src/**/*.test.ts'],
+    // 劇本依集數動態載入（#388）；測試直接讀 episodes，先全部載好。
+    setupFiles: ['src/test-setup.ts'],
   },
 });
