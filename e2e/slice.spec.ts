@@ -112,7 +112,7 @@ async function solve(
   await links.getByRole('radio', { name: relation }).click();
   await links.getByRole('button', { name: '連起來' }).click();
   await expect(links.getByRole('status')).toContainText('連起來了');
-  await q.getByRole('button', { name: new RegExp(`^發現 ${n}：`) }).click();
+  await q.getByRole('button', { name: new RegExp(`^發現 ${n}，`) }).click();
   await q.getByRole('button', { name: /^提交/ }).click();
   await expect(q).toContainText('已確認');
 }
@@ -146,7 +146,7 @@ async function playToRachelLast(page: Page) {
   // 冷開場
   await next(page);
   await next(page);
-  await page.getByRole('button', { name: /打開 葛蘭特・沃斯 的訊息/ }).click();
+  await page.getByRole('button', { name: /^聊天 葛蘭特・沃斯/ }).click();
   await page.getByRole('button', { name: '好。' }).click();
   await next(page);
   await page.getByRole('button', { name: '叫車' }).click();

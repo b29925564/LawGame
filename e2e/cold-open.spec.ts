@@ -11,7 +11,7 @@ test('冷開場：看過的訊息被收回，換場自動存檔，可從標題�
   const next = () => page.getByRole('button', { name: '繼續' }).click();
   await next();
   await next();
-  await page.getByRole('button', { name: /打開 葛蘭特・沃斯 的訊息/ }).click();
+  await page.getByRole('button', { name: /^聊天 葛蘭特・沃斯/ }).click();
   await expect(page.getByText('十點四十五分上來，把筆電帶來。我們私下解決。')).toBeVisible();
   await page.getByRole('button', { name: '好。' }).click();
   await next();

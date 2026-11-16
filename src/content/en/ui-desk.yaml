@@ -199,6 +199,7 @@
 '（{topic}）': '({topic})'
 聲請人請求本院: 'The movant asks the Court to:'
 '，': ','
+'{name}，{relation}：{pair}': '{name}, {relation}: {pair}'
 理由：依: 'on the ground of'
 並提出: and offers
 為證。: as evidence.
