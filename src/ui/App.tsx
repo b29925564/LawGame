@@ -1,4 +1,4 @@
-import { type ReactNode, Suspense, useEffect, useState } from 'react';
+import { type ReactNode, useEffect, useState } from 'react';
 import { episodes } from '../content';
 import { batesAt, ownBates, totalPages } from '../engine/bates';
 import {
@@ -183,44 +183,40 @@ export function App() {
           onDone={() => setFramed(scene.id)}
         />
       )}
-      <Suspense fallback={null}>
-        {!beat && scene?.type === 'phone' && <Phone key={`${loadId}:${scene.id}`} scene={scene} />}
-        {!beat &&
-          scene?.type === 'dialogue' &&
-          (scene.photos && progress.step >= scene.steps.length ? (
-            <ScenePhotos key={`${loadId}:${scene.id}`} photos={scene.photos} onNext={advance} />
-          ) : (
-            <Dialogue key={`${loadId}:${scene.id}`} scene={scene} />
-          ))}
-        {!beat && scene?.type === 'interview' && (
-          <Interview key={`${loadId}:${scene.id}`} scene={scene} />
-        )}
-        {!beat && scene?.type === 'desk' && <Desk key={`${loadId}:${scene.id}`} scene={scene} />}
-        {!beat && scene?.type === 'trial' && (
-          <Courtroom key={`${loadId}:${scene.id}`} scene={scene} />
-        )}
-        {!beat && scene?.type === 'deposition' && (
-          <Deposition key={`${loadId}:${scene.id}`} scene={scene} />
-        )}
-        {!beat && scene?.type === 'negotiation' && (
-          <Negotiation key={`${loadId}:${scene.id}`} scene={scene} />
-        )}
-        {!beat && scene?.type === 'voirdire' && (
-          <VoirDire key={`${loadId}:${scene.id}`} scene={scene} />
-        )}
-        {!beat && scene?.type === 'defense' && (
-          <Defense key={`${loadId}:${scene.id}`} scene={scene} />
-        )}
-        {!beat && scene?.type === 'theory' && (
-          <Theory key={`${loadId}:${scene.id}`} scene={scene} />
-        )}
-        {!beat && scene?.type === 'opening' && (
-          <Opening key={`${loadId}:${scene.id}`} scene={scene} />
-        )}
-        {!beat && scene?.type === 'closing' && (
-          <Closing key={`${loadId}:${scene.id}`} scene={scene} />
-        )}
-      </Suspense>
+      {!beat && scene?.type === 'phone' && <Phone key={`${loadId}:${scene.id}`} scene={scene} />}
+      {!beat &&
+        scene?.type === 'dialogue' &&
+        (scene.photos && progress.step >= scene.steps.length ? (
+          <ScenePhotos key={`${loadId}:${scene.id}`} photos={scene.photos} onNext={advance} />
+        ) : (
+          <Dialogue key={`${loadId}:${scene.id}`} scene={scene} />
+        ))}
+      {!beat && scene?.type === 'interview' && (
+        <Interview key={`${loadId}:${scene.id}`} scene={scene} />
+      )}
+      {!beat && scene?.type === 'desk' && <Desk key={`${loadId}:${scene.id}`} scene={scene} />}
+      {!beat && scene?.type === 'trial' && (
+        <Courtroom key={`${loadId}:${scene.id}`} scene={scene} />
+      )}
+      {!beat && scene?.type === 'deposition' && (
+        <Deposition key={`${loadId}:${scene.id}`} scene={scene} />
+      )}
+      {!beat && scene?.type === 'negotiation' && (
+        <Negotiation key={`${loadId}:${scene.id}`} scene={scene} />
+      )}
+      {!beat && scene?.type === 'voirdire' && (
+        <VoirDire key={`${loadId}:${scene.id}`} scene={scene} />
+      )}
+      {!beat && scene?.type === 'defense' && (
+        <Defense key={`${loadId}:${scene.id}`} scene={scene} />
+      )}
+      {!beat && scene?.type === 'theory' && <Theory key={`${loadId}:${scene.id}`} scene={scene} />}
+      {!beat && scene?.type === 'opening' && (
+        <Opening key={`${loadId}:${scene.id}`} scene={scene} />
+      )}
+      {!beat && scene?.type === 'closing' && (
+        <Closing key={`${loadId}:${scene.id}`} scene={scene} />
+      )}
       {scene?.type === 'card' && !last && progress.step === 0 && (
         <IntroThen key={scene.id} episode={opening ? progress.episode : null}>
           <ActCard headline={headline} place={slate} bates={page} onDone={advance} />
