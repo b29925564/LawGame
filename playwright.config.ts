@@ -20,7 +20,8 @@ const TIER23 = /(?<!\d)(320|360|1920)(?!\d)|\ben\b|English|英文|125|150/;
 export default defineConfig({
   testDir: 'e2e',
   // WebKit 冒煙只由 playwright.webkit.config.ts 跑。
-  testIgnore: ['webkit-smoke.spec.ts', ...(FAST ? FULL_ONLY : [])],
+  // 全路線通關（e2e/sweep）只由 playwright.sweep.config.ts 跑。
+  testIgnore: ['webkit-smoke.spec.ts', 'sweep/**', ...(FAST ? FULL_ONLY : [])],
   grepInvert: FAST ? TIER23 : undefined,
   use: { baseURL: 'http://localhost:4173' },
   projects: [
