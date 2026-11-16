@@ -1,3 +1,4 @@
+import { bibleViolations } from './bible';
 import { installExtra } from './extra';
 import { installLineCheck, lineResult } from './linecheck';
 import { expect as expectLines, test } from '@playwright/test';
@@ -27,6 +28,7 @@ const routes: Record<string, Opts> = {
 
 for (const [name, o] of Object.entries(routes)) {
   test(name, async ({ page }, info) => {
+    bibleViolations.length = 0;
     const dir = `/tmp/qa-shots/${info.project.name}/${name.split(' ')[0]}`;
     mkdirSync(dir, { recursive: true });
     log.length = 0;
@@ -38,6 +40,8 @@ for (const [name, o] of Object.entries(routes)) {
       for (const f of lr.fails) log.push(`[台詞沒出現] ${f.kind}｜${f.scene}｜${f.label}`);
       log.push(`[台詞檢查] 檢查 ${lr.checked} 句，缺 ${lr.fails.length} 句`);
       expectLines(lr.fails.map((f) => `${f.kind}｜${f.label}`)).toEqual([]);
+      // BIBLE=1（CI 的 routes 工作）時，設定集稽核的違規也要是空的。
+      expectLines.soft(bibleViolations, '設定集稽核').toEqual([]);
     } finally {
       appendFileSync('/tmp/qa-log.txt', `\n## [${info.project.name}] ${name}\n${log.join('\n')}\n`);
     }
