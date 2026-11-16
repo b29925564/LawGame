@@ -142,6 +142,12 @@ export default defineConfig({
   define: { __BUILD__: JSON.stringify(build()) },
   css: { postcss: { plugins: [reducedMotionCss()] } },
   build: {
+    // 場景延遲載入以後（Issue #388 P3），樣式仍然打包成一份：試玩連結的 bundle.py 只內嵌這一份，
+    // 而且場景切換時不會因為晚到的 CSS 閃一下沒樣式。
+    cssCodeSplit: false,
+    // 動態載入不插 modulepreload：預載的路徑是從網站根目錄算的，放到試玩連結（不在根目錄）會 404，連帶整個場景載入失敗。
+    // 場景的相依幾乎都在主程式一起載好了，少了預載只差一點點。
+    modulePreload: false,
     // 音效用 fetch 載入：小於 4 KB 的檔若照預設內嵌成 data:，會被 CSP 的 connect-src 擋（設計師 #398 審查）。
     // 音檔一律輸出成檔案；其他資源照 Vite 預設。
     assetsInlineLimit: (file) => (/\.(m4a|mp3|ogg|wav)$/i.test(file) ? false : undefined),
