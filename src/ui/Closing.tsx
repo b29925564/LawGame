@@ -31,6 +31,7 @@ import { VerdictBench } from './court/VerdictBench';
 import type { Verdict as VerdictKind } from './court/verdictBeats';
 import { CourtCast, CourtFace } from './jury/CourtFace';
 import { castLook } from './jury/cast';
+import { useShallow } from 'zustand/react/shallow';
 
 /** 結辯與判決（企劃書 6.9.8、6.10）：挑三個論點排順序、選基調，然後看三輪評議。 */
 /** 法庭畫面：說話者頭像是剪影替身（P4-2）。 */
@@ -43,7 +44,15 @@ export function Closing({ scene }: { scene: ClosingScene }) {
 }
 
 function ClosingScreen({ scene }: { scene: ClosingScene }) {
-  const { progress, pickArg, setTone, deliver, advance } = useEpisode();
+  const { progress, pickArg, setTone, deliver, advance } = useEpisode(
+    useShallow((s) => ({
+      progress: s.progress,
+      pickArg: s.pickArg,
+      setTone: s.setTone,
+      deliver: s.deliver,
+      advance: s.advance,
+    })),
+  );
   const st = closingState(progress, scene);
   const terms = useCaseTerms();
   const t = useT();

@@ -5,6 +5,7 @@ import { useT } from '../i18n';
 import { SLOTS, type Slot } from '../engine/save';
 import { SettingsPanel } from './Settings';
 import { SlotList } from './Title';
+import { useShallow } from 'zustand/react/shallow';
 
 type Tab = null | 'save' | 'load' | 'options';
 /** 選單開著沒有、開在哪一頁。片頭（TitleIntro）讀它來暫停，按 Esc 也從這裡打開。 */
@@ -15,7 +16,9 @@ export const useMenu = create<{ open: Tab; setOpen: (open: Tab) => void }>((set)
 
 /** 遊戲中隨時可開的選單：手動存檔 3 格、讀檔、回標題（企劃書 6.14「隨時存檔」）。 */
 export function GameMenu() {
-  const { save, load, toTitle } = useEpisode();
+  const { save, load, toTitle } = useEpisode(
+    useShallow((s) => ({ save: s.save, load: s.load, toTitle: s.toTitle })),
+  );
   const open = useMenu((s) => s.open);
   const setOpen = useMenu((s) => s.setOpen);
   // 選單跟著遊戲畫面掛載：離開（回標題）就收起來，下次進來不是開著的。

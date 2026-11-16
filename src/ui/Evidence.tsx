@@ -33,6 +33,7 @@ import { cardHighlights, cardStamps, Hl, Stamp } from './Marks';
 import { exhibitNo } from './Pleading';
 import { useCardPick } from './pick';
 import { TimelineView } from './Timeline';
+import { useShallow } from 'zustand/react/shallow';
 
 /**
  * 證據抽屜。
@@ -330,7 +331,7 @@ export function EvidenceCard({
   const t = useT();
   const scope = useScope();
   const { pool, on, pick, tags, exhibits } = useCardPick();
-  const { progress } = useEpisode();
+  const { progress } = useEpisode(useShallow((s) => ({ progress: s.progress })));
   const hl = cardHighlights(episodeOf(progress))[item.id];
   const sealed = cardStamps(progress)[item.id];
   const can = !!(pickable && pick && pool.includes(item.id));
@@ -551,7 +552,7 @@ export function CardPick({
 function Provenance({ id }: { id: string }) {
   const t = useT();
   const scope = useScope();
-  const { progress } = useEpisode();
+  const { progress } = useEpisode(useShallow((s) => ({ progress: s.progress })));
   const card = cardIn(episodeOf(progress), id);
   const all = card ? provenanceOf(card, branchContext(progress)) : [];
   return (

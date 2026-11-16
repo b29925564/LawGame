@@ -10,6 +10,7 @@ import { Transcript } from './Shell';
 import { fitDots, fitLine } from './prose';
 import { fitUnits } from './fitUnits';
 import { useTaught } from './taught';
+import { useShallow } from 'zustand/react/shallow';
 
 /** 按鈕標籤至少有一個排成兩行以上。 */
 const wraps = (row: HTMLElement) =>
@@ -67,7 +68,15 @@ function useActionRow(deps: unknown[]) {
 
 /** 訪談（企劃書 6.3）：提問、施壓、安撫。視訊通話畫面。 */
 export function Interview({ scene }: { scene: InterviewScene }) {
-  const { progress, advance, ask, press, calm } = useEpisode();
+  const { progress, advance, ask, press, calm } = useEpisode(
+    useShallow((s) => ({
+      progress: s.progress,
+      advance: s.advance,
+      ask: s.ask,
+      press: s.press,
+      calm: s.calm,
+    })),
+  );
   const t = useT();
   const scope = useScope();
   const st = interviewState(progress, scene);
