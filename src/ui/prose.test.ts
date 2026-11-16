@@ -48,6 +48,14 @@ describe('紙面內文的換行單位（設計師 P2-6 r2 第 12 條）', () => 
     expect(pros.some((x) => x.includes('檢方'))).toBe(true);
   });
 
+  it('第二幕羅根的教學台詞：「算數」「別想」不拆（設計師 #425）', () => {
+    const u = proseUnits(
+      '規則簡單到連你都記得住：兩張卡連得起來才是發現，發現答得了疑問才算數。連錯一次燒掉一小時，同樣的錯別想再試第二次。',
+    );
+    expect(u.some((x) => x.includes('算數'))).toBe(true);
+    expect(u.some((x) => x.includes('別想'))).toBe(true);
+  });
+
   it('沒有漢字的英文原樣不動', () => {
     expect(proseUnits('Indictment filed: one count of murder.')).toEqual([
       'Indictment filed: one count of murder.',

@@ -15,7 +15,12 @@ export type TaughtKey =
   | 'present' // 法庭：交互詰問時出示論點
   | 'recess' // 法庭：按休庭看結果
   | 'theory' // 案件理論：比較後定案
-  | 'voirdire'; // 陪審團遴選：點名單看資料
+  | 'voirdire' // 陪審團遴選：點名單看資料
+  // 第二幕桌面各程式第一次打開時角色講的那一句（企劃書 10.10，#365）：
+  | 'desk-docs' // 戴文：標記事實
+  | 'desk-board' // 羅根：連線、答疑問
+  | 'desk-jobs' // 蘿莎：委託
+  | 'desk-court'; // 海爾：動議
 
 /** 這個說明還要不要出現；done 一變成 true 就記下來，從此不再出現。 */
 export function useTaught(key: TaughtKey, done = false): boolean {

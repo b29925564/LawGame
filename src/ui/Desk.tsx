@@ -51,6 +51,7 @@ import { useShallow } from 'zustand/react/shallow';
 
 // 證據庫和左下的證據抽屜內容一模一樣，所以只留抽屜：它在每個畫面都叫得出來。
 type App = 'mail' | 'docs' | 'board' | 'jobs' | 'court' | 'discovery';
+type TeachApp = DeskScene['teach'][number]['app'];
 const labels: Record<App, string> = {
   mail: '郵件',
   docs: '卷宗',
@@ -190,6 +191,20 @@ export function Desk({ scene }: { scene: DeskScene }) {
   useDueRow(bar, t(scene.deadline, scope));
   const st = deskState(progress, scene);
   const [app, setApp] = useState<App>('mail');
+  // 第一次打開這個程式時，角色講一句怎麼用（企劃書 10.10，#365）；做過一次就不再出現。
+  const teachDone: Record<TeachApp, boolean> = {
+    docs: st.marked.length > 0,
+    board: st.confirmed.length > 0,
+    jobs: st.jobs.length > 0,
+    court: Object.values(st.motions).some((a) => !!a.ruling),
+  };
+  const untaught = {
+    docs: useTaught('desk-docs', teachDone.docs),
+    board: useTaught('desk-board', teachDone.board),
+    jobs: useTaught('desk-jobs', teachDone.jobs),
+    court: useTaught('desk-court', teachDone.court),
+  };
+  const teach = scene.teach.find((x) => x.app === app && untaught[x.app])?.line;
   // 翻開卷宗是資料夾聲，其他程式是翻頁聲；點同一個不出聲。
   const pickApp = (next: App) => {
     if (next !== app) play(next === 'docs' ? 'folder' : 'page');
@@ -316,7 +331,7 @@ export function Desk({ scene }: { scene: DeskScene }) {
         <p className="eyebrow">{t(scene.act, scope)}</p>
         <div className="lines">
           {scene.goalLines.map((l, i) => (
-            <Speech key={i} line={l} />
+            <Speech key={i} line={l} wrap />
           ))}
         </div>
         <button className="primary next" onClick={advance}>
@@ -378,6 +393,11 @@ export function Desk({ scene }: { scene: DeskScene }) {
       }
     >
       {st.hours === scene.hours && <Recap />}
+      {teach && (
+        <div className="lines desk-teach">
+          <Speech line={teach} wrap />
+        </div>
+      )}
       {app === 'mail' && <Mail scene={scene} />}
       {app === 'docs' && <Docs scene={scene} />}
       {app === 'board' && <Board scene={scene} held={held} />}
@@ -934,7 +954,8 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
         .map((id) => ({
           id,
           name: scene.cards.find((c) => c.id === id)?.name ?? id,
-          why: m.label.includes('傳票') ? '尚未取得　需傳票' : '尚未取得　需聲請',
+          // 不分傳票或排除都寫「需聲請」：要法官做什麼是玩家自己判斷的（#366）。
+          why: '尚未取得　需聲請',
         })),
     )
     .slice(0, Math.max(0, 3 - bars));

@@ -333,7 +333,8 @@
 }
 .cork-card.note b.cork-hand,
 :is(.cork-focus, .cork-measure-card).note b.cork-hand {
-  --lines: 2;
+  /* 論點名稱要整句放得下（設計師 #425：「論點：手錶／能縮小」切掉「死亡時間」意思就錯了）：卡名最多三行。 */
+  --lines: 3;
   font-size: 16px;
   background: none;
 }
