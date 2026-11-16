@@ -258,7 +258,11 @@ function VoirDireScreen({ scene }: { scene: VoirDireScene }) {
               {t('無因迴避', 'voirdire')}{' '}
               <span className="cost">{t('剩 {n}', { n: leftStrikes })}</span>
             </button>
-            <button className="secondary" onClick={() => challengeJuror(picked.id)}>
+            <button
+              className="secondary"
+              disabled={!vd.canChallenge(st, picked.id)}
+              onClick={() => challengeJuror(picked.id)}
+            >
               {t('聲請有因迴避')}
             </button>
           </div>

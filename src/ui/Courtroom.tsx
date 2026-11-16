@@ -29,6 +29,7 @@ import { Speech } from './Portrait';
 import { batesOf, CourtRecord, useCourtEntries } from './Record';
 import type { Cue } from './record';
 import { Shell, Tabs } from './Shell';
+import { useMenu } from './GameMenu';
 import { CourtCast } from './jury/CourtFace';
 import { Recap } from './ActCard';
 import { reducedMotion } from './a11y';
@@ -154,18 +155,40 @@ function ObjectionWindow({
   const t = useT();
   const scope = useScope();
   const [left, setLeft] = useState(seconds);
+  // 選單開著或切到別的分頁時暫停倒數，回來接著算；不然回來時已經被記成不異議（上線前審查 C12，#386）。
+  const paused = useMenu((m) => m.open !== null);
+  const [hidden, setHidden] = useState(() => document.hidden);
   useEffect(() => {
-    if (!seconds || !live) return;
-    const end = Date.now() + seconds * 1000;
+    const sync = () => setHidden(document.hidden);
+    document.addEventListener('visibilitychange', sync);
+    return () => document.removeEventListener('visibilitychange', sync);
+  }, []);
+  const restMs = useRef(seconds * 1000);
+  // 換一題（onPass 換了）或窗重新打開：從頭算。這個要排在下面計時之前。
+  useEffect(() => {
+    restMs.current = seconds * 1000;
+  }, [seconds, onPass, live]);
+  useEffect(() => {
+    if (!seconds || !live || paused || hidden) return;
+    let last = performance.now();
+    const spend = () => {
+      const now = performance.now();
+      restMs.current -= now - last;
+      last = now;
+    };
     const timer = setInterval(() => {
-      const rest = Math.ceil((end - Date.now()) / 1000);
+      spend();
+      const rest = Math.ceil(restMs.current / 1000);
       if (rest <= 0) {
         clearInterval(timer);
         onPass();
       } else setLeft(rest);
     }, 250);
-    return () => clearInterval(timer);
-  }, [seconds, onPass, live]);
+    return () => {
+      spend();
+      clearInterval(timer);
+    };
+  }, [seconds, onPass, live, paused, hidden]);
   const inEffect = rulings.map((r) => t(r, scope)).join(t('、'));
   return (
     <section
