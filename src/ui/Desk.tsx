@@ -762,12 +762,29 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
     };
   }, [qId, wide]);
   // 剛連出來的發現在答案列後面看不到：捲進答案列上方（動畫跟著減少動態）。
+  // 桌機中欄自己捲、答案列照順序排在發現下面（板子比中欄高，答案列釘底會蓋到板子）：新發現連同第 3 步答案
+  // 一起捲進中欄；兩個一起放不下就以新發現為準，貼到中欄上緣（設計師 #354 裁定 C）。第一次連線前不捲。
   useEffect(() => {
     if (!fresh) return;
-    document
-      .querySelector('.found.fresh')
-      ?.scrollIntoView({ block: 'nearest', behavior: reducedMotion() ? 'auto' : 'smooth' });
-  }, [fresh]);
+    const note = document.querySelector<HTMLElement>('.found.fresh');
+    if (!note) return;
+    const behavior = reducedMotion() ? 'auto' : 'smooth';
+    const box = wide ? note.closest<HTMLElement>('.shell-body') : null;
+    const bar = document.querySelector<HTMLElement>('.answer-bar');
+    if (!box || !bar) {
+      note.scrollIntoView({ block: 'nearest', behavior });
+      return;
+    }
+    const view = box.getBoundingClientRect();
+    // 中欄底緣淡出 24 px（styles.css .shell-body 的 mask）：答案列的底框要停在淡出區上面。
+    const top = view.top + 8;
+    const bottom = view.bottom - 24;
+    const from = note.getBoundingClientRect().top;
+    const to = Math.max(note.getBoundingClientRect().bottom, bar.getBoundingClientRect().bottom);
+    const move =
+      to - from <= bottom - top ? Math.min(Math.max(0, to - bottom), from - top) : from - top;
+    if (Math.abs(move) >= 1) box.scrollBy({ top: move, behavior });
+  }, [fresh, wide]);
   const status = (id: string) =>
     st.confirmed.includes(id)
       ? 'done'
