@@ -6,6 +6,7 @@ import { installExtra, extraShot } from './extra';
 import { expect as expectLines, test, expect, type Page } from '@playwright/test';
 import { appendFileSync, mkdirSync } from 'node:fs';
 import { link, answer, readFact, delegate, hours, skipBeat } from './play';
+import { settle } from './playx';
 import { fileMotion } from './motion';
 import { at, tick } from './r225';
 
@@ -746,8 +747,10 @@ async function court(page: Page, r: R, dir: string, shot: (s: string) => Promise
         }
         const avail = await art.locator('.pick-name').allTextContents();
         const card = art.locator('.pick-name').filter({ hasText: arg }).first();
-        if (await card.isVisible().catch(() => false)) await card.click();
-        else L.push(`[交互] ${ct.slice(0, 12)} 沒有 ${arg.source}；可出示：${avail.join(' | ')}`);
+        if (await card.isVisible().catch(() => false)) {
+          await card.click();
+          await settle(page);
+        } else L.push(`[交互] ${ct.slice(0, 12)} 沒有 ${arg.source}；可出示：${avail.join(' | ')}`);
         await page.waitForTimeout(150);
         L.push(
           `[交互] ${ct.slice(0, 16)}（可出示 ${avail.length} 張：${avail.slice(0, 7).join('、')}）→ ${(
