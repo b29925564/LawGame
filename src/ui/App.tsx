@@ -13,29 +13,29 @@ import {
 import { matches } from '../engine/episode/branch';
 import type { Scene } from '../engine/episode/schema';
 import { useSettings } from '../engine/settings';
-import { useGame } from '../engine/store';
-import { Board } from './Board';
-import { Court } from './Court';
-import { Closing } from './Closing';
-import { Courtroom } from './Courtroom';
-import { warmCourt } from './court/CourtCamera';
-import { Deposition } from './Deposition';
-import { Desk } from './Desk';
 import { Dialogue } from './Dialogue';
 import { GameMenu } from './GameMenu';
-import { Interview } from './Interview';
+import {
+  Closing,
+  Courtroom,
+  Defense,
+  Deposition,
+  Desk,
+  Interview,
+  Negotiation,
+  Opening,
+  preloadScenes,
+  Prototype,
+  Theory,
+  VoirDire,
+} from './lazyScenes';
 import { ActCard, PlaceBeat, Recap, splitHeadline } from './ActCard';
 import { introOn, TitleIntro } from './TitleIntro';
 import { Announcer } from './Marks';
-import { Negotiation } from './Negotiation';
 import { Phone } from './Phone';
 import { ScenePhotos } from './ScenePhotos';
-import { Intro, VerdictScreen } from './Scenes';
 import { PlateHost, useScenePlate, useShown } from './scenePlate';
 import { Title } from './Title';
-import { Defense } from './Defense';
-import { Opening, Theory } from './Theory';
-import { VoirDire } from './VoirDire';
 import { useT } from '../i18n';
 import { SceneScope, useDocumentLang } from './lang';
 import { fitUnits, watchUnits } from './fitUnits';
@@ -45,7 +45,14 @@ import { useShallow } from 'zustand/react/shallow';
 
 /** 不畫東西：審判前一場演著時，把審判第一個機位的圖預熱。 */
 function WarmCourt({ id, patience }: { id: string; patience: number }) {
-  useEffect(() => warmCourt(id, patience), [id, patience]);
+  useEffect(() => {
+    // 法庭的程式也是延遲載入：先把它載進來，再照原本的規則預熱圖（也順便讓下一場不用等程式）。
+    let live = true;
+    void import('./court/CourtCamera').then((m) => live && m.warmCourt(id, patience));
+    return () => {
+      live = false;
+    };
+  }, [id, patience]);
   return null;
 }
 
@@ -76,6 +83,10 @@ export function App() {
     clearMenu(fitUnits);
   }, [textScale]);
   useEffect(() => watchUnits(), []);
+  // 進遊戲以後才預載後面的場景：標題畫面只載主程式（Issue #388 P3）。
+  useEffect(() => {
+    if (mode === 'play') preloadScenes();
+  }, [mode]);
 
   if (mode === 'title') return <Title />;
   if (mode === 'proto')
@@ -264,18 +275,4 @@ function IntroThen({ episode, children }: { episode: string | null; children: Re
   const [played, setPlayed] = useState(() => !introOn());
   if (episode && !played) return <TitleIntro episode={episode} onDone={() => setPlayed(true)} />;
   return children;
-}
-
-function Prototype() {
-  const phase = useGame((s) => s.phase);
-  switch (phase) {
-    case 'intro':
-      return <Intro />;
-    case 'board':
-      return <Board />;
-    case 'court':
-      return <Court />;
-    case 'verdict':
-      return <VerdictScreen />;
-  }
 }

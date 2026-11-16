@@ -110,7 +110,9 @@ test('判決法官席：英文介面讀 -en 的底圖，場記寫英文房間名
 
 test('判決法官席：等圖時是純黑，圖好了才切進來', async ({ page }) => {
   // 底圖晚到：這段時間只有黑，不出場記、不出立牌。
-  await page.route(/bench-verdict-e2-1610-p5\.webp/, async (r) => {
+  // 檔名有建置雜湊（bench-verdict-e2-1610-p5-DN8kYs8_.webp）：以前寫成 p5\.webp 從來沒攔到，
+  // 這個測試只是剛好在解碼的那幾十毫秒看到 wait；場景改成延遲載入後就看不到了（#404 CI）。
+  await page.route(/bench-verdict-e2-1610-p5-[\w-]{8}\.webp$/, async (r) => {
     await new Promise((f) => setTimeout(f, 1200));
     await r.continue();
   });
