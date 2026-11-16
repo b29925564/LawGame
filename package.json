@@ -14,7 +14,8 @@
     "validate:content": "vitest run src/content",
     "e2e": "playwright test",
     "i18n": "node scripts/i18n.mjs",
-    "i18n:rekey": "node scripts/i18n.mjs --rekey"
+    "i18n:rekey": "node scripts/i18n.mjs --rekey",
+    "a11y:names": "UPDATE_A11Y_NAMES=1 playwright test e2e/a11y-names.spec.ts --project=desktop"
   },
   "dependencies": {
     "react": "^19.3.0",
