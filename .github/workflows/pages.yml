@@ -16,7 +16,27 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Pages 還沒啟用（Settings → Pages 的 Source 還不是 GitHub Actions）時，建置和部署都跳過，不算失敗、不寄信。
+  # 使用者一選好 GitHub Actions，下一次合併就自動恢復部署。
+  enabled:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      pages: read
+    outputs:
+      on: ${{ steps.check.outputs.on }}
+    steps:
+      - id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          t=$(gh api "repos/${{ github.repository }}/pages" --jq .build_type 2>/dev/null || true)
+          if [ "$t" = workflow ]; then echo on=true >> "$GITHUB_OUTPUT"; echo 'Pages 已啟用，照常部署'
+          else echo on=false >> "$GITHUB_OUTPUT"; echo "Pages 還沒設成 GitHub Actions（${t:-未啟用}），這次跳過部署"; fi
+
   build:
+    needs: enabled
+    if: needs.enabled.outputs.on == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:

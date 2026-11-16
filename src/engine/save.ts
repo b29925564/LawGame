@@ -331,6 +331,18 @@ export function readSave(slot: Slot, storage: Storage | undefined = globalThis.l
   }
 }
 
+/** 這一格有資料，但讀不出來（壞檔，或比這一版新的存檔）。空格不算。 */
+export function unreadable(slot: Slot, storage: Storage | undefined = globalThis.localStorage) {
+  try {
+    return !!storage?.getItem(key(slot)) && !readSave(slot, storage);
+  } catch {
+    return false;
+  }
+}
+
+/** 讀不出來的存檔在第一次被覆寫前另存到這裡，只留最近一份（#363）。 */
+export const backupKey = (slot: Slot) => `${key(slot)}-bad`;
+
 export function writeSave(
   slot: Slot,
   label: string,
@@ -345,6 +357,14 @@ export function writeSave(
     progress,
   };
   try {
+    // 之後修好檢查或遷移還救得回來：原始字串先搬到備份鍵，備份失敗也照常存。
+    if (unreadable(slot, storage)) {
+      try {
+        storage?.setItem(backupKey(slot), storage.getItem(key(slot))!);
+      } catch {
+        /* 空間不夠就算了 */
+      }
+    }
     storage?.setItem(key(slot), JSON.stringify(file));
     return !!storage;
   } catch {
