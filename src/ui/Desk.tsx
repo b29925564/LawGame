@@ -331,7 +331,7 @@ export function Desk({ scene }: { scene: DeskScene }) {
         <p className="eyebrow">{t(scene.act, scope)}</p>
         <div className="lines">
           {scene.goalLines.map((l, i) => (
-            <Speech key={i} line={l} />
+            <Speech key={i} line={l} wrap />
           ))}
         </div>
         <button className="primary next" onClick={advance}>
@@ -395,7 +395,7 @@ export function Desk({ scene }: { scene: DeskScene }) {
       {st.hours === scene.hours && <Recap />}
       {teach && (
         <div className="lines desk-teach">
-          <Speech line={teach} />
+          <Speech line={teach} wrap />
         </div>
       )}
       {app === 'mail' && <Mail scene={scene} />}

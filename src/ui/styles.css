@@ -858,6 +858,10 @@ details summary {
   align-items: flex-start;
   line-height: 1.7;
 }
+/* 桌面第一次打開程式時角色那一句（#365）：文字欄限寬約 34 字，寬螢幕上眼睛不必橫掃整列（設計師 11-16）。 */
+.desk-teach .speech > span:last-child {
+  max-width: 34em;
+}
 .portrait {
   /* 4:5（立繪包的頭像比例）；手機 56×70，桌機 72×90。 */
   width: 56px;
