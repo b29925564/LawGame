@@ -930,7 +930,9 @@ function Subtitles({
     : '';
   useEffect(() => {
     const el = box.current;
-    if (!onSaid || !el || !said) return;
+    if (!onSaid) return;
+    // 這一批鏡頭裡沒人開口：回報 0，旁白不用等。
+    if (!el || !said) return onSaid(0);
     const probe = document.createElement('i');
     probe.hidden = true;
     probe.style.transitionDelay = said;

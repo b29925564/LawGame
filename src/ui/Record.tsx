@@ -393,26 +393,44 @@ export function CourtRecord({
     told.current = batch;
     onBeat?.(beat.t, tokensFrom(box.current ?? document.documentElement));
   });
+  // 鏡頭拍得到的人說的話（證人、法官）：字幕列只放這些。
+  const inShot = (e: RecordEntry) => e.kind === 'a' || e.who === JUDGE;
+  // 證人（鏡頭裡的人）回答後接旁白：旁白和它之後的行等證人的字幕播完才印（--dur-said，法庭畫面量完字幕寫進去；
+  // 對質那一拍寫的是停格結束的時間）。旁白不能在證人話說完前替這一拍下結論（設計師 i354-confront）。
+  const hush = useMemo(() => {
+    if (!live || beat) return -1;
+    const i = entries.findIndex((e, i) => i > batch && e.kind === 'note' && inShot(entries[i - 1]));
+    return i < 0 ? -1 : (rows.find((r) => r.entry === i)?.index ?? -1);
+  }, [live, beat, entries, batch, rows]);
   // 不是異議的一批：交出逐行出完的時間點（一行一拍 --dur-ui；按過「立即顯示全文」就是馬上）。
+  // 有等字幕的旁白時只算到旁白之前（之後的行跟著字幕走）。
   const toldBatch = useRef(batch);
   useEffect(() => {
     if (!live || beat || toldBatch.current === batch) return;
     toldBatch.current = batch;
     onBatch?.(
-      animate ? { ui: rows.length - firstNew } : {},
+      animate ? { ui: (hush >= 0 ? hush : rows.length) - firstNew } : {},
       tokensFrom(box.current ?? document.documentElement),
     );
   });
   // 每一行從哪個時間點開始逐行出現：異議那一拍裡，法官的話等章落下、駁回後的回答等切回證人。
   const blockOf = (entry: number) =>
-    !beat || entry <= beat.o
-      ? { at: '0s', from: firstNew }
-      : entry === beat.o + 1
-        ? { at: cssOf(beat.t.judge), from: rows.find((r) => r.entry === entry)?.index ?? firstNew }
-        : {
-            at: cssOf(beat.t.rest),
-            from: rows.find((r) => r.entry > beat.o + 1)?.index ?? firstNew,
-          };
+    !beat && hush >= 0 && entry >= (rows.find((r) => r.index === hush)?.entry ?? Infinity)
+      ? {
+          at: `max(${cssOf({ ui: hush - firstNew })}, var(--dur-said, 0s))`,
+          from: hush,
+        }
+      : !beat || entry <= beat.o
+        ? { at: '0s', from: firstNew }
+        : entry === beat.o + 1
+          ? {
+              at: cssOf(beat.t.judge),
+              from: rows.find((r) => r.entry === entry)?.index ?? firstNew,
+            }
+          : {
+              at: cssOf(beat.t.rest),
+              from: rows.find((r) => r.entry > beat.o + 1)?.index ?? firstNew,
+            };
   // 刪除證詞的黑條：法官那句裁定打完才開始，照這一頁由上往下一行接一行蓋上（設定集 7-3）。
   // 只數這一頁上被蓋的行，前面幾頁看不到、直接蓋好；一頁蓋滿最多六拍，不讓最後幾行等好幾秒
   // （第一道關卡重跑 Q1：第 2 頁的「答」整整空白了五、六秒，看起來像沒蓋上黑條）。
@@ -426,7 +444,6 @@ export function CourtRecord({
 
   // 字幕列：這一批裡鏡頭拍得到的人說的話（證人、法官），在它第一行打出來的那一刻出現，留到下一句。
   // 律師在鏡頭外，問句只在筆錄上（玩家剛選的問題不再閃一次）。這一批沒有就留最後一句，不重播。
-  const inShot = (e: RecordEntry) => e.kind === 'a' || e.who === JUDGE;
   const cues = useMemo<Cue[]>(() => {
     if (!live || !onCues) return [];
     const at = (i: number) => {

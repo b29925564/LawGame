@@ -1,5 +1,5 @@
 import { useCaseTerms } from './terms';
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import type { TrialScene } from '../engine/episode/schema';
 import * as trial from '../engine/episode/trial';
 import {
@@ -338,7 +338,12 @@ function shotOf(phase: Phase | undefined): Shot {
  * 這一拍裡輸入鎖住，和異議那一拍一樣。只有出示成立才演；不成立照舊用筆錄上的回饋，鏡頭不動。
  * 第 10.4 章整段（證物推進光池、貼紙、頁行浮出）之後再做。
  */
-function useConfrontBeat() {
+/** 旁白開始印進筆錄的時間點（這一批開播後幾毫秒），筆錄的 CSS 讀 --dur-said。 */
+function said(ms: number) {
+  document.documentElement.style.setProperty('--dur-said', `${Math.round(ms)}ms`);
+}
+
+function useConfrontBeat(subsShown: { current: boolean }) {
   const [held, setHeld] = useState(false);
   const waiting = useRef(false);
   const timer = useRef(0);
@@ -373,20 +378,28 @@ function useConfrontBeat() {
     (at: At, read: (tok: Tok) => number) => {
       if (!waiting.current) return;
       waiting.current = false;
-      clock.current = { t0: performance.now(), end: msOf(at, read), hold: read('bench-hold') };
+      const c = { t0: performance.now(), end: msOf(at, read), hold: read('bench-hold') };
+      clock.current = c;
+      said(c.end + c.hold);
       arm();
     },
     [arm],
   );
   /** 字幕量出這一批鏡頭裡的話播完要多久（在筆錄交出這一批之後才到）：比筆錄晚就停到字幕播完再加一拍（設計師 i354-confront）。 */
+  // 字幕看得到的時候（桌機鏡頭條、手機插入鏡頭打開時）：同一批裡證人回答後的旁白，等證人的字幕播完才印進筆錄；
+  // 對質那一拍等停格結束才印（設計師 i354-confront：旁白不能在證人話說完前替這一拍下結論）。
   const onSaid = useCallback(
     (ms: number) => {
+      const shown = subsShown.current ? ms : 0;
       const c = clock.current;
-      if (!c || ms <= c.end) return;
-      c.end = ms;
-      arm();
+      if (!c) return said(shown);
+      if (shown > c.end) {
+        c.end = shown;
+        arm();
+      }
+      said(c.end + c.hold);
     },
-    [arm],
+    [arm, subsShown],
   );
   return [held, start, onBatch, onSaid] as const;
 }
@@ -450,9 +463,22 @@ function CourtroomScreen({ scene: raw }: { scene: TrialScene }) {
   const narrow = useNarrow();
   const compactJury = useCompactJury();
   const [beat, startBeat, onJudgeRead, onJudgeShown] = useObjectionBeat();
-  const [confronting, startConfront, onBatch, onSaid] = useConfrontBeat();
+  const subsShown = useRef(true);
+  const [confronting, startConfront, onBatch, onSaid] = useConfrontBeat(subsShown);
   // 招牌時刻裡（異議、出示成立）輸入鎖住。
   const busy = !!beat || confronting;
+  // 手機插入的鏡頭：一刀黑起打開；成立時法官說完就收，駁回時留到證人答完。
+  // 出示成立那一拍也打開，證人的話出完就收。
+  const insertOpen =
+    confronting ||
+    (!!beat &&
+      (beat.phase === 'black' ||
+        beat.phase === 'bench' ||
+        (!beat.t.sustained && (beat.phase === 'back' || beat.phase === 'answer'))));
+  // 字幕看得到才讓旁白等字幕（手機插入鏡頭收著時沒有字幕）。
+  useLayoutEffect(() => {
+    subsShown.current = !narrow || insertOpen;
+  });
   const [insert, setInsert] = useState<HTMLDivElement | null>(null);
   // 桌機陪審團收合後點開的浮層：蓋在筆錄紙下半，最新一句要捲到它上面（設計師 gate 2 第三輪第 1 項）。
   const [pop, setPop] = useState<HTMLDivElement | null>(null);
@@ -581,14 +607,6 @@ function CourtroomScreen({ scene: raw }: { scene: TrialScene }) {
             ? 'lock'
             : 'default'
         : 'default';
-  // 手機插入的鏡頭：一刀黑起打開；成立時法官說完就收，駁回時留到證人答完。
-  // 出示成立那一拍也打開，證人的話出完就收。
-  const insertOpen =
-    confronting ||
-    (!!beat &&
-      (beat.phase === 'black' ||
-        beat.phase === 'bench' ||
-        (!beat.t.sustained && (beat.phase === 'back' || beat.phase === 'answer'))));
   const camera = {
     shot,
     witness: scene.witness.name,

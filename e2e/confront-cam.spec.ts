@@ -82,12 +82,23 @@ for (const strong of [true, false])
           ),
         text,
       );
+    // 同一批接在後面的旁白（「……陪審團記得。」）等停格結束才印進筆錄，不在證人話說完前替這一拍下結論。
+    const notePrinted = () =>
+      page.evaluate(() =>
+        [...document.querySelectorAll('.record .rec-row .rec-tx')].some(
+          (e) =>
+            (e.textContent ?? '').includes('陪審團記') &&
+            Number(getComputedStyle(e).opacity) > 0.05,
+        ),
+      );
     for (const text of ['我沒有看過。', '所以我們沒有再往下查。']) {
       await expect.poll(() => subOn(text), { timeout: 8000, intervals: [50] }).toBe(true);
       await expect(panel).toHaveAttribute('inert', '');
+      expect(await notePrinted(), `「${text}」播出時旁白已經印出來`).toBe(false);
     }
     // 演完：鬆開輸入，換回下一項證詞的狀態（這一場只有一項證詞，留在原處），手機收起插入鏡頭。
     await expect(panel).not.toHaveAttribute('inert', '', { timeout: 8000 });
+    await expect.poll(notePrinted, { timeout: 3000 }).toBe(true);
     await expect(witnessPlate(page, 'confront')).toHaveCount(0, { timeout: 3000 });
     if (phone) await expect(page.locator('.court-cam.insert')).not.toHaveAttribute('data-open');
   });
