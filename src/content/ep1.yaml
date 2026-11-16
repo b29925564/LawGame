@@ -757,6 +757,26 @@ scenes:
   - type: desk
     id: investigate
     act: 第二幕
+    # 第二幕各程式的第一次教學（企劃書 10.10；#365，台詞：劇本與內容 #2）。
+    teach:
+      - app: docs
+        line:
+          who: 戴文
+          text: 葛雷律師，卷宗都印好了。看到站得住的句子就圈起來，我幫你抄成卡片，之後拼案情用得到。
+      - app: board
+        line:
+          who: 羅根
+          text: 規則簡單到連你都記得住：兩張卡連得起來才是發現，發現答得了疑問才算數。連錯一次燒掉一小時，同樣的錯別想再試第二次。
+          mood: 硬
+      - app: jobs
+        line:
+          who: 蘿莎
+          text: 派人出去查，花的是你的工時。查到東西要等一陣子，我回報了你才會知道。
+      - app: court
+        line:
+          who: 馬庫斯・海爾
+          text: 跟法官要東西，三件事得一起對：憑哪一條規則、拿什麼撐著、要法官做什麼。被駁回一次，開庭第一天法官對你的耐心就少一分。
+          mood: 暖
     hours: 24
     deadline: 預審　三週後
     cards: *cards
@@ -982,7 +1002,7 @@ scenes:
         answer: [l-watch]
         argument:
           id: arg-watch
-          name: 論點：手錶資料與本案相關
+          name: 論點：手錶能縮小死亡時間
           text: 死者戴著手錶，錶帶完好；法醫的死亡時間窗有一個半小時。手錶的資料能把它縮小。
           strength: 5
           motionOnly: true
@@ -1042,8 +1062,8 @@ scenes:
           tags: [邏輯]
     motions:
       - id: m-watch
-        label: 聲請傳票：死者手錶的健康資料
-        detail: 要拿到廠商手上的心率紀錄，得先讓法官相信這支手錶和本案有關。
+        label: 死者的智慧手錶
+        detail: 沃斯死的時候，左腕還戴著那支智慧手錶。手錶裡的資料不在警方手上。
         cost: 2
         needs: [arg-watch]
         bases: [相關性, 米蘭達警告, 傳聞例外, 營業秘密]
@@ -1181,8 +1201,8 @@ scenes:
     jobs: []
     motions:
       - id: m-miranda
-        label: 聲請排除：巡邏車上的供述
-        detail: 沒有警告就問話，問出來的話不能用。不提出的話，檢方開庭時會用它。
+        label: 巡邏車上的供述
+        detail: 押解途中，伊森在巡邏車後座說了一句：「我只是想讓他住手。」檢方打算在開庭時用這句話。
         cost: 3
         needs: [arg-miranda]
         bases: [米蘭達警告, 相關性, 傳聞例外, 證據基礎]
@@ -1226,7 +1246,7 @@ scenes:
           l-no-warning: [l-late-warning]
         argument:
           id: arg-miranda
-          name: 論點：供述取得程序違法
+          name: 論點：那句話是警員問出來的
           text: 報告寫「自願陳述」，錄影裡卻是警員先開口問話，而且從頭到尾沒有權利告知。
           strength: 10
           motionOnly: true

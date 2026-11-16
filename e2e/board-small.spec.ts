@@ -41,7 +41,7 @@ const CARDS = [
 ];
 const SLOT = /點板上的卡，或從證據裡挑|Tap a card on the board, or pick one from Evidence./;
 
-// confirmed：q2a 已確認，論點 arg-watch 上板，聲請「死者手錶的健康資料」還沒裁定，牌架第一頁排一條黑條。
+// confirmed：q2a 已確認，論點 arg-watch 上板，聲請「死者的智慧手錶」還沒裁定，牌架第一頁排一條黑條。
 async function open(
   page: Page,
   lang: string,
@@ -270,7 +270,7 @@ for (const lang of ['zh-TW', 'en'])
       expect(t.mask).toBe('none');
       expect(t.ellipsis).toBe('clip');
     }
-    // 尚未取得的黑條卡：標籤本身就是要傳達的資訊，卡名和「尚未取得、需傳票」一個字都不能被切掉。
+    // 尚未取得的黑條卡：標籤本身就是要傳達的資訊，卡名和「尚未取得、需聲請」一個字都不能被切掉。
     const bar = await page
       .locator('.cork-rack.marks .cork-redact')
       .first()
@@ -477,7 +477,7 @@ for (const w of [1380, 1381, 1440, 1530])
       await open(page, lang, ['q1', 'q2a'], ['l-watch', 'l-called-msg'], GATE_CARDS);
       await page
         .locator('.q-item')
-        .filter({ hasText: /手錶資料與本案相關|the watch data is relevant/ })
+        .filter({ hasText: /手錶能縮小死亡時間|the watch can narrow the time of death/ })
         .first()
         .click();
       await expect(page.locator('.cork')).toBeVisible();
@@ -693,7 +693,7 @@ for (const w of [412, 360, 320])
       await open(page, lang, ['q1', 'q2a'], ['l-watch', 'l-called-msg'], GATE_CARDS);
       await page
         .locator('.q-item')
-        .filter({ hasText: /手錶資料與本案相關|the watch data is relevant/ })
+        .filter({ hasText: /手錶能縮小死亡時間|the watch can narrow the time of death/ })
         .first()
         .click();
       await expect(page.locator('.cork')).toBeVisible();
@@ -1263,7 +1263,7 @@ test('手機 360 英文：牌架上「Indictment」有字，而且邊際 ≥2px�
   await open(page, 'en', ['q1', 'q2a'], ['l-watch', 'l-called-msg'], GATE_CARDS);
   await page
     .locator('.q-item')
-    .filter({ hasText: /the watch data is relevant/ })
+    .filter({ hasText: /the watch can narrow the time of death/ })
     .first()
     .click();
   await expect(page.locator('.cork')).toBeVisible();

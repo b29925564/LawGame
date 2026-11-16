@@ -381,7 +381,7 @@ export async function play(page: Page, o: Opts) {
   await page.getByRole('button', { name: '法院系統' }).click();
   await expect(page.locator('article.plead')).toContainText(/手錶/);
   if (o.mistakes) {
-    await fileMotion(page, '核發傳票給手錶廠商', '營業秘密', /手錶資料與本案相關/);
+    await fileMotion(page, '核發傳票給手錶廠商', '營業秘密', /手錶能縮小死亡時間/);
     await shot(page, o, 'motion-denied');
     const st = await ruling(page);
     log.push(`[走錯] 手錶傳票選錯依據：駁回章${st ? `「${st}」` : '沒有'}出現`);
@@ -402,7 +402,7 @@ export async function play(page: Page, o: Opts) {
     }
   }
   if (!denied) {
-    await fileMotion(page, '核發傳票給手錶廠商', '相關性', /手錶資料與本案相關/);
+    await fileMotion(page, '核發傳票給手錶廠商', '相關性', /手錶能縮小死亡時間/);
     await expect(page.getByText(/22:24，心率歸零。|23 分鐘/).first()).toBeVisible();
     await page.getByRole('button', { name: '回到桌面' }).click();
     await page.getByRole('button', { name: '法院系統' }).click();
@@ -496,7 +496,7 @@ export async function play(page: Page, o: Opts) {
   else
     await solve(page, '車上那句話', [/逮捕報告：「自願陳述」/, '巡邏車錄影：沒有警告'], /矛盾/, 1);
   await page.getByRole('button', { name: '法院系統' }).click();
-  await fileMotion(page, '排除該項供述', '米蘭達警告', /供述取得程序違法/);
+  await fileMotion(page, '排除該項供述', '米蘭達警告', /那句話是警員問出來的/);
   await expect(page.getByText('本庭排除該項供述')).toBeVisible();
   await page.getByRole('button', { name: '回到桌面' }).click();
   {
