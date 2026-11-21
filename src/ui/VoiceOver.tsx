@@ -17,6 +17,7 @@ import { useScope } from './lang';
 import { announce } from './Marks';
 import { useOnPlate } from './scenePlate';
 import { voTiming } from './voTiming';
+import { prose } from './prose';
 
 /** 這一輪已經播過的字幕：回到同一畫面時只留筆錄，不再整段重播。 */
 const played = new Set<string>();
@@ -35,7 +36,8 @@ const plain = (t: string) =>
  * 畫外字幕（設計稿 inner-voice 3）：盧卡斯沒說出口的話，不掛名字框。
  * 筆錄裡留一行 .vo-log；第一次出現時，世界退下、字從光縫漏出來。
  */
-export function VoLine({ line }: { line: Line }) {
+/** wrap：中文照詞換行（教學台詞放在窄欄裡，和 Speech 的 wrap 同一套，設計師 #425）。 */
+export function VoLine({ line, wrap = false }: { line: Line; wrap?: boolean }) {
   const t = useT();
   const scope = useScope();
   const key = beatsOf(line)
@@ -62,7 +64,7 @@ export function VoLine({ line }: { line: Line }) {
         beatsOf(line).map((b, i) => (
           <p key={i} className="vo-log">
             <span className="vo-mark" aria-hidden />
-            <span>{plain(t(b.text, scope))}</span>
+            <span>{wrap ? prose(plain(t(b.text, scope))) : plain(t(b.text, scope))}</span>
           </p>
         ))}
       {open && createPortal(<VoiceOver line={line} onDone={close} />, document.body)}

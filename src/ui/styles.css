@@ -862,6 +862,19 @@ details summary {
 .desk-teach .speech > span:last-child {
   max-width: 34em;
 }
+/* 教學用的心聲（談判攤牌，#445）：筆錄行本來置中；放在分頁裡改成靠左、記號對第一行，和上面的對白同一條左緣。 */
+.desk-teach .vo-log {
+  justify-content: flex-start;
+  align-items: flex-start;
+  text-align: start;
+}
+.desk-teach .vo-log .vo-mark {
+  flex: none;
+  margin-top: 0.8em;
+}
+.desk-teach .vo-log > span:last-child {
+  max-width: 34em;
+}
 .portrait {
   /* 4:5（立繪包的頭像比例）；手機 56×70，桌機 72×90。 */
   width: 56px;
