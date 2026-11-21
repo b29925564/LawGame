@@ -70,6 +70,23 @@ describe('筆錄排版', () => {
     expect(rows[1].indent).toBe(0);
   });
 
+  it('一句話不跨頁：這頁放不下整句就留白，整句從下一頁第一行起（v97 gate 2）', () => {
+    const one: RecordEntry = { kind: 'say', tag: '', text: '一' };
+    const two: RecordEntry = { kind: 'q', tag: '問', text: '一'.repeat(15) };
+    // 24 行單行的話，第 25 行只剩一行：兩行的問句整句搬到第 2 頁。
+    const rows = layout([...Array(ROWS_PER_PAGE - 1).fill(one), two], 10);
+    const q = rows.filter((r) => r.entry === ROWS_PER_PAGE - 1);
+    expect(q.length).toBeGreaterThan(1);
+    expect(new Set(q.map((r) => r.page))).toEqual(new Set([2]));
+    expect(q[0]).toMatchObject({ first: true, line: 1 });
+    // 留白的那行算在上一句的尾巴，沒有字。
+    expect(rows[ROWS_PER_PAGE - 1]).toMatchObject({ page: 1, text: '', entry: ROWS_PER_PAGE - 2 });
+    // 比一頁還長的話照常接著排。
+    const long: RecordEntry = { kind: 'a', tag: '答', text: '一'.repeat(10 * 30) };
+    const r2 = layout([one, long], 10);
+    expect(r2[1]).toMatchObject({ page: 1, line: 2, first: true });
+  });
+
   it('證人說的是答、接著證人回答的律師發言是問、法官與異議列名字', () => {
     const log = [
       { who: '法官' },
