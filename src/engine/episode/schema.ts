@@ -757,6 +757,11 @@ const negotiationScene = z.object({
   confidence: z.number().int().min(0).max(100),
   rounds: z.number().int().min(1),
   intro: z.array(line).default([]),
+  /**
+   * 攤牌分頁第一次打開時角色講的那一句：亮出去的論點，開庭時對方會備好反擊（企劃書 6.8 底牌反擊）。
+   * 第一次亮牌後就不再出現（taught.ts 'nego-reveal'）。沒寫就不講。
+   */
+  teachReveal: line.optional(),
   /** 信心落在 min 以上時，對方開的條件。由高到低寫。 */
   offers: z
     .array(

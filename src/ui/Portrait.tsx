@@ -75,7 +75,7 @@ export function Speech({
   const line = { ...raw, text: t(raw.text, scope) };
   // 記號不是說出口的話，不進對白框（設計稿 inner-voice）。
   if (line.mark) return <MarkLine line={line} />;
-  if (line.voice === 'off') return <VoLine line={line} />;
+  if (line.voice === 'off') return <VoLine line={line} wrap={wrap} />;
   // 還沒改寫的舊心聲：不再掛「（心裡）」，先當成畫外字幕的筆錄行。
   if (line.thought)
     return (
