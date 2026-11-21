@@ -2099,6 +2099,11 @@ html[lang='en'] .doc-record-box .record.doc-record {
   font-weight: 400;
   white-space: nowrap;
 }
+/* 只寫名稱的列（桌機對質清單）：上下各 9px，列高 45px（仍 ≥44 可點），1440×900 中欄放得下 4 列。 */
+.pick.brief {
+  padding-top: 9px;
+  padding-bottom: 9px;
+}
 /* 對質清單（桌機）：清單自己捲，框高取到最後一張完整的列（ConfrontList 量）。
    還有列在框外時，那一邊出現內陰影；不用虛線、不加字（v97 第二道關卡第 6 點，設計師裁定）。 */
 .confront-list {
