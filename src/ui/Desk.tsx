@@ -712,7 +712,16 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
       text: q.argument.text,
     }));
   const pool = [...args, ...scene.cards.filter((c) => held.includes(c.id))];
-  const nameOf = (id: string) => pool.find((c) => c.id === id)?.name ?? id;
+  // 找不到就用整份牌庫的卡名，絕不把內部代號印給玩家（v97 gate 2：發現卡寫出「arrest-report」）。
+  const nameOf = (id: string) =>
+    (pool.find((c) => c.id === id) ?? scene.cards.find((c) => c.id === id))?.name ?? id;
+  // 發現上寫的是玩家真的放上去的那張：連線的 accept 准用替代卡（拿「車上供述」代替「逮捕報告」），
+  // 玩家手上沒有原本那張時，寫他手上那張替代卡。
+  const usedName = (l: { accept?: Record<string, string[]> }, id: string) => {
+    if (pool.some((c) => c.id === id)) return nameOf(id);
+    const alt = (l.accept?.[id] ?? []).find((a) => pool.some((c) => c.id === a));
+    return nameOf(alt ?? id);
+  };
   // 光圈裡的照片或證物袋按「放大」：完整的照片紀錄表與保管鏈（設計師 P2-6）。
   const [zoomed, setZoomed] = useState<string | null>(null);
   // 答案列的矮版（Cork.tsx 量到放好的長卡比一般版答案列上面的空間高時換）。
@@ -723,7 +732,7 @@ function Board({ scene, held }: { scene: DeskScene; held: string[] }) {
     name: `發現 ${i + 1}`,
     kind: '發現' as const,
     text: l.text,
-    pair: [nameOf(l.cards[0]), nameOf(l.cards[1])] as const,
+    pair: [usedName(l, l.cards[0]), usedName(l, l.cards[1])] as const,
     relation: l.relation,
     conclusion: l.conclusion,
   }));
