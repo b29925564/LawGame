@@ -1376,6 +1376,25 @@ for (const lang of ['en', 'zh-TW'])
     }
   });
 
+// v97 gate 2 第 7 點：放好 A、B 之後下一步是挑關係、按「連起來」，那一排不能在答案列後面（點了沒反應）。
+// 卡優先：英文長卡在 412×839 兩樣放不下（差約 15px），維持卡整張看得到、答案列一般版（設計師 v93 選 A）。
+for (const [lang, w, h] of [
+  ['zh-TW', 390, 844],
+  ['zh-TW', 412, 839],
+] as const)
+  test(`手機 ${w}×${h}（${lang}）：放好兩張卡，關係和「連起來」在答案列上面，卡也整張看得到`, async ({
+    page,
+  }) => {
+    await placeTwo(page, lang, w, h);
+    const g = await geometry(page);
+    const foot = await page.locator('.bench-ops .bench-foot').boundingBox();
+    expect(foot!.y + foot!.height, '「連起來」被答案列蓋住').toBeLessThanOrEqual(g.barTop + 0.5);
+    for (const c of g.cards) {
+      expect(c.top).toBeGreaterThanOrEqual(g.headBottom - 0.5);
+      expect(c.bottom).toBeLessThanOrEqual(g.barTop + 0.5);
+    }
+  });
+
 test('手機 Pixel 7（412×839）：卡放得下，答案列維持一般版', async ({ page }) => {
   await placeTwo(page, 'en', 412, 839);
   const g = await geometry(page);

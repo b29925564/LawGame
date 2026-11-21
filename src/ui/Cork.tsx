@@ -1049,6 +1049,20 @@ export function Cork({
       if (hh > avail) move += toTop;
       else if (toBottom > 0) move += toBottom;
       else if (toTop < 0) move += toTop;
+      // 兩格都放好了，下一步是挑關係、按「連起來」：那一排也要在答案列上面（v97 gate 2 第 7 點：
+      // 手機放好 A、B 之後關係和「連起來」都在答案列後面，點了沒反應）。卡的上緣可以讓出去，不讓出頂列下面。
+      // 卡還是要整張看得到：往上讓的量不超過最上面那張卡離頂列的空間（兩樣放不下時，卡優先）。
+      const filledNow = focusEls.current.filter(
+        (f): f is HTMLDivElement =>
+          !!f?.classList.contains('filled') && !f.classList.contains('away'),
+      );
+      const ops = document.querySelector('.bench-ops .bench-foot');
+      if (filledNow.length >= 2 && ops) {
+        const below = ops.getBoundingClientRect().bottom - move - (barTop - SEE_GAP);
+        const cardTop = Math.min(...filledNow.map((f) => f.getBoundingClientRect().top)) - move;
+        const spare = cardTop - (head + SEE_GAP);
+        if (below > 0 && spare > 0) move += Math.min(below, spare);
+      }
       measuring.current = false;
       if (Math.abs(move) >= 1) scrollPageTo(window.scrollY + move);
     };
