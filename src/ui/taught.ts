@@ -20,7 +20,8 @@ export type TaughtKey =
   | 'desk-docs' // 戴文：標記事實
   | 'desk-board' // 羅根：連線、答疑問
   | 'desk-jobs' // 蘿莎：委託
-  | 'desk-court'; // 海爾：動議
+  | 'desk-court' // 海爾：動議
+  | 'nego-reveal'; // 談判：攤牌亮出的論點，開庭時對方備好反擊
 
 /** 這個說明還要不要出現；done 一變成 true 就記下來，從此不再出現。 */
 export function useTaught(key: TaughtKey, done = false): boolean {

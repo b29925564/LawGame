@@ -12,6 +12,7 @@ import { Shell, Tabs, Transcript } from './Shell';
 import { Recap } from './ActCard';
 import { fitDots, fitLine } from './prose';
 import { useShallow } from 'zustand/react/shallow';
+import { useTaught } from './taught';
 
 /** 認罪協商（企劃書 6.8）：攤牌會洩底，虛張聲勢看證據清單，決定權在委託人手上。 */
 /**
@@ -79,6 +80,8 @@ export function Negotiation({ scene }: { scene: NegotiationScene }) {
   const [intro, setIntro] = useState(st.log.length <= scene.intro.length);
   const [tab, setTab] = useState<'offer' | 'reveal' | 'bluff'>('offer');
   const args = closingArgs(progress);
+  // 攤牌會洩底（企劃書 6.8）：第一次打開攤牌分頁時角色講一句，亮過一張就不再講（評測 v97 第 6 點）。
+  const teachReveal = useTaught('nego-reveal', st.played.length > 0);
   const offer = nego.offerOf(scene, st);
   const ok = nego.authorized(scene, st, offer);
   const money = useMoney();
@@ -397,6 +400,11 @@ export function Negotiation({ scene }: { scene: NegotiationScene }) {
       {tab === 'reveal' && (
         <section className="panel reveal">
           <h2>{t('攤牌')}</h2>
+          {scene.teachReveal && teachReveal && (
+            <div className="lines desk-teach">
+              <Speech line={scene.teachReveal} wrap />
+            </div>
+          )}
           {st.credit > 0 && (
             <p className="muted small">
               {t('被識破過 {n} 次：攤牌的效果只剩 {p}%。', {
