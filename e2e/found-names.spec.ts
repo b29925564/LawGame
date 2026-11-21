@@ -53,10 +53,7 @@ test('發現卡寫玩家放上去的替代卡，不寫內部代號', async ({ pa
     );
   }, desk);
   await page.reload();
-  await page
-    .getByRole('button', { name: /^繼續/ })
-    .first()
-    .click();
+  await page.getByRole('button', { name: /^繼續/ }).first().click();
   const beat = page.locator('.place-beat');
   await page.waitForTimeout(300);
   if (await beat.count()) await beat.click();
