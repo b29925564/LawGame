@@ -6,6 +6,8 @@ import {
   useState,
   useCallback,
   type CSSProperties,
+  type MouseEvent as ReactMouseEvent,
+  type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from 'react';
 import type { Relation } from '../engine/constants';
@@ -1157,6 +1159,22 @@ export function Cork({
   const pages = rackPages.length;
   const [rackAt, setRackAt] = useState(0);
   const page = Math.min(rackAt, pages - 1);
+  // 手指在牌架上滑（想捲頁面）不算點卡：按下到放開移動超過 10px，或頁面捲動過，這次點擊就不放卡
+  // （v97 gate 2 第 8 點：從一張卡開始往上滑，卡被放進 A）。鍵盤或程式觸發的點擊（沒有按下的位置）照常。
+  const press = useRef<{ x: number; y: number; sy: number } | null>(null);
+  const onRackDown = (e: ReactPointerEvent) => {
+    press.current = { x: e.clientX, y: e.clientY, sy: window.scrollY };
+  };
+  const onRackClick = (e: ReactMouseEvent) => {
+    const p = press.current;
+    press.current = null;
+    if (!p || e.detail === 0) return;
+    const moved = Math.hypot(e.clientX - p.x, e.clientY - p.y) > 10;
+    if (moved || Math.abs(window.scrollY - p.sy) > 2) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  };
   const cellW = w ? (w - 2 * RACK_PAD - (RACK_COLS - 1) * RACK_GAP) / RACK_COLS : 0;
   const cellH = (cellW * 3) / 4;
   const rackH = 2 * cellH + RACK_GAP;
@@ -1643,7 +1661,12 @@ export function Cork({
       )}
       {/* 手機牌架：在吊燈下面，所以落在光圈外的暗處。 */}
       {compact && w > 0 && (
-        <div className="cork-rack" style={rackStyle}>
+        <div
+          className="cork-rack"
+          style={rackStyle}
+          onPointerDown={onRackDown}
+          onClickCapture={onRackClick}
+        >
           {rackPage.map(({ item: { id, card }, col, row }) =>
             card && !focusIds.includes(id) ? (
               <button
