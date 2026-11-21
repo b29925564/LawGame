@@ -1376,6 +1376,46 @@ for (const lang of ['en', 'zh-TW'])
     }
   });
 
+// v97 gate 2 第 8 點：在牌架上從一張卡開始滑（想捲頁面）不算點，卡不放上板；真的點一下照常放。
+test('手機：在牌架卡上拖動不放卡，點一下才放', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await open(page, 'zh-TW', ['q1']);
+  await question(page);
+  await settled(page);
+  const card = page.locator('.cork-rack:not(.marks) > .cork-card').first();
+  const b = (await card.boundingBox())!;
+  const x = b.x + b.width / 2;
+  const y = b.y + b.height * 0.75;
+  await page.mouse.move(x, y);
+  await page.mouse.down();
+  await page.mouse.move(x, y - b.height * 0.5, { steps: 5 });
+  await page.mouse.up();
+  await page.waitForTimeout(600);
+  await expect(page.locator('.cork-focus.filled')).toHaveCount(0);
+  // 點一下（按下放開不移動）；桌機專案沒有觸控，用滑鼠點。
+  await card.click();
+  await expect(page.locator('.cork-focus.filled')).toHaveCount(1);
+});
+
+// v97 gate 2 第 7 點：放好 A、B 之後下一步是挑關係、按「連起來」，那一排不能在答案列後面（點了沒反應）。
+// 卡優先：英文長卡在 412×839 兩樣放不下（差約 15px），維持卡整張看得到、答案列一般版（設計師 v93 選 A）。
+for (const [lang, w, h] of [
+  ['zh-TW', 390, 844],
+  ['zh-TW', 412, 839],
+] as const)
+  test(`手機 ${w}×${h}（${lang}）：放好兩張卡，關係和「連起來」在答案列上面，卡也整張看得到`, async ({
+    page,
+  }) => {
+    await placeTwo(page, lang, w, h);
+    const g = await geometry(page);
+    const foot = await page.locator('.bench-ops .bench-foot').boundingBox();
+    expect(foot!.y + foot!.height, '「連起來」被答案列蓋住').toBeLessThanOrEqual(g.barTop + 0.5);
+    for (const c of g.cards) {
+      expect(c.top).toBeGreaterThanOrEqual(g.headBottom - 0.5);
+      expect(c.bottom).toBeLessThanOrEqual(g.barTop + 0.5);
+    }
+  });
+
 test('手機 Pixel 7（412×839）：卡放得下，答案列維持一般版', async ({ page }) => {
   await placeTwo(page, 'en', 412, 839);
   const g = await geometry(page);

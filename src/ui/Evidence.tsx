@@ -506,6 +506,8 @@ export function CardPick({
   onPick,
   verb,
   tag,
+  status,
+  brief,
   compact,
 }: {
   item: { id: string; name: string; text: string; date?: string; time?: string; kind?: string };
@@ -518,25 +520,46 @@ export function CardPick({
   tag?: string;
   /** 一行一張：名稱與種類，選中的那張才展開內容（法院系統的支撐清單）。 */
   compact?: boolean;
+  /** 狀態標籤，放在名稱同一行右側（例如「已洩漏・效果減半」）；螢幕報讀當成這顆按鈕的說明。 */
+  status?: string;
+  /** 只寫名稱、不印內容：內容在旁邊常駐的欄裡看得到（桌機法庭的對質清單）。 */
+  brief?: boolean;
 }) {
   const t = useT();
   const scope = useScope();
+  const sid = useId();
+  const name = (
+    <span className="pick-name">
+      {verb && <span className="verb">{t(verb)} </span>}
+      {stamp(item, scope) && <span className="time">{stamp(item, scope)}</span>}
+      {fitLine(t(item.name, scope))}
+      {tag && <span className="muted"> {t(tag, scope)}</span>}
+    </span>
+  );
   return (
     <button
-      className={['pick', on && 'on', compact && 'compact'].filter(Boolean).join(' ')}
+      className={['pick', on && 'on', compact && 'compact', brief && 'brief']
+        .filter(Boolean)
+        .join(' ')}
       aria-pressed={on}
+      aria-describedby={status ? sid : undefined}
       data-kind={item.kind}
       disabled={disabled}
       onClick={onPick}
     >
-      <span className="pick-name">
-        {verb && <span className="verb">{t(verb)} </span>}
-        {stamp(item, scope) && <span className="time">{stamp(item, scope)}</span>}
-        {fitLine(t(item.name, scope))}
-        {tag && <span className="muted"> {t(tag, scope)}</span>}
-      </span>
+      {status ? (
+        <span className="pick-row">
+          {name}
+          {/* 名稱只念名稱；狀態由 aria-describedby 當說明念（r8-scan），不重複念兩次。 */}
+          <span className="tag pick-status" id={sid} aria-hidden>
+            {t(status, scope)}
+          </span>
+        </span>
+      ) : (
+        name
+      )}
       {compact && item.kind && <span className="pick-kind">{t(item.kind)}</span>}
-      {(!compact || on) && <span className="pick-text">{t(item.text, scope)}</span>}
+      {!brief && (!compact || on) && <span className="pick-text">{t(item.text, scope)}</span>}
     </button>
   );
 }

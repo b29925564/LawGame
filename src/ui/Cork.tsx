@@ -6,6 +6,8 @@ import {
   useState,
   useCallback,
   type CSSProperties,
+  type MouseEvent as ReactMouseEvent,
+  type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from 'react';
 import type { Relation } from '../engine/constants';
@@ -1049,6 +1051,20 @@ export function Cork({
       if (hh > avail) move += toTop;
       else if (toBottom > 0) move += toBottom;
       else if (toTop < 0) move += toTop;
+      // 兩格都放好了，下一步是挑關係、按「連起來」：那一排也要在答案列上面（v97 gate 2 第 7 點：
+      // 手機放好 A、B 之後關係和「連起來」都在答案列後面，點了沒反應）。卡的上緣可以讓出去，不讓出頂列下面。
+      // 卡還是要整張看得到：往上讓的量不超過最上面那張卡離頂列的空間（兩樣放不下時，卡優先）。
+      const filledNow = focusEls.current.filter(
+        (f): f is HTMLDivElement =>
+          !!f?.classList.contains('filled') && !f.classList.contains('away'),
+      );
+      const ops = document.querySelector('.bench-ops .bench-foot');
+      if (filledNow.length >= 2 && ops) {
+        const below = ops.getBoundingClientRect().bottom - move - (barTop - SEE_GAP);
+        const cardTop = Math.min(...filledNow.map((f) => f.getBoundingClientRect().top)) - move;
+        const spare = cardTop - (head + SEE_GAP);
+        if (below > 0 && spare > 0) move += Math.min(below, spare);
+      }
       measuring.current = false;
       if (Math.abs(move) >= 1) scrollPageTo(window.scrollY + move);
     };
@@ -1143,6 +1159,22 @@ export function Cork({
   const pages = rackPages.length;
   const [rackAt, setRackAt] = useState(0);
   const page = Math.min(rackAt, pages - 1);
+  // 手指在牌架上滑（想捲頁面）不算點卡：按下到放開移動超過 10px，或頁面捲動過，這次點擊就不放卡
+  // （v97 gate 2 第 8 點：從一張卡開始往上滑，卡被放進 A）。鍵盤或程式觸發的點擊（沒有按下的位置）照常。
+  const press = useRef<{ x: number; y: number; sy: number } | null>(null);
+  const onRackDown = (e: ReactPointerEvent) => {
+    press.current = { x: e.clientX, y: e.clientY, sy: window.scrollY };
+  };
+  const onRackClick = (e: ReactMouseEvent) => {
+    const p = press.current;
+    press.current = null;
+    if (!p || e.detail === 0) return;
+    const moved = Math.hypot(e.clientX - p.x, e.clientY - p.y) > 10;
+    if (moved || Math.abs(window.scrollY - p.sy) > 2) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  };
   const cellW = w ? (w - 2 * RACK_PAD - (RACK_COLS - 1) * RACK_GAP) / RACK_COLS : 0;
   const cellH = (cellW * 3) / 4;
   const rackH = 2 * cellH + RACK_GAP;
@@ -1629,7 +1661,12 @@ export function Cork({
       )}
       {/* 手機牌架：在吊燈下面，所以落在光圈外的暗處。 */}
       {compact && w > 0 && (
-        <div className="cork-rack" style={rackStyle}>
+        <div
+          className="cork-rack"
+          style={rackStyle}
+          onPointerDown={onRackDown}
+          onClickCapture={onRackClick}
+        >
           {rackPage.map(({ item: { id, card }, col, row }) =>
             card && !focusIds.includes(id) ? (
               <button

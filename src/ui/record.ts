@@ -264,6 +264,25 @@ export function layout(
           ).length
         : 0;
     while (lines.length < other) lines.push('');
+    // 一句話不跨頁：這頁剩下的行放不下整句，就把這頁剩下的行留白（算在上一句的尾巴，跟兩種語言補的空行一樣），
+    // 整句從下一頁第一行開始。比一頁還長的才照常接著排（v97 gate 2：「被告那天下午｜在走廊上大吼」被拆到兩卷）。
+    const at = rows.length % ROWS_PER_PAGE;
+    const room = ROWS_PER_PAGE - at;
+    if (at > 0 && lines.length > room && lines.length <= ROWS_PER_PAGE)
+      for (let k = 0; k < room; k++) {
+        const index = rows.length;
+        rows.push({
+          index,
+          page: Math.floor(index / ROWS_PER_PAGE) + 1,
+          line: (index % ROWS_PER_PAGE) + 1,
+          entry: entry - 1,
+          first: false,
+          indent: 0,
+          text: '',
+          width: 0,
+          space: false,
+        });
+      }
     lines.forEach((text, k) => {
       const index = rows.length;
       let space = false;

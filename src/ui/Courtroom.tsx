@@ -35,6 +35,7 @@ import { Recap } from './ActCard';
 import { reducedMotion } from './a11y';
 import { msOf, type At, type ObjectionBeat, type Tok } from './court/beat';
 import { CourtCamera, type Shot, type WitnessState } from './court/CourtCamera';
+import { ConfrontList } from './court/ConfrontList';
 import { LUCAS } from './cast';
 import { Portrait } from './Portrait';
 import { fitDots, fitLine } from './prose';
@@ -893,13 +894,15 @@ function CourtroomScreen({ scene: raw }: { scene: TrialScene }) {
                 <li className={cs.result !== 'none' ? 'done' : ''}>
                   {t('3 對質')}
                   {cs.result === 'none' && (
-                    <div className="stack">
+                    // 桌機右邊常駐論點分頁看得到說明：每列只寫名稱，清單自己捲（v97 第二道關卡第 6 點，設計師裁定）。
+                    <ConfrontList boxed={!narrow}>
                       {args.map((a) => (
                         <CardPick
                           key={a.id}
                           item={{ ...a, name: t(a.name, scope), text: t(a.text, scope) }}
                           verb={t('出示')}
-                          tag={exposed.includes(a.id) ? t('（已洩漏，她備好了反擊）') : undefined}
+                          brief={!narrow}
+                          status={exposed.includes(a.id) ? t('已洩漏・效果減半') : undefined}
                           onPick={() => {
                             teach('present');
                             confront(claim.id, a.strength, a.tags as Tag[], a.id);
@@ -919,7 +922,7 @@ function CourtroomScreen({ scene: raw }: { scene: TrialScene }) {
                       {args.length === 0 && (
                         <span className="muted">{t('手上沒有論點可以出示。')}</span>
                       )}
-                    </div>
+                    </ConfrontList>
                   )}
                 </li>
               </ol>

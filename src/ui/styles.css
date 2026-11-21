@@ -2096,6 +2096,57 @@ html[lang='en'] .doc-record-box .record.doc-record {
 .relations.support .stack {
   gap: 4px;
 }
+/* 名稱同一行右側的狀態標籤（例如「已洩漏・效果減半」）：沿用 .tag 的灰框膠囊，不用紅、綠、黃。 */
+.pick-row {
+  display: flex;
+  align-items: baseline;
+  gap: 4px 10px;
+  width: 100%;
+}
+.pick-row > .pick-name {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.pick-status {
+  flex: none;
+  font-weight: 400;
+  white-space: nowrap;
+}
+/* 只寫名稱的列（桌機對質清單）：上下各 9px，列高 45px（仍 ≥44 可點），1440×900 中欄放得下 4 列。 */
+.pick.brief {
+  padding-top: 9px;
+  padding-bottom: 9px;
+}
+/* 對質清單（桌機）：清單自己捲，框高取到最後一張完整的列（ConfrontList 量）。
+   還有列在框外時，那一邊出現內陰影；不用虛線、不加字（v97 第二道關卡第 6 點，設計師裁定）。 */
+.confront-list {
+  position: relative;
+}
+.confront-scroll {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.confront-shade {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 14px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--dur-rm) var(--ease);
+}
+.confront-shade.top {
+  top: 0;
+  background: linear-gradient(to bottom, rgb(11 14 19 / 0.18), rgb(11 14 19 / 0));
+}
+.confront-shade.bottom {
+  bottom: 0;
+  background: linear-gradient(to top, rgb(11 14 19 / 0.18), rgb(11 14 19 / 0));
+}
+.confront-list[data-up] > .confront-shade.top,
+.confront-list[data-down] > .confront-shade.bottom {
+  opacity: 1;
+}
 .chips.kinds {
   flex-shrink: 0;
   /* 塞不下就換行，不裁切、不橫捲（視覺規格 §6；試玩回報：「物品」被切掉）。 */
