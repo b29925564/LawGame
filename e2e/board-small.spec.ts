@@ -1392,7 +1392,8 @@ test('手機：在牌架卡上拖動不放卡，點一下才放', async ({ page 
   await page.mouse.up();
   await page.waitForTimeout(600);
   await expect(page.locator('.cork-focus.filled')).toHaveCount(0);
-  await card.tap();
+  // 點一下（按下放開不移動）；桌機專案沒有觸控，用滑鼠點。
+  await card.click();
   await expect(page.locator('.cork-focus.filled')).toHaveCount(1);
 });
 

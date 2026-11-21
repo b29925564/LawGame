@@ -396,8 +396,10 @@ async function playToRachelLast(page: Page) {
 
   await page.getByRole('button', { name: /「所有」是指所有/ }).click();
   await page.getByRole('button', { name: /智慧手錶會同步手機的通知/ }).click();
-  // 談判裡攤牌過的論點，庭上會標成已洩漏：對方備好了反擊。
-  await expect(card(page, /出示 論點 A.*已洩漏/)).toBeVisible();
+  // 談判裡攤牌過的論點，庭上名稱右側標「已洩漏・效果減半」（v97 設計師裁定）。
+  await expect(
+    page.locator('.pick', { has: card(page, /出示 論點 A/) }).locator('.pick-status'),
+  ).toHaveText('已洩漏・效果減半');
   await card(page, /出示 論點 A/).click();
   // 字幕列會重複同一句：在筆錄裡找。
   await expect(page.locator('.record').getByText('那則通知……我沒有看過')).toBeVisible();
