@@ -170,6 +170,45 @@
         }
       ]
     },
+    "lucas-office-0940": {
+      "plates": ["lucas-office-0940"],
+      "size": {
+        "desktop": [1440, 900],
+        "phone": [720, 1280]
+      },
+      "anchor": {
+        "desktop": {
+          "at": 0.459,
+          "to": 0.5
+        },
+        "phone": {
+          "at": 0.5764,
+          "to": 0.5
+        }
+      },
+      "people": [
+        {
+          "id": "lucas",
+          "fig": "lucas_seated_phone",
+          "desktop": {
+            "file": "lucas-office-0940-lucas-desktop.png",
+            "ink": [542, 780],
+            "head": [609, 711],
+            "box": [529, 356, 264, 544],
+            "feet": [650.7, 973.2],
+            "crown": [644.8, 368.2]
+          },
+          "phone": {
+            "file": "lucas-office-0940-lucas-phone.png",
+            "ink": [203, 541],
+            "head": [298, 443],
+            "box": [188, 511, 365, 769],
+            "feet": [356.5, 1384.2],
+            "crown": [348.2, 523.6]
+          }
+        }
+      ]
+    },
     "s1-a1": {
       "plates": ["s1-a1-review", "s1-a1-dismissed", "s1-a1-withdrew", "s1-a1-deal"],
       "size": {

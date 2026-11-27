@@ -372,18 +372,19 @@ def lucas_seated_back():
     return figure(sk, 'suit')
 
 def lucas_seated_phone():
-    # #447 盧卡斯的辦公室 09:40（看守所來電）: the same seated back view, the desk phone's handset at his left ear (screen left from
-    # behind): the left upper arm swings out and forward, so from behind the elbow stands out beside the ribs a little under the
-    # shoulder and the forearm climbs to the ear; the right forearm stays on the desk by the legal pad
-    sk = stance(weight='r', pelvis_x=-0.01, tilt=0.008, sh_y=1.452, sh_w=0.2, sh_tilt=0.004, waist=(0.158, 1.07))
+    # #447 盧卡斯的辦公室 09:40（看守所來電）: the same seated back view, the desk phone's handset at his right ear (screen right
+    # from behind; the phone sits at his right so its LCD stays clear of him): the right upper arm swings out and forward, so from
+    # behind the elbow stands out beside the ribs a little under the shoulder and the forearm climbs to the ear; the left forearm
+    # stays on the desk by the legal pad
+    sk = stance(weight='l', pelvis_x=-0.01, tilt=0.008, sh_y=1.452, sh_w=0.2, sh_tilt=0.004, waist=(0.158, 1.07))
     sit(sk, seat=0.47, back=True)
-    sk['shoulder_l'] = (sk['shoulder_l'][0], sk['shoulder_l'][1] + 0.012)   # the raised arm lifts that shoulder a little
+    sk['shoulder_r'] = (sk['shoulder_r'][0], sk['shoulder_r'][1] + 0.012)   # the raised arm lifts that shoulder a little
     sk['trouser'] = (0.18, 0.13, 0.112); sk['arm'] = (0.112, 0.095, 0.082)
-    hc = (sk['neck_top'][0] - 0.012, sk['neck_top'][1] + 0.05)   # head tipped a touch toward the phone
-    sk['elbow_l'] = (-0.255, sk['shoulder_l'][1] - 0.11); sk['wrist_l'] = (hc[0] - 0.084, hc[1] - 0.05); sk['hand_dir_l'] = (0.35, 1.0)
-    sk['elbow_r'] = (0.192, 0.80); sk['wrist_r'] = (0.085, 0.795); sk['hand_dir_r'] = (-1.0, 0.0)
+    hc = (sk['neck_top'][0] + 0.012, sk['neck_top'][1] + 0.05)   # head tipped a touch toward the phone
+    sk['elbow_r'] = (0.255, sk['shoulder_r'][1] - 0.11); sk['wrist_r'] = (hc[0] + 0.084, hc[1] - 0.05); sk['hand_dir_r'] = (-0.35, 1.0)
+    sk['elbow_l'] = (-0.19, 0.805); sk['wrist_l'] = (-0.085, 0.80); sk['hand_dir_l'] = (1.0, 0.0)
     sk['shoes'] = shoe_back(sk['ankle_l'][0], out=-0.03) + shoe_back(sk['ankle_r'][0], out=0.03)
-    sk['head'] = head(hc, w=0.150, h=0.226, ears=True, tilt=0.06)
+    sk['head'] = head(hc, w=0.150, h=0.226, ears=True, tilt=-0.06)
     sk['hair'] = [mv(FIG_SRC['lucas_back_hair'](hc), 0, hc[1] - 1.672)]
     return figure(sk, 'suit')
 

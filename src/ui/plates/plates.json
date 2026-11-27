@@ -1004,6 +1004,63 @@
       },
       "source": "project-files art-bible/scenes/firm-lobby (lobby.py v4：材質 v3、站位 v4；sun/sky/down/haze 128 spp；英文版只重算銅牌那一塊 border=0.465,0.52,0.535,0.585 plaque=en 再貼回；scratchpad fin_lobby.py sky=1 down=1 haze=0.5 tsun=k-daylight exp=-1.3 black=0.25 cx=0.3893)；色彩腳本格 05w",
       "blocking": "盧卡斯背影在左前（手機裁切外）；惠特洛克、海爾、羅根三人站在櫃台前，羅根的頭離銅牌左緣約 40 px，不擋銅牌"
+    },
+    {
+      "id": "lucas-office-0940",
+      "scene": "ep1:jail-call",
+      "rig": "ep1-lucas-office-mon",
+      "card_kelvin": 5600,
+      "date": "2026-03-16 09:40",
+      "episode": 1,
+      "files": {
+        "desktop": {
+          "file": "lucas-office-0940-desktop.jpg",
+          "bytes": 71462
+        },
+        "phone": {
+          "file": "lucas-office-0940-phone.jpg",
+          "bytes": 52090
+        }
+      },
+      "frames_res": [2304, 1440],
+      "frames": {
+        "lucas": [810, 648, 1218, 1440]
+      },
+      "phone_cx": 0.4536,
+      "phone_crop_px": [640, 0, 1450, 1440],
+      "phone_crop_note": "盧卡斯和他右手邊桌上電話的 LCD 都在手機直式裁切內（立牌 fit.phone.include 把 LCD 算進對齊範圍）",
+      "key": "sky",
+      "fill": ["ceil"],
+      "target": null,
+      "target_note": "盧卡斯是剪影，不量主補比。色彩腳本格 08m（設計師 11-27 更正）：主色 #8f9cab，用 meas26 量出貨 JPG；陰影與 p95/p25 用實測值登記。驗收：300 px 縮圖看得出白天、看得出是一個房間、LCD 是室內最飽和的一點",
+      "measured_08m": {
+        "desktop": {
+          "dominant": "#929aa6",
+          "dE76": 2.33,
+          "shadow_L": 11.6,
+          "p95_p25": 29.0
+        },
+        "phone": {
+          "dominant": "#979fac",
+          "dE76": 2.76
+        }
+      },
+      "grade": {
+        "exp": -3.8,
+        "black": 0.02,
+        "ceil": 48
+      },
+      "grade_note": "天空層 --k-clearsky（#ccdbff，設計師 08m 新增）；太陽在大樓背後，ext 層只照窗外港口（--k-daylight）；天花燈 --k-fluoro 權重 48（設計師接受，同 S1 A1 壓天空權重的做法）；LCD --k-lcd 是畫面最飽和的一點（C* 24.4）",
+      "floor_L": {
+        "desktop": 3.68,
+        "phone": 3.7
+      },
+      "yellow_final_violations": {
+        "desktop": 0,
+        "phone": 0
+      },
+      "source": "project-files art-bible/scenes/lucas-office（lucas_office.py v1：sky/ext/ceil/lcd 128 spp，相機 clip 20 km、f/8；檯燈移到盧卡斯頭的左邊以後，框 x 0.30–0.50、y 0.36–0.66 補算貼回）；fin_lo.py exp=-3.8 ceil=48 tsky=k-clearsky cx=0.4536；色彩腳本格 08m",
+      "blocking": "盧卡斯坐在桌前面窗、背對鏡頭，右手拿話筒；電話在他右手邊桌上，LCD 亮；檯燈關；窗外是早上順光的港口"
     }
   ]
 }

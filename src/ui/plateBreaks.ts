@@ -76,6 +76,15 @@ export const PLATE_BREAKS: readonly string[] = [
   "Yes.|It doesn't open.",
   '09:40.|The desk phone/lights up.',
   'Caller ID:|Calder Harbor¦Detention Center.',
+  // ── #447 盧卡斯的辦公室 09:40（jail-call，看守所打來的電話）──
+  'You have a call|from the Calder‖Harbor/Detention Center.',
+  'Four years ago…|you were/my public defender.',
+  'Yours is the only number|I know by heart.',
+  "Ethan,|what's going on?",
+  'I swear,|he told me/to come up.',
+  '…A little after ten-thirty,|he messaged me,/told me to—',
+  'Wait.|This line is recorded.',
+  'In the police car|they kept asking/and asking…|so I said,¦I just wanted/him to stop.',
 ];
 
 /**
@@ -94,7 +103,7 @@ export const LINE_END_BANNED = new Set('a an the of to in on at for with by from
 export const endsBanned = (line: string) => {
   const last = line.trim().split(/\s+/).pop() ?? '';
   // 句號、問號、驚嘆號收尾的是句子的最後一個字（"Ethan doesn't get on."），不是懸在行尾的虛詞。
-  if (/[.!?…]["'”’)]*$/.test(last)) return false;
+  if (/[.!?…—]["'”’)]*$/.test(last)) return false;
   return LINE_END_BANNED.has(last.toLowerCase().replace(/[^a-z']/g, ''));
 };
 
