@@ -5,23 +5,14 @@ import { setLang, useLang, useT } from '../i18n';
 export const SceneScope = createContext<string | undefined>(undefined);
 export const useScope = () => useContext(SceneScope);
 
-const FONTS =
-  'https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;700&family=Source+Serif+4:ital,wght@0,400;0,700;0,900;1,400&display=swap';
-
 /**
- * 跟著語言換 <html lang>，英文模式才下載 Plex Sans 與 Source Serif 4
- * （視覺設計師定案，字體變數在 styles.css 的 :root:lang(en)）。
+ * 跟著語言換 <html lang>：英文模式的字體變數在 styles.css 的 :root:lang(en)（視覺設計師定案）。
+ * 字型自架（src/ui/fonts/），瀏覽器只下載畫面真的用到的字族，英文的 Plex Sans 與 Source Serif 4 照舊只在英文模式載。
  */
 export function useDocumentLang() {
   const lang = useLang((s) => s.lang);
   useEffect(() => {
     document.documentElement.lang = lang === 'en' ? 'en' : 'zh-Hant';
-    if (lang !== 'en' || document.getElementById('font-en')) return;
-    const link = document.createElement('link');
-    link.id = 'font-en';
-    link.rel = 'stylesheet';
-    link.href = FONTS;
-    document.head.appendChild(link);
   }, [lang]);
 }
 
