@@ -31,7 +31,7 @@ export const ID: Record<string, string> = {
   '普莉亞・奈爾': 'priya',
   奧瑪: 'omar',
   '奧瑪・哈桑': 'omar',
-  // 設計師 #446：她在停車場見盧卡斯（夜裡、鈉燈）。
+  // 設計師 #446：她的戲大多是傳訊息，夜裡的光來自手機（screen；鈉燈的橘邊會在淺色桌面上跟黃色按鈕搶，審查 #460）。
   潔德: 'jade',
   '潔德・坎農': 'jade',
   '亞瑟・卡爾德': 'arthur',
@@ -40,6 +40,8 @@ export const ID: Record<string, string> = {
   '瑪莉索・維加': 'marisol',
   '喬安娜・費雪醫師': 'fisher',
   '麥可・唐醫師': 'tang',
+  // 設計師 #460：第二集取證的證人（S5 奧卡福會議室，白天陰天的窗光）。
+  '艾瑪・徐': 'emma',
 };
 
 /**
@@ -54,6 +56,8 @@ export const NO_FACE = new Set([
   '赫克托',
   '父親',
   '林肯・高',
+  // 第 1 集瑞秋取證時對方的律師（schema 的 examiner 預設值，在取證筆錄裡提異議）：沒有名字、沒有外型。
+  '對造律師',
 ]);
 
 const LOOKS = new Map<string, JurorLook>(

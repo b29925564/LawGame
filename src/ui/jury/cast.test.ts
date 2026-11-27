@@ -37,7 +37,7 @@ describe('法庭剪影替身', () => {
   });
 });
 
-/** 兩集劇本裡所有台詞的 who:（不分場景）。 */
+/** 兩集劇本裡會顯示頭像的名字：台詞的 who:、證人 witness.name、詰問的人 examiner（不分場景）。 */
 function everyWho() {
   const out = new Set<string>();
   const walk = (x: unknown) => {
@@ -45,6 +45,9 @@ function everyWho() {
     else if (x && typeof x === 'object') {
       const o = x as Record<string, unknown>;
       if (typeof o.who === 'string') out.add(o.who);
+      if (typeof o.examiner === 'string') out.add(o.examiner);
+      const w = o.witness as { name?: unknown } | undefined;
+      if (w && typeof w.name === 'string') out.add(w.name);
       Object.values(o).forEach(walk);
     }
   };
@@ -53,7 +56,7 @@ function everyWho() {
 }
 
 describe('說話者頭像（設計師 #446）', () => {
-  it('兩集劇本裡每個 who:：要嘛在 ID 表裡，要嘛在無頭像名單裡', () => {
+  it('兩集劇本裡每個 who:、證人、詰問的人：要嘛在 ID 表裡，要嘛在無頭像名單裡', () => {
     const all = everyWho();
     expect(all.length).toBeGreaterThan(20);
     expect(all.filter((w) => w !== LUCAS && !(w in ID) && !NO_FACE.has(w))).toEqual([]);
@@ -67,5 +70,8 @@ describe('說話者頭像（設計師 #446）', () => {
     expect(castLook('潔德・坎農')).toBe(castLook('潔德'));
     expect(castLook('奧瑪')).toBe(castLook('奧瑪・哈桑'));
     expect(castLook('普萊斯')).toBe(castLook('羅根'));
+    expect(castLook('艾瑪・徐')?.id).toBe('emma');
+    // 潔德的光是手機的冷光，不是鈉燈（審查 #460：橘邊跟黃色按鈕搶）。
+    expect(castLook('潔德')?.light).toBe('screen');
   });
 });
