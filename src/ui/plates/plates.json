@@ -735,6 +735,44 @@
       },
       "source": "project-files art-bible/scenes/s1-conference (s1_conference.py cam=a1-wide, finish_s1.py spec-s1-a1.json；11-27 照新的 finish.py 重新調色、手機裁切改到維多莉亞與海爾)；review designer-review-v2.1.md",
       "blocking": "盧卡斯背對鏡頭坐在桌子右前端（手機版在框外）；海爾坐在桌子對面，維多莉亞站在桌子左端"
+    },
+    {
+      "id": "s2-copy-devin",
+      "scene": "ep2:epilogue-devon",
+      "rig": "ep2-copy-room-night",
+      "card_kelvin": 4100,
+      "date": "2026-06-04 22:10",
+      "episode": 2,
+      "files": {
+        "desktop": {
+          "file": "s2-copy-devin-desktop.jpg",
+          "bytes": 68566
+        },
+        "phone": {
+          "file": "s2-copy-devin-phone.jpg",
+          "bytes": 42459
+        }
+      },
+      "frames_res": [2304, 1440],
+      "frames": {
+        "devin": [1145, 535, 1848, 1440],
+        "lucas": [957, 562, 1202, 1323]
+      },
+      "phone_cx": 0.577,
+      "phone_crop_px": [924, 0, 1734, 1440],
+      "key": "scan",
+      "fill": ["spill", "panel"],
+      "target": "10:1",
+      "floor_L": {
+        "desktop": 3.6,
+        "phone": 3.71
+      },
+      "yellow_final_violations": {
+        "desktop": 0,
+        "phone": 0
+      },
+      "source": "project-files art-bible/scenes/s2-afterhours (s2_afterhours.py set=copy cam=devin cx=0.9 cy=0.2 tx=1.0 ty=1.5 lstep=0.45 door=75 lens=22；11-27 重做：影印室加細節、重新取景)；review sample-report-v2.md、#458 設計師審查",
+      "blocking": "戴文在影印機前側身對著掃描燈（右側臉）；盧卡斯站在半開的門口（門開 75°），兩人都在手機直式裁切內"
     }
   ]
 }

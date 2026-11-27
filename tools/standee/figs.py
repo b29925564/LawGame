@@ -72,6 +72,33 @@ def wavy(pts, amp, n, seed=0.0):
         d = N((x - cx, y - cy)); out.append((x + d[0] * r, y + d[1] * r))
     return out
 
+def curls(path, d, amp=0.6, seed=0.0, k=5):
+    """curly hair edge (cast: devon curly): walk `path` in irregular steps around d m and bulge each step outward (left of
+    travel) as a flattened arc of its own size, so the outline reads as loose curls rather than a smooth helmet or a row of beads"""
+    L = [0.0]
+    for a, b in zip(path, path[1:]): L.append(L[-1] + math.dist(a, b))
+    def at(s):
+        for i in range(len(path) - 1):
+            if s <= L[i + 1] or i == len(path) - 2:
+                return lerp(path[i], path[i + 1], (s - L[i]) / max(1e-9, L[i + 1] - L[i]))
+    ss, i = [0.0], 0
+    while ss[-1] < L[-1]:
+        ss.append(ss[-1] + d * (1.0 + 0.45 * math.sin(i * 2.399 + seed) * math.cos(i * 1.31 + seed)))
+        i += 1
+    ss[-1] = L[-1]
+    if ss[-1] - ss[-2] < d * 0.4: ss.pop(-2)
+    q = [at(s) for s in ss]; pts = []
+    for i, (a, b) in enumerate(zip(q, q[1:])):
+        m = lerp(a, b, 0.5); h = (a[0] - m[0], a[1] - m[1]); u = N(V(a, b)); o = (-u[1], u[0])
+        r = math.hypot(*h) * amp * (1.0 + 0.35 * math.sin(i * 3.7 + seed * 2.1))
+        sk = 0.25 * math.sin(i * 1.9 + seed)   # lean the curl forward or back along the edge
+        pts.append(a)
+        for j in range(1, k):
+            g = math.pi * j / k; c = math.cos(g) - sk * math.sin(g)
+            pts.append((m[0] + h[0] * c + o[0] * r * math.sin(g), m[1] + h[1] * c + o[1] * r * math.sin(g)))
+    pts.append(q[-1])
+    return pts
+
 def neck(base_c, top_c, wb=0.13, wt=0.098, wn=0.088):
     """neck: narrowest under the jaw, flaring into the trapezius"""
     m = lerp(base_c, top_c, 0.55)
@@ -427,20 +454,23 @@ def devin_profile():
     nb, nt = (0.0, 1.47), (0.03, 1.56)
     P_.append(('neck', [(nb[0] - 0.055, nb[1]), (nb[0] + 0.05, nb[1]), (nt[0] + 0.045, nt[1]), (nt[0] - 0.045, nt[1])]))
     hc = (nt[0] + 0.01, 1.625); t = math.radians(-14)
-    prof = [(-0.098, 0.0), (-0.1, 0.045), (-0.085, 0.09), (-0.05, 0.118), (0.0, 0.122), (0.045, 0.105), (0.075, 0.07), (0.088, 0.035), (0.086, 0.01),
-            (0.094, -0.012), (0.106, -0.04), (0.094, -0.047), (0.092, -0.06), (0.097, -0.072), (0.088, -0.082), (0.084, -0.095), (0.06, -0.112),
-            (0.025, -0.112), (0.0, -0.09), (-0.03, -0.075), (-0.07, -0.06), (-0.092, -0.035)]
+    # wide head; profile points close together so the spline keeps the brow, nose, lips and chin as single smooth turns
+    prof = [(-0.108, 0.0), (-0.106, 0.05), (-0.088, 0.095), (-0.05, 0.122), (0.0, 0.128), (0.045, 0.113), (0.074, 0.08), (0.087, 0.045),
+            (0.089, 0.028), (0.084, 0.012), (0.096, -0.01), (0.108, -0.03), (0.114, -0.039), (0.108, -0.047), (0.094, -0.05),
+            (0.094, -0.058), (0.09, -0.067), (0.093, -0.076), (0.084, -0.087), (0.091, -0.1), (0.084, -0.115), (0.055, -0.124),
+            (0.018, -0.12), (-0.03, -0.09), (-0.075, -0.066), (-0.1, -0.036)]
     rot = lambda p: (hc[0] + p[0] * math.cos(t) - p[1] * math.sin(t), hc[1] + p[0] * math.sin(t) + p[1] * math.cos(t))
     P_.append(('head', [rot(p) for p in prof]))
-    # big round glasses: the rim stands just proud of the brow-nose line in front of the eye
-    P_.append(('head', [rot(p) for p in [(0.082, 0.03), (0.098, 0.026), (0.104, 0.008), (0.1, -0.012), (0.086, -0.016)]]))
+    # big round glasses seen edge-on: the lens stands proud of the brow-nose dip and rests on the bridge
+    P_.append(('head', [rot(p) for p in [(0.082, 0.045), (0.104, 0.043), (0.112, 0.022), (0.111, 0.0), (0.104, -0.015), (0.088, -0.013)]]))
+    # temple arm from the lens back over the ear, dipping behind it; drawn as its own part so the scan light can catch its underside
+    # only the front of the arm (lens hinge to the hairline) catches the light: a full-length lit bar read as a cap brim (11-27)
+    arm = [(0.088, 0.036), (0.05, 0.032), (0.015, 0.028), (0.004, 0.025), (0.015, 0.024), (0.05, 0.026), (0.088, 0.029)]
+    P_.append(('temple', [rot(p) for p in arm]))
     hair = [(-0.112, -0.03), (-0.124, 0.03), (-0.118, 0.09), (-0.092, 0.135), (-0.05, 0.158), (0.0, 0.16), (0.045, 0.148), (0.078, 0.118),
             (0.09, 0.085), (0.07, 0.07), (0.03, 0.085), (-0.02, 0.07), (-0.06, 0.02), (-0.075, -0.04), (-0.095, -0.06)]
-    dense = []   # twice the points, so the curls read as small lumps rather than a smooth helmet
-    for i, a in enumerate(hair[:10]):
-        dense += [a, lerp(a, hair[i + 1], 0.5)]
-    dense += hair[10:]
-    P_.append(('hair', [rot(p) for p in wavy(dense, 0.011, len(dense), 2.3)]))
+    # outer edge (nape, crown, fringe) as separate curls; the inner edge (hairline over the temple and ear) stays smooth
+    P_.append(('hair', [rot(p) for p in curls(hair[:10], 0.03, seed=2.3) + hair[10:]]))
     # near (right) arm: upper arm down the side, forearm forward to the scan glass, hand flat on it
     S, E, W = (-0.005, 1.4), (0.025, 1.13), (0.225, 1.015)
     P_.append(('arm', seg(S, E, 0.1, 0.086, bulge=0.012, at=0.35)))

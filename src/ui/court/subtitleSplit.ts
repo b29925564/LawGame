@@ -179,11 +179,16 @@ const CLAUSE = /[^，、；：—,;:]+(?:[，、；：—,;:]+\s*)?/g;
 const zhOf = (t: string) => /[\p{Script=Han}]/u.test(t);
 const join = (parts: string[]) => parts.join(zhOf(parts[0] ?? '') ? '' : ' ');
 
-/** 依正規表示式分段；「Mr.」「Dr.」後面的句點不是句尾：併回下一段。 */
+/**
+ * 依正規表示式分段；「Mr.」「Dr.」和名字縮寫（「V. 惠特洛克」「R. Delgado」）後面的句點不是句尾：併回下一段。
+ */
 function piecesOf(t: string, re: RegExp) {
   const out: string[] = [];
   for (const x of (t.match(re) ?? [t]).filter((y) => y.trim())) {
-    if (out.length && /\b(?:Mr|Mrs|Ms|Dr|Prof|St|Jr|Sr)\.\s*$/.test(out[out.length - 1]))
+    if (
+      out.length &&
+      /(?:\b(?:Mr|Mrs|Ms|Dr|Prof|St|Jr|Sr)|(?:^|\s)[A-Z])\.\s*$/.test(out[out.length - 1])
+    )
       out[out.length - 1] += x;
     else out.push(x);
   }
