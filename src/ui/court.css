@@ -756,74 +756,6 @@ details.earlier[open] > .lines {
 }
 
 /* ═══ 陪審團遴選與判決（視覺規格 v1.4 §18，圖版 10、11） ═══ */
-/* 檔案照（§16 模板 B）：配角真立繪到位前都用這張。 */
-.idphoto {
-  --w: 96px;
-  width: var(--w);
-  display: grid;
-  grid-template-rows: 1fr auto;
-  gap: 3px;
-  padding: 4px;
-  border-radius: var(--radius);
-  background: var(--surface-3);
-  border: 1px solid var(--border-strong);
-  box-shadow: var(--inset-hi);
-  flex: none;
-}
-.idphoto .ph {
-  position: relative;
-  aspect-ratio: 3 / 4;
-  border-radius: 3px;
-  overflow: hidden;
-  display: grid;
-  place-items: center;
-  background: linear-gradient(
-    180deg,
-    light-dark(#ebe4cf, #cdc3a9) 0%,
-    light-dark(#d8cfb3, #b3a98d) 100%
-  );
-}
-.idphoto .ph::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(85% 75% at 50% 32%, transparent 55%, rgb(0 0 0 / 24%) 100%);
-  pointer-events: none;
-}
-.idphoto .ph b {
-  font: 700 calc(var(--w) * 0.4) / 1 var(--font-doc);
-  color: var(--gold-paper);
-}
-.idphoto .ph img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-.idphoto .nm {
-  font: 400 10px/1 var(--font-court);
-  color: var(--muted);
-  text-align: center;
-  letter-spacing: 0.04em;
-  white-space: nowrap;
-  overflow: hidden;
-}
-.idphoto.s40 {
-  padding: 2px;
-  gap: 0;
-  grid-template-rows: 1fr;
-  border-radius: 4px;
-}
-.idphoto.s28 {
-  padding: 1px;
-  gap: 0;
-  grid-template-rows: 1fr;
-  border-radius: 3px;
-}
-.idphoto.s28 .ph {
-  border-radius: 2px;
-}
-
 /* 頂列：左眉標＋標題，右三個額度數字；右上角留給選單鈕。 */
 .trialbar {
   min-height: var(--taskbar-h);
@@ -1210,7 +1142,6 @@ button.cand[aria-pressed='true'],
   font: 600 13px/1 var(--font-mono);
   color: light-dark(#8a6a43, #8a7258);
 }
-.seatc.on .idphoto,
 .seatc.on .silcard {
   outline: 2px solid var(--text);
   outline-offset: 2px;
@@ -1222,8 +1153,7 @@ button.cand[aria-pressed='true'],
   max-width: 72px;
   min-width: 0;
 }
-.box:not(.mini) .seatc .silcard,
-.box:not(.mini) .seatc .idphoto {
+.box:not(.mini) .seatc .silcard {
   --w: 100%;
 }
 .box:not(.mini) .seatc .slot0 {
@@ -1244,7 +1174,6 @@ button.cand[aria-pressed='true'],
   padding: var(--s4);
   min-height: 0;
 }
-.prof > .idphoto,
 .prof > .silcard {
   align-self: start;
 }
@@ -1386,7 +1315,6 @@ button.cand[aria-pressed='true'],
   .panel.prof {
     grid-template-columns: 72px minmax(0, 1fr);
   }
-  .panel.prof > .idphoto,
   .panel.prof .silcard {
     --w: 72px !important;
   }
@@ -2922,6 +2850,13 @@ html[lang='en'] .stamp.rec-stamp b {
   width: 100%;
   height: 100%;
 }
+/* 說話者的剪影卡在深色面板上（會見卡、法庭、深色主題；color-scheme: dark）：1px 內描邊，卡的邊界才看得出來。
+   淺色面板上不加，跟陪審團卡一樣（設計師 #446 第 5 點）。描邊畫在內容上面，不被 SVG 蓋掉。 */
+.portrait.sil,
+.silcard.face {
+  outline: 1px solid light-dark(transparent, rgb(255 255 255 / 0.12));
+  outline-offset: -1px;
+}
 /*
  * 陪審員候選人：遴選在法庭裡，跟陪審席同一種剪影卡（設計師第二輪）。4:5、鏡頭層的黑、--radius，
  * 只有 SVG 裡那一圈虛線；不套檔案照模板 B 的紙框，也不在卡下重複印名字。
@@ -2948,6 +2883,10 @@ html[lang='en'] .stamp.rec-stamp b {
 /* 結辯後的對白：法庭裡的人是剪影小卡（40×50），名字寫在旁邊那一行；欄寬跟著放寬，字不貼著剪影。 */
 .epi .msg:has(> .portrait.sil) {
   grid-template-columns: 40px minmax(0, 1fr);
+}
+/* 對不到外型的人（語音、App、電話那頭）不畫頭像：名字和話靠左，不留空的頭像欄（#446 第 3 點）。 */
+.epi .msg:not(:has(> .portrait, > .silcard)) {
+  grid-template-columns: minmax(0, 1fr);
 }
 .epi .msg > .portrait.sil {
   display: block;

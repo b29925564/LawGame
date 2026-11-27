@@ -195,6 +195,14 @@
       "head": "medium",
       "build": "medium",
       "light": "hospital"
+    },
+    {
+      "id": "jade",
+      "hair": "wavy",
+      "build": "narrow",
+      "head": "medium",
+      "lift": 4,
+      "light": "sodium"
     }
   ]
 }

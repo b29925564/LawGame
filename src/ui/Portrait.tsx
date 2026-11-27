@@ -2,7 +2,6 @@ import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import type { Line } from '../engine/episode/schema';
 import { useT } from '../i18n';
 import { LUCAS, lucas, lucasFace } from './cast';
-import { IdPhoto } from './IdPhoto';
 import { useScope } from './lang';
 import { CourtFace, useInCourt } from './jury/CourtFace';
 import { MarkLine } from './Marks';
@@ -10,13 +9,10 @@ import { prose } from './prose';
 import { VoLine } from './VoiceOver';
 
 /**
- * 角色頭像，4:5。盧卡斯用正式立繪（cast.ts）；其他人在法庭是剪影替身（jury/CourtFace），
- * 在桌上和卷宗旁是檔案照（IdPhoto 模板 B；視覺規格 §16，使用者 10-09）。程式畫的卡通臉已下架。
+ * 角色頭像，4:5。盧卡斯用正式立繪（cast.ts）；其他人不論在法庭、桌上、會見、談判都是同一張剪影卡（jury/CourtFace，
+ * J1、受光 85）。檔案照模板 B（米色紙片＋一個字）退役（設計師 #446，11-27）。
+ * 對不到外型的說話者（旁白、語音、法院系統、App、電話那頭）不畫頭像，也不留空框：名字和台詞直接靠左（cast.ts NO_FACE）。
  */
-
-/** 不是人的說話者：電話語音、派單 App。 */
-const faceless = new Set(['語音', '卡爾德快遞']);
-
 export function Portrait({
   who,
   mood = '平',
@@ -28,31 +24,20 @@ export function Portrait({
   decorative?: boolean;
 }) {
   const t = useT();
-  const inCourt = useInCourt();
+  if (who !== LUCAS) return <CourtFace who={who} label={decorative ? undefined : t(who)} />;
   const a11y = decorative
     ? ({ 'aria-hidden': true } as const)
     : ({ role: 'img', 'aria-label': t(who) } as const);
-  if (who === '旁白') return null;
-  // 不是人的說話者：不放頭像也不放黑條（黑條留給林肯），頭像那一格留空，台詞左緣才和別人對齊（設計師 #258）。
-  if (faceless.has(who)) return <span className="portrait faceless" aria-hidden />;
-  // 法庭裡的配角是剪影替身（P4-2）；盧卡斯照舊放立繪。
-  if (inCourt && who !== LUCAS) return <CourtFace who={who} />;
-  const src = who === LUCAS ? lucas(mood, 144) : undefined;
-  if (src)
-    return (
-      <span className="portrait art face-crop" style={lucasFace(mood)} {...a11y}>
-        <img
-          src={src}
-          srcSet={`${src} 144w, ${lucas(mood, 512)} 512w`}
-          sizes="(min-width: 768px) 108px, 84px"
-          alt=""
-          decoding="async"
-        />
-      </span>
-    );
+  const src = lucas(mood, 144);
   return (
-    <span className="portrait id" {...a11y}>
-      <IdPhoto who={who} size="fill" />
+    <span className="portrait art face-crop" style={lucasFace(mood)} {...a11y}>
+      <img
+        src={src}
+        srcSet={`${src} 144w, ${lucas(mood, 512)} 512w`}
+        sizes="(min-width: 768px) 108px, 84px"
+        alt=""
+        decoding="async"
+      />
     </span>
   );
 }

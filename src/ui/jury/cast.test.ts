@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { episodes } from '../../content';
 import { DA, JUDGE } from '../../engine/episode/trial';
 import { LUCAS } from '../cast';
-import { castLook } from './cast';
+import { castLook, ID, NO_FACE } from './cast';
 
 const COURT = new Set(['trial', 'defense', 'closing', 'voirdire']);
 const SYSTEM = new Set(['旁白', '語音', '法院系統', LUCAS]);
@@ -34,5 +34,38 @@ describe('法庭剪影替身', () => {
   it('短名、全名、職稱對到同一個人', () => {
     expect(castLook('莫羅')).toBe(castLook('莫羅檢察官'));
     expect(castLook('伊森')).toBe(castLook('伊森・蕭'));
+  });
+});
+
+/** 兩集劇本裡所有台詞的 who:（不分場景）。 */
+function everyWho() {
+  const out = new Set<string>();
+  const walk = (x: unknown) => {
+    if (Array.isArray(x)) x.forEach(walk);
+    else if (x && typeof x === 'object') {
+      const o = x as Record<string, unknown>;
+      if (typeof o.who === 'string') out.add(o.who);
+      Object.values(o).forEach(walk);
+    }
+  };
+  for (const ep of Object.values(episodes)) walk(ep.scenes);
+  return [...out];
+}
+
+describe('說話者頭像（設計師 #446）', () => {
+  it('兩集劇本裡每個 who:：要嘛在 ID 表裡，要嘛在無頭像名單裡', () => {
+    const all = everyWho();
+    expect(all.length).toBeGreaterThan(20);
+    expect(all.filter((w) => w !== LUCAS && !(w in ID) && !NO_FACE.has(w))).toEqual([]);
+  });
+  it('在 ID 表裡的人都畫得出剪影；無頭像名單裡的人沒有剪影', () => {
+    expect(Object.keys(ID).filter((w) => !castLook(w))).toEqual([]);
+    expect([...NO_FACE].filter((w) => castLook(w))).toEqual([]);
+  });
+  it('潔德、奧瑪、普萊斯的短名對到同一個人', () => {
+    expect(castLook('潔德')?.id).toBe('jade');
+    expect(castLook('潔德・坎農')).toBe(castLook('潔德'));
+    expect(castLook('奧瑪')).toBe(castLook('奧瑪・哈桑'));
+    expect(castLook('普萊斯')).toBe(castLook('羅根'));
   });
 });
