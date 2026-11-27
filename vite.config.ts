@@ -95,14 +95,14 @@ function reducedMotionCss(): CssPlugin {
 
 /**
  * 內容安全政策（上線前審查 S2，Issue #380）：GitHub Pages 不能自訂回應標頭，只能用 <meta>。
- * 只在建置時加：開發伺服器的熱更新要跑行內腳本。字型還從 Google Fonts 載（自架見 #380 S3），放行那兩個網域。
+ * 只在建置時加：開發伺服器的熱更新要跑行內腳本。字型已自架（#380 S3，src/ui/fonts/），不再放行 Google Fonts。
  * 發布 Artifact 時 bundle.py 把主程式內嵌成行內腳本，會拿掉這一行（pipeline/publish/README.md）。
  */
 export const CSP = [
   "default-src 'self'",
   "script-src 'self'",
-  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-  "font-src 'self' https://fonts.gstatic.com",
+  "style-src 'self' 'unsafe-inline'",
+  "font-src 'self'",
   "img-src 'self' data: blob:",
   "media-src 'self' blob:",
   "connect-src 'self'",
@@ -155,8 +155,8 @@ export default defineConfig({
     // 場景的相依幾乎都在主程式一起載好了，少了預載只差一點點。
     modulePreload: false,
     // 音效用 fetch 載入：小於 4 KB 的檔若照預設內嵌成 data:，會被 CSP 的 connect-src 擋（設計師 #398 審查）。
-    // 音檔一律輸出成檔案；其他資源照 Vite 預設。
-    assetsInlineLimit: (file) => (/\.(m4a|mp3|ogg|wav)$/i.test(file) ? false : undefined),
+    // 字型同理：CSP 的 font-src 只放行 'self'，不收 data:。音檔與字型一律輸出成檔案；其他資源照 Vite 預設。
+    assetsInlineLimit: (file) => (/\.(m4a|mp3|ogg|wav|woff2)$/i.test(file) ? false : undefined),
   },
   test: {
     include: ['src/**/*.test.ts'],

@@ -12,3 +12,5 @@ e2e/rule1/
 pw-json
 # 無障礙名稱基準：npm run a11y:names 產生，不重排。
 e2e/scan/a11y-names/
+# 字型子集的 @font-face：scripts/fonts.py 產生，不重排。
+src/ui/fonts/fonts.css

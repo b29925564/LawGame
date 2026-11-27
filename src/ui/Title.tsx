@@ -11,6 +11,7 @@ import { fitLine } from './prose';
 import { useFault } from './ErrorBoundary';
 import { DocketMini, SaveBates } from './Dossier';
 import { useShallow } from 'zustand/react/shallow';
+import { warmMainFonts } from './fonts/warm';
 
 const when = (t: number, lang: string) =>
   new Date(t).toLocaleString(lang === 'en' ? 'en-US' : 'zh-TW', {
@@ -115,6 +116,8 @@ export function Title() {
   useEffect(() => {
     useFault.setState({ fault: null });
   }, []);
+  // 標題畫完、閒下來再預載對白要用的中文主檔（設計師 #462 複審；fonts/warm.ts）。
+  useEffect(warmMainFonts, []);
   const t = useT();
   // 瀏覽器要等玩家碰過畫面才肯出聲：標題畫面上的點擊或按鍵都順手解鎖。
   // 各瀏覽器認的手勢不同（iOS 要 touchend／click），所以全部聽，重複呼叫無害。

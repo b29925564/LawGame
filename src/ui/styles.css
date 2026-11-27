@@ -6,6 +6,9 @@
  * 形狀規則：面板、按鈕、卡片一律 6px 圓角；膠囊形只給標籤、計數與刻度點。
  * 所有顏色都是權杖，用 light-dark() 一次寫出淺色與深色，data-theme 可以強制其中一邊。
  */
+/* 字型自架（Issue #380 S3）：scripts/fonts.py 產生的子集，不再從 Google Fonts 載。 */
+@import './fonts/fonts.css';
+
 :root {
   color-scheme: light dark;
 
