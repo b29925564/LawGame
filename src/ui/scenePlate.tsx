@@ -59,8 +59,9 @@ const urls = import.meta.glob<string>('./plates/*.jpg', {
  */
 type Standee = {
   id: string;
-  desktop: StandeeFile;
-  phone: StandeeFile;
+  desktop?: StandeeFile;
+  /** 手機版裁切外的人沒有這一版（S1 會議室手機只框說話的兩個人）。 */
+  phone?: StandeeFile;
 };
 type StandeeFile = {
   file: string;
@@ -228,9 +229,10 @@ function decoded(src: string): Promise<HTMLImageElement> {
 
 /** 這張底圖上站的人（立牌）的圖檔位址：和底圖一起解碼完才算好，人不會晚一拍才冒出來。 */
 function standeeSrcs(plateId: string, variant: Variant): string[] {
-  return (STANDEES.find((x) => x.plates.includes(plateId))?.people ?? []).map(
-    (p) => standeeUrls[`./plates/standee/${p[variant].file}`],
-  );
+  return (STANDEES.find((x) => x.plates.includes(plateId))?.people ?? []).flatMap((p) => {
+    const f = p[variant];
+    return f ? [standeeUrls[`./plates/standee/${f.file}`]] : [];
+  });
 }
 
 /** 載好並解碼（底圖加上面的人）；同一張只做一次。圖壞掉算 fail（不記住，下次再試）。 */
@@ -352,7 +354,9 @@ export function ScenePlate({
       >
         <img className="plate-bg" src={url} alt="" decoding="async" draggable={false} />
         {people.map((p) => {
-          const { file, box } = p[variant];
+          const f = p[variant];
+          if (!f) return null;
+          const { file, box } = f;
           return (
             <img
               key={p.id}

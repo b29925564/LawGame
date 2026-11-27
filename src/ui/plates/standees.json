@@ -79,6 +79,116 @@
         }
       ]
     },
+    "s2-copy-ethics": {
+      "plates": ["s2-copy-ethics-perjury", "s2-copy-ethics-coached", "s2-copy-ethics-clean"],
+      "size": {
+        "desktop": [1440, 900],
+        "phone": [720, 1280]
+      },
+      "anchor": {
+        "desktop": {
+          "at": 0.5028,
+          "to": 0.5
+        },
+        "phone": {
+          "at": 0.4861,
+          "to": 0.5
+        }
+      },
+      "people": [
+        {
+          "id": "devin",
+          "fig": "devin_front",
+          "desktop": {
+            "file": "s2-copy-ethics-devin-desktop.png",
+            "ink": [571, 877],
+            "head": [663, 792],
+            "box": [559, 229, 330, 671],
+            "feet": [720.0, 1418.2],
+            "crown": [720.0, 241.9]
+          },
+          "phone": {
+            "file": "s2-copy-ethics-devin-phone.png",
+            "ink": [133, 567],
+            "head": [262, 447],
+            "box": [121, 331, 458, 949],
+            "feet": [344.0, 2017.1],
+            "crown": [344.0, 344.0]
+          }
+        },
+        {
+          "id": "lucas",
+          "fig": "lucas_back",
+          "desktop": {
+            "file": "s2-copy-ethics-lucas-desktop.png",
+            "ink": [0, 312],
+            "head": [0, 65],
+            "box": [0, 82, 360, 818],
+            "feet": [44.4, 2714.6],
+            "crown": [-97.8, 94.3]
+          }
+        }
+      ]
+    },
+    "s2-corr-am": {
+      "plates": ["s2-corr-am"],
+      "size": {
+        "desktop": [1440, 900],
+        "phone": [720, 1280]
+      },
+      "anchor": {
+        "desktop": {
+          "at": 0.5552,
+          "to": 0.5
+        },
+        "phone": {
+          "at": 0.4264,
+          "to": 0.5
+        }
+      },
+      "people": [
+        {
+          "id": "hale",
+          "fig": "hale_front",
+          "desktop": {
+            "file": "s2-corr-am-hale-desktop.png",
+            "ink": [699, 739],
+            "head": [713, 726],
+            "box": [687, 404, 65, 156],
+            "feet": [719.9, 547.3],
+            "crown": [719.9, 416.6]
+          },
+          "phone": {
+            "file": "s2-corr-am-hale-phone.png",
+            "ink": [165, 221],
+            "head": [184, 203],
+            "box": [152, 580, 81, 211],
+            "feet": [193.6, 778.4],
+            "crown": [193.6, 592.4]
+          }
+        },
+        {
+          "id": "lucas",
+          "fig": "lucas_back",
+          "desktop": {
+            "file": "s2-corr-am-lucas-desktop.png",
+            "ink": [773, 900],
+            "head": [813, 860],
+            "box": [761, 369, 151, 467],
+            "feet": [833.8, 822.6],
+            "crown": [834.4, 381.2]
+          },
+          "phone": {
+            "file": "s2-corr-am-lucas-phone.png",
+            "ink": [269, 449],
+            "head": [326, 393],
+            "box": [257, 530, 205, 654],
+            "feet": [355.6, 1169.9],
+            "crown": [356.5, 542.1]
+          }
+        }
+      ]
+    },
     "s6-steps": {
       "plates": ["s6-steps", "s6-steps-en"],
       "size": {

@@ -42,8 +42,22 @@ def layer(person, tag, cfg):
     straight = np.where(al[..., None] > 1e-6, prem / np.maximum(al[..., None], 1e-6), 0)
     rgb = (lin2srgb(straight) * 255 + 0.5).astype(np.uint8)
     edge = 1 - (1 - al) ** EDGE
+    if person.get('occ'):   # 桌椅擋在人前面的地方（場景深度比人近，occ/*.png 是算圖解析度的 2 倍，白＝擋住）：照面積比例扣掉 alpha
+        om = Image.open(os.path.join(HERE, person['occ'])).convert('L'); k = om.size[0] / R[0]
+        box = ((x0 / sc + ox) * k, y0 / sc * k, ((x0 + w) / sc + ox) * k, (y0 + h) / sc * k)
+        pad = int(max(0, -box[0], -box[1], box[2] - om.size[0], box[3] - om.size[1])) + 2   # 畫面外：沒有東西擋
+        if pad > 2:
+            big = Image.new('L', (om.size[0] + 2 * pad, om.size[1] + 2 * pad), 0); big.paste(om, (pad, pad)); om = big
+            box = tuple(v + pad for v in box)
+        occ = np.asarray(om.resize((w, h), Image.BOX, box=box), np.float64) / 255
+        edge = edge * (1 - occ)
     rgba = np.dstack([rgb, (edge * 255 + 0.5).astype(np.uint8)])
-    return Image.fromarray(rgba, 'RGBA'), (x0, y0, w, h), f
+    # 裁到底圖框內（近景的人可以比畫面大：只留畫面裡的部分）
+    W_, H_ = SIZE[tag]; cx0, cy0, cx1, cy1 = max(0, x0), max(0, y0), min(W_, x0 + w), min(H_, y0 + h)
+    if cx1 <= cx0 or cy1 <= cy0:
+        return None, None, f
+    rgba = rgba[cy0 - y0:cy1 - y0, cx0 - x0:cx1 - x0]
+    return Image.fromarray(np.ascontiguousarray(rgba), 'RGBA'), (cx0, cy0, cx1 - cx0, cy1 - cy0), f
 
 
 def main():
@@ -58,13 +72,18 @@ def main():
         for p in cfg['people']:  # 遠到近
             entry = {'id': p['name'], 'fig': p['fig']}
             for tag in ('desktop', 'phone'):
-                img, (x, y, w, h), f = layer(p, tag, cfg)
+                img, xywh, f = layer(p, tag, cfg)
                 fn = f"{sid}-{p['name']}-{tag}.png"
+                a = None if img is None else np.asarray(img)[..., 3]
+                if a is None or not (a > 40).any():   # 這個版本的畫面裡沒有這個人（手機裁切外）：不出檔
+                    if os.path.exists(os.path.join(OUT, 'standee', fn)): os.remove(os.path.join(OUT, 'standee', fn))
+                    continue
+                x, y, w, h = xywh
                 img.save(os.path.join(OUT, 'standee', fn), optimize=True)
-                a = np.asarray(img)[..., 3]
                 cols = np.where((a > 40).any(axis=0))[0]
                 top = int(round(f['_crown'][1] - y)); hh = int(round(0.13 * (f['_feet'][1] - f['_crown'][1])))
-                hc = np.where((a[max(0, top):top + hh] > 40).any(axis=0))[0]
+                hc = np.where((a[max(0, top):max(0, top + hh)] > 40).any(axis=0))[0]
+                if not len(hc): hc = cols   # 頭在畫面外（過肩的近景）
                 entry[tag] = {
                     'file': fn,
                     'ink': [int(x + cols.min()), int(x + cols.max() + 1)],
@@ -79,8 +98,10 @@ def main():
         # 不夠的寬度全部從左邊那一側扣（羈押室手機：三個人佔圖寬 85%，放不下，優先頭、遠景的人完整，前景盧卡斯的身體可被左緣切）。
         anchor = {}
         for tag in ('desktop', 'phone'):
-            lo = min(p[tag]['ink'][0] for p in people)
-            hi = max(p[tag]['ink'][1] for p in people)
+            # 過肩的前景（cfg 的 anchor: false，影印室倫理版的盧卡斯肩膀）不算進人群：舞台對齊後面那個人
+            ins = [p[tag]['ink'] for p, c in zip(people, cfg['people']) if tag in p and c.get('anchor', True)]
+            lo = min(i[0] for i in ins)
+            hi = max(i[1] for i in ins)
             fit = cfg.get('fit', {}).get(tag, {})
             if fit.get('edge') == 'right':
                 anchor[tag] = {'at': round(hi / SIZE[tag][0], 4), 'to': round(1 - fit['margin'], 4)}

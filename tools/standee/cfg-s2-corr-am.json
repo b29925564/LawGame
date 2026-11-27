@@ -1,0 +1,45 @@
+{
+  "id": "s2-corr-am",
+  "frames_res": [2304, 1440],
+  "phone_crop_px": [934, 0, 1744, 1440],
+  "people": [
+    {
+      "name": "hale",
+      "fig": "hale_front",
+      "h": 1.849,
+      "feet_px": [1151.8, 875.7],
+      "crown_px": [1151.8, 666.5],
+      "body": "#07090c",
+      "lights": [
+        {
+          "dir": [0.0, -1.0],
+          "color": "#e9dccb",
+          "width": 1.0,
+          "alpha": 0.9,
+          "soft": 0.3
+        }
+      ],
+      "occ": "occ/s2-corr-am-hale.png"
+    },
+    {
+      "name": "lucas",
+      "fig": "lucas_back",
+      "h": 1.801,
+      "feet_px": [1334.1, 1316.1],
+      "crown_px": [1335.1, 609.9],
+      "body": "#07090c",
+      "lights": [
+        {
+          "dir": [0.0, -1.0],
+          "color": "#aab3b6",
+          "width": 1.5,
+          "alpha": 0.85,
+          "soft": 0.3
+        }
+      ],
+      "occ": "occ/s2-corr-am-lucas.png"
+    }
+  ],
+  "plates": ["s2-corr-am"],
+  "fit": {}
+}
