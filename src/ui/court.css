@@ -1106,8 +1106,12 @@ button.cand[aria-pressed='true'],
   gap: var(--s4) var(--s3);
   justify-items: center;
 }
+/* 兩排錯位減半（共 18 px），後排往右、前排往左各 9 px，左右對稱：錯位只放在後排時，席 12 離木框右緣只剩 9 px（Issue #434，設計師建議減半）。 */
 .seats.back {
-  margin: 0 -36px var(--s3) 36px;
+  margin: 0 -9px var(--s3) 9px;
+}
+.seat-rows > .seats:not(.back) {
+  margin: 0 9px 0 -9px;
 }
 .seatc {
   display: grid;

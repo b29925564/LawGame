@@ -16,7 +16,7 @@ import { durUi, reducedMotion } from './a11y';
 import { scrollPageTo } from './pageScroll';
 import { PhotoLogLine, type PhotoRecord } from './Dossier';
 import { useScope } from './lang';
-import { prose } from './prose';
+import { fitLine, prose } from './prose';
 import { nameUnits } from './lineUnits';
 import './cork.css';
 import { JurySketch, type JuryCard } from './sketch/JurySketch';
@@ -851,7 +851,8 @@ function RackBar({
   return (
     <div ref={root} className={board ? 'cork-redact board' : 'cork-redact'} style={style}>
       <b ref={name} style={lines === undefined ? undefined : { maxHeight: `calc(${lines} * 1lh)` }}>
-        {t(bar.name, scope)}
+        {/* 中文在詞界換行，不斷成「心／率」（Issue #429）。 */}
+        {fitLine(t(bar.name, scope))}
       </b>
       <span ref={why}>
         {parts.map((p, i) => (
