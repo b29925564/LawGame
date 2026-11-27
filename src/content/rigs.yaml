@@ -68,6 +68,10 @@ ep1-hale-office-mon:
   label: 週一
   time: '15:20'
   kelvin: 5600
+  # 室內燈（算圖讀，介面不讀）：天花燈 --k-fluoro 約 4100K、桌燈 --k-tungsten 約 2700K（hale_day.py 的 ceil、lamp 層）。
+  practicals:
+    ceil: 4100
+    lamp: 2700
 # 答辯庭當晚的事務所走廊（第 3 章第 12 格）：燈管，S2 第 12 格字卡。
 ep1-firm-corridor-tue:
   label: 週二

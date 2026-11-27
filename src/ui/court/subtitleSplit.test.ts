@@ -58,6 +58,20 @@ describe('字幕拆卡', () => {
     expect(lines.length).toBeGreaterThan(1);
     expect(lines[lines.length - 1].length).toBeGreaterThan(6);
   });
+  it('數字中間的冒號、逗號不是子句界線；一般的逗號、冒號照舊切（#478）', () => {
+    const t = '16:05，地方檢察官辦公室送來三箱開示資料。';
+    const a = splitCards(t, 8);
+    expect(a.map((c) => c.text).join('')).toBe(t);
+    expect(a.some((c) => c.text.includes('16: ') || c.text === '16:')).toBe(false);
+    const e = 'He billed the firm 1,000 dollars for the copies.';
+    const b = splitCards(e, 14, 1);
+    expect(b.map((c) => c.text).join(' ')).toBe(e);
+    expect(b.some((c) => /1,$/.test(c.text) || c.text.startsWith('000'))).toBe(false);
+    const f = 'He paused for a long moment, then answered the question.';
+    expect(splitCards(f, 30, 1)[0].text).toBe('He paused for a long moment,');
+    const g = '證人說：那天晚上他根本不在辦公室。';
+    expect(splitCards(g, 8, 1)[0].text).toBe('證人說：');
+  });
   it('英文在詞界斷：卡片不停在冠詞、所有格、介系詞上', () => {
     const s = 'The victim was on the floor beside his desk with a blunt-force wound to the head.';
     const stop =

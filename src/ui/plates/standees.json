@@ -1,5 +1,84 @@
 {
   "sets": {
+    "hale-office-1520": {
+      "plates": ["hale-office-1520"],
+      "size": {
+        "desktop": [1440, 900],
+        "phone": [720, 1280]
+      },
+      "anchor": {
+        "desktop": {
+          "at": 0.3965,
+          "to": 0.5
+        },
+        "phone": {
+          "at": 0.5,
+          "to": 0.5
+        }
+      },
+      "people": [
+        {
+          "id": "whitlock",
+          "fig": "victoria_front",
+          "desktop": {
+            "file": "hale-office-1520-whitlock-desktop.png",
+            "ink": [471, 561],
+            "head": [495, 533],
+            "box": [457, 326, 116, 398],
+            "feet": [520.8, 710.9],
+            "crown": [514.4, 338.2]
+          },
+          "phone": {
+            "file": "hale-office-1520-whitlock-phone.png",
+            "ink": [203, 331],
+            "head": [238, 292],
+            "box": [189, 468, 155, 556],
+            "feet": [274.0, 1011.0],
+            "crown": [264.9, 481.0]
+          }
+        },
+        {
+          "id": "hale",
+          "fig": "hale_seated",
+          "desktop": {
+            "file": "hale-office-1520-hale-desktop.png",
+            "ink": [701, 846],
+            "head": [750, 798],
+            "box": [689, 392, 169, 383],
+            "feet": [772.2, 761.5],
+            "crown": [773.8, 404.3]
+          },
+          "phone": {
+            "file": "hale-office-1520-hale-phone.png",
+            "ink": [531, 720],
+            "head": [600, 668],
+            "box": [518, 562, 202, 534],
+            "feet": [631.6, 1083.0],
+            "crown": [633.9, 575.0]
+          }
+        },
+        {
+          "id": "lucas",
+          "fig": "lucas_seated_back",
+          "desktop": {
+            "file": "hale-office-1520-lucas-desktop.png",
+            "ink": [296, 483],
+            "head": [349, 423],
+            "box": [284, 422, 211, 478],
+            "feet": [398.4, 961.4],
+            "crown": [383.4, 434.2]
+          },
+          "phone": {
+            "file": "hale-office-1520-lucas-phone.png",
+            "ink": [0, 220],
+            "head": [30, 135],
+            "box": [0, 605, 232, 675],
+            "feet": [100.0, 1367.3],
+            "crown": [78.6, 617.5]
+          }
+        }
+      ]
+    },
     "holding-door": {
       "plates": ["holding-door", "holding-door-zh"],
       "size": {

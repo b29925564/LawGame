@@ -174,7 +174,8 @@ export function lineBreaks(text: string, em: number): string[] {
 const lineWidth = (t: string) =>
   MEASURE && !/[\p{Script=Han}]/u.test(t) ? MEASURE(t) : [...t].reduce((n, ch) => n + w(ch), 0);
 const SENTENCE = /[^。！？.!?]+(?:[。！？.!?]+[」』”’"')）]*\s*)?/g;
-const CLAUSE = /[^，、；：—,;:]+(?:[，、；：—,;:]+\s*)?/g;
+// 數字中間的 : 和 , 不是子句的界線（「16:05」「1,000」）。
+const CLAUSE = /(?:[^，、；：—,;:]|(?<=\d)[:,](?=\d))+(?:[，、；：—,;:]+\s*)?/g;
 
 const zhOf = (t: string) => /[\p{Script=Han}]/u.test(t);
 const join = (parts: string[]) => parts.join(zhOf(parts[0] ?? '') ? '' : ' ');

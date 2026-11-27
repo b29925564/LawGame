@@ -1,0 +1,63 @@
+{
+  "id": "hale-office-1520",
+  "frames_res": [2304, 1440],
+  "phone_crop_px": [525, 0, 1335, 1440],
+  "people": [
+    {
+      "name": "whitlock",
+      "fig": "victoria_front",
+      "h": 1.698,
+      "feet_px": [833.3, 1137.4],
+      "crown_px": [823.0, 541.1],
+      "body": "#07090c",
+      "lights": [
+        {
+          "dir": [0.6, -0.8],
+          "color": "#d8dde6",
+          "width": 1.3,
+          "alpha": 0.85,
+          "soft": 0.3
+        }
+      ],
+      "occ": "occ/hale-office-1520-whitlock.png"
+    },
+    {
+      "name": "hale",
+      "fig": "hale_seated",
+      "h": 1.424,
+      "feet_px": [1235.5, 1218.4],
+      "crown_px": [1238.1, 646.9],
+      "body": "#07090c",
+      "lights": [
+        {
+          "dir": [0.6, -0.8],
+          "color": "#d8dde6",
+          "width": 1.4,
+          "alpha": 0.85,
+          "soft": 0.3
+        }
+      ],
+      "occ": "occ/hale-office-1520-hale.png"
+    },
+    {
+      "name": "lucas",
+      "fig": "lucas_seated_back",
+      "h": 1.393,
+      "feet_px": [637.5, 1538.2],
+      "crown_px": [613.4, 694.7],
+      "body": "#07090c",
+      "lights": [
+        {
+          "dir": [0.9, -0.4],
+          "color": "#d4dae2",
+          "width": 1.6,
+          "alpha": 0.85,
+          "soft": 0.3
+        }
+      ],
+      "occ": "occ/hale-office-1520-lucas.png"
+    }
+  ],
+  "plates": ["hale-office-1520"],
+  "fit": {}
+}
