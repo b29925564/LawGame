@@ -259,6 +259,13 @@ async function play2(page: Page, r: R, dir: string) {
   PREFER = [/略過$/, /我會先看完卷宗/, r.coach ? /爸。二〇一六年/ : /我只是做我的工作/];
   if (r.mediation === 'low') PREFER.unshift(/休息$/);
   await page.goto('/');
+  // 第 2 集要第 1 集打完才列在新遊戲裡（#442）：這條巡檢只走第 2 集，先記成第 1 集打完。
+  await page.evaluate(() => {
+    const raw = JSON.parse(localStorage.getItem('lawgame-settings') ?? '{"state":{},"version":1}');
+    raw.state = { ...raw.state, cleared: { ...raw.state?.cleared, ep1: true } };
+    localStorage.setItem('lawgame-settings', JSON.stringify(raw));
+  });
+  await page.reload();
   await click(page, '新遊戲');
   await click(page, /^第 2 集/);
   const iv = page.getByRole('button', { name: /疲勞提醒是怎麼運作的/ });
