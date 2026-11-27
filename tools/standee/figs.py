@@ -462,11 +462,7 @@ def devin_profile():
     rot = lambda p: (hc[0] + p[0] * math.cos(t) - p[1] * math.sin(t), hc[1] + p[0] * math.sin(t) + p[1] * math.cos(t))
     P_.append(('head', [rot(p) for p in prof]))
     # big round glasses seen edge-on: the lens stands proud of the brow-nose dip and rests on the bridge
-    P_.append(('head', [rot(p) for p in [(0.082, 0.045), (0.104, 0.043), (0.112, 0.022), (0.111, 0.0), (0.104, -0.015), (0.088, -0.013)]]))
-    # temple arm from the lens back over the ear, dipping behind it; drawn as its own part so the scan light can catch its underside
-    # only the front of the arm (lens hinge to the hairline) catches the light: a full-length lit bar read as a cap brim (11-27)
-    arm = [(0.088, 0.036), (0.05, 0.032), (0.015, 0.028), (0.004, 0.025), (0.015, 0.024), (0.05, 0.026), (0.088, 0.029)]
-    P_.append(('temple', [rot(p) for p in arm]))
+    P_.append(('head', [rot(p) for p in [(0.082, 0.048), (0.106, 0.047), (0.117, 0.026), (0.116, 0.002), (0.108, -0.014), (0.09, -0.013)]]))
     hair = [(-0.112, -0.03), (-0.124, 0.03), (-0.118, 0.09), (-0.092, 0.135), (-0.05, 0.158), (0.0, 0.16), (0.045, 0.148), (0.078, 0.118),
             (0.09, 0.085), (0.07, 0.07), (0.03, 0.085), (-0.02, 0.07), (-0.06, 0.02), (-0.075, -0.04), (-0.095, -0.06)]
     # outer edge (nape, crown, fringe) as separate curls; the inner edge (hairline over the temple and ear) stays smooth

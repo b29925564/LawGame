@@ -193,7 +193,7 @@
           "desktop": {
             "file": "s2-copy-devin-devin-desktop.png",
             "ink": [826, 1149],
-            "head": [861, 1025],
+            "head": [861, 1029],
             "box": [801, 210, 360, 690],
             "feet": [895.4, 1433.4],
             "crown": [923.5, 222.4]
@@ -201,7 +201,7 @@
           "phone": {
             "file": "s2-copy-devin-devin-phone.png",
             "ink": [354, 720],
-            "head": [403, 636],
+            "head": [403, 641],
             "box": [323, 304, 397, 976],
             "feet": [452.1, 2038.7],
             "crown": [492.1, 316.4]

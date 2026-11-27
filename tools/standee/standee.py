@@ -31,13 +31,12 @@ def fig_mask(name, feet, crown, h_m, size, flipx=False):
     y0 = int(math.floor(min(p[1] for p in xs))) - 12; y1 = int(math.ceil(max(p[1] for p in xs))) + 12
     size_ = ((x1 - x0) * SS, (y1 - y0) * SS)
     m = Image.new('L', size_, 0); d = ImageDraw.Draw(m); hm = Image.new('L', size_, 0); dh = ImageDraw.Draw(hm)
-    fm = Image.new('L', size_, 0); dfm = ImageDraw.Draw(fm); tm = Image.new('L', size_, 0); dtm = ImageDraw.Draw(tm)
+    fm = Image.new('L', size_, 0); dfm = ImageDraw.Draw(fm)
     for (pn, _), q in zip(parts, polys):
         d.polygon([((x - x0) * SS, (y - y0) * SS) for x, y in q], fill=255)
         if pn in ('head', 'hair'): dh.polygon([((x - x0) * SS, (y - y0) * SS) for x, y in q], fill=255)
         if pn == 'forearm': dfm.polygon([((x - x0) * SS, (y - y0) * SS) for x, y in q], fill=255)
-        if pn == 'temple': dtm.polygon([((x - x0) * SS, (y - y0) * SS) for x, y in q], fill=255)   # glasses arm (戴文側面)
-    hm = {'head': np.asarray(hm, np.float32) / 255, 'forearm': np.asarray(fm, np.float32) / 255, 'temple': np.asarray(tm, np.float32) / 255}
+    hm = {'head': np.asarray(hm, np.float32) / 255, 'forearm': np.asarray(fm, np.float32) / 255}
     hip_y = (feet[1] - 0.84 * k - y0) * SS   # hip line in mask rows (legs: hip -> feet gradient)
     return np.asarray(m, np.float32) / 255, x0, y0, hm, hip_y, (feet[1] - y0) * SS
 

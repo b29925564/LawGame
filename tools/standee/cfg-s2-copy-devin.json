@@ -35,14 +35,6 @@
           "width": 1.6,
           "alpha": 0.85,
           "soft": 0.3
-        },
-        {
-          "dir": [0.0, 1.0],
-          "color": "#c4d2e4",
-          "width": 0.8,
-          "alpha": 0.55,
-          "soft": 0.35,
-          "part": "temple"
         }
       ],
       "occ": "occ/s2-copy-devin-devin.png"
