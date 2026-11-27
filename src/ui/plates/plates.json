@@ -929,7 +929,7 @@
         "black": 0.25,
         "haze": 0.5
       },
-      "grade_note": "手機裁切裡沒有全圖最暗的那幾塊，全圖 floorlift 落在手機檔是 L* 5.0；手機檔另外做反向 lift 回到 3.9（桌機檔不動，scratchpad lobby/phone_floor.py）",
+      "grade_note": "手機裁切裡沒有全圖最暗的那幾塊，全圖 floorlift 落在手機檔是 L* 5.0；照 finish48 的通用規則（任何出貨檔最暗 0.5% 高過 4.4 就對那一張反向 lift 回 3.9，設計師 #473 審查）拉回，桌機檔不動。夾層下的燈是開著的室內燈，燈組 practicals.down 3000K",
       "floor_L": {
         "desktop": 3.85,
         "phone": 3.9
@@ -993,7 +993,7 @@
         "black": 0.25,
         "haze": 0.5
       },
-      "grade_note": "手機裁切裡沒有全圖最暗的那幾塊，全圖 floorlift 落在手機檔是 L* 5.0；手機檔另外做反向 lift 回到 3.9（桌機檔不動，scratchpad lobby/phone_floor.py）",
+      "grade_note": "手機裁切裡沒有全圖最暗的那幾塊，全圖 floorlift 落在手機檔是 L* 5.0；照 finish48 的通用規則（任何出貨檔最暗 0.5% 高過 4.4 就對那一張反向 lift 回 3.9，設計師 #473 審查）拉回，桌機檔不動。夾層下的燈是開著的室內燈，燈組 practicals.down 3000K",
       "floor_L": {
         "desktop": 3.85,
         "phone": 3.89
