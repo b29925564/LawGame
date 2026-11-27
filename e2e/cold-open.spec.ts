@@ -6,7 +6,9 @@ test.beforeEach(({ page }) => page.addInitScript(() => localStorage.setItem('rd.
 test('冷開場：看過的訊息被收回，換場自動存檔，可從標題繼續', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: '新遊戲' }).click();
-  await page.getByRole('button', { name: /^第 1 集/ }).click();
+  // 只有第 1 集能選時「新遊戲」直接開始（#452）；第 2 集也列出來時才有清單。
+  const ep1 = page.getByRole('button', { name: /^第 1 集/ });
+  if (await ep1.isVisible()) await ep1.click();
 
   const next = () => page.getByRole('button', { name: '繼續' }).click();
   await next();

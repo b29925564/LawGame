@@ -11,7 +11,9 @@ test.beforeEach(({ page }) => page.addInitScript(() => localStorage.setItem('rd.
 test('手機通知：名稱就是按鈕上的字，念得到訊息內文', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: '新遊戲' }).click();
-  await page.getByRole('button', { name: /^第 1 集/ }).click();
+  // 只有第 1 集能選時「新遊戲」直接開始（#452）；第 2 集也列出來時才有清單。
+  const ep1 = page.getByRole('button', { name: /^第 1 集/ });
+  if (await ep1.isVisible()) await ep1.click();
   await page.getByRole('button', { name: '繼續' }).click();
   await page.getByRole('button', { name: '繼續' }).click();
   const notif = page.locator('button.notif');

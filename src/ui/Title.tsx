@@ -177,8 +177,9 @@ export function Title() {
           )}
           <button
             className={auto || loading ? '' : 'primary'}
-            onClick={() => setPicking(!picking)}
-            aria-expanded={picking}
+            // 只有一集能選（第一次玩）就直接開始，不出現只有一列的清單（設計師 #452）。
+            onClick={() => (playable.length === 1 ? newGame(playable[0]) : setPicking(!picking))}
+            aria-expanded={playable.length === 1 ? undefined : picking}
           >
             {t('新遊戲')}
           </button>
