@@ -724,7 +724,7 @@ function Verdict({
               const via = text.match(CHANNEL);
               return (
                 <div key={i} className="msg">
-                  {/* 人在法庭：剪影替身；訊息、電話不在場：證件照（設計師 10-09：桌上證件照、庭上剪影）。 */}
+                  {/* 人在法庭：40 的剪影；訊息、電話不在場：28 的小剪影卡（模板 B 退役，#446）；對不到外型的不畫，話靠左。 */}
                   {!via && castLook(l.who) ? (
                     <CourtFace who={l.who} />
                   ) : (

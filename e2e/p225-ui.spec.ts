@@ -52,8 +52,9 @@ test('換地點：先放一格場記（一行），演完才掛介面', async ({
   await expect(page.locator('.sub-card')).toBeVisible();
   await page.getByRole('button', { name: '筆錄' }).click();
   await expect(page.locator('.speech').first()).toBeVisible();
-  // 配角的頭像是檔案照（姓的第一個字），不是程式畫的卡通臉。
-  await expect(page.locator('.speech .portrait.id .idphoto .ph b').first()).toHaveText('海');
+  // 配角的頭像是剪影卡（跟法庭同一張；檔案照模板 B 退役，設計師 #446），不是程式畫的卡通臉，也不是一個字。
+  await expect(page.locator('.speech .portrait.sil svg').first()).toBeVisible();
+  await expect(page.locator('.idphoto')).toHaveCount(0);
   await expect(page.locator('svg.portrait')).toHaveCount(0);
 });
 

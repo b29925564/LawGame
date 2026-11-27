@@ -893,7 +893,7 @@ details summary {
   position: relative;
   overflow: hidden;
 }
-:is(.portrait, .idphoto .ph).face-crop > img {
+:is(.portrait, .silcard).face-crop > img {
   position: absolute;
   top: 3%;
   left: calc(50% - var(--face-x, 0.456) * 150%);
@@ -908,39 +908,6 @@ details summary {
     height: 90px;
     flex-basis: 72px;
   }
-}
-/* 配角的檔案照（IdPhoto 模板 B）填滿頭像的格子：外框跟 .portrait 一樣大，換說話者時行高不跳。 */
-.portrait.id {
-  background: none;
-  box-shadow: none;
-  border-radius: 0;
-  display: block;
-}
-.portrait.faceless {
-  background: none;
-  box-shadow: none;
-}
-.idphoto.fill {
-  --w: 56px;
-  width: 100%;
-  height: 100%;
-  box-sizing: border-box;
-  grid-template-rows: 1fr;
-  gap: 0;
-  padding: 3px;
-}
-.idphoto.fill .ph {
-  aspect-ratio: auto;
-  min-height: 0;
-}
-@media (min-width: 768px) {
-  .idphoto.fill {
-    --w: 72px;
-    padding: 4px;
-  }
-}
-.call .idphoto.fill {
-  --w: 60px;
 }
 /* 對話場景旁的盧卡斯大圖：寬螢幕才有（1360px 以下不出現，Portrait.tsx），放在台詞欄右邊、底部對齊。 */
 .lucas-stage {

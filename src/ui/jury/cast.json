@@ -195,6 +195,22 @@
       "head": "medium",
       "build": "medium",
       "light": "hospital"
+    },
+    {
+      "id": "jade",
+      "hair": "wavy",
+      "build": "narrow",
+      "head": "medium",
+      "lift": 4,
+      "light": "screen"
+    },
+    {
+      "id": "emma",
+      "hair": "braid",
+      "build": "narrow",
+      "head": "narrow",
+      "lift": -4,
+      "light": "overcast"
     }
   ]
 }

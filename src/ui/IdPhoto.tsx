@@ -1,16 +1,15 @@
 import type { CSSProperties } from 'react';
-import { useT } from '../i18n';
 import { LUCAS, lucas, lucasFace } from './cast';
+import { castLook } from './jury/cast';
 import { svg, type JurorLook } from './jury/silhouette';
-import { useScope } from './lang';
 
 /**
- * 檔案照（視覺規格 §16，模板 B）：真立繪到位之前，配角都用這張。
- * 3:4 紙色相片區，中央是姓的第一個字（英文介面是姓的首字母）；96 寬才在下面印名字。
- * 盧卡斯一律放照片，同一個外框。
- *
- * look（陪審員候選人）：遴選在法庭裡，法庭裡的人一律是剪影卡（使用者 10-09）。不套模板 B 的外框、不重複印名字，
- * 跟陪審席同一種卡：--radius。剪影就是定稿，不加標籤、不加虛線框（使用者 11-16，設計師 remove-portrait-tag）。
+ * 卷宗旁、名單上的人像卡，4:5、--radius，跟陪審席同一種卡（設定集第 7.6 章）。
+ * - 陪審員候選人（look）：剪影、端坐、受光 60（遴選，設計師 10-09）。
+ * - 其他配角：同一張說話者剪影，J1、受光 85，跟法庭的 CourtFace 一樣（設計師 #446，11-27：檔案照模板 B 退役）。
+ * - 盧卡斯：AI 立繪，同一個 4:5 外框，沒有米色紙邊。
+ * - 對不到外型的人：不畫（呼叫的人照沒有頭像排版）。
+ * 剪影就是定稿，不加名字、不加標籤、不加虛線框（使用者 11-16）。
  */
 export function IdPhoto({
   who,
@@ -18,59 +17,42 @@ export function IdPhoto({
   look,
 }: {
   who: string;
-  /** 'fill'：填滿對話頭像的格子（.portrait，手機 56×70、桌機 72×90），不印名字。 */
-  size?: 96 | 72 | 40 | 28 | 'fill';
+  size?: 96 | 72 | 40 | 28;
   /** 陪審員候選人：AI 立繪到位前用剪影替身（設定集第 7.6 章；設計師 10-09），端坐、不帶影子。 */
   look?: JurorLook;
 }) {
-  const t = useT();
-  const scope = useScope();
-  const name = t(who, scope);
-  if (look) {
-    const card = (
+  const style = { '--w': `${size}px` } as CSSProperties;
+  if (who === LUCAS && !look)
+    return (
       <span
-        className={`silcard s${size}`}
-        style={{ '--w': `${size}px` } as CSSProperties}
+        className={`silcard face s${size} face-crop`}
+        style={{ ...style, ...lucasFace('平') }}
         aria-hidden
-        dangerouslySetInnerHTML={{
-          __html: svg(look, { v: 60, pose: 'J1', uid: `id-${look.id}-${size}` }),
-        }}
-      />
+      >
+        <img
+          src={lucas('平', 144)}
+          srcSet={`${lucas('平', 144)} 144w, ${lucas('平', 512)} 512w`}
+          sizes={`${size}px`}
+          alt=""
+          decoding="async"
+        />
+      </span>
     );
-    return card;
-  }
-  // 「茱蒂絲・柯恩」取「柯」；「Judith Cohen」取「C」。
-  const last =
-    name
-      .split(/[・·\s]+/)
-      .filter(Boolean)
-      .pop() ?? name;
-  const cls =
-    size === 'fill'
-      ? 'idphoto fill'
-      : size === 40
-        ? 'idphoto s40'
-        : size === 28
-          ? 'idphoto s28'
-          : 'idphoto';
+  const face = look ?? castLook(who);
+  if (!face) return null;
   return (
     <span
-      className={cls}
-      style={size === 'fill' ? undefined : ({ '--w': `${size}px` } as CSSProperties)}
+      className={look ? `silcard s${size}` : `silcard face s${size}`}
+      style={style}
       aria-hidden
-    >
-      {who === LUCAS ? (
-        <span className="ph face-crop" style={lucasFace('平')}>
-          <img src={lucas('平', 144)} alt="" decoding="async" />
-        </span>
-      ) : (
-        <span className="ph">
-          <b>{last[0]}</b>
-        </span>
-      )}
-      {size === 96 && (
-        <span className="nm">{/^[A-Za-z]/.test(name) ? name.toUpperCase() : name}</span>
-      )}
-    </span>
+      dangerouslySetInnerHTML={{
+        __html: svg(
+          face,
+          look
+            ? { v: 60, pose: 'J1', uid: `id-${face.id}-${size}` }
+            : { v: 85, pose: 'J1', uid: `idf-${face.id}-${size}` },
+        ),
+      }}
+    />
   );
 }
