@@ -1015,11 +1015,11 @@
       "files": {
         "desktop": {
           "file": "lucas-office-0940-desktop.jpg",
-          "bytes": 71462
+          "bytes": 70763
         },
         "phone": {
           "file": "lucas-office-0940-phone.jpg",
-          "bytes": 52090
+          "bytes": 51205
         }
       },
       "frames_res": [2304, 1440],
@@ -1035,31 +1035,42 @@
       "target_note": "盧卡斯是剪影，不量主補比。色彩腳本格 08m（設計師 11-27 更正）：主色 #8f9cab，用 meas26 量出貨 JPG；陰影與 p95/p25 用實測值登記。驗收：300 px 縮圖看得出白天、看得出是一個房間、LCD 是室內最飽和的一點",
       "measured_08m": {
         "desktop": {
-          "dominant": "#929aa6",
-          "dE76": 2.33,
-          "shadow_L": 11.6,
+          "dominant": "#8992a1",
+          "dE76": 3.83,
+          "shadow_L": 11.3,
           "p95_p25": 29.0
         },
         "phone": {
-          "dominant": "#979fac",
-          "dE76": 2.76
+          "dominant": "#8f99a8",
+          "dE76": 1.55,
+          "shadow_L": 9.0,
+          "p95_p25": 38.9
+        },
+        "contrast_L_p90_p10": {
+          "far_shore": 11.6,
+          "terminal": 16.0,
+          "window_frame": 38.1
         }
       },
       "grade": {
         "exp": -3.8,
         "black": 0.02,
-        "ceil": 48
+        "ceil": 48,
+        "ceilr": 1,
+        "ext": 0.552,
+        "sun_el": 26.4,
+        "sun_weight_rule": "clear_sun_weight(el)"
       },
-      "grade_note": "天空層 --k-clearsky（#ccdbff，設計師 08m 新增）；太陽在大樓背後，ext 層只照窗外港口（--k-daylight）；天花燈 --k-fluoro 權重 48（設計師接受，同 S1 A1 壓天空權重的做法）；LCD --k-lcd 是畫面最飽和的一點（C* 24.4）",
+      "grade_note": "天空層 --k-clearsky（#ccdbff）；太陽在大樓背後，ext 層只照窗外港口（--k-daylight），權重 0.552＝lib48.clear_sun_weight(26.4)：IES clear sky 直射：漫射 3.2:1 對 Nishita 的 6.2:1（設計師 #476 規則，p4-8-lib/README.md）；天花燈 --k-fluoro 權重 48；玻璃上的倒影（ceilr＝天花燈層減掉玻璃不反射的版本）權重 1，跟天空一樣；空氣透視：能見度 20 km，外景 L·T＋H·(1−T)，H＝地平線天空；LCD --k-lcd 是畫面最飽和的一點（C* 23.3）",
       "floor_L": {
-        "desktop": 3.68,
+        "desktop": 3.69,
         "phone": 3.7
       },
       "yellow_final_violations": {
         "desktop": 0,
         "phone": 0
       },
-      "source": "project-files art-bible/scenes/lucas-office（lucas_office.py v1：sky/ext/ceil/lcd 128 spp，相機 clip 20 km、f/8；檯燈移到盧卡斯頭的左邊以後，框 x 0.30–0.50、y 0.36–0.66 補算貼回）；fin_lo.py exp=-3.8 ceil=48 tsky=k-clearsky cx=0.4536；色彩腳本格 08m",
+      "source": "project-files art-bible/scenes/lucas-office（lucas_office.py：sky/ext 128 spp 新外景 firm_ext v2、ceil／lcd 沿用檯燈修正版、ceil glassnr=1、depth=20 距離圖；相機 clip 20 km、f/8）；prep_haze.py（空氣透視＋倒影分層）；fin_lo.py exp=-3.8 ceil=48 ext=0.552 tsky=k-clearsky cx=0.4536；色彩腳本格 08m",
       "blocking": "盧卡斯坐在桌前面窗、背對鏡頭，右手拿話筒；電話在他右手邊桌上，LCD 亮；檯燈關；窗外是早上順光的港口"
     }
   ]
