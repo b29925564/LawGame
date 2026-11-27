@@ -61,6 +61,21 @@ export const PLATE_BREAKS: readonly string[] = [
   'The attachment|to the records/retention policy.',
   '"Pier Nine warehouse/maintenance record¦backups: destroyed/per policy."',
   "The approver's signature…|I zoomed in.",
+  // 第一集第一幕：港灣大道一號大廳 週一 08:00（#447）
+  'The brass plate/behind reception|reads "Whitlock & Hale."',
+  'The paint under "Hale"|is newer/than the rest.',
+  'Four years/as a public defender,|two hundred-some cases.',
+  'I brought you here|because you can/take a loss.',
+  'This floor is full of people|who are good/at losing.',
+  'The ones who lose|and still go back¦and dig/to the bottom?',
+  'Our largest client,/Calder Logistics,|had an incident/over the weekend.',
+  'For the time being,|be careful/how you mention them¦outside this office.',
+  'Their CFO died|in his office/Friday night.',
+  'The police|picked someone up/yesterday.',
+  'Your office is‖at the end/of the hall,|the one/next to the copier.',
+  "Yes.|It doesn't open.",
+  '09:40.|The desk phone/lights up.',
+  'Caller ID:|Calder Harbor¦Detention Center.',
 ];
 
 /**

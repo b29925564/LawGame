@@ -100,9 +100,11 @@ def main():
         for tag in ('desktop', 'phone'):
             # 過肩的前景（cfg 的 anchor: false，影印室倫理版的盧卡斯肩膀）不算進人群：舞台對齊後面那個人
             ins = [p[tag]['ink'] for p, c in zip(people, cfg['people']) if tag in p and c.get('anchor', True)]
+            fit = cfg.get('fit', {}).get(tag, {})
+            # fit.<版本>.include：圖上不是人、但也要留在畫面裡的東西（大廳的銅牌），[左, 右] 輸出圖的 px，併進人群外框一起置中
+            ins += [fit['include']] if 'include' in fit else []
             lo = min(i[0] for i in ins)
             hi = max(i[1] for i in ins)
-            fit = cfg.get('fit', {}).get(tag, {})
             if fit.get('edge') == 'right':
                 anchor[tag] = {'at': round(hi / SIZE[tag][0], 4), 'to': round(1 - fit['margin'], 4)}
             else:

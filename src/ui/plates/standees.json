@@ -79,6 +79,97 @@
         }
       ]
     },
+    "lobby-0800": {
+      "plates": ["lobby-0800", "lobby-0800-en"],
+      "size": {
+        "desktop": [1440, 900],
+        "phone": [720, 1280]
+      },
+      "anchor": {
+        "desktop": {
+          "at": 0.2653,
+          "to": 0.5
+        },
+        "phone": {
+          "at": 0.5118,
+          "to": 0.5
+        }
+      },
+      "people": [
+        {
+          "id": "logan",
+          "fig": "logan_front",
+          "desktop": {
+            "file": "lobby-0800-logan-desktop.png",
+            "ink": [585, 659],
+            "head": [611, 635],
+            "box": [573, 445, 98, 269],
+            "feet": [620.8, 701.5],
+            "crown": [623.9, 457.8]
+          },
+          "phone": {
+            "file": "lobby-0800-logan-phone.png",
+            "ink": [395, 499],
+            "head": [432, 466],
+            "box": [382, 638, 130, 373],
+            "feet": [445.5, 997.7],
+            "crown": [450.0, 651.0]
+          }
+        },
+        {
+          "id": "whitlock",
+          "fig": "victoria_front",
+          "desktop": {
+            "file": "lobby-0800-whitlock-desktop.png",
+            "ink": [377, 449],
+            "head": [403, 432],
+            "box": [365, 441, 97, 314],
+            "feet": [407.0, 741.8],
+            "crown": [418.6, 454.0]
+          },
+          "phone": {
+            "file": "lobby-0800-whitlock-phone.png",
+            "ink": [99, 202],
+            "head": [135, 177],
+            "box": [87, 633, 127, 435],
+            "feet": [141.5, 1055.0],
+            "crown": [158.0, 645.7]
+          }
+        },
+        {
+          "id": "hale",
+          "fig": "hale_front",
+          "desktop": {
+            "file": "lobby-0800-hale-desktop.png",
+            "ink": [471, 568],
+            "head": [507, 539],
+            "box": [459, 414, 122, 345],
+            "feet": [516.1, 746.4],
+            "crown": [524.5, 426.8]
+          },
+          "phone": {
+            "file": "lobby-0800-hale-phone.png",
+            "ink": [233, 371],
+            "head": [284, 330],
+            "box": [221, 594, 162, 481],
+            "feet": [296.7, 1061.5],
+            "crown": [308.6, 606.9]
+          }
+        },
+        {
+          "id": "lucas",
+          "fig": "lucas_back",
+          "desktop": {
+            "file": "lobby-0800-lucas-desktop.png",
+            "ink": [105, 275],
+            "head": [172, 235],
+            "box": [87, 320, 200, 580],
+            "feet": [161.6, 926.8],
+            "crown": [203.1, 333.0]
+          }
+        }
+      ]
+    },
     "s1-a1": {
       "plates": ["s1-a1-review", "s1-a1-dismissed", "s1-a1-withdrew", "s1-a1-deal"],
       "size": {

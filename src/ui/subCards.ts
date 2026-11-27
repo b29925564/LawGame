@@ -98,8 +98,11 @@ const END_FN = /[的之與和及或在於對把被為從到以而並是了著過
 const END_PRON = /[我你他她它]$/u;
 const END_MEASURE = /[一二兩三四五六七八九十幾這那每某][個座份張位件條本次句間台輛杯]$/u;
 const START_BAD = /^[旁上下裡內外中的了著過]/u;
+/** 「寫著／印著…」後面直接接引號：引號裡就是受詞，在引號前換行和英文 reads / "…" 一樣自然，不算虛詞收尾（#447 大廳銅牌）。 */
+const QUOTE_VERB = /[寫印刻標說喊念]著$/u;
+const quoteOk = (l: string, r: string) => QUOTE_VERB.test(l) && r.startsWith('「');
 const badness = (l: string, r: string) =>
-  (END_FN.test(l) ? 2 : END_PRON.test(l) ? 1 : END_MEASURE.test(l) ? 0.5 : 0) +
+  (END_FN.test(l) && !quoteOk(l, r) ? 2 : END_PRON.test(l) ? 1 : END_MEASURE.test(l) ? 0.5 : 0) +
   (START_BAD.test(r) ? 2 : 0);
 /**
  * 斷詞器有時把代名詞和後面的介系詞切成一個詞（「他在」），整個詞放行尾就是虛詞收尾、找不到別的位置：

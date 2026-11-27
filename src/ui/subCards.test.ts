@@ -196,7 +196,10 @@ describe('字幕卡（有底圖的場景）', () => {
             for (const c of subCards(l.text, em)) {
               const ls = c.lines ?? [c.text];
               ls.slice(0, -1).forEach((x, i) => {
-                if (END.test(x) || START.test(ls[i + 1])) bad.push(`${em}：${ls.join('／')}`);
+                // 「寫著」後面接引號：引號裡是受詞，在引號前換行可以（subCards.ts QUOTE_VERB）
+                const quote = /[寫印刻標說喊念]著$/u.test(x) && ls[i + 1].startsWith('「');
+                if ((END.test(x) && !quote) || START.test(ls[i + 1]))
+                  bad.push(`${em}：${ls.join('／')}`);
               });
             }
           }
