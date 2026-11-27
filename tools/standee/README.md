@@ -13,3 +13,11 @@ python3 tools/standee/render.py      # 需要 numpy、Pillow
 
 改人形、座標或邊光：改這裡的檔案、重跑、把新的 PNG 和 json 一起 commit。S6 的座標與手機裁切（`phone_crop_px`）要和
 `src/ui/plates/plates.json` 一致（場景光影的 PR 會一起更新）。
+
+## 坐著的人、被桌椅擋住的人（#447）
+
+- 人形有坐姿（`hale_seated`、`lucas_seated_back`）和側面（`devin_profile`）。
+- `occ/<組>-<人>.png`：場景深度比這個人近 0.15 m 以上的地方（白＝桌椅、門板擋在他前面），算圖解析度的 2 倍。
+  由場景光影在算圖的 .blend 上算 1 spp 深度做出來（地板不算），cfg 的 `occ` 指到它；render.py 照面積比例扣掉 alpha。
+- 近景的人可以比畫面大，PNG 只留畫面裡的部分。手機裁切外的人沒有手機版（standees.json 少了 `phone`）。
+- 過肩的前景人物在 cfg 寫 `"anchor": false`：窄視窗對齊時不算進人群。
