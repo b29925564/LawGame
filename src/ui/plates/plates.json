@@ -484,6 +484,97 @@
         "phone": 0
       },
       "source": "art-bible/scenes/coldopen-v94/final/03-2314b-*.jpg；rig art-bible/scenes/coldopen-v94/rigs/harbour-shelter-night.yaml"
+    },
+    {
+      "id": "s2-corr-am",
+      "scene": "ep2:hale-civil",
+      "rig": "ep2-firm-corridor-mon",
+      "card_kelvin": 4100,
+      "date": "2026-05-04 09:40",
+      "episode": 2,
+      "files": {
+        "desktop": { "file": "s2-corr-am-desktop.jpg", "bytes": 71379 },
+        "phone": { "file": "s2-corr-am-phone.jpg", "bytes": 67016 }
+      },
+      "frames_res": [2304, 1440],
+      "frames": { "hale": [1129, 689, 1175, 876], "lucas": [1251, 670, 1426, 1324] },
+      "phone_cx": 0.581,
+      "phone_crop_px": [934, 0, 1744, 1440],
+      "key": "fl-odd",
+      "fill": ["fl-even", "hale-sun", "hale-sky"],
+      "target": "2:1",
+      "floor_L": { "desktop": 4.22, "phone": 3.89 },
+      "yellow_final_violations": { "desktop": 0, "phone": 0 },
+      "source": "project-files art-bible/scenes/s2-afterhours (s2_afterhours.py set=corr t=am, finish_s2.py); review sample-report-v2.md"
+    },
+    {
+      "id": "s2-copy-ethics-perjury",
+      "scene": "ep2:epilogue-ethics-perjury",
+      "rig": "ep2-copy-room-night",
+      "card_kelvin": 4100,
+      "date": "2026-06-04 22:10",
+      "episode": 2,
+      "files": {
+        "desktop": { "file": "s2-copy-ethics-desktop.jpg", "bytes": 55949 },
+        "phone": { "file": "s2-copy-ethics-phone.jpg", "bytes": 31977 }
+      },
+      "frames_res": [2304, 1440],
+      "frames": { "devin": [877, 556, 1462, 1440], "lucas": [0, 572, 597, 1440] },
+      "phone_cx": 0.508,
+      "phone_crop_px": [765, 0, 1575, 1440],
+      "key": "spill",
+      "fill": ["panel"],
+      "target": "10:1",
+      "floor_L": { "desktop": 3.86, "phone": 3.88 },
+      "yellow_final_violations": { "desktop": 0, "phone": 0 },
+      "source": "project-files art-bible/scenes/s2-afterhours (s2_afterhours.py set=copy cam=ethics step=1.2 camx=0 camy=0.6 door=90, finish_s2.py); review sample-report-v2.md",
+      "blocking": "門開 90°；戴文從影印機往門口走 1.2 m（走廊燈在 2.2 m 門楣後，直射只到門內約 1.1 m 的頭高）；鏡頭在盧卡斯右肩後、門外 0.6 m"
+    },
+    {
+      "id": "s2-copy-ethics-coached",
+      "scene": "ep2:epilogue-ethics-coached",
+      "rig": "ep2-copy-room-night",
+      "card_kelvin": 4100,
+      "date": "2026-06-04 22:10",
+      "episode": 2,
+      "files": {
+        "desktop": { "file": "s2-copy-ethics-desktop.jpg", "bytes": 55949 },
+        "phone": { "file": "s2-copy-ethics-phone.jpg", "bytes": 31977 }
+      },
+      "frames_res": [2304, 1440],
+      "frames": { "devin": [877, 556, 1462, 1440], "lucas": [0, 572, 597, 1440] },
+      "phone_cx": 0.508,
+      "phone_crop_px": [765, 0, 1575, 1440],
+      "key": "spill",
+      "fill": ["panel"],
+      "target": "10:1",
+      "floor_L": { "desktop": 3.86, "phone": 3.88 },
+      "yellow_final_violations": { "desktop": 0, "phone": 0 },
+      "source": "project-files art-bible/scenes/s2-afterhours (s2_afterhours.py set=copy cam=ethics step=1.2 camx=0 camy=0.6 door=90, finish_s2.py); review sample-report-v2.md",
+      "blocking": "門開 90°；戴文從影印機往門口走 1.2 m（走廊燈在 2.2 m 門楣後，直射只到門內約 1.1 m 的頭高）；鏡頭在盧卡斯右肩後、門外 0.6 m"
+    },
+    {
+      "id": "s2-copy-ethics-clean",
+      "scene": "ep2:epilogue-ethics-clean",
+      "rig": "ep2-copy-room-night",
+      "card_kelvin": 4100,
+      "date": "2026-06-04 22:10",
+      "episode": 2,
+      "files": {
+        "desktop": { "file": "s2-copy-ethics-desktop.jpg", "bytes": 55949 },
+        "phone": { "file": "s2-copy-ethics-phone.jpg", "bytes": 31977 }
+      },
+      "frames_res": [2304, 1440],
+      "frames": { "devin": [877, 556, 1462, 1440], "lucas": [0, 572, 597, 1440] },
+      "phone_cx": 0.508,
+      "phone_crop_px": [765, 0, 1575, 1440],
+      "key": "spill",
+      "fill": ["panel"],
+      "target": "10:1",
+      "floor_L": { "desktop": 3.86, "phone": 3.88 },
+      "yellow_final_violations": { "desktop": 0, "phone": 0 },
+      "source": "project-files art-bible/scenes/s2-afterhours (s2_afterhours.py set=copy cam=ethics step=1.2 camx=0 camy=0.6 door=90, finish_s2.py); review sample-report-v2.md",
+      "blocking": "門開 90°；戴文從影印機往門口走 1.2 m（走廊燈在 2.2 m 門楣後，直射只到門內約 1.1 m 的頭高）；鏡頭在盧卡斯右肩後、門外 0.6 m"
     }
   ]
 }

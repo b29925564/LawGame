@@ -99,7 +99,7 @@ def figure(sk, kind):
             tor += [(hl[0] - 0.02, hl[1] + 0.02), hl_, (sk['pelvis'][0] - hw_l * 0.5, hy - 0.004),
                     (sk['pelvis'][0] + hw_r * 0.5, hy - 0.004), hr_, (hr[0] + 0.02, hr[1] + 0.02)]
     else:
-        tor += [(hl[0] - 0.01, hl[1]), (sk['pelvis'][0], sk['pelvis'][1] - 0.11), (hr[0] + 0.01, hr[1])]
+        tor += [(hl[0] - 0.01, hl[1]), (sk['pelvis'][0], sk['pelvis'][1] - sk.get('crotch', 0.11)), (hr[0] + 0.01, hr[1])]
     tor += [wr, (wr[0], wr[1] + 0.10), (sr[0] + pad - 0.004, sr[1] - 0.08), (sr[0] + pad, sr[1] - 0.04), (sr[0] + pad * 0.95, sr[1] - 0.012),
             (sr[0] + pad * 0.55, sr[1] + 0.007), (sr[0] - 0.004, sr[1] + 0.014),
             (lerp(nb, sr, 0.55)[0], lerp(nb, sr, 0.55)[1] + (0.012 if kind != 'suit' else 0.008)), (nb[0] + 0.06, nb[1] + 0.005)]
@@ -285,5 +285,195 @@ def sister():
 
 FIG = {'lucas_back': lucas_back(), 'lucas_front': lucas_front(), 'ethan_cuffed': ethan_cuffed(), 'ethan_lookback': ethan_lookback(),
        'bailiff': bailiff(), 'sister': sister()}
+
+# ---------------------------------------------------------------- seated and new cast (#447 S1 / Ep2)
+def sit(sk, seat=0.47, knee=(0.11, 0.53), ankle=0.12, back=False):
+    """standing skeleton -> seated: everything from the pelvis up drops onto a seat at `seat` m; the thighs run toward (front) or
+    away from (back) the camera, so in a front/back view they read as a short block from the hips to the knees, the shins hang
+    straight down to the shoes"""
+    d = sk['pelvis'][1] - (seat + 0.03)
+    for k in ('pelvis', 'hip_l', 'hip_r', 'shoulder_l', 'shoulder_r', 'neck_base', 'neck_top', 'sj_l', 'sj_r', 'elbow_l', 'elbow_r',
+              'wrist_l', 'wrist_r', 'waist_l', 'waist_r'):
+        sk[k] = (sk[k][0], sk[k][1] - d)
+    px = sk['pelvis'][0]
+    sk['knee_l'] = (px - knee[0], knee[1]); sk['knee_r'] = (px + knee[0], knee[1] - 0.006)
+    sk['ankle_l'] = (px - ankle, 0.085); sk['ankle_r'] = (px + ankle + 0.01, 0.085)
+    sk['hem'] = None; sk['crotch'] = 0.035
+    # the lap: thighs foreshortened toward/away from the camera fill the space between the hips and the knees (no crotch gap)
+    hl, hr = sk['hip_l'], sk['hip_r']; kl, kr = sk['knee_l'], sk['knee_r']; tw = 0.09
+    sk.setdefault('extra', []).append(('leg', [(hl[0] - 0.012, hl[1] + 0.04), (hr[0] + 0.012, hr[1] + 0.04), (kr[0] + tw * 0.75, kr[1] + 0.01),
+                                               (kr[0] + tw * 0.62, kr[1] - 0.05), (kr[0] - 0.03, kr[1] - 0.06), (kl[0] + 0.03, kl[1] - 0.06), (kl[0] - tw * 0.62, kl[1] - 0.05), (kl[0] - tw * 0.75, kl[1] + 0.01)]))
+    return sk
+
+def slick_back(hc, w=0.152):
+    """front view, hair combed straight back: a smooth dome a little above and wider than the cranium, neat (flat) at the
+    temples, no fringe; the hairline shows as a shallow widow's peak against the forehead"""
+    h = [(hc[0] - 0.079, 1.0), (hc[0] - 0.084, 1.045), (hc[0] - 0.08, 1.09), (hc[0] - 0.066, 1.125), (hc[0] - 0.04, 1.15), (hc[0] - 0.012, 1.158),
+         (hc[0] + 0.016, 1.157), (hc[0] + 0.044, 1.148), (hc[0] + 0.068, 1.122), (hc[0] + 0.081, 1.087), (hc[0] + 0.085, 1.042), (hc[0] + 0.079, 1.0),
+         (hc[0] + 0.06, 1.06), (hc[0] + 0.02, 1.082), (hc[0], 1.072), (hc[0] - 0.02, 1.082), (hc[0] - 0.06, 1.06)]
+    return [mv(wavy(h, 0.0015, len(h), 0.5), 0, hc[1] - 1.0)]
+
+def hale_seated():
+    # S1 A1: Marcus at the far (east) head of the table, facing the camera, forearms on the table (0.76 m). Wide build, padded
+    # three-piece suit (cast: build wide, slick; 6.1: 銀灰後梳＋口袋巾三角). Below the table top the table hides him.
+    sk = stance(weight='l', pelvis_x=-0.01, tilt=0.008, sh_y=1.455, sh_w=0.218, sh_tilt=0.008, waist=(0.165, 1.07), hip_w=0.108)
+    sit(sk, seat=0.47)
+    sk['trouser'] = (0.19, 0.135, 0.112); sk['arm'] = (0.118, 0.1, 0.082)
+    # forearms forward onto the table: elbows out beside the waist, wrists in toward the middle, hands resting flat (foreshortened)
+    sk['elbow_l'] = (-0.232, 0.80); sk['elbow_r'] = (0.236, 0.805)
+    sk['wrist_l'] = (-0.075, 0.79); sk['wrist_r'] = (0.07, 0.795); sk['hand_dir_l'] = (1.0, -0.15); sk['hand_dir_r'] = (-1.0, -0.15)
+    sk['shoes'] = [shoe_front(sk['ankle_l'][0], out=-0.02, w=0.105), shoe_front(sk['ankle_r'][0], out=0.02, w=0.105)]
+    sk['neck_w'] = (0.142, 0.106, 0.098)
+    hc = (sk['neck_top'][0], sk['neck_top'][1] + 0.05); sk['head'] = head(hc, w=0.156, h=0.236, jaw=0.84)
+    sk['hair'] = slick_back(hc)
+    return figure(sk, 'suit')
+
+def lucas_seated_back():
+    # S1 A1: Lucas in the near chair, from behind (camera behind his left shoulder): forearms on the table, so from behind the
+    # upper arms angle forward and the elbows sit lower and close to the waist; the chair back covers most of the torso
+    sk = stance(weight='r', pelvis_x=-0.01, tilt=0.008, sh_y=1.452, sh_w=0.2, sh_tilt=0.01, waist=(0.158, 1.07))
+    sit(sk, seat=0.47, back=True)
+    sk['trouser'] = (0.18, 0.13, 0.112); sk['arm'] = (0.112, 0.095, 0.082)
+    sk['elbow_l'] = (-0.19, 0.805); sk['elbow_r'] = (0.192, 0.80)
+    sk['wrist_l'] = (-0.085, 0.80); sk['wrist_r'] = (0.085, 0.795); sk['hand_dir_l'] = (1.0, 0.0); sk['hand_dir_r'] = (-1.0, 0.0)
+    sk['shoes'] = shoe_back(sk['ankle_l'][0], out=-0.03) + shoe_back(sk['ankle_r'][0], out=0.03)
+    hc = (sk['neck_top'][0] - 0.004, sk['neck_top'][1] + 0.05)
+    sk['head'] = head(hc, w=0.150, h=0.226, ears=True)
+    dy = hc[1] - 1.672
+    base = FIG_SRC['lucas_back_hair'](hc)
+    sk['hair'] = [mv(base, 0, dy)]
+    return figure(sk, 'suit')
+
+def _lucas_back_hair(hc):
+    hair = [(hc[0] - 0.086, 1.615), (hc[0] - 0.093, 1.66), (hc[0] - 0.094, 1.705), (hc[0] - 0.087, 1.745), (hc[0] - 0.068, 1.775),
+            (hc[0] - 0.04, 1.793), (hc[0] - 0.008, 1.80), (hc[0] + 0.03, 1.797), (hc[0] + 0.062, 1.782), (hc[0] + 0.085, 1.752),
+            (hc[0] + 0.095, 1.71), (hc[0] + 0.094, 1.66), (hc[0] + 0.086, 1.615),
+            (hc[0] + 0.07, 1.585), (hc[0] + 0.058, 1.572), (hc[0] + 0.045, 1.578), (hc[0] + 0.03, 1.566), (hc[0] + 0.012, 1.574),
+            (hc[0] - 0.006, 1.562), (hc[0] - 0.024, 1.573), (hc[0] - 0.04, 1.566), (hc[0] - 0.056, 1.578), (hc[0] - 0.072, 1.588)]
+    return wavy(hair[:13], 0.0035, 13, 1.3) + hair[13:]
+FIG_SRC = {'lucas_back_hair': _lucas_back_hair}
+
+def victoria_front():
+    # S1 A1: Victoria Whitlock standing by the corridor wall, about to leave (她走出會議室). Narrow build (cast), 1.66 m.
+    # 6.1: 貼耳銀白短髮 — a close crop with a little lift on top swept to one side, tapered tight at the ears and nape (the ears
+    # show); camel turtleneck (a straight column up to the jaw), charcoal fitted jacket — soft shoulders, a nipped waist — over a
+    # knee-length pencil skirt (the silhouette reads her at a glance where trousers read as one more suit)
+    sk = stance(weight='l', pelvis_x=-0.022, hip_y=0.89, tilt=0.016, sh_y=1.37, sh_w=0.166, sh_tilt=0.012, feet=(0.06, 0.075),
+                elbow=(0.168, 1.045), wrist=(0.152, 0.81), waist=(0.112, 1.03), hip_w=0.092)
+    sk['hem'] = (0.47, 0.118, 0.12); sk['hem_line'] = True; sk['arm'] = (0.086, 0.074, 0.058); sk['hand_scale'] = 0.86
+    sk['shoes'] = [shoe_front(sk['ankle_l'][0], out=-0.012, w=0.072, toe=0.018), shoe_front(sk['ankle_r'][0], out=0.016, w=0.072, toe=0.018)]
+    sk['neck_w'] = (0.122, 0.104, 0.102)                   # turtleneck: no taper under the jaw
+    sk['neck_top'] = (sk['neck_top'][0], sk['neck_top'][1] - 0.02)
+    hc = (sk['neck_top'][0], sk['neck_top'][1] + 0.05); sk['head'] = head(hc, w=0.142, h=0.214, jaw=0.78)
+    cap = [(hc[0] - 0.07, hc[1] - 0.02), (hc[0] - 0.076, hc[1] + 0.025), (hc[0] - 0.072, hc[1] + 0.063), (hc[0] - 0.058, hc[1] + 0.094),
+           (hc[0] - 0.03, hc[1] + 0.118), (hc[0] + 0.004, hc[1] + 0.128), (hc[0] + 0.04, hc[1] + 0.124), (hc[0] + 0.066, hc[1] + 0.106),
+           (hc[0] + 0.082, hc[1] + 0.078), (hc[0] + 0.083, hc[1] + 0.04), (hc[0] + 0.074, hc[1] + 0.0), (hc[0] + 0.07, hc[1] - 0.02),
+           (hc[0] + 0.05, hc[1] + 0.045), (hc[0] + 0.0, hc[1] + 0.065), (hc[0] - 0.052, hc[1] + 0.048)]
+    sk['hair'] = [wavy(cap, 0.0015, len(cap), 0.3)]
+    # the pencil skirt is the coat-kind hem; below it the calves in sheer tights
+    return figure(sk, 'coat')
+
+def hale_front():
+    # Ep2 hale-civil: Marcus standing in his lit doorway at the far end of the corridor, facing down it. Wide build, slick back
+    sk = stance(weight='l', pelvis_x=-0.024, tilt=0.014, sh_y=1.47, sh_w=0.218, sh_tilt=0.012, feet=(0.105, 0.11), elbow=(0.226, 1.12),
+                wrist=(0.208, 0.872), waist=(0.168, 1.08), hip_w=0.108)
+    sk['hem'] = (0.78, 0.182, 0.186); sk['trouser'] = (0.19, 0.135, 0.112); sk['arm'] = (0.118, 0.1, 0.082)
+    sk['shoes'] = [shoe_front(sk['ankle_l'][0], out=-0.02, w=0.105), shoe_front(sk['ankle_r'][0], out=0.024, w=0.105)]
+    sk['neck_w'] = (0.142, 0.106, 0.098)
+    hc = (sk['neck_top'][0], sk['neck_top'][1] + 0.05); sk['head'] = head(hc, w=0.156, h=0.236, jaw=0.84)
+    sk['hair'] = slick_back(hc)
+    return figure(sk, 'suit')
+
+def curly(hc, w=0.17, top=0.15, seed=0.0):
+    """Devin: a soft mop of short curls — volume all round the crown and over the ears, a lumpy edge"""
+    pts = []
+    for i in range(22):
+        a = math.pi * (-0.12 + 1.24 * i / 21)                     # from the right ear over the top to the left ear
+        pts.append((hc[0] + math.cos(a) * w / 2 * 1.06, hc[1] + 0.012 + math.sin(a) * top))
+    pts += [(hc[0] - w * 0.46, hc[1] - 0.035), (hc[0] - w * 0.3, hc[1] + 0.05), (hc[0], hc[1] + 0.07), (hc[0] + w * 0.3, hc[1] + 0.05), (hc[0] + w * 0.46, hc[1] - 0.035)]
+    pts = pts[:22][::-1] + pts[22:][::-1]
+    return [wavy(pts, 0.01, len(pts), seed)]
+
+def devin_front():
+    # Ep2 ethics: Devin turned to the door, facing the camera. Narrow, wide head (cast), 24; short fluffy curls, big round glasses
+    # (the hinges stand just proud of the temples), an oatmeal cardigan — soft shoulders, hem at the hip — over a shirt
+    sk = stance(weight='r', pelvis_x=-0.02, tilt=0.014, sh_y=1.43, sh_w=0.182, sh_tilt=0.012, feet=(0.095, 0.1), elbow=(0.188, 1.095),
+                wrist=(0.17, 0.85), waist=(0.142, 1.05), hip_w=0.096)
+    sk['hem'] = (0.8, 0.165, 0.168); sk['hem_line'] = True; sk['trouser'] = (0.162, 0.118, 0.1); sk['arm'] = (0.1, 0.086, 0.068)
+    sk['shoes'] = [shoe_front(sk['ankle_l'][0], out=-0.02), shoe_front(sk['ankle_r'][0], out=0.02)]
+    sk['neck_w'] = (0.12, 0.092, 0.084)
+    hc = (sk['neck_top'][0], sk['neck_top'][1] + 0.045); sk['head'] = head(hc, w=0.162, h=0.226, jaw=0.86)
+    sk['hair'] = curly(hc, w=0.184, top=0.14, seed=1.1)
+    ey = hc[1] + 0.005
+    sk['extra'] = [('acc', [(hc[0] + s * 0.076, ey + 0.016), (hc[0] + s * 0.091, ey + 0.016), (hc[0] + s * 0.091, ey + 0.004), (hc[0] + s * 0.076, ey + 0.004)]) for s in (-1, 1)]
+    return figure(sk, 'casual')
+
+def devin_profile():
+    # Ep2 copy room 22:10: Devin at the copier, right profile (faces screen right, the copier), head bowed to the scan glass
+    # (cast lift -20), forearm forward to the glass at ~1.0 m. Profile parts drawn directly (x forward, y up, metres).
+    P_ = []
+    # far leg (behind), near leg a little forward; trousers with a break, shoes in profile (heel left, toe right)
+    for kx, ax, w in ((-0.02, -0.035, 1.0), (0.035, 0.03, 1.0)):
+        P_.append(('leg', seg((0.0, 0.9), (kx, 0.49), 0.165, 0.112, bulge=0.01, at=0.3, lean=-0.3)))
+        P_.append(('leg', disc((kx, 0.49), 0.056)))
+        P_.append(('leg', seg((kx, 0.49), (ax, 0.04), 0.112, 0.095, bulge=0.012, at=0.35, lean=0.4)))
+        P_.append(('shoe', [(ax - 0.06, 0.095), (ax + 0.03, 0.095), (ax + 0.1, 0.06), (ax + 0.185, 0.04), (ax + 0.2, 0.018), (ax + 0.195, 0.0),
+                            (ax - 0.065, 0.0), (ax - 0.072, 0.03)]))
+    # torso: back of the neck, shoulder blade, small of the back, seat; cardigan hem at the hip (longer at the back), chest
+    P_.append(('torso', [(-0.035, 1.505), (-0.09, 1.465), (-0.112, 1.39), (-0.11, 1.27), (-0.088, 1.13), (-0.092, 1.02), (-0.112, 0.93),
+                         (-0.118, 0.8), (-0.06, 0.785), (0.02, 0.79), (0.1, 0.8), (0.098, 0.9), (0.085, 1.02), (0.095, 1.15),
+                         (0.112, 1.27), (0.108, 1.37), (0.08, 1.45), (0.045, 1.5)]))
+    # neck leaning forward (head bowed), head profile tipped down ~14 deg about the neck
+    nb, nt = (0.0, 1.47), (0.03, 1.56)
+    P_.append(('neck', [(nb[0] - 0.055, nb[1]), (nb[0] + 0.05, nb[1]), (nt[0] + 0.045, nt[1]), (nt[0] - 0.045, nt[1])]))
+    hc = (nt[0] + 0.01, 1.625); t = math.radians(-14)
+    prof = [(-0.098, 0.0), (-0.1, 0.045), (-0.085, 0.09), (-0.05, 0.118), (0.0, 0.122), (0.045, 0.105), (0.075, 0.07), (0.088, 0.035), (0.086, 0.01),
+            (0.094, -0.012), (0.106, -0.04), (0.094, -0.047), (0.092, -0.06), (0.097, -0.072), (0.088, -0.082), (0.084, -0.095), (0.06, -0.112),
+            (0.025, -0.112), (0.0, -0.09), (-0.03, -0.075), (-0.07, -0.06), (-0.092, -0.035)]
+    rot = lambda p: (hc[0] + p[0] * math.cos(t) - p[1] * math.sin(t), hc[1] + p[0] * math.sin(t) + p[1] * math.cos(t))
+    P_.append(('head', [rot(p) for p in prof]))
+    # big round glasses: the rim stands just proud of the brow-nose line in front of the eye
+    P_.append(('head', [rot(p) for p in [(0.082, 0.03), (0.098, 0.026), (0.104, 0.008), (0.1, -0.012), (0.086, -0.016)]]))
+    hair = [(-0.112, -0.03), (-0.124, 0.03), (-0.118, 0.09), (-0.092, 0.135), (-0.05, 0.158), (0.0, 0.16), (0.045, 0.148), (0.078, 0.118),
+            (0.09, 0.085), (0.07, 0.07), (0.03, 0.085), (-0.02, 0.07), (-0.06, 0.02), (-0.075, -0.04), (-0.095, -0.06)]
+    dense = []   # twice the points, so the curls read as small lumps rather than a smooth helmet
+    for i, a in enumerate(hair[:10]):
+        dense += [a, lerp(a, hair[i + 1], 0.5)]
+    dense += hair[10:]
+    P_.append(('hair', [rot(p) for p in wavy(dense, 0.011, len(dense), 2.3)]))
+    # near (right) arm: upper arm down the side, forearm forward to the scan glass, hand flat on it
+    S, E, W = (-0.005, 1.4), (0.025, 1.13), (0.225, 1.015)
+    P_.append(('arm', seg(S, E, 0.1, 0.086, bulge=0.012, at=0.35)))
+    P_.append(('arm', disc(E, 0.043)))
+    P_.append(('forearm', seg(E, W, 0.086, 0.066, bulge=0.008, at=0.3)))
+    P_.append(('forearm', place(hand(1, 0.85), A(W, N(V(E, W)), -0.012), V(E, W))))
+    # shoulder cap of the cardigan over the arm
+    P_.append(('torso', disc((0.0, 1.405), 0.062, 14)))
+    return P_
+
+def side_part(hc):
+    """front view, Logan's short side part: the part high on his right (screen left), the top swept across to his left with a
+    little lift at the front, tight at the temples (cast: 側分)"""
+    h = [(hc[0] - 0.078, 1.0), (hc[0] - 0.083, 1.045), (hc[0] - 0.079, 1.088), (hc[0] - 0.064, 1.118), (hc[0] - 0.046, 1.134),
+         (hc[0] - 0.040, 1.133), (hc[0] - 0.030, 1.143), (hc[0] - 0.004, 1.154), (hc[0] + 0.03, 1.156), (hc[0] + 0.058, 1.145),
+         (hc[0] + 0.077, 1.122), (hc[0] + 0.086, 1.084), (hc[0] + 0.086, 1.04), (hc[0] + 0.079, 1.0),
+         (hc[0] + 0.064, 1.058), (hc[0] + 0.03, 1.08), (hc[0] - 0.01, 1.083), (hc[0] - 0.05, 1.07), (hc[0] - 0.066, 1.05)]
+    return [mv(wavy(h, 0.0012, len(h), 0.9), 0, hc[1] - 1.0)]
+
+def logan_front():
+    # Ep1 firm-morning: Logan Price facing the camera. The squarest shoulders in the cast (padded, nearly level), navy suit,
+    # short side part; weight on his left leg, standing straighter than Lucas
+    sk = stance(weight='l', pelvis_x=-0.02, tilt=0.012, sh_y=1.475, sh_w=0.222, sh_tilt=0.004, feet=(0.10, 0.105), elbow=(0.228, 1.125),
+                wrist=(0.206, 0.876), waist=(0.162, 1.085), hip_w=0.104)
+    sk['hem'] = (0.78, 0.176, 0.18); sk['trouser'] = (0.18, 0.128, 0.108); sk['arm'] = (0.114, 0.096, 0.08)
+    sk['shoes'] = [shoe_front(sk['ankle_l'][0], out=-0.018, w=0.102), shoe_front(sk['ankle_r'][0], out=0.022, w=0.102)]
+    sk['neck_w'] = (0.138, 0.102, 0.094)
+    hc = (sk['neck_top'][0], sk['neck_top'][1] + 0.05); sk['head'] = head(hc, w=0.152, h=0.232, jaw=0.84)
+    sk['hair'] = side_part(hc)
+    return figure(sk, 'suit')
+
+FIG.update({'hale_seated': hale_seated(), 'lucas_seated_back': lucas_seated_back(), 'victoria_front': victoria_front(),
+            'hale_front': hale_front(), 'devin_front': devin_front(), 'devin_profile': devin_profile(),
+            'logan_front': logan_front()})
 
 def top_of(parts): return max(y for _, pts in parts for _, y in pts)

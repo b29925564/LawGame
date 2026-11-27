@@ -101,8 +101,18 @@ const START_BAD = /^[旁上下裡內外中的了著過]/u;
 const badness = (l: string, r: string) =>
   (END_FN.test(l) ? 2 : END_PRON.test(l) ? 1 : END_MEASURE.test(l) ? 0.5 : 0) +
   (START_BAD.test(r) ? 2 : 0);
+/**
+ * 斷詞器有時把代名詞和後面的介系詞切成一個詞（「他在」），整個詞放行尾就是虛詞收尾、找不到別的位置：
+ * 字幕換行時拆回兩個，讓「…讓他｜在證人席上…」這種只扣代名詞分的位置可以選（#447 第二集倫理結局）。
+ */
+const PRON_PREP = /^([我你他她它]們?)([在對把被從到給跟])$/u;
+const subUnits = (t: string) =>
+  proseUnits(t).flatMap((u) => {
+    const m = PRON_PREP.exec(u);
+    return m ? [m[1], m[2]] : [u];
+  });
 function wordLines(card: Card, em: number): { lines: string[]; bad: number } | null {
-  const units = proseUnits(card.text);
+  const units = subUnits(card.text);
   let best = -1;
   let gap = Infinity;
   let at = 0;
@@ -121,6 +131,79 @@ function wordLines(card: Card, em: number): { lines: string[]; bad: number } | n
   if (best < 0) return null;
   const lines = [card.text.slice(0, best), card.text.slice(best)];
   return { lines, bad: badness(lines[0], lines[1]) };
+}
+
+/**
+ * 切分器硬換行（逐字貪婪）會排出「…讓他在｜證人席…」：行尾是虛詞、代名詞，或行首是方位詞。
+ * 這時把這張和接續的下一張（同一個子句被硬切開的）合起來，在詞與詞之間重排：行數不變多、張數不變，
+ * 不好的位置總分變少才換（#447 第二集倫理結局：「你本來可以讓／他在證人席上｜再說一次那句話。」）。
+ */
+const PUNCT_END = /[，。、；：！？」』）…—]$/u;
+const breakBad = (lines: string[]) =>
+  lines.slice(0, -1).reduce((n, l, k) => n + badness(l, lines[k + 1]), 0);
+function relayout(text: string, em: number, maxLines: number): string[] | null {
+  const units = subUnits(text);
+  const n = units.length;
+  // best[i]：前 i 個詞排完的最少（行數, 分數）；分數＝不好位置 × 100 ＋ 行寬差。
+  const best: { lines: number; cost: number; prev: number }[] = Array.from(
+    { length: n + 1 },
+    () => ({
+      lines: Infinity,
+      cost: Infinity,
+      prev: -1,
+    }),
+  );
+  best[0] = { lines: 0, cost: 0, prev: -1 };
+  const pos = [0];
+  for (const u of units) pos.push(pos[pos.length - 1] + u.length);
+  for (let i = 0; i < n; i++) {
+    if (best[i].lines === Infinity) continue;
+    for (let j = i + 1; j <= n; j++) {
+      const line = text.slice(pos[i], pos[j]);
+      if (zhW(line) > em) break;
+      if (j < n && /^[，。、；：！？」』）…—]/u.test(text.slice(pos[j]))) continue;
+      const bad = j < n ? badness(line, text.slice(pos[j])) : 0;
+      const cost = best[i].cost + bad * 100 + (j < n ? em - zhW(line) : 0);
+      const lines = best[i].lines + 1;
+      if (lines < best[j].lines || (lines === best[j].lines && cost < best[j].cost))
+        best[j] = { lines, cost, prev: i };
+    }
+  }
+  if (best[n].lines > maxLines) return null;
+  const out: string[] = [];
+  for (let j = n; j > 0; j = best[j].prev) out.unshift(text.slice(pos[best[j].prev], pos[j]));
+  return out;
+}
+function rebreak(cards: Card[], em: number): Card[] {
+  const out = [...cards];
+  for (let i = 0; i < out.length; i++) {
+    const a = out[i];
+    const b = out[i + 1];
+    const la = a.lines ?? [a.text];
+    const join2 = b && !PUNCT_END.test(a.text);
+    const lb = join2 ? (b.lines ?? [b.text]) : [];
+    const old = [...la, ...lb];
+    // 只救虛詞、代名詞收尾和方位詞起頭（≥ 1 分）；數量詞收尾（0.5）照原樣，冷開場「手裡多了一座／水晶獎盃。」不變。
+    if (breakBad(old) < 1) continue;
+    const text = join2 ? a.text + b.text : a.text;
+    const lines = relayout(text, em, old.length);
+    if (!lines || lines.length > old.length || breakBad(lines) >= breakBad(old)) continue;
+    const cut = join2 ? Math.max(1, lines.length - lb.length) : lines.length;
+    const mk = (ls: string[], from: number): Card => ({
+      text: ls.join(''),
+      from,
+      ...(ls.length > 1 ? { lines: ls } : {}),
+    });
+    const first = mk(lines.slice(0, cut), a.from);
+    const rest = lines.slice(cut);
+    out.splice(
+      i,
+      join2 ? 2 : 1,
+      first,
+      ...(rest.length ? [mk(rest, a.from + first.text.length)] : []),
+    );
+  }
+  return out;
 }
 
 function zhWordLines(card: Card, em: number): Card {
@@ -219,7 +302,7 @@ export function subCards(
       // 不讓瀏覽器把那一行折成第 3 行（第二道關卡 a26de2b 第 2 項：844×390 字幕 150%「沃斯倒在地毯上，」）。
       for (let e = em - 1; room !== undefined && e >= 4 && !inRoom(cards, room); e--)
         cards = cut(e);
-      return tag(cards, false);
+      return tag(rebreak(cards, em), false);
     }
     const m = markedFor(s);
     const marked = m && markedCards(m, em, measure);

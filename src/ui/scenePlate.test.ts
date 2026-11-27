@@ -82,7 +82,7 @@ describe('人物立牌（standees.json）', () => {
     {
       plates: string[];
       size: Record<'desktop' | 'phone', [number, number]>;
-      people: { id: string; desktop: F; phone: F }[];
+      people: { id: string; desktop?: F; phone?: F }[];
     }
   >;
   type F = { file: string; box: [number, number, number, number] };
@@ -101,12 +101,16 @@ describe('人物立牌（standees.json）', () => {
     expect(new Set(seen).size).toBe(seen.length);
   });
 
-  it('每個人桌機、手機各一張透明 PNG，框在底圖裡面', () => {
+  it('每個人在畫面裡的版本各一張透明 PNG，框在底圖裡面；每一版至少有一個人', () => {
     for (const [name, set] of Object.entries(sets)) {
       expect(set.people.length, name).toBeGreaterThan(0);
+      for (const v of ['desktop', 'phone'] as const)
+        expect(set.people.filter((p) => p[v]).length, `${name} ${v}`).toBeGreaterThan(0);
       for (const p of set.people)
         for (const v of ['desktop', 'phone'] as const) {
-          const { file, box } = p[v];
+          const f = p[v];
+          if (!f) continue;
+          const { file, box } = f;
           expect(existsSync(new URL(`./plates/standee/${file}`, import.meta.url)), file).toBe(true);
           const [w, h] = set.size[v];
           expect(box[0]).toBeGreaterThanOrEqual(0);
