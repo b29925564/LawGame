@@ -1,5 +1,7 @@
-本資料夾的字型檔是下列字型的子集（scripts/fonts.py 產生），依 SIL Open Font License 1.1 散布。
-子集的內部字型名稱已改成 LawGame 開頭，不使用各字型的保留字型名（Reserved Font Name）。
+本資料夾的字型檔依 SIL Open Font License 1.1 散布（scripts/fonts.py 產生）：
+- 中文字型（Noto Sans TC、Noto Serif TC、LXGW WenKai TC）是子集，內部字型名稱已改成 LawGame 開頭，
+  不使用保留字型名（Reserved Font Name）。
+- 拉丁字型（Courier Prime、JetBrains Mono、IBM Plex Sans、Source Serif 4）是 Google Fonts 提供的原檔，未修改。
 
 Copyright 2014-2021 Adobe (http://www.adobe.com/), with Reserved Font Name 'Source'
 
