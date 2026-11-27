@@ -174,8 +174,9 @@ async function playToRachelLast(page: Page) {
   await next(page);
   await next(page); // 片頭
 
-  // 第一幕：事務所與看守所來電
-  await until(page, page.getByRole('button', { name: '慢慢說。從你收到訊息開始。' }));
+  // 第一幕：事務所與看守所來電。大廳 08:00 和盧卡斯辦公室 09:40 都接上底圖（#447）：一句一張字幕卡，
+  // 長句在手機分成幾張，到電話裡第一個選項要按的「繼續」比 30 次多。
+  await until(page, page.getByRole('button', { name: '慢慢說。從你收到訊息開始。' }), 80);
   await page.getByRole('button', { name: '慢慢說。從你收到訊息開始。' }).click();
   await until(page, page.getByRole('button', { name: '星期五下午，沃斯找你做什麼？' }));
 

@@ -1,0 +1,31 @@
+{
+  "id": "lucas-office-0940",
+  "frames_res": [2304, 1440],
+  "phone_crop_px": [640, 0, 1450, 1440],
+  "people": [
+    {
+      "name": "lucas",
+      "fig": "lucas_seated_phone",
+      "h": 1.371,
+      "feet_px": [1041.1, 1557.2],
+      "crown_px": [1031.7, 589.1],
+      "body": "#07090c",
+      "lights": [
+        {
+          "dir": [0.0, -1.0],
+          "color": "#d4dcea",
+          "width": 1.6,
+          "alpha": 0.85,
+          "soft": 0.3
+        }
+      ],
+      "occ": "occ/lucas-office-0940-lucas.png"
+    }
+  ],
+  "plates": ["lucas-office-0940"],
+  "fit": {
+    "phone": {
+      "include": [587, 627]
+    }
+  }
+}

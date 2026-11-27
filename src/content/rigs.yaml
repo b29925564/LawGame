@@ -55,11 +55,14 @@ ep1-firm-lobby-mon:
   #（lobby.py 的 down 層，權重 1）。場記的色溫仍是主光日光 5600（設計師 #473 審查的條件）。
   practicals:
     down: 3000
-# 盧卡斯的辦公室上午，西南窗只有天光（見上面）。
+# 盧卡斯的辦公室上午（色彩腳本 08m）：西南窗只有藍天的天光，太陽在大樓背後，房間裡沒有直射。
 ep1-lucas-office-mon:
   label: 週一
   time: '09:40'
   kelvin: 5600
+  # 室內燈（算圖讀，介面不讀）：上班時間天花燈開著，--k-fluoro 約 4100K（lucas_office.py 的 ceil 層）。
+  practicals:
+    ceil: 4100
 # 海爾的辦公室窗光。
 ep1-hale-office-mon:
   label: 週一
@@ -120,16 +123,22 @@ ep1-lucas-office-thu-night:
   label: 週四
   time: '20:40'
   kelvin: 2700
-# 盧卡斯的辦公室上午，西南窗只有天光（見上面）。
+# 盧卡斯的辦公室上午（色彩腳本 08m）：西南窗只有藍天的天光，太陽在大樓背後，房間裡沒有直射。
 ep1-lucas-office-week1:
   label: 一週後
   time: '08:15'
   kelvin: 5600
-# 盧卡斯的辦公室上午，西南窗只有天光（見上面）。
+  # 室內燈（算圖讀，介面不讀）：上班時間天花燈開著，--k-fluoro 約 4100K（lucas_office.py 的 ceil 層）。
+  practicals:
+    ceil: 4100
+# 盧卡斯的辦公室上午（色彩腳本 08m）：西南窗只有藍天的天光，太陽在大樓背後，房間裡沒有直射。
 ep1-lucas-office-week2:
   label: 兩週後
   time: '09:10'
   kelvin: 5600
+  # 室內燈（算圖讀，介面不讀）：上班時間天花燈開著，--k-fluoro 約 4100K（lucas_office.py 的 ceil 層）。
+  practicals:
+    ceil: 4100
 # 盧卡斯的公寓，入夜檯燈。
 ep1-lucas-apartment-night:
   label: ''
