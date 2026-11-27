@@ -21,6 +21,7 @@ export type TaughtKey =
   | 'desk-board' // 羅根：連線、答疑問
   | 'desk-jobs' // 蘿莎：委託
   | 'desk-court' // 海爾：動議
+  | 'desk-discovery' // 第 2 集羅根：交出去的文件，對方看得懂它指向哪裡（#448）
   | 'nego-reveal'; // 談判：攤牌亮出的論點，開庭時對方備好反擊
 
 /** 這個說明還要不要出現；done 一變成 true 就記下來，從此不再出現。 */

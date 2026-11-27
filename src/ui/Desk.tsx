@@ -197,12 +197,15 @@ export function Desk({ scene }: { scene: DeskScene }) {
     board: st.confirmed.length > 0,
     jobs: st.jobs.length > 0,
     court: Object.values(st.motions).some((a) => !!a.ruling),
+    // 回應過一項開示請求就算教過（#448）：送出前已經讀到那一句。
+    discovery: Object.keys(discovery.answered(st)).length > 0,
   };
   const untaught = {
     docs: useTaught('desk-docs', teachDone.docs),
     board: useTaught('desk-board', teachDone.board),
     jobs: useTaught('desk-jobs', teachDone.jobs),
     court: useTaught('desk-court', teachDone.court),
+    discovery: useTaught('desk-discovery', teachDone.discovery),
   };
   const teach = scene.teach.find((x) => x.app === app && untaught[x.app])?.line;
   // 翻開卷宗是資料夾聲，其他程式是翻頁聲；點同一個不出聲。

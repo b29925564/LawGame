@@ -3,7 +3,7 @@ import { optionOpen, useEpisode, sceneChoices } from '../engine/game';
 import type { DialogueScene, Line } from '../engine/episode/schema';
 import { useT } from '../i18n';
 import { useScope } from './lang';
-import { LucasStage, Speech } from './Portrait';
+import { Speech } from './Portrait';
 import { Transcript } from './Shell';
 import { Recap, splitSlate } from './ActCard';
 import { SubActions, useSubs } from './SubCard';
@@ -129,8 +129,8 @@ export function Dialogue({ scene }: { scene: DialogueScene }) {
             <span>{fitLine(splitSlate(t(scene.place, scope))[0])}</span>
           </p>
         )}
-        {/* 有底圖時不放盧卡斯大圖：攝影棚光對不上底圖的光；他在畫面裡的位置由立牌負責（設計師 #296）。 */}
-        {!shown && <LucasStage lines={lines} />}
+        {/* 不放盧卡斯大圖（LucasStage）：有底圖時他的位置由立牌負責（設計師 #296）；沒有底圖時，攝影棚半身照站在灰底上、
+            下半身被切掉，像沒做完（#447 過渡期，設計師 11-27）。他的臉在台詞欄裡；正式解法是場景光影補底圖。 */}
         <Transcript count={lines.length} open={!shown || rec}>
           <Recap />
           {lines.map((l, i) => (

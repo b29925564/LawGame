@@ -127,7 +127,7 @@ export function Deposition({ scene }: { scene: DepositionScene }) {
                       {gave.length > 0 && (
                         <span className="muted small">
                           {t('對方拿到：{names}', {
-                            names: gave.map((id) => t(cardName(id), scope)).join('、'),
+                            names: gave.map((id) => t(cardName(id), scope)).join(t('、')),
                           })}
                         </span>
                       )}

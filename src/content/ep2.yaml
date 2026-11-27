@@ -453,6 +453,13 @@ scenes:
     id: investigate
     act: 第二幕
     hours: 20
+    # 交出開示文件會洩漏論點的第一次教學（#448；台詞：劇本與內容 #2，writing/ep2-discovery-teach-line.md）。
+    teach:
+      - app: discovery
+        line:
+          who: 羅根・普萊斯
+          text: 交出去的每一張紙，奧卡福都讀得出它指向哪裡。交之前先想好，他會順著哪一條往下挖。
+          mood: 硬
     deadline: 證據開示截止　兩週後
     cards: *cards
     docs:

@@ -45,7 +45,7 @@
 '・陪審長': '· Foreperson'
 '對方以有因迴避剔除：{names}': 'Struck for cause by the other side: {names}'
 '{name}（{why}）': '{name} ({why})'
-'沒有根據的聲請有 {n} 次。開庭第一天的法官耐心會少 {n} 點。': 'Baseless motions: {n}. The judge starts the first day of trial with {n} less patience.'
+'沒有根據的聲請有 {n} 次。開庭第一天的法官耐心會少 {n} 點。': 'Baseless motions: {n}. The judge loses {n} point{n:s} of patience for the first day of trial.'
 陪審團遴選: Jury selection
 'voirdire::提問': Questions
 無因迴避: Peremptory strike

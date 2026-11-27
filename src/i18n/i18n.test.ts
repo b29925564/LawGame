@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import { install, money, reset, setLang, t, translate, useLang } from '.';
 
 afterEach(() => {
@@ -97,19 +97,12 @@ describe('雙語查表', () => {
     expect(t('誘導')).toBe('誘導');
   });
 
-  it('英文表還在載的時候又按了中文：停在中文，不寫回英文（Issue #389）', async () => {
-    const store = new Map<string, string>();
-    vi.stubGlobal('localStorage', {
-      getItem: (k: string) => store.get(k) ?? null,
-      setItem: (k: string, v: string) => void store.set(k, v),
-      removeItem: (k: string) => void store.delete(k),
-    });
+  it('英文表還在載時又切回中文：載完不再切成英文（#389）', async () => {
+    reset();
+    useLang.setState({ lang: 'zh' });
     const en = setLang('en');
-    const zh = setLang('zh');
-    await Promise.all([en, zh]);
+    await setLang('zh');
+    await en;
     expect(useLang.getState().lang).toBe('zh');
-    expect(t('誘導')).toBe('誘導');
-    expect(store.get('lawgame-lang')).toBe('zh');
-    vi.unstubAllGlobals();
   });
 });

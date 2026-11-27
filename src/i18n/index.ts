@@ -83,7 +83,7 @@ export function preload() {
   });
 }
 
-/** 最後一次要求的語言：英文表還在載的時候又按了中文，載完不可以再切回英文（Issue #389）。 */
+/** 最後一次要求的語言：英文表載完前玩家又切回中文，載完時就不能再切成英文（#389）。 */
 let wanted: Lang | null = null;
 
 export async function setLang(lang: Lang) {
