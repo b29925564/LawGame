@@ -56,6 +56,11 @@ export const PLATE_BREAKS: readonly string[] = [
   'This time,|you remembered that.',
   'You saved him a trial,|and you saved the firm/sixteen hours.',
   'They want to know|whether your subpoena¦is still sitting/on their audit log.',
+  // 第二集尾聲：影印室，戴文和那張銷毀令（#447）
+  'Devon lays/an old document‖on the scanner|and zooms to four/hundred percent.',
+  'The attachment|to the records/retention policy.',
+  '"Pier Nine warehouse/maintenance record¦backups: destroyed/per policy."',
+  "The approver's signature…|I zoomed in.",
 ];
 
 /**

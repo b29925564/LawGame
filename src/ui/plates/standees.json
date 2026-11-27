@@ -150,6 +150,65 @@
         }
       ]
     },
+    "s2-copy-devin": {
+      "plates": ["s2-copy-devin"],
+      "size": {
+        "desktop": [1440, 900],
+        "phone": [720, 1280]
+      },
+      "anchor": {
+        "desktop": {
+          "at": 0.6073,
+          "to": 0.5
+        },
+        "phone": {
+          "at": 0.5229,
+          "to": 0.5
+        }
+      },
+      "people": [
+        {
+          "id": "lucas",
+          "fig": "lucas_front",
+          "desktop": {
+            "file": "s2-copy-devin-lucas-desktop.png",
+            "ink": [600, 742],
+            "head": [646, 698],
+            "box": [588, 295, 166, 519],
+            "feet": [675.2, 801.0],
+            "crown": [672.5, 307.9]
+          },
+          "phone": {
+            "file": "s2-copy-devin-lucas-phone.png",
+            "ink": [33, 234],
+            "head": [97, 172],
+            "box": [20, 425, 226, 728],
+            "feet": [138.9, 1139.2],
+            "crown": [135.1, 437.9]
+          }
+        },
+        {
+          "id": "devin",
+          "fig": "devin_profile",
+          "desktop": {
+            "file": "s2-copy-devin-devin-desktop.png",
+            "ink": [826, 1149],
+            "head": [861, 1029],
+            "box": [801, 210, 360, 690],
+            "feet": [895.4, 1433.4],
+            "crown": [923.5, 222.4]
+          },
+          "phone": {
+            "file": "s2-copy-devin-devin-phone.png",
+            "ink": [354, 720],
+            "head": [403, 641],
+            "box": [323, 304, 397, 976],
+            "feet": [452.1, 2038.7],
+            "crown": [492.1, 316.4]
+          }
+        }
+      ]
+    },
     "s2-copy-ethics": {
       "plates": ["s2-copy-ethics-perjury", "s2-copy-ethics-coached", "s2-copy-ethics-clean"],
       "size": {
@@ -158,7 +217,7 @@
       },
       "anchor": {
         "desktop": {
-          "at": 0.5028,
+          "at": 0.5031,
           "to": 0.5
         },
         "phone": {
@@ -172,8 +231,8 @@
           "fig": "devin_front",
           "desktop": {
             "file": "s2-copy-ethics-devin-desktop.png",
-            "ink": [571, 877],
-            "head": [663, 792],
+            "ink": [572, 877],
+            "head": [656, 797],
             "box": [559, 229, 330, 671],
             "feet": [720.0, 1418.2],
             "crown": [720.0, 241.9]
@@ -181,7 +240,7 @@
           "phone": {
             "file": "s2-copy-ethics-devin-phone.png",
             "ink": [133, 567],
-            "head": [262, 447],
+            "head": [253, 454],
             "box": [121, 331, 458, 949],
             "feet": [344.0, 2017.1],
             "crown": [344.0, 344.0]

@@ -1,0 +1,45 @@
+{
+  "id": "s2-copy-devin",
+  "frames_res": [2304, 1440],
+  "phone_crop_px": [924, 0, 1734, 1440],
+  "people": [
+    {
+      "name": "lucas",
+      "fig": "lucas_front",
+      "h": 1.798,
+      "feet_px": [1080.3, 1281.6],
+      "crown_px": [1076.0, 492.6],
+      "body": "#07090c",
+      "lights": [
+        {
+          "dir": [0.0, -1.0],
+          "color": "#7f93a5",
+          "width": 1.4,
+          "alpha": 0.85,
+          "soft": 0.3
+        }
+      ],
+      "occ": "occ/s2-copy-devin-lucas.png"
+    },
+    {
+      "name": "devin",
+      "fig": "devin_profile",
+      "h": 1.798,
+      "feet_px": [1432.6, 2293.5],
+      "crown_px": [1477.6, 355.9],
+      "body": "#07090c",
+      "lights": [
+        {
+          "dir": [0.6, 0.8],
+          "color": "#b7c4d6",
+          "width": 1.6,
+          "alpha": 0.85,
+          "soft": 0.3
+        }
+      ],
+      "occ": "occ/s2-copy-devin-devin.png"
+    }
+  ],
+  "plates": ["s2-copy-devin"],
+  "fit": {}
+}
