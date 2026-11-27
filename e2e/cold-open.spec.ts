@@ -58,7 +58,9 @@ test('冷開場：看過的訊息被收回，換場自動存檔，可從標題�
   // 片頭卡之後直接是週一早上：警方照片要等 16:05 開示送到（police-photos.spec.ts）。
   await expect(page.getByRole('list', { name: '現場照片' })).toHaveCount(0);
   await next();
-  await expect(page.getByText('港灣大道一號，頂樓', { exact: false })).toBeVisible();
+  // 大廳 08:00 有底圖（#447）：旁白是下三分之一的字幕卡（片頭卡的換場和這一下點擊可能已經翻過第一張，所以只驗到了大廳、旁白原文在筆錄裡）。
+  await expect(page.locator('.scene.plated > .sub-card.narration')).toBeVisible();
+  await expect(page.locator('p.narration').first()).toContainText('港灣大道一號，頂樓');
 });
 
 test('語言切換：標題畫面切成英文，重新整理後保留，切回中文', async ({ page }) => {

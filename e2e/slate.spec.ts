@@ -64,7 +64,8 @@ test('減少動態：場記停 2.5 秒後直接收掉，黃直接回到主按鈕
 
 test('沒有地點字卡的時候（幕卡之後的第一場），主按鈕一開始就是黃的', async ({ page }) => {
   await load(page, 'ep1', 2);
-  await expect(page.getByText(/港灣大道一號/)).toBeVisible();
+  // 大廳有底圖（#447）：旁白在字幕卡（台詞原文還在筆錄裡，藏著）
+  await expect(page.locator('.sub-card').filter({ hasText: /港灣大道一號/ })).toBeVisible();
   await expect(page.locator('.place-slate')).toHaveCount(0);
   await expect(page.locator('html')).not.toHaveAttribute('data-hand', 'slate');
   await expect(page.locator('button.primary:visible').first()).not.toHaveCSS(
