@@ -3,6 +3,7 @@ import { episodeMeta, isEpisodeId, loadEpisode } from '../content';
 import { batesAt, ownBates, totalPages } from '../engine/bates';
 import {
   END_TITLE,
+  atEpisodeEnd,
   branchContext,
   caseClosed,
   episodeOf,
@@ -92,6 +93,13 @@ export function App() {
   useEffect(() => {
     if (isEpisodeId(following)) loadEpisode(following).catch(() => undefined);
   }, [following]);
+  // 走到集尾就記下這一集打完了：下一集才會出現在新遊戲清單裡（#442）。
+  const ended = mode === 'play' && atEpisodeEnd(progress);
+  useEffect(() => {
+    if (!ended) return;
+    const { cleared, set } = useSettings.getState();
+    if (!cleared[progress.episode]) set({ cleared: { ...cleared, [progress.episode]: true } });
+  }, [ended, progress.episode]);
 
   if (mode === 'title') return <Title />;
   if (mode === 'proto')

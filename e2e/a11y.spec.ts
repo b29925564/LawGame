@@ -2,7 +2,9 @@ import { expect, test, type Page } from '@playwright/test';
 
 async function openOptions(page: Page) {
   await page.getByRole('button', { name: '新遊戲' }).click();
-  await page.getByRole('button', { name: /^第 1 集/ }).click();
+  // 只有第 1 集能選時「新遊戲」直接開始（#452）；第 2 集也列出來時才有清單。
+  const ep1 = page.getByRole('button', { name: /^第 1 集/ });
+  if (await ep1.isVisible()) await ep1.click();
   await page.getByRole('button', { name: '選單' }).click();
   await page.getByRole('tab', { name: '選項' }).click();
 }

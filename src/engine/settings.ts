@@ -28,6 +28,11 @@ export interface Settings {
    * key 見 ui/taught.ts。
    */
   taught: Record<string, boolean>;
+  /**
+   * 走到結局的集（集尾卡出現過）。新遊戲只列第 1 集和前一集打完的集（#442：教學全在第 1 集，
+   * 第一次玩的人不能跳過）。和存檔分開，刪存檔不會把後面的集再鎖起來。
+   */
+  cleared: Record<string, boolean>;
   set: (patch: Partial<Omit<Settings, 'set'>>) => void;
 }
 
@@ -47,6 +52,7 @@ export const DEFAULTS: Values = {
   voBox: false,
   introSeen: {},
   taught: {},
+  cleared: {},
 };
 
 const num = (v: unknown, min: number, max: number, d: number) =>
@@ -79,6 +85,7 @@ export function cleanSettings(raw: unknown): Values {
     voBox: bool(r.voBox, d.voBox),
     introSeen: flags(r.introSeen),
     taught: flags(r.taught),
+    cleared: flags(r.cleared),
   };
 }
 

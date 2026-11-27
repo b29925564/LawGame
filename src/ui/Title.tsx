@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { episodeLoaded, episodeMeta, loadEpisode, onEpisodeLoaded, isEpisodeId } from '../content';
-import { useEpisode } from '../engine/game';
+import { newGameEpisodes, useEpisode } from '../engine/game';
+import { useSettings } from '../engine/settings';
 import { useLang, useT } from '../i18n';
 import { LangSwitch } from './lang';
 import { readSave, SLOTS, unreadable, type Slot } from '../engine/save';
@@ -101,6 +102,12 @@ export function Title() {
   const [credits, setCredits] = useState(false);
   // 標題畫面每次進來才讀一次：讀檔要解析整份 JSON，不必每次 render 都做（Issue #388 P5）。
   const [auto] = useState(() => readSave('auto'));
+  // 新遊戲只列第 1 集和前一集打完的集（#442：教學全在第 1 集）；已經有存檔的集照樣列。
+  const [savedEps] = useState(() =>
+    (['auto', ...SLOTS] as const).map((slot) => readSave(slot)?.progress.episode),
+  );
+  const cleared = useSettings((s) => s.cleared);
+  const playable = newGameEpisodes(cleared, savedEps);
   // 自動存檔有資料卻讀不出來：沒有「繼續」，要說一聲（Issue #364）。
   const [broken] = useState(() => !auto && unreadable('auto'));
   // 被畫面錯誤送回來的那一次才說明；讀過就清掉，下次回標題不再出現。
@@ -170,21 +177,24 @@ export function Title() {
           )}
           <button
             className={auto || loading ? '' : 'primary'}
-            onClick={() => setPicking(!picking)}
-            aria-expanded={picking}
+            // 只有一集能選（第一次玩）就直接開始，不出現只有一列的清單（設計師 #452）。
+            onClick={() => (playable.length === 1 ? newGame(playable[0]) : setPicking(!picking))}
+            aria-expanded={playable.length === 1 ? undefined : picking}
           >
             {t('新遊戲')}
           </button>
           {picking && (
             <ul className="stack slots">
-              {Object.entries(episodeMeta).map(([id, ep]) => (
-                <li key={id}>
-                  <button className="slot" onClick={() => newGame(id)}>
-                    <strong>{t('第 {n} 集', { n: ep.number })}</strong>
-                    <span className="muted">{t(ep.title)}</span>
-                  </button>
-                </li>
-              ))}
+              {Object.entries(episodeMeta)
+                .filter(([id]) => playable.includes(id))
+                .map(([id, ep]) => (
+                  <li key={id}>
+                    <button className="slot" onClick={() => newGame(id)}>
+                      <strong>{t('第 {n} 集', { n: ep.number })}</strong>
+                      <span className="muted">{t(ep.title)}</span>
+                    </button>
+                  </li>
+                ))}
             </ul>
           )}
           <button onClick={() => setLoading(!loading)} aria-expanded={loading}>

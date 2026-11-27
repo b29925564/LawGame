@@ -56,6 +56,26 @@ const start = (episode: string): Progress => ({
 const ORDER: readonly string[] = EPISODE_IDS;
 
 /** 這一集之後的下一集；最後一集回傳 null。 */
+/** 走到這一集的結尾了：最後一場是集尾卡且正停在它上面，或已經走過最後一場。 */
+export function atEpisodeEnd(p: Progress): boolean {
+  const ep = episodeOf(p);
+  const s = ep.scenes[p.scene];
+  return !s || (s.type === 'card' && p.scene === ep.scenes.length - 1);
+}
+
+/**
+ * 新遊戲能選的集（#442）：第 1 集永遠可以；之後的集要前一集走到過結局，
+ * 或者手上已經有那一集的存檔（之前就玩到了，不要把人鎖在外面）。
+ */
+export function newGameEpisodes(
+  cleared: Record<string, boolean>,
+  saved: readonly (string | undefined)[] = [],
+): string[] {
+  return ORDER.filter(
+    (id, i) => i === 0 || cleared[ORDER[i - 1]] || cleared[id] || saved.includes(id),
+  );
+}
+
 export function followingEpisode(p: Progress): string | null {
   return ORDER[ORDER.indexOf(p.episode) + 1] ?? null;
 }
