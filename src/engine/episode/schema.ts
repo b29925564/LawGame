@@ -379,7 +379,9 @@ const deskScene = z.object({
    * 第一次打開某個程式時，角色講一句怎麼用（企劃書 10.10：教學由劇情角色說出）。
    * 玩家做過一次（標記、確認疑問、委託、送出動議）就不再出現，跨集也不再出現（ui/taught.ts）。
    */
-  teach: z.array(z.object({ app: z.enum(['docs', 'board', 'jobs', 'court']), line })).default([]),
+  teach: z
+    .array(z.object({ app: z.enum(['docs', 'board', 'jobs', 'court', 'discovery']), line }))
+    .default([]),
   hours: z.number().int().min(1),
   deadline: z.string(),
   cards: z.array(card),
