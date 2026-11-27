@@ -35,8 +35,12 @@ test('16:05 開示送到：最後一句之後是附件二的照片頁，頁首�
   page,
 }) => {
   await load(page, 5, 13);
-  await expect(page.getByText('最上面是警方報告。附件二，現場照片，四十八張。')).toBeVisible();
-  await page.locator('button.primary.next').click();
+  // take-case 有底圖（#447 海爾的辦公室 15:20）：旁白是字幕卡，一張一句。翻到最後一句再往下。
+  const card = page.locator('.scene.plated > .sub-card.narration');
+  await expect(card).toContainText('最上面是警方報告。');
+  await page.locator('.scene.plated .sub-actions .primary').click();
+  await expect(card).toContainText('附件二，現場照片，四十八張。');
+  await page.locator('.scene.plated .sub-actions .primary').click();
 
   await expect(
     page.getByRole('heading', { name: '警方報告　附件二：現場照片（共 48 張）　檢方開示第一批' }),
