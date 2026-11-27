@@ -173,7 +173,7 @@ export function lineBreaks(text: string, em: number): string[] {
 
 const lineWidth = (t: string) =>
   MEASURE && !/[\p{Script=Han}]/u.test(t) ? MEASURE(t) : [...t].reduce((n, ch) => n + w(ch), 0);
-const SENTENCE = /[^。！？.!?]+(?:[。！？.!?]+[」』”’)）]*\s*)?/g;
+const SENTENCE = /[^。！？.!?]+(?:[。！？.!?]+[」』”’"')）]*\s*)?/g;
 const CLAUSE = /[^，、；：—,;:]+(?:[，、；：—,;:]+\s*)?/g;
 
 const zhOf = (t: string) => /[\p{Script=Han}]/u.test(t);

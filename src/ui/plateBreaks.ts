@@ -36,6 +36,16 @@ export const PLATE_BREAKS: readonly string[] = [
   // 一整句：桌機一行、手機兩行就放得下，不分張（設計師 #330 審查 3：一句一張）；只有真的超過兩行才在 ¦ 分。
   // 兩行時在子句 "up," 後面換行，不在 looking 後面（設計師 #330 複審）。
   "He opens the chat¦and scrolls up,¦looking for Voss's message.",
+  // ── #447 第二集接上底圖：海爾辦公室（hale-civil，民事的舉證門檻）──
+  'In a criminal case,|you make the jury doubt.',
+  'In a civil case,|the other side only has to/make them think¦it\'s "more likely than not."',
+  "And this time|you're the one/standing on the line.",
+  // ── #447 第二集影印室（倫理結局三版）──
+  'Mr. Grey,|you let him/say it again‖in front of the jury.',
+  'I was in the gallery,|watching the court reporter type.',
+  'He said it steadier/on the stand|than he did/at the deposition.',
+  "You went over it|with him,/didn't you?",
+  'Logan says you could have had him|say that line again/on the stand.',
 ];
 
 /**

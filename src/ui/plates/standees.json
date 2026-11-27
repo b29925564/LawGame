@@ -79,57 +79,6 @@
         }
       ]
     },
-    "s2-copy-devin": {
-      "plates": ["s2-copy-devin"],
-      "size": {
-        "desktop": [1440, 900],
-        "phone": [720, 1280]
-      },
-      "anchor": {
-        "desktop": {
-          "at": 0.5774,
-          "to": 0.5
-        },
-        "phone": {
-          "at": 0.6049,
-          "to": 0.5
-        }
-      },
-      "people": [
-        {
-          "id": "lucas",
-          "fig": "lucas_front",
-          "desktop": {
-            "file": "s2-copy-devin-lucas-desktop.png",
-            "ink": [473, 574],
-            "head": [513, 561],
-            "box": [461, 291, 155, 479],
-            "feet": [545.8, 757.1],
-            "crown": [536.9, 303.8]
-          }
-        },
-        {
-          "id": "devin",
-          "fig": "devin_profile",
-          "desktop": {
-            "file": "s2-copy-devin-devin-desktop.png",
-            "ink": [932, 1190],
-            "head": [968, 1096],
-            "box": [905, 234, 303, 666],
-            "feet": [984.7, 1235.6],
-            "crown": [1015.5, 247.0]
-          },
-          "phone": {
-            "file": "s2-copy-devin-devin-phone.png",
-            "ink": [252, 619],
-            "head": [303, 485],
-            "box": [219, 339, 420, 941],
-            "feet": [326.7, 1757.2],
-            "crown": [370.5, 351.3]
-          }
-        }
-      ]
-    },
     "s2-copy-ethics": {
       "plates": ["s2-copy-ethics-perjury", "s2-copy-ethics-coached", "s2-copy-ethics-clean"],
       "size": {
