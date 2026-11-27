@@ -418,8 +418,8 @@ def curly(hc, w=0.17, top=0.15, seed=0.0):
         a = math.pi * (-0.12 + 1.24 * i / 21)                     # from the right ear over the top to the left ear
         pts.append((hc[0] + math.cos(a) * w / 2 * 1.06, hc[1] + 0.012 + math.sin(a) * top))
     pts += [(hc[0] - w * 0.46, hc[1] - 0.035), (hc[0] - w * 0.3, hc[1] + 0.05), (hc[0], hc[1] + 0.07), (hc[0] + w * 0.3, hc[1] + 0.05), (hc[0] + w * 0.46, hc[1] - 0.035)]
-    pts = pts[:22][::-1] + pts[22:][::-1]
-    return [wavy(pts, 0.01, len(pts), seed)]
+    # 11-27 (#471): the outer edge as separate curls, the same curls() as the profile, so the two copy-room shots read as one head
+    return [curls(pts[:22][::-1], 0.03, seed=seed) + pts[22:][::-1]]
 
 def devin_front():
     # Ep2 ethics: Devin turned to the door, facing the camera. Narrow, wide head (cast), 24; short fluffy curls, big round glasses

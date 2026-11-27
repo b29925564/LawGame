@@ -515,8 +515,8 @@
       "date": "2026-06-04 22:10",
       "episode": 2,
       "files": {
-        "desktop": { "file": "s2-copy-ethics-desktop.jpg", "bytes": 55949 },
-        "phone": { "file": "s2-copy-ethics-phone.jpg", "bytes": 31977 }
+        "desktop": { "file": "s2-copy-ethics-desktop.jpg", "bytes": 51715 },
+        "phone": { "file": "s2-copy-ethics-phone.jpg", "bytes": 27205 }
       },
       "frames_res": [2304, 1440],
       "frames": { "devin": [877, 556, 1462, 1440], "lucas": [0, 572, 597, 1440] },
@@ -525,9 +525,9 @@
       "key": "spill",
       "fill": ["panel"],
       "target": "10:1",
-      "floor_L": { "desktop": 3.86, "phone": 3.88 },
+      "floor_L": { "desktop": 3.83, "phone": 3.86 },
       "yellow_final_violations": { "desktop": 0, "phone": 0 },
-      "source": "project-files art-bible/scenes/s2-afterhours (s2_afterhours.py set=copy cam=ethics step=1.2 camx=0 camy=0.6 door=90, finish_s2.py); review sample-report-v2.md",
+      "source": "project-files art-bible/scenes/s2-afterhours (s2_afterhours.py set=copy cam=ethics step=1.2 camx=0 camy=0.6 door=90, finish_s2.py；11-27 照新房間重算（#471）：面板權重 0.097、溢光 0.387、exp 6.27); review sample-report-v2.md",
       "blocking": "門開 90°；戴文從影印機往門口走 1.2 m（走廊燈在 2.2 m 門楣後，直射只到門內約 1.1 m 的頭高）；鏡頭在盧卡斯右肩後、門外 0.6 m"
     },
     {
@@ -538,8 +538,8 @@
       "date": "2026-06-04 22:10",
       "episode": 2,
       "files": {
-        "desktop": { "file": "s2-copy-ethics-desktop.jpg", "bytes": 55949 },
-        "phone": { "file": "s2-copy-ethics-phone.jpg", "bytes": 31977 }
+        "desktop": { "file": "s2-copy-ethics-desktop.jpg", "bytes": 51715 },
+        "phone": { "file": "s2-copy-ethics-phone.jpg", "bytes": 27205 }
       },
       "frames_res": [2304, 1440],
       "frames": { "devin": [877, 556, 1462, 1440], "lucas": [0, 572, 597, 1440] },
@@ -548,9 +548,9 @@
       "key": "spill",
       "fill": ["panel"],
       "target": "10:1",
-      "floor_L": { "desktop": 3.86, "phone": 3.88 },
+      "floor_L": { "desktop": 3.83, "phone": 3.86 },
       "yellow_final_violations": { "desktop": 0, "phone": 0 },
-      "source": "project-files art-bible/scenes/s2-afterhours (s2_afterhours.py set=copy cam=ethics step=1.2 camx=0 camy=0.6 door=90, finish_s2.py); review sample-report-v2.md",
+      "source": "project-files art-bible/scenes/s2-afterhours (s2_afterhours.py set=copy cam=ethics step=1.2 camx=0 camy=0.6 door=90, finish_s2.py；11-27 照新房間重算（#471）：面板權重 0.097、溢光 0.387、exp 6.27); review sample-report-v2.md",
       "blocking": "門開 90°；戴文從影印機往門口走 1.2 m（走廊燈在 2.2 m 門楣後，直射只到門內約 1.1 m 的頭高）；鏡頭在盧卡斯右肩後、門外 0.6 m"
     },
     {
@@ -561,8 +561,8 @@
       "date": "2026-06-04 22:10",
       "episode": 2,
       "files": {
-        "desktop": { "file": "s2-copy-ethics-desktop.jpg", "bytes": 55949 },
-        "phone": { "file": "s2-copy-ethics-phone.jpg", "bytes": 31977 }
+        "desktop": { "file": "s2-copy-ethics-desktop.jpg", "bytes": 51715 },
+        "phone": { "file": "s2-copy-ethics-phone.jpg", "bytes": 27205 }
       },
       "frames_res": [2304, 1440],
       "frames": { "devin": [877, 556, 1462, 1440], "lucas": [0, 572, 597, 1440] },
@@ -571,9 +571,9 @@
       "key": "spill",
       "fill": ["panel"],
       "target": "10:1",
-      "floor_L": { "desktop": 3.86, "phone": 3.88 },
+      "floor_L": { "desktop": 3.83, "phone": 3.86 },
       "yellow_final_violations": { "desktop": 0, "phone": 0 },
-      "source": "project-files art-bible/scenes/s2-afterhours (s2_afterhours.py set=copy cam=ethics step=1.2 camx=0 camy=0.6 door=90, finish_s2.py); review sample-report-v2.md",
+      "source": "project-files art-bible/scenes/s2-afterhours (s2_afterhours.py set=copy cam=ethics step=1.2 camx=0 camy=0.6 door=90, finish_s2.py；11-27 照新房間重算（#471）：面板權重 0.097、溢光 0.387、exp 6.27); review sample-report-v2.md",
       "blocking": "門開 90°；戴文從影印機往門口走 1.2 m（走廊燈在 2.2 m 門楣後，直射只到門內約 1.1 m 的頭高）；鏡頭在盧卡斯右肩後、門外 0.6 m"
     },
     {
@@ -746,11 +746,11 @@
       "files": {
         "desktop": {
           "file": "s2-copy-devin-desktop.jpg",
-          "bytes": 68566
+          "bytes": 65432
         },
         "phone": {
           "file": "s2-copy-devin-phone.jpg",
-          "bytes": 42459
+          "bytes": 40210
         }
       },
       "frames_res": [2304, 1440],
@@ -771,7 +771,7 @@
         "desktop": 0,
         "phone": 0
       },
-      "source": "project-files art-bible/scenes/s2-afterhours (s2_afterhours.py set=copy cam=devin cx=0.9 cy=0.2 tx=1.0 ty=1.5 lstep=0.45 door=75 lens=22；11-27 重做：影印室加細節、重新取景)；review sample-report-v2.md、#458 設計師審查",
+      "source": "project-files art-bible/scenes/s2-afterhours (s2_afterhours.py set=copy cam=devin cx=0.9 cy=0.2 tx=1.0 ty=1.5 lstep=0.45 door=75 lens=22；11-27 重做：影印室加細節、重新取景、南牆內面改影印室漆（#471 審查 2），面板權重照新探針重解 0.097)；review sample-report-v2.md、#458 設計師審查",
       "blocking": "戴文在影印機前側身對著掃描燈（右側臉）；盧卡斯站在半開的門口（門開 75°），兩人都在手機直式裁切內"
     }
   ]

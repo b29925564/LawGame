@@ -217,7 +217,7 @@
       },
       "anchor": {
         "desktop": {
-          "at": 0.5028,
+          "at": 0.5031,
           "to": 0.5
         },
         "phone": {
@@ -231,8 +231,8 @@
           "fig": "devin_front",
           "desktop": {
             "file": "s2-copy-ethics-devin-desktop.png",
-            "ink": [571, 877],
-            "head": [663, 792],
+            "ink": [572, 877],
+            "head": [656, 797],
             "box": [559, 229, 330, 671],
             "feet": [720.0, 1418.2],
             "crown": [720.0, 241.9]
@@ -240,7 +240,7 @@
           "phone": {
             "file": "s2-copy-ethics-devin-phone.png",
             "ink": [133, 567],
-            "head": [262, 447],
+            "head": [253, 454],
             "box": [121, 331, 458, 949],
             "feet": [344.0, 2017.1],
             "crown": [344.0, 344.0]
