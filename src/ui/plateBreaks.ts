@@ -46,6 +46,16 @@ export const PLATE_BREAKS: readonly string[] = [
   'He said it steadier/on the stand|than he did/at the deposition.',
   "You went over it|with him,/didn't you?",
   'Logan says you could have had him|say that line again/on the stand.',
+  // 第一集尾聲：會議室 A 一的評語（#447）
+  'Whatever the result says,|you fought this one¦cleaner than I expected.',
+  "Calder Logistics' general counsel|called this morning.",
+  "They want to know|if you'll dig this deep¦next time too.",
+  "This firm is not|the public defender's office.",
+  'She leaves the conference room|without waiting¦for Lucas to answer.',
+  'They asked me to thank you|for withdrawing that subpoena.',
+  'This time,|you remembered that.',
+  'You saved him a trial,|and you saved the firm/sixteen hours.',
+  'They want to know|whether your subpoena¦is still sitting/on their audit log.',
 ];
 
 /**

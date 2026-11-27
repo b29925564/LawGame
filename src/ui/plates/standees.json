@@ -79,6 +79,77 @@
         }
       ]
     },
+    "s1-a1": {
+      "plates": ["s1-a1-review", "s1-a1-dismissed", "s1-a1-withdrew", "s1-a1-deal"],
+      "size": {
+        "desktop": [1440, 900],
+        "phone": [720, 1280]
+      },
+      "anchor": {
+        "desktop": {
+          "at": 0.4222,
+          "to": 0.5
+        },
+        "phone": {
+          "at": 0.4868,
+          "to": 0.5
+        }
+      },
+      "people": [
+        {
+          "id": "hale",
+          "fig": "hale_seated",
+          "desktop": {
+            "file": "s1-a1-hale-desktop.png",
+            "ink": [571, 662],
+            "head": [601, 631],
+            "box": [559, 376, 116, 249],
+            "feet": [617.7, 612.4],
+            "crown": [615.6, 389.1]
+          },
+          "phone": {
+            "file": "s1-a1-hale-phone.png",
+            "ink": [502, 631],
+            "head": [544, 586],
+            "box": [489, 541, 154, 343],
+            "feet": [567.4, 871.0],
+            "crown": [564.4, 553.3]
+          }
+        },
+        {
+          "id": "whitlock",
+          "fig": "victoria_front",
+          "desktop": {
+            "file": "s1-a1-whitlock-desktop.png",
+            "ink": [268, 351],
+            "head": [289, 324],
+            "box": [256, 326, 107, 364],
+            "feet": [318.2, 676.6],
+            "crown": [306.1, 338.6]
+          },
+          "phone": {
+            "file": "s1-a1-whitlock-phone.png",
+            "ink": [70, 188],
+            "head": [100, 149],
+            "box": [58, 469, 142, 506],
+            "feet": [141.5, 962.2],
+            "crown": [124.2, 481.5]
+          }
+        },
+        {
+          "id": "lucas",
+          "fig": "lucas_seated_back",
+          "desktop": {
+            "file": "s1-a1-lucas-desktop.png",
+            "ink": [734, 948],
+            "head": [802, 887],
+            "box": [722, 429, 238, 471],
+            "feet": [836.7, 1047.6],
+            "crown": [843.2, 441.5]
+          }
+        }
+      ]
+    },
     "s2-copy-ethics": {
       "plates": ["s2-copy-ethics-perjury", "s2-copy-ethics-coached", "s2-copy-ethics-clean"],
       "size": {

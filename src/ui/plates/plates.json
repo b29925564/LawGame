@@ -575,6 +575,166 @@
       "yellow_final_violations": { "desktop": 0, "phone": 0 },
       "source": "project-files art-bible/scenes/s2-afterhours (s2_afterhours.py set=copy cam=ethics step=1.2 camx=0 camy=0.6 door=90, finish_s2.py); review sample-report-v2.md",
       "blocking": "門開 90°；戴文從影印機往門口走 1.2 m（走廊燈在 2.2 m 門楣後，直射只到門內約 1.1 m 的頭高）；鏡頭在盧卡斯右肩後、門外 0.6 m"
+    },
+    {
+      "id": "s1-a1-review",
+      "scene": "ep1:epilogue-review",
+      "rig": "ep1-conf-a-thu",
+      "card_kelvin": 4100,
+      "date": "2026-04-09 15:00",
+      "episode": 1,
+      "files": {
+        "desktop": {
+          "file": "s1-a1-desktop.jpg",
+          "bytes": 151323
+        },
+        "phone": {
+          "file": "s1-a1-phone.jpg",
+          "bytes": 105654
+        }
+      },
+      "frames_res": [2304, 1440],
+      "frames": {
+        "hale": [921, 657, 1054, 985],
+        "whitlock": [418, 557, 583, 1095],
+        "lucas": [1152, 769, 1563, 1440]
+      },
+      "phone_cx": 0.3277,
+      "phone_crop_px": [350, 0, 1160, 1440],
+      "key": "ceil",
+      "fill": ["sky"],
+      "target": "3:1",
+      "measured_ratio": 3.0,
+      "floor_L": {
+        "desktop": 3.7,
+        "phone": 3.76
+      },
+      "yellow_final_violations": {
+        "desktop": 0,
+        "phone": 0
+      },
+      "source": "project-files art-bible/scenes/s1-conference (s1_conference.py cam=a1-wide, finish_s1.py spec-s1-a1.json；11-27 照新的 finish.py 重新調色、手機裁切改到維多莉亞與海爾)；review designer-review-v2.1.md",
+      "blocking": "盧卡斯背對鏡頭坐在桌子右前端（手機版在框外）；海爾坐在桌子對面，維多莉亞站在桌子左端"
+    },
+    {
+      "id": "s1-a1-dismissed",
+      "scene": "ep1:epilogue-review-dismissed",
+      "rig": "ep1-conf-a-thu",
+      "card_kelvin": 4100,
+      "date": "2026-04-09 15:00",
+      "episode": 1,
+      "files": {
+        "desktop": {
+          "file": "s1-a1-desktop.jpg",
+          "bytes": 151323
+        },
+        "phone": {
+          "file": "s1-a1-phone.jpg",
+          "bytes": 105654
+        }
+      },
+      "frames_res": [2304, 1440],
+      "frames": {
+        "hale": [921, 657, 1054, 985],
+        "whitlock": [418, 557, 583, 1095],
+        "lucas": [1152, 769, 1563, 1440]
+      },
+      "phone_cx": 0.3277,
+      "phone_crop_px": [350, 0, 1160, 1440],
+      "key": "ceil",
+      "fill": ["sky"],
+      "target": "3:1",
+      "measured_ratio": 3.0,
+      "floor_L": {
+        "desktop": 3.7,
+        "phone": 3.76
+      },
+      "yellow_final_violations": {
+        "desktop": 0,
+        "phone": 0
+      },
+      "source": "project-files art-bible/scenes/s1-conference (s1_conference.py cam=a1-wide, finish_s1.py spec-s1-a1.json；11-27 照新的 finish.py 重新調色、手機裁切改到維多莉亞與海爾)；review designer-review-v2.1.md",
+      "blocking": "盧卡斯背對鏡頭坐在桌子右前端（手機版在框外）；海爾坐在桌子對面，維多莉亞站在桌子左端"
+    },
+    {
+      "id": "s1-a1-withdrew",
+      "scene": "ep1:epilogue-review-withdrew",
+      "rig": "ep1-conf-a-thu",
+      "card_kelvin": 4100,
+      "date": "2026-04-09 15:00",
+      "episode": 1,
+      "files": {
+        "desktop": {
+          "file": "s1-a1-desktop.jpg",
+          "bytes": 151323
+        },
+        "phone": {
+          "file": "s1-a1-phone.jpg",
+          "bytes": 105654
+        }
+      },
+      "frames_res": [2304, 1440],
+      "frames": {
+        "hale": [921, 657, 1054, 985],
+        "whitlock": [418, 557, 583, 1095],
+        "lucas": [1152, 769, 1563, 1440]
+      },
+      "phone_cx": 0.3277,
+      "phone_crop_px": [350, 0, 1160, 1440],
+      "key": "ceil",
+      "fill": ["sky"],
+      "target": "3:1",
+      "measured_ratio": 3.0,
+      "floor_L": {
+        "desktop": 3.7,
+        "phone": 3.76
+      },
+      "yellow_final_violations": {
+        "desktop": 0,
+        "phone": 0
+      },
+      "source": "project-files art-bible/scenes/s1-conference (s1_conference.py cam=a1-wide, finish_s1.py spec-s1-a1.json；11-27 照新的 finish.py 重新調色、手機裁切改到維多莉亞與海爾)；review designer-review-v2.1.md",
+      "blocking": "盧卡斯背對鏡頭坐在桌子右前端（手機版在框外）；海爾坐在桌子對面，維多莉亞站在桌子左端"
+    },
+    {
+      "id": "s1-a1-deal",
+      "scene": "ep1:epilogue-review-deal",
+      "rig": "ep1-conf-a-thu",
+      "card_kelvin": 4100,
+      "date": "2026-04-09 15:00",
+      "episode": 1,
+      "files": {
+        "desktop": {
+          "file": "s1-a1-desktop.jpg",
+          "bytes": 151323
+        },
+        "phone": {
+          "file": "s1-a1-phone.jpg",
+          "bytes": 105654
+        }
+      },
+      "frames_res": [2304, 1440],
+      "frames": {
+        "hale": [921, 657, 1054, 985],
+        "whitlock": [418, 557, 583, 1095],
+        "lucas": [1152, 769, 1563, 1440]
+      },
+      "phone_cx": 0.3277,
+      "phone_crop_px": [350, 0, 1160, 1440],
+      "key": "ceil",
+      "fill": ["sky"],
+      "target": "3:1",
+      "measured_ratio": 3.0,
+      "floor_L": {
+        "desktop": 3.7,
+        "phone": 3.76
+      },
+      "yellow_final_violations": {
+        "desktop": 0,
+        "phone": 0
+      },
+      "source": "project-files art-bible/scenes/s1-conference (s1_conference.py cam=a1-wide, finish_s1.py spec-s1-a1.json；11-27 照新的 finish.py 重新調色、手機裁切改到維多莉亞與海爾)；review designer-review-v2.1.md",
+      "blocking": "盧卡斯背對鏡頭坐在桌子右前端（手機版在框外）；海爾坐在桌子對面，維多莉亞站在桌子左端"
     }
   ]
 }
