@@ -354,24 +354,67 @@
       "phone_cx": 0.44,
       "phone_crop_px": [609, 0, 1419, 1440],
       "focus_note": "圖貼底（獎盃和手在下三分之一）；手機版窄視窗把獎盃右緣對齊視窗右緣，手指整個露出。字幕框和按鈕避開主體框（設計師 #316 審查 1）：cover＝主體框最多可以看不到的比例（跑出視窗＋被介面蓋住）。獎盃、手指 0；手（手背＋手指）0.45＝最多只剩手指",
-      "focus": { "y": 1 },
-      "anchor": { "phone": { "at": 0.868, "to": 1 } },
+      "focus": {
+        "y": 1
+      },
+      "anchor": {
+        "phone": {
+          "at": 0.868,
+          "to": 1
+        }
+      },
       "subjects": {
         "desktop": [
-          { "id": "trophy", "box": [0.378, 0.731, 0.573, 0.842], "cover": 0 },
-          { "id": "fingers", "box": [0.28, 0.828, 0.358, 0.886], "cover": 0 },
-          { "id": "hand", "box": [0.208, 0.828, 0.358, 0.886], "cover": 0.45 }
+          {
+            "id": "trophy",
+            "box": [0.378, 0.731, 0.573, 0.842],
+            "cover": 0
+          },
+          {
+            "id": "fingers",
+            "box": [0.28, 0.828, 0.358, 0.886],
+            "cover": 0
+          },
+          {
+            "id": "hand",
+            "box": [0.208, 0.828, 0.358, 0.886],
+            "cover": 0.45
+          }
         ],
         "phone": [
-          { "id": "trophy", "box": [0.326, 0.734, 0.868, 0.841], "cover": 0 },
-          { "id": "fingers", "box": [0.07, 0.829, 0.262, 0.886], "cover": 0 },
-          { "id": "hand", "box": [0, 0.829, 0.262, 0.886], "cover": 0.45 }
+          {
+            "id": "trophy",
+            "box": [0.326, 0.734, 0.868, 0.841],
+            "cover": 0
+          },
+          {
+            "id": "fingers",
+            "box": [0.07, 0.829, 0.262, 0.886],
+            "cover": 0
+          },
+          {
+            "id": "hand",
+            "box": [0, 0.829, 0.262, 0.886],
+            "cover": 0.45
+          }
         ]
       },
       "clear_note": "盡量不蓋的亮處（設計師 e771fcf 舊問題裁定 2）：門縫那道光。量法同第二道關卡：亮度 >185、0.5H 那一列最長的連續亮段，往上下延伸到 0.72H 以內。擺字幕時主體先不蓋，再挑蓋這一塊最少的位置；cover 是目標（≤5%）",
       "clear": {
-        "desktop": [{ "id": "door-light", "box": [0.4215, 0, 0.4597, 0.6767], "cover": 0.05 }],
-        "phone": [{ "id": "door-light", "box": [0.4458, 0, 0.5556, 0.6766], "cover": 0.05 }]
+        "desktop": [
+          {
+            "id": "door-light",
+            "box": [0.4215, 0, 0.4597, 0.6767],
+            "cover": 0.05
+          }
+        ],
+        "phone": [
+          {
+            "id": "door-light",
+            "box": [0.4458, 0, 0.5556, 0.6766],
+            "cover": 0.05
+          }
+        ]
       },
       "key": "corridor",
       "fill": ["corr_fill"],
@@ -493,18 +536,33 @@
       "date": "2026-05-04 09:40",
       "episode": 2,
       "files": {
-        "desktop": { "file": "s2-corr-am-desktop.jpg", "bytes": 71379 },
-        "phone": { "file": "s2-corr-am-phone.jpg", "bytes": 67016 }
+        "desktop": {
+          "file": "s2-corr-am-desktop.jpg",
+          "bytes": 71379
+        },
+        "phone": {
+          "file": "s2-corr-am-phone.jpg",
+          "bytes": 67016
+        }
       },
       "frames_res": [2304, 1440],
-      "frames": { "hale": [1129, 689, 1175, 876], "lucas": [1251, 670, 1426, 1324] },
+      "frames": {
+        "hale": [1129, 689, 1175, 876],
+        "lucas": [1251, 670, 1426, 1324]
+      },
       "phone_cx": 0.581,
       "phone_crop_px": [934, 0, 1744, 1440],
       "key": "fl-odd",
       "fill": ["fl-even", "hale-sun", "hale-sky"],
       "target": "2:1",
-      "floor_L": { "desktop": 4.22, "phone": 3.89 },
-      "yellow_final_violations": { "desktop": 0, "phone": 0 },
+      "floor_L": {
+        "desktop": 4.22,
+        "phone": 3.89
+      },
+      "yellow_final_violations": {
+        "desktop": 0,
+        "phone": 0
+      },
       "source": "project-files art-bible/scenes/s2-afterhours (s2_afterhours.py set=corr t=am, finish_s2.py); review sample-report-v2.md"
     },
     {
@@ -515,18 +573,33 @@
       "date": "2026-06-04 22:10",
       "episode": 2,
       "files": {
-        "desktop": { "file": "s2-copy-ethics-desktop.jpg", "bytes": 51715 },
-        "phone": { "file": "s2-copy-ethics-phone.jpg", "bytes": 27205 }
+        "desktop": {
+          "file": "s2-copy-ethics-desktop.jpg",
+          "bytes": 51715
+        },
+        "phone": {
+          "file": "s2-copy-ethics-phone.jpg",
+          "bytes": 27205
+        }
       },
       "frames_res": [2304, 1440],
-      "frames": { "devin": [877, 556, 1462, 1440], "lucas": [0, 572, 597, 1440] },
+      "frames": {
+        "devin": [877, 556, 1462, 1440],
+        "lucas": [0, 572, 597, 1440]
+      },
       "phone_cx": 0.508,
       "phone_crop_px": [765, 0, 1575, 1440],
       "key": "spill",
       "fill": ["panel"],
       "target": "10:1",
-      "floor_L": { "desktop": 3.83, "phone": 3.86 },
-      "yellow_final_violations": { "desktop": 0, "phone": 0 },
+      "floor_L": {
+        "desktop": 3.83,
+        "phone": 3.86
+      },
+      "yellow_final_violations": {
+        "desktop": 0,
+        "phone": 0
+      },
       "source": "project-files art-bible/scenes/s2-afterhours (s2_afterhours.py set=copy cam=ethics step=1.2 camx=0 camy=0.6 door=90, finish_s2.py；11-27 照新房間重算（#471）：面板權重 0.097、溢光 0.387、exp 6.27); review sample-report-v2.md",
       "blocking": "門開 90°；戴文從影印機往門口走 1.2 m（走廊燈在 2.2 m 門楣後，直射只到門內約 1.1 m 的頭高）；鏡頭在盧卡斯右肩後、門外 0.6 m"
     },
@@ -538,18 +611,33 @@
       "date": "2026-06-04 22:10",
       "episode": 2,
       "files": {
-        "desktop": { "file": "s2-copy-ethics-desktop.jpg", "bytes": 51715 },
-        "phone": { "file": "s2-copy-ethics-phone.jpg", "bytes": 27205 }
+        "desktop": {
+          "file": "s2-copy-ethics-desktop.jpg",
+          "bytes": 51715
+        },
+        "phone": {
+          "file": "s2-copy-ethics-phone.jpg",
+          "bytes": 27205
+        }
       },
       "frames_res": [2304, 1440],
-      "frames": { "devin": [877, 556, 1462, 1440], "lucas": [0, 572, 597, 1440] },
+      "frames": {
+        "devin": [877, 556, 1462, 1440],
+        "lucas": [0, 572, 597, 1440]
+      },
       "phone_cx": 0.508,
       "phone_crop_px": [765, 0, 1575, 1440],
       "key": "spill",
       "fill": ["panel"],
       "target": "10:1",
-      "floor_L": { "desktop": 3.83, "phone": 3.86 },
-      "yellow_final_violations": { "desktop": 0, "phone": 0 },
+      "floor_L": {
+        "desktop": 3.83,
+        "phone": 3.86
+      },
+      "yellow_final_violations": {
+        "desktop": 0,
+        "phone": 0
+      },
       "source": "project-files art-bible/scenes/s2-afterhours (s2_afterhours.py set=copy cam=ethics step=1.2 camx=0 camy=0.6 door=90, finish_s2.py；11-27 照新房間重算（#471）：面板權重 0.097、溢光 0.387、exp 6.27); review sample-report-v2.md",
       "blocking": "門開 90°；戴文從影印機往門口走 1.2 m（走廊燈在 2.2 m 門楣後，直射只到門內約 1.1 m 的頭高）；鏡頭在盧卡斯右肩後、門外 0.6 m"
     },
@@ -561,18 +649,33 @@
       "date": "2026-06-04 22:10",
       "episode": 2,
       "files": {
-        "desktop": { "file": "s2-copy-ethics-desktop.jpg", "bytes": 51715 },
-        "phone": { "file": "s2-copy-ethics-phone.jpg", "bytes": 27205 }
+        "desktop": {
+          "file": "s2-copy-ethics-desktop.jpg",
+          "bytes": 51715
+        },
+        "phone": {
+          "file": "s2-copy-ethics-phone.jpg",
+          "bytes": 27205
+        }
       },
       "frames_res": [2304, 1440],
-      "frames": { "devin": [877, 556, 1462, 1440], "lucas": [0, 572, 597, 1440] },
+      "frames": {
+        "devin": [877, 556, 1462, 1440],
+        "lucas": [0, 572, 597, 1440]
+      },
       "phone_cx": 0.508,
       "phone_crop_px": [765, 0, 1575, 1440],
       "key": "spill",
       "fill": ["panel"],
       "target": "10:1",
-      "floor_L": { "desktop": 3.83, "phone": 3.86 },
-      "yellow_final_violations": { "desktop": 0, "phone": 0 },
+      "floor_L": {
+        "desktop": 3.83,
+        "phone": 3.86
+      },
+      "yellow_final_violations": {
+        "desktop": 0,
+        "phone": 0
+      },
       "source": "project-files art-bible/scenes/s2-afterhours (s2_afterhours.py set=copy cam=ethics step=1.2 camx=0 camy=0.6 door=90, finish_s2.py；11-27 照新房間重算（#471）：面板權重 0.097、溢光 0.387、exp 6.27); review sample-report-v2.md",
       "blocking": "門開 90°；戴文從影印機往門口走 1.2 m（走廊燈在 2.2 m 門楣後，直射只到門內約 1.1 m 的頭高）；鏡頭在盧卡斯右肩後、門外 0.6 m"
     },
@@ -773,6 +876,134 @@
       },
       "source": "project-files art-bible/scenes/s2-afterhours (s2_afterhours.py set=copy cam=devin cx=0.9 cy=0.2 tx=1.0 ty=1.5 lstep=0.45 door=75 lens=22；11-27 重做：影印室加細節、重新取景、南牆內面改影印室漆（#471 審查 2），面板權重照新探針重解 0.097)；review sample-report-v2.md、#458 設計師審查",
       "blocking": "戴文在影印機前側身對著掃描燈（右側臉）；盧卡斯站在半開的門口（門開 75°），兩人都在手機直式裁切內"
+    },
+    {
+      "id": "lobby-0800",
+      "scene": "ep1:firm-morning",
+      "rig": "ep1-firm-lobby-mon",
+      "card_kelvin": 5600,
+      "date": "2026-03-16 08:00",
+      "episode": 1,
+      "lang": "zh",
+      "lang_note": "接待櫃台後的銅牌照介面語言：中文「惠特洛克・海爾」，英文 WHITLOCK & HALE（和英文台詞的事務所名一致）；兩版只差銅牌那一塊",
+      "files": {
+        "desktop": {
+          "file": "lobby-0800-desktop.jpg",
+          "bytes": 92528
+        },
+        "phone": {
+          "file": "lobby-0800-phone.jpg",
+          "bytes": 53406
+        }
+      },
+      "frames_res": [2304, 1440],
+      "frames": {
+        "lucas": [104, 558, 436, 1440],
+        "hale": [759, 707, 906, 1196],
+        "whitlock": [589, 745, 732, 1188],
+        "logan": [939, 752, 1052, 1122]
+      },
+      "phone_cx": 0.3893,
+      "phone_crop_px": [492, 0, 1302, 1440],
+      "phone_crop_note": "惠特洛克、海爾、羅根和銅牌在手機直式裁切內；剪影外框離左右邊緣至少裁切寬的 12%（惠特洛克左 12.0%、羅根右 30.6%），銅牌右緣離邊 11.4%；盧卡斯的背影在裁切外（同 S1），手機不畫他的立牌",
+      "key": "sun",
+      "fill": ["sky", "down"],
+      "target": null,
+      "target_note": "四人都是剪影，不量主補比；色彩腳本格 05w（#aca9a5、陰影 L* 33、p95/p25 6.5）用 meas26 量出貨 JPG",
+      "measured_05w": {
+        "desktop": {
+          "dominant": "#b8b1a9",
+          "dE76": 4.14,
+          "shadow_L": 32.1,
+          "p95_p25": 7.59
+        },
+        "phone": {
+          "dominant": "#aaa49b",
+          "dE76": 2.84,
+          "shadow_L": 26.9,
+          "p95_p25": 8.35
+        }
+      },
+      "grade": {
+        "exp": -1.3,
+        "black": 0.25,
+        "haze": 0.5
+      },
+      "grade_note": "手機裁切裡沒有全圖最暗的那幾塊，全圖 floorlift 落在手機檔是 L* 5.0；照 finish48 的通用規則（任何出貨檔最暗 0.5% 高過 4.4 就對那一張反向 lift 回 3.9，設計師 #473 審查）拉回，桌機檔不動。夾層下的燈是開著的室內燈，燈組 practicals.down 3000K",
+      "floor_L": {
+        "desktop": 3.85,
+        "phone": 3.9
+      },
+      "yellow_final_violations": {
+        "desktop": 0,
+        "phone": 0
+      },
+      "source": "project-files art-bible/scenes/firm-lobby (lobby.py v4：材質 v3、站位 v4；sun/sky/down/haze 128 spp；英文版只重算銅牌那一塊 border=0.465,0.52,0.535,0.585 plaque=en 再貼回；scratchpad fin_lobby.py sky=1 down=1 haze=0.5 tsun=k-daylight exp=-1.3 black=0.25 cx=0.3893)；色彩腳本格 05w",
+      "blocking": "盧卡斯背影在左前（手機裁切外）；惠特洛克、海爾、羅根三人站在櫃台前，羅根的頭離銅牌左緣約 40 px，不擋銅牌"
+    },
+    {
+      "id": "lobby-0800-en",
+      "scene": "ep1:firm-morning",
+      "rig": "ep1-firm-lobby-mon",
+      "card_kelvin": 5600,
+      "date": "2026-03-16 08:00",
+      "episode": 1,
+      "lang": "en",
+      "lang_note": "接待櫃台後的銅牌照介面語言：中文「惠特洛克・海爾」，英文 WHITLOCK & HALE（和英文台詞的事務所名一致）；兩版只差銅牌那一塊",
+      "files": {
+        "desktop": {
+          "file": "lobby-0800-en-desktop.jpg",
+          "bytes": 92452
+        },
+        "phone": {
+          "file": "lobby-0800-en-phone.jpg",
+          "bytes": 53278
+        }
+      },
+      "frames_res": [2304, 1440],
+      "frames": {
+        "lucas": [104, 558, 436, 1440],
+        "hale": [759, 707, 906, 1196],
+        "whitlock": [589, 745, 732, 1188],
+        "logan": [939, 752, 1052, 1122]
+      },
+      "phone_cx": 0.3893,
+      "phone_crop_px": [492, 0, 1302, 1440],
+      "phone_crop_note": "惠特洛克、海爾、羅根和銅牌在手機直式裁切內；剪影外框離左右邊緣至少裁切寬的 12%（惠特洛克左 12.0%、羅根右 30.6%），銅牌右緣離邊 11.4%；盧卡斯的背影在裁切外（同 S1），手機不畫他的立牌",
+      "key": "sun",
+      "fill": ["sky", "down"],
+      "target": null,
+      "target_note": "四人都是剪影，不量主補比；色彩腳本格 05w（#aca9a5、陰影 L* 33、p95/p25 6.5）用 meas26 量出貨 JPG",
+      "measured_05w": {
+        "desktop": {
+          "dominant": "#b8b1a9",
+          "dE76": 4.14,
+          "shadow_L": 32.1,
+          "p95_p25": 7.59
+        },
+        "phone": {
+          "dominant": "#aaa49b",
+          "dE76": 2.84,
+          "shadow_L": 26.9,
+          "p95_p25": 8.35
+        }
+      },
+      "grade": {
+        "exp": -1.3,
+        "black": 0.25,
+        "haze": 0.5
+      },
+      "grade_note": "手機裁切裡沒有全圖最暗的那幾塊，全圖 floorlift 落在手機檔是 L* 5.0；照 finish48 的通用規則（任何出貨檔最暗 0.5% 高過 4.4 就對那一張反向 lift 回 3.9，設計師 #473 審查）拉回，桌機檔不動。夾層下的燈是開著的室內燈，燈組 practicals.down 3000K",
+      "floor_L": {
+        "desktop": 3.85,
+        "phone": 3.89
+      },
+      "yellow_final_violations": {
+        "desktop": 0,
+        "phone": 0
+      },
+      "source": "project-files art-bible/scenes/firm-lobby (lobby.py v4：材質 v3、站位 v4；sun/sky/down/haze 128 spp；英文版只重算銅牌那一塊 border=0.465,0.52,0.535,0.585 plaque=en 再貼回；scratchpad fin_lobby.py sky=1 down=1 haze=0.5 tsun=k-daylight exp=-1.3 black=0.25 cx=0.3893)；色彩腳本格 05w",
+      "blocking": "盧卡斯背影在左前（手機裁切外）；惠特洛克、海爾、羅根三人站在櫃台前，羅根的頭離銅牌左緣約 40 px，不擋銅牌"
     }
   ]
 }

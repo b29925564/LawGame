@@ -1,0 +1,85 @@
+{
+  "id": "lobby-0800",
+  "frames_res": [2304, 1440],
+  "phone_crop_px": [492, 0, 1302, 1440],
+  "people": [
+    {
+      "name": "logan",
+      "fig": "logan_front",
+      "h": 1.83,
+      "feet_px": [993.2, 1122.4],
+      "crown_px": [998.2, 732.4],
+      "body": "#07090c",
+      "lights": [
+        {
+          "dir": [1.0, -0.1],
+          "color": "#f2e9df",
+          "width": 1.1,
+          "alpha": 0.85,
+          "soft": 0.3
+        }
+      ],
+      "occ": "occ/lobby-0800-logan.png"
+    },
+    {
+      "name": "whitlock",
+      "fig": "victoria_front",
+      "h": 1.7,
+      "feet_px": [651.2, 1186.9],
+      "crown_px": [669.7, 726.4],
+      "body": "#07090c",
+      "lights": [
+        {
+          "dir": [1.0, -0.1],
+          "color": "#f2e9df",
+          "width": 1.2,
+          "alpha": 0.85,
+          "soft": 0.3
+        }
+      ],
+      "occ": "occ/lobby-0800-whitlock.png"
+    },
+    {
+      "name": "hale",
+      "fig": "hale_front",
+      "h": 1.85,
+      "feet_px": [825.8, 1194.2],
+      "crown_px": [839.2, 682.8],
+      "body": "#07090c",
+      "lights": [
+        {
+          "dir": [1.0, -0.1],
+          "color": "#f2e9df",
+          "width": 1.2,
+          "alpha": 0.85,
+          "soft": 0.3
+        }
+      ],
+      "occ": "occ/lobby-0800-hale.png"
+    },
+    {
+      "name": "lucas",
+      "fig": "lucas_back",
+      "h": 1.8,
+      "feet_px": [258.5, 1482.9],
+      "crown_px": [324.9, 532.8],
+      "body": "#07090c",
+      "lights": [
+        {
+          "dir": [1.0, -0.1],
+          "color": "#f2e9df",
+          "width": 1.6,
+          "alpha": 0.85,
+          "soft": 0.3
+        }
+      ],
+      "occ": "occ/lobby-0800-lucas.png"
+    }
+  ],
+  "plates": ["lobby-0800", "lobby-0800-en"],
+  "fit": {
+    "phone": {
+      "include": [536, 638]
+    }
+  }
+}

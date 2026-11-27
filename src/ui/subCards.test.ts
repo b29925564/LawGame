@@ -3,7 +3,7 @@ import { afterAll, describe, expect, it } from 'vitest';
 import { parse } from 'yaml';
 import { install, reset, translate } from '../i18n';
 import { lineBreaks, sentencesOf } from './court/subtitleSplit';
-import { subCards } from './subCards';
+import { quoteOk, subCards } from './subCards';
 
 /**
  * 底圖上的字幕（設計師 #296）：一張卡一個句子，任何字級（100／125／150%）、桌機和手機的卡寬都不超過兩行。
@@ -182,6 +182,24 @@ describe('字幕卡（有底圖的場景）', () => {
     ).toEqual([['你要告訴陪審團', '一個故事，'], ['一個就好。']]);
   });
 
+  it('「著」後面緊接開引號才不算虛詞收尾（設計師 #473：正例、反例）', () => {
+    expect(quoteOk('接待櫃台後的銅牌寫著', '「惠特洛克・海爾」。')).toBe(true);
+    expect(quoteOk('封面上印著', '『機密』兩個字。')).toBe(true);
+    // 「著」後面不是引號：照樣擋
+    expect(quoteOk('他手裡拿著', '一份文件。')).toBe(false);
+    // 其他虛詞後面接引號：不比照
+    expect(quoteOk('銅牌上寫的', '「海爾」比較新。')).toBe(false);
+    // 引號不是緊接著（中間隔了字）：不算
+    expect(quoteOk('他看著', '我說「好」。')).toBe(false);
+    // 實際排版：「寫著」那句在最窄的框排成兩行時，換行點在引號前
+    expect(
+      subCards('接待櫃台後的銅牌寫著「惠特洛克・海爾」。', 11).map((c) => c.lines ?? [c.text]),
+    ).toEqual([['接待櫃台後的銅牌寫著', '「惠特洛克・海爾」。']]);
+    // 反例：「著」後面不是引號時，不選「著」收尾的換行點
+    for (const c of subCards('他站在門口一直看著窗外那盞路燈慢慢熄掉。', 11))
+      for (const l of (c.lines ?? [c.text]).slice(0, -1)) expect(l, c.text).not.toMatch(/著$/u);
+  });
+
   it('字幕卡的中文每一行：行尾不是虛詞、行首不是方位詞或助詞（所有有底圖的場景、兩種寬度、三種字級）', () => {
     const END = /[的之與和及或在於對把被為從到以而並是了著過沒不又也都就還再很我你他她它]$/u;
     const START = /^[旁上下裡內外中的了著過，。、；：！？]/u;
@@ -196,7 +214,9 @@ describe('字幕卡（有底圖的場景）', () => {
             for (const c of subCards(l.text, em)) {
               const ls = c.lines ?? [c.text];
               ls.slice(0, -1).forEach((x, i) => {
-                if (END.test(x) || START.test(ls[i + 1])) bad.push(`${em}：${ls.join('／')}`);
+                // 「著」後面緊接開引號：在引號前換行可以（subCards.ts quoteOk，設計師 #473）
+                if ((END.test(x) && !quoteOk(x, ls[i + 1])) || START.test(ls[i + 1]))
+                  bad.push(`${em}：${ls.join('／')}`);
               });
             }
           }

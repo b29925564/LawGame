@@ -18,7 +18,11 @@ const faceX: Record<string, number> = Object.fromEntries(
 
 test.beforeEach(({ page }) => page.addInitScript(() => localStorage.setItem('rd.dev.intro', '0')));
 
-/** 第一集第一幕（大廳，週一 08:00），盧卡斯第一句「謝謝。這個我很擅長。」。 */
+/**
+ * 第一集看守所會見室（週日 16:30）盧卡斯第一句「你一站上去，莫羅就能問四年前的事。」。
+ * 原本用大廳 08:00 那句，大廳接上底圖（#447）以後那場是字幕＋立牌、沒有台詞欄頭像，改用還沒有底圖的對白場景；
+ * 會見室接上底圖時要再換一場。
+ */
 async function open(page: Page, lang: 'zh' | 'en') {
   await page.goto('/');
   await page.evaluate((lang) => {
@@ -31,8 +35,8 @@ async function open(page: Page, lang: 'zh' | 'en') {
         label: 'x',
         progress: {
           episode: 'ep1',
-          scene: 2,
-          step: 3,
+          scene: 12,
+          step: 1,
           choices: {},
           cards: [],
           flags: [],

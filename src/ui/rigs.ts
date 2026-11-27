@@ -5,13 +5,15 @@ import rigData from '../content/rigs.yaml';
  * 燈組資料在 src/content/rigs.yaml；每場戲在劇本裡用 rig: 指定一組（第 10 章 :108），法庭的日卡另外寫當天那一組。
  * 不再用地點字串猜色溫（設計師 2026-10-10：猜錯過，改劇本也容易猜錯）。
  */
-/** grade、layers：算圖的調色參數和光層權重（例如判決的暗部分色、百葉暖補光），介面不讀。 */
+/** grade、layers、practicals：算圖的調色參數、光層權重和開著的室內燈（例如判決的暗部分色、百葉暖補光、大廳夾層下的燈），介面不讀。 */
 export type Rig = {
   label: string;
   time: string;
   kelvin: number;
   grade?: { split?: number };
   layers?: Record<string, number>;
+  /** 畫面裡開著的室內燈（光層名 → 色溫 K），算圖讀，介面不讀；場記的色溫是主光 kelvin。 */
+  practicals?: Record<string, number>;
 };
 
 export const RIGS = rigData as Record<string, Rig>;

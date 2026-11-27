@@ -51,6 +51,10 @@ ep1-firm-lobby-mon:
   label: 週一
   time: '08:00'
   kelvin: 5600
+  # 室內燈（算圖讀，介面不讀）：夾層底下那排燈 08:00 是開著的，自發光，--k-tungsten 約 3000K
+  #（lobby.py 的 down 層，權重 1）。場記的色溫仍是主光日光 5600（設計師 #473 審查的條件）。
+  practicals:
+    down: 3000
 # 盧卡斯的辦公室上午，西南窗只有天光（見上面）。
 ep1-lucas-office-mon:
   label: 週一

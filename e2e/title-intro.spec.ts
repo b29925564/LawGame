@@ -229,7 +229,8 @@ test('一格一黃：0:00–0:23 沒有黃，0:29 第一道黃（螢光），0:3
 
 test('讀檔讀到片頭之後：不播片頭', async ({ page }) => {
   await open(page, { scene: 2 });
-  await expect(page.getByText('港灣大道一號，頂樓', { exact: false })).toBeVisible();
+  // 大廳有底圖（#447）：旁白在字幕卡
+  await expect(page.locator('.sub-card').filter({ hasText: '港灣大道一號，頂樓' })).toBeVisible();
   await expect(page.locator('.title-intro')).toHaveCount(0);
 });
 
