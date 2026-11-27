@@ -96,4 +96,13 @@ describe('雙語查表', () => {
     await setLang('zh');
     expect(t('誘導')).toBe('誘導');
   });
+
+  it('英文表還在載時又切回中文：載完不再切成英文（#389）', async () => {
+    reset();
+    useLang.setState({ lang: 'zh' });
+    const en = setLang('en');
+    await setLang('zh');
+    await en;
+    expect(useLang.getState().lang).toBe('zh');
+  });
 });

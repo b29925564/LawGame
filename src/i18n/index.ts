@@ -83,7 +83,11 @@ export function preload() {
   });
 }
 
+/** 最後一次要求的語言：英文表載完前玩家又切回中文，載完時就不能再切成英文（#389）。 */
+let wanted: Lang | null = null;
+
 export async function setLang(lang: Lang) {
+  wanted = lang;
   if (lang === 'en') {
     try {
       await load();
@@ -92,6 +96,7 @@ export async function setLang(lang: Lang) {
       loading = null;
       return;
     }
+    if (wanted !== lang) return;
   }
   try {
     localStorage.setItem(KEY, lang);
