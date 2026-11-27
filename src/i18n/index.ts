@@ -83,7 +83,11 @@ export function preload() {
   });
 }
 
+/** 最後一次要求的語言：英文表還在載的時候又按了中文，載完不可以再切回英文（Issue #389）。 */
+let wanted: Lang | null = null;
+
 export async function setLang(lang: Lang) {
+  wanted = lang;
   if (lang === 'en') {
     try {
       await load();
@@ -92,6 +96,7 @@ export async function setLang(lang: Lang) {
       loading = null;
       return;
     }
+    if (wanted !== lang) return;
   }
   try {
     localStorage.setItem(KEY, lang);

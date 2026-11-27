@@ -96,4 +96,19 @@ describe('雙語查表', () => {
     await setLang('zh');
     expect(t('誘導')).toBe('誘導');
   });
+
+  it('英文表還在載的時候又按了中文：停在中文，不寫回英文（Issue #389）', async () => {
+    const en = setLang('en');
+    const zh = setLang('zh');
+    await Promise.all([en, zh]);
+    expect(useLang.getState().lang).toBe('zh');
+    expect(t('誘導')).toBe('誘導');
+    let saved: string | null = null;
+    try {
+      saved = localStorage.getItem('lawgame-lang');
+    } catch {
+      saved = null;
+    }
+    expect(saved).not.toBe('en');
+  });
 });
