@@ -451,7 +451,29 @@ def devin_profile():
     P_.append(('torso', disc((0.0, 1.405), 0.062, 14)))
     return P_
 
+def side_part(hc):
+    """front view, Logan's short side part: the part high on his right (screen left), the top swept across to his left with a
+    little lift at the front, tight at the temples (cast: 側分)"""
+    h = [(hc[0] - 0.078, 1.0), (hc[0] - 0.083, 1.045), (hc[0] - 0.079, 1.088), (hc[0] - 0.064, 1.118), (hc[0] - 0.046, 1.134),
+         (hc[0] - 0.040, 1.133), (hc[0] - 0.030, 1.143), (hc[0] - 0.004, 1.154), (hc[0] + 0.03, 1.156), (hc[0] + 0.058, 1.145),
+         (hc[0] + 0.077, 1.122), (hc[0] + 0.086, 1.084), (hc[0] + 0.086, 1.04), (hc[0] + 0.079, 1.0),
+         (hc[0] + 0.064, 1.058), (hc[0] + 0.03, 1.08), (hc[0] - 0.01, 1.083), (hc[0] - 0.05, 1.07), (hc[0] - 0.066, 1.05)]
+    return [mv(wavy(h, 0.0012, len(h), 0.9), 0, hc[1] - 1.0)]
+
+def logan_front():
+    # Ep1 firm-morning: Logan Price facing the camera. The squarest shoulders in the cast (padded, nearly level), navy suit,
+    # short side part; weight on his left leg, standing straighter than Lucas
+    sk = stance(weight='l', pelvis_x=-0.02, tilt=0.012, sh_y=1.475, sh_w=0.222, sh_tilt=0.004, feet=(0.10, 0.105), elbow=(0.228, 1.125),
+                wrist=(0.206, 0.876), waist=(0.162, 1.085), hip_w=0.104)
+    sk['hem'] = (0.78, 0.176, 0.18); sk['trouser'] = (0.18, 0.128, 0.108); sk['arm'] = (0.114, 0.096, 0.08)
+    sk['shoes'] = [shoe_front(sk['ankle_l'][0], out=-0.018, w=0.102), shoe_front(sk['ankle_r'][0], out=0.022, w=0.102)]
+    sk['neck_w'] = (0.138, 0.102, 0.094)
+    hc = (sk['neck_top'][0], sk['neck_top'][1] + 0.05); sk['head'] = head(hc, w=0.152, h=0.232, jaw=0.84)
+    sk['hair'] = side_part(hc)
+    return figure(sk, 'suit')
+
 FIG.update({'hale_seated': hale_seated(), 'lucas_seated_back': lucas_seated_back(), 'victoria_front': victoria_front(),
-            'hale_front': hale_front(), 'devin_front': devin_front(), 'devin_profile': devin_profile()})
+            'hale_front': hale_front(), 'devin_front': devin_front(), 'devin_profile': devin_profile(),
+            'logan_front': logan_front()})
 
 def top_of(parts): return max(y for _, pts in parts for _, y in pts)

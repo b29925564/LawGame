@@ -183,7 +183,8 @@ function rebreak(cards: Card[], em: number): Card[] {
     const join2 = b && !PUNCT_END.test(a.text);
     const lb = join2 ? (b.lines ?? [b.text]) : [];
     const old = [...la, ...lb];
-    if (breakBad(old) === 0) continue;
+    // 只救虛詞、代名詞收尾和方位詞起頭（≥ 1 分）；數量詞收尾（0.5）照原樣，冷開場「手裡多了一座／水晶獎盃。」不變。
+    if (breakBad(old) < 1) continue;
     const text = join2 ? a.text + b.text : a.text;
     const lines = relayout(text, em, old.length);
     if (!lines || lines.length > old.length || breakBad(lines) >= breakBad(old)) continue;
