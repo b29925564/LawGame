@@ -85,6 +85,16 @@ export const PLATE_BREAKS: readonly string[] = [
   '…A little after ten-thirty,|he messaged me,/told me to—',
   'Wait.|This line is recorded.',
   'In the police car|they kept asking/and asking…|so I said,¦I just wanted/him to stop.',
+  // ── #447 海爾的辦公室 15:20（take-case，接案）──
+  'You want/Calder Logistics|to sign off/on you defending¦the man/who killed their CFO.',
+  'Twenty-four/for investigation,|sixteen/for pretrial.',
+  'One hour over,|you explain it/in my office.',
+  "He needs to know|the firm defending him/takes Calder's money.",
+  'Logan is taking it|to the detention center/this afternoon.',
+  "16:05. The DA's office|delivers three boxes/of discovery.",
+  "On the side of each,|the prosecutor's name:/Catherine Morrow.",
+  'On top:|the police report.',
+  'Attachment 2,|scene photographs,/forty-eight of them.',
 ];
 
 /**

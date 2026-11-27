@@ -1072,6 +1072,73 @@
       },
       "source": "project-files art-bible/scenes/lucas-office（lucas_office.py：sky/ext 128 spp 新外景 firm_ext v2、ceil／lcd 沿用檯燈修正版、ceil glassnr=1、depth=20 距離圖；相機 clip 20 km、f/8）；prep_haze.py（空氣透視＋倒影分層）；fin_lo.py exp=-3.8 ceil=48 ext=0.552 tsky=k-clearsky cx=0.4536；色彩腳本格 08m",
       "blocking": "盧卡斯坐在桌前面窗、背對鏡頭，右手拿話筒；電話在他右手邊桌上，LCD 亮；檯燈關；窗外是早上順光的港口"
+    },
+    {
+      "id": "hale-office-1520",
+      "scene": "ep1:take-case",
+      "rig": "ep1-hale-office-mon",
+      "card_kelvin": 5600,
+      "date": "2026-03-16 15:20",
+      "episode": 1,
+      "files": {
+        "desktop": {
+          "file": "hale-office-1520-desktop.jpg",
+          "bytes": 116662
+        },
+        "phone": {
+          "file": "hale-office-1520-phone.jpg",
+          "bytes": 76104
+        }
+      },
+      "frames_res": [2304, 1440],
+      "frames": {
+        "hale": [1123, 700, 1349, 1246],
+        "lucas": [424, 751, 813, 1440],
+        "whitlock": [718, 574, 933, 1156]
+      },
+      "phone_cx": 0.4036,
+      "phone_crop_px": [525, 0, 1335, 1440],
+      "phone_crop_note": "三人都在手機直式裁切內（惠特洛克台詞最多）；海爾右肩可以切到一點（設計師 07a 第二輪）",
+      "key": "sky",
+      "fill": ["ceil", "lamp"],
+      "target": null,
+      "target_note": "三人都是剪影，不量主補比。色彩腳本格 07a（設計師 11-27）：主色 #63686e（暫定），用 meas26 量出貨 JPG；陰影與 p95/p25 用實測值登記；窗：牆亮度約 4:1。驗收：300 px 縮圖三個立牌都讀得出來",
+      "measured_07a": {
+        "desktop": {
+          "dominant": "#666a6d",
+          "dE76": 2.07,
+          "shadow_L": 6.1,
+          "p95_p25": 43.8
+        },
+        "phone": {
+          "dominant": "#5c6061",
+          "dE76": 4.63,
+          "shadow_L": 5.8,
+          "p95_p25": 35.8
+        },
+        "window_wall_Y": 4.08
+      },
+      "grade": {
+        "exp": -3.8,
+        "black": 0.02,
+        "ceil": 48,
+        "ceilr": 1,
+        "lamp": 1,
+        "ext": 0.509,
+        "sun_el": 38.5,
+        "sun_weight_rule": "clear_sun_weight(el)"
+      },
+      "grade_note": "天空層 --k-clearsky；太陽 223.6°／38.5° 在西南、東窗沒有直射，ext 層只照窗外城市的西面（--k-daylight），權重 0.509＝lib48.clear_sun_weight(38.5)；天花燈 --k-fluoro 權重 48，玻璃上的倒影（ceilr）權重 1；桌燈開（--k-tungsten）；城市 firm_ext v2，空氣透視能見度 20 km",
+      "floor_L": {
+        "desktop": 3.76,
+        "phone": 3.6
+      },
+      "yellow_final_violations": {
+        "desktop": 0,
+        "phone": 0
+      },
+      "source": "project-files art-bible/scenes/hale-office（hale_day.py 2304×1440、128 spp，家具 hale_office.py v2、城市 firm_ext v2；ceil glassnr=1、depth=20 距離圖）；prep_haze.py；fin_ho.py exp=-3.8 ceil=48 ceilr=1 lamp=1 ext=0.509 tsky=k-clearsky cx=0.4036；色彩腳本格 07a",
+      "blocking": "海爾坐在桌後、背對東窗；盧卡斯坐在訪客椅、背對鏡頭；惠特洛克站在桌子北端窗角前，她和海爾在桌子同一邊對著盧卡斯；桌燈開"
     }
   ]
 }
