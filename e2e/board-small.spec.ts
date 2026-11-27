@@ -275,7 +275,8 @@ for (const lang of ['zh-TW', 'en'])
       .locator('.cork-rack.marks .cork-redact')
       .first()
       .evaluate((e) =>
-        [...e.querySelectorAll('b, span')].map((x) => ({
+        // 卡名裡是 fitLine 的詞（span.fl）：只量黑條直屬的卡名和說明。
+        [...e.querySelectorAll(':scope > b, :scope > span')].map((x) => ({
           tag: x.tagName,
           cut: x.scrollHeight - x.clientHeight,
         })),
@@ -1745,3 +1746,39 @@ for (const found of [[], ['l-perjury']])
         ).toBeLessThanOrEqual(g.barTop + 1);
       }
     });
+
+// Issue #429 第 1 項：手機牌架的黑條卡（尚未取得）卡名只在詞界換行，不斷成「沃斯手錶的心／率紀錄」。
+for (const w of [412, 390, 360, 320])
+  test(`手機 ${w}：黑條卡卡名只在詞界換行（zh-TW）`, async ({ page }) => {
+    await page.setViewportSize({ width: w, height: 839 });
+    await open(page, 'zh-TW', ['q2a']);
+    await question(page);
+    await settled(page);
+    await page.evaluate(() => document.fonts.ready);
+    const bars = await page.locator('.cork-rack.marks .cork-redact b').evaluateAll((els) =>
+      els.map((b) => {
+        // 每個字的位置：換到下一行的字前面就是斷點。
+        const text = b.textContent ?? '';
+        const walker = document.createTreeWalker(b, NodeFilter.SHOW_TEXT);
+        const tops: number[] = [];
+        for (let n = walker.nextNode(); n; n = walker.nextNode())
+          for (let i = 0; i < (n.textContent ?? '').length; i++) {
+            const r = document.createRange();
+            r.setStart(n, i);
+            r.setEnd(n, i + 1);
+            tops.push(r.getClientRects()[0]?.top ?? NaN);
+          }
+        const breaks: number[] = [];
+        for (let i = 1; i < tops.length; i++) if (tops[i] - tops[i - 1] > 4) breaks.push(i);
+        return { text, breaks };
+      }),
+    );
+    expect(bars.length, '牌架上有黑條卡').toBeGreaterThan(0);
+    for (const { text, breaks } of bars) {
+      const ends = new Set<number>();
+      let at = 0;
+      for (const u of proseUnits(text, false, false)) ends.add((at += u.length));
+      for (const b of breaks)
+        expect(ends.has(b), `${text.slice(0, b)}｜${text.slice(b)} 斷在詞中間`).toBe(true);
+    }
+  });
