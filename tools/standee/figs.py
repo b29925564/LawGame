@@ -515,8 +515,30 @@ def logan_front():
     sk['hair'] = side_part(hc)
     return figure(sk, 'suit')
 
+def ethan_seated():
+    # #447 看守所會見室 週日 16:30（ethan-testify）: across the table from Lucas, facing the camera, both forearms on the table
+    # (0.76 m) and the hands together in the middle, fingers laced (緊). Narrower than Hale, shoulders up and a little forward, the
+    # head lowered as at the holding door; his own messy crown (ethan_cuffed). Below the table top the table hides him.
+    sk = stance(weight='r', pelvis_x=-0.01, tilt=0.008, sh_y=1.44, sh_w=0.19, sh_tilt=0.01, waist=(0.148, 1.06))
+    sit(sk, seat=0.45)
+    sk['trouser'] = (0.17, 0.12, 0.10); sk['arm'] = (0.098, 0.084, 0.066)
+    sk['shoulder_l'] = (sk['shoulder_l'][0] + 0.006, sk['shoulder_l'][1] + 0.012)   # hunched: shoulders lifted toward the ears
+    sk['shoulder_r'] = (sk['shoulder_r'][0] - 0.006, sk['shoulder_r'][1] + 0.016)
+    sk['elbow_l'] = (-0.214, 0.79); sk['elbow_r'] = (0.21, 0.792)
+    sk['wrist_l'] = (-0.04, 0.80); sk['wrist_r'] = (0.036, 0.802); sk['hand_dir_l'] = (1.0, 0.25); sk['hand_dir_r'] = (-1.0, 0.25)
+    sk['hand_scale'] = 0.92
+    sk['shoes'] = [shoe_front(sk['ankle_l'][0], out=-0.02), shoe_front(sk['ankle_r'][0], out=0.02)]
+    sk['neck_top'] = (sk['neck_top'][0], sk['neck_top'][1] - 0.04)                  # head lowered (as ethan_cuffed)
+    hc = (sk['neck_top'][0] - 0.006, sk['neck_top'][1] + 0.07); sk['head'] = head(hc, w=0.150, h=0.228)
+    dy = hc[1] - 1.655
+    m = [(hc[0] - 0.084, 1.63), (hc[0] - 0.095, 1.675), (hc[0] - 0.092, 1.72), (hc[0] - 0.08, 1.755), (hc[0] - 0.058, 1.776), (hc[0] - 0.035, 1.774),
+         (hc[0] - 0.018, 1.788), (hc[0] + 0.004, 1.782), (hc[0] + 0.026, 1.79), (hc[0] + 0.05, 1.779), (hc[0] + 0.072, 1.765), (hc[0] + 0.088, 1.735),
+         (hc[0] + 0.097, 1.692), (hc[0] + 0.09, 1.632), (hc[0] + 0.074, 1.672), (hc[0], 1.694), (hc[0] - 0.072, 1.672)]
+    sk['hair'] = [mv(wavy(m, 0.006, len(m), 2.1), 0, dy)]
+    return figure(sk, 'casual')
+
 FIG.update({'hale_seated': hale_seated(), 'lucas_seated_back': lucas_seated_back(), 'lucas_seated_phone': lucas_seated_phone(), 'victoria_front': victoria_front(),
             'hale_front': hale_front(), 'devin_front': devin_front(), 'devin_profile': devin_profile(),
-            'logan_front': logan_front()})
+            'logan_front': logan_front(), 'ethan_seated': ethan_seated()})
 
 def top_of(parts): return max(y for _, pts in parts for _, y in pts)
