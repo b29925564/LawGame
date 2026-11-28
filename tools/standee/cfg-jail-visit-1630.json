@@ -1,14 +1,14 @@
 {
   "id": "jail-visit-1630",
   "frames_res": [2304, 1440],
-  "phone_crop_px": [493, 0, 1303, 1440],
+  "phone_crop_px": [747, 0, 1557, 1440],
   "people": [
     {
       "name": "ethan",
       "fig": "ethan_seated",
       "h": 1.32,
-      "feet_px": [1093.2, 1241.1],
-      "crown_px": [1089.6, 543.2],
+      "feet_px": [1457.6, 1820.5],
+      "crown_px": [1472.6, 545.4],
       "body": "#07090c",
       "lights": [
         {
@@ -25,8 +25,8 @@
       "name": "lucas",
       "fig": "lucas_seated_back",
       "h": 1.393,
-      "feet_px": [829.0, 1884.5],
-      "crown_px": [787.7, 516.8],
+      "feet_px": [728.0, 2924.5],
+      "crown_px": [687.0, 521.3],
       "body": "#07090c",
       "lights": [
         {
