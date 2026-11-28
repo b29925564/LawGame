@@ -100,11 +100,14 @@ ep1-conf-a-sun-night:
   label: 週日
   time: '22:40'
   kelvin: 2700
-# 法院走廊燈管。
+# 法院走廊燈管（色彩腳本 22a）：天花燈管隔一盞亮一盞，東窗斜開的百葉透進晨光。
 ep1-court3-corridor-next:
   label: 隔天
   time: '09:20'
   kelvin: 4100
+  # 室內燈（算圖讀，介面不讀）：走廊燈管 --k-fluoro 約 4100K（court_corridor.py 的 fl-on 層）。
+  practicals:
+    fl-on: 4100
 # 量刑庭：同一間法庭的 court-d1-am 值（第 4 章 :135），時刻照劇本。
 ep1-sentencing-mon:
   label: 週一
