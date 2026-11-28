@@ -553,7 +553,7 @@ def ethan_free():
     sk = stance(weight='l', pelvis_x=-0.022, tilt=0.014, sh_y=1.44, sh_w=0.192, sh_tilt=0.012, feet=(0.10, 0.105), waist=(0.15, 1.06),
                 elbow=(0.212, 1.105), wrist=(0.205, 0.862))
     sk['trouser'] = (0.17, 0.12, 0.10); sk['arm'] = (0.098, 0.084, 0.066)
-    sk['hand_dir_l'] = (-0.12, -1.0); sk['hand_dir_r'] = (0.12, -1.0)   # open hands, fingers down and a little out
+    sk['hand_dir_l'] = (0.06, -1.0); sk['hand_dir_r'] = (-0.06, -1.0)   # open hands hanging, fingers a touch in toward the thigh (turned out they read as flippers)
     sk['shoes'] = [shoe_front(sk['ankle_l'][0], out=-0.022), shoe_front(sk['ankle_r'][0], out=0.025)]
     sk['neck_base'] = (sk['neck_base'][0], sk['neck_base'][1] + 0.01); sk['neck_top'] = (sk['neck_top'][0], 1.592)
     hc = (sk['neck_top'][0] - 0.004, 1.662); sk['head'] = head(hc, w=0.150, h=0.228)
