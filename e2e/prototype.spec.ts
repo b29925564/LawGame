@@ -18,7 +18,7 @@ async function impeach(page: Page, claim: string, lockQ: string, setupQ: string,
 }
 
 test('自動通關：三次彈劾成功，判決無罪', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('/?proto');
   await page.getByRole('button', { name: /系統原型/ }).click();
   await page.getByRole('button', { name: '打開證據板' }).click();
 

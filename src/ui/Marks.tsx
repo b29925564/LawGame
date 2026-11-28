@@ -416,7 +416,12 @@ export function WindowRuler({ text }: { text: string }) {
         aria-label={t('推估窗口 {a} 到 {b}，收窄到 {c}', { a: m[1], b: m[2], c: m[3] })}
       >
         <div className="ruler-track">
-          <span className="ruler-window ghost" style={style({ '--a': 0, '--b': 1 })}>
+          {/* 「原本推估」放在釘點的另一側，不跟釘點的時間疊在一起（評測 v98：手機上 22:24 壓到這行字）。 */}
+          <span
+            className="ruler-window ghost"
+            style={style({ '--a': 0, '--b': 1 })}
+            data-lbl={x(p) < 0.5 ? 'end' : undefined}
+          >
             <span className="lbl">{t('原本推估 {a}–{b}', { a: m[1], b: m[2] })}</span>
           </span>
           <span

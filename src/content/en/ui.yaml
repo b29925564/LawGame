@@ -21,7 +21,6 @@
 讀取: Load
 存到: Save to
 系統原型（證據板、彈劾、陪審團）: System prototype (board, impeachment, jury)
-垂直切片: Vertical slice
 自動存檔: Autosave
 存檔 {n}: Slot {n}
 空: Empty
@@ -41,6 +40,7 @@
 
 # 製作群
 製作群: Credits
+版本: Build
 音樂與音效: Music and sound
 法庭緊張配樂: Courtroom tension music
 結辯配樂: Closing argument music
