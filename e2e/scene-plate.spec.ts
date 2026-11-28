@@ -38,10 +38,17 @@ const CASES: Case[] = [
   },
 ];
 
-async function open(page: Page, scene: number, lang: 'zh' | 'en', deal?: string, scale = 1) {
+async function open(
+  page: Page,
+  scene: number,
+  lang: 'zh' | 'en',
+  deal?: string,
+  scale = 1,
+  episode = 'ep1',
+) {
   await page.goto('/');
   await page.evaluate(
-    ([scene, lang, deal, scale]) => {
+    ([scene, lang, deal, scale, episode]) => {
       localStorage.setItem('lawgame-lang', lang as string);
       localStorage.setItem(
         'lawgame-settings',
@@ -54,7 +61,7 @@ async function open(page: Page, scene: number, lang: 'zh' | 'en', deal?: string,
           savedAt: Date.now(),
           label: 'x',
           progress: {
-            episode: 'ep1',
+            episode,
             scene,
             step: 0,
             choices: {},
@@ -66,7 +73,7 @@ async function open(page: Page, scene: number, lang: 'zh' | 'en', deal?: string,
         }),
       );
     },
-    [scene, lang, deal, scale] as const,
+    [scene, lang, deal, scale, episode] as const,
   );
   await page.reload();
   await page
@@ -193,8 +200,9 @@ test('等圖的時候點一下可以跳過；進了場景，圖到之前也是�
   await expect(bg).toHaveAttribute('data-state', 'ok', { timeout: 5000 });
 });
 
+// 第一集沒有底圖的對白場景都在 #447 的排程裡（會見室 16:30 已接上），改用第二集、不在 #447 範圍內的五樓走廊 17:05（epilogue-trevor）。
 test('沒有底圖的場景照舊：定場放占位字，對話不貼底', async ({ page }) => {
-  await open(page, 12, 'zh');
+  await open(page, 24, 'zh', undefined, 1, 'ep2');
   await expect(page.locator('.plate-host .scene-plate')).toHaveCount(0);
   await expect(page.locator('.place-tbd')).toContainText('待放 3D 機位');
   await page.locator('.place-beat').click();
