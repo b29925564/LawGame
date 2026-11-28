@@ -82,6 +82,20 @@ function buttonUnder(x: number, y: number): HTMLButtonElement | null {
   return null;
 }
 
+/**
+ * 自動前進收掉最後一拍的那一刻，玩家可能正好要點「點擊繼續」：獨白已經不在，那一下就落在底下的選項上
+ * （評測 v98：認罪協商的攤牌提示自己收掉，同一下誤亮出論點 D）。收掉後短時間內的點擊吃掉。
+ */
+const GUARD_MS = 700;
+function swallowClicks() {
+  const stop = (e: Event) => {
+    e.stopPropagation();
+    e.preventDefault();
+  };
+  window.addEventListener('click', stop, true);
+  setTimeout(() => window.removeEventListener('click', stop, true), GUARD_MS);
+}
+
 export function VoiceOver({ line, onDone }: { line: Line; onDone: () => void }) {
   const { voAuto, voScale, voBox } = useSettings();
   const onPlate = useOnPlate();
@@ -102,7 +116,7 @@ export function VoiceOver({ line, onDone }: { line: Line; onDone: () => void }) 
   const tm = useMemo(() => voTiming(beat.text), [beat.text]);
   const reduced = reducedMotion();
 
-  const next = (at?: { x: number; y: number }) => {
+  const next = (at?: { x: number; y: number }, auto = false) => {
     if (i + 1 < beats.length) {
       setI(i + 1);
       setP(0);
@@ -113,6 +127,7 @@ export function VoiceOver({ line, onDone }: { line: Line; onDone: () => void }) 
       const under = at && buttonUnder(at.x, at.y);
       announce.voiceEnd();
       onDone();
+      if (auto) swallowClicks();
       if (under) setTimeout(() => under.click(), 0);
     }
   };
@@ -159,7 +174,10 @@ export function VoiceOver({ line, onDone }: { line: Line; onDone: () => void }) 
       if (k < 1) raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
-    const auto = voAuto && !manual.current ? setTimeout(() => next(), tm.hold + 400) : undefined;
+    const auto =
+      voAuto && !manual.current
+        ? setTimeout(() => next(undefined, true), tm.hold + 400)
+        : undefined;
     return () => {
       cancelAnimationFrame(raf);
       clearTimeout(auto);

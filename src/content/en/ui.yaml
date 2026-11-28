@@ -7,7 +7,6 @@
 新遊戲: New game
 繼續（{label}）: Continue ({label})
 第 {n} 集: Episode {n}
-定場: Establishing
 跳過: Skip
 載入中: Loading
 剛才的畫面出了錯，已回到標題。進度停在上一次自動存檔。: Something went wrong on that screen, so you're back at the title. Your progress is at the last autosave.
@@ -21,7 +20,6 @@
 讀取: Load
 存到: Save to
 系統原型（證據板、彈劾、陪審團）: System prototype (board, impeachment, jury)
-垂直切片: Vertical slice
 自動存檔: Autosave
 存檔 {n}: Slot {n}
 空: Empty
@@ -41,6 +39,7 @@
 
 # 製作群
 製作群: Credits
+版本: Build
 音樂與音效: Music and sound
 法庭緊張配樂: Courtroom tension music
 結辯配樂: Closing argument music

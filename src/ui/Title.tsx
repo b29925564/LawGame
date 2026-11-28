@@ -101,6 +101,7 @@ export function Title() {
   const [loading, setLoading] = useState(false);
   const [picking, setPicking] = useState(false);
   const [credits, setCredits] = useState(false);
+  const [proto] = useState(() => new URLSearchParams(location.search).has('proto'));
   // 標題畫面每次進來才讀一次：讀檔要解析整份 JSON，不必每次 render 都做（Issue #388 P5）。
   const [auto] = useState(() => readSave('auto'));
   // 新遊戲只列第 1 集和前一集打完的集（#442：教學全在第 1 集）；已經有存檔的集照樣列。
@@ -208,16 +209,13 @@ export function Title() {
             {t('製作群')}
           </button>
           {credits && <Credits />}
-          <button className="link" onClick={openProto}>
-            {t('系統原型（證據板、彈劾、陪審團）')}
-          </button>
+          {/* 系統原型是開發用的單場劇本，玩家看不到（評測 v98）；網址帶 ?proto 才列出來（e2e/prototype.spec.ts）。 */}
+          {proto && (
+            <button className="link" onClick={openProto}>
+              {t('系統原型（證據板、彈劾、陪審團）')}
+            </button>
+          )}
         </div>
-        <p className="title-build">
-          {t('垂直切片')}
-          <span className="build-id">
-            {__BUILD__.sha}・{__BUILD__.at}
-          </span>
-        </p>
       </div>
     </main>
   );

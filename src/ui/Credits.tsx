@@ -86,6 +86,10 @@ export function Credits() {
         {FONTS}
         {t('，皆以 SIL Open Font License 1.1 授權。')}
       </p>
+      {/* 版本號從標題畫面移到這裡（評測 v98：標題上的版本號像開發版）；回報問題時對得上是哪一版。 */}
+      <p className="muted small build-id">
+        {t('版本')} {__BUILD__.sha}・{__BUILD__.at}
+      </p>
     </section>
   );
 }

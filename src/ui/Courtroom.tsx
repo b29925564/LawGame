@@ -621,8 +621,9 @@ function CourtroomScreen({ scene: raw }: { scene: TrialScene }) {
     onSaid,
   };
   // 手機常駐的說話者頭像（第 10.1 章「對話頭像：法庭＝立繪」，56×70）：最後開口的人；盧卡斯用立繪。
-  const speaker = [...st.log].reverse().find((l) => l.who !== '旁白')?.who ?? scene.witness.name;
-  const now = (body: ReactNode) =>
+  const last = [...st.log].reverse().find((l) => l.who !== '旁白')?.who ?? scene.witness.name;
+  // 證詞卡上的那句話是證人說的：頭像和名字跟著那句話，不跟最後開口的法官（評測 v98 第 7 點）。
+  const now = (body: ReactNode, speaker = last) =>
     narrow ? (
       <div className="court-now">
         {/* 剪影就是定稿、不再有標籤（使用者 11-16）：法庭裡的人寫一行說話者名字，盧卡斯有立繪不寫。 */}
@@ -861,7 +862,10 @@ function CourtroomScreen({ scene: raw }: { scene: TrialScene }) {
         {st.stage === 'cross' && (
           <section className="panel" inert={confronting}>
             <article className="claim">
-              {now(<p className="claim-text">{t('「{text}」', { text: t(claim.text, scope) })}</p>)}
+              {now(
+                <p className="claim-text">{t('「{text}」', { text: t(claim.text, scope) })}</p>,
+                scene.witness.name,
+              )}
               <ol className="steps">
                 {claim.anchor && anchored.includes(claim.anchor) ? (
                   <li className="done anchored">

@@ -201,10 +201,12 @@ test('等圖的時候點一下可以跳過；進了場景，圖到之前也是�
 });
 
 // 第一集沒有底圖的對白場景都在 #447 的排程裡（會見室 16:30 已接上），改用第二集、不在 #447 範圍內的五樓走廊 17:05（epilogue-trevor）。
-test('沒有底圖的場景照舊：定場放占位字，對話不貼底', async ({ page }) => {
+// 定場只有黑底加場記，不標「待放 3D 機位」（設計師 v98 裁定）。
+test('沒有底圖的場景照舊：定場只放場記，對話不貼底', async ({ page }) => {
   await open(page, 24, 'zh', undefined, 1, 'ep2');
   await expect(page.locator('.plate-host .scene-plate')).toHaveCount(0);
-  await expect(page.locator('.place-tbd')).toContainText('待放 3D 機位');
+  await expect(page.locator('.place-beat .place-slate')).toBeVisible();
+  await expect(page.locator('.place-beat')).not.toContainText('待放');
   await page.locator('.place-beat').click();
   await expect(page.locator('.scene.dialogue')).toBeVisible();
   await expect(page.locator('.scene-plate')).toHaveCount(0);

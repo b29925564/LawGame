@@ -21,8 +21,6 @@ const SIDE = [
   '.vdict .hero',
   '.vdict .hero .ey',
   '.board-one .wb-head',
-  // 定場還沒有場景圖時左上角的「待放 3D 機位・定場」（設計師 關卡 72a9003：320 英文 125／150% 碰到、被切到選單鈕）。
-  '.place-tbd',
 ].join(', ');
 /** 頂列的第一行：下面一列要在鈕下面 8px 以外。 */
 const TOP = '.bench > .eyebrow';
