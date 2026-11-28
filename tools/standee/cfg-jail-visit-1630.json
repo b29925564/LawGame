@@ -1,0 +1,46 @@
+{
+  "id": "jail-visit-1630",
+  "frames_res": [2304, 1440],
+  "phone_crop_px": [1004, 0, 1814, 1440],
+  "people": [
+    {
+      "name": "ethan",
+      "fig": "ethan_seated",
+      "h": 1.32,
+      "feet_px": [1457.6, 1820.5],
+      "crown_px": [1472.6, 545.4],
+      "body": "#07090c",
+      "lights": [
+        {
+          "dir": [0.0, -1.0],
+          "color": "#d2dbd2",
+          "width": 1.4,
+          "alpha": 0.85,
+          "soft": 0.3
+        }
+      ],
+      "occ": "occ/jail-visit-1630-ethan.png"
+    },
+    {
+      "name": "lucas",
+      "fig": "lucas_seated_back",
+      "h": 1.393,
+      "feet_px": [728.0, 2924.5],
+      "crown_px": [687.0, 521.3],
+      "body": "#07090c",
+      "lights": [
+        {
+          "dir": [0.0, -1.0],
+          "color": "#b9c3bb",
+          "width": 1.6,
+          "alpha": 0.85,
+          "soft": 0.3
+        }
+      ],
+      "occ": "occ/jail-visit-1630-lucas.png",
+      "anchor": false
+    }
+  ],
+  "plates": ["jail-visit-1630"],
+  "fit": {}
+}

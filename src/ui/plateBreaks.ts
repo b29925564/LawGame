@@ -95,6 +95,10 @@ export const PLATE_BREAKS: readonly string[] = [
   "On the side of each,|the prosecutor's name:/Catherine Morrow.",
   'On top:|the police report.',
   'Attachment 2,|scene photographs,/forty-eight of them.',
+  // ── #447 看守所會見室 16:30（ethan-testify，要不要作證）──
+  "The second/you're up there,|Morrow gets to ask/about four years ago.",
+  'Okay. Starting today|we rehearse/the ugliest questions.',
+  'The jury needs|the evidence,/not you.',
 ];
 
 /**

@@ -19,9 +19,9 @@ const faceX: Record<string, number> = Object.fromEntries(
 test.beforeEach(({ page }) => page.addInitScript(() => localStorage.setItem('rd.dev.intro', '0')));
 
 /**
- * 第一集看守所會見室（週日 16:30）盧卡斯第一句「你一站上去，莫羅就能問四年前的事。」。
- * 原本用大廳 08:00 那句，大廳接上底圖（#447）以後那場是字幕＋立牌、沒有台詞欄頭像，改用還沒有底圖的對白場景；
- * 會見室接上底圖時要再換一場。
+ * 第二集惠特洛克的辦公室（週一 09:00）盧卡斯第一句「妳要我替卡爾德辯護。」。
+ * 原本用第一集大廳 08:00、再來是看守所會見室；兩場都接上底圖（#447）以後是字幕＋立牌、沒有台詞欄頭像。
+ * 第一集剩下沒有底圖的對白場景都在 #447 的排程裡，所以改用第二集、不在 #447 範圍內的場景；這場接上底圖時要再換一場。
  */
 async function open(page: Page, lang: 'zh' | 'en') {
   await page.goto('/');
@@ -34,9 +34,9 @@ async function open(page: Page, lang: 'zh' | 'en') {
         savedAt: Date.now(),
         label: 'x',
         progress: {
-          episode: 'ep1',
-          scene: 12,
-          step: 1,
+          episode: 'ep2',
+          scene: 2,
+          step: 3,
           choices: {},
           cards: [],
           flags: [],
