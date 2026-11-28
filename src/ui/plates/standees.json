@@ -158,6 +158,65 @@
         }
       ]
     },
+    "jail-visit-1630": {
+      "plates": ["jail-visit-1630"],
+      "size": {
+        "desktop": [1440, 900],
+        "phone": [720, 1280]
+      },
+      "anchor": {
+        "desktop": {
+          "at": 0.6358,
+          "to": 0.5
+        },
+        "phone": {
+          "at": 0.5681,
+          "to": 0.5
+        }
+      },
+      "people": [
+        {
+          "id": "ethan",
+          "fig": "ethan_seated",
+          "desktop": {
+            "file": "jail-visit-1630-ethan-desktop.png",
+            "ink": [763, 1068],
+            "head": [862, 979],
+            "box": [751, 328, 329, 572],
+            "feet": [911.0, 1137.8],
+            "crown": [920.4, 340.9]
+          },
+          "phone": {
+            "file": "jail-visit-1630-ethan-phone.png",
+            "ink": [192, 626],
+            "head": [334, 499],
+            "box": [180, 472, 459, 808],
+            "feet": [403.2, 1618.2],
+            "crown": [416.5, 484.8]
+          }
+        },
+        {
+          "id": "lucas",
+          "fig": "lucas_seated_back",
+          "desktop": {
+            "file": "jail-visit-1630-lucas-desktop.png",
+            "ink": [175, 704],
+            "head": [331, 541],
+            "box": [163, 313, 554, 587],
+            "feet": [455.0, 1827.8],
+            "crown": [429.4, 325.8]
+          },
+          "phone": {
+            "file": "jail-visit-1630-lucas-phone.png",
+            "ink": [0, 109],
+            "head": [0, 109],
+            "box": [0, 451, 122, 829],
+            "feet": [-245.3, 2599.6],
+            "crown": [-281.8, 463.4]
+          }
+        }
+      ]
+    },
     "lobby-0800": {
       "plates": ["lobby-0800", "lobby-0800-en"],
       "size": {

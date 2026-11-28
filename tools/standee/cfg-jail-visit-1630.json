@@ -1,7 +1,7 @@
 {
   "id": "jail-visit-1630",
   "frames_res": [2304, 1440],
-  "phone_crop_px": [747, 0, 1557, 1440],
+  "phone_crop_px": [1004, 0, 1814, 1440],
   "people": [
     {
       "name": "ethan",
@@ -37,7 +37,8 @@
           "soft": 0.3
         }
       ],
-      "occ": "occ/jail-visit-1630-lucas.png"
+      "occ": "occ/jail-visit-1630-lucas.png",
+      "anchor": false
     }
   ],
   "plates": ["jail-visit-1630"],

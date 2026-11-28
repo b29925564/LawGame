@@ -524,8 +524,10 @@ def ethan_seated():
     sk['trouser'] = (0.17, 0.12, 0.10); sk['arm'] = (0.098, 0.084, 0.066)
     sk['shoulder_l'] = (sk['shoulder_l'][0] + 0.006, sk['shoulder_l'][1] + 0.012)   # hunched: shoulders lifted toward the ears
     sk['shoulder_r'] = (sk['shoulder_r'][0] - 0.006, sk['shoulder_r'][1] + 0.016)
-    sk['elbow_l'] = (-0.214, 0.79); sk['elbow_r'] = (0.21, 0.792)
-    sk['wrist_l'] = (-0.04, 0.80); sk['wrist_r'] = (0.036, 0.802); sk['hand_dir_l'] = (1.0, 0.25); sk['hand_dir_r'] = (-1.0, 0.25)
+    # the forearms run toward the camera along the table top, so on the standee plane they drop below the elbows: the clasped hands
+    # land on the table's grey in front of its far edge (07b: the far edge sits at ~0.71 m on Ethan's plane), not on the wall above it
+    sk['elbow_l'] = (-0.214, 0.785); sk['elbow_r'] = (0.21, 0.787)
+    sk['wrist_l'] = (-0.06, 0.66); sk['wrist_r'] = (0.055, 0.663); sk['hand_dir_l'] = (1.0, -0.3); sk['hand_dir_r'] = (-1.0, -0.3)
     sk['hand_scale'] = 0.92
     sk['shoes'] = [shoe_front(sk['ankle_l'][0], out=-0.02), shoe_front(sk['ankle_r'][0], out=0.02)]
     sk['neck_top'] = (sk['neck_top'][0], sk['neck_top'][1] - 0.04)                  # head lowered (as ethan_cuffed)

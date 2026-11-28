@@ -1139,6 +1139,68 @@
       },
       "source": "project-files art-bible/scenes/hale-office（hale_day.py 2304×1440、128 spp，家具 hale_office.py v2、城市 firm_ext v2；ceil glassnr=1、depth=20 距離圖）；prep_haze.py；fin_ho.py exp=-3.8 ceil=48 ceilr=1 lamp=1 ext=0.509 tsky=k-clearsky cx=0.4036；色彩腳本格 07a",
       "blocking": "海爾坐在桌後、背對東窗；盧卡斯坐在訪客椅、背對鏡頭；惠特洛克站在桌子北端窗角前，她和海爾在桌子同一邊對著盧卡斯；桌燈開"
+    },
+    {
+      "id": "jail-visit-1630",
+      "scene": "ep1:ethan-testify",
+      "rig": "ep1-jail-visit-sun",
+      "card_kelvin": 4100,
+      "date": "2026-04-05 16:30",
+      "episode": 1,
+      "files": {
+        "desktop": {
+          "file": "jail-visit-1630-desktop.jpg",
+          "bytes": 65692
+        },
+        "phone": {
+          "file": "jail-visit-1630-phone.jpg",
+          "bytes": 38844
+        }
+      },
+      "frames_res": [2304, 1440],
+      "frames": {
+        "lucas": [131, 691, 1203, 1440],
+        "ethan": [1194, 574, 1736, 1440]
+      },
+      "phone_cx": 0.6115,
+      "phone_crop_px": [1004, 0, 1814, 1440],
+      "phone_crop_note": "過肩鏡頭：伊森在手機框中間偏右（約 0.58），盧卡斯背對鏡頭只留左邊的暗肩和半顆頭（設計師 07b 第三輪手機規則修訂）",
+      "key": "fl",
+      "fill": ["corr"],
+      "target": null,
+      "target_note": "兩人都是剪影，不量主補比。色彩腳本格 07b（設計師 11-28）：主色 #545f58（暫定，終版實測後登記），用 meas26 量出貨 JPG；零黃；300 px 縮圖第一眼落在伊森的頭",
+      "measured_07b": {
+        "desktop": {
+          "dominant": "#566159",
+          "dE76": 0.74,
+          "shadow_L": 28.2,
+          "p95_p25": 2.29
+        },
+        "phone": {
+          "dominant": "#57615b",
+          "dE76": 1.15,
+          "shadow_L": 29.5,
+          "p95_p25": 2.17
+        }
+      },
+      "grade": {
+        "exp": 2.5,
+        "black": 0.02,
+        "fl": 1,
+        "corr": 1,
+        "dome": 0
+      },
+      "grade_note": "桌子正上方一盞 1×1 m 天花燈（設定集 0504，70 W）--k-fluoro；門上觀察窗透進走廊單燈管燈條的光（28 W T5）--k-fluoro，權重 1；CCTV 紅色指示燈不放（dome 0）；沒有窗、沒有日光",
+      "floor_L": {
+        "desktop": 4.3,
+        "phone": 3.87
+      },
+      "yellow_final_violations": {
+        "desktop": 0,
+        "phone": 0
+      },
+      "source": "project-files art-bible/scenes/jail-visit（visit_room.py 2304×1440、128 spp，45 mm 過肩）；fin_jv.py exp=2.5 fl=1 corr=1 dome=0 cx=0.6115；色彩腳本格 07b",
+      "blocking": "伊森坐在桌子對面、正對鏡頭，前臂放在桌上、兩手交握；盧卡斯坐在近側、背對鏡頭（過肩前景）；兩人都坐固定在地上的塑膠椅；律師會見不錄影，監視器在天花板角落、出框"
     }
   ]
 }

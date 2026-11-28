@@ -87,11 +87,14 @@ ep1-da-office-fri:
   label: 週五
   time: '15:30'
   kelvin: 7000
-# 看守所螢光燈。
+# 看守所螢光燈（色彩腳本 07b）：桌子正上方一盞 1×1 m 天花燈，門上觀察窗透進走廊的單燈管燈條。
 ep1-jail-visit-sun:
   label: 週日
   time: '16:30'
   kelvin: 4100
+  practicals:
+    fl: 4100
+    corr: 4100
 # 第 3 章第 16 格「選擇案件理論」：深夜，頂燈全關，只剩一盞檯燈 --k-tungsten，主補 8:1（設計師 10-10 裁定；日照表第 24 行的「待定」就此解決）。
 ep1-conf-a-sun-night:
   label: 週日
