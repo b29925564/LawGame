@@ -521,14 +521,22 @@ def ethan_seated():
     # head lowered as at the holding door; his own messy crown (ethan_cuffed). Below the table top the table hides him.
     sk = stance(weight='r', pelvis_x=-0.01, tilt=0.008, sh_y=1.44, sh_w=0.19, sh_tilt=0.01, waist=(0.148, 1.06))
     sit(sk, seat=0.45)
-    sk['trouser'] = (0.17, 0.12, 0.10); sk['arm'] = (0.098, 0.084, 0.066)
+    sk['trouser'] = (0.17, 0.12, 0.10); sk['arm'] = (0.10, 0.095, 0.088)   # thick forearms: they read as two bars on the table
     sk['shoulder_l'] = (sk['shoulder_l'][0] + 0.006, sk['shoulder_l'][1] + 0.012)   # hunched: shoulders lifted toward the ears
     sk['shoulder_r'] = (sk['shoulder_r'][0] - 0.006, sk['shoulder_r'][1] + 0.016)
-    # the forearms run toward the camera along the table top, so on the standee plane they drop below the elbows: the clasped hands
-    # land on the table's grey in front of its far edge (07b: the far edge sits at ~0.71 m on Ethan's plane), not on the wall above it
-    sk['elbow_l'] = (-0.214, 0.785); sk['elbow_r'] = (0.21, 0.787)
-    sk['wrist_l'] = (-0.06, 0.66); sk['wrist_r'] = (0.055, 0.663); sk['hand_dir_l'] = (1.0, -0.3); sk['hand_dir_r'] = (-1.0, -0.3)
-    sk['hand_scale'] = 0.92
+    # elbows on the table, just in front of its far edge (07b: the far edge sits at ~0.71 m on Ethan's plane), so the upper arms hang
+    # straight down the sides and the torso keeps its width down to the edge (the table hides the rest). The forearms run toward
+    # the camera along the table top, so on the standee plane they come in and down from the elbows as two bars on the table's grey,
+    # meeting at the clasped hands: one block with knuckles on top, thick enough to read as hands (07b review: not a thin X)
+    sk['elbow_l'] = (-0.2, 0.70); sk['elbow_r'] = (0.197, 0.702)
+    sk['wrist_l'] = (-0.075, 0.618); sk['wrist_r'] = (0.072, 0.62); sk['hand_dir_l'] = (1.0, -0.15); sk['hand_dir_r'] = (-1.0, -0.15)
+    sk['hand_scale'] = 0.55
+    cx, cy = 0.0, 0.603
+    clasp = [(cx - 0.088, cy + 0.012), (cx - 0.08, cy + 0.034), (cx - 0.058, cy + 0.044), (cx - 0.04, cy + 0.04), (cx - 0.026, cy + 0.047),
+             (cx - 0.01, cy + 0.042), (cx + 0.006, cy + 0.048), (cx + 0.022, cy + 0.043), (cx + 0.038, cy + 0.047), (cx + 0.056, cy + 0.043),
+             (cx + 0.078, cy + 0.034), (cx + 0.088, cy + 0.012), (cx + 0.082, cy - 0.02), (cx + 0.06, cy - 0.036), (cx + 0.02, cy - 0.042),
+             (cx - 0.02, cy - 0.042), (cx - 0.06, cy - 0.036), (cx - 0.082, cy - 0.02)]
+    sk.setdefault('extra', []).append(('arm', clasp))
     sk['shoes'] = [shoe_front(sk['ankle_l'][0], out=-0.02), shoe_front(sk['ankle_r'][0], out=0.02)]
     sk['neck_top'] = (sk['neck_top'][0], sk['neck_top'][1] - 0.04)                  # head lowered (as ethan_cuffed)
     hc = (sk['neck_top'][0] - 0.006, sk['neck_top'][1] + 0.07); sk['head'] = head(hc, w=0.150, h=0.228)
