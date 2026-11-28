@@ -327,7 +327,8 @@ export async function play(page: Page, o: Opts) {
   await next(page);
   await next(page);
 
-  await until(page, page.getByRole('button', { name: '慢慢說。從你收到訊息開始。' }));
+  // 大廳有底圖以後（#473）字幕一句一張，要按的「繼續」變多：上限和 slice.spec.ts 一樣給 80。
+  await until(page, page.getByRole('button', { name: '慢慢說。從你收到訊息開始。' }), 80);
   await shot(page, o, 'dialogue');
   await page.getByRole('button', { name: '慢慢說。從你收到訊息開始。' }).click();
   await until(page, page.getByRole('button', { name: '星期五下午，沃斯找你做什麼？' }));
