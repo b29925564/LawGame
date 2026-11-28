@@ -520,7 +520,6 @@ export function PlaceBeat({
   /** 冷開場的定場：場記的短槓不用黃（PlaceSlate 的 cold）。 */
   cold?: boolean;
 }) {
-  const t = useT();
   const wait = reducedMotion() ? SLATE_HOLD : 2 * SLATE_FADE + SLATE_HOLD;
   // 有底圖就是定場鏡頭：圖解碼完才放場記、才開始計時；等的時候整格純黑（不放占位字、不放顆粒）。
   const shown = useShown(useScenePlate(episode, { id, rig: place.rig, variant: place.variant }));
@@ -568,13 +567,7 @@ export function PlaceBeat({
       onClick={cut.skip}
       data-auto=""
     >
-      {!shown && (
-        <span className="place-tbd">
-          {t('待放 3D 機位')}
-          {'\u3000'}
-          {t('定場')}
-        </span>
-      )}
+      {/* 沒有場景圖的定場：黑底加場記，像一張地點字卡（設計師 v98 裁定，不再標「待放 3D 機位」）。 */}
       {!waiting && <PlaceSlate id={id} place={place} cold={cold} />}
     </main>
   );

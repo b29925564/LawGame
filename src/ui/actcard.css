@@ -535,15 +535,6 @@
   overflow: hidden;
   clip-path: inset(50%);
 }
-/* 定場那一格還沒有鏡頭：左上標占位（和法庭鏡頭條同一種標法），鏡頭進來就拿掉。 */
-.place-tbd {
-  position: absolute;
-  top: max(16px, env(safe-area-inset-top));
-  left: max(16px, env(safe-area-inset-left));
-  font: 400 12px / 1.4 var(--font-court);
-  letter-spacing: 0.08em;
-  color: var(--cine-muted);
-}
 .place-slate .ps-when {
   flex: none;
   white-space: pre;

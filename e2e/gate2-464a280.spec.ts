@@ -243,16 +243,6 @@ test('英文兩個字的短標籤放得下就不拆（調解數字板 Not agreed
   }
 });
 
-// 設計師更正（12:1x）：「3D camera TBD」「Establishing」是兩個標籤，中間是全形空白，就在那裡換行；不改。這條鎖住現狀。
-test('定場佔位字（英文 320・150%）：「3D camera TBD ⏎ Establishing」', async ({ page }, info) => {
-  test.skip(info.project.name !== 'chromium', '自己設視窗大小，手機那一組跑就好');
-  await page.setViewportSize({ width: 320, height: 640 });
-  await open(page, at('ep2', 15), 'en', 1.5);
-  await expect(page.locator('.place-tbd')).toBeVisible();
-  const rows = await rowsOf(page, '.place-tbd');
-  expect(rows).toEqual(['3D camera TBD', 'Establishing']);
-});
-
 // 設計師裁定（464a280 第 5 項補充）：候選人卡中文每行至少 3 個字；以「，。？」收尾的子句兩個字加標點就夠（「自己開店｜七年。」可以，「自己｜開店七年。」不行）。
 for (const [ep, scene] of [
   ['ep1', 15],
