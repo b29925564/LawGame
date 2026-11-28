@@ -99,6 +99,14 @@ export const PLATE_BREAKS: readonly string[] = [
   "The second/you're up there,|Morrow gets to ask/about four years ago.",
   'Okay. Starting today|we rehearse/the ugliest questions.',
   'The jury needs|the evidence,/not you.',
+  // ── #447 第三法庭外走廊 隔天 09:20（epilogue-dismissed，撤回起訴）──
+  'At nine/the next morning,|Prosecutor Morrow/moves to dismiss¦the charges/against Ethan Shaw.',
+  'Two officers/wait in the back row|of the gallery/for Rachel Adler.',
+  'When Rachel stands,|she buttons/her jacket first.',
+  'She passes/the defense table|without looking/at anyone.',
+  'In the hallway,/Prosecutor Morrow,¦file tucked/under her arm,|stops in front/of the elevator.',
+  'Next time,|call me sooner.',
+  'Hale comes/down the hallway|from the other end.',
 ];
 
 /**

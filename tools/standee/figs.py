@@ -547,8 +547,24 @@ def ethan_seated():
     sk['hair'] = [mv(wavy(m, 0.006, len(m), 2.1), 0, dy)]
     return figure(sk, 'casual')
 
+def ethan_free():
+    # court-3 corridor 09:20 (epilogue-dismissed, "That's it? I can... go?"): facing the camera, nothing in his hands, arms hanging
+    # loose a little away from the body (no cuffs any more); still the hunch and the messy hair of ethan_cuffed, head up a touch
+    sk = stance(weight='l', pelvis_x=-0.022, tilt=0.014, sh_y=1.44, sh_w=0.192, sh_tilt=0.012, feet=(0.10, 0.105), waist=(0.15, 1.06),
+                elbow=(0.212, 1.105), wrist=(0.205, 0.862))
+    sk['trouser'] = (0.17, 0.12, 0.10); sk['arm'] = (0.098, 0.084, 0.066)
+    sk['hand_dir_l'] = (0.06, -1.0); sk['hand_dir_r'] = (-0.06, -1.0)   # open hands hanging, fingers a touch in toward the thigh (turned out they read as flippers)
+    sk['shoes'] = [shoe_front(sk['ankle_l'][0], out=-0.022), shoe_front(sk['ankle_r'][0], out=0.025)]
+    sk['neck_base'] = (sk['neck_base'][0], sk['neck_base'][1] + 0.01); sk['neck_top'] = (sk['neck_top'][0], 1.592)
+    hc = (sk['neck_top'][0] - 0.004, 1.662); sk['head'] = head(hc, w=0.150, h=0.228)
+    m = [(hc[0] - 0.084, 1.637), (hc[0] - 0.095, 1.682), (hc[0] - 0.092, 1.727), (hc[0] - 0.08, 1.762), (hc[0] - 0.058, 1.783), (hc[0] - 0.035, 1.781),
+         (hc[0] - 0.018, 1.795), (hc[0] + 0.004, 1.789), (hc[0] + 0.026, 1.797), (hc[0] + 0.05, 1.786), (hc[0] + 0.072, 1.772), (hc[0] + 0.088, 1.742),
+         (hc[0] + 0.097, 1.699), (hc[0] + 0.09, 1.639), (hc[0] + 0.074, 1.679), (hc[0], 1.701), (hc[0] - 0.072, 1.679)]
+    sk['hair'] = [wavy(m, 0.006, len(m), 2.1)]     # the same messy crown as at the holding door
+    return figure(sk, 'casual')
+
 FIG.update({'hale_seated': hale_seated(), 'lucas_seated_back': lucas_seated_back(), 'lucas_seated_phone': lucas_seated_phone(), 'victoria_front': victoria_front(),
             'hale_front': hale_front(), 'devin_front': devin_front(), 'devin_profile': devin_profile(),
-            'logan_front': logan_front(), 'ethan_seated': ethan_seated()})
+            'logan_front': logan_front(), 'ethan_seated': ethan_seated(), 'ethan_free': ethan_free()})
 
 def top_of(parts): return max(y for _, pts in parts for _, y in pts)

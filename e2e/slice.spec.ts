@@ -530,7 +530,8 @@ test('瑞秋援引緘默權後，檢方撤回起訴，直接進尾聲（E1）', 
   // 最後一句落地後先停在筆錄上，按「休庭」才進休庭頁。
   await page.getByRole('button', { name: '休庭', exact: true }).click();
   await next(page);
-  await until(page, page.getByText('下次，早點打給我。'));
+  // 走廊這場有底圖（#447）：台詞在字幕卡上，筆錄裡另有一份藏著的，只等看得見的那一份。
+  await until(page, page.getByText('下次，早點打給我。').filter({ visible: true }));
   // 沒走蘿莎的停車場線，不知道潔德是誰：信封不能交給她。
   const keep = page.getByRole('button', { name: /自己保留/ });
   await until(page, keep);

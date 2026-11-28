@@ -1,0 +1,45 @@
+{
+  "id": "court3-corridor-0920",
+  "frames_res": [2304, 1440],
+  "phone_crop_px": [885, 0, 1695, 1440],
+  "people": [
+    {
+      "name": "ethan",
+      "fig": "ethan_free",
+      "h": 1.801,
+      "feet_px": [1429.5, 1223.6],
+      "crown_px": [1430.4, 576.9],
+      "body": "#07090c",
+      "lights": [
+        {
+          "dir": [0.7, -0.7],
+          "color": "#e6e2da",
+          "width": 1.4,
+          "alpha": 0.85,
+          "soft": 0.3
+        }
+      ],
+      "occ": "occ/court3-corridor-0920-ethan.png"
+    },
+    {
+      "name": "lucas",
+      "fig": "lucas_back",
+      "h": 1.801,
+      "feet_px": [1156.0, 1374.3],
+      "crown_px": [1156.1, 546.4],
+      "body": "#07090c",
+      "lights": [
+        {
+          "dir": [0.7, -0.7],
+          "color": "#b3bcc4",
+          "width": 1.6,
+          "alpha": 0.85,
+          "soft": 0.3
+        }
+      ],
+      "occ": "occ/court3-corridor-0920-lucas.png"
+    }
+  ],
+  "plates": ["court3-corridor-0920"],
+  "fit": {}
+}

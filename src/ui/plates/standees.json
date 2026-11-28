@@ -1,5 +1,64 @@
 {
   "sets": {
+    "court3-corridor-0920": {
+      "plates": ["court3-corridor-0920"],
+      "size": {
+        "desktop": [1440, 900],
+        "phone": [720, 1280]
+      },
+      "anchor": {
+        "desktop": {
+          "at": 0.5559,
+          "to": 0.5
+        },
+        "phone": {
+          "at": 0.4889,
+          "to": 0.5
+        }
+      },
+      "people": [
+        {
+          "id": "ethan",
+          "fig": "ethan_free",
+          "desktop": {
+            "file": "court3-corridor-0920-ethan-desktop.png",
+            "ink": [834, 950],
+            "head": [870, 915],
+            "box": [822, 348, 140, 430],
+            "feet": [893.4, 764.8],
+            "crown": [894.0, 360.6]
+          },
+          "phone": {
+            "file": "court3-corridor-0920-ethan-phone.png",
+            "ink": [400, 565],
+            "head": [451, 514],
+            "box": [388, 500, 189, 601],
+            "feet": [484.0, 1087.6],
+            "crown": [484.8, 512.8]
+          }
+        },
+        {
+          "id": "lucas",
+          "fig": "lucas_back",
+          "desktop": {
+            "file": "court3-corridor-0920-lucas-desktop.png",
+            "ink": [651, 799],
+            "head": [698, 753],
+            "box": [639, 329, 173, 544],
+            "feet": [722.5, 858.9],
+            "crown": [722.6, 341.5]
+          },
+          "phone": {
+            "file": "court3-corridor-0920-lucas-phone.png",
+            "ink": [139, 350],
+            "head": [206, 284],
+            "box": [127, 473, 235, 763],
+            "feet": [240.9, 1221.6],
+            "crown": [241.0, 485.7]
+          }
+        }
+      ]
+    },
     "hale-office-1520": {
       "plates": ["hale-office-1520"],
       "size": {

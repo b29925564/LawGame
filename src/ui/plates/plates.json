@@ -1201,6 +1201,74 @@
       },
       "source": "project-files art-bible/scenes/jail-visit（visit_room.py 2304×1440、128 spp，45 mm 過肩）；fin_jv.py exp=2.5 fl=1 corr=1 dome=0 cx=0.6115；色彩腳本格 07b",
       "blocking": "伊森坐在桌子對面、正對鏡頭，前臂放在桌上、兩手交握；盧卡斯坐在近側、背對鏡頭（過肩前景）；兩人都坐固定在地上的塑膠椅；律師會見不錄影，監視器在天花板角落、出框"
+    },
+    {
+      "id": "court3-corridor-0920",
+      "scene": "ep1:epilogue-dismissed",
+      "rig": "ep1-court3-corridor-next",
+      "card_kelvin": 4100,
+      "date": "2026-04-09 09:20",
+      "episode": 1,
+      "files": {
+        "desktop": {
+          "file": "court3-corridor-0920-desktop.jpg",
+          "bytes": 84783
+        },
+        "phone": {
+          "file": "court3-corridor-0920-phone.jpg",
+          "bytes": 66879
+        }
+      },
+      "frames_res": [2304, 1440],
+      "frames": {
+        "lucas": [1035, 595, 1272, 1384],
+        "ethan": [1340, 628, 1517, 1225]
+      },
+      "phone_cx": 0.56,
+      "phone_crop_px": [885, 0, 1695, 1440],
+      "phone_crop_note": "兩個頭都在手機框內、離框緣 180 px 以上；中心往東窗偏一點，讓手機框右緣留一截百葉窗",
+      "key": "fl-on",
+      "fill": ["sun", "sky"],
+      "target": null,
+      "target_note": "兩人都是剪影，不量主補比（伊森頭部探針 2.65:1，燈管當主光）。色彩腳本格 22a（設計師 11-28）：主色 #797572（暫定，終版放了立牌實測後登記），用 meas26 量出貨 JPG 疊上立牌；零黃，沒有飽和點；300 px 縮圖第一眼落在伊森",
+      "measured_22a": {
+        "desktop": {
+          "dominant": "#767270",
+          "dE76": 1.1,
+          "shadow_L": 9.6,
+          "p95_p25": 52.0
+        },
+        "phone": {
+          "dominant": "#7d7975",
+          "dE76": 1.5,
+          "shadow_L": 10.3,
+          "p95_p25": 42.7
+        },
+        "ring_L_med": {
+          "ethan": [47.0, 48.0],
+          "lucas": [18.7, 18.1]
+        }
+      },
+      "grade": {
+        "exp": 0.5,
+        "black": 0.02,
+        "fl-on": 1,
+        "sun": 0.526,
+        "sky": 1,
+        "sun_el": 31.2,
+        "sun_weight_rule": "clear_sun_weight(el)"
+      },
+      "grade_note": "走廊燈管只開一半（2.4 m 一盞，隔一盞亮一盞）--k-fluoro；東窗晨光：太陽 107.6°／31.2°，直射穿過斜開的百葉落在窗邊的地上和法庭那面牆 --k-daylight，權重 0.526＝clear_sun_weight(31.2)；天光 --k-daylight 權重 1。牆漆冷灰 #8e98a0（法院走廊這組景的材質，讓第 22 格 14:40 的 #3c4650 量得到）；門的推板、踢腳、門牌數字是法院正門同款的老銅 #6e6450",
+      "floor_L": {
+        "desktop": 3.86,
+        "phone": 3.73
+      },
+      "yellow_final_violations": {
+        "desktop": 0,
+        "phone": 0
+      },
+      "source": "project-files art-bible/scenes/court3-corridor（court_corridor.py 2304×1440、256 spp，40 mm，相機 (5.6,−1.2,1.5)→(12.5,1.4,1.4)；門牌數字和兩人那一塊局部重算 border=；人的影子和地上倒影用立牌輪廓做的替身 proxy=proxy-0920.json，鏡頭看不到、只投影）；fin_cc.py exp=0.5 cx=0.56；色彩腳本格 22a",
+      "blocking": "伊森站在第三法庭門右邊、往窗那邊一步，正面對鏡頭，手空著垂下，頭在法庭牆那條晨光旁、腳站在地上的陽光裡；盧卡斯在門前、背對鏡頭，是暗的前景；莫羅和海爾只有台詞，不進底圖（先後出場）"
     }
   ]
 }
